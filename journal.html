@@ -408,8 +408,23 @@
                     <div>
                         <label class="field-label">Symbol</label>
                         <select id="e-symbol" class="field">
-                            <option>EURUSD</option><option>GBPUSD</option><option>XAUUSD</option><option>NAS100</option>
+                            <optgroup label="Forex">
+                                <option>EURUSD</option><option>GBPUSD</option><option>USDJPY</option><option>EURJPY</option><option>AUDUSD</option><option>USDCAD</option><option>USDCHF</option><option>NZDUSD</option>
+                            </optgroup>
+                            <optgroup label="Commodities">
+                                <option>XAUUSD</option><option>XAGUSD</option><option>USOIL</option><option>UKOIL</option><option>NATGAS</option><option>COFFEE</option>
+                            </optgroup>
+                            <optgroup label="Indices">
+                                <option>NAS100</option><option>US30</option><option>SPX500</option><option>DAX40</option><option>UK100</option><option>JPN225</option><option>AUS200</option>
+                            </optgroup>
+                            <optgroup label="Crypto">
+                                <option>BTCUSD</option><option>ETHUSD</option><option>SOLUSD</option><option>XRPUSD</option><option>DOGEUSD</option>
+                            </optgroup>
+                            <optgroup label="Stocks">
+                                <option>AAPL</option><option>TSLA</option><option>MSFT</option><option>NVDA</option><option>AMZN</option><option>META</option><option>GOOGL</option><option>NFLX</option>
+                            </optgroup>
                         </select>
+                        <div id="asset-chip" class="flex items-center gap-1.5 mt-1.5"></div>
                     </div>
                     <div>
                         <label class="field-label">Direction</label>
@@ -418,8 +433,9 @@
                         </select>
                     </div>
                     <div>
-                        <label class="field-label">Size</label>
+                        <label class="field-label" id="e-size-label">Size (lots)</label>
                         <input id="e-size" type="number" step="0.01" min="0" class="field num" placeholder="1.00">
+                        <div id="size-hint" class="text-[10.5px] text-[#55555E] mt-1"></div>
                     </div>
                     <div>
                         <label class="field-label">Entry price</label>
@@ -580,6 +596,10 @@
 
             function fmtPrice(symbol, v) {
                 if (v == null || isNaN(v)) return '—';
+                // spec-aware precision (5 decimals forex, 3 JPY, 2 gold/stocks,
+                // 0 indices) — delegated to the shared asset engine.
+                const core = window.TradeMindCore;
+                if (core && typeof core.fmtPrice === 'function') return core.fmtPrice(symbol, v);
                 if (symbol.indexOf('NAS') > -1 || symbol.indexOf('US30') > -1) return v.toFixed(0);
                 if (symbol.indexOf('XAU') > -1) return v.toFixed(2);
                 return v.toFixed(5);
@@ -591,6 +611,10 @@
             }
 
             // ============ DATA ============
+            // Asset-aware P&L — the SHARED core engine (src/core) is the single
+            // source of truth: forex pips/lots, commodity pips/contracts, index
+            // points, stock shares/cents, crypto coins/$. The legacy formula is
+            // only a fallback before the core boots.
             function pipInfo(symbol) {
                 if (symbol.indexOf('XAU') > -1) return { pip: 0.1, val: 10 };
                 if (symbol.indexOf('NAS') > -1 || symbol.indexOf('US30') > -1) return { pip: 1, val: 1 };
@@ -598,8 +622,36 @@
             }
 
             function calcPnl(symbol, dir, entry, exit, size) {
+                const core = window.TradeMindCore;
+                if (core && typeof core.calcPnl === 'function') return core.calcPnl(symbol, dir, entry, exit, size);
                 const p = pipInfo(symbol);
                 return ((exit - entry) / p.pip) * size * p.val * (dir === 'Long' ? 1 : -1);
+            }
+
+            // Asset-class / unit chip for the form: shows the detected class and
+            // the contract units (Pips · Points · Cents · Coins · Amount) plus
+            // the per-pip value, updating live as the symbol changes.
+            function assetInfoFor(symbol) {
+                const core = window.TradeMindCore;
+                if (core && typeof core.assetSpecFor === 'function') {
+                    const s = core.assetSpecFor(symbol) || {};
+                    return {
+                        cls: s.assetClass || 'Other', unit: s.unit || 'Units',
+                        sizeLabel: s.sizeLabel || 'Units',
+                        val: s.val != null ? s.val : null, pip: s.pip != null ? s.pip : null
+                    };
+                }
+                return { cls: 'Forex', unit: 'Pips', sizeLabel: 'Lots', val: 10, pip: 0.0001 };
+            }
+            function renderAssetInfo(symbol) {
+                // Only controlled values (class / unit / labels) — no escaping needed.
+                const info = assetInfoFor(symbol);
+                const chip = document.getElementById('asset-chip');
+                const sizelbl = document.getElementById('e-size-label');
+                if (chip) chip.innerHTML = '<span class="tag tag-blue !py-0.5 !px-2 text-[10.5px]">' + info.cls + '</span>' +
+                    '<span class="text-[11px] text-[#6E6E78]">' + info.unit + (info.val != null ? ' · $' + info.val + ' / ' + info.pip + ' / ' + info.sizeLabel.toLowerCase().replace(/s$/, '') : '') + '</span>';
+                if (sizelbl) sizelbl.textContent = 'Size (' + info.sizeLabel.toLowerCase() + ')';
+                return info;
             }
 
             function buildTrades() {
@@ -675,13 +727,19 @@
             ];
 
             const ADHERENCE_LABEL = { followed: 'Followed', 'early exit': 'Early exit', 'moving stop': 'Moving stop', 'no-plan': 'No plan' };
-            const MARKET_OF = { EURUSD: 'Forex', GBPUSD: 'Forex', XAUUSD: 'Metals', NAS100: 'Indices' };
+            // Market filter — asset class from the shared core engine (all classes).
+            const MARKET_OF = { EURUSD: 'Forex', GBPUSD: 'Forex', XAUUSD: 'Commodities', NAS100: 'Indices' };
+            const marketOf = s => {
+                const core = window.TradeMindCore;
+                if (core && typeof core.assetClassOf === 'function') return core.assetClassOf(s);
+                return MARKET_OF[s] || 'Other';
+            };
 
             // ============ RENDER ============
             function filteredTrades() {
                 return trades
                     .filter(t => VIEWS.find(v => v.id === activeView).test(t))
-                    .filter(t => filters.market === 'all' || MARKET_OF[t.symbol] === filters.market)
+                    .filter(t => filters.market === 'all' || marketOf(t.symbol) === filters.market)
                     .filter(t => filters.setup === 'all' || t.setup === filters.setup)
                     .filter(t => filters.strategy === 'all' || t.strategy === filters.strategy)
                     .filter(t => filters.session === 'all' || t.session === filters.session)
@@ -726,7 +784,7 @@
                     sel.innerHTML = '<option value="all">' + label + '</option>' +
                         vals.map(v => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + v + '</option>').join('');
                 };
-                fill('f-market', uniq(trades.map(t => MARKET_OF[t.symbol])), 'All markets');
+                fill('f-market', uniq(trades.map(t => marketOf(t.symbol))), 'All markets');
                 fill('f-setup', uniq(trades.map(t => t.setup)), 'All setups');
                 fill('f-strategy', uniq(trades.map(t => t.strategy)), 'All strategies');
                 fill('f-session', uniq(trades.map(t => t.session)), 'All sessions');
@@ -746,7 +804,7 @@
                     const btn = empty.querySelector('button');
                     if (btn) btn.textContent = 'Log your first trade';
                 } else {
-                    $('journal-sub').textContent = trades.length + ' trades · ' + fmtTs(trades[0].ts).replace('Today ', '') + ' → today · ' + MARKET_OF[trades[0].symbol] + ' & more';
+                    $('journal-sub').textContent = trades.length + ' trades · ' + fmtTs(trades[0].ts).replace('Today ', '') + ' → today · ' + marketOf(trades[0].symbol) + ' & more';
                 }
 
                 // topbar account chip — live from the canonical store
@@ -907,6 +965,26 @@
                 const exit = parseFloat($('e-exit').value);
                 const size = parseFloat($('e-size').value) || 0;
                 const risk = parseFloat($('e-risk').value) || 0;
+
+                // live asset-class + unit detection (Pips / Points / Cents / Coins)
+                const info = renderAssetInfo(symbol);
+
+                // suggested position size from risk budget + stop distance
+                const slVal = parseFloat($('e-sl').value);
+                const hintEl = $('size-hint');
+                if (hintEl) {
+                    const core = window.TradeMindCore;
+                    const suggested = (risk > 0 && !isNaN(entry) && !isNaN(slVal) && entry !== slVal && core && typeof core.calcPositionSize === 'function')
+                        ? core.calcPositionSize(symbol, risk, entry, slVal)
+                        : null;
+                    if (suggested != null) {
+                        hintEl.textContent = size > 0 && Math.abs(size - suggested) < 0.0001
+                            ? suggested + ' ' + info.sizeLabel.toLowerCase() + ' — matches risk budget'
+                            : 'Suggested: ' + suggested + ' ' + info.sizeLabel.toLowerCase() + ' for $' + risk + ' risk at this stop';
+                    } else {
+                        hintEl.textContent = '';
+                    }
+                }
 
                 if (!isNaN(entry) && !isNaN(exit) && size > 0) {
                     const pnl = calcPnl(symbol, dir, entry, exit, size);

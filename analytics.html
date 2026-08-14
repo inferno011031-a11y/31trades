@@ -813,17 +813,26 @@
                     .sort((a, b) => b.s.pnl - a.s.pnl);
                 const th = (l, al) => '<th' + (al ? ' style="text-align:' + al + '"' : '') + '>' + l + '</th>';
 
+                // asset class + contract unit from the SHARED core engine — the
+                // same recognition the journal form and backend use (single source).
+                const specOf = s => {
+                    const core = window.TradeMindCore;
+                    return (core && typeof core.assetSpecFor === 'function' && core.assetSpecFor(s))
+                        || (core && typeof core.assetSpecFor !== 'function' && D.ASSET_CLASS[s] ? { assetClass: D.ASSET_CLASS[s], unit: '—' } : null);
+                };
                 const symRows = bySym.map(r => {
                     const longs = r.trades.filter(t => t.dir === 'Long').length;
                     const shorts = r.trades.length - longs;
                     const lshare = r.trades.length ? Math.round((longs / r.trades.length) * 100) : 0;
+                    const sp = specOf(r.name) || {};
                     return '<tr>' +
                         '<td class="font-semibold text-white">' + esc(r.name) + '</td>' +
-                        '<td class="text-[#55555E]">' + D.ASSET_CLASS[r.name] + '</td>' +
+                        '<td class="text-[#55555E]">' + esc(sp.assetClass || 'Other') + '</td>' +
+                        '<td class="text-[#55555E]">' + esc(sp.unit || '—') + '</td>' +
                         '<td class="num">' + r.s.n + '</td>' +
                         '<td class="num">' + pct(r.s.winRate * 100, 100) + '%</td>' +
                         '<td class="num ' + (r.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(r.s.expectancy) + '</td>' +
-                        '<td class="num ">' + fmtR(r.s.expectancy) + '</td>' +
+                        '<td class="num ' + (r.s.avgR >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(r.s.avgR) + '</td>' +
                         '<td class="num ' + (r.s.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(r.s.pnl) + '</td>' +
                         '<td style="min-width:120px"><div class="flex items-center gap-1.5"><div class="bar-track flex-1"><div class="bar-fill" style="width:' + lshare + '%;background:#3B82F6"></div></div><span class="num text-[10.5px] text-[#8A8A93]">' + lshare + '%L</span></div></td>' +
                         '<td>' + confTag(r.s.n) + '</td></tr>';
@@ -838,7 +847,7 @@
 
                 const bySymbol = panel('Performance by instrument',
                     bySym.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
-                        th('Symbol') + th('Class') + th('Trades') + th('Win rate') + th('Expectancy') + th('Avg R') + th('Net P&L') + th('Long split') + th('Confidence') +
+                        th('Symbol') + th('Class') + th('Unit') + th('Trades') + th('Win rate') + th('Expectancy') + th('Avg R') + th('Net P&L') + th('Long split') + th('Confidence') +
                         '</tr></thead><tbody>' + symRows + '</tbody></table></div>' +
                         '<p class="text-[11.5px] text-[#55555E] mt-3">Best/worst instruments carry sample-size guardrails — under 10 trades is flagged, not ranked.</p>'
                         : '<p class="text-[12.5px] text-[#6E6E78]">No data.</p>');

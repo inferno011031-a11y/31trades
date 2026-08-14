@@ -31,10 +31,12 @@
     }
 
     const SETUPS = ['MSS + FVG', 'FVG', 'Breakout', 'Order Block'];
-    const SYMBOLS = ['EURUSD', 'GBPUSD', 'XAUUSD', 'NAS100'];
+    // One representative symbol per major asset class — the demo journal spans
+    // Forex, Commodities (metals/energy), Indices, Crypto and Stocks.
+    const SYMBOLS = ['EURUSD', 'GBPUSD', 'USDJPY', 'XAUUSD', 'USOIL', 'NAS100', 'US30', 'BTCUSD', 'ETHUSD', 'AAPL', 'TSLA'];
     const SESSIONS = ['London', 'New York', 'Asia'];
     const EMOTIONS = ['Calm', 'Confident', 'Anxious'];
-    const ASSET_CLASS = { EURUSD: 'Forex', GBPUSD: 'Forex', XAUUSD: 'Metals', NAS100: 'Indices' };
+    const ASSET_CLASS = { EURUSD: 'Forex', GBPUSD: 'Forex', USDJPY: 'Forex', XAUUSD: 'Commodities', USOIL: 'Commodities', NAS100: 'Indices', US30: 'Indices', BTCUSD: 'Crypto', ETHUSD: 'Crypto', AAPL: 'Stocks', TSLA: 'Stocks' };
     const TIMEFRAMES = ['M5', 'M15', 'H1', 'H4'];
     const NOTES = [
         'Waited for sweep and confirmation before entry.',

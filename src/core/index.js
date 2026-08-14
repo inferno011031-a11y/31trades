@@ -217,13 +217,13 @@
         demo.forEach((t, i) => {
             const strategyId = DEMO_STRATEGY_BY_SETUP[t.setup] || 'strat-lfvg';
             const sv = versionActiveAt(strategyId, t.ts) || ConfigVersions.find(c2 => c2.entity_id === strategyId);
-            // derive entry/exit/size consistent with the ledger P&L (pip math,
-            // deterministic via the hash helper — the same numbers everywhere)
+            // derive entry/exit/size consistent with the ledger P&L (pip math
+            // from the shared ASSET SPEC ENGINE, deterministic via the hash
+            // helper — the same numbers everywhere)
             const tsNum = t.ts.getTime();
-            const pipInfo = { EURUSD: [0.0001, 10], GBPUSD: [0.0001, 10], XAUUSD: [0.1, 10], NAS100: [1, 1] };
-            const pip = (pipInfo[t.symbol] || [0.0001, 10])[0];
-            const val = (pipInfo[t.symbol] || [0.0001, 10])[1];
-            const base = { EURUSD: 1.08, GBPUSD: 1.27, XAUUSD: 2350, NAS100: 20000 }[t.symbol] || 1.08;
+            const spec = assetSpecFor(t.symbol) || DEFAULT_SPEC;
+            const pip = spec.pip, val = spec.val;
+            const base = spec.base;
             const size = 1;
             const move = (t.pnl / (size * val)) * pip;                     // price move implied by P&L
             const jitter = (env.demoTrades ? env.demoTrades.mulberry32(tsNum + 3)() - 0.5 : 0) * pip * 10;
@@ -353,7 +353,110 @@
     // Pages need hour / dow / assetClass / timeframe / holdMin / notes / postLoss /
     // delayMin for analytics, insights and discipline. These are DERIVED from the
     // canonical ledger — recomputed here, never stored separately.
-    const ASSET_CLASS_OF = { EURUSD: 'Forex', GBPUSD: 'Forex', XAUUSD: 'Metals', NAS100: 'Indices' };
+
+    // ----------------------------------------------------------------------
+    // ASSET SPEC ENGINE — contract specifications for every major asset class
+    // (Global Stocks, Indices, Forex, Crypto, Commodities). The SAME engine
+    // powers the browser (journal live-calc, analytics units) and the server
+    // (trade pipeline) — one formula, one source of truth.
+    //
+    //   pip      — the price step used to quote a move (0.0001 forex, 1 index
+    //              point, 0.01 stock cent, 0.1 gold…)
+    //   val      — dollars gained per 1.0 unit of size per ONE pip of move
+    //              (forex $10/lot/pip, index $1/contract/point, stock $0.01
+    //              /share/cent ⇒ $1 per $1 price move, crypto $1/coin/$1)
+    //   unit     — the UI unit label (Pips / Points / Cents / Coins / Amount)
+    //   sizeLabel— what the Size field means (Lots / Contracts / Shares / Coins)
+    //   decimals — price display precision
+    //   base     — a reference price for deriving seeded entry/exit prices
+    //
+    // P&L  = (exit − entry) ÷ pip × size × val × sign(dir)
+    // Per-unit contract value = val ÷ pip  ($ per 1.0 price move per unit)
+    // Size = risk ÷ (|entry − stop| × contract value)
+    // ----------------------------------------------------------------------
+    const ASSET_SPECS = [
+        // ---- FOREX (JPY pairs quote in 0.01) ----
+        { re: /^(USDJPY|EURJPY|GBPJPY|AUDJPY|CADJPY|CHFJPY|NZDJPY)$/, assetClass: 'Forex', pip: 0.01, val: 10, unit: 'Pips', sizeLabel: 'Lots', decimals: 3, base: 155 },
+        { re: /^(EURUSD|GBPUSD|AUDUSD|NZDUSD|USDCAD|USDCHF|EURGBP|EURCHF|AUDNZD|EURNZD|GBPAUD|GBPNZD|EURCAD|GBPCAD|AUDCHF|CADCHF)$/, assetClass: 'Forex', pip: 0.0001, val: 10, unit: 'Pips', sizeLabel: 'Lots', decimals: 5, base: 1.1 },
+        // ---- METALS ----
+        { re: /^XAU/, assetClass: 'Commodities', pip: 0.1, val: 10, unit: 'Pips', sizeLabel: 'Lots', decimals: 2, base: 2350 },
+        { re: /^XAG/, assetClass: 'Commodities', pip: 0.01, val: 5, unit: 'Pips', sizeLabel: 'Lots', decimals: 3, base: 27 },
+        { re: /^X(PT|PD)/, assetClass: 'Commodities', pip: 0.1, val: 10, unit: 'Pips', sizeLabel: 'Lots', decimals: 2, base: 900 },
+        // ---- ENERGY ----
+        { re: /^(USOIL|UKOIL|XTIUSD|XBRUSD|BRENT|CL|WTI|OIL)$/, assetClass: 'Commodities', pip: 0.01, val: 10, unit: 'Pips', sizeLabel: 'Contracts', decimals: 2, base: 78 },
+        { re: /^(NATGAS|XNGUSD|NG)$/, assetClass: 'Commodities', pip: 0.001, val: 10, unit: 'Pips', sizeLabel: 'Contracts', decimals: 3, base: 2.8 },
+        // ---- AGRICULTURE / SOFTS (dollar move per unit) ----
+        { re: /^(COFFEE|SUGAR|COCOA|COTTON|WHEAT|CORN|SOYBEAN|OATS|RICE|KC|SB|CC)$/, assetClass: 'Commodities', pip: 0.01, val: 1, unit: 'Pips', sizeLabel: 'Contracts', decimals: 2, base: 100 },
+        // ---- INDICES (1 point = $1 per contract) ----
+        { re: /(NAS100|US100|US30|SPX500|SP500|DAX40|GER40|DE40|UK100|JPN225|NIKKEI|AUS200|EU50|FRA40|HK50|NQ|ES|YM)$/, assetClass: 'Indices', pip: 1, val: 1, unit: 'Points', sizeLabel: 'Contracts', decimals: 0, base: 20000 },
+        // ---- CRYPTO (dollar move per coin) ----
+        { re: /^(BTC|ETH|SOL|XRP|ADA|DOGE|DOT|LTC|BNB|AVAX|MATIC|LINK|UNI|SHIB|PEPE|XLM|NEAR|APT|ARB|OP|SUI|INJ|SEI|TIA)/, assetClass: 'Crypto', pip: 1, val: 1, unit: 'Coins', sizeLabel: 'Coins', decimals: 0, base: 60000 },
+        // ---- STOCKS (any 1–5 letter ticker: AAPL, TSLA, MSFT…) ----
+        { re: /^[A-Z]{1,5}$/, assetClass: 'Stocks', pip: 0.01, val: 0.01, unit: 'Cents', sizeLabel: 'Shares', decimals: 2, base: 150 }
+    ];
+    const DEFAULT_SPEC = { assetClass: 'Other', pip: 1, val: 1, unit: 'Units', sizeLabel: 'Units', decimals: 2, base: 100 };
+
+    // First match wins — specific contracts (JPY pairs, CL oil) are listed
+    // before the broad fallbacks (stock ticker regex).
+    function assetSpecFor(symbol) {
+        const s = String(symbol || '').toUpperCase();
+        for (let i = 0; i < ASSET_SPECS.length; i++) {
+            if (ASSET_SPECS[i].re.test(s)) return ASSET_SPECS[i];
+        }
+        return null;
+    }
+
+    function assetClassOf(symbol) {
+        const spec = assetSpecFor(symbol);
+        return spec ? spec.assetClass : DEFAULT_SPEC.assetClass;
+    }
+
+    // $ per 1.0 price move per 1.0 unit of size (the contract value).
+    function contractValueOf(symbol) {
+        const s = assetSpecFor(symbol) || DEFAULT_SPEC;
+        return s.val / s.pip;
+    }
+
+    // Dynamic P&L from contract spec — NOT a single default formula.
+    // Returns null when there isn't enough to compute (callers fall back to
+    // the user-provided value).
+    function calcPnl(symbol, dir, entry, exit, size) {
+        if (entry == null || exit == null || !size || size <= 0) return null;
+        const s = assetSpecFor(symbol) || DEFAULT_SPEC;
+        const sign = String(dir || 'Long').toLowerCase() === 'short' ? -1 : 1;
+        return Math.round(((exit - entry) / s.pip) * size * s.val * sign * 100) / 100;
+    }
+
+    // Risk-based position sizing: units = risk $ ÷ (stop distance × contract
+    // value per unit). E.g. forex: $100 ÷ (20 pips × $10/pip) = 0.5 lots;
+    // stocks: $100 ÷ ($5 stop × $1/share/$, 1 move) = 20 shares.
+    function calcPositionSize(symbol, riskDollars, entry, stop) {
+        if (!riskDollars || riskDollars <= 0 || entry == null || stop == null || entry === stop) return null;
+        const dist = Math.abs(entry - stop);
+        const perUnit = contractValueOf(symbol);
+        if (!dist || !perUnit) return null;
+        return Math.round((riskDollars / (dist * perUnit)) * 100) / 100;
+    }
+
+    // Actual $ risk of a position: stop distance × size × contract value.
+    function calcRiskDollars(symbol, entry, stop, size) {
+        if (entry == null || stop == null || !size || size <= 0 || entry === stop) return null;
+        return Math.round(Math.abs(entry - stop) * size * contractValueOf(symbol) * 100) / 100;
+    }
+
+    // Reward-to-risk from entry / stop / target (price distances only).
+    function calcRR(entry, stop, tp) {
+        if (entry == null || stop == null || tp == null || entry === stop) return null;
+        const risk = Math.abs(entry - stop);
+        return risk ? Math.round((Math.abs(tp - entry) / risk) * 100) / 100 : null;
+    }
+
+    // Spec-aware price formatting (5 decimals forex, 3 JPY, 2 gold/stocks…).
+    function fmtPrice(symbol, v) {
+        if (v == null || isNaN(v)) return '—';
+        const s = assetSpecFor(symbol) || DEFAULT_SPEC;
+        return Number(v).toFixed(s.decimals);
+    }
 
     function enrichTrade(t, prev) {
         // normalize ts to a Date (localStorage round-trips it to an ISO string)
@@ -361,7 +464,7 @@
         const ts = t.ts;
         t.hour = ts.getHours();
         t.dow = ts.getDay();
-        if (t.assetClass == null) t.assetClass = ASSET_CLASS_OF[t.symbol] || '—';
+        if (t.assetClass == null) t.assetClass = assetClassOf(t.symbol);
         if (t.timeframe == null) t.timeframe = 'M5';
         if (t.holdMin == null) t.holdMin = 60;
         if (t.notes == null) t.notes = t.note || '';
@@ -811,13 +914,30 @@
         // Step 3: Evaluate — the shared Rule Engine (deterministic, versioned).
         // The engine covers per-trade risk, daily risk, daily loss, trade count,
         // cooldown, session/setup rules, execution and behavior rules.
+        // ---- ASSET-AWARE DERIVATION (shared engine, not a default formula):
+        // if the ledger P&L wasn't given but entry/exit/size were, compute it
+        // from the instrument's contract spec (pips/lots, points/contracts,
+        // shares/cents, coins/$). If size is missing but P&L + prices exist,
+        // derive the size that produced it. Rules evaluate against the final
+        // values so daily-loss / max-risk checks see the real numbers.
+        const spec = assetSpecFor(rawTrade.symbol);
+        let _pnl = rawTrade.pnl != null ? rawTrade.pnl : null;
+        let _size = rawTrade.size != null ? rawTrade.size : null;
+        if (_pnl == null && _size > 0 && rawTrade.entry != null && rawTrade.exit != null) {
+            _pnl = calcPnl(rawTrade.symbol, rawTrade.dir, rawTrade.entry, rawTrade.exit, _size);
+        }
+        if (_size == null && _pnl != null && rawTrade.entry != null && rawTrade.exit != null && rawTrade.entry !== rawTrade.exit) {
+            const cv = spec ? spec.val / spec.pip : 1;
+            if (cv > 0) _size = Math.round(Math.abs(_pnl) / (Math.abs(rawTrade.exit - rawTrade.entry) * cv) * 100) / 100;
+        }
         const draft = {
             ...rawTrade,
             account_id: accountId,
             strategy_id: assignment.strategy_id,
             ts: rawTrade.ts ? new Date(rawTrade.ts) : new Date(),
-            pnl: rawTrade.pnl != null ? rawTrade.pnl : 0,
-            risk: rawTrade.risk != null ? rawTrade.risk : (rawTrade.plannedRisk || 0)
+            pnl: _pnl != null ? _pnl : 0,
+            risk: rawTrade.risk != null ? rawTrade.risk : (rawTrade.plannedRisk || 0),
+            size: _size != null ? _size : rawTrade.size
         };
         const evals = evaluateRules({
             accountId,
@@ -1664,6 +1784,9 @@
         activeAssignment, activePolicy, activeStrategyVersion, activeRuleSetVersion,
         strategiesFor, accountIdsForStrategy,
         getEventLog: () => EVENT_LOG,
+        // ---- ASSET SPEC ENGINE (single source of truth for P&L / sizing / units) ----
+        assetSpecFor, assetClassOf, contractValueOf, calcPnl, calcPositionSize,
+        calcRiskDollars, calcRR, fmtPrice, ASSET_SPECS,
         bumpVer, nowStr, sameDay, dayKey,
         hydrate, reseed,
         // local-first storage & testing
