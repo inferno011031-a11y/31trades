@@ -237,7 +237,7 @@
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
                     <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                    <input type="text" class="search-input" placeholder="Ask the mentor… findings are grounded in your journal">
+                    <input type="text" id="ask-search" class="search-input" placeholder="Ask the mentor… findings are grounded in your journal">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <div class="session-chip hide-when-collapsed">
@@ -289,6 +289,7 @@
                         <button class="ins-tab" data-tab="discipline">Discipline Coach</button>
                         <button class="ins-tab" data-tab="sessions">Session Intel</button>
                         <button class="ins-tab" data-tab="tilt">Tilt Detection</button>
+                        <button class="ins-tab" data-tab="ask">Ask the Mentor</button>
                     </div>
 
                     <div id="panel-coach" class="ins-panel active"></div>
@@ -299,6 +300,26 @@
                     <div id="panel-discipline" class="ins-panel"></div>
                     <div id="panel-sessions" class="ins-panel"></div>
                     <div id="panel-tilt" class="ins-panel"></div>
+                    <div id="panel-ask" class="ins-panel">
+                        <div class="panel p-5 flex flex-col" style="min-height: 480px">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-8 h-8 rounded-lg bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center">
+                                    <svg data-lucide="bot" class="w-4.5 h-4.5 text-[#34D399]"></svg>
+                                </div>
+                                <div>
+                                    <div class="text-[13.5px] font-bold text-white">Your personal mentor</div>
+                                    <div class="text-[11.5px] text-[#6E6E78]">Every answer is computed from your journal — evidence, not guesses</div>
+                                </div>
+                                <span id="ask-source" class="tag tag-gray !py-0.5 !px-2 ml-auto">…</span>
+                            </div>
+                            <div id="chat-log" class="flex-1 overflow-y-auto flex flex-col gap-3 pr-1" style="min-height: 320px"></div>
+                            <div id="ask-quick" class="flex flex-wrap gap-1.5 mt-3"></div>
+                            <form id="ask-form" class="flex gap-2 mt-3">
+                                <input id="ask-input" type="text" autocomplete="off" class="search-input !w-auto flex-1 !py-2.5" placeholder="Ask anything about your trading… e.g. 'Am I tilting?'" />
+                                <button type="submit" class="btn-primary !py-2.5 !px-5">Ask</button>
+                            </form>
+                        </div>
+                    </div>
 
                     <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · AI Mentor · findings computed server-side from your actual journal (canonical ledger) · cached in ai_findings · offline falls back to local heuristics</p>
                 </div>
@@ -829,10 +850,123 @@
             }
 
             // ====================================================================
+            // ASK THE MENTOR — the personal bot. Server /api/ai/ask when online,
+            // otherwise the same intent detection over the LOCAL bundle.
+            // ====================================================================
+            const chat = { messages: [] };
+            const QUICK_PROMPTS = ['How am I doing overall?', 'Am I tilting?', 'What should I focus on?', 'How is my risk sizing?', 'Which session is my best?', 'How was my week?'];
+            function botKpi(k) {
+                return '<div class="kpi !py-2.5 !px-3"><div class="k-label">' + esc(k.label) + '</div><div class="k-val num text-[16px] ' + (k.cls || 'text-white') + '">' + esc(k.value) + '</div></div>';
+            }
+            function botMsg(r) {
+                const kpis = (r.kpis || []).length ? '<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2.5">' + r.kpis.map(botKpi).join('') + '</div>' : '';
+                const ev = (r.evidence || []).length ? '<div class="flex flex-wrap gap-1.5 mt-2">' + r.evidence.slice(0, 6).map(id => '<span class="ev-chip">' + esc(String(id).slice(0, 12)) + '</span>').join('') + (r.evidence.length > 6 ? '<span class="ev-chip">+' + (r.evidence.length - 6) + ' more</span>' : '') + '</div>' : '';
+                const follow = (r.followUps || []).length ? '<div class="flex flex-wrap gap-1.5 mt-2.5">' + r.followUps.map(f => '<button class="period-chip !py-1 !px-2.5 text-[11.5px]" onclick="askSend(\'' + esc(f).replace(/'/g, "\\'") + '\')">' + esc(f) + '</button>').join('') + '</div>' : '';
+                return '<div class="flex items-start gap-2.5">' +
+                    '<div class="w-7 h-7 rounded-lg bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center flex-shrink-0"><svg data-lucide="bot" class="w-3.5 h-3.5 text-[#34D399]"></svg></div>' +
+                    '<div class="bg-[#0F0F11] border border-[#1F1F23] rounded-xl rounded-tl-sm px-3.5 py-3 max-w-[85%]">' +
+                        '<div class="text-[13px] text-[#E8E8EC] leading-relaxed whitespace-pre-line">' + esc(r.answer) + '</div>' + kpis + ev + follow +
+                    '</div></div>';
+            }
+            function userMsg(text) {
+                return '<div class="flex justify-end"><div class="bg-[#1F2B26] border border-[rgba(16,185,129,0.25)] rounded-xl rounded-tr-sm px-3.5 py-2.5 max-w-[80%] text-[13px] text-[#E8E8EC]">' + esc(text) + '</div></div>';
+            }
+            const typingHtml = '<div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center flex-shrink-0"><svg data-lucide="bot" class="w-3.5 h-3.5 text-[#34D399]"></svg></div><div class="bg-[#0F0F11] border border-[#1F1F23] rounded-xl rounded-tl-sm px-4 py-3 text-[12.5px] text-[#6E6E78]">analyzing your journal…</div></div>';
+            function renderChat() {
+                const log = $('chat-log');
+                log.innerHTML = chat.messages.map(m => m.role === 'user' ? userMsg(m.text) : botMsg(m)).join('');
+                log.scrollTop = log.scrollHeight;
+            }
+            function renderQuick() {
+                $('ask-quick').innerHTML = QUICK_PROMPTS.map(q => '<button class="period-chip !py-1 !px-2.5 text-[11.5px]" onclick="askSend(\'' + q.replace(/'/g, "\\'") + '\')">' + esc(q) + '</button>').join('');
+            }
+            function localAsk(q) {
+                const b = DATA || buildLocalBundle();
+                if (!b) return { answer: 'No account yet — create one in Strategy Lab and log trades first.', kpis: [], evidence: [], followUps: [] };
+                const c = b.context, s = c;
+                const low = q.toLowerCase();
+                const top = b.coach.patterns.find(f => !f.suppressed);
+                const strength = b.coach.strengths.find(f => !f.suppressed);
+                if (/\b(tilt|revenge|fomo|emotional|psychology)\b/.test(low)) {
+                    const t = b.tilt[0];
+                    if (t) return { answer: t.msg, kpis: [{ label: 'Status', value: t.sev === 'critical' ? 'ACTIVE' : 'WATCH', cls: t.sev === 'critical' ? 'text-[#F87171]' : 'text-[#34D399]' }, { label: 'Episodes', value: String(t.count), cls: 'text-white' }], evidence: t.ev, followUps: ['What should I focus on?'] };
+                    return { answer: 'No tilt signal yet — needs at least 8 trades to learn your signature.', kpis: [], evidence: [], followUps: [] };
+                }
+                if (/\b(focus|improve|work on|do better|fix|next step|what should i|advice)\b/.test(low)) {
+                    const parts = [];
+                    if (top) parts.push('Your #1 fix: stop "' + top.title + '" — ' + top.count + ' occurrence' + (top.count === 1 ? '' : 's') + ' costing ' + $money(top.cost) + '.');
+                    if (strength) parts.push('Double down on what works: ' + strength.title + '.');
+                    if (!top && !strength) parts.push('No strong signal yet — log more trades with emotion + adherence tags.');
+                    return { answer: parts.join(' '), kpis: [], evidence: top ? top.ev : [], followUps: ['Am I tilting?', 'How is my risk sizing?'] };
+                }
+                if (/\b(risk|oversiz|size|stop.?loss|drawdown)\b/.test(low)) {
+                    const over = b.risk.findings.find(f => f.type === 'risk-over-policy');
+                    const parts = [];
+                    if (c.avgRisk) parts.push('Your average risk per trade is $' + c.avgRisk + (c.policyRiskPerTrade ? ' against a $' + c.policyRiskPerTrade + ' policy limit.' : '.'));
+                    if (over) parts.push('You exceeded the policy on ' + over.count + ' trades.');
+                    parts.push('Max drawdown ' + $money(-c.maxDD) + ', recovery factor ' + (c.recovery ? c.recovery.toFixed(2) : '—') + '.');
+                    return { answer: parts.join(' '), kpis: [{ label: 'Avg risk', value: c.avgRisk ? '$' + c.avgRisk : '—', cls: 'text-white' }, { label: 'Policy', value: c.policyRiskPerTrade ? '$' + c.policyRiskPerTrade : '—', cls: 'text-white' }, { label: 'Max DD', value: $money(-c.maxDD), cls: 'text-[#F87171]' }], evidence: over ? over.ev : [], followUps: ['Am I tilting?'] };
+                }
+                if (/\b(session|when do i|best time)\b/.test(low)) {
+                    const byS = b.sessions.tables.session || [];
+                    if (byS.length) return { answer: 'Your best session is ' + byS[0].key + ' (' + Math.round(byS[0].winRate * 100) + '% win rate, ' + byS[0].avgR.toFixed(2) + 'R, ' + byS[0].n + ' trades).', kpis: [{ label: 'Best session', value: byS[0].key, cls: 'text-[#34D399]' }], evidence: [], followUps: ['What should I focus on?'] };
+                    return { answer: 'Not enough data per session yet (needs ≥5 trades per group).', kpis: [], evidence: [], followUps: [] };
+                }
+                if (/\b(today|yesterday|this week|last week|this month)\b/.test(low)) {
+                    return { answer: 'This month you have ' + c.tradeCount + ' trades — ' + $money(c.netPnl) + ' net, ' + (c.winRate ? c.winRate + '%' : '—') + ' win rate.', kpis: [{ label: 'Month P&L', value: $money(c.netPnl), cls: c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }, { label: 'Trades', value: String(c.tradeCount), cls: 'text-white' }], evidence: [], followUps: ['How am I doing overall?'] };
+                }
+                const parts = [];
+                parts.push('Overall you have ' + c.tradeCount + ' trades in range: ' + $money(c.netPnl) + ' net, ' + (c.winRate ? c.winRate + '%' : '—') + ' win rate, ' + (c.expectancy >= 0 ? '+' : '') + c.expectancy.toFixed(2) + 'R expectancy.');
+                if (top) parts.push('Biggest leak: "' + top.title + '" — ' + top.count + ' occurrences.');
+                if (strength) parts.push('What works: ' + strength.title + '.');
+                return { answer: parts.join(' '), kpis: [{ label: 'Net P&L', value: $money(c.netPnl), cls: c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }, { label: 'Win rate', value: (c.winRate ? c.winRate + '%' : '—'), cls: 'text-white' }, { label: 'Discipline', value: c.disciplineScore != null ? c.disciplineScore + '/100' : '—', cls: 'text-white' }], evidence: top ? top.ev : [], followUps: ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?'] };
+            }
+            window.askSend = async function (text) {
+                const q = (text || '').trim() || ($('ask-input') ? $('ask-input').value.trim() : '');
+                if (!q) return;
+                if ($('ask-input')) $('ask-input').value = '';
+                chat.messages.push({ role: 'user', text: q });
+                renderChat();
+                const log = $('chat-log');
+                const typing = document.createElement('div');
+                typing.innerHTML = typingHtml;
+                log.appendChild(typing);
+                log.scrollTop = log.scrollHeight;
+                if (window.lucide) lucide.createIcons();
+                let r = null;
+                const online = core && typeof core.isBackendOnline === 'function' && core.isBackendOnline();
+                if (online) {
+                    try {
+                        const accId = core.selectedAccountId ? core.selectedAccountId() : (core.Accounts[0] ? core.Accounts[0].id : null);
+                        if (accId) {
+                            const res = await fetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, accountId: accId, period: PERIOD }) });
+                            if (res.ok) { r = await res.json(); if (r.ok) r = r; }
+                        }
+                    } catch (e) { /* fall through to local */ }
+                }
+                if (!r) { r = localAsk(q); r.offline = true; }
+                chat.messages.push({ role: 'bot', ...r });
+                renderChat();
+                if (window.lucide) lucide.createIcons();
+                const src = $('ask-source');
+                if (src) src.textContent = r.offline ? 'offline · local' : 'server · your data';
+            };
+            window.askPrompt = q => window.askSend(q);
+            function initChat() {
+                renderQuick();
+                chat.messages.push({ role: 'bot', answer: 'Hi — I am your mentor bot. Ask me anything about your trading; every answer is computed from your journal, and I always cite the trades behind it. Try one of the quick questions below, or ask in your own words.', kpis: [], evidence: [], followUps: [] });
+                renderChat();
+                const form = $('ask-form');
+                if (form) form.addEventListener('submit', e => { e.preventDefault(); window.askSend(); });
+            }
+            function renderAsk(b) { /* chat is imperative — nothing to rebuild per bundle */ }
+
+            // ====================================================================
             // WIRING
             // ====================================================================
-            const VALID_TABS = ['coach', 'autopsy', 'patterns', 'psychology', 'risk', 'discipline', 'sessions', 'tilt'];
-            const RENDERERS = { coach: renderCoach, autopsy: renderAutopsy, patterns: renderPatterns, psychology: renderPsychology, risk: renderRisk, discipline: renderDiscipline, sessions: renderSessions, tilt: renderTilt };
+            const VALID_TABS = ['coach', 'autopsy', 'patterns', 'psychology', 'risk', 'discipline', 'sessions', 'tilt', 'ask'];
+            const RENDERERS = { coach: renderCoach, autopsy: renderAutopsy, patterns: renderPatterns, psychology: renderPsychology, risk: renderRisk, discipline: renderDiscipline, sessions: renderSessions, tilt: renderTilt, ask: renderAsk };
+            initChat();
             function activateTab(tab) {
                 document.querySelectorAll('.ins-tab').forEach(bn => bn.classList.toggle('active', bn.dataset.tab === tab));
                 document.querySelectorAll('.ins-panel').forEach(pn => pn.classList.toggle('active', pn.id === 'panel-' + tab));
@@ -882,6 +1016,16 @@
             const dismissedOverlay = $('dismissed-modal');
             if (dismissedOverlay) dismissedOverlay.addEventListener('click', e => { if (e.target === dismissedOverlay) window.closeDismissed(); });
             document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeDismissed(); });
+            // Topbar search → jump to the Ask tab and send the question.
+            const askSearch = $('ask-search');
+            if (askSearch) askSearch.addEventListener('keydown', e => {
+                if (e.key === 'Enter' && askSearch.value.trim()) {
+                    const q = askSearch.value.trim();
+                    askSearch.value = '';
+                    activateTab('ask');
+                    window.askSend(q);
+                }
+            });
 
             refresh();
         })();

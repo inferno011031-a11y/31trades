@@ -38,6 +38,7 @@ const { loadEnv } = require('./server/env.js');
 const db = require('./server/db.js');
 const auth = require('./server/auth.js');
 const AI = require('./server/ai-mentor.js');
+const Bot = require('./server/ai-bot.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -517,6 +518,15 @@ async function handleApi(req, res, url) {
             const r = Core.completeReview(body.account_id, body.period || 'daily', body.note);
             uc.scheduleSave();
             return json(res, 200, r);
+        }
+
+        // ---- AI Mentor personal bot (grounded Q&A over the ledger) ----
+        if (p === '/api/ai/ask') {
+            if (!body.question || !String(body.question).trim()) return json(res, 400, { error: 'question required' });
+            const accountId = body.accountId || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
+            if (!accountId) return json(res, 200, { ok: true, answer: 'No account yet — create one in Strategy Lab and log trades; then I can coach you on your real data.', kpis: [], evidence: [], followUps: [] });
+            const r = Bot.askBot(Core, accountId, body.question, { period: body.period || '30d' });
+            return json(res, 200, Object.assign({ ok: true }, r));
         }
 
         // ---- AI Mentor findings prefs (dismiss / rate a finding) ----
