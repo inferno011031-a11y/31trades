@@ -525,7 +525,13 @@ async function handleApi(req, res, url) {
             if (!body.question || !String(body.question).trim()) return json(res, 400, { error: 'question required' });
             const accountId = body.accountId || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
             if (!accountId) return json(res, 200, { ok: true, answer: 'No account yet — create one in Strategy Lab and log trades; then I can coach you on your real data.', kpis: [], evidence: [], followUps: [] });
-            const r = Bot.askBot(Core, accountId, body.question, { period: body.period || '30d' });
+            // Conversation memory: the server's persisted context wins, but the
+            // client's remembered context (sent every turn) fills in for a fresh
+            // server. Persist the updated context (survives restarts via
+            // data/chat-*.json).
+            const mem = (await Bot.loadMemory(uc.userId, accountId)) || body.memory || null;
+            const r = Bot.askBot(Core, accountId, body.question, { period: body.period || '30d', memory: mem });
+            if (r.memory) await Bot.saveMemory(uc.userId, accountId, r.memory);
             return json(res, 200, Object.assign({ ok: true }, r));
         }
 

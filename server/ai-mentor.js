@@ -46,7 +46,7 @@ function inPeriod(ts, period) {
     return (Date.now() - new Date(ts).getTime()) <= days * DAY;
 }
 
-function buildContext(core, accountId, period) {
+function buildContext(core, accountId, period, sinceMs) {
     const account = core.Accounts.find(a => a.id === accountId);
     if (!account) return null;
     const all = core.Trades
@@ -57,7 +57,7 @@ function buildContext(core, accountId, period) {
         accountId,
         account,
         trades: all,                                     // newest first
-        period: all.filter(t => inPeriod(t.ts, period)),
+        period: all.filter(t => sinceMs != null ? t.ts.getTime() >= sinceMs : inPeriod(t.ts, period)),
         a: core.analytics(accountId, {}),
         disc: core.disciplineState(accountId, {}),
         policy: (core.activePolicy && core.activePolicy(accountId)) || null,
@@ -402,7 +402,8 @@ function autopsy(core, trade) {
 // ---------------------------------------------------------------------------
 function mentorBundle(core, accountId, opts) {
     const period = (opts && opts.period) || '30d';
-    const ctx = buildContext(core, accountId, period);
+    const sinceMs = opts && opts.sinceMs;
+    const ctx = buildContext(core, accountId, period, sinceMs);
     if (!ctx) return null;
 
     const patterns = detectPatterns(ctx);

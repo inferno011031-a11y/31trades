@@ -853,7 +853,23 @@
             // ASK THE MENTOR — the personal bot. Server /api/ai/ask when online,
             // otherwise the same intent detection over the LOCAL bundle.
             // ====================================================================
-            const chat = { messages: [] };
+            const CHAT_KEY = '31trades.ai.chat.v1';
+            const chat = loadChat();
+            function loadChat() {
+                const d = { messages: [], memory: null };
+                try {
+                    const raw = localStorage.getItem(CHAT_KEY);
+                    if (raw) {
+                        const j = JSON.parse(raw);
+                        if (Array.isArray(j.messages)) d.messages = j.messages;
+                        if (j.memory) d.memory = j.memory;
+                    }
+                } catch (e) { /* corrupt transcript → start fresh */ }
+                return d;
+            }
+            function saveChat() {
+                try { localStorage.setItem(CHAT_KEY, JSON.stringify({ messages: chat.messages.slice(-60), memory: chat.memory })); } catch (e) { /* ignore */ }
+            }
             const QUICK_PROMPTS = ['How am I doing overall?', 'Am I tilting?', 'What should I focus on?', 'How is my risk sizing?', 'Which session is my best?', 'How was my week?'];
             function botKpi(k) {
                 return '<div class="kpi !py-2.5 !px-3"><div class="k-label">' + esc(k.label) + '</div><div class="k-val num text-[16px] ' + (k.cls || 'text-white') + '">' + esc(k.value) + '</div></div>';
@@ -880,46 +896,101 @@
             function renderQuick() {
                 $('ask-quick').innerHTML = QUICK_PROMPTS.map(q => '<button class="period-chip !py-1 !px-2.5 text-[11.5px]" onclick="askSend(\'' + q.replace(/'/g, "\\'") + '\')">' + esc(q) + '</button>').join('');
             }
-            function localAsk(q) {
+            // Mirror of the server's context resolution (server/ai-bot.js):
+            // carry the previous intent/subject/window on follow-ups like
+            // "and this week?" / "what about EURUSD?" / "tell me more".
+            function localResolve(q, mem) {
+                const low = q.toLowerCase();
+                const knownSyms = core ? [...new Set(core.Trades.filter(t => t.account_id === (core.selectedAccountId() || (core.Accounts[0] && core.Accounts[0].id))).map(t => t.symbol).filter(Boolean))] : [];
+                const knownSes = core ? [...new Set(core.Trades.filter(t => t.account_id === (core.selectedAccountId() || (core.Accounts[0] && core.Accounts[0].id))).map(t => t.session).filter(Boolean))] : [];
+                const explicitSym = knownSyms.find(s => low.indexOf(String(s).toLowerCase()) !== -1) || null;
+                const explicitSes = !explicitSym ? knownSes.find(s => low.indexOf(String(s).toLowerCase()) !== -1) || null : null;
+                const windowMatch = (low.match(/\b(today|yesterday|this week|last week|this month)\b/) || [null])[0];
+                const followUp = /^(and|also|then|so|what about|how about|tell me more|more|same|again)\b/.test(low);
+                let intent = null;
+                const probe = [
+                    ['period', /\b(today|yesterday|this week|last week|this month|(my )?week|(my )?month)\b/],
+                    ['tilt', /\b(tilt\w*|revenge|fomo|emotion\w*|psycholog\w*|angr\w*|frustrat\w*|panic\w*)\b/],
+                    ['discipline', /\b(disciplin\w*|violat\w*|rules?|adher\w*|clean|follow\w* (my|the) plan)\b/],
+                    ['streak', /\b(streak|consecutive|in a row)\b/],
+                    ['risk', /\b(risk|oversiz|size|sizing|stop.?loss|drawdown|dd)\b/],
+                    ['session', /\b(session|when do i|best time|time of day|which session)\b/],
+                    ['symbol', /\b(symbol|pair|instrument|market|currency|forex|crypto|stocks?|indices)\b/],
+                    ['setup', /\b(setup|strategy|entry model|which strategy|pattern)\b/],
+                    ['winloss', /\b(win|loss|lose|losing|winner|profit factor|made money|bleed)\b/],
+                    ['focus', /\b(focus|improve|work on|do better|fix|next step|what should i|advice|suggest)\b/],
+                    ['overall', /\b(overall|how am i doing|status|summary|health|score|good|review)\b/]
+                ];
+                for (const [id, re] of probe) { if (re.test(low)) { intent = id; break; } }
+                let subject = explicitSym || explicitSes || null;
+                let subjKind = explicitSym ? 'symbol' : explicitSes ? 'session' : null;
+                if (subject) intent = subjKind;
+                if (followUp && mem) {
+                    if (!intent) intent = mem.intent;
+                    if (!subject && mem.subject) { subject = mem.subject; subjKind = mem.subjKind; }
+                }
+                return { intent: intent || 'overall', subject, subjKind, window: windowMatch || (followUp && mem && mem.window ? mem.window : null), followUp };
+            }
+            function localAsk(q, mem) {
                 const b = DATA || buildLocalBundle();
-                if (!b) return { answer: 'No account yet — create one in Strategy Lab and log trades first.', kpis: [], evidence: [], followUps: [] };
+                if (!b) return { answer: 'No account yet — create one in Strategy Lab and log trades first.', kpis: [], evidence: [], followUps: [], memory: null };
+                const rq = localResolve(q, mem);
                 const c = b.context, s = c;
                 const low = q.toLowerCase();
                 const top = b.coach.patterns.find(f => !f.suppressed);
                 const strength = b.coach.strengths.find(f => !f.suppressed);
-                if (/\b(tilt|revenge|fomo|emotional|psychology)\b/.test(low)) {
-                    const t = b.tilt[0];
-                    if (t) return { answer: t.msg, kpis: [{ label: 'Status', value: t.sev === 'critical' ? 'ACTIVE' : 'WATCH', cls: t.sev === 'critical' ? 'text-[#F87171]' : 'text-[#34D399]' }, { label: 'Episodes', value: String(t.count), cls: 'text-white' }], evidence: t.ev, followUps: ['What should I focus on?'] };
-                    return { answer: 'No tilt signal yet — needs at least 8 trades to learn your signature.', kpis: [], evidence: [], followUps: [] };
+                const scope = rq.window ? ' in the ' + rq.window + ' range' : '';
+                const memory = { intent: rq.intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q };
+                const withMem = r => Object.assign({ memory }, r);
+                const subjectRow = kind => {
+                    const rows = (b.sessions.tables[kind] || []);
+                    const row = rows.find(x => String(x.key).toLowerCase() === String(rq.subject).toLowerCase());
+                    if (!row) return { answer: 'No ' + kind + ' matches "' + rq.subject + '"' + scope + ' — I only speak from trades you have actually logged.', kpis: [], evidence: [] };
+                    return { answer: rq.subject + scope + ': ' + row.n + ' trades, ' + Math.round(row.winRate * 100) + '% win rate, ' + row.avgR.toFixed(2) + 'R average (' + $money(row.pnl) + ').', kpis: [{ label: 'Trades', value: String(row.n), cls: 'text-white' }, { label: 'Win rate', value: Math.round(row.winRate * 100) + '%', cls: 'text-white' }, { label: 'Avg R', value: (row.avgR >= 0 ? '+' : '') + row.avgR.toFixed(2) + 'R', cls: row.avgR >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }], evidence: [] };
+                };
+                switch (rq.intent) {
+                    case 'tilt': {
+                        const t = b.tilt[0];
+                        return withMem(t ? { answer: t.msg, kpis: [{ label: 'Status', value: t.sev === 'critical' ? 'ACTIVE' : 'WATCH', cls: t.sev === 'critical' ? 'text-[#F87171]' : 'text-[#34D399]' }, { label: 'Episodes', value: String(t.count), cls: 'text-white' }], evidence: t.ev, followUps: ['What should I focus on?'] } : { answer: 'No tilt signal yet — needs at least 8 trades to learn your signature.', kpis: [], evidence: [], followUps: [] });
+                    }
+                    case 'focus': {
+                        const parts = [];
+                        if (top) parts.push('Your #1 fix: stop "' + top.title + '" — ' + top.count + ' occurrence' + (top.count === 1 ? '' : 's') + ' costing ' + $money(top.cost) + '.');
+                        if (strength) parts.push('Double down on what works: ' + strength.title + '.');
+                        if (!top && !strength) parts.push('No strong signal yet — log more trades with emotion + adherence tags.');
+                        return withMem({ answer: parts.join(' '), kpis: [], evidence: top ? top.ev : [], followUps: ['Am I tilting?', 'How is my risk sizing?'] });
+                    }
+                    case 'risk': {
+                        const over = b.risk.findings.find(f => f.type === 'risk-over-policy');
+                        const parts = [];
+                        if (c.avgRisk) parts.push('Your average risk per trade is $' + c.avgRisk + (c.policyRiskPerTrade ? ' against a $' + c.policyRiskPerTrade + ' policy limit.' : '.'));
+                        if (over) parts.push('You exceeded the policy on ' + over.count + ' trades.');
+                        parts.push('Max drawdown ' + $money(-c.maxDD) + ', recovery factor ' + (c.recovery ? c.recovery.toFixed(2) : '—') + '.');
+                        return withMem({ answer: parts.join(' '), kpis: [{ label: 'Avg risk', value: c.avgRisk ? '$' + c.avgRisk : '—', cls: 'text-white' }, { label: 'Policy', value: c.policyRiskPerTrade ? '$' + c.policyRiskPerTrade : '—', cls: 'text-white' }, { label: 'Max DD', value: $money(-c.maxDD), cls: 'text-[#F87171]' }], evidence: over ? over.ev : [], followUps: ['Am I tilting?'] });
+                    }
+                    case 'session': {
+                        if (rq.subject && rq.subjKind === 'session') return withMem(subjectRow('session'));
+                        const byS = b.sessions.tables.session || [];
+                        if (byS.length) return withMem({ answer: 'Your best session is ' + byS[0].key + ' (' + Math.round(byS[0].winRate * 100) + '% win rate, ' + byS[0].avgR.toFixed(2) + 'R, ' + byS[0].n + ' trades).', kpis: [{ label: 'Best session', value: byS[0].key, cls: 'text-[#34D399]' }], evidence: [], followUps: ['What should I focus on?'] });
+                        return withMem({ answer: 'Not enough data per session yet (needs ≥5 trades per group).', kpis: [], evidence: [], followUps: [] });
+                    }
+                    case 'symbol': {
+                        if (rq.subject && rq.subjKind === 'symbol') return withMem(subjectRow('symbol'));
+                        const bySym = b.sessions.tables.symbol || [];
+                        if (bySym.length) return withMem({ answer: 'By instrument: ' + bySym[0].key + ' leads at ' + bySym[0].avgR.toFixed(2) + 'R (' + bySym[0].n + ' trades, ' + $money(bySym[0].pnl) + ') while ' + bySym[bySym.length - 1].key + ' trails at ' + bySym[bySym.length - 1].avgR.toFixed(2) + 'R (' + bySym[bySym.length - 1].n + ' trades).', kpis: [{ label: 'Best symbol', value: bySym[0].key, cls: 'text-[#34D399]' }], evidence: [], followUps: ['What should I focus on?'] });
+                        return withMem({ answer: 'Not enough trades per instrument yet (needs ≥5 per symbol).', kpis: [], evidence: [], followUps: [] });
+                    }
+                    case 'period': {
+                        return withMem({ answer: (rq.window || 'this month') + ' you have ' + c.tradeCount + ' trades — ' + $money(c.netPnl) + ' net, ' + (c.winRate ? c.winRate + '%' : '—') + ' win rate.', kpis: [{ label: (rq.window || 'Month') + ' P&L', value: $money(c.netPnl), cls: c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }, { label: 'Trades', value: String(c.tradeCount), cls: 'text-white' }], evidence: [], followUps: ['How am I doing overall?'] });
+                    }
+                    default: {
+                        const parts = [];
+                        parts.push('Overall you have ' + c.tradeCount + ' trades in range: ' + $money(c.netPnl) + ' net, ' + (c.winRate ? c.winRate + '%' : '—') + ' win rate, ' + (c.expectancy >= 0 ? '+' : '') + c.expectancy.toFixed(2) + 'R expectancy.');
+                        if (top) parts.push('Biggest leak: "' + top.title + '" — ' + top.count + ' occurrences.');
+                        if (strength) parts.push('What works: ' + strength.title + '.');
+                        return withMem({ answer: parts.join(' '), kpis: [{ label: 'Net P&L', value: $money(c.netPnl), cls: c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }, { label: 'Win rate', value: (c.winRate ? c.winRate + '%' : '—'), cls: 'text-white' }, { label: 'Discipline', value: c.disciplineScore != null ? c.disciplineScore + '/100' : '—', cls: 'text-white' }], evidence: top ? top.ev : [], followUps: ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?'] });
+                    }
                 }
-                if (/\b(focus|improve|work on|do better|fix|next step|what should i|advice)\b/.test(low)) {
-                    const parts = [];
-                    if (top) parts.push('Your #1 fix: stop "' + top.title + '" — ' + top.count + ' occurrence' + (top.count === 1 ? '' : 's') + ' costing ' + $money(top.cost) + '.');
-                    if (strength) parts.push('Double down on what works: ' + strength.title + '.');
-                    if (!top && !strength) parts.push('No strong signal yet — log more trades with emotion + adherence tags.');
-                    return { answer: parts.join(' '), kpis: [], evidence: top ? top.ev : [], followUps: ['Am I tilting?', 'How is my risk sizing?'] };
-                }
-                if (/\b(risk|oversiz|size|stop.?loss|drawdown)\b/.test(low)) {
-                    const over = b.risk.findings.find(f => f.type === 'risk-over-policy');
-                    const parts = [];
-                    if (c.avgRisk) parts.push('Your average risk per trade is $' + c.avgRisk + (c.policyRiskPerTrade ? ' against a $' + c.policyRiskPerTrade + ' policy limit.' : '.'));
-                    if (over) parts.push('You exceeded the policy on ' + over.count + ' trades.');
-                    parts.push('Max drawdown ' + $money(-c.maxDD) + ', recovery factor ' + (c.recovery ? c.recovery.toFixed(2) : '—') + '.');
-                    return { answer: parts.join(' '), kpis: [{ label: 'Avg risk', value: c.avgRisk ? '$' + c.avgRisk : '—', cls: 'text-white' }, { label: 'Policy', value: c.policyRiskPerTrade ? '$' + c.policyRiskPerTrade : '—', cls: 'text-white' }, { label: 'Max DD', value: $money(-c.maxDD), cls: 'text-[#F87171]' }], evidence: over ? over.ev : [], followUps: ['Am I tilting?'] };
-                }
-                if (/\b(session|when do i|best time)\b/.test(low)) {
-                    const byS = b.sessions.tables.session || [];
-                    if (byS.length) return { answer: 'Your best session is ' + byS[0].key + ' (' + Math.round(byS[0].winRate * 100) + '% win rate, ' + byS[0].avgR.toFixed(2) + 'R, ' + byS[0].n + ' trades).', kpis: [{ label: 'Best session', value: byS[0].key, cls: 'text-[#34D399]' }], evidence: [], followUps: ['What should I focus on?'] };
-                    return { answer: 'Not enough data per session yet (needs ≥5 trades per group).', kpis: [], evidence: [], followUps: [] };
-                }
-                if (/\b(today|yesterday|this week|last week|this month)\b/.test(low)) {
-                    return { answer: 'This month you have ' + c.tradeCount + ' trades — ' + $money(c.netPnl) + ' net, ' + (c.winRate ? c.winRate + '%' : '—') + ' win rate.', kpis: [{ label: 'Month P&L', value: $money(c.netPnl), cls: c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }, { label: 'Trades', value: String(c.tradeCount), cls: 'text-white' }], evidence: [], followUps: ['How am I doing overall?'] };
-                }
-                const parts = [];
-                parts.push('Overall you have ' + c.tradeCount + ' trades in range: ' + $money(c.netPnl) + ' net, ' + (c.winRate ? c.winRate + '%' : '—') + ' win rate, ' + (c.expectancy >= 0 ? '+' : '') + c.expectancy.toFixed(2) + 'R expectancy.');
-                if (top) parts.push('Biggest leak: "' + top.title + '" — ' + top.count + ' occurrences.');
-                if (strength) parts.push('What works: ' + strength.title + '.');
-                return { answer: parts.join(' '), kpis: [{ label: 'Net P&L', value: $money(c.netPnl), cls: c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }, { label: 'Win rate', value: (c.winRate ? c.winRate + '%' : '—'), cls: 'text-white' }, { label: 'Discipline', value: c.disciplineScore != null ? c.disciplineScore + '/100' : '—', cls: 'text-white' }], evidence: top ? top.ev : [], followUps: ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?'] };
             }
             window.askSend = async function (text) {
                 const q = (text || '').trim() || ($('ask-input') ? $('ask-input').value.trim() : '');
@@ -939,14 +1010,18 @@
                     try {
                         const accId = core.selectedAccountId ? core.selectedAccountId() : (core.Accounts[0] ? core.Accounts[0].id : null);
                         if (accId) {
-                            const res = await fetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, accountId: accId, period: PERIOD }) });
+                            // Send the remembered context so a server restart can't
+                            // lose the thread; the server returns its updated memory.
+                            const res = await fetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, accountId: accId, period: PERIOD, memory: chat.memory }) });
                             if (res.ok) { r = await res.json(); if (r.ok) r = r; }
                         }
                     } catch (e) { /* fall through to local */ }
                 }
-                if (!r) { r = localAsk(q); r.offline = true; }
+                if (!r) { r = localAsk(q, chat.memory); r.offline = true; }
+                if (r && r.memory) chat.memory = r.memory;   // remember for the next turn
                 chat.messages.push({ role: 'bot', ...r });
                 renderChat();
+                saveChat();   // longer memory — transcript survives reloads
                 if (window.lucide) lucide.createIcons();
                 const src = $('ask-source');
                 if (src) src.textContent = r.offline ? 'offline · local' : 'server · your data';
@@ -954,7 +1029,9 @@
             window.askPrompt = q => window.askSend(q);
             function initChat() {
                 renderQuick();
-                chat.messages.push({ role: 'bot', answer: 'Hi — I am your mentor bot. Ask me anything about your trading; every answer is computed from your journal, and I always cite the trades behind it. Try one of the quick questions below, or ask in your own words.', kpis: [], evidence: [], followUps: [] });
+                if (!chat.messages.length) {
+                    chat.messages.push({ role: 'bot', answer: 'Hi — I am your mentor bot. Ask me anything about your trading; every answer is computed from your journal, and I always cite the trades behind it. Try one of the quick questions below, or ask in your own words.', kpis: [], evidence: [], followUps: [] });
+                }
                 renderChat();
                 const form = $('ask-form');
                 if (form) form.addEventListener('submit', e => { e.preventDefault(); window.askSend(); });

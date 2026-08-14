@@ -95,5 +95,33 @@ check('answer offers follow-ups', Array.isArray(overall.followUps) && overall.fo
     'followUps: ' + JSON.stringify(overall.followUps));
 check('follow-ups are real questions', overall.followUps.every(f => typeof f === 'string' && f.length > 3));
 
+// ---- 5. conversation memory: follow-ups resolve against the previous turn ----
+// "Am I tilting?" then "and this week?" → carries tilt + scopes to this week.
+const m1 = Bot.askBot(core, ACCOUNT, 'Am I tilting?');
+check('first turn returns memory', m1.memory && m1.memory.intent === 'tilt',
+    'memory.intent=' + (m1.memory && m1.memory.intent));
+const m2 = Bot.askBot(core, ACCOUNT, 'and this week?', { memory: m1.memory });
+check('"and this week?" carries previous intent', m2.intent === 'tilt',
+    'got intent ' + m2.intent + ' — ' + m2.answer.slice(0, 60));
+check('windowed follow-up scopes the answer', /this week/.test(m2.answer),
+    'answer: ' + m2.answer.slice(0, 90));
+check('memory history accumulates', m2.memory && Array.isArray(m2.memory.history) && m2.memory.history.length >= 2,
+    'history length=' + (m2.memory && m2.memory.history && m2.memory.history.length));
+
+// "What should I focus on?" then "tell me more" → same intent, keeps context.
+const f1 = Bot.askBot(core, ACCOUNT, 'What should I focus on?');
+const f2 = Bot.askBot(core, ACCOUNT, 'tell me more', { memory: f1.memory });
+check('"tell me more" keeps the focus intent', f2.intent === 'focus', 'got ' + f2.intent);
+
+// Subject carry: "Which symbol performs best?" then "and EURUSD?"
+const s1 = Bot.askBot(core, ACCOUNT, 'Which symbol performs best?');
+const s2 = Bot.askBot(core, ACCOUNT, 'and EURUSD?', { memory: s1.memory });
+check('"and EURUSD?" resolves to the symbol subject', s2.intent === 'symbol' && /EURUSD/i.test(s2.answer),
+    'got intent ' + s2.intent + ' — ' + s2.answer.slice(0, 80));
+
+// Bare "overall" with no prior context still works (no memory → no crash).
+const freshAsk = Bot.askBot(core, ACCOUNT, 'how am I doing?');
+check('no-memory ask still answers', typeof freshAsk.answer === 'string' && freshAsk.answer.length > 0);
+
 console.log(failures ? '\n' + failures + ' FAILURE(S)' : '\nALL AI BOT CHECKS PASS');
 process.exit(failures ? 1 : 0);

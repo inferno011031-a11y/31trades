@@ -16,9 +16,33 @@
 // from here. Exposed as POST /api/ai/ask (see server.js).
 // ============================================================================
 
+const path = require('node:path');
+const fs = require('node:fs');
 const { mentorBundle } = require('./ai-mentor.js');
 
 const DAY = 86400000;
+const DATA_DIR = path.join(__dirname, '..', 'data');
+const chatFile = (userId, accountId) => path.join(
+    process.env.TRADEMIND_AI_DATA_DIR || DATA_DIR,
+    'chat-' + userId + '-' + accountId + '.json');
+
+// Per-user conversation memory — persisted so the bot keeps context across
+// requests AND server restarts. The client also keeps a transcript locally.
+async function loadMemory(userId, accountId) {
+    try {
+        const f = chatFile(userId, accountId);
+        if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8'));
+    } catch (e) { /* ignore */ }
+    return null;
+}
+async function saveMemory(userId, accountId, mem) {
+    if (!mem) return;
+    try {
+        const f = chatFile(userId, accountId);
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        fs.writeFileSync(f, JSON.stringify(mem, null, 2));
+    } catch (e) { /* non-fatal */ }
+}
 
 // ---------------------------------------------------------------------------
 // Small canonical helpers — all computed from the REAL ledger.
@@ -301,26 +325,97 @@ const INTENTS = [
 
 function detectIntent(q) {
     for (const it of INTENTS) if (it.re.test(q)) return it.id;
-    return 'overall';
+    return null;   // null = no explicit subject → may carry context from memory
+}
+
+// ---------------------------------------------------------------------------
+// CONVERSATION CONTEXT — resolve a question against the previous turn.
+//   · "and this week?"            → previous subject, window this week
+//   · "what about EURUSD?"        → previous subject, explicit instrument
+//   · "tell me more"              → previous intent + subject
+//   · "am I tilting?"             → explicit, no context needed
+// Returns { intent, subject, window, followUp }.
+// ---------------------------------------------------------------------------
+const WINDOW_RE = /\b(today|yesterday|this week|last week|this month)\b/;
+const FOLLOWUP_RE = /^(and|also|then|so|what about|how about|tell me more|more|same|again|that|it|them|else|another)\b/;
+
+function windowSinceMs(word) {
+    const now = new Date();
+    const sod = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    if (word === 'today') return sod.getTime();
+    if (word === 'yesterday') return sod.getTime() - DAY;
+    if (word === 'this week') { const d = sod.getDate() - sod.getDay(); return new Date(now.getFullYear(), now.getMonth(), d).getTime(); }
+    if (word === 'last week') { const d = sod.getDate() - sod.getDay() - 7; return new Date(now.getFullYear(), now.getMonth(), d).getTime(); }
+    if (word === 'this month') return new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+    return null;
+}
+
+function knownSubjects(core, accountId) {
+    const trades = core.Trades.filter(t => t.account_id === accountId);
+    return {
+        symbols: [...new Set(trades.map(t => t.symbol).filter(Boolean))],
+        sessions: [...new Set(trades.map(t => t.session).filter(Boolean))],
+        setups: [...new Set(trades.map(t => t.setup).filter(Boolean))]
+    };
+}
+
+// Extract an explicit subject word (instrument/session/setup) from the question.
+function extractSubject(low, known) {
+    const hit = list => list.find(s => s && low.indexOf(String(s).toLowerCase()) !== -1) || null;
+    return { symbol: hit(known.symbols), session: hit(known.sessions), setup: hit(known.setups) };
+}
+
+function resolveAsk(q, prev, core, accountId) {
+    const low = q.toLowerCase();
+    const known = knownSubjects(core, accountId);
+    const explicit = extractSubject(low, known);
+    let intent = detectIntent(low);
+    let subject = explicit.symbol || explicit.session || explicit.setup || null;
+    const subjKind = explicit.symbol ? 'symbol' : explicit.session ? 'session' : explicit.setup ? 'setup' : null;
+    if (subjKind) intent = subjKind;                       // "what about EURUSD?" → symbol
+    const windowMatch = (low.match(WINDOW_RE) || [null])[0];
+    const followUp = FOLLOWUP_RE.test(low) || (!intent && (!prev || low.length < 28));
+
+    if (followUp && prev) {
+        // carry the previous subject, keep any explicit one. A bare window
+        // modifier ("and this week?") is a period on the PREVIOUS subject,
+        // not a new period intent — so carry the previous intent too.
+        if (!intent || (intent === 'period' && !subject)) intent = prev.intent;
+        if (!subject && prev.subject) subject = prev.subject;
+    }
+    if (!intent) intent = 'overall';
+    return {
+        intent,
+        subject: subject || (followUp && prev && prev.subject ? prev.subject : null) || null,
+        subjKind: subjKind || (followUp && prev && prev.subjKind ? prev.subjKind : null),
+        window: windowMatch || (followUp && prev && prev.window ? prev.window : null),
+        followUp
+    };
 }
 
 function askBot(core, accountId, question, opts) {
     const period = (opts && opts.period) || '30d';
-    const b = mentorBundle(core, accountId, { period });
+    const prev = (opts && opts.memory) || null;
     const q = String(question || '').trim();
 
-    if (!b) {
-        return { question: q, intent: 'none', answer: 'No account yet — create one in Strategy Lab and log trades; then I can coach you on your real data.', kpis: [], evidence: [], followUps: ['How do I create an account?'] };
+    if (!core.Accounts.some(a => a.id === accountId)) {
+        return { question: q, intent: 'none', answer: 'No account yet — create one in Strategy Lab and log trades; then I can coach you on your real data.', kpis: [], evidence: [], followUps: ['How do I create an account?'], memory: null };
     }
-    const sinceMs = period === 'all' ? null : Date.now() - (period === '90d' ? 90 : 30) * DAY;
+
+    const rq = resolveAsk(q, prev, core, accountId);
+    const sinceMs = rq.window ? windowSinceMs(rq.window)
+        : (period === 'all' ? null : Date.now() - (period === '90d' ? 90 : 30) * DAY);
+    const b = mentorBundle(core, accountId, { period, sinceMs });
     const s = statsOf(tradesIn(core, accountId, sinceMs));
-    const intent = detectIntent(q.toLowerCase());
+    const intent = rq.intent;
 
     if (!s.n && intent !== 'tilt') {
+        const scope = rq.window ? ' in the ' + rq.window + ' range' : ' in the current ' + period + ' range';
         return {
             question: q, intent, period,
-            answer: 'No trades in the current ' + period + ' range yet — log a few and I will start coaching from real evidence. (You have ' + b.context.totalTrades + ' total on this account.)',
-            kpis: [], evidence: [], followUps: ['How am I doing overall?', 'Which session is my best?']
+            answer: 'No trades' + scope + ' yet — log a few and I will start coaching from real evidence. (You have ' + b.context.totalTrades + ' total on this account.)',
+            kpis: [], evidence: [], followUps: ['How am I doing overall?', 'Which session is my best?'],
+            memory: { intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q, history: pushHistory(prev, q, null) }
         };
     }
 
@@ -331,27 +426,37 @@ function askBot(core, accountId, question, opts) {
         case 'discipline': r = disciplineAnswer(b); break;
         case 'streak': r = streakAnswer(b, core, accountId); break;
         case 'risk': r = riskAnswer(b, s); break;
-        case 'session': r = sessionAnswer(b); break;
+        case 'session': {
+            if (rq.subject && rq.subjKind === 'session') r = subjectRowAnswer('session', rq.subject, b, s, rq.window);
+            else r = sessionAnswer(b);
+            break;
+        }
         case 'symbol': {
-            const bySym = (b.sessions.tables.symbol || []);
-            if (bySym.length) {
-                const best = bySym[0], worst = bySym[bySym.length - 1];
-                r = {
-                    answer: 'By instrument: ' + best.key + ' leads at ' + best.avgR.toFixed(2) + 'R (' + best.n + ' trades, ' + money(best.pnl) + ') while ' + worst.key + ' trails at ' + worst.avgR.toFixed(2) + 'R (' + worst.n + ' trades).',
-                    kpis: [
-                        { label: 'Best symbol', value: best.key, cls: 'text-[#34D399]' },
-                        { label: 'Worst symbol', value: worst.key, cls: 'text-[#F87171]' },
-                        { label: 'Spread', value: (best.avgR - worst.avgR).toFixed(2) + 'R', cls: 'text-white' }
-                    ],
-                    evidence: []
-                };
-            } else r = { answer: 'Not enough trades per instrument yet (needs ≥5 per symbol).', kpis: [], evidence: [] };
+            if (rq.subject && rq.subjKind === 'symbol') r = subjectRowAnswer('symbol', rq.subject, b, s, rq.window);
+            else {
+                const bySym = (b.sessions.tables.symbol || []);
+                if (bySym.length) {
+                    const best = bySym[0], worst = bySym[bySym.length - 1];
+                    r = {
+                        answer: 'By instrument: ' + best.key + ' leads at ' + best.avgR.toFixed(2) + 'R (' + best.n + ' trades, ' + money(best.pnl) + ') while ' + worst.key + ' trails at ' + worst.avgR.toFixed(2) + 'R (' + worst.n + ' trades).',
+                        kpis: [
+                            { label: 'Best symbol', value: best.key, cls: 'text-[#34D399]' },
+                            { label: 'Worst symbol', value: worst.key, cls: 'text-[#F87171]' },
+                            { label: 'Spread', value: (best.avgR - worst.avgR).toFixed(2) + 'R', cls: 'text-white' }
+                        ],
+                        evidence: []
+                    };
+                } else r = { answer: 'Not enough trades per instrument yet (needs ≥5 per symbol).', kpis: [], evidence: [] };
+            }
             break;
         }
         case 'setup': {
-            const bySetup = (b.sessions.tables.setup || []);
-            if (bySetup.length) r = { answer: 'Your highest-conviction setup is ' + bySetup[0].key + ' (' + Math.round(bySetup[0].winRate * 100) + '% win rate, ' + bySetup[0].avgR.toFixed(2) + 'R, ' + bySetup[0].n + ' trades).', kpis: [{ label: 'Best setup', value: bySetup[0].key, cls: 'text-[#34D399]' }], evidence: [] };
-            else r = { answer: 'Not enough trades per setup yet (needs ≥5 per setup).', kpis: [], evidence: [] };
+            if (rq.subject && rq.subjKind === 'setup') r = subjectRowAnswer('setup', rq.subject, b, s, rq.window);
+            else {
+                const bySetup = (b.sessions.tables.setup || []);
+                if (bySetup.length) r = { answer: 'Your highest-conviction setup is ' + bySetup[0].key + ' (' + Math.round(bySetup[0].winRate * 100) + '% win rate, ' + bySetup[0].avgR.toFixed(2) + 'R, ' + bySetup[0].n + ' trades).', kpis: [{ label: 'Best setup', value: bySetup[0].key, cls: 'text-[#34D399]' }], evidence: [] };
+                else r = { answer: 'Not enough trades per setup yet (needs ≥5 per setup).', kpis: [], evidence: [] };
+            }
             break;
         }
         case 'winloss': r = winLossAnswer(b, s, q, tradesIn(core, accountId, sinceMs)); break;
@@ -359,9 +464,41 @@ function askBot(core, accountId, question, opts) {
         default: r = overallAnswer(b, s);
     }
     if (r.text && !r.answer) r.answer = r.text;   // builders may use either key
-    return Object.assign({ question: q, intent, period }, r, {
-        followUps: r.followUps || ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?']
+    if (rq.window && r.answer.indexOf(rq.window) === -1 && intent !== 'period') {
+        r.answer += ' (This covers the ' + rq.window + ' range.)';
+    }
+    return Object.assign({ question: q, intent, period, window: rq.window }, r, {
+        followUps: r.followUps || ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?'],
+        memory: { intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q, history: pushHistory(prev, q, r.answer) }
     });
 }
 
-module.exports = { askBot, detectIntent, statsOf, rankBy, tradesIn };
+// Answer specifically about one instrument/session/setup row ("what about EURUSD?").
+function subjectRowAnswer(kind, subject, b, s, window) {
+    const rows = (b.sessions.tables[kind] || []);
+    const row = rows.find(x => String(x.key).toLowerCase() === String(subject).toLowerCase());
+    const scope = window ? ' in the ' + window + ' range' : '';
+    if (!row) return { answer: 'No ' + kind + ' matches "' + subject + '"' + scope + ' — I only speak from trades you have actually logged.', kpis: [], evidence: [] };
+    return {
+        answer: subject + scope + ': ' + row.n + ' trades, ' + Math.round(row.winRate * 100) + '% win rate, ' + row.avgR.toFixed(2) + 'R average (' + money(row.pnl) + ').' +
+            (row.n >= 5 ? ' That is ' + (row.avgR >= 0 ? 'your better' : 'a weaker') + ' performer.' : ' Small sample — read it as a hint, not a verdict.'),
+        kpis: [
+            { label: 'Trades', value: String(row.n), cls: 'text-white' },
+            { label: 'Win rate', value: Math.round(row.winRate * 100) + '%', cls: 'text-white' },
+            { label: 'Avg R', value: (row.avgR >= 0 ? '+' : '') + row.avgR.toFixed(2) + 'R', cls: row.avgR >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' },
+            { label: 'Net P&L', value: money(row.pnl), cls: row.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }
+        ],
+        evidence: []
+    };
+}
+
+// Keep a rolling window of the last N exchanges (longer memory — survives
+// reloads server-side and is mirrored in the client transcript).
+function pushHistory(prev, q, answer) {
+    const h = (prev && prev.history) ? prev.history.slice() : [];
+    h.push({ role: 'user', text: q, ts: Date.now() });
+    if (answer != null) h.push({ role: 'bot', answer, ts: Date.now() });
+    return h.slice(-30);   // keep the last 15 exchanges
+}
+
+module.exports = { askBot, detectIntent, resolveAsk, windowSinceMs, statsOf, rankBy, tradesIn, loadMemory, saveMemory, subjectRowAnswer };
