@@ -740,7 +740,7 @@
                     '</div>' +
                     '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
                         '<div class="xl:col-span-2 flex flex-col gap-4">' +
-                            panel('Coach — grounded in your ' + c.tradeCount + ' trades', '<div class="px-4 py-3.5 rounded-xl bg-[rgba(16,185,129,0.05)] border border-[rgba(16,185,129,0.2)] text-[13.5px] text-[#E8E8EC] leading-relaxed">' + esc(b.coach.message) + '</div>') +
+                            panel('Coach — grounded in your ' + c.tradeCount + ' trades' + (b.ai ? ' <span class="tag tag-blue !py-0 !px-1.5 ml-1.5 align-middle">AI narrated</span>' : ''), '<div class="px-4 py-3.5 rounded-xl bg-[rgba(16,185,129,0.05)] border border-[rgba(16,185,129,0.2)] text-[13.5px] text-[#E8E8EC] leading-relaxed">' + esc(b.coach.message) + '</div>') +
                             panel('Patterns found', '<div class="flex flex-col gap-2.5">' + (b.patterns.filter(f => !f.suppressed).length ? b.patterns.filter(f => !f.suppressed).slice(0, 4).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No recurring patterns in this range yet.</p>') + '</div>') +
                         '</div>' +
                         '<div class="flex flex-col gap-4">' +
@@ -875,13 +875,14 @@
                 return '<div class="kpi !py-2.5 !px-3"><div class="k-label">' + esc(k.label) + '</div><div class="k-val num text-[16px] ' + (k.cls || 'text-white') + '">' + esc(k.value) + '</div></div>';
             }
             function botMsg(r) {
+                const aiBadge = r.ai ? '<span class="tag tag-blue !py-0 !px-1.5 ml-1.5">AI</span>' : '';
                 const kpis = (r.kpis || []).length ? '<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2.5">' + r.kpis.map(botKpi).join('') + '</div>' : '';
                 const ev = (r.evidence || []).length ? '<div class="flex flex-wrap gap-1.5 mt-2">' + r.evidence.slice(0, 6).map(id => '<span class="ev-chip">' + esc(String(id).slice(0, 12)) + '</span>').join('') + (r.evidence.length > 6 ? '<span class="ev-chip">+' + (r.evidence.length - 6) + ' more</span>' : '') + '</div>' : '';
                 const follow = (r.followUps || []).length ? '<div class="flex flex-wrap gap-1.5 mt-2.5">' + r.followUps.map(f => '<button class="period-chip !py-1 !px-2.5 text-[11.5px]" onclick="askSend(\'' + esc(f).replace(/'/g, "\\'") + '\')">' + esc(f) + '</button>').join('') + '</div>' : '';
                 return '<div class="flex items-start gap-2.5">' +
                     '<div class="w-7 h-7 rounded-lg bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center flex-shrink-0"><svg data-lucide="bot" class="w-3.5 h-3.5 text-[#34D399]"></svg></div>' +
                     '<div class="bg-[#0F0F11] border border-[#1F1F23] rounded-xl rounded-tl-sm px-3.5 py-3 max-w-[85%]">' +
-                        '<div class="text-[13px] text-[#E8E8EC] leading-relaxed whitespace-pre-line">' + esc(r.answer) + '</div>' + kpis + ev + follow +
+                        '<div class="flex items-start gap-1">' + aiBadge + '<div class="text-[13px] text-[#E8E8EC] leading-relaxed whitespace-pre-line">' + esc(r.answer) + '</div></div>' + kpis + ev + follow +
                     '</div></div>';
             }
             function userMsg(text) {
@@ -1024,7 +1025,7 @@
                 saveChat();   // longer memory — transcript survives reloads
                 if (window.lucide) lucide.createIcons();
                 const src = $('ask-source');
-                if (src) src.textContent = r.offline ? 'offline · local' : 'server · your data';
+                if (src) src.textContent = r.offline ? 'offline · local' : (r.ai ? 'server · AI narrated · your data' : 'server · your data');
             };
             window.askPrompt = q => window.askSend(q);
             function initChat() {

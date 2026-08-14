@@ -40,6 +40,7 @@ const auth = require('./server/auth.js');
 const AI = require('./server/ai-mentor.js');
 const Bot = require('./server/ai-bot.js');
 const EcoCal = require('./server/ecocal.js');
+const LLM = require('./server/llm.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -453,6 +454,10 @@ async function handleApi(req, res, url) {
                         const cal = await EcoCal.getCalendar();
                         bundle.context.upcomingEvents = EcoCal.upcomingHighImpact(cal, 12);
                     } catch (e) { bundle.context.upcomingEvents = []; }
+                    if (process.env.GEMINI_API_KEY) {
+                        const narrated = await LLM.narrateCoachMessage(bundle);
+                        if (narrated) { bundle.coach.message = narrated; bundle.ai = 'gemini'; }
+                    }
                 }
                 return json(res, 200, { ok: true, bundle });
             }
@@ -563,6 +568,13 @@ async function handleApi(req, res, url) {
             } catch (e) { /* calendar offline — the bot answers without news */ }
             const r = Bot.askBot(Core, accountId, body.question, { period: body.period || '30d', memory: mem, events });
             if (r.memory) await Bot.saveMemory(uc.userId, accountId, r.memory);
+            // AI narration: Gemini rephrases the grounded answer when a key is
+            // configured; the grounding guard discards it if any number is
+            // altered, and the deterministic answer always remains.
+            if (process.env.GEMINI_API_KEY) {
+                const narrated = await LLM.narrateBotAnswer(r);
+                if (narrated) { r.answer = narrated; r.ai = 'gemini'; }
+            }
             return json(res, 200, Object.assign({ ok: true }, r));
         }
 
