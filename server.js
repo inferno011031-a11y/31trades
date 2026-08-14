@@ -25,7 +25,8 @@
    identical on both sides. State persists to data/db.json with atomic writes;
    a PRISTINE snapshot taken at boot powers /api/reset.
 
-   Run:  npm start   (or  node server.js)   →  http://127.0.0.1:8000
+   Run:  npm start   (or  node server.js)   →  http://127.0.0.1:8080
+   (Railway: binds 0.0.0.0 on process.env.PORT, default 8080)
    ========================================================================== */
 
 'use strict';
@@ -42,11 +43,11 @@ loadEnv();   // reads .env into process.env (real env vars win)
 
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
-// Port priority: process.env.PORT first (Railway/Hosting inject the real
-// port there) → TRADEMIND_PORT (local dev / tests) → 8000 default. Falsy
-// values are skipped naturally — some sandboxes inject PORT=0, which must
-// not win over the intended default.
-const PORT = Number(process.env.PORT) || Number(process.env.TRADEMIND_PORT) || 8000;
+// Port priority: process.env.PORT first (Railway injects the real container
+// port there — it ALWAYS wins when set) → TRADEMIND_PORT (local dev / tests
+// only, never set on Railway) → 8080 default. Falsy values are skipped
+// naturally — some sandboxes inject PORT=0, which must not win.
+const PORT = Number(process.env.PORT) || Number(process.env.TRADEMIND_PORT) || 8080;
 
 // Auth gate: ON by default. Set TRADEMIND_AUTH=off for dev/testing — the
 // server then runs in anonymous mode (single LOCAL_USER partition) so the
@@ -208,8 +209,47 @@ async function coreFor(req) {
     return getUserCore(user);
 }
 
+// Mask a connection string so secrets never reach the logs — show the
+// scheme + user + host, hide the password.
+function maskSecret(v) {
+    if (!v) return '(empty)';
+    const m = String(v).match(/^(postgres(?:ql)?:\/\/)([^:@/]+):([^@/]+)@(.+)$/i);
+    if (m) return m[1] + m[2] + ':***@' + m[4];
+    return String(v).slice(0, 12) + '…';
+}
+
 async function boot() {
     fs.mkdirSync(DATA_DIR, { recursive: true });
+
+    // ---- Supabase environment diagnostic (read live at startup, so Railway
+    // runtime logs show instantly whether the config reached the process). ----
+    const su = process.env.SUPABASE_URL || '';
+    const ak = process.env.SUPABASE_ANON_KEY || '';
+    const dbu = process.env.SUPABASE_DB_URL || '';
+    console.log('[31trades] ── environment ──');
+    console.log('[31trades]   SUPABASE_URL      ' + (su ? '✓ detected  (' + su.replace(/^https?:\/\//, '') + ')' : '✗ MISSING'));
+    console.log('[31trades]   SUPABASE_ANON_KEY ' + (ak ? '✓ detected  (' + ak.slice(0, 10) + '…)' : '✗ MISSING'));
+    console.log('[31trades]   SUPABASE_DB_URL   ' + (dbu ? '✓ detected  (' + maskSecret(dbu) + ')' : '✗ MISSING'));
+    console.log('[31trades]   PORT              ' + (process.env.PORT ? '✓ ' + process.env.PORT + ' (from env)' : '✗ not set → default 8080'));
+
+    // ---- boot-time DB probe: a live ping right here so an unreachable /
+    // misconfigured database fails loudly in the runtime logs instead of the
+    // app silently falling back to data/db.json. ----
+    if (dbu) {
+        try {
+            const p = await db.ping();
+            console.log('[31trades]   database ping      ' + (p.ok
+                ? '✓ connected (' + p.latencyMs + 'ms)'
+                : '✗ FAILED — ' + p.error));
+            if (!p.ok) console.log('[31trades]   → falling back to data/db.json until the database is reachable');
+        } catch (err) {
+            console.log('[31trades]   database ping      ✗ FAILED — ' + err.message);
+            console.log('[31trades]   → falling back to data/db.json until the database is reachable');
+        }
+    } else {
+        console.log('[31trades]   database ping      skipped (SUPABASE_DB_URL missing → data/db.json mode)');
+    }
+
     // Cores load lazily per user; nothing global to hydrate at boot. The
     // Postgres health status is reported on demand by /api/health.
     if (AUTH_REQUIRED) console.log('[31trades] auth: Supabase GoTrue (TRADEMIND_AUTH=off disables it)');
@@ -625,7 +665,7 @@ boot().then(() => {
     // 0.0.0.0 — Railway (and other hosts) route external traffic to the
     // container this way; loopback clients (127.0.0.1) are still served.
     }).listen(PORT, '0.0.0.0', () => {
-        console.log('31Trades backend listening on http://0.0.0.0:' + PORT + '  (storage: ' + (DB_MODE ? 'Supabase Postgres' : 'data/db.json') + ')');
+        console.log('31Trades backend listening on http://0.0.0.0:' + PORT + '  (db: ' + (db.status().configured ? 'Supabase Postgres' : 'data/db.json (SUPABASE_DB_URL not configured)') + ')');
     });
 }).catch(err => {
     console.error('[31trades] boot failed: ' + err.message);

@@ -15,10 +15,11 @@
 ## How to run the server
 
 ```bash
-npm start          # = node server.js  → http://127.0.0.1:8000
+npm start          # = node server.js  → http://127.0.0.1:8080
 ```
 
-- Port: `TRADEMIND_PORT` env var wins, default `8000`.
+- Port: `process.env.PORT` wins (Railway), else `TRADEMIND_PORT` (dev/tests), default `8080`. Server binds `0.0.0.0`.
+- Boot logs print a Supabase env diagnostic (SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_DB_URL detected or missing) plus a live database ping — check them in Railway runtime logs if the app falls back to data/db.json.
 - Auth is ON by default — the app gates all pages behind Supabase GoTrue
   (sign up / sign in at `auth.html`). Sign-up requires email confirmation
   unless "Confirm email" is disabled in the Supabase dashboard.
