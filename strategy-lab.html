@@ -650,8 +650,12 @@
                     '</div>';
                 }).join('');
 
-                // monthly risk (PRD §9.1)
-                const m = riskState(ACCOUNTS[0]).month;
+                // monthly risk (PRD §9.1) — zero-account first-user state must
+                // render (not crash): ACCOUNTS[0] is undefined until an account
+                // exists, and a throw here blanks the whole page under the header.
+                const m = ACCOUNTS.length
+                    ? riskState(ACCOUNTS[0]).month
+                    : { planned: 0, realizedLoss: 0, worst: 0, avgRisk: 0, breachDays: 0, highDays: 0, n: 0 };
                 const monthCards = [
                     kpi('Planned risk (Aug)', $money(m.planned)),
                     kpi('Realized loss', $money(-m.realizedLoss)),
@@ -667,7 +671,7 @@
                         kpi('Active strategies', activeStrats.length) +
                         kpi('Configured capital', $money(totalCapital)) +
                         kpi('Daily risk budget', $money(totalBudget)) +
-                        kpi('Drawdown consumed', Math.round((ddUsed / totalDD) * 100) + '% <span class="text-[12px] text-[#6E6E78]">of $' + totalDD.toLocaleString() + '</span>') +
+                        kpi('Drawdown consumed', (totalDD ? Math.round((ddUsed / totalDD) * 100) : 0) + '% <span class="text-[12px] text-[#6E6E78]">of $' + (totalDD || 0).toLocaleString() + '</span>') +
                         kpi('System adherence', adh + '% <span class="text-[12px] text-[#6E6E78]">journaled</span>') +
                     '</div>' +
                     '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
