@@ -123,5 +123,19 @@ check('"and EURUSD?" resolves to the symbol subject', s2.intent === 'symbol' && 
 const freshAsk = Bot.askBot(core, ACCOUNT, 'how am I doing?');
 check('no-memory ask still answers', typeof freshAsk.answer === 'string' && freshAsk.answer.length > 0);
 
+// ---- 6. market news integration (real calendar events, never invented) -----
+const in1h = new Date(Date.now() + 3600000).toISOString();
+const newsEv = [{ ts: in1h, impact: 'High', title: 'US Nonfarm Payrolls', country: 'USD' }];
+const newsAsk = Bot.askBot(core, ACCOUNT, 'Any news today?', { events: newsEv });
+check('news intent answers with the real event', /Nonfarm Payrolls/.test(newsAsk.answer) && newsAsk.intent === 'news',
+    newsAsk.answer.slice(0, 90));
+const warn = Bot.askBot(core, ACCOUNT, 'How am I doing overall?', { events: newsEv });
+check('high-impact warning attaches to overall answers', !!warn.news && /Nonfarm Payrolls/.test(warn.news),
+    warn.news || 'no warning');
+const quiet = Bot.askBot(core, ACCOUNT, 'Any news today?', { events: [] });
+check('empty calendar = honest quiet message, not fabricated events', /quiet|no scheduled/i.test(quiet.answer));
+const offline = Bot.askBot(core, ACCOUNT, 'Any news today?', { events: null });
+check('unreachable calendar = honest unavailable message', /unavailable/.test(offline.answer), offline.answer.slice(0, 80));
+
 console.log(failures ? '\n' + failures + ' FAILURE(S)' : '\nALL AI BOT CHECKS PASS');
 process.exit(failures ? 1 : 0);

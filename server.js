@@ -39,6 +39,7 @@ const db = require('./server/db.js');
 const auth = require('./server/auth.js');
 const AI = require('./server/ai-mentor.js');
 const Bot = require('./server/ai-bot.js');
+const EcoCal = require('./server/ecocal.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -414,6 +415,19 @@ async function handleApi(req, res, url) {
             if (p === '/api/insights') {
                 return json(res, 200, { findings: Core.insights(q.get('accountId') || 'acc-prop') });
             }
+            if (p === '/api/ecocal') {
+                const cal = await EcoCal.getCalendar();
+                const t = EcoCal.todayBySession(cal);
+                if (q.get('session') && t.by[q.get('session')]) {
+                    t.filtered = q.get('session');
+                    t.events = t.by[q.get('session')].slice();
+                }
+                if (q.get('impact')) {
+                    const want = q.get('impact');
+                    t.events = t.events.filter(e => e.impact === want || (want === 'High' ? e.impact === 'High' : e.impact !== 'Low'));
+                }
+                return json(res, 200, t);
+            }
             if (p === '/api/calendar') {
                 const year = Number(q.get('year') || new Date().getFullYear());
                 const month = Number(q.get('month') === undefined ? new Date().getMonth() : q.get('month'));
@@ -432,6 +446,14 @@ async function handleApi(req, res, url) {
                     userId: uc.userId,
                     includeSuppressed: q.get('includeSuppressed') === '1'
                 });
+                // Attach the real upcoming calendar so the UI/AI can warn about
+                // trading into scheduled high-impact releases.
+                if (bundle) {
+                    try {
+                        const cal = await EcoCal.getCalendar();
+                        bundle.context.upcomingEvents = EcoCal.upcomingHighImpact(cal, 12);
+                    } catch (e) { bundle.context.upcomingEvents = []; }
+                }
                 return json(res, 200, { ok: true, bundle });
             }
             if (p === '/api/ai/tilt') {
@@ -530,7 +552,16 @@ async function handleApi(req, res, url) {
             // server. Persist the updated context (survives restarts via
             // data/chat-*.json).
             const mem = (await Bot.loadMemory(uc.userId, accountId)) || body.memory || null;
-            const r = Bot.askBot(Core, accountId, body.question, { period: body.period || '30d', memory: mem });
+            // Real calendar context feeds the coach: upcoming high/medium events
+            // let it warn about trading into a scheduled release.
+            // null = provider unreachable (bot says "unavailable"); [] = calendar
+            // live but quiet (bot says "no events scheduled"). Never fabricated.
+            let events = null;
+            try {
+                const cal = await EcoCal.getCalendar();
+                events = cal.ok ? EcoCal.upcomingHighImpact(cal, 12) : null;
+            } catch (e) { /* calendar offline — the bot answers without news */ }
+            const r = Bot.askBot(Core, accountId, body.question, { period: body.period || '30d', memory: mem, events });
             if (r.memory) await Bot.saveMemory(uc.userId, accountId, r.memory);
             return json(res, 200, Object.assign({ ok: true }, r));
         }

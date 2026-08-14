@@ -1005,35 +1005,13 @@
                     <!-- Market events + Weekly focus -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div class="panel p-5 lg:col-span-2">
-                            <div class="flex items-center justify-between mb-4">
+                            <div class="flex items-center justify-between mb-3">
                                 <div class="panel-title">Market Events</div>
-                                <span class="tag tag-gray">Today · London</span>
+                                <span id="ecocal-live" class="tag tag-gray">Live calendar · loading…</span>
                             </div>
-                            <div class="flex flex-col divide-y divide-[#17171A]">
-                                <div class="flex items-center gap-4 py-3">
-                                    <span class="num text-[12.5px] text-[#6E6E78] w-14">10:00</span>
-                                    <div class="flex-1">
-                                        <div class="text-[13.5px] font-semibold text-white">US CPI (YoY)</div>
-                                        <div class="text-[12px] text-[#6E6E78]">High impact · consensus 2.9%</div>
-                                    </div>
-                                    <span class="tag tag-amber">High</span>
-                                </div>
-                                <div class="flex items-center gap-4 py-3">
-                                    <span class="num text-[12.5px] text-[#6E6E78] w-14">13:30</span>
-                                    <div class="flex-1">
-                                        <div class="text-[13.5px] font-semibold text-white">US Jobless Claims</div>
-                                        <div class="text-[12px] text-[#6E6E78]">Medium impact</div>
-                                    </div>
-                                    <span class="tag tag-gray">Medium</span>
-                                </div>
-                                <div class="flex items-center gap-4 py-3">
-                                    <span class="num text-[12.5px] text-[#6E6E78] w-14">18:00</span>
-                                    <div class="flex-1">
-                                        <div class="text-[13.5px] font-semibold text-white">FOMC Meeting Minutes</div>
-                                        <div class="text-[12px] text-[#6E6E78]">High impact · volatility expected</div>
-                                    </div>
-                                    <span class="tag tag-amber">High</span>
-                                </div>
+                            <div class="flex flex-wrap gap-1.5 mb-3" id="ecocal-sessions"></div>
+                            <div id="ecocal-list" class="flex flex-col divide-y divide-[#17171A]">
+                                <div class="py-6 text-center text-[12.5px] text-[#6E6E78]">Loading live economic events…</div>
                             </div>
                         </div>
 
@@ -1608,7 +1586,80 @@
                 }
             }
 
+            // ====================================================================
+            // MARKET EVENTS — live economic calendar (server-fetched + cached).
+            // The browser never hits the provider directly; GET /api/ecocal
+            // returns the day's High/Medium events with session tags.
+            // ====================================================================
+            var ecoSession = 'All';
+            var ecoData = null;
+            function ecoImpactTag(impact) {
+                if (impact === 'High') return '<span class="tag tag-red !py-0.5">High</span>';
+                if (impact === 'Medium') return '<span class="tag tag-amber !py-0.5">Medium</span>';
+                return '<span class="tag tag-gray !py-0.5">Low</span>';
+            }
+            function ecoTime(ts) {
+                var d = new Date(ts);
+                return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2) + ' ' + (d.toLocaleTimeString('en-US', { hour12: true }).match(/[AP]M/) || [''])[0];
+            }
+            function ecoTitle(t) {
+                var s = String(t || '');
+                var m = s.match(/^(.+?)\s+\((.+)\)$/);
+                return m ? m[1].trim() + ' <span class="text-[#6E6E78] font-normal">(' + m[2] + ')</span>' : s;
+            }
+            function renderEco() {
+                var list = document.getElementById('ecocal-list');
+                var live = document.getElementById('ecocal-live');
+                var chips = document.getElementById('ecocal-sessions');
+                if (!list || !ecoData) { if (list) list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[#6E6E78]">Economic calendar unavailable right now — no fake events will be shown.</div>'; return; }
+                if (live) {
+                    if (!ecoData.ok) live.innerHTML = '<span class="tag tag-red !py-1 !px-2.5">Calendar unavailable</span>';
+                    else live.innerHTML = '<span class="tag tag-emerald !py-1 !px-2.5">Live · ' + ecoData.source + '</span>';
+                }
+                // session chips
+                if (chips) {
+                    var ses = ['All'].concat(Object.keys(ecoData.by || {}));
+                    chips.innerHTML = ses.map(function (s) {
+                        var count = s === 'All' ? (ecoData.events || []).length : ((ecoData.by || {})[s] || []).length;
+                        var active = ecoSession === s ? 'period-chip active' : 'period-chip';
+                        return '<button class="' + active + ' !py-1 !px-2.5 text-[11.5px]" data-ses="' + s + '">' + s + ' <span class="num text-[10.5px] opacity-60">' + count + '</span></button>';
+                    }).join('');
+                    chips.querySelectorAll('button').forEach(function (b) {
+                        b.addEventListener('click', function () { ecoSession = b.getAttribute('data-ses'); renderEco(); });
+                    });
+                }
+                var events = ecoSession === 'All' ? (ecoData.events || []) : ((ecoData.by || {})[ecoSession] || []);
+                if (!events.length) {
+                    list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[#6E6E78]">No scheduled events for ' + ecoSession + ' today. The calendar is real — quiet sessions stay quiet.</div>';
+                    return;
+                }
+                list.innerHTML = events.slice(0, 12).map(function (e) {
+                    return '<div class="flex items-center gap-4 py-3">' +
+                        '<span class="num text-[12.5px] text-[#6E6E78] w-16 flex-shrink-0">' + ecoTime(e.ts) + '</span>' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="text-[13.5px] font-semibold text-white truncate">' + ecoTitle(e.title) + '</div>' +
+                            '<div class="text-[12px] text-[#6E6E78] truncate">' + (e.impact || '') + ' impact · ' + (e.country || e.currency || '') +
+                                (e.forecast ? ' · consensus ' + e.forecast : '') + (e.previous ? ' · prev ' + e.previous : '') + (e.actual ? ' · actual ' + e.actual : '') +
+                            '</div>' +
+                        '</div>' +
+                        ecoImpactTag(e.impact) +
+                    '</div>';
+                }).join('');
+            }
+            async function loadEco() {
+                try {
+                    var res = await fetch('/api/ecocal');
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    ecoData = await res.json();
+                } catch (e) {
+                    ecoData = null;
+                }
+                renderEco();
+            }
+
             function boot() {
+                loadEco();
+                setInterval(loadEco, 5 * 60 * 1000);   // refresh the cached calendar every 5 min
                 if (window.TradeMindCore) {
                     var bus = window.TradeMindCore.TradeMindBus;
                     ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.changed'].forEach(function (ev) { bus.subscribe(ev, sync); });

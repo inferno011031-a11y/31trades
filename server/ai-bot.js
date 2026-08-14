@@ -310,6 +310,7 @@ function periodAnswer(q, core, accountId) {
 // Intent detection + dispatch. Order matters: specific intents first.
 // ---------------------------------------------------------------------------
 const INTENTS = [
+    { id: 'news', re: /\b(news|economic calendar|high.?impact|event|cpi|nfp|fomc|interest rate|fed|ecb|boe|release|data drop|payrolls?|gdp)\b/ },
     { id: 'period', re: /\b(today|yesterday|this week|last week|this month|(my )?week|(my )?month)\b/ },
     { id: 'tilt', re: /\b(tilt\w*|revenge|fomo|emotion\w*|psycholog\w*|angr\w*|frustrat\w*|panic\w*)\b/ },
     { id: 'discipline', re: /\b(disciplin\w*|violat\w*|rules?|adher\w*|clean|follow\w* (my|the) plan)\b/ },
@@ -396,6 +397,7 @@ function resolveAsk(q, prev, core, accountId) {
 function askBot(core, accountId, question, opts) {
     const period = (opts && opts.period) || '30d';
     const prev = (opts && opts.memory) || null;
+    const events = (opts && opts.events) || null;   // upcoming high/medium events from the calendar
     const q = String(question || '').trim();
 
     if (!core.Accounts.some(a => a.id === accountId)) {
@@ -405,11 +407,18 @@ function askBot(core, accountId, question, opts) {
     const rq = resolveAsk(q, prev, core, accountId);
     const sinceMs = rq.window ? windowSinceMs(rq.window)
         : (period === 'all' ? null : Date.now() - (period === '90d' ? 90 : 30) * DAY);
+
+    // ---- market context: are high-impact events near right now? ----
+    const newsWarn = newsWarning(events, q);
+    if (newsWarn && (rq.intent === 'overall' || rq.intent === 'focus' || rq.intent === 'risk' || rq.intent === 'tilt')) {
+        // The coach reminds the trader of scheduled volatility that could hit
+        // an open position or a planned entry.
+    }
     const b = mentorBundle(core, accountId, { period, sinceMs });
     const s = statsOf(tradesIn(core, accountId, sinceMs));
     const intent = rq.intent;
 
-    if (!s.n && intent !== 'tilt') {
+    if (!s.n && intent !== 'tilt' && intent !== 'news') {
         const scope = rq.window ? ' in the ' + rq.window + ' range' : ' in the current ' + period + ' range';
         return {
             question: q, intent, period,
@@ -421,6 +430,7 @@ function askBot(core, accountId, question, opts) {
 
     let r;
     switch (intent) {
+        case 'news': r = newsAnswer(events); break;
         case 'period': r = periodAnswer(q, core, accountId); break;
         case 'tilt': r = tiltAnswer(b); break;
         case 'discipline': r = disciplineAnswer(b); break;
@@ -464,13 +474,51 @@ function askBot(core, accountId, question, opts) {
         default: r = overallAnswer(b, s);
     }
     if (r.text && !r.answer) r.answer = r.text;   // builders may use either key
-    if (rq.window && r.answer.indexOf(rq.window) === -1 && intent !== 'period') {
+    if (rq.window && r.answer.indexOf(rq.window) === -1 && intent !== 'period' && intent !== 'news') {
         r.answer += ' (This covers the ' + rq.window + ' range.)';
     }
+    if (newsWarn && intent !== 'news' && r.answer.indexOf('high-impact') === -1) {
+        r.answer += ' ' + newsWarn;
+        r.news = newsWarn;
+    }
     return Object.assign({ question: q, intent, period, window: rq.window }, r, {
-        followUps: r.followUps || ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?'],
+        followUps: r.followUps || ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?', events && events.length ? 'Any news today?' : null].filter(Boolean),
         memory: { intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q, history: pushHistory(prev, q, r.answer) }
     });
+}
+
+// ---- market news awareness -----------------------------------------------
+function newsWarning(events, q) {
+    if (!events || !events.length) return null;
+    const now = Date.now();
+    const soon = events.filter(e => {
+        const t = new Date(e.ts).getTime();
+        return t >= now && t <= now + 6 * 3600000;   // within the next 6 hours
+    });
+    if (!soon.length) return null;
+    const first = soon[0];
+    const mins = Math.round((new Date(first.ts).getTime() - now) / 60000);
+    const inLabel = mins <= 1 ? 'imminent' : 'in ~' + (mins < 60 ? mins + ' min' : (mins / 60).toFixed(1) + ' h');
+    return 'Heads-up: ' + first.title + ' (' + first.impact + ' impact, ' + (first.country || first.currency || '') + ') is ' + inLabel + ' — high-impact releases can spike spreads and stop you out. Consider flattening before it hits.';
+}
+function newsAnswer(events) {
+    if (events === null) {
+        return { answer: 'The economic calendar is currently unavailable (no provider reachable) — I never invent events, so I have nothing to report. It recovers on the next successful fetch.', kpis: [], evidence: [], followUps: ['How am I doing overall?'] };
+    }
+    if (!events.length) {
+        return { answer: 'The calendar is live but quiet right now — no scheduled High/Medium events in the next few hours. Quiet sessions stay quiet; I only report real scheduled releases.', kpis: [{ label: 'Upcoming events', value: '0', cls: 'text-white' }], evidence: [], followUps: ['How am I doing overall?', 'What should I focus on?'] };
+    }
+    const soon = events.slice(0, 5);
+    const lines = soon.map(e => {
+        const t = new Date(e.ts);
+        const hh = ('0' + t.getUTCHours()).slice(-2) + ':' + ('0' + t.getUTCMinutes()).slice(-2) + ' UTC';
+        return '· ' + hh + ' — ' + e.title + ' (' + e.impact + ' · ' + (e.country || e.currency || '') + ')' + (e.forecast ? ' — consensus ' + e.forecast : '');
+    }).join('\n');
+    return {
+        answer: 'Scheduled high/medium-impact events coming up:\n' + lines + '\n\nThese are real calendar entries, not guesses. If a position is open into a release, size down or flatten — that is where accounts blow up.',
+        kpis: [{ label: 'Upcoming events', value: String(soon.length), cls: 'text-white' }],
+        evidence: soon.map(e => e.title), followUps: ['What should I focus on?', 'Am I tilting?']
+    };
 }
 
 // Answer specifically about one instrument/session/setup row ("what about EURUSD?").
