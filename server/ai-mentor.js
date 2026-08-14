@@ -539,21 +539,31 @@ async function mentorWithPrefs(core, accountId, opts) {
         ...bundle.patterns, ...bundle.psychology.findings, ...bundle.risk.findings,
         ...bundle.discipline.findings, ...bundle.sessions.findings, ...bundle.tilt
     ];
-    // Attach prefs (suppressed/feedback) to every finding and persist, then
-    // FILTER the actual response so a dismissal really hides the finding.
-    const isHidden = f => {
+    const attach = f => {
         const p = prefs[f.id];
         if (p) { f.suppressed = p.suppressed; f.feedback = p.feedback; }
-        return !!(p && p.suppressed);
+        return f;
     };
-    bundle.patterns = bundle.patterns.filter(f => !isHidden(f));
-    bundle.psychology.findings = bundle.psychology.findings.filter(f => !isHidden(f));
-    bundle.risk.findings = bundle.risk.findings.filter(f => !isHidden(f));
-    bundle.discipline.findings = bundle.discipline.findings.filter(f => !isHidden(f));
-    bundle.sessions.findings = bundle.sessions.findings.filter(f => !isHidden(f));
-    bundle.tilt = bundle.tilt.filter(f => !isHidden(f));
-    bundle.coach.patterns = bundle.coach.patterns.filter(f => !isHidden(f));
-    bundle.coach.strengths = bundle.coach.strengths.filter(f => !isHidden(f));
+    const hidden = f => !!(attach(f).suppressed);
+    // Finding arrays live at different depths: patterns/tilt are top-level,
+    // psychology/risk/discipline/sessions nest under .findings.
+    const FINDING_SECTIONS = [
+        ['patterns', null], ['tilt', null],
+        ['psychology', 'findings'], ['risk', 'findings'],
+        ['discipline', 'findings'], ['sessions', 'findings']
+    ];
+    const section = ([a, b]) => (b ? bundle[a][b] : bundle[a]);
+    // The dismissed-findings management view needs EVERYTHING (suppressed ones
+    // included, flagged); the normal coach view filters them out so a
+    // dismissal really hides the finding. Both attach prefs and persist.
+    const keepAll = !!(opts && opts.includeSuppressed);
+    FINDING_SECTIONS.forEach(([a, b]) => {
+        const arr = section([a, b]);
+        const out = keepAll ? arr.map(attach) : arr.filter(f => !hidden(f));
+        if (b) bundle[a][b] = out; else bundle[a] = out;
+    });
+    bundle.coach.patterns = keepAll ? bundle.coach.patterns.map(attach) : bundle.coach.patterns.filter(f => !hidden(f));
+    bundle.coach.strengths = keepAll ? bundle.coach.strengths.map(attach) : bundle.coach.strengths.filter(f => !hidden(f));
     await saveFindings(userId, all);
     return bundle;
 }

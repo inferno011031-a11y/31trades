@@ -120,6 +120,19 @@ const fileFor = id => path.join(tmpDir, 'ai-' + id + '.json');
     const prefs3 = await AI.loadPrefs(userId);
     check('feedback persisted', prefs3[target] && prefs3[target].feedback === -1);
 
+    // includeSuppressed=1 must return the dismissed finding WITH its flag so
+    // the management view can list and restore it.
+    const withHidden = await AI.mentorWithPrefs(demo, ACCOUNT, { period: 'all', userId, includeSuppressed: true });
+    const hiddenList = withHidden ? [
+        ...withHidden.patterns, ...withHidden.psychology.findings, ...withHidden.risk.findings,
+        ...withHidden.discipline.findings, ...withHidden.sessions.findings, ...withHidden.tilt
+    ] : [];
+    check('includeSuppressed returns dismissed finding with flag',
+        hiddenList.some(f => f.id === target && f.suppressed === true),
+        'not found flagged in includeSuppressed bundle');
+    check('includeSuppressed keeps non-dismissed findings',
+        hiddenList.some(f => f.id !== target && !f.suppressed));
+
     // unsuppress → visible again.
     await AI.setPref(userId, target, { suppressed: false });
     const withPrefs2 = await AI.mentorWithPrefs(demo, ACCOUNT, { period: 'all', userId });

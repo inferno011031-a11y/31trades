@@ -426,7 +426,11 @@ async function handleApi(req, res, url) {
             if (p === '/api/ai/mentor') {
                 const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
                 if (!accountId) return json(res, 200, { ok: true, bundle: null });
-                const bundle = await AI.mentorWithPrefs(Core, accountId, { period: q.get('period') || '30d', userId: uc.userId });
+                const bundle = await AI.mentorWithPrefs(Core, accountId, {
+                    period: q.get('period') || '30d',
+                    userId: uc.userId,
+                    includeSuppressed: q.get('includeSuppressed') === '1'
+                });
                 return json(res, 200, { ok: true, bundle });
             }
             if (p === '/api/ai/tilt') {

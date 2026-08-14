@@ -148,6 +148,25 @@
         .ai-action.on { background: rgba(16,185,129,0.12); color: #34D399; border-color: rgba(16,185,129,0.3); }
         .ai-action.off { background: rgba(239,68,68,0.12); color: #F87171; border-color: rgba(239,68,68,0.3); }
 
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.62); z-index: 50;
+            display: none; align-items: center; justify-content: center; padding: 16px;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            width: 100%; max-width: 660px; max-height: 78vh;
+            background: #121214; border: 1px solid #1F1F23; border-radius: 14px;
+            padding: 20px; display: flex; flex-direction: column;
+            animation: fadeIn 0.2s ease;
+        }
+        .dismissed-count-badge {
+            min-width: 20px; height: 20px; border-radius: 999px; padding: 0 6px;
+            background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
+            color: #F87171; font-size: 11px; font-weight: 700;
+            display: inline-flex; align-items: center; justify-content: center;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
@@ -252,6 +271,10 @@
                                 <button class="period-chip" data-period="90d">90D</button>
                                 <button class="period-chip" data-period="all">All</button>
                             </div>
+                            <button id="dismissed-btn" class="btn-ghost !py-1.5 !px-3" title="See what you dismissed and restore it" style="display:none">
+                                <svg data-lucide="eye-off" class="w-4 h-4"></svg> Dismissed
+                                <span id="dismissed-count" class="dismissed-count-badge">0</span>
+                            </button>
                             <span id="ai-source" class="tag tag-gray !py-1 !px-2.5">computing…</span>
                         </div>
                     </div>
@@ -280,6 +303,23 @@
                     <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · AI Mentor · findings computed server-side from your actual journal (canonical ledger) · cached in ai_findings · offline falls back to local heuristics</p>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- Dismissed-findings management view -->
+    <div id="dismissed-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="flex items-start justify-between gap-4 mb-4">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h3 class="text-[15px] font-bold text-white">Dismissed findings</h3>
+                        <span id="dismissed-modal-count" class="dismissed-count-badge">0</span>
+                    </div>
+                    <p class="text-[12px] text-[#6E6E78] mt-1">Hidden from your coach because you dismissed them. Restore any you want back — they reappear in the mentor immediately.</p>
+                </div>
+                <button id="dismissed-close" class="ai-action text-[14px] !p-2" title="Close">✕</button>
+            </div>
+            <div id="dismissed-list" class="flex flex-col gap-2.5 overflow-y-auto pr-1"></div>
         </div>
     </div>
 
@@ -565,7 +605,10 @@
                     try {
                         const accId = core.selectedAccountId ? core.selectedAccountId() : (core.Accounts[0] ? core.Accounts[0].id : null);
                         if (!accId) return null;
-                        const r = await fetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD);
+                        // includeSuppressed=1 returns ALL findings with their
+                        // suppressed flags so the Dismissed view can restore them
+                        // (renderers filter f.suppressed themselves).
+                        const r = await fetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD + '&includeSuppressed=1');
                         if (r.ok) {
                             const j = await r.json();
                             if (j && j.bundle) { SOURCE = 'api'; return j.bundle; }
@@ -613,6 +656,51 @@
                 return '<div class="panel p-10 text-center"><div class="text-[15px] font-bold text-white">' + title + '</div>' +
                     '<p class="text-[12.5px] text-[#6E6E78] mt-1.5 max-w-md mx-auto">' + sub + '</p></div>';
             }
+
+            // ---- dismissed-findings management view ----
+            function dismissedCard(f) {
+                const sevColor = f.sev === 'critical' ? '#F87171' : f.sev === 'warning' ? '#FBBF24' : f.sev === 'positive' ? '#34D399' : '#93C5FD';
+                return '<div class="fcard flex gap-3">' +
+                    '<div class="sev-bar" style="background:' + sevColor + '"></div>' +
+                    '<div class="flex-1 min-w-0">' +
+                        '<div class="flex flex-wrap items-center gap-2 mb-1">' + sevTag(f.sev) +
+                            '<b class="text-[13px] text-white">' + esc(f.title) + '</b>' +
+                            '<span class="ml-auto flex items-center gap-2">' +
+                                '<span class="ev-chip">' + f.count + ' evidence</span>' +
+                                '<button class="btn-ghost !py-1 !px-2.5" title="Bring this finding back" onclick="aiPref(\'suppress\',\'' + f.id + '\',false)">↩ Restore</button>' +
+                            '</span></div>' +
+                        '<p class="text-[12px] text-[#8A8A93] leading-relaxed">' + esc(f.msg) + '</p>' +
+                    '</div></div>';
+            }
+            function dismissedList() {
+                const hidden = DATA ? allFindings(DATA).filter(f => f.suppressed) : [];
+                const n = $('dismissed-count');
+                if (n) n.textContent = hidden.length;
+                const btn = $('dismissed-btn');
+                if (btn) btn.style.display = hidden.length ? '' : 'none';
+                const mc = $('dismissed-modal-count');
+                if (mc) mc.textContent = hidden.length;
+                return hidden;
+            }
+            function renderDismissedList() {
+                const hidden = dismissedList();
+                $('dismissed-list').innerHTML = hidden.length
+                    ? hidden.map(dismissedCard).join('') +
+                      '<button class="btn-ghost mx-auto mt-1 !px-4" title="Bring every dismissed finding back" onclick="restoreAllDismissed()">↩ Restore all</button>'
+                    : '<p class="text-[12.5px] text-[#6E6E78] py-6 text-center">Nothing dismissed yet — press ✕ on any finding card and it shows up here for safe keeping.</p>';
+            }
+            window.openDismissed = function () {
+                renderDismissedList();
+                $('dismissed-modal').classList.add('open');
+            };
+            window.closeDismissed = function () { $('dismissed-modal').classList.remove('open'); };
+            window.restoreAllDismissed = function () {
+                const ids = dismissedList().map(f => f.id);
+                ids.forEach(id => window.aiPref('suppress', id, false));
+                // aiPref re-renders each time; keep the modal open so the user
+                // sees the list empty out.
+            };
+            window.restoreDismissed = function (id) { window.aiPref('suppress', id, false); };
 
             function renderCoach(b) {
                 const p = $('panel-coach');
@@ -774,7 +862,12 @@
                 VALID_TABS.forEach(t => { try { RENDERERS[t](b); } catch (e) { console.error('[ai] render ' + t + ' failed: ' + e.message); } });
                 if (window.lucide) lucide.createIcons();
             }
-            function renderAll() { VALID_TABS.forEach(t => { try { RENDERERS[t](DATA); } catch (e) { console.error('[ai] render ' + t + ' failed: ' + e.message); } }); if (window.lucide) lucide.createIcons(); }
+            function renderAll() {
+                VALID_TABS.forEach(t => { try { RENDERERS[t](DATA); } catch (e) { console.error('[ai] render ' + t + ' failed: ' + e.message); } });
+                dismissedList();   // keep the Dismissed badge/modal count in sync
+                if ($('dismissed-modal') && $('dismissed-modal').classList.contains('open')) renderDismissedList();  // live-refresh the open modal
+                if (window.lucide) lucide.createIcons();
+            }
 
             if (core) {
                 ['trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'account.changed'].forEach(ev => core.TradeMindBus.subscribe(ev, () => { refresh(); }));
@@ -782,6 +875,13 @@
             }
             const collapseBtn = $('collapse-btn');
             if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            const dismissedBtn = $('dismissed-btn');
+            if (dismissedBtn) dismissedBtn.addEventListener('click', window.openDismissed);
+            const dismissedClose = $('dismissed-close');
+            if (dismissedClose) dismissedClose.addEventListener('click', window.closeDismissed);
+            const dismissedOverlay = $('dismissed-modal');
+            if (dismissedOverlay) dismissedOverlay.addEventListener('click', e => { if (e.target === dismissedOverlay) window.closeDismissed(); });
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeDismissed(); });
 
             refresh();
         })();
