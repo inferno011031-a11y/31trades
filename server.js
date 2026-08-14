@@ -42,9 +42,11 @@ loadEnv();   // reads .env into process.env (real env vars win)
 
 const ROOT = __dirname;
 const DATA_DIR = path.join(ROOT, 'data');
-// Port: TRADEMIND_PORT wins, else 8000. (A generic PORT env var is ignored
-// because shells/sandboxes often inject one that collides with this app.)
-const PORT = Number(process.env.TRADEMIND_PORT) || 8000;
+// Port priority: process.env.PORT first (Railway/Hosting inject the real
+// port there) → TRADEMIND_PORT (local dev / tests) → 8000 default. Falsy
+// values are skipped naturally — some sandboxes inject PORT=0, which must
+// not win over the intended default.
+const PORT = Number(process.env.PORT) || Number(process.env.TRADEMIND_PORT) || 8000;
 
 // Auth gate: ON by default. Set TRADEMIND_AUTH=off for dev/testing — the
 // server then runs in anonymous mode (single LOCAL_USER partition) so the
@@ -620,8 +622,10 @@ boot().then(() => {
             return;
         }
         serveStatic(res, url.pathname);
-    }).listen(PORT, '127.0.0.1', () => {
-        console.log('31Trades backend listening on http://127.0.0.1:' + PORT + '  (storage: ' + (DB_MODE ? 'Supabase Postgres' : 'data/db.json') + ')');
+    // 0.0.0.0 — Railway (and other hosts) route external traffic to the
+    // container this way; loopback clients (127.0.0.1) are still served.
+    }).listen(PORT, '0.0.0.0', () => {
+        console.log('31Trades backend listening on http://0.0.0.0:' + PORT + '  (storage: ' + (DB_MODE ? 'Supabase Postgres' : 'data/db.json') + ')');
     });
 }).catch(err => {
     console.error('[31trades] boot failed: ' + err.message);
