@@ -1,0 +1,1289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Journal</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: #0A0A0C;
+            color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 13px; font-weight: 700; color: #E8E8EC; }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+
+        .btn-ghost {
+            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
+        .tag-blue { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.25); }
+
+        /* ---- Journal controls ---- */
+        .view-chip {
+            padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            background: #121214; border: 1px solid #1F1F23; transition: all 0.15s; white-space: nowrap;
+        }
+        .view-chip:hover { color: #E8E8EC; border-color: #2E2E35; }
+        .view-chip.active { background: #1F1F23; color: #FFFFFF; border-color: #2E2E35; }
+        .view-chip .count { color: #6E6E78; font-weight: 600; }
+        .view-chip.active .count { color: #8A8A93; }
+
+        .ctrl {
+            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
+            font-size: 13px; color: #C4C4CC; padding: 8px 12px; outline: none; transition: border-color 0.15s;
+        }
+        .ctrl:focus { border-color: #2E2E35; }
+        select.ctrl option { background: #121214; color: #E8E8EC; }
+        .ctrl::placeholder { color: #55555E; }
+
+        /* ---- Table ---- */
+        .tbl th {
+            text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
+            color: #6E6E78; padding: 8px 12px; border-bottom: 1px solid #1F1F23; white-space: nowrap;
+            position: sticky; top: 0; background: #121214; z-index: 1;
+        }
+        .tbl td { padding: 9px 12px; font-size: 12.5px; color: #B4B4BD; border-bottom: 1px solid #17171A; white-space: nowrap; }
+        .tbl tbody tr { cursor: pointer; transition: background 0.1s; }
+        .tbl tbody tr:hover { background: #16161A; }
+        .tbl tbody tr.selected-row { background: rgba(16,185,129,0.04); }
+        .tbl input[type="checkbox"] { accent-color: #10B981; width: 14px; height: 14px; cursor: pointer; }
+
+        /* ---- Modal & drawer ---- */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .overlay.open { opacity: 1; pointer-events: auto; }
+
+        .modal {
+            position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .modal.open { opacity: 1; pointer-events: auto; }
+        .modal-box {
+            width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto;
+            background: #121214; border: 1px solid #26262B; border-radius: 14px;
+            transform: translateY(10px) scale(0.98); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+        }
+        .modal.open .modal-box { transform: none; }
+
+        .drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 94vw); z-index: 50;
+            background: #0D0D0F; border-left: 1px solid #1C1C20;
+            transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+            display: flex; flex-direction: column;
+        }
+        .drawer.open { transform: none; }
+
+        .entry-tab {
+            flex: 1; padding: 9px; border-radius: 7px; font-size: 13px; font-weight: 600; color: #8A8A93;
+            text-align: center; border: none; background: transparent; transition: all 0.15s;
+        }
+        .entry-tab.active { background: #1F1F23; color: #FFFFFF; }
+
+        .field-label { display: block; font-size: 12px; font-weight: 600; color: #8A8A93; margin-bottom: 6px; }
+        .field { width: 100%; background: #0F0F11; border: 1px solid #1F1F23; border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #E8E8EC; outline: none; transition: border-color 0.15s; }
+        .field:focus { border-color: #2E2E35; }
+        .field::placeholder { color: #55555E; }
+        select.field option { background: #121214; color: #E8E8EC; }
+
+        .chip-tag {
+            padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            background: #0F0F11; border: 1px solid #1F1F23; transition: all 0.15s;
+        }
+        .chip-tag.selected { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.5); color: #34D399; }
+
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: #1C1C20; border: 1px solid #2E2E35; color: #E8E8EC; border-radius: 10px;
+            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        /* Timeline */
+        .tl-item { display: flex; gap: 12px; position: relative; }
+        .tl-item::before { content: ""; position: absolute; left: 6px; top: 18px; bottom: -6px; width: 1px; background: #232327; }
+        .tl-item:last-child::before { display: none; }
+        .tl-dot { width: 13px; height: 13px; border-radius: 999px; border: 2px solid #10B981; background: #0D0D0F; flex-shrink: 0; margin-top: 2px; }
+        .tl-dot.muted { border-color: #4A4A52; }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
+        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item active"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="#" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search trades, symbols, strategies…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="openEntryModal()">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1500px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Journal</h1>
+                            <p id="journal-sub" class="text-[13px] text-[#6E6E78] mt-0.5"></p>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <button class="btn-ghost" onclick="showToast('Import — connect a broker or upload a CSV statement')">
+                                <svg data-lucide="file-down" class="w-4 h-4"></svg> Import
+                            </button>
+                            <button class="btn-primary" onclick="openEntryModal()">
+                                <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Saved views (PRD §6.1) -->
+                    <div id="views" class="flex gap-2 overflow-x-auto pb-1"></div>
+
+                    <!-- Filters (PRD §6.1) -->
+                    <div class="panel p-3.5 flex flex-wrap items-center gap-2.5">
+                        <div class="relative">
+                            <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                            <input id="f-search" type="text" class="ctrl !pl-9 w-[220px]" placeholder="Search symbol, setup, notes…">
+                        </div>
+                        <select id="f-market" class="ctrl">
+                            <option value="all">All markets</option>
+                        </select>
+                        <select id="f-setup" class="ctrl">
+                            <option value="all">All setups</option>
+                        </select>
+                        <select id="f-strategy" class="ctrl">
+                            <option value="all">All strategies</option>
+                        </select>
+                        <select id="f-session" class="ctrl">
+                            <option value="all">All sessions</option>
+                        </select>
+                        <select id="f-direction" class="ctrl">
+                            <option value="all">Both directions</option>
+                            <option value="Long">Long only</option>
+                            <option value="Short">Short only</option>
+                        </select>
+                        <select id="f-result" class="ctrl">
+                            <option value="all">All results</option>
+                            <option value="win">Wins</option>
+                            <option value="loss">Losses</option>
+                            <option value="scratch">Scratches</option>
+                        </select>
+                        <input id="f-from" type="date" class="ctrl num" title="From date">
+                        <span class="text-[12px] text-[#6E6E78]">→</span>
+                        <input id="f-to" type="date" class="ctrl num" title="To date">
+                        <button id="f-clear" class="btn-ghost !py-2 !px-3 !text-[12.5px] hidden">
+                            Clear all
+                        </button>
+                        <span id="f-count" class="ml-auto text-[12.5px] text-[#6E6E78] num"></span>
+                    </div>
+
+                    <!-- Bulk bar (PRD §6.1) -->
+                    <div id="bulk-bar" class="hidden items-center gap-3 px-4 py-2.5 rounded-lg bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.25)]">
+                        <span id="bulk-count" class="text-[13px] font-semibold text-white num"></span>
+                        <div class="flex items-center gap-2 ml-auto">
+                            <button class="btn-ghost !py-1.5 !px-3 !text-[12.5px]" onclick="bulkMarkReviewed()">Mark reviewed</button>
+                            <button class="btn-ghost !py-1.5 !px-3 !text-[12.5px]" onclick="showToast('Bulk tag — coming soon')">Add tag</button>
+                            <button class="btn-ghost !py-1.5 !px-3 !text-[12.5px]" onclick="clearSelection()">Clear</button>
+                        </div>
+                    </div>
+
+                    <!-- Trade table (PRD §6.1) -->
+                    <div class="panel overflow-hidden">
+                        <div class="overflow-x-auto max-h-[62vh] overflow-y-auto">
+                            <table class="tbl w-full">
+                                <thead>
+                                    <tr>
+                                        <th style="position:sticky;left:0;background:#121214;z-index:2;">
+                                            <input type="checkbox" id="check-all" onclick="toggleAll(event)">
+                                        </th>
+                                        <th>Time</th><th>Symbol</th><th>Dir</th><th>Setup</th><th>Strategy</th>
+                                        <th>Session</th><th>Entry</th><th>Exit</th><th>Size</th><th>Risk</th>
+                                        <th>P&amp;L</th><th>R</th><th>Adherence</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="tbody"></tbody>
+                            </table>
+                            <div id="empty-state" class="hidden py-16 text-center">
+                                <svg data-lucide="search-x" class="w-10 h-10 mx-auto text-[#3A3A41] mb-3"></svg>
+                                <p class="text-[14px] font-semibold text-[#B4B4BD]">No trades match these filters</p>
+                                <p class="text-[12.5px] text-[#6E6E78] mt-1">Try clearing filters or logging a new trade.</p>
+                                <button class="btn-primary mt-5 !py-2.5 !px-5" onclick="openEntryModal()">Log your first trade</button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Journal demo build · data is illustrative</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ============ TRADE ENTRY MODAL (PRD §6.2) ============ -->
+    <div class="overlay" id="entry-overlay" onclick="closeEntryModal()"></div>
+    <div class="modal" id="entry-modal">
+        <div class="modal-box">
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#1F1F23]">
+                <div>
+                    <h2 class="text-[17px] font-bold">Log Trade</h2>
+                    <p class="text-[12.5px] text-[#6E6E78] mt-0.5">P&amp;L and R are calculated automatically</p>
+                </div>
+                <button class="collapse-btn" onclick="closeEntryModal()"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+
+            <div class="px-6 pt-4">
+                <div class="flex bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1 mb-5">
+                    <button type="button" id="tab-fast" class="entry-tab active" onclick="switchEntryMode('fast')">Fast entry</button>
+                    <button type="button" id="tab-detailed" class="entry-tab" onclick="switchEntryMode('detailed')">Detailed entry</button>
+                </div>
+            </div>
+
+            <div class="px-6 pb-6">
+                <!-- Common core fields -->
+                <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div>
+                        <label class="field-label">Account</label>
+                        <select id="e-account" class="field"></select>
+                    </div>
+                    <div>
+                        <label class="field-label">Symbol</label>
+                        <select id="e-symbol" class="field">
+                            <option>EURUSD</option><option>GBPUSD</option><option>XAUUSD</option><option>NAS100</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Direction</label>
+                        <select id="e-dir" class="field">
+                            <option>Long</option><option>Short</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="field-label">Size</label>
+                        <input id="e-size" type="number" step="0.01" min="0" class="field num" placeholder="1.00">
+                    </div>
+                    <div>
+                        <label class="field-label">Entry price</label>
+                        <input id="e-entry" type="number" step="0.00001" class="field num" placeholder="1.08845">
+                    </div>
+                    <div>
+                        <label class="field-label">Exit price</label>
+                        <input id="e-exit" type="number" step="0.00001" class="field num" placeholder="1.09085">
+                    </div>
+                    <div>
+                        <label class="field-label">Risk ($)</label>
+                        <input id="e-risk" type="number" step="5" min="0" class="field num" placeholder="100">
+                    </div>
+                </div>
+
+                <!-- Detailed-only fields (PRD §6.2) -->
+                <div id="detailed-fields" class="hidden">
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3 mt-3">
+                        <div>
+                            <label class="field-label">Setup</label>
+                            <select id="e-setup" class="field">
+                                <option>MSS + FVG</option><option>FVG</option><option>Breakout</option><option>Order Block</option><option>Liquidity Sweep</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">Strategy</label>
+                            <select id="e-strategy" class="field">
+                                <option>London MSS + FVG</option><option>ICT / SMC</option><option>Price Action</option><option>Breakout</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">Timeframe</label>
+                            <select id="e-tf" class="field">
+                                <option>1m</option><option>5m</option><option>15m</option><option>1h</option><option>4h</option><option>1D</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">Session</label>
+                            <select id="e-session" class="field">
+                                <option>London</option><option>New York</option><option>Asia</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">Stop loss</label>
+                            <input id="e-sl" type="number" step="0.00001" class="field num" placeholder="1.08620">
+                        </div>
+                        <div>
+                            <label class="field-label">Take profit</label>
+                            <input id="e-tp" type="number" step="0.00001" class="field num" placeholder="1.09300">
+                        </div>
+                        <div>
+                            <label class="field-label">Entry time</label>
+                            <input id="e-time-in" type="time" class="field num">
+                        </div>
+                        <div>
+                            <label class="field-label">Exit time</label>
+                            <input id="e-time-out" type="time" class="field num">
+                        </div>
+                    </div>
+
+                    <div class="mt-3">
+                        <label class="field-label">Thesis (why did you take this trade?)</label>
+                        <textarea id="e-thesis" rows="2" class="field resize-none" placeholder="e.g. MSS into FVG at 1.08845, liquidity above, targeting equal highs…"></textarea>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
+                        <div>
+                            <label class="field-label">Exit reason</label>
+                            <select id="e-exit-reason" class="field">
+                                <option>Target hit</option><option>Stop hit</option><option>Manual — thesis invalidated</option><option>Manual — FOMO/early</option><option>Scratched at entry</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">Emotion at exit</label>
+                            <div class="flex flex-wrap gap-1.5 pt-1">
+                                <button type="button" class="chip-tag" data-emotion="Calm">Calm</button>
+                                <button type="button" class="chip-tag" data-emotion="Confident">Confident</button>
+                                <button type="button" class="chip-tag" data-emotion="Anxious">Anxious</button>
+                                <button type="button" class="chip-tag" data-emotion="Revenge">Revenge</button>
+                                <button type="button" class="chip-tag" data-emotion="FOMO">FOMO</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-3">
+                        <label class="field-label">Screenshot / chart annotation</label>
+                        <label class="field !py-3 flex items-center justify-center gap-2 text-[#6E6E78] cursor-pointer">
+                            <svg data-lucide="image" class="w-4 h-4"></svg> Attach screenshot
+                            <input type="file" accept="image/*" class="hidden">
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Live calculation preview -->
+                <div class="mt-5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-4 grid grid-cols-2 sm:grid-cols-4 gap-3">
+                    <div>
+                        <div class="label-xs mb-1">P&amp;L</div>
+                        <div id="calc-pnl" class="num text-[16px] font-bold text-[#34D399]">—</div>
+                    </div>
+                    <div>
+                        <div class="label-xs mb-1">R multiple</div>
+                        <div id="calc-r" class="num text-[16px] font-bold text-white">—</div>
+                    </div>
+                    <div>
+                        <div class="label-xs mb-1">Risk / reward</div>
+                        <div id="calc-rr" class="num text-[16px] font-bold text-white">—</div>
+                    </div>
+                    <div>
+                        <div class="label-xs mb-1">Duration</div>
+                        <div id="calc-dur" class="num text-[16px] font-bold text-white">—</div>
+                    </div>
+                </div>
+
+                <div class="flex items-center justify-end gap-2.5 mt-6">
+                    <button class="btn-ghost" onclick="closeEntryModal()">Cancel</button>
+                    <button id="save-trade" class="btn-primary" onclick="saveTrade()">Save Trade</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ TRADE DETAIL DRAWER (PRD §6.3) ============ -->
+    <div class="overlay" id="detail-overlay" onclick="closeDetail()"></div>
+    <div class="drawer" id="detail-drawer">
+        <div id="detail-body"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        (function() {
+            // ============ HELPERS ============
+            const $ = id => document.getElementById(id);
+            const fmt = n => (n >= 0 ? '+' : '') + n.toFixed(2);
+            const day = 864e5;
+
+            function daysAgo(d, h, m, sec) {
+                const t = new Date();
+                t.setDate(t.getDate() - d);
+                t.setHours(h || 0, m || 0, sec || 0, 0);
+                return t;
+            }
+
+            function sameDay(a, b) {
+                return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+            }
+
+            function fmtTs(ts) {
+                const now = new Date();
+                const hm = ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2);
+                if (sameDay(ts, now)) return 'Today ' + hm;
+                const yest = new Date(now - day);
+                if (sameDay(ts, yest)) return 'Yesterday ' + hm;
+                return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][ts.getMonth()] + ' ' + ts.getDate() + ', ' + hm;
+            }
+
+            function fmtPrice(symbol, v) {
+                if (v == null || isNaN(v)) return '—';
+                if (symbol.indexOf('NAS') > -1 || symbol.indexOf('US30') > -1) return v.toFixed(0);
+                if (symbol.indexOf('XAU') > -1) return v.toFixed(2);
+                return v.toFixed(5);
+            }
+
+            function fmtDate(ts) {
+                const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][ts.getMonth()];
+                return m + ' ' + ts.getDate() + ', ' + ts.getFullYear() + ' · ' + ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2);
+            }
+
+            // ============ DATA ============
+            function pipInfo(symbol) {
+                if (symbol.indexOf('XAU') > -1) return { pip: 0.1, val: 10 };
+                if (symbol.indexOf('NAS') > -1 || symbol.indexOf('US30') > -1) return { pip: 1, val: 1 };
+                return { pip: 0.0001, val: 10 };
+            }
+
+            function calcPnl(symbol, dir, entry, exit, size) {
+                const p = pipInfo(symbol);
+                return ((exit - entry) / p.pip) * size * p.val * (dir === 'Long' ? 1 : -1);
+            }
+
+            function buildTrades() {
+                const T = (d, h, m, sym, dir, entry, exit, size, risk, setup, strategy, session, adherence, reviewed, note) => {
+                    const pnl = Math.round(calcPnl(sym, dir, entry, exit, size) * 100) / 100;
+                    return {
+                        id: 't' + Math.random().toString(36).slice(2, 9),
+                        ts: daysAgo(d, h, m),
+                        symbol: sym, dir, entry, exit, size, risk,
+                        pnl, r: risk > 0 ? Math.round((pnl / risk) * 100) / 100 : 0,
+                        setup, strategy, session, adherence, reviewed, note: note || ''
+                    };
+                };
+                return [
+                    T(0, 9, 32, 'EURUSD', 'Long', 1.08845, 1.09085, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'London', 'followed', true, 'Textbook London session. Waited for confirmation after the sweep.'),
+                    T(0, 8, 14, 'XAUUSD', 'Long', 2345.10, 2345.10, 1, 100, 'FVG', 'ICT / SMC', 'London', 'followed', false, 'Scratched at entry — no follow-through, exited flat.'),
+                    T(1, 14, 20, 'GBPUSD', 'Short', 1.27100, 1.27000, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'New York', 'followed', true, ''),
+                    T(2, 9, 55, 'EURUSD', 'Short', 1.09200, 1.09300, 1, 100, 'FVG', 'ICT / SMC', 'London', 'early exit', true, 'Moved stop to BE too early, got stopped on noise.'),
+                    T(2, 15, 40, 'EURUSD', 'Long', 1.08500, 1.08884, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'New York', 'followed', true, ''),
+                    T(3, 9, 18, 'EURUSD', 'Long', 1.08350, 1.08460, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'London', 'followed', false, ''),
+                    T(3, 10, 5, 'GBPUSD', 'Long', 1.26450, 1.26350, 1, 100, 'Price Action', 'Price Action', 'London', 'moving stop', true, 'Lowered stop during drawdown — broke my own rule.'),
+                    T(4, 16, 10, 'XAUUSD', 'Long', 2330.20, 2331.70, 1, 100, 'FVG', 'ICT / SMC', 'New York', 'followed', true, ''),
+                    T(4, 17, 2, 'NAS100', 'Short', 21840, 21820, 1, 100, 'Breakout', 'Breakout', 'New York', 'followed', true, ''),
+                    T(5, 9, 30, 'EURUSD', 'Short', 1.09120, 1.09240, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'New York', 'no-plan', true, 'Entered without a plan. Cost me 1.2R.'),
+                    T(5, 12, 45, 'GBPUSD', 'Long', 1.26800, 1.26980, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'London', 'followed', true, ''),
+                    T(6, 9, 25, 'XAUUSD', 'Short', 2350.40, 2349.50, 1, 100, 'FVG', 'ICT / SMC', 'London', 'followed', true, '')
+                ];
+            }
+
+            // Canonical source of truth (master §13 — the Journal is a view of
+            // the shared ledger, not a separate database). The ledger for the
+            // currently selected account is the active dataset (single source
+            // of truth); with no selection it reads every account's trades.
+            function loadCanonicalTrades() {
+                const core = window.TradeMindCore;
+                if (!core || !core.Trades || !core.Trades.length) return null;
+                const sel = core.selectedAccountId ? core.selectedAccountId() : null;
+                return core.Trades
+                    .filter(t => !sel || t.account_id === sel)
+                    .map(t => {
+                        const sm = core.StrategyMaster.find(m => m.id === t.strategy_id);
+                        return {
+                            ...t,
+                            ts: new Date(t.ts),
+                            strategy: sm ? sm.name : (t.strategy || '—'),
+                            reviewed: !!t.reviewed,
+                            note: t.note || ''
+                        };
+                    })
+                    .sort((a, b) => b.ts - a.ts);
+            }
+
+            // ============ STATE ============
+            // Local-first: the Journal is a view of the canonical ledger. With no
+            // trades (first user) it starts EMPTY — it never fabricates history.
+            let trades = loadCanonicalTrades() || [];
+            let activeView = 'all';
+            let filters = { market: 'all', setup: 'all', strategy: 'all', session: 'all', direction: 'all', result: 'all', search: '', from: null, to: null };
+            let selected = new Set();
+            let entryMode = 'fast';
+            let emotion = '';
+            let currentDetailId = null;
+            let editingId = null;   // set when the modal is in edit mode (TradeService.update)
+
+            const VIEWS = [
+                { id: 'all', label: 'All Trades', test: () => true },
+                { id: 'today', label: 'Today', test: t => sameDay(t.ts, new Date()) },
+                { id: 'week', label: 'This Week', test: t => (new Date() - t.ts) <= 7 * day },
+                { id: 'winners', label: 'Winners', test: t => t.pnl > 0 },
+                { id: 'losers', label: 'Losers', test: t => t.pnl < 0 },
+                { id: 'rulebreaks', label: 'Rule Breaks', test: t => t.adherence !== 'followed' },
+                { id: 'unreviewed', label: 'Unreviewed', test: t => !t.reviewed }
+            ];
+
+            const ADHERENCE_LABEL = { followed: 'Followed', 'early exit': 'Early exit', 'moving stop': 'Moving stop', 'no-plan': 'No plan' };
+            const MARKET_OF = { EURUSD: 'Forex', GBPUSD: 'Forex', XAUUSD: 'Metals', NAS100: 'Indices' };
+
+            // ============ RENDER ============
+            function filteredTrades() {
+                return trades
+                    .filter(t => VIEWS.find(v => v.id === activeView).test(t))
+                    .filter(t => filters.market === 'all' || MARKET_OF[t.symbol] === filters.market)
+                    .filter(t => filters.setup === 'all' || t.setup === filters.setup)
+                    .filter(t => filters.strategy === 'all' || t.strategy === filters.strategy)
+                    .filter(t => filters.session === 'all' || t.session === filters.session)
+                    .filter(t => filters.direction === 'all' || t.dir === filters.direction)
+                    .filter(t => filters.result === 'all' ||
+                        (filters.result === 'win' && t.pnl > 0) ||
+                        (filters.result === 'loss' && t.pnl < 0) ||
+                        (filters.result === 'scratch' && t.pnl === 0))
+                    .filter(t => {
+                        if (!filters.from && !filters.to) return true;
+                        const ts = t.ts.getTime();
+                        const from = filters.from ? new Date(filters.from + 'T00:00').getTime() : 0;
+                        const to = filters.to ? new Date(filters.to + 'T23:59').getTime() : Infinity;
+                        return ts >= from && ts <= to;
+                    })
+                    .filter(t => {
+                        if (!filters.search) return true;
+                        const q = filters.search.toLowerCase();
+                        return (t.symbol + ' ' + t.setup + ' ' + t.strategy + ' ' + t.note + ' ' + t.session).toLowerCase().includes(q);
+                    })
+                    .sort((a, b) => b.ts - a.ts);
+            }
+
+            function renderViews() {
+                const wrap = $('views');
+                wrap.innerHTML = '';
+                VIEWS.forEach(v => {
+                    const count = trades.filter(v.test).length;
+                    const btn = document.createElement('button');
+                    btn.className = 'view-chip' + (v.id === activeView ? ' active' : '');
+                    btn.innerHTML = v.label + ' <span class="count num">' + count + '</span>';
+                    btn.onclick = () => { activeView = v.id; selected.clear(); renderAll(); };
+                    wrap.appendChild(btn);
+                });
+            }
+
+            function renderSelects() {
+                const uniq = arr => [...new Set(arr)].sort();
+                const fill = (id, vals, label) => {
+                    const sel = $(id);
+                    const cur = filters[id.replace('f-', '')];
+                    sel.innerHTML = '<option value="all">' + label + '</option>' +
+                        vals.map(v => '<option value="' + v + '"' + (cur === v ? ' selected' : '') + '>' + v + '</option>').join('');
+                };
+                fill('f-market', uniq(trades.map(t => MARKET_OF[t.symbol])), 'All markets');
+                fill('f-setup', uniq(trades.map(t => t.setup)), 'All setups');
+                fill('f-strategy', uniq(trades.map(t => t.strategy)), 'All strategies');
+                fill('f-session', uniq(trades.map(t => t.session)), 'All sessions');
+            }
+
+            function renderTable() {
+                const list = filteredTrades();
+                const tbody = $('tbody');
+                tbody.innerHTML = '';
+                $('empty-state').classList.toggle('hidden', list.length > 0);
+                if (trades.length === 0) {
+                    $('journal-sub').textContent = 'No trades yet — log your first trade to start your dataset';
+                    const empty = $('empty-state');
+                    const ps = empty.querySelectorAll('p');
+                    if (ps[0]) ps[0].textContent = 'No trades yet';
+                    if (ps[1]) ps[1].textContent = 'Your trading intelligence starts with your first trade.';
+                    const btn = empty.querySelector('button');
+                    if (btn) btn.textContent = 'Log your first trade';
+                } else {
+                    $('journal-sub').textContent = trades.length + ' trades · ' + fmtTs(trades[0].ts).replace('Today ', '') + ' → today · ' + MARKET_OF[trades[0].symbol] + ' & more';
+                }
+
+                // topbar account chip — live from the canonical store
+                const coreNow = window.TradeMindCore;
+                const accChip = document.querySelector('.account-select');
+                if (accChip && coreNow && coreNow.Accounts.length) {
+                    const acc = coreNow.Accounts.find(a => a.id === coreNow.selectedAccountId()) || coreNow.Accounts[0];
+                    accChip.innerHTML = '<span class="num text-[12px]">$' + Number(acc.current_equity).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '</span><span class="text-[#6E6E78]">·</span><span>' + acc.name + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>';
+                    if (window.lucide) lucide.createIcons();
+                } else if (accChip) {
+                    accChip.innerHTML = '<span class="text-[#6E6E78]">No account yet</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>';
+                    if (window.lucide) lucide.createIcons();
+                }
+
+                list.forEach(t => {
+                    const tr = document.createElement('tr');
+                    tr.className = selected.has(t.id) ? 'selected-row' : '';
+                    tr.innerHTML =
+                        '<td style="position:sticky;left:0;background:inherit;" onclick="event.stopPropagation()">' +
+                            '<input type="checkbox" data-id="' + t.id + '"' + (selected.has(t.id) ? ' checked' : '') + '>' +
+                        '</td>' +
+                        '<td class="num text-[#6E6E78]">' + fmtTs(t.ts) + '</td>' +
+                        '<td class="font-semibold text-white">' + t.symbol + '</td>' +
+                        '<td>' + (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</td>' +
+                        '<td class="text-[#C4C4CC]">' + t.setup + '</td>' +
+                        '<td class="text-[#8A8A93]">' + t.strategy + '</td>' +
+                        '<td class="text-[#8A8A93]">' + t.session + '</td>' +
+                        '<td class="num text-[#C4C4CC]">' + fmtPrice(t.symbol, t.entry) + '</td>' +
+                        '<td class="num text-[#C4C4CC]">' + fmtPrice(t.symbol, t.exit) + '</td>' +
+                        '<td class="num text-[#C4C4CC]">' + t.size + '</td>' +
+                        '<td class="num text-[#C4C4CC]">$' + t.risk + '</td>' +
+                        '<td class="num font-bold ' + (t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]') + '">' + fmt(t.pnl) + '</td>' +
+                        '<td class="num font-bold ' + (t.r > 0 ? 'text-[#34D399]' : t.r < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]') + '">' + (t.r > 0 ? '+' : '') + t.r.toFixed(1) + 'R</td>' +
+                        '<td>' + (t.adherence === 'followed'
+                            ? '<span class="tag tag-emerald">' + ADHERENCE_LABEL[t.adherence] + '</span>'
+                            : '<span class="tag tag-amber">' + ADHERENCE_LABEL[t.adherence] + '</span>') +
+                            (t.adherence_result === 'BLOCK' ? ' <span class="tag tag-red">Policy block</span>' : '') +
+                            (t.reviewed ? '' : '<span class="tag tag-blue ml-1">Pending</span>') +
+                        '</td>';
+                    tr.addEventListener('click', () => openDetail(t.id));
+                    tbody.appendChild(tr);
+                });
+
+                tbody.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+                    cb.addEventListener('change', () => {
+                        const id = cb.dataset.id;
+                        if (cb.checked) selected.add(id); else selected.delete(id);
+                        renderBulk();
+                        cb.closest('tr').classList.toggle('selected-row', cb.checked);
+                    });
+                });
+
+                $('f-count').textContent = list.length + ' of ' + trades.length + ' trades';
+                const hasFilters = Object.values(filters).some(v => v !== 'all' && v !== '' && v !== null);
+                $('f-clear').classList.toggle('hidden', !hasFilters && activeView === 'all');
+            }
+
+            function renderBulk() {
+                const bar = $('bulk-bar');
+                bar.classList.toggle('flex', selected.size > 0);
+                bar.classList.toggle('hidden', selected.size === 0);
+                $('bulk-count').textContent = selected.size + ' selected';
+            }
+
+            function renderAll() { renderViews(); renderSelects(); renderTable(); renderBulk(); }
+
+            // ============ FILTER EVENTS ============
+            $('f-search').addEventListener('input', e => { filters.search = e.target.value; renderTable(); });
+            $('f-market').addEventListener('change', e => { filters.market = e.target.value; renderTable(); });
+            $('f-setup').addEventListener('change', e => { filters.setup = e.target.value; renderTable(); });
+            $('f-strategy').addEventListener('change', e => { filters.strategy = e.target.value; renderTable(); });
+            $('f-session').addEventListener('change', e => { filters.session = e.target.value; renderTable(); });
+            $('f-direction').addEventListener('change', e => { filters.direction = e.target.value; renderTable(); });
+            $('f-result').addEventListener('change', e => { filters.result = e.target.value; renderTable(); });
+            $('f-from').addEventListener('change', e => { filters.from = e.target.value || null; renderTable(); });
+            $('f-to').addEventListener('change', e => { filters.to = e.target.value || null; renderTable(); });
+            $('f-clear').addEventListener('click', () => {
+                filters = { market: 'all', setup: 'all', strategy: 'all', session: 'all', direction: 'all', result: 'all', search: '', from: null, to: null };
+                activeView = 'all';
+                $('f-search').value = ''; $('f-from').value = ''; $('f-to').value = '';
+                selected.clear();
+                renderAll();
+            });
+            $('global-search').addEventListener('input', e => { filters.search = e.target.value; renderTable(); });
+
+            window.toggleAll = function(e) {
+                filteredTrades().forEach(t => {
+                    if (e.target.checked) selected.add(t.id); else selected.delete(t.id);
+                });
+                renderTable(); renderBulk();
+            };
+
+            window.clearSelection = function() { selected.clear(); renderTable(); renderBulk(); };
+            window.bulkMarkReviewed = function() {
+                let n = 0;
+                trades.forEach(t => { if (selected.has(t.id)) { t.reviewed = true; n++; } });
+                selected.clear();
+                renderAll();
+                showToast(n + ' trade' + (n === 1 ? '' : 's') + ' marked as reviewed');
+            };
+
+            // ============ ENTRY MODAL (PRD §6.2) ============
+            window.openEntryModal = function(prefill) {
+                entryMode = 'fast';
+                $('tab-fast').classList.add('active');
+                $('tab-detailed').classList.remove('active');
+                $('detailed-fields').classList.add('hidden');
+                emotion = '';
+                editingId = prefill && prefill.id ? prefill.id : null;   // edit mode when id present
+                if (prefill) {
+                    $('e-symbol').value = prefill.symbol;
+                    $('e-dir').value = prefill.dir;
+                    $('e-setup').value = prefill.setup;
+                    if (prefill.strategy_id && $('e-strategy').querySelector('option[value="' + prefill.strategy_id + '"]')) {
+                        $('e-strategy').value = prefill.strategy_id;
+                    } else if (prefill.strategy) {
+                        $('e-strategy').value = prefill.strategy;
+                    }
+                    $('e-session').value = prefill.session;
+                    $('e-entry').value = prefill.entry != null ? prefill.entry : '';
+                    $('e-exit').value = prefill.exit != null ? prefill.exit : '';
+                    $('e-size').value = prefill.size != null ? prefill.size : '';
+                    $('e-risk').value = prefill.risk != null ? prefill.risk : '';
+                    if (prefill.note != null && $('e-thesis')) $('e-thesis').value = prefill.note;
+                }
+                $('entry-overlay').classList.add('open');
+                $('entry-modal').classList.add('open');
+                updateCalc();
+                if (window.lucide) lucide.createIcons();
+            };
+
+            window.closeEntryModal = function() {
+                $('entry-overlay').classList.remove('open');
+                $('entry-modal').classList.remove('open');
+            };
+
+            window.switchEntryMode = function(mode) {
+                entryMode = mode;
+                $('tab-fast').classList.toggle('active', mode === 'fast');
+                $('tab-detailed').classList.toggle('active', mode === 'detailed');
+                $('detailed-fields').classList.toggle('hidden', mode === 'fast');
+            };
+
+            document.querySelectorAll('[data-emotion]').forEach(b => {
+                b.addEventListener('click', () => {
+                    emotion = b.dataset.emotion;
+                    document.querySelectorAll('[data-emotion]').forEach(x => x.classList.toggle('selected', x === b));
+                });
+            });
+
+            ['e-symbol','e-dir','e-entry','e-exit','e-size','e-risk','e-sl','e-tp','e-time-in','e-time-out'].forEach(id =>
+                $(id).addEventListener('input', updateCalc));
+
+            function updateCalc() {
+                const symbol = $('e-symbol').value;
+                const dir = $('e-dir').value;
+                const entry = parseFloat($('e-entry').value);
+                const exit = parseFloat($('e-exit').value);
+                const size = parseFloat($('e-size').value) || 0;
+                const risk = parseFloat($('e-risk').value) || 0;
+
+                if (!isNaN(entry) && !isNaN(exit) && size > 0) {
+                    const pnl = calcPnl(symbol, dir, entry, exit, size);
+                    const r = risk > 0 ? pnl / risk : 0;
+                    $('calc-pnl').textContent = fmt(pnl);
+                    $('calc-pnl').className = 'num text-[16px] font-bold ' + (pnl > 0 ? 'text-[#34D399]' : pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]');
+                    $('calc-r').textContent = (r >= 0 ? '+' : '') + r.toFixed(2) + 'R';
+                    $('calc-r').className = 'num text-[16px] font-bold ' + (r > 0 ? 'text-[#34D399]' : r < 0 ? 'text-[#F87171]' : 'text-white');
+                } else {
+                    $('calc-pnl').textContent = '—';
+                    $('calc-r').textContent = '—';
+                }
+
+                // R:R from SL/TP
+                const sl = parseFloat($('e-sl').value);
+                const tp = parseFloat($('e-tp').value);
+                if (!isNaN(sl) && !isNaN(tp) && !isNaN(entry) && sl !== entry) {
+                    const rr = Math.abs((tp - entry) / (entry - sl));
+                    $('calc-rr').textContent = '1 : ' + rr.toFixed(2);
+                } else {
+                    $('calc-rr').textContent = '—';
+                }
+
+                // Duration from entry/exit times
+                const ti = $('e-time-in').value, to = $('e-time-out').value;
+                if (ti && to) {
+                    const [ih, im] = ti.split(':').map(Number);
+                    const [oh, om] = to.split(':').map(Number);
+                    let mins = (oh * 60 + om) - (ih * 60 + im);
+                    if (mins < 0) mins += 1440;
+                    $('calc-dur').textContent = mins < 60 ? mins + ' min' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
+                } else {
+                    $('calc-dur').textContent = '—';
+                }
+            }
+
+            window.saveTrade = function() {
+                const accountId = $('e-account').value;
+                if (!accountId) {
+                    showToast('Create an account first — Strategy Lab → Accounts → Add account');
+                    return;
+                }
+                const symbol = $('e-symbol').value;
+                const dir = $('e-dir').value;
+                const entry = parseFloat($('e-entry').value);
+                const exit = parseFloat($('e-exit').value);
+                const size = parseFloat($('e-size').value);
+                const risk = parseFloat($('e-risk').value) || 0;
+                const sl = parseFloat($('e-sl').value), tp = parseFloat($('e-tp').value);
+                if (isNaN(entry) || isNaN(exit) || !size || size <= 0) {
+                    showToast('Enter symbol, direction, entry, exit and size');
+                    return;
+                }
+
+                const pnl = Math.round(calcPnl(symbol, dir, entry, exit, size) * 100) / 100;
+
+                // Defensive: any unexpected error in the save path must surface as
+                // a visible message — never leave the button "dead" (modal stuck
+                // open, no feedback). The modal only closes on a successful save.
+                try {
+                    if (editingId) {
+                        // EDIT — a controlled mutation. TradeService.update recalculates
+                        // the full dependency graph: R, risk consumption, evaluations,
+                        // violations, discipline, equity — all from the canonical store.
+                        const id = editingId;
+                        editingId = null;
+                        const stratSel = $('e-strategy');
+                        const fields = {
+                            symbol, dir, entry, exit, size, risk, pnl,
+                            r: risk > 0 ? Math.round((pnl / risk) * 100) / 100 : 0,
+                            strategy: stratSel && stratSel.selectedOptions[0] ? stratSel.selectedOptions[0].textContent : '—',
+                            strategy_id: stratSel && stratSel.value ? stratSel.value : undefined,
+                            note: $('e-thesis') ? $('e-thesis').value : ''
+                        };
+                        const inLedger = core && core.Trades.some(t => t.id === id);
+                        if (inLedger && core) {
+                            core.TradeService.update(id, fields);
+                            const idx = trades.findIndex(t => t.id === id);
+                            if (idx >= 0) trades[idx] = core.Trades.find(t => t.id === id);
+                        } else {
+                            const idx = trades.findIndex(t => t.id === id);
+                            if (idx >= 0) Object.assign(trades[idx], fields);
+                        }
+                        renderAll();
+                        showToast('Trade updated — risk, discipline & analytics recalculated');
+                    } else {
+                        // 7-STEP PIPELINE (core.js — canonical data model):
+                        // 1 Resolve Context → 2 Load Policy → 3 Evaluate → 4 Persist Evidence
+                        // → 5 Update State → 6&7 Publish Events & Refresh.
+                        // The trade.created event on the bus drives the UI via the subscriber
+                        // below — this function only emits, it never renders directly.
+                        const stratSel = $('e-strategy');
+                        core.logTradePipeline({
+                            account_id: accountId,
+                            ts: new Date(),
+                            symbol, dir, entry, exit, size, risk,
+                            pnl, r: risk > 0 ? Math.round((pnl / risk) * 100) / 100 : 0,
+                            setup: $('e-setup').value || '—',
+                            strategy: stratSel && stratSel.selectedOptions[0] ? stratSel.selectedOptions[0].textContent : '—',
+                            strategy_id: stratSel && stratSel.value ? stratSel.value : undefined,
+                            session: $('e-session').value || '—',
+                            timeframe: $('e-tf') ? $('e-tf').value : '5m',
+                            stop: isFinite(sl) ? sl : undefined,
+                            tp: isFinite(tp) ? tp : undefined,
+                            adherence: 'followed',
+                            reviewed: false,
+                            note: $('e-thesis') ? $('e-thesis').value : '',
+                            emotion
+                        });
+                    }
+                    closeEntryModal();
+                } catch (err) {
+                    showToast('⚠ Could not save trade — ' + (err && err.message ? err.message : err));
+                    if (window.console) console.error('saveTrade failed:', err);
+                }
+            };
+
+            // ============ TRADE EDIT / DELETE (TradeService) ============
+            window.editTrade = function(id) {
+                const t = trades.find(x => x.id === id);
+                if (!t) return;
+                closeDetail();
+                openEntryModal({ id, symbol: t.symbol, dir: t.dir, setup: t.setup, strategy: t.strategy, strategy_id: t.strategy_id, session: t.session, entry: t.entry, exit: t.exit, size: t.size, risk: t.risk, note: t.note });
+            };
+
+            window.deleteTrade = function(id) {
+                if (!window.confirm('Reverse / delete this trade? Equity, risk, discipline and analytics will recalculate.')) return;
+                const core = window.TradeMindCore;
+                if (core && core.Trades.some(t => t.id === id)) {
+                    core.TradeService.remove(id);   // publishes trade.deleted → all pages recalc
+                }
+                const idx = trades.findIndex(t => t.id === id);
+                if (idx >= 0) trades.splice(idx, 1);
+                closeDetail();
+                renderAll();
+                showToast('Trade deleted — derived values recalculated');
+            };
+
+            // ============ TRADE DETAIL (PRD §6.3) ============
+            window.openDetail = function(id) {
+                currentDetailId = id;
+                const t = trades.find(x => x.id === id);
+                if (!t) return;
+                const related = trades.filter(x => x.setup === t.setup && x.id !== id).slice(0, 2);
+                const adherenceBadge = t.adherence === 'followed'
+                    ? '<span class="tag tag-emerald">' + ADHERENCE_LABEL[t.adherence] + '</span>'
+                    : '<span class="tag tag-amber">' + ADHERENCE_LABEL[t.adherence] + '</span>';
+
+                $('detail-body').innerHTML =
+                    '<div class="flex items-center justify-between px-6 py-5 border-b border-[#1C1C20]">' +
+                        '<div class="flex items-center gap-3">' +
+                            '<div class="w-9 h-9 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[11px] font-bold ' + (t.dir === 'Long' ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + t.symbol.slice(0, 2).toUpperCase() + '</div>' +
+                            '<div>' +
+                                '<div class="text-[15px] font-bold text-white flex items-center gap-2">' + t.symbol + ' ' +
+                                    (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</div>' +
+                                '<div class="text-[12px] text-[#6E6E78] num">' + fmtDate(t.ts) + '</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="collapse-btn" onclick="closeDetail()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                    '</div>' +
+
+                    '<div class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">' +
+
+                        // Result banner
+                        '<div class="rounded-lg border p-4 flex items-center justify-between ' + (t.pnl > 0 ? 'border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.06)]' : t.pnl < 0 ? 'border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.06)]' : 'border-[#26262B] bg-[#121214]') + '">' +
+                            '<div>' +
+                                '<div class="label-xs mb-1">Net result</div>' +
+                                '<div class="num text-[22px] font-bold ' + (t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-white') + '">' + fmt(t.pnl) + '</div>' +
+                            '</div>' +
+                            '<div class="text-right">' +
+                                '<div class="label-xs mb-1">R multiple</div>' +
+                                '<div class="num text-[18px] font-bold ' + (t.r > 0 ? 'text-[#34D399]' : t.r < 0 ? 'text-[#F87171]' : 'text-white') + '">' + (t.r > 0 ? '+' : '') + t.r.toFixed(2) + 'R</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        // Chart / screenshot region
+                        '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] overflow-hidden">' +
+                            '<div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1F1F23]">' +
+                                '<span class="text-[12px] font-semibold text-[#8A8A93]">Chart · ' + t.symbol + ' ' + t.setup + '</span>' +
+                                '<span class="text-[11px] text-[#6E6E78]">5m · annotated</span>' +
+                            '</div>' +
+                            '<svg viewBox="0 0 460 180" class="w-full block">' +
+                                '<rect x="0" y="0" width="460" height="180" fill="#0F0F11"/>' +
+                                '<g stroke="#1C1C20" stroke-width="1">' +
+                                    '<line x1="0" y1="36" x2="460" y2="36"/><line x1="0" y1="72" x2="460" y2="72"/>' +
+                                    '<line x1="0" y1="108" x2="460" y2="108"/><line x1="0" y1="144" x2="460" y2="144"/>' +
+                                '</g>' +
+                                '<rect x="140" y="34" width="52" height="58" fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.35)" stroke-width="1" stroke-dasharray="4 3"/>' +
+                                '<text x="150" y="30" fill="#34D399" font-family="JetBrains Mono, monospace" font-size="9">FVG</text>' +
+                                '<g stroke="#10B981" stroke-width="1.2">' +
+                                    '<line x1="40" y1="120" x2="40" y2="104"/><rect x="38" y="108" width="4" height="12" fill="#10B981"/>' +
+                                    '<line x1="52" y1="112" x2="52" y2="96"/><rect x="50" y="100" width="4" height="12" fill="#10B981"/>' +
+                                    '<line x1="64" y1="102" x2="64" y2="88"/><rect x="62" y="92" width="4" height="10" fill="#10B981"/>' +
+                                    '<line x1="88" y1="96" x2="88" y2="60"/><rect x="86" y="68" width="4" height="22" fill="#10B981"/>' +
+                                    '<line x1="100" y1="80" x2="100" y2="50"/><rect x="98" y="56" width="4" height="20" fill="#10B981"/>' +
+                                    '<line x1="112" y1="66" x2="112" y2="44"/><rect x="110" y="48" width="4" height="14" fill="#10B981"/>' +
+                                    '<line x1="150" y1="70" x2="150" y2="92"/><rect x="148" y="74" width="4" height="12" fill="#ef4444"/>' +
+                                    '<line x1="162" y1="88" x2="162" y2="112"/><rect x="160" y="94" width="4" height="12" fill="#ef4444"/>' +
+                                    '<line x1="174" y1="100" x2="174" y2="120"/><rect x="172" y="104" width="4" height="12" fill="#ef4444"/>' +
+                                    '<line x1="198" y1="96" x2="198" y2="72"/><rect x="196" y="78" width="4" height="14" fill="#10B981"/>' +
+                                    '<line x1="210" y1="86" x2="210" y2="66"/><rect x="208" y="70" width="4" height="12" fill="#10B981"/>' +
+                                    '<line x1="234" y1="76" x2="234" y2="92"/><rect x="232" y="80" width="4" height="8" fill="#ef4444"/>' +
+                                    '<line x1="246" y1="84" x2="246" y2="100"/><rect x="244" y="88" width="4" height="8" fill="#ef4444"/>' +
+                                    '<line x1="258" y1="96" x2="258" y2="112"/><rect x="256" y="100" width="4" height="8" fill="#ef4444"/>' +
+                                '</g>' +
+                                '<line x1="0" y1="92" x2="460" y2="92" stroke="#10B981" stroke-width="1" stroke-dasharray="5 4"/>' +
+                                '<line x1="0" y1="120" x2="460" y2="120" stroke="#F87171" stroke-width="1" stroke-dasharray="5 4"/>' +
+                                '<text x="330" y="88" fill="#34D399" font-family="JetBrains Mono, monospace" font-size="9">exit ' + t.exit + '</text>' +
+                                '<text x="330" y="130" fill="#F87171" font-family="JetBrains Mono, monospace" font-size="9">stop ' + (t.entry - (t.dir === 'Long' ? 0.0015 : -0.0015)).toFixed(5) + '</text>' +
+                            '</svg>' +
+                        '</div>' +
+
+                        // Metrics
+                        '<div class="grid grid-cols-2 gap-3">' +
+                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
+                                '<div class="label-xs mb-2.5">Execution</div>' +
+                                '<div class="flex flex-col gap-2 text-[12.5px]">' +
+                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Entry</span><span class="num text-white">' + fmtPrice(t.symbol, t.entry) + '</span></div>' +
+                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Exit</span><span class="num text-white">' + fmtPrice(t.symbol, t.exit) + '</span></div>' +
+                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Size</span><span class="num text-white">' + t.size + ' lot' + (t.size === 1 ? '' : 's') + '</span></div>' +
+                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Slippage</span><span class="num text-[#34D399]">0.0</span></div>' +
+                                '</div>' +
+                            '</div>' +
+                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
+                                '<div class="label-xs mb-2.5">Risk</div>' +
+                                '<div class="flex flex-col gap-2 text-[12.5px]">' +
+                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Risk</span><span class="num text-white">$' + t.risk + '</span></div>' +
+                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">R multiple</span><span class="num ' + (t.r >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + (t.r > 0 ? '+' : '') + t.r.toFixed(2) + 'R</span></div>' +
+                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Position risk</span><span class="num text-white">' + (t.risk / 100).toFixed(1) + '%</span></div>' +
+                                '</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        // Timeline (PRD §6.3)
+                        '<div>' +
+                            '<div class="panel-title mb-3">Trade timeline</div>' +
+                            '<div class="flex flex-col gap-4">' +
+                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Plan</div><div class="text-[12px] text-[#8A8A93] mt-0.5">Setup identified: ' + t.setup + ' · strategy: ' + t.strategy + ' · session: ' + t.session + '</div></div></div>' +
+                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Entry</div><div class="text-[12px] text-[#8A8A93] mt-0.5 num">' + fmtPrice(t.symbol, t.entry) + ' · risk $' + t.risk + ' · 1R plan</div></div></div>' +
+                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Management</div><div class="text-[12px] text-[#8A8A93] mt-0.5">' + (t.adherence === 'followed' ? 'Left plan untouched' : ADHERENCE_LABEL[t.adherence]) + '</div></div></div>' +
+                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Exit</div><div class="text-[12px] text-[#8A8A93] mt-0.5 num">' + fmtPrice(t.symbol, t.exit) + ' · ' + fmt(t.pnl) + ' (' + (t.r > 0 ? '+' : '') + t.r.toFixed(1) + 'R)</div></div></div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        // Context
+                        '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
+                            '<div class="label-xs mb-2.5">Setup &amp; context</div>' +
+                            '<div class="flex flex-wrap gap-2">' +
+                                '<span class="tag tag-gray">' + t.setup + '</span>' +
+                                '<span class="tag tag-gray">' + t.strategy + '</span>' +
+                                '<span class="tag tag-gray">' + t.session + ' session</span>' +
+                                (t.adherence === 'followed' ? '' : adherenceBadge) +
+                                (t.reviewed ? '<span class="tag tag-emerald">Reviewed</span>' : '<span class="tag tag-blue">Pending review</span>') +
+                            '</div>' +
+                            (t.note ? '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed mt-3">' + t.note + '</p>' : '') +
+                        '</div>' +
+
+                        // AI critique (PRD §6.3)
+                        '<div class="rounded-lg border border-[#1F1F23] p-3.5">' +
+                            '<div class="flex items-center gap-2 mb-3"><svg data-lucide="sparkles" class="w-4 h-4 text-[#10B981]"></svg><span class="panel-title">AI critique</span></div>' +
+                            '<div class="flex flex-col gap-2.5 text-[12.5px] leading-relaxed">' +
+                                '<p><span class="text-[#34D399] font-semibold">Valid:</span> <span class="text-[#C4C4CC]">Entry at the FVG with confirmed MSS — matches your highest-probability setup.</span></p>' +
+                                '<p><span class="text-[#F59E0B] font-semibold">Weak:</span> <span class="text-[#C4C4CC]">' + (t.adherence === 'followed' ? 'Management was fine, but no explicit invalidation was written down before entry.' : ADHERENCE_LABEL[t.adherence] + ' — this violated your rules and cost ' + Math.abs(t.r).toFixed(1) + 'R.') + '</span></p>' +
+                                '<p><span class="text-[#3B82F6] font-semibold">Change:</span> <span class="text-[#C4C4CC]">Write the invalidation level before entry and log it with the plan. Consider a replay session for this setup.</span></p>' +
+                            '</div>' +
+                        '</div>' +
+
+                        // Related trades
+                        '<div>' +
+                            '<div class="panel-title mb-3">Related trades · ' + t.setup + '</div>' +
+                            (related.length
+                                ? related.map(rt =>
+                                    '<button class="w-full text-left flex items-center justify-between rounded-lg border border-[#1F1F23] bg-[#0F0F11] px-3.5 py-2.5 mb-2 hover:border-[#2E2E35] transition-colors" onclick="openDetail(\'' + rt.id + '\')">' +
+                                        '<span class="text-[13px] font-semibold text-white">' + rt.symbol + ' <span class="text-[#6E6E78] font-medium num">' + fmtDate(rt.ts) + '</span></span>' +
+                                        '<span class="num text-[13px] font-bold ' + (rt.pnl > 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmt(rt.pnl) + ' · ' + (rt.r > 0 ? '+' : '') + rt.r.toFixed(1) + 'R</span>' +
+                                    '</button>').join('')
+                                : '<p class="text-[12.5px] text-[#6E6E78]">No other trades on this setup yet.</p>') +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="px-6 py-4 border-t border-[#1C1C20] flex items-center gap-2.5 flex-wrap">' +
+                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px]" onclick="editTrade(\'' + t.id + '\')"><svg data-lucide="pencil" class="w-4 h-4"></svg> Edit</button>' +
+                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px]" onclick="duplicateSetup(\'' + t.id + '\')"><svg data-lucide="copy" class="w-4 h-4"></svg> Duplicate setup</button>' +
+                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px] !text-[#F87171]" onclick="deleteTrade(\'' + t.id + '\')"><svg data-lucide="trash-2" class="w-4 h-4"></svg> Delete</button>' +
+                        '<button class="btn-primary !py-2 !px-3.5 !text-[13px] ml-auto" onclick="markReviewed(\'' + t.id + '\')">' + (t.reviewed ? 'Reviewed ✓' : 'Mark reviewed') + '</button>' +
+                    '</div>';
+
+                $('detail-overlay').classList.add('open');
+                $('detail-drawer').classList.add('open');
+                if (window.lucide) lucide.createIcons();
+            };
+
+            window.closeDetail = function() {
+                $('detail-overlay').classList.remove('open');
+                $('detail-drawer').classList.remove('open');
+            };
+
+            window.markReviewed = function(id) {
+                const t = trades.find(x => x.id === id);
+                if (t) { t.reviewed = true; }
+                renderAll();
+                openDetail(id);
+                showToast('Trade marked as reviewed');
+            };
+
+            window.duplicateSetup = function(id) {
+                const t = trades.find(x => x.id === id);
+                closeDetail();
+                openEntryModal({ symbol: t.symbol, dir: t.dir, setup: t.setup, strategy: t.strategy, session: t.session });
+                showToast('Setup prefilled — enter new prices');
+            };
+
+            // ============ TOAST ============
+            let toastTimer;
+            window.showToast = function(msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+
+            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
+            // The Journal listens for trade.created and updates itself — the save
+            // action only emits on the bus (see saveTrade → logTradePipeline).
+            const core = window.TradeMindCore;
+            if (core) {
+                // populate the entry form's account selector from the canonical registry
+                const syncAccounts = () => {
+                    if (core.Accounts.length) {
+                        const sel = core.selectedAccountId();
+                        $('e-account').innerHTML = core.Accounts.map(a =>
+                            '<option value="' + a.id + '"' + (a.id === sel ? ' selected' : '') + '>' + a.name + '</option>').join('');
+                    } else {
+                        $('e-account').innerHTML = '<option value="">No account yet — create one in Strategy Lab</option>';
+                    }
+                    // Real strategies become selectable when logging a trade
+                    // (local-first §3). Fall back to the built-in presets only
+                    // when the user hasn't created any strategies yet.
+                    const stratSel = $('e-strategy');
+                    if (stratSel && core.StrategyMaster && core.StrategyMaster.length) {
+                        const active = core.StrategyMaster.filter(s => s.status !== 'inactive');
+                        stratSel.innerHTML = '<option value="">— strategy —</option>' + active.map(s =>
+                            '<option value="' + s.id + '">' + s.name + '</option>').join('');
+                    }
+                };
+                syncAccounts();
+                core.TradeMindBus.subscribe('config.changed', syncAccounts);
+                core.TradeMindBus.subscribe('account.changed', syncAccounts);
+                // re-read the canonical ledger whenever it changes (hydration,
+                // edits, deletes — the ledger is the single source of truth)
+                const reloadFromCanonical = () => {
+                    const canonical = loadCanonicalTrades();
+                    if (canonical) { trades = canonical; activeView = 'all'; selected.clear(); renderAll(); }
+                };
+                core.TradeMindBus.subscribe('state.hydrated', reloadFromCanonical);
+                core.TradeMindBus.subscribe('trade.updated', reloadFromCanonical);
+                core.TradeMindBus.subscribe('trade.deleted', reloadFromCanonical);
+                core.TradeMindBus.subscribe('trade.created', t => {
+                    trades.unshift(t);
+                    activeView = 'all';
+                    renderAll();
+                    const blocked = t.adherence_result === 'BLOCK';
+                    showToast('Trade logged — ' + t.symbol + ' ' + t.dir + ' ' + fmt(t.pnl) + ' (' + (t.r >= 0 ? '+' : '') + t.r.toFixed(2) + 'R)' + (blocked ? ' · ⚠ BLOCKED — ' + t.block_reason : ''));
+                });
+            }
+
+            // ============ INIT ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            renderAll();
+            if (window.lucide) lucide.createIcons();
+            // Deep link from the Dashboard's "Log Trade" buttons
+            // (journal.html?log=1) — open the entry modal right away.
+            if (new URLSearchParams(window.location.search).has('log')) {
+                openEntryModal();
+            }
+        })();
+    </script>
+    <script src="reset.js"></script>
+</body>
+</html>

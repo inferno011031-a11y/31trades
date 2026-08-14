@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Calendar</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: #0A0A0C;
+            color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+
+        .btn-ghost {
+            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+
+        .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
+
+        /* ---- Calendar grid ---- */
+        .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+
+        .cal-cell {
+            min-height: 92px;
+            background: #121214;
+            border: 1px solid #1F1F23;
+            border-radius: 10px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            transition: all 0.15s;
+            text-align: left;
+        }
+
+        .cal-cell:hover { border-color: #3A3A41; background: #16161A; }
+        .cal-cell.other { opacity: 0.35; pointer-events: none; }
+        .cal-cell.today { border-color: rgba(16,185,129,0.55); box-shadow: 0 0 0 1px rgba(16,185,129,0.3); }
+        .cal-cell.no-trades { border-style: dashed; }
+
+        .cal-cell.win { background: rgba(16,185,129, 0.055); border-color: rgba(16,185,129,0.16); }
+        .cal-cell.win-2 { background: rgba(16,185,129, 0.10); border-color: rgba(16,185,129,0.28); }
+        .cal-cell.win-3 { background: rgba(16,185,129, 0.16); border-color: rgba(16,185,129,0.40); }
+
+        .cal-cell.loss { background: rgba(239,68,68, 0.055); border-color: rgba(239,68,68,0.16); }
+        .cal-cell.loss-2 { background: rgba(239,68,68, 0.10); border-color: rgba(239,68,68,0.28); }
+        .cal-cell.loss-3 { background: rgba(239,68,68, 0.16); border-color: rgba(239,68,68,0.40); }
+
+        .cal-daynum { font-size: 11.5px; font-weight: 700; color: #8A8A93; }
+        .cal-cell.today .cal-daynum { color: #34D399; }
+        .cal-pnl { font-size: 13px; font-weight: 700; }
+        .cal-count { font-size: 10.5px; color: #6E6E78; font-weight: 600; }
+
+        /* Legend */
+        .legend-swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+
+        /* Drawer */
+        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .overlay.open { opacity: 1; pointer-events: auto; }
+
+        .drawer {
+            position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 94vw); z-index: 50;
+            background: #0D0D0F; border-left: 1px solid #1C1C20;
+            transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
+            display: flex; flex-direction: column;
+        }
+        .drawer.open { transform: none; }
+
+        .tl-item { display: flex; gap: 12px; position: relative; }
+        .tl-item::before { content: ""; position: absolute; left: 6px; top: 18px; bottom: -6px; width: 1px; background: #232327; }
+        .tl-item:last-child::before { display: none; }
+        .tl-dot { width: 13px; height: 13px; border-radius: 999px; border: 2px solid #10B981; background: #0D0D0F; flex-shrink: 0; margin-top: 2px; }
+        .tl-dot.muted { border-color: #4A4A52; }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
+        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+
+        .month-btn {
+            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            background: #121214; border: 1px solid #1F1F23; color: #8A8A93; transition: all 0.15s;
+        }
+        .month-btn:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+        @media (max-width: 768px) {
+            .cal-cell { min-height: 64px; padding: 6px 8px; }
+            .cal-pnl { font-size: 11px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item active"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="#" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input type="text" class="search-input" placeholder="Search trades, symbols, strategies…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="showToast('Open the Journal to log a trade')">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+
+                    <!-- Header + month navigation -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Calendar</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Daily P&amp;L · trade count · risk · discipline (PRD §14)</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="month-btn" onclick="shiftMonth(-1)"><svg data-lucide="chevron-left" class="w-4 h-4"></svg></button>
+                            <button id="month-label" class="btn-ghost !px-4 num"></button>
+                            <button class="month-btn" onclick="shiftMonth(1)"><svg data-lucide="chevron-right" class="w-4 h-4"></svg></button>
+                            <button class="btn-ghost !py-2 !px-3 !text-[12.5px] ml-1" onclick="goToday()">Today</button>
+                        </div>
+                    </div>
+
+                    <!-- Month summary strip -->
+                    <div id="month-summary" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3"></div>
+
+                    <!-- Calendar grid -->
+                    <div class="panel p-4 sm:p-5">
+                        <div class="cal-grid mb-2">
+                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Mon</div>
+                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Tue</div>
+                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Wed</div>
+                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Thu</div>
+                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Fri</div>
+                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Sat</div>
+                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Sun</div>
+                        </div>
+                        <div id="cal-grid" class="cal-grid"></div>
+
+                        <!-- Legend -->
+                        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-4 pt-4 border-t border-[#17171A]">
+                            <span class="text-[12px] font-semibold text-[#8A8A93]">Daily P&amp;L:</span>
+                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);"></span> Big win</span>
+                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:rgba(16,185,129,0.055);border:1px solid rgba(16,185,129,0.16);"></span> Small win</span>
+                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:rgba(239,68,68,0.055);border:1px solid rgba(239,68,68,0.16);"></span> Small loss</span>
+                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:rgba(239,68,68,0.16);border:1px solid rgba(239,68,68,0.4);"></span> Big loss</span>
+                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:#121214;border:1px dashed #232327;"></span> No trades</span>
+                            <span class="ml-auto text-[12px] text-[#6E6E78]"><span class="text-[#34D399] font-semibold">●</span> Today</span>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Calendar demo build · data is illustrative</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ============ DAY SESSION REVIEW DRAWER ============ -->
+    <div class="overlay" id="day-overlay" onclick="closeDay()"></div>
+    <div class="drawer" id="day-drawer">
+        <div id="day-body"></div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    <style>
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: #1C1C20; border: 1px solid #2E2E35; color: #E8E8EC; border-radius: 10px;
+            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    </style>
+
+    <script>
+        (function() {
+            const $ = id => document.getElementById(id);
+            const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+            const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+            const SYMBOLS = ['EURUSD','GBPUSD','XAUUSD','NAS100'];
+            const SETUPS = ['MSS + FVG','FVG','Breakout','Order Block'];
+            const fmt = n => (n >= 0 ? '+' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
+
+            // Deterministic PRNG so demo data is stable per month
+            function mulberry32(a) {
+                return function() {
+                    a |= 0; a = a + 0x6D2B79F5 | 0;
+                    let t = Math.imul(a ^ a >>> 15, 1 | a);
+                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+                };
+            }
+
+            // Generate trades for a month (weekdays only, 0-3 per day)
+            function genTrades(year, month) {
+                const trades = [];
+                const rnd = mulberry32(year * 100 + month + 7);
+                const days = new Date(year, month + 1, 0).getDate();
+                for (let d = 1; d <= days; d++) {
+                    const date = new Date(year, month, d);
+                    const dow = date.getDay();
+                    if (dow === 0 || dow === 6) continue;
+                    const n = Math.floor(rnd() * 4); // 0-3
+                    for (let i = 0; i < n; i++) {
+                        const symbol = SYMBOLS[Math.floor(rnd() * SYMBOLS.length)];
+                        const win = rnd() > 0.3;
+                        const raw = win ? 0.5 + rnd() * 3 : -(0.5 + rnd() * 1.5);
+                        const r = Math.round(raw * 100) / 100;
+                        const risk = 100;
+                        trades.push({
+                            date: new Date(year, month, d, 8 + Math.floor(rnd() * 8), Math.floor(rnd() * 60)),
+                            symbol,
+                            dir: rnd() > 0.5 ? 'Long' : 'Short',
+                            setup: SETUPS[Math.floor(rnd() * SETUPS.length)],
+                            session: rnd() > 0.5 ? 'London' : 'New York',
+                            pnl: Math.round(r * risk),
+                            r,
+                            risk,
+                            adherence: rnd() > 0.86 ? (rnd() > 0.5 ? 'early exit' : 'no-plan') : 'followed',
+                            reviewed: rnd() > 0.2
+                        });
+                    }
+                }
+                return trades;
+            }
+
+            let year = new Date().getFullYear();
+            let month = new Date().getMonth();
+            const today = new Date();
+            let tradesCache = {};
+
+            // Canonical source of truth: the calendar is a daily read model of
+            // the shared trade ledger (core.js). The offline generator is ONLY
+            // used when core.js itself is missing — a first user sees an empty
+            // calendar, never fabricated history.
+            function tradesFor(year, month) {
+                const key = year + '-' + month;
+                if (!tradesCache[key]) {
+                    const core = window.TradeMindCore;
+                    if (core && core.Trades) {
+                        const accId = core.selectedAccountId() || (core.Accounts.length ? core.Accounts[0].id : null);
+                        if (!accId) { tradesCache[key] = []; return tradesCache[key]; }
+                        const t0 = new Date(year, month, 1);
+                        const t1 = new Date(year, month + 1, 1);
+                        tradesCache[key] = core.Trades
+                            .filter(t => t.account_id === accId && new Date(t.ts) >= t0 && new Date(t.ts) < t1)
+                            .map(t => ({ ...t, date: new Date(t.ts) }));
+                    } else {
+                        tradesCache[key] = genTrades(year, month);
+                    }
+                }
+                return tradesCache[key];
+            }
+
+            function dayAgg(trades, date) {
+                const list = trades.filter(t =>
+                    t.date.getFullYear() === date.getFullYear() &&
+                    t.date.getMonth() === date.getMonth() &&
+                    t.date.getDate() === date.getDate());
+                const pnl = list.reduce((s, t) => s + t.pnl, 0);
+                const wins = list.filter(t => t.pnl > 0).length;
+                const losses = list.filter(t => t.pnl < 0).length;
+                const consumed = Math.abs(list.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
+                const violations = list.filter(t => t.adherence !== 'followed').length;
+                const discipline = Math.max(0, 100 - violations * 10);
+                return { list, pnl, wins, losses, consumed, discipline, violations, count: list.length };
+            }
+
+            function level(pnl, absMax) {
+                if (pnl > 0) {
+                    const m = Math.abs(pnl) / (absMax || 1);
+                    return m > 0.6 ? 'win-3' : m > 0.3 ? 'win-2' : 'win';
+                }
+                if (pnl < 0) {
+                    const m = Math.abs(pnl) / (absMax || 1);
+                    return m > 0.6 ? 'loss-3' : m > 0.3 ? 'loss-2' : 'loss';
+                }
+                return '';
+            }
+
+            function renderSummary() {
+                const trades = tradesFor(year, month);
+                const total = trades.reduce((s, t) => s + t.pnl, 0);
+                const wins = trades.filter(t => t.pnl > 0).length;
+                const losses = trades.filter(t => t.pnl < 0).length;
+                const avgR = trades.length ? trades.reduce((s, t) => s + t.r, 0) / trades.length : 0;
+                const consumed = Math.abs(trades.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
+                const days = new Set(trades.map(t => t.date.getDate())).size;
+                const violations = trades.filter(t => t.adherence !== 'followed').length;
+                const discipline = trades.length ? Math.max(0, Math.round(100 - (violations / trades.length) * 50)) : 100;
+
+                const cards = [
+                    ['Net P&L', fmt(total), total >= 0 ? 'text-[#34D399]' : 'text-[#F87171]', 'Month to date'],
+                    ['Trades', String(trades.length), 'text-white', wins + 'W / ' + losses + 'L · ' + days + ' days'],
+                    ['Win rate', trades.length ? Math.round(wins / (wins + losses || 1) * 100) + '%' : '—', 'text-white', 'Rolling month'],
+                    ['Avg R', avgR >= 0 ? '+' + avgR.toFixed(2) + 'R' : avgR.toFixed(2) + 'R', avgR >= 0 ? 'text-[#34D399]' : 'text-[#F87171]', 'Per trade'],
+                    ['Risk consumed', '$' + consumed, consumed > 0 ? 'text-white' : 'text-[#6E6E78]', 'realized losses this month'],
+                    ['Discipline', discipline + '/100', discipline > 80 ? 'text-[#34D399]' : discipline > 60 ? 'text-[#F59E0B]' : 'text-[#F87171]', violations + ' violations']
+                ];
+
+                $('month-summary').innerHTML = cards.map(c =>
+                    '<div class="panel p-3.5">' +
+                        '<div class="label-xs mb-1.5">' + c[0] + '</div>' +
+                        '<div class="num text-[18px] font-bold ' + c[2] + '">' + c[1] + '</div>' +
+                        '<div class="text-[11px] text-[#6E6E78] mt-1">' + c[3] + '</div>' +
+                    '</div>').join('');
+            }
+
+            function renderGrid() {
+                const trades = tradesFor(year, month);
+                const daysInMonth = new Date(year, month + 1, 0).getDate();
+                const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+                const offset = (firstDow + 6) % 7; // Monday-first
+                const prevMonth = new Date(year, month - 1, 1);
+                const daysInPrev = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
+
+                // absolute max day P&L for intensity scaling
+                let absMax = 1;
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const agg = dayAgg(trades, new Date(year, month, d));
+                    absMax = Math.max(absMax, Math.abs(agg.pnl));
+                }
+
+                const cells = [];
+                for (let i = 0; i < offset; i++) {
+                    const d = daysInPrev - offset + 1 + i;
+                    cells.push('<button class="cal-cell other" disabled><span class="cal-daynum">' + d + '</span></button>');
+                }
+                for (let d = 1; d <= daysInMonth; d++) {
+                    const date = new Date(year, month, d);
+                    const agg = dayAgg(trades, date);
+                    const isToday = date.toDateString() === today.toDateString();
+                    const cls = ['cal-cell'];
+                    if (isToday) cls.push('today');
+                    if (agg.count === 0) cls.push('no-trades');
+                    else cls.push(level(agg.pnl, absMax));
+                    const pnlText = agg.count ? (agg.pnl > 0 ? '+' : agg.pnl < 0 ? '-' : '') + '$' + Math.abs(agg.pnl) : '';
+                    const pnlColor = agg.pnl > 0 ? 'text-[#34D399]' : agg.pnl < 0 ? 'text-[#F87171]' : '';
+                    const countText = agg.count ? agg.count + ' trade' + (agg.count === 1 ? '' : 's') : '—';
+                    cells.push(
+                        '<button class="' + cls.join(' ') + '" onclick="openDay(' + d + ')">' +
+                            '<span class="cal-daynum">' + d + '</span>' +
+                            '<span class="flex items-end justify-between gap-1">' +
+                                '<span class="cal-pnl num ' + pnlColor + '">' + pnlText + '</span>' +
+                                '<span class="cal-count">' + countText + '</span>' +
+                            '</span>' +
+                        '</button>');
+                }
+                // trailing cells
+                const total = offset + daysInMonth;
+                const trailing = (7 - (total % 7)) % 7;
+                for (let i = 1; i <= trailing; i++) {
+                    cells.push('<button class="cal-cell other" disabled><span class="cal-daynum">' + i + '</span></button>');
+                }
+
+                $('cal-grid').innerHTML = cells.join('');
+                $('month-label').textContent = MONTHS[month] + ' ' + year;
+                if (window.lucide) lucide.createIcons();
+            }
+
+            function renderAll() { renderSummary(); renderGrid(); }
+
+            window.shiftMonth = function(delta) {
+                month += delta;
+                if (month < 0) { month = 11; year--; }
+                if (month > 11) { month = 0; year++; }
+                renderAll();
+            };
+
+            window.goToday = function() {
+                year = today.getFullYear();
+                month = today.getMonth();
+                renderAll();
+            };
+
+            // ============ DAY SESSION REVIEW (PRD §14) ============
+            window.openDay = function(d) {
+                const date = new Date(year, month, d);
+                const agg = dayAgg(tradesFor(year, month), date);
+                const weekday = DOW[date.getDay()];
+                const monday = date.toDateString() === today.toDateString();
+
+                const tradesHtml = agg.list.length
+                    ? agg.list.slice().sort((a, b) => a.date - b.date).map(t =>
+                        '<div class="flex items-center gap-3 rounded-lg border border-[#1F1F23] bg-[#0F0F11] px-3.5 py-2.5 mb-2">' +
+                            '<div class="w-7 h-7 rounded-md bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold ' + (t.dir === 'Long' ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + t.symbol.slice(0, 2).toUpperCase() + '</div>' +
+                            '<div class="flex-1 min-w-0">' +
+                                '<div class="text-[13px] font-semibold text-white">' + t.symbol + ' <span class="tag tag-gray !text-[10px] !px-1.5 !py-0.5">' + t.dir + '</span></div>' +
+                                '<div class="text-[11px] text-[#6E6E78] mt-0.5">' + t.setup + ' · ' + t.session + ' · ' + ('0' + t.date.getHours()).slice(-2) + ':' + ('0' + t.date.getMinutes()).slice(-2) + '</div>' +
+                            '</div>' +
+                            '<div class="text-right">' +
+                                '<div class="num text-[13px] font-bold ' + (t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]') + '">' + (t.pnl > 0 ? '+' : t.pnl < 0 ? '-' : '') + '$' + Math.abs(t.pnl) + '</div>' +
+                                '<div class="num text-[11px] text-[#6E6E78]">' + (t.r >= 0 ? '+' : '') + t.r.toFixed(1) + 'R' + (t.adherence !== 'followed' ? ' · <span class="text-[#F59E0B]">' + t.adherence + '</span>' : '') + '</div>' +
+                            '</div>' +
+                        '</div>').join('')
+                    : '<p class="text-[13px] text-[#6E6E78] py-4 text-center">No trades this day.</p>';
+
+                const dayVerdict = agg.pnl > 0
+                    ? '<span class="text-[#34D399] font-semibold">Profitable day</span> — discipline held, no violations.'
+                    : agg.pnl < 0
+                    ? (agg.violations > 0
+                        ? '<span class="text-[#F59E0B] font-semibold">Red day with violations</span> — review what broke before the next session.'
+                        : '<span class="text-[#F87171] font-semibold">Red day, clean execution</span> — the process held; losses were within plan.')
+                    : 'Flat day — no net movement.';
+
+                $('day-body').innerHTML =
+                    '<div class="flex items-center justify-between px-6 py-5 border-b border-[#1C1C20]">' +
+                        '<div class="flex items-center gap-3">' +
+                            '<div class="w-9 h-9 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[13px] font-bold text-[#34D399] num">' + d + '</div>' +
+                            '<div>' +
+                                '<div class="text-[15px] font-bold text-white">' + weekday + ', ' + MONTHS[date.getMonth()] + ' ' + d + '</div>' +
+                                '<div class="text-[12px] text-[#6E6E78]">' + (monday ? 'Today · ' : '') + agg.count + ' trade' + (agg.count === 1 ? '' : 's') + ' · session review</div>' +
+                            '</div>' +
+                        '</div>' +
+                        '<button class="collapse-btn" onclick="closeDay()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                    '</div>' +
+
+                    '<div class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">' +
+
+                        '<div class="grid grid-cols-2 gap-3">' +
+                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
+                                '<div class="label-xs mb-1">Net P&amp;L</div>' +
+                                '<div class="num text-[20px] font-bold ' + (agg.pnl > 0 ? 'text-[#34D399]' : agg.pnl < 0 ? 'text-[#F87171]' : 'text-white') + '">' + (agg.pnl > 0 ? '+' : agg.pnl < 0 ? '-' : '') + '$' + Math.abs(agg.pnl) + '</div>' +
+                            '</div>' +
+                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
+                                '<div class="label-xs mb-1">Result</div>' +
+                                '<div class="num text-[20px] font-bold text-white">' + agg.wins + 'W / ' + agg.losses + 'L</div>' +
+                            '</div>' +
+                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
+                                '<div class="label-xs mb-1">Risk consumed</div>' +
+                                '<div class="num text-[20px] font-bold ' + (agg.consumed > 200 ? 'text-[#F59E0B]' : 'text-white') + '">$' + agg.consumed + '</div>' +
+                                '<div class="text-[11px] text-[#6E6E78] mt-1">of $250 daily budget</div>' +
+                            '</div>' +
+                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
+                                '<div class="label-xs mb-1">Discipline score</div>' +
+                                '<div class="num text-[20px] font-bold ' + (agg.discipline > 80 ? 'text-[#34D399]' : agg.discipline > 60 ? 'text-[#F59E0B]' : 'text-[#F87171]') + '">' + agg.discipline + '<span class="text-[12px] text-[#6E6E78] font-semibold">/100</span></div>' +
+                                '<div class="text-[11px] text-[#6E6E78] mt-1">' + agg.violations + ' violation' + (agg.violations === 1 ? '' : 's') + '</div>' +
+                            '</div>' +
+                        '</div>' +
+
+                        '<div class="rounded-lg border border-[#1F1F23] p-3.5 text-[12.5px] text-[#C4C4CC] leading-relaxed">' + dayVerdict + '</div>' +
+
+                        '<div>' +
+                            '<div class="panel-title mb-3">Trades</div>' +
+                            tradesHtml +
+                            '<button class="btn-ghost w-full !py-2.5 !text-[13px] mt-2" onclick="showToast(\'Full session review lives in the Journal — open it to review each trade\')">' +
+                                '<svg data-lucide="book-open" class="w-4 h-4"></svg> Open full review in Journal' +
+                            '</button>' +
+                        '</div>' +
+
+                        // Timeline (PRD §14: day-level review)
+                        '<div>' +
+                            '<div class="panel-title mb-3">Session</div>' +
+                            '<div class="flex flex-col gap-4">' +
+                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Plan</div><div class="text-[12px] text-[#8A8A93] mt-0.5">' + (agg.count ? agg.list[0].setup + ' identified on ' + agg.list[0].symbol + ' during ' + agg.list[0].session : 'No plan — no trades') + '</div></div></div>' +
+                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Execution</div><div class="text-[12px] text-[#8A8A93] mt-0.5">' + agg.count + ' trade' + (agg.count === 1 ? '' : 's') + ' · ' + agg.wins + ' winners · ' + agg.losses + ' losers</div></div></div>' +
+                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Review</div><div class="text-[12px] text-[#8A8A93] mt-0.5">' + (agg.count ? agg.list.filter(t => t.reviewed).length + ' of ' + agg.count + ' reviewed' : 'Nothing to review') + '</div></div></div>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="px-6 py-4 border-t border-[#1C1C20] flex items-center gap-2.5">' +
+                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px]" onclick="showToast(\'Generate daily report — coming soon\')"><svg data-lucide="file-text" class="w-4 h-4"></svg> Daily report</button>' +
+                        '<button class="btn-primary !py-2 !px-3.5 !text-[13px] ml-auto" onclick="showToast(\'Logged the day as reviewed\')">Mark day reviewed</button>' +
+                    '</div>';
+
+                $('day-overlay').classList.add('open');
+                $('day-drawer').classList.add('open');
+                if (window.lucide) lucide.createIcons();
+            };
+
+            window.closeDay = function() {
+                $('day-overlay').classList.remove('open');
+                $('day-drawer').classList.remove('open');
+            };
+
+            let toastTimer;
+            window.showToast = function(msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+
+            // ============ EVENT BUS ============
+            // The calendar re-aggregates from the canonical ledger whenever a
+            // trade or configuration changes — it never holds its own totals.
+            if (window.TradeMindCore) {
+                const bus = window.TradeMindCore.TradeMindBus;
+                const refresh = () => { tradesCache = {}; renderAll(); };
+                ['trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'account.changed'].forEach(ev => bus.subscribe(ev, refresh));
+            }
+
+            // ============ INIT ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            renderAll();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script src="reset.js"></script>
+</body>
+</html>

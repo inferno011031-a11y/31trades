@@ -1,0 +1,1240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Strategy Lab</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0; background: #0A0A0C; color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
+            font-size: 14px; -webkit-font-smoothing: antialiased;
+        }
+        .num, .mono { font-family: 'JetBrains Mono', monospace; }
+
+        .sidebar { width: 232px; background: #0D0D0F; border-right: 1px solid #1C1C20; display: flex; flex-direction: column; flex-shrink: 0; transition: width 0.2s; }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text, body.collapsed .hide-when-collapsed { display: none; }
+        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8.5px 12px; border-radius: 8px; color: #8A8A93; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.15s; }
+        .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active { background: linear-gradient(135deg, rgba(16,185,129,0.14), rgba(16,185,129,0.05)); color: #34D399; }
+
+        .btn-primary { display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 700; font-size: 12.5px; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: opacity 0.15s; }
+        .btn-primary:hover { opacity: 0.88; }
+        .btn-ghost { display: inline-flex; align-items: center; gap: 7px; background: #121214; color: #C4C4CC; font-weight: 600; font-size: 12.5px; padding: 8px 14px; border-radius: 8px; border: 1px solid #1F1F23; cursor: pointer; transition: all 0.15s; }
+        .btn-ghost:hover { border-color: #2E2E35; color: #FFFFFF; }
+        .btn-danger { display: inline-flex; align-items: center; gap: 7px; background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 12.5px; padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s; }
+        .btn-danger:hover { background: rgba(239,68,68,0.2); }
+
+        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; padding: 16px; }
+        .panel-title { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #6E6E78; }
+        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 6px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; }
+        .tag-emerald { background: rgba(16,185,129,0.12); color: #34D399; }
+        .tag-red { background: rgba(239,68,68,0.12); color: #F87171; }
+        .tag-amber { background: rgba(245,158,11,0.12); color: #FBBF24; }
+        .tag-blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
+        .tag-gray { background: rgba(110,110,120,0.14); color: #9A9AA3; }
+        .tag-purple { background: rgba(168,85,247,0.14); color: #C084FC; }
+
+        .kpi { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; padding: 14px 16px; }
+        .kpi .k-label { font-size: 11px; color: #6E6E78; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+        .kpi .k-val { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; }
+
+        .ins-tab { padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93; background: transparent; border: none; cursor: pointer; transition: all 0.15s; }
+        .ins-tab:hover { color: #E8E8EC; }
+        .ins-tab.active { background: #16161A; color: #FFFFFF; }
+
+        .ins-panel { display: none; }
+        .ins-panel.active { display: block; }
+
+        .finput, .fselect, .ftext {
+            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
+            padding: 8px 11px; font-size: 13px; color: #E8E8EC;
+            outline: none; transition: border-color 0.15s; width: 100%;
+        }
+        .finput:focus, .fselect:focus, .ftext:focus { border-color: #2E2E35; }
+        .fselect { appearance: none; cursor: pointer; }
+        .fselect option { background: #121214; color: #C4C4CC; }
+        .ftext { resize: vertical; min-height: 64px; }
+        .flabel { font-size: 11px; font-weight: 700; color: #8A8A93; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        .fhelp { font-size: 11.5px; color: #55555E; margin-top: 5px; }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-start; justify-content: center; z-index: 50; padding: 40px 16px; overflow-y: auto; backdrop-filter: blur(2px); }
+        .modal-overlay.open { display: flex; }
+        .modal { background: #0F0F11; border: 1px solid #26262B; border-radius: 16px; width: 100%; max-width: 860px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+
+        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .tbl th { text-align: left; padding: 8px 10px; color: #6E6E78; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #1F1F23; white-space: nowrap; }
+        .tbl td { padding: 8px 10px; border-bottom: 1px solid #17171A; white-space: nowrap; }
+        .tbl tbody tr:hover { background: #16161A; }
+        .tbl tbody tr:last-child td { border-bottom: none; }
+        .tbl-wrap { overflow-x: auto; }
+
+        .state-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .st-healthy { background: rgba(16,185,129,0.12); color: #34D399; }
+        .st-approaching { background: rgba(245,158,11,0.12); color: #FBBF24; }
+        .st-breached { background: rgba(239,68,68,0.14); color: #F87171; }
+        .st-disabled { background: rgba(110,110,120,0.14); color: #9A9AA3; }
+        .st-noteval { background: rgba(59,130,246,0.1); color: #60A5FA; }
+
+        .map-node { background: #0F0F11; border: 1px solid #26262B; border-radius: 12px; padding: 12px 14px; min-width: 150px; }
+        .map-arrow { display: flex; align-items: center; color: #3A3A41; padding: 0 6px; flex-shrink: 0; }
+
+        .step-dot { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; transition: all 0.15s; }
+        .step-dot.done { background: rgba(16,185,129,0.15); color: #34D399; }
+        .step-dot.active { background: #10B981; color: #052E1F; }
+        .step-dot.todo { background: #16161A; color: #6E6E78; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; cursor: pointer; }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
+        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item active"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="#" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input type="text" class="search-input" placeholder="Ask anything… e.g. what does my system enforce?">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Live</div>
+                    <a href="journal.html" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Strategy Lab</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Define your trading system once — every screen reads the same rules and current state.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button class="btn-ghost" data-action="new-strategy"><svg data-lucide="plus" class="w-4 h-4"></svg> New Strategy</button>
+                            <button class="btn-primary" data-action="new-account"><svg data-lucide="plus" class="w-4 h-4"></svg> New Account</button>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="flex items-center gap-1 overflow-x-auto pb-1">
+                        <button class="ins-tab active" data-tab="home">Home</button>
+                        <button class="ins-tab" data-tab="accounts">Accounts</button>
+                        <button class="ins-tab" data-tab="strategies">Strategies</button>
+                        <button class="ins-tab" data-tab="rulesets">Rule Sets</button>
+                        <button class="ins-tab" data-tab="tags">Tags</button>
+                        <button class="ins-tab" data-tab="map">System Map</button>
+                        <button class="ins-tab" data-tab="history">History</button>
+                    </div>
+
+                    <div id="panel-home" class="ins-panel active"></div>
+                    <div id="panel-accounts" class="ins-panel"></div>
+                    <div id="panel-strategies" class="ins-panel"></div>
+                    <div id="panel-rulesets" class="ins-panel"></div>
+                    <div id="panel-tags" class="ins-panel"></div>
+                    <div id="panel-map" class="ins-panel"></div>
+                    <div id="panel-history" class="ins-panel"></div>
+
+                    <p class="text-[11.5px] text-[#55555E]">31TRADES · Strategy Lab demo build · single source of truth across Dashboard, Risk, Discipline, Analytics, Insights, Journal and Backtesting · data is illustrative</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Account editor modal -->
+    <div id="acc-modal" class="modal-overlay">
+        <div class="modal">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-[#1F1F23]">
+                <h2 id="acc-modal-title" class="text-[16px] font-bold">New Account</h2>
+                <button class="collapse-btn" data-action="close-acc"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="flex flex-col gap-4">
+                    <div>
+                        <label class="flabel">Account name</label>
+                        <input id="acc-name" class="finput" placeholder="FTMO 5K">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="flabel">Type</label>
+                            <select id="acc-type" class="fselect">
+                                <option>Personal</option><option>Prop / Funded</option><option>Demo</option><option>Backtest</option><option>Other</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="flabel">Currency</label>
+                            <select id="acc-currency" class="fselect"><option>USD</option><option>EUR</option><option>GBP</option></select>
+                        </div>
+                        <div>
+                            <label class="flabel">Trading style</label>
+                            <select id="acc-style" class="fselect">
+                                <option>Scalping</option><option>Intraday</option><option>Swing</option><option>Position</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="flabel">Starting balance</label>
+                            <input id="acc-start" type="number" class="finput num" placeholder="10000">
+                        </div>
+                        <div>
+                            <label class="flabel">Current equity</label>
+                            <input id="acc-equity" type="number" class="finput num" placeholder="10319">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="flabel">Drawdown model <span class="tag tag-blue !py-0.5">Static · Trailing · Daily · Custom</span></label>
+                        <select id="acc-ddmodel" class="fselect">
+                            <option value="static">Static — max loss from starting balance</option>
+                            <option value="trailing">Trailing — threshold moves with peak equity</option>
+                            <option value="daily">Daily reset — loss budget resets each day</option>
+                            <option value="custom">Custom — manual label + limit</option>
+                        </select>
+                        <p class="fhelp">The calculation basis is always shown next to the number — never a bare drawdown figure.</p>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="flabel">Daily loss limit ($)</label>
+                            <input id="acc-dayloss" type="number" class="finput num" placeholder="100">
+                        </div>
+                        <div>
+                            <label class="flabel">Max drawdown ($)</label>
+                            <input id="acc-maxdd" type="number" class="finput num" placeholder="500">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="flabel">Risk per trade</label>
+                            <div class="flex gap-2">
+                                <input id="acc-risk" type="number" class="finput num" placeholder="25">
+                                <select id="acc-riskbasis" class="fselect !w-[70px]"><option value="money">$</option><option value="pct">%</option></select>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="flabel">Max open risk</label>
+                            <div class="flex gap-2">
+                                <input id="acc-openrisk" type="number" class="finput num" placeholder="50">
+                                <select id="acc-openbasis" class="fselect !w-[70px]"><option value="money">$</option><option value="pct">%</option></select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="flabel">Max trades / day</label>
+                            <input id="acc-maxtrades" type="number" class="finput num" placeholder="3">
+                        </div>
+                        <div>
+                            <label class="flabel">Status</label>
+                            <select id="acc-status" class="fselect"><option>Active</option><option>Paused</option><option>Archived</option></select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="flabel">Warning thresholds (%)</label>
+                        <input id="acc-warn" class="finput" value="50, 70, 90">
+                        <p class="fhelp">Comma-separated. User thresholds override presets.</p>
+                    </div>
+                </div>
+                <div class="flex flex-col gap-4">
+                    <div class="panel">
+                        <div class="panel-title mb-3">What TradeMind will enforce</div>
+                        <div id="acc-preview" class="flex flex-col gap-2"></div>
+                    </div>
+                    <div class="panel">
+                        <div class="panel-title mb-3">Cross-section reflection</div>
+                        <div class="flex flex-col gap-1.5 text-[12.5px] text-[#C4C4CC]">
+                            <div>· <b class="text-white">Risk</b> — daily/total/monthly state & proximity alerts</div>
+                            <div>· <b class="text-white">Discipline</b> — hard vs soft rule evaluation</div>
+                            <div>· <b class="text-white">Journal</b> — allowed risk, strategy validation, rule status</div>
+                            <div>· <b class="text-white">Dashboard</b> — remaining budget, drawdown used, system status</div>
+                            <div>· <b class="text-white">Analytics / Insights</b> — segmentation by account, strategy, compliance</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#1F1F23]">
+                <button class="btn-ghost" data-action="close-acc">Cancel</button>
+                <button id="acc-save" class="btn-primary">Save account</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Strategy builder modal -->
+    <div id="strat-modal" class="modal-overlay">
+        <div class="modal !max-w-[1040px]">
+            <div class="flex items-center justify-between px-6 py-4 border-b border-[#1F1F23]">
+                <h2 id="strat-modal-title" class="text-[16px] font-bold">New Strategy</h2>
+                <button class="collapse-btn" data-action="close-strat"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+            <div class="p-6 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
+                <div>
+                    <div id="strat-steps" class="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1"></div>
+                    <div id="strat-step-body" class="flex flex-col gap-4"></div>
+                </div>
+                <div>
+                    <div class="panel sticky top-0">
+                        <div class="panel-title mb-3">Strategy Snapshot · live</div>
+                        <div id="strat-snapshot" class="flex flex-col gap-2"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="flex items-center justify-between px-6 py-4 border-t border-[#1F1F23]">
+                <div id="strat-ver-note" class="text-[11.5px] text-[#6E6E78]"></div>
+                <div class="flex gap-2">
+                    <button class="btn-ghost" data-action="strat-prev">← Back</button>
+                    <button id="strat-next" class="btn-ghost">Next →</button>
+                    <button id="strat-save" class="btn-primary" style="display:none">Save strategy · new version</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <script>
+        (function () {
+            const $ = id => document.getElementById(id);
+            const D = window.DemoTrades;
+            const { fmtMoney, fmtR, pct, groupBy, day } = D;
+
+            const ANCHOR = new Date();
+            const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            const TODAY = iso(new Date());
+            const MONTH = new Date().getMonth();
+            // Canonical ledger — Home risk state, rule evaluation and the monthly
+            // view read the SAME local trades every other screen reads.
+            let ALL = [];
+            function refreshTrades() {
+                if (core && core.Accounts && core.Accounts.length) {
+                    const accId = core.selectedAccountId() || core.Accounts[0].id;
+                    ALL = core.Trades.filter(t => t.account_id === accId);
+                } else { ALL = []; }
+            }
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+            const now = () => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            const $money = n => (n >= 0 ? '' : '-') + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+
+            // ============ CANONICAL CONFIG STORE (core.js — single source of truth) ============
+            // ACCOUNTS / STRATEGIES / RULE_SETS are now *derived views* over the canonical
+            // relational model (Accounts, ConfigVersions, StrategyAssignments, Trades).
+            // Every mutation goes through TradeMindCore.ConfigAPI, which creates an
+            // immutable ConfigVersion and publishes events on the bus — the modules
+            // (including this page) listen and update themselves.
+            const core = window.TradeMindCore;
+
+            function resolveAccounts() {
+                return core.Accounts.map(a => {
+                    const pol = core.activePolicy(a.id);
+                    const v = pol ? pol.values : {};
+                    return {
+                        id: a.id, name: a.name, type: a.account_type, currency: a.currency,
+                        starting: a.starting_balance, equity: a.current_equity,
+                        ddModel: v.ddModel, dailyLoss: v.maxDailyLoss, maxDD: v.maxTotalDrawdown,
+                        riskPerTrade: v.riskPerTrade, riskBasis: v.riskBasis,
+                        maxOpenRisk: v.maxOpenRisk, openBasis: v.openBasis,
+                        maxTrades: v.maxTrades, warn: v.warn,
+                        status: a.status, stratIds: core.strategiesFor(a.id).map(s => s.id),
+                        note: a.note, policyId: pol ? pol.id : null, policyVersion: pol ? pol.version : null
+                    };
+                });
+            }
+            function resolveStrategies() {
+                return core.StrategyMaster.map(m => {
+                    const ver = core.activeStrategyVersion(m.id);
+                    const val = ver ? ver.values : {};
+                    return {
+                        id: m.id, name: val.name || m.name, desc: m.desc, version: ver ? ver.version : 'v0.0',
+                        status: m.status || 'Active', color: m.color,
+                        markets: val.markets, sessions: val.sessions || [], setup: val.setup,
+                        risk: val.risk || { riskPerTrade: '—', minRR: 1.5, stopRequired: true, maxPositions: 1 },
+                        entry: val.entry, exit: val.exit,
+                        behavior: val.behavior || [], evidence: val.evidence || [], tags: val.tags || [],
+                        accounts: core.accountIdsForStrategy(m.id)
+                    };
+                });
+            }
+            function resolveRuleSets() {
+                return core.RuleSetMaster.map(m => {
+                    const ver = core.activeRuleSetVersion(m.id);
+                    return {
+                        id: m.id, name: m.name, scope: m.scope,
+                        version: ver ? ver.version : 'v0.0', status: 'Active',
+                        rules: ver ? ver.values.rules : []
+                    };
+                });
+            }
+            let ACCOUNTS = resolveAccounts();
+            let STRATEGIES = resolveStrategies();
+            let RULE_SETS = resolveRuleSets();
+            let CHANGES = core.getEventLog();
+            function syncDerived() {
+                refreshTrades();
+                ACCOUNTS = resolveAccounts();
+                STRATEGIES = resolveStrategies();
+                RULE_SETS = resolveRuleSets();
+                CHANGES = core.getEventLog();
+            }
+
+            const TAG_CATS = {
+                'Setup Quality': { color: '#10B981', tags: ['A+ Setup', 'A Setup', 'B Setup'] },
+                'Session': { color: '#3B82F6', tags: ['London', 'New York', 'Asia'] },
+                'Market State': { color: '#F59E0B', tags: ['Trend', 'Range', 'High Volatility'] },
+                'Execution': { color: '#C084FC', tags: ['Clean Entry', 'Late Entry', 'Early Entry'] },
+                'Mistake': { color: '#EF4444', tags: ['FOMO', 'Revenge', 'Oversize'] },
+                'Emotion': { color: '#F472B6', tags: ['Calm', 'Confident', 'Anxious'] },
+                'Outcome': { color: '#34D399', tags: ['Win', 'Loss', 'BE'] },
+                'Custom': { color: '#6E6E78', tags: ['#31Trades', 'Scalp'] }
+            };
+            const ARCHIVED_TAGS = ['BE', 'Anxious'];
+
+            // CHANGES is now the live audit log from core.js (event bus) — see syncDerived().
+
+            // ============ RISK STATE ENGINE (from config + real journal data) ============
+            function riskState(acc) {
+                const todays = (groupBy(ALL, t => iso(t.ts))[TODAY] || []);
+                const riskUsed = todays.reduce((s, t) => s + t.risk, 0);
+                const dayLoss = Math.abs(todays.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
+                const dayPnl = todays.reduce((s, t) => s + t.pnl, 0);
+
+                // equity curve (all trades sorted) for drawdown from peak
+                let peak = acc.starting, cur = acc.starting, maxDD = 0;
+                ALL.slice().sort((a, b) => a.ts - b.ts).forEach(t => {
+                    cur += t.pnl;
+                    if (cur > peak) peak = cur;
+                    maxDD = Math.max(maxDD, peak - cur);
+                });
+                const ddFromPeak = Math.max(0, peak - acc.equity);
+                const ddPct = acc.maxDD ? Math.min(100, Math.round((ddFromPeak / acc.maxDD) * 100)) : 0;
+                const dailyPct = acc.dailyLoss ? Math.min(100, Math.round((dayLoss / acc.dailyLoss) * 100)) : 0;
+                const riskPct = acc.dailyLoss ? Math.min(100, Math.round((riskUsed / acc.dailyLoss) * 100)) : 0;
+
+                // month-level risk (PRD §9.1)
+                const monthTrades = ALL.filter(t => t.ts.getMonth() === MONTH);
+                const planned = monthTrades.reduce((s, t) => s + t.risk, 0);
+                const realizedLoss = Math.abs(monthTrades.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
+                let mPeak = acc.starting, mCur = acc.starting, mWorst = 0;
+                monthTrades.slice().sort((a, b) => a.ts - b.ts).forEach(t => {
+                    mCur += t.pnl; if (mCur > mPeak) mPeak = mCur;
+                    mWorst = Math.max(mWorst, mPeak - mCur);
+                });
+                const perDay = groupBy(monthTrades, t => iso(t.ts));
+                const breachDays = Object.values(perDay).filter(tr => tr.reduce((s, t) => s + t.risk, 0) > acc.dailyLoss).length;
+                const highDays = Object.values(perDay).filter(tr => tr.reduce((s, t) => s + t.risk, 0) > acc.dailyLoss * 0.7).length;
+
+                const openRisk = Math.min(acc.maxOpenRisk, Math.round(riskUsed * 0.5));
+
+                return { riskUsed, dayLoss, dayPnl, ddFromPeak, ddPct, dailyPct, riskPct, openRisk,
+                    month: { planned, realizedLoss, worst: mWorst, avgRisk: monthTrades.length ? Math.round(planned / monthTrades.length) : 0, breachDays, highDays, n: monthTrades.length },
+                    dailyRemaining: Math.max(0, acc.dailyLoss - dayLoss), ddRemaining: Math.max(0, acc.maxDD - ddFromPeak) };
+            }
+
+            // ============ RULE EVALUATION (against real trades) ============
+            function evaluateRules() {
+                const sorted = ALL.slice().sort((a, b) => a.ts - b.ts);
+                const todays = (groupBy(ALL, t => iso(t.ts))[TODAY] || []);
+                const maxDailyRisk = Math.max(...Object.values(groupBy(ALL, t => iso(t.ts))).map(tr => tr.reduce((s, t) => s + t.risk, 0)));
+                const maxDayLoss = Math.max(...Object.values(groupBy(ALL, t => iso(t.ts))).map(tr => Math.abs(tr.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0))));
+
+                return RULE_SETS.flatMap(rs => rs.rules.filter(r => r.enabled).map(r => {
+                    let state, msg, ev = 0, breaches = 0;
+                    if (r.key === 'riskPerTrade') {
+                        const over = ALL.filter(t => t.risk > r.threshold);
+                        breaches = over.length; ev = ALL.length;
+                        state = breaches ? 'breached' : 'healthy';
+                        msg = breaches ? breaches + ' of ' + ALL.length + ' trades risked more than $' + r.threshold : 'All ' + ALL.length + ' trades within $' + r.threshold + ' risk';
+                    } else if (r.key === 'dailyRisk') {
+                        breaches = maxDailyRisk > r.threshold ? 1 : 0; ev = 1;
+                        state = breaches ? 'breached' : 'healthy';
+                        msg = 'Worst day risked $' + maxDailyRisk + ' vs $' + r.threshold + ' budget';
+                    } else if (r.key === 'dailyLoss') {
+                        breaches = maxDayLoss > r.threshold ? 1 : 0; ev = 1;
+                        state = breaches ? 'breached' : 'healthy';
+                        msg = 'Worst day lost $' + maxDayLoss + ' vs $' + r.threshold + ' limit';
+                    } else if (r.key === 'maxTrades') {
+                        const dayCounts = Object.values(groupBy(ALL, t => iso(t.ts))).map(tr => tr.length);
+                        const maxN = Math.max(...dayCounts);
+                        breaches = maxN > r.threshold ? 1 : 0; ev = dayCounts.length;
+                        state = breaches ? 'breached' : 'healthy';
+                        msg = 'Most active day had ' + maxN + ' trades vs ' + r.threshold + ' limit';
+                    } else if (r.key === 'maxOpenRisk') {
+                        state = 'noteval'; msg = 'Open positions are not journaled — cannot evaluate';
+                    } else if (r.key === 'cooldown') {
+                        const gaps = [];
+                        for (let i = 1; i < sorted.length; i++) {
+                            if (sorted[i - 1].pnl < 0) gaps.push((sorted[i].ts - sorted[i - 1].ts) / 60000);
+                        }
+                        const fast = gaps.filter(g => g < r.threshold);
+                        breaches = fast.length; ev = gaps.length;
+                        state = ev ? (breaches ? 'approaching' : 'healthy') : 'noteval';
+                        msg = ev ? fast.length + ' re-entries within ' + r.threshold + ' min of a loss' : 'No loss sequences to evaluate';
+                    } else if (r.key === 'stopRequired') {
+                        state = 'noteval'; msg = 'Every demo trade carries a stop — treated as satisfied';
+                    } else if (r.key === 'minRR') {
+                        const low = ALL.filter(t => t.rr && t.rr < r.threshold);
+                        breaches = low.length; ev = ALL.length;
+                        state = breaches ? 'approaching' : 'healthy';
+                        msg = breaches + ' trades below ' + r.threshold + 'R minimum';
+                    } else if (r.key === 'noRevenge') {
+                        const todayLosses = todays.filter(t => t.pnl < 0);
+                        const after = [];
+                        for (let i = 1; i < todays.length; i++) if (todays[i - 1].pnl < 0) after.push(todays[i]);
+                        const revenge = after.filter(t => t.risk > 25);
+                        breaches = revenge.length; ev = after.length;
+                        state = ev ? (breaches ? 'breached' : 'healthy') : 'noteval';
+                        msg = ev ? (breaches ? revenge.length + ' trades escalated risk right after a loss' : 'No risk escalation after losses today') : 'No loss-to-trade sequences today';
+                    } else if (r.key === 'noAddLoser') {
+                        state = 'noteval'; msg = 'Position-averaging is not journaled';
+                    } else {
+                        state = 'noteval'; msg = 'Not enough data to evaluate';
+                    }
+                    if (r.key === 'maxTrades' && todays.length >= 3) { state = 'approaching'; msg = todays.length + ' of ' + r.threshold + ' trades used today'; }
+                    return { ...r, rs: rs.name, state, msg, ev, breaches };
+                }));
+            }
+
+            function systemAdherence() {
+                const over = ALL.filter(t => t.risk > 25);
+                return pct(ALL.length - over.length, ALL.length);
+            }
+
+            // ============ CONFIG HEALTH ============
+            function healthFlags() {
+                const flags = [];
+                if (ACCOUNTS.some(a => !a.dailyLoss || !a.maxDD)) flags.push({ sev: 'amber', msg: 'An account is missing a daily loss or drawdown limit — risk cannot be fully evaluated.' });
+                STRATEGIES.forEach(s => {
+                    if (!s.risk || !s.risk.riskPerTrade) flags.push({ sev: 'amber', msg: 'Strategy “' + s.name + '” has no defined risk limit — discipline risk evaluation is incomplete.' });
+                    if (s.sessions.length === 0) flags.push({ sev: 'amber', msg: 'Strategy “' + s.name + '” has no allowed sessions.' });
+                    if (!s.accounts.length) flags.push({ sev: 'red', msg: 'Strategy “' + s.name + '” is not assigned to any account.' });
+                });
+                if (STRATEGIES.length && !STRATEGIES.some(s => s.sessions.length && s.sessions[0] === 'London')) flags.push({ sev: 'blue', msg: 'No strategy targets the London session — your best session has no system.' });
+                const used = new Set(ALL.flatMap(t => [t.setup, t.session, t.emotion]));
+                const tagCount = Object.values(TAG_CATS).flat().length;
+                if (tagCount > used.size + 2) flags.push({ sev: 'gray', msg: tagCount + ' tags defined · ' + used.size + ' appear in journaled trades — consider archiving unused ones.' });
+                return flags.length ? flags : [{ sev: 'emerald', msg: 'All systems nominal — no configuration gaps detected.' }];
+            }
+
+            // ============ UI HELPERS ============
+            const panel = (title, body) => '<div class="panel"><div class="panel-title mb-3">' + title + '</div>' + body + '</div>';
+            const pill = (state, label) => '<span class="state-pill st-' + state + '"><span class="w-1.5 h-1.5 rounded-full" style="background:currentColor"></span>' + label + '</span>';
+
+            function activateTab(tab) {
+                document.querySelectorAll('.ins-tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+                document.querySelectorAll('.ins-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+            }
+
+            // ============ RENDER: HOME ============
+            function renderHome() {
+                const activeAccs = ACCOUNTS.filter(a => a.status === 'Active');
+                const activeStrats = STRATEGIES.filter(s => s.status === 'Active');
+                const totalCapital = activeAccs.reduce((s, a) => s + a.equity, 0);
+                const totalBudget = activeAccs.reduce((s, a) => s + a.dailyLoss, 0);
+                const totalDD = activeAccs.reduce((s, a) => s + a.maxDD, 0);
+                const ddUsed = activeAccs.reduce((s, a) => s + riskState(a).ddFromPeak, 0);
+                const adh = systemAdherence();
+                const flags = healthFlags();
+
+                const cards = activeAccs.map(a => {
+                    const rs = riskState(a);
+                    const statusCls = rs.dailyPct >= 90 ? 'tag-red' : rs.dailyPct >= 70 ? 'tag-amber' : 'tag-emerald';
+                    const statusTxt = rs.dailyPct >= 90 ? 'High risk' : rs.dailyPct >= 70 ? 'Caution' : 'Healthy';
+                    return '<div class="panel p-5">' +
+                        '<div class="flex items-start justify-between gap-3 mb-3">' +
+                            '<div>' +
+                                '<div class="text-[15px] font-bold text-white">' + esc(a.name) + '</div>' +
+                                '<div class="text-[11.5px] text-[#6E6E78] mt-0.5">' + a.type + ' · ' + a.currency + ' · ' + a.stratIds.length + ' strategies · ' + a.ddModel + ' drawdown</div>' +
+                            '</div>' +
+                            '<span class="tag ' + statusCls + '">' + statusTxt + '</span>' +
+                        '</div>' +
+                        '<div class="flex items-end justify-between mb-4">' +
+                            '<div><div class="text-[10.5px] text-[#6E6E78] font-bold uppercase tracking-wide">Current equity</div><div class="num text-[26px] font-extrabold text-white">' + $money(a.equity) + '</div></div>' +
+                            '<div class="text-right"><div class="text-[10.5px] text-[#6E6E78] font-bold uppercase tracking-wide">Starting</div><div class="num text-[13px] text-[#8A8A93]">' + $money(a.starting) + '</div></div>' +
+                        '</div>' +
+                        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
+                            kpi('Daily loss remaining', $money(rs.dailyRemaining) + ' <span class="text-[12px] text-[#6E6E78]">of $' + a.dailyLoss + '</span>') +
+                            kpi('Drawdown remaining', $money(rs.ddRemaining) + ' <span class="text-[12px] text-[#6E6E78]">' + (100 - rs.ddPct) + '% left</span>') +
+                            kpi('Risk / trade', (a.riskBasis === 'pct' ? a.riskPerTrade + '%' : '$' + a.riskPerTrade)) +
+                            kpi('Daily risk used', '$' + rs.riskUsed + ' <span class="text-[12px] text-[#6E6E78]">' + rs.riskPct + '%</span>') +
+                        '</div>' +
+                        '<div class="mt-3 flex items-center justify-between text-[11.5px] text-[#6E6E78]">' +
+                            '<span>Max drawdown $' + a.maxDD + ' (' + a.ddModel + ' from ' + (a.ddModel === 'trailing' ? 'peak equity' : 'starting balance') + ')</span>' +
+                            '<span>Max ' + a.maxTrades + ' trades/day · open risk $' + a.maxOpenRisk + '</span>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+
+                // monthly risk (PRD §9.1)
+                const m = riskState(ACCOUNTS[0]).month;
+                const monthCards = [
+                    kpi('Planned risk (Aug)', $money(m.planned)),
+                    kpi('Realized loss', $money(-m.realizedLoss)),
+                    kpi('Worst drawdown', $money(-m.worst)),
+                    kpi('Avg risk / trade', '$' + m.avgRisk),
+                    kpi('Rule breach days', m.breachDays + ' <span class="text-[12px] text-[#6E6E78]">of ' + m.n + ' days</span>'),
+                    kpi('High-risk days', m.highDays)
+                ].join('');
+
+                $('panel-home').innerHTML =
+                    '<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">' +
+                        kpi('Active accounts', ACCOUNTS.filter(a => a.status === 'Active').length) +
+                        kpi('Active strategies', activeStrats.length) +
+                        kpi('Configured capital', $money(totalCapital)) +
+                        kpi('Daily risk budget', $money(totalBudget)) +
+                        kpi('Drawdown consumed', Math.round((ddUsed / totalDD) * 100) + '% <span class="text-[12px] text-[#6E6E78]">of $' + totalDD.toLocaleString() + '</span>') +
+                        kpi('System adherence', adh + '% <span class="text-[12px] text-[#6E6E78]">journaled</span>') +
+                    '</div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
+                        '<div class="xl:col-span-2 flex flex-col gap-4">' +
+                            '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + cards + '</div>' +
+                            panel('Monthly risk — August (derived from config + journal)', '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">' + monthCards + '</div><p class="text-[11.5px] text-[#55555E] mt-3">Monthly risk is derived automatically from account limits plus journaled activity — no separate monthly rule required.</p>') +
+                        '</div>' +
+                        '<div class="flex flex-col gap-4">' +
+                            panel('Configuration health', '<div class="flex flex-col gap-2">' + flags.map(f =>
+                                '<div class="flex items-start gap-2.5 px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23]"><span class="tag tag-' + (f.sev === 'emerald' ? 'emerald' : f.sev) + ' !py-0.5">' + f.sev.toUpperCase() + '</span><span class="text-[12px] text-[#C4C4CC]">' + f.msg + '</span></div>'
+                            ).join('') + '</div>') +
+                            panel('Recent changes', '<div class="flex flex-col gap-2.5">' + CHANGES.slice(0, 4).map(c =>
+                                '<div class="text-[12px] text-[#C4C4CC]"><div class="flex items-center gap-2"><b class="text-white">' + esc(c.entity) + '</b><span class="tag tag-blue !py-0 !px-1.5 text-[9.5px]">' + esc(c.what) + '</span></div><div class="text-[11.5px] text-[#8A8A93] mt-0.5">' + esc(c.detail) + ' · ' + c.at + '</div></div>'
+                            ).join('') + '</div>') +
+                        '</div>' +
+                    '</div>';
+            }
+
+            // ============ RENDER: ACCOUNTS ============
+            function renderAccounts() {
+                const rows = ACCOUNTS.map(a => {
+                    const rs = riskState(a);
+                    const st = a.status === 'Active' ? (rs.dailyPct >= 90 ? 'High risk' : rs.dailyPct >= 70 ? 'Caution' : 'Healthy') : a.status;
+                    const stCls = a.status !== 'Active' ? 'tag-gray' : rs.dailyPct >= 90 ? 'tag-red' : rs.dailyPct >= 70 ? 'tag-amber' : 'tag-emerald';
+                    return '<tr>' +
+                        '<td><div class="font-semibold text-white">' + esc(a.name) + '</div><div class="text-[10.5px] text-[#6E6E78]">' + a.type + ' · ' + a.ddModel + '</div></td>' +
+                        '<td class="num">' + $money(a.starting) + '</td>' +
+                        '<td class="num text-white">' + $money(a.equity) + '</td>' +
+                        '<td class="num">$' + a.dailyLoss + '</td>' +
+                        '<td class="num">$' + a.maxDD + '</td>' +
+                        '<td class="num">' + (a.riskBasis === 'pct' ? a.riskPerTrade + '%' : '$' + a.riskPerTrade) + '</td>' +
+                        '<td class="num ' + (rs.dailyRemaining <= a.dailyLoss * 0.3 ? 'text-[#F87171]' : 'text-[#34D399]') + '">$' + rs.dailyRemaining + '</td>' +
+                        '<td class="num ' + (rs.ddRemaining <= a.maxDD * 0.3 ? 'text-[#F87171]' : 'text-[#34D399]') + '">$' + rs.ddRemaining + '</td>' +
+                        '<td><span class="tag ' + stCls + '">' + st + '</span></td>' +
+                        '<td class="num">' + a.stratIds.length + '</td>' +
+                        '<td><div class="flex gap-1.5">' +
+                            '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-edit-acc="' + a.id + '">Edit</button>' +
+                            '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-dup-acc="' + a.id + '">Duplicate</button>' +
+                            (a.status === 'Active'
+                                ? '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-archive-acc="' + a.id + '">Archive</button>'
+                                : '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-unarchive-acc="' + a.id + '">Activate</button>') +
+                        '</div></td>' +
+                    '</tr>';
+                }).join('');
+
+                $('panel-accounts').innerHTML =
+                    '<div class="flex items-center justify-between mb-3">' +
+                        '<h2 class="text-[15px] font-bold">Accounts</h2>' +
+                        '<button class="btn-primary !py-1.5 !px-3 !text-[12px]" data-action="new-account"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> New Account</button>' +
+                    '</div>' +
+                    '<div class="panel"><div class="tbl-wrap"><table class="tbl">' +
+                        '<thead><tr><th>Account</th><th>Start</th><th>Equity</th><th>Daily loss</th><th>Max DD</th><th>Risk/trade</th><th>Daily left</th><th>DD left</th><th>Status</th><th>Strats</th><th></th></tr></thead>' +
+                        '<tbody>' + rows + '</tbody></table></div></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Money values come first; percentages are supporting context. Drawdown basis is always shown: ' + ACCOUNTS.map(a => esc(a.name) + ' = ' + a.ddModel).join(', ') + '.</p>';
+            }
+
+            // ============ RENDER: STRATEGIES ============
+            function renderStrategies() {
+                const cards = STRATEGIES.map(s => {
+                    const accNames = s.accounts.map(id => (ACCOUNTS.find(a => a.id === id) || {}).name || id).join(', ');
+                    return '<div class="panel p-5 flex flex-col gap-3">' +
+                        '<div class="flex items-start justify-between gap-3">' +
+                            '<div class="flex items-center gap-3">' +
+                                '<div class="w-9 h-9 rounded-lg flex items-center justify-center font-extrabold text-[13px]" style="background:' + s.color + '22;color:' + s.color + '">' + esc(s.name[0]) + '</div>' +
+                                '<div><div class="text-[15px] font-bold text-white">' + esc(s.name) + '</div>' +
+                                '<div class="text-[11.5px] text-[#6E6E78]">' + esc(s.desc) + '</div></div>' +
+                            '</div>' +
+                            '<div class="flex flex-col items-end gap-1.5">' +
+                                '<span class="tag tag-emerald">' + esc(s.version) + ' · Active</span>' +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="flex flex-wrap gap-1.5">' +
+                            '<span class="tag tag-blue">' + esc(s.markets) + '</span>' +
+                            '<span class="tag tag-purple">' + s.sessions.map(x => esc(x)).join(', ') + '</span>' +
+                            '<span class="tag tag-gray">Setup: ' + esc(s.setup) + '</span>' +
+                            '<span class="tag tag-gray">Risk: ' + esc(s.risk.riskPerTrade) + ' · min RR ' + s.risk.minRR + 'R</span>' +
+                        '</div>' +
+                        '<div class="text-[11.5px] text-[#8A8A93]">Behavior: ' + s.behavior.map(esc).join(' · ') + '</div>' +
+                        '<div class="flex items-center justify-between mt-auto pt-2 border-t border-[#17171A]">' +
+                            '<span class="text-[11.5px] text-[#6E6E78]">Accounts: <b class="text-[#C4C4CC]">' + esc(accNames) + '</b> · Tags: ' + s.tags.map(esc).join(', ') + '</span>' +
+                            '<div class="flex gap-1.5">' +
+                                '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-edit-strat="' + s.id + '">Edit · new version</button>' +
+                                '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-dup-strat="' + s.id + '">Duplicate</button>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                }).join('');
+
+                $('panel-strategies').innerHTML =
+                    '<div class="flex items-center justify-between mb-3">' +
+                        '<h2 class="text-[15px] font-bold">Strategies</h2>' +
+                        '<button class="btn-primary !py-1.5 !px-3 !text-[12px]" data-action="new-strategy"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> New Strategy</button>' +
+                    '</div>' +
+                    '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + cards + '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Editing a strategy creates a new version with an effective timestamp — historical trades retain the version active when they were taken (PRD §6.3).</p>';
+            }
+
+            // ============ RENDER: RULE SETS ============
+            function renderRuleSets() {
+                const evals = evaluateRules();
+                const sets = RULE_SETS.map(rs => {
+                    const rules = evals.filter(e => e.rs === rs.name);
+                    const rows = rules.map(r => {
+                        const stMap = { healthy: ['st-healthy', 'Healthy'], approaching: ['st-approaching', 'Approaching'], breached: ['st-breached', 'Breached'], disabled: ['st-disabled', 'Disabled'], noteval: ['st-noteval', 'Not evaluated'] };
+                        const [cls, label] = stMap[r.state];
+                        return '<tr>' +
+                            '<td><div class="font-semibold text-white">' + esc(r.label) + '</div><div class="text-[10.5px] text-[#6E6E78]">' + r.cat + ' · ' + esc(r.rs) + '</div></td>' +
+                            '<td class="num">' + r.op + ' ' + esc(r.threshold) + (r.unit ? ' ' + r.unit : '') + '</td>' +
+                            '<td><span class="tag ' + (r.severity === 'Hard' ? 'tag-red' : 'tag-amber') + '">' + r.severity + '</span></td>' +
+                            '<td><span class="state-pill ' + cls + '">' + label + '</span></td>' +
+                            '<td class="text-[11.5px] text-[#8A8A93] max-w-[260px]">' + esc(r.msg) + '</td>' +
+                            '<td><button class="btn-ghost !py-0.5 !px-2 !text-[10.5px]" data-toggle-rule="' + r.key + '">' + (r.enabled ? 'Disable' : 'Enable') + '</button></td>' +
+                        '</tr>';
+                    }).join('');
+                    return panel('<div class="flex items-center gap-2">' + esc(rs.name) + ' <span class="tag tag-gray !py-0.5 !px-1.5">' + esc(rs.version) + '</span> <span class="tag tag-blue !py-0.5 !px-1.5">' + esc(rs.scope) + '</span></div>',
+                        '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rule</th><th>Limit</th><th>Severity</th><th>State</th><th>Evaluation</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>');
+                }).join('');
+
+                $('panel-rulesets').innerHTML =
+                    '<div class="grid grid-cols-1 gap-4">' + sets + '</div>' +
+                    '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">' +
+                        panel('Rule priority', '<div class="flex flex-col gap-1.5 text-[12px] text-[#C4C4CC]">' +
+                            '<div><b class="text-white">1 · System safety</b> — platform constraints</div>' +
+                            '<div><b class="text-white">2 · Account hard limit</b> — drawdown / daily loss / open risk</div>' +
+                            '<div><b class="text-white">3 · Strategy hard limit</b> — strategy risk & execution</div>' +
+                            '<div><b class="text-white">4 · User soft rule</b> — warnings only</div>' +
+                            '<div><b class="text-white">5 · Analytics heuristic</b> — AI patterns, never silent hard rules</div></div>') +
+                        panel('Hard vs soft', '<div class="flex flex-col gap-2 text-[12px] text-[#C4C4CC]">' +
+                            '<div><span class="tag tag-red !py-0.5">HARD</span> Breach blocks or flags the trade — visible in Discipline & Journal validation.</div>' +
+                            '<div class="mt-1"><span class="tag tag-amber !py-0.5">SOFT</span> Miss is a preference, never a violation. Prefer min RR, cooldown, evidence.</div></div>') +
+                        panel('When rules apply', '<div class="flex flex-col gap-1.5 text-[12px] text-[#C4C4CC]">' +
+                            '<div><b class="text-white">Risk rules</b> — before trade + after trade + live state</div>' +
+                            '<div><b class="text-white">Frequency</b> — trade creation + end of day</div>' +
+                            '<div><b class="text-white">Qualification</b> — pre-trade / journal completion</div>' +
+                            '<div><b class="text-white">Behavior</b> — sequence analysis / journal</div>' +
+                            '<div><b class="text-white">Evidence</b> — journal completion</div></div>') +
+                    '</div>';
+            }
+
+            // ============ RENDER: TAGS ============
+            function renderTags() {
+                const usage = {};
+                ALL.forEach(t => {
+                    (usage[t.setup] = usage[t.setup] || 0);
+                    usage[t.setup]++;
+                    usage[t.session] = (usage[t.session] || 0) + 1;
+                    usage[t.emotion] = (usage[t.emotion] || 0) + 1;
+                });
+                const cats = Object.entries(TAG_CATS).map(([cat, c]) => {
+                    const chips = c.tags.map(tg => {
+                        const archived = ARCHIVED_TAGS.includes(tg);
+                        const n = usage[tg] || 0;
+                        return '<div class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ' + (archived ? 'border-[#1F1F23] opacity-50' : 'border-[#26262B]') + '" style="background:' + c.color + '0F">' +
+                            '<span class="w-2 h-2 rounded-full" style="background:' + c.color + '"></span>' +
+                            '<span class="text-[12px] font-semibold text-[#E8E8EC]">' + esc(tg) + '</span>' +
+                            '<span class="num text-[10.5px] text-[#6E6E78]">' + n + '×</span>' +
+                            (archived ? '<span class="tag tag-gray !py-0 !px-1.5 text-[9px]">archived</span>' : '') +
+                            '<button class="ml-auto text-[10.5px] ' + (archived ? 'text-[#34D399]' : 'text-[#6E6E78] hover:text-[#F87171]') + '" data-archive-tag="' + esc(tg) + '">' + (archived ? 'restore' : 'archive') + '</button>' +
+                        '</div>';
+                    }).join('');
+                    return panel('<div class="flex items-center gap-2">' + esc(cat) + ' <span class="tag tag-gray !py-0.5 !px-1.5">' + c.tags.length + '</span></div>', '<div class="flex flex-wrap gap-2">' + chips + '</div>');
+                }).join('');
+
+                $('panel-tags').innerHTML =
+                    '<div class="flex items-center justify-between mb-3">' +
+                        '<h2 class="text-[15px] font-bold">Tags & Classification</h2>' +
+                        '<button class="btn-ghost !py-1.5 !px-3 !text-[12px]" data-action="new-tag"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> Quick-create tag</button>' +
+                    '</div>' +
+                    '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + cats + '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Tags are archived, never hard-deleted — historical trades keep their tags and analytics stay intact. Usage counts come from real journaled trades.</p>';
+            }
+
+            // ============ RENDER: SYSTEM MAP ============
+            function renderMap() {
+                const accNode = (a) => '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-blue !py-0.5">ACCOUNT</span><b class="text-[12.5px] text-white">' + esc(a.name) + '</b></div>' +
+                    '<div class="text-[11px] text-[#8A8A93]">' + $money(a.equity) + ' · ' + a.stratIds.length + ' strategies</div>' +
+                    '<div class="text-[11px] text-[#6E6E78]">' + (a.status === 'Active' ? 'Active' : a.status) + ' · ' + a.ddModel + ' DD</div></div>';
+                const stratNode = (s) => '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-purple !py-0.5">STRATEGY</span><b class="text-[12.5px] text-white">' + esc(s.name) + '</b></div>' +
+                    '<div class="text-[11px] text-[#8A8A93]">' + esc(s.version) + ' · ' + esc(s.markets) + '</div>' +
+                    '<div class="text-[11px] text-[#6E6E78]">' + s.sessions.map(esc).join(', ') + ' · ' + esc(s.risk.riskPerTrade) + ' risk</div></div>';
+                const rulesNode = '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-amber !py-0.5">RULE SETS</span></div>' +
+                    '<div class="text-[11px] text-[#8A8A93]">' + RULE_SETS.length + ' sets · ' + RULE_SETS.reduce((s, r) => s + r.rules.length, 0) + ' rules</div>' +
+                    '<div class="text-[11px] text-[#6E6E78]">Hard & soft · priority 1–5</div></div>';
+                const tagsNode = '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-emerald !py-0.5">TAGS</span></div>' +
+                    '<div class="text-[11px] text-[#8A8A93]">' + Object.values(TAG_CATS).reduce((s, c) => s + c.tags.length, 0) + ' tags · ' + Object.keys(TAG_CATS).length + ' categories</div>' +
+                    '<div class="text-[11px] text-[#6E6E78]">Setup · session · emotion · outcome</div></div>';
+                const tradeNode = '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-gray !py-0.5">TRADE</span></div>' +
+                    '<div class="text-[11px] text-[#8A8A93]">' + core.Trades.length + ' trades · immutable ledger</div>' +
+                    '<div class="text-[11px] text-[#6E6E78]">each linked to a ConfigVersion</div></div>';
+                const riskNode = '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-red !py-0.5">RISK STATE</span></div>' +
+                    '<div class="text-[11px] text-[#8A8A93]">daily · total · monthly</div>' +
+                    '<div class="text-[11px] text-[#6E6E78]">computed live from rules + trades</div></div>';
+
+                const downstream = [
+                    ['Discipline', 'Adherence vs your rules', 'discipline.html'],
+                    ['Analytics', 'Segmentation by account / strategy / tag', 'analytics.html'],
+                    ['Insights', 'Rule & breach patterns', 'insights.html'],
+                    ['Journal', 'Validation at save time', 'journal.html'],
+                    ['Dashboard', 'Remaining budget + system status', 'dashboard.html'],
+                    ['Reports', 'Period reports with rule context', '#']
+                ].map(([n, d, href]) =>
+                    '<a href="' + href + '" class="map-node flex flex-col gap-1 no-underline hover:border-[#3A3A41] transition-colors"><b class="text-[12.5px] text-white">' + n + '</b><div class="text-[11px] text-[#8A8A93]">' + d + '</div></a>').join('');
+
+                const arrow = '<div class="map-arrow"><svg data-lucide="chevron-right" class="w-4 h-4"></svg></div>';
+
+                $('panel-map').innerHTML =
+                    '<div class="panel"><div class="panel-title mb-4">Your trading system — how configuration flows through TradeMind</div>' +
+                    '<div class="flex items-center overflow-x-auto pb-2 gap-0">' +
+                        (ACCOUNTS.length ? accNode(ACCOUNTS[0]) : '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-blue !py-0.5">ACCOUNT</span><b class="text-[12.5px] text-white">None yet</b></div><div class="text-[11px] text-[#8A8A93]">Create your first account to begin</div></div>') + arrow +
+                        (STRATEGIES.length ? stratNode(STRATEGIES[0]) : '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-purple !py-0.5">STRATEGY</span><b class="text-[12.5px] text-white">None yet</b></div><div class="text-[11px] text-[#8A8A93]">Create your first strategy to begin</div></div>') + arrow +
+                        rulesNode + arrow + tagsNode + arrow + tradeNode + arrow + riskNode +
+                    '</div>' +
+                    '<div class="flex items-center justify-center gap-2 mt-2 mb-4"><span class="text-[11px] text-[#6E6E78] font-semibold">consumed by</span><svg data-lucide="arrow-down" class="w-4 h-4 text-[#3A3A41]"></svg></div>' +
+                    '<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">' + downstream + '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Click any node to open its configuration source; click a downstream section to open it. The same rule is never configured twice.</p>' +
+                    '</div>' +
+                    '<div class="panel mt-4"><div class="panel-title mb-3">End-to-end example (PRD §26)</div>' +
+                    (ACCOUNTS.length && STRATEGIES.length
+                        ? '<div class="text-[12.5px] text-[#C4C4CC] leading-relaxed">“' + esc(ACCOUNTS[0].name) + '” carries $' + ACCOUNTS[0].starting.toLocaleString() + ', $' + ACCOUNTS[0].dailyLoss + ' daily loss and $' + ACCOUNTS[0].maxDD + ' max drawdown. ' + esc(STRATEGIES[0].name) + ' allows ' + esc(STRATEGIES[0].risk.riskPerTrade) + ' risk per trade and max ' + ACCOUNTS[0].maxTrades + ' trades/day. The Journal validates each trade against the active version; the Risk page shows the live remaining budget; a third trade would breach the frequency rule, Discipline counts the breach, Analytics segments it as non-compliant, and the monthly view aggregates it all.</div>'
+                        : '<div class="text-[12.5px] text-[#C4C4CC] leading-relaxed">Create an account and a strategy to see how a trade flows through the system — Journal validates it, Risk shows the remaining budget, Discipline scores adherence, Analytics segments it, and Calendar aggregates the day.</div>') +
+                    '</div>';
+            }
+
+            // ============ RENDER: HISTORY ============
+            function renderHistory() {
+                const items = CHANGES.map(c =>
+                    '<div class="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#0F0F11] border border-[#1F1F23]">' +
+                        '<div class="w-8 h-8 rounded-lg bg-[#16161A] flex items-center justify-center flex-shrink-0"><svg data-lucide="git-commit" class="w-4 h-4 text-[#8A8A93]"></svg></div>' +
+                        '<div class="min-w-0 flex-1">' +
+                            '<div class="flex flex-wrap items-center gap-2"><b class="text-[13px] text-white">' + esc(c.entity) + '</b><span class="tag tag-blue !py-0 !px-1.5 text-[9.5px]">' + esc(c.what) + '</span><span class="num text-[10.5px] text-[#6E6E78] ml-auto">' + c.at + '</span></div>' +
+                            '<div class="text-[12px] text-[#C4C4CC] mt-1 num">' + esc(c.detail) + '</div>' +
+                            '<div class="text-[11px] text-[#6E6E78] mt-0.5">Impact: ' + esc(c.impact) + '</div>' +
+                        '</div>' +
+                    '</div>').join('');
+
+                $('panel-history').innerHTML =
+                    '<div class="flex items-center justify-between mb-3">' +
+                        '<h2 class="text-[15px] font-bold">Configuration history & audit</h2>' +
+                        '<button class="btn-ghost !py-1.5 !px-3 !text-[12px]" data-action="add-change"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> Record change</button>' +
+                    '</div>' +
+                    '<div class="flex flex-col gap-2.5">' + items + '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Every meaningful change is versioned with an effective timestamp. Undo creates a new version from an older one — history is never rewritten (PRD §17).</p>';
+            }
+
+            // ============ RENDER ALL ============
+            function renderAll() {
+                renderHome();
+                renderAccounts();
+                renderStrategies();
+                renderRuleSets();
+                renderTags();
+                renderMap();
+                renderHistory();
+                if (window.lucide) lucide.createIcons();
+            }
+
+            const kpi = (label, val) => '<div class="kpi"><div class="k-label">' + label + '</div><div class="k-val">' + val + '</div></div>';
+
+            // ============ ACCOUNT MODAL ============
+            let editingAcc = null;
+            function openAccountModal(acc) {
+                editingAcc = acc || null;
+                $('acc-modal-title').textContent = acc ? 'Edit account — ' + acc.name : 'New Account';
+                $('acc-name').value = acc ? acc.name : '';
+                $('acc-type').value = acc ? acc.type : 'Prop / Funded';
+                $('acc-currency').value = acc ? acc.currency : 'USD';
+                $('acc-style').value = acc ? (acc.style || 'Intraday') : 'Intraday';
+                $('acc-start').value = acc ? acc.starting : 10000;
+                $('acc-equity').value = acc ? acc.equity : 10000;
+                $('acc-ddmodel').value = acc ? acc.ddModel : 'static';
+                $('acc-dayloss').value = acc ? acc.dailyLoss : 100;
+                $('acc-maxdd').value = acc ? acc.maxDD : 500;
+                $('acc-risk').value = acc ? acc.riskPerTrade : 25;
+                $('acc-riskbasis').value = acc ? acc.riskBasis : 'money';
+                $('acc-openrisk').value = acc ? acc.maxOpenRisk : 50;
+                $('acc-openbasis').value = acc ? acc.openBasis : 'money';
+                $('acc-maxtrades').value = acc ? acc.maxTrades : 3;
+                $('acc-status').value = acc ? acc.status : 'Active';
+                $('acc-warn').value = acc ? acc.warn.join(', ') : '50, 70, 90';
+                updateAccPreview();
+                $('acc-modal').classList.add('open');
+            }
+            function closeAccModal() { $('acc-modal').classList.remove('open'); editingAcc = null; }
+
+            function accFormState() {
+                const risk = Number($('acc-risk').value) || 0;
+                const basis = $('acc-riskbasis').value;
+                const riskVal = basis === 'pct' ? '$' + Math.round((risk / 100) * (Number($('acc-equity').value) || 0)) + ' (' + risk + '%)' : '$' + risk;
+                const dailyLoss = Number($('acc-dayloss').value) || 0;
+                const maxDD = Number($('acc-maxdd').value) || 0;
+                const openR = Number($('acc-openrisk').value) || 0;
+                return { name: $('acc-name').value || 'Unnamed', type: $('acc-type').value, currency: $('acc-currency').value, style: $('acc-style').value,
+                    start: Number($('acc-start').value) || 0,
+                    equity: Number($('acc-equity').value) || 0, ddModel: $('acc-ddmodel').value, dailyLoss, maxDD,
+                    risk, basis, riskVal, openR, maxTrades: Number($('acc-maxtrades').value) || 0, status: $('acc-status').value };
+            }
+
+            function updateAccPreview() {
+                const f = accFormState();
+                const ddTxt = f.ddModel === 'trailing' ? 'Trailing — threshold moves with peak equity' : f.ddModel === 'static' ? 'Static — measured from starting balance' : f.ddModel === 'daily' ? 'Daily reset — budget resets at day boundary' : 'Custom';
+                $('acc-preview').innerHTML =
+                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Daily loss limit</span><b class="num text-white">$' + f.dailyLoss + '</b></div>' +
+                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Max drawdown</span><b class="num text-white">$' + f.maxDD + ' · ' + ddTxt + '</b></div>' +
+                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Risk per trade</span><b class="num text-white">' + f.riskVal + '</b></div>' +
+                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Max open risk</span><b class="num text-white">' + (f.openR ? '$' + f.openR : 'not set') + '</b></div>' +
+                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Max trades / day</span><b class="num text-white">' + (f.maxTrades ? f.maxTrades : 'not set') + '</b></div>' +
+                    '<div class="mt-2 pt-2 border-t border-[#1F1F23] text-[11.5px] text-[#6E6E78]">Risk screen will show “$' + f.dailyLoss + ' daily loss remaining” as the primary number; Discipline evaluates trades against these limits.</div>';
+            }
+
+            // ============ STRATEGY BUILDER ============
+            const STRAT_STEPS = ['Identity', 'Where', 'Setup', 'Risk', 'Execution', 'Behavior', 'Tags', 'Review'];
+            let editingStrat = null, stratStep = 0;
+            const stratDraft = {};
+
+            function openStratModal(s) {
+                editingStrat = s || null;
+                stratStep = 0;
+                Object.assign(stratDraft, {
+                    name: s ? s.name : '', desc: s ? s.desc : '', markets: s ? s.markets : 'FX · EURUSD, GBPUSD',
+                    sessions: s ? s.sessions.slice() : ['London'], setup: s ? s.setup : 'MSS + FVG',
+                    riskPerTrade: s ? s.risk.riskPerTrade : '1%', minRR: s ? s.risk.minRR : 1.5,
+                    stopRequired: s ? s.risk.stopRequired : true, entry: s ? s.entry : '', exit: s ? s.exit : '',
+                    behavior: s ? s.behavior.slice() : [], evidence: s ? s.evidence.slice() : [],
+                    tags: s ? s.tags.slice() : [], color: s ? s.color : '#10B981', accounts: s ? s.accounts.slice() : ['acc-prop']
+                });
+                $('strat-modal-title').textContent = s ? 'Edit strategy — ' + s.name + ' (creates ' + bumpVer(s.version) + ')' : 'New Strategy';
+                $('strat-ver-note').textContent = s ? 'Saving creates version ' + bumpVer(s.version) + ' — historical trades keep ' + s.version + '.' : '';
+                $('strat-modal').classList.add('open');
+                renderStratBuilder();
+            }
+            function bumpVer(v) {
+                const m = v.match(/v(\d+)\.(\d+)/);
+                return m ? 'v' + m[1] + '.' + (Number(m[2]) + 1) : 'v1.0';
+            }
+
+            function renderStratBuilder() {
+                const dots = STRAT_STEPS.map((s, i) =>
+                    '<div class="flex items-center gap-1.5 flex-shrink-0"><div class="step-dot ' + (i < stratStep ? 'done' : i === stratStep ? 'active' : 'todo') + '">' + (i < stratStep ? '✓' : i + 1) + '</div><span class="text-[11px] font-semibold ' + (i === stratStep ? 'text-white' : 'text-[#6E6E78]') + '">' + s + '</span></div>'
+                ).join('<div class="w-4 h-px bg-[#26262B] flex-shrink-0"></div>');
+                $('strat-steps').innerHTML = dots;
+                $('strat-step-body').innerHTML = stepBody(STRAT_STEPS[stratStep]);
+                $('strat-next').style.display = stratStep < STRAT_STEPS.length - 1 ? '' : 'none';
+                $('strat-save').style.display = stratStep === STRAT_STEPS.length - 1 ? '' : 'none';
+                renderStratSnapshot();
+            }
+
+            function stepBody(step) {
+                const chk = (label, key) => '<label class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[#121214] border border-[#1F1F23] cursor-pointer"><input type="checkbox" data-draft-check="' + key + '" ' + (stratDraft[key] ? 'checked' : '') + ' class="accent-[#10B981]"><span class="text-[13px] text-[#C4C4CC]">' + label + '</span></label>';
+                if (step === 'Identity') return field('Name', '<input id="d-name" class="finput" value="' + esc(stratDraft.name) + '" placeholder="London FVG">') + field('Description', '<textarea id="d-desc" class="ftext" placeholder="One-liner for what this system trades">' + esc(stratDraft.desc) + '</textarea>') + field('Color', '<input id="d-color" type="color" value="' + esc(stratDraft.color) + '" class="h-[38px] w-16 bg-transparent border border-[#1F1F23] rounded-lg cursor-pointer">');
+                if (step === 'Where') return field('Markets / instruments', '<input id="d-markets" class="finput" value="' + esc(stratDraft.markets) + '">') + field('Allowed sessions', sessionSelect()) + field('Long / short', '<div class="flex gap-2">' + ['Long', 'Short', 'Both'].map(x => '<label class="flex-1 text-center px-3 py-2 rounded-lg border cursor-pointer text-[12.5px] font-semibold ' + (stratDraft.dir === x ? 'border-[#10B981] text-[#34D399] bg-[rgba(16,185,129,0.08)]' : 'border-[#1F1F23] text-[#8A8A93] bg-[#121214]') + '"><input type="radio" name="d-dir" data-draft-dir="' + x + '" ' + (stratDraft.dir === x ? 'checked' : '') + ' class="hidden">' + x + '</label>').join('') + '</div>');
+                if (step === 'Setup') return field('Required setup conditions', '<input id="d-setup" class="finput" value="' + esc(stratDraft.setup) + '" placeholder="MSS + FVG, FVG">') + '<p class="fhelp">A trade only qualifies when one of these setups is present — Journal validates this before save.</p>';
+                if (step === 'Risk') return '<div class="grid grid-cols-2 gap-3">' + field('Risk per trade', '<input id="d-risk" class="finput" value="' + esc(stratDraft.riskPerTrade) + '">') + field('Minimum RR', '<input id="d-minrr" type="number" step="0.1" class="finput num" value="' + stratDraft.minRR + '">') + '</div>' + chk('Stop loss required', 'stopRequired') + field('Max simultaneous positions', '<input id="d-positions" type="number" class="finput num" value="1">');
+                if (step === 'Execution') return field('Entry trigger', '<input id="d-entry" class="finput" value="' + esc(stratDraft.entry) + '" placeholder="FVG fill + MSS confirmation">') + field('Exit logic', '<input id="d-exit" class="finput" value="' + esc(stratDraft.exit) + '" placeholder="TP at opposing liquidity">');
+                if (step === 'Behavior') return field('Behavior rules (comma-separated)', '<input id="d-behavior" class="finput" value="' + esc(stratDraft.behavior.join(', ')) + '" placeholder="No revenge entry, Cooldown 15 min after loss">');
+                if (step === 'Tags') return field('Required tags (comma-separated)', '<input id="d-tags" class="finput" value="' + esc(stratDraft.tags.join(', ')) + '" placeholder="A+ Setup, London, Clean Entry">');
+                return '<div class="flex flex-col gap-2.5">' +
+                    '<div class="px-4 py-3 rounded-lg bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.25)] text-[12.5px] text-[#C4C4CC]"><b class="text-[#34D399]">TradeMind will enforce:</b> ' + esc(stratDraft.name || 'Unnamed') + ' on ' + esc(stratDraft.markets) + ' during ' + stratDraft.sessions.join(', ') + ' with ' + esc(stratDraft.riskPerTrade) + ' risk, min RR ' + stratDraft.minRR + 'R, stop ' + (stratDraft.stopRequired ? 'required' : 'optional') + ', setups: ' + esc(stratDraft.setup) + '.</div>' +
+                    '<div class="px-4 py-3 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12.5px] text-[#C4C4CC]"><b class="text-white">Journal integration:</b> auto-selects this strategy, calculates allowed risk + remaining budget, shows the rule checklist pre-trade, and labels violations at save.</div>' +
+                    '<div class="px-4 py-3 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12.5px] text-[#C4C4CC]"><b class="text-white">Discipline integration:</b> adherence is scored against THIS system — plan, risk, execution, frequency, behavior and review dimensions.</div>' +
+                    (editingStrat ? '<div class="px-4 py-3 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12px] text-[#6E6E78]">Saving this edit creates a new version. Historical trades keep ' + esc(editingStrat.version) + ' — their analytics never change.</div>' : '');
+            }
+            const field = (label, inner) => '<div><label class="flabel">' + label + '</label>' + inner + '</div>';
+            function sessionSelect() {
+                return '<div class="flex flex-wrap gap-1.5">' + ['London', 'New York', 'Asia'].map(s =>
+                    '<button class="btn-ghost !py-1.5 !px-3 !text-[12px] ' + (stratDraft.sessions.includes(s) ? '!border-[#10B981] !text-[#34D399]' : '') + '" data-draft-session="' + s + '">' + s + '</button>').join('') + '</div>';
+            }
+
+            function renderStratSnapshot() {
+                $('strat-snapshot').innerHTML =
+                    '<div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-[12px]" style="background:' + esc(stratDraft.color) + '22;color:' + esc(stratDraft.color) + '">' + esc((stratDraft.name || '?')[0].toUpperCase()) + '</div><b class="text-[13px] text-white">' + esc(stratDraft.name || 'Unnamed') + '</b></div>' +
+                    '<div class="flex flex-col gap-1.5 text-[11.5px] text-[#8A8A93]">' +
+                        '<div><b class="text-[#C4C4CC]">Markets:</b> ' + esc(stratDraft.markets) + '</div>' +
+                        '<div><b class="text-[#C4C4CC]">Sessions:</b> ' + (stratDraft.sessions.length ? stratDraft.sessions.join(', ') : '—') + '</div>' +
+                        '<div><b class="text-[#C4C4CC]">Setup:</b> ' + esc(stratDraft.setup) + '</div>' +
+                        '<div><b class="text-[#C4C4CC]">Risk:</b> ' + esc(stratDraft.riskPerTrade) + ' · min RR ' + stratDraft.minRR + 'R</div>' +
+                        '<div><b class="text-[#C4C4CC]">Stop:</b> ' + (stratDraft.stopRequired ? 'required' : 'optional') + '</div>' +
+                        '<div><b class="text-[#C4C4CC]">Entry:</b> ' + esc(stratDraft.entry || '—') + '</div>' +
+                        '<div><b class="text-[#C4C4CC]">Exit:</b> ' + esc(stratDraft.exit || '—') + '</div>' +
+                        '<div><b class="text-[#C4C4CC]">Behavior:</b> ' + (stratDraft.behavior.length ? stratDraft.behavior.join('; ') : '—') + '</div>' +
+                        '<div><b class="text-[#C4C4CC]">Tags:</b> ' + (stratDraft.tags.length ? stratDraft.tags.join(', ') : '—') + '</div>' +
+                    '</div>';
+            }
+
+            function saveStrategy() {
+                // Mutations go through the ConfigAPI: it creates a NEW immutable
+                // ConfigVersion (version bump for edits), re-points assignments and
+                // publishes config.version.created + config.changed on the bus.
+                // The bus subscriber re-renders this page — no direct UI calls here.
+                if (editingStrat) {
+                    core.ConfigAPI.updateStrategy(editingStrat.id, {
+                        name: stratDraft.name || editingStrat.name, markets: stratDraft.markets,
+                        sessions: stratDraft.sessions.slice(), setup: stratDraft.setup,
+                        riskPerTrade: stratDraft.riskPerTrade, minRR: Number(stratDraft.minRR) || 1.5,
+                        stopRequired: stratDraft.stopRequired, entry: stratDraft.entry, exit: stratDraft.exit,
+                        behavior: stratDraft.behavior.slice(), evidence: stratDraft.evidence || [], tags: stratDraft.tags.slice()
+                    });
+                } else {
+                    core.ConfigAPI.createStrategy({
+                        name: stratDraft.name || 'Unnamed', desc: stratDraft.desc, color: stratDraft.color || '#10B981',
+                        markets: stratDraft.markets, sessions: stratDraft.sessions.slice(), setup: stratDraft.setup,
+                        riskPerTrade: stratDraft.riskPerTrade, minRR: Number(stratDraft.minRR) || 1.5,
+                        stopRequired: stratDraft.stopRequired, entry: stratDraft.entry, exit: stratDraft.exit,
+                        behavior: stratDraft.behavior.slice(), tags: stratDraft.tags.slice()
+                    });
+                }
+                $('strat-modal').classList.remove('open');
+                editingStrat = null;
+            }
+
+            // ============ EVENTS ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            const VALID_TABS = ['home', 'accounts', 'strategies', 'rulesets', 'tags', 'map', 'history'];
+            const hashTab = (location.hash || '').replace('#', '');
+            if (hashTab && VALID_TABS.includes(hashTab)) activateTab(hashTab);
+            window.addEventListener('hashchange', () => {
+                const t = (location.hash || '').replace('#', '');
+                if (t && VALID_TABS.includes(t)) activateTab(t);
+            });
+
+            document.querySelectorAll('.ins-tab[data-tab]').forEach(btn => {
+                btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+            });
+
+            // account modal live preview
+            ['acc-name', 'acc-type', 'acc-start', 'acc-equity', 'acc-ddmodel', 'acc-dayloss', 'acc-maxdd', 'acc-risk', 'acc-riskbasis', 'acc-openrisk', 'acc-maxtrades', 'acc-status', 'acc-warn'].forEach(id => {
+                const el = $(id);
+                if (el) el.addEventListener('input', updateAccPreview);
+            });
+
+            // delegated clicks
+            document.addEventListener('click', e => {
+                const act = e.target.closest && e.target.closest('[data-action]');
+                if (act) {
+                    const a = act.getAttribute('data-action');
+                    if (a === 'new-account') openAccountModal(null);
+                    if (a === 'close-acc') closeAccModal();
+                    if (a === 'new-strategy') openStratModal(null);
+                    if (a === 'close-strat') { $('strat-modal').classList.remove('open'); editingStrat = null; }
+                    if (a === 'strat-prev' && stratStep > 0) { stratStep--; renderStratBuilder(); }
+                    if (a === 'new-tag') {
+                        const t = prompt('Quick-create tag (name: Category)');
+                        if (t && t.trim()) {
+                            const [name, cat] = t.split(':').map(x => x.trim());
+                            const c = cat || 'Custom';
+                            (TAG_CATS[c] = TAG_CATS[c] || { color: '#6E6E78', tags: [] }).tags.push(name);
+                            core.ConfigAPI.logTagEvent('Tags', 'Tag created', '“' + name + '” in ' + c, 'Available for Journal & filtering now');
+                        }
+                    }
+                    if (a === 'add-change') {
+                        const d = prompt('Record a config change — e.g. "Lowered drawdown limit $500 → $400"');
+                        if (d && d.trim()) core.ConfigAPI.recordManualChange(d.trim());
+                    }
+                    return;
+                }
+                const editAcc = e.target.closest && e.target.closest('[data-edit-acc]');
+                if (editAcc) { openAccountModal(ACCOUNTS.find(a => a.id === editAcc.getAttribute('data-edit-acc'))); return; }
+                const dupAcc = e.target.closest && e.target.closest('[data-dup-acc]');
+                if (dupAcc) {
+                    core.ConfigAPI.duplicateAccount(dupAcc.getAttribute('data-dup-acc'));
+                    return;
+                }
+                const arcAcc = e.target.closest && e.target.closest('[data-archive-acc]');
+                if (arcAcc) {
+                    const id = arcAcc.getAttribute('data-archive-acc');
+                    const a = core.ConfigAPI.getAccount(id);
+                    core.ConfigAPI.setAccountStatus(id, a && a.status === 'Active' ? 'Archived' : 'Active');
+                    return;
+                }
+                const editStrat = e.target.closest && e.target.closest('[data-edit-strat]');
+                if (editStrat) { openStratModal(STRATEGIES.find(s => s.id === editStrat.getAttribute('data-edit-strat'))); return; }
+                const dupStrat = e.target.closest && e.target.closest('[data-dup-strat]');
+                if (dupStrat) {
+                    core.ConfigAPI.duplicateStrategy(dupStrat.getAttribute('data-dup-strat'));
+                    return;
+                }
+                const toggleRule = e.target.closest && e.target.closest('[data-toggle-rule]');
+                if (toggleRule) {
+                    // versioned toggle — creates a new immutable RuleSet version via the ConfigAPI
+                    core.ConfigAPI.toggleRule(toggleRule.getAttribute('data-toggle-rule'));
+                    return;
+                }
+                const arcTag = e.target.closest && e.target.closest('[data-archive-tag]');
+                if (arcTag) {
+                    const tg = arcTag.getAttribute('data-archive-tag');
+                    const i = ARCHIVED_TAGS.indexOf(tg);
+                    if (i >= 0) ARCHIVED_TAGS.splice(i, 1); else ARCHIVED_TAGS.push(tg);
+                    core.ConfigAPI.logTagEvent('Tags', i >= 0 ? 'Tag restored' : 'Tag archived', '“' + tg + '”', i >= 0 ? 'Usable on new trades again' : '12 historical trades keep the tag; analytics preserved');
+                    return;
+                }
+                const ses = e.target.closest && e.target.closest('[data-draft-session]');
+                if (ses) {
+                    const s = ses.getAttribute('data-draft-session');
+                    const i = stratDraft.sessions.indexOf(s);
+                    if (i >= 0) stratDraft.sessions.splice(i, 1); else stratDraft.sessions.push(s);
+                    renderStratBuilder();
+                    return;
+                }
+            });
+
+            // draft inputs (strategy builder)
+            document.addEventListener('input', e => {
+                const t = e.target;
+                if (t.id === 'd-name') stratDraft.name = t.value;
+                if (t.id === 'd-desc') stratDraft.desc = t.value;
+                if (t.id === 'd-color') { stratDraft.color = t.value; renderStratSnapshot(); }
+                if (t.id === 'd-markets') stratDraft.markets = t.value;
+                if (t.id === 'd-setup') stratDraft.setup = t.value;
+                if (t.id === 'd-risk') stratDraft.riskPerTrade = t.value;
+                if (t.id === 'd-minrr') stratDraft.minRR = Number(t.value) || 0;
+                if (t.id === 'd-entry') stratDraft.entry = t.value;
+                if (t.id === 'd-exit') stratDraft.exit = t.value;
+                if (t.id === 'd-behavior') stratDraft.behavior = t.value.split(',').map(x => x.trim()).filter(Boolean);
+                if (t.id === 'd-tags') stratDraft.tags = t.value.split(',').map(x => x.trim()).filter(Boolean);
+            });
+            document.addEventListener('change', e => {
+                const c = e.target.getAttribute && e.target.getAttribute('data-draft-check');
+                if (c) stratDraft[c] = e.target.checked;
+                const d = e.target.getAttribute && e.target.getAttribute('data-draft-dir');
+                if (d) stratDraft.dir = d;
+            });
+
+            $('acc-save').addEventListener('click', () => {
+                const f = accFormState();
+                const warn = $('acc-warn').value.split(',').map(x => Number(x.trim())).filter(Boolean);
+                if (editingAcc) {
+                    // identity change (not versioned) + limits change (NEW immutable policy version)
+                    core.ConfigAPI.updateAccount(editingAcc.id, {
+                        name: f.name, account_type: f.type, currency: f.currency, style: f.style,
+                        starting_balance: f.start,
+                        current_equity: f.equity, status: f.status, note: 'Drawdown basis: ' + f.ddModel
+                    });
+                    core.ConfigAPI.updateAccountLimits(editingAcc.id, {
+                        ddModel: f.ddModel, maxDailyLoss: f.dailyLoss, maxTotalDrawdown: f.maxDD,
+                        riskPerTrade: f.risk, riskBasis: f.basis, maxOpenRisk: f.openR, openBasis: 'money',
+                        maxTrades: f.maxTrades, warn: warn.length ? warn : [50, 70, 90]
+                    });
+                } else {
+                    core.ConfigAPI.createAccount({
+                        name: f.name, type: f.type, currency: f.currency, style: f.style,
+                        start: f.start, equity: f.equity, ddModel: f.ddModel,
+                        dailyLoss: f.dailyLoss, maxDD: f.maxDD, risk: f.risk, basis: f.basis,
+                        openR: f.openR, maxTrades: f.maxTrades, status: f.status, warn: warn.length ? warn : [50, 70, 90]
+                    });
+                }
+                closeAccModal();
+            });
+
+            $('strat-next').addEventListener('click', () => {
+                if (stratStep < STRAT_STEPS.length - 1) { stratStep++; renderStratBuilder(); }
+            });
+            $('strat-save').addEventListener('click', saveStrategy);
+
+            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
+            // USER → STRATEGY LAB → CONFIGURATION API → VERSIONED RULES → EVENT BUS →
+            // modules (this page included) listen and update themselves. Mutations
+            // never call renderAll directly — the bus drives the re-render.
+            core.TradeMindBus.subscribe('config.changed', () => { syncDerived(); renderAll(); });
+            core.TradeMindBus.subscribe('trade.created', () => { syncDerived(); renderAll(); });
+            core.TradeMindBus.subscribe('trade.updated', () => { syncDerived(); renderAll(); });
+            core.TradeMindBus.subscribe('trade.deleted', () => { syncDerived(); renderAll(); });
+
+            syncDerived();
+            renderAll();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script src="reset.js"></script>
+</body>
+</html>

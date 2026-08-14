@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Analytics</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN, Lucide & shared demo data -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: #0A0A0C;
+            color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 13px; font-weight: 700; color: #E8E8EC; }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+
+        .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
+        .tag-blue { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.25); }
+        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
+
+        /* Period chips */
+        .period-chip {
+            padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            background: #121214; border: 1px solid #1F1F23; transition: all 0.15s; cursor: pointer;
+        }
+        .period-chip:hover { color: #E8E8EC; border-color: #2E2E35; }
+        .period-chip.active { background: #1F1F23; color: #FFFFFF; border-color: #2E2E35; }
+
+        /* Tabs */
+        .ins-tab {
+            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        }
+        .ins-tab:hover { color: #E8E8EC; }
+        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+
+        .ins-panel { display: none; animation: fadeIn 0.3s ease; }
+        .ins-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        .bar-track { height: 5px; background: #1F1F23; border-radius: 999px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 999px; }
+
+        .metric-mini { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 12px 14px; }
+        .metric-mini .label-xs { margin-bottom: 6px; }
+        .metric-mini .val { font-size: 18px; font-weight: 700; }
+
+        /* Filter selects */
+        .fsel {
+            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
+            padding: 7px 10px; font-size: 12.5px; font-weight: 600; color: #C4C4CC;
+            outline: none; cursor: pointer; transition: border-color 0.15s;
+        }
+        .fsel:hover, .fsel:focus { border-color: #2E2E35; color: #FFFFFF; }
+        .fsel option { background: #121214; color: #C4C4CC; }
+
+        /* Tables */
+        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .tbl th {
+            text-align: left; padding: 8px 10px; color: #6E6E78; font-size: 10.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #1F1F23;
+            cursor: pointer; white-space: nowrap; user-select: none;
+        }
+        .tbl th:hover { color: #B4B4BD; }
+        .tbl td { padding: 8px 10px; border-bottom: 1px solid #17171A; white-space: nowrap; }
+        .tbl tbody tr:hover { background: #16161A; }
+        .tbl tbody tr:last-child td { border-bottom: none; }
+        .tbl-wrap { overflow-x: auto; }
+
+        /* Heatmap */
+        .heat {
+            border-radius: 5px; min-height: 26px; display: flex; align-items: center; justify-content: center;
+            font-size: 10px; font-weight: 700; color: #E8E8EC; cursor: default;
+        }
+        .heat-cell { border-radius: 5px; min-height: 22px; }
+
+        /* Calendar */
+        .cal-day {
+            border-radius: 8px; border: 1px solid #1F1F23; background: #0F0F11;
+            min-height: 78px; padding: 8px; cursor: pointer; transition: border-color 0.15s, transform 0.1s;
+            display: flex; flex-direction: column; gap: 4px; position: relative;
+        }
+        .cal-day:hover { border-color: #3A3A41; transform: translateY(-1px); }
+        .cal-day.empty { background: transparent; border-color: transparent; cursor: default; }
+        .cal-day.empty:hover { border-color: transparent; transform: none; }
+        .cal-day.other { opacity: 0.35; }
+        .cal-day.today { outline: 2px solid rgba(16,185,129,0.5); outline-offset: 1px; }
+        .cal-day .daynum { font-size: 11px; font-weight: 700; color: #8A8A93; }
+        .cal-day .dayval { font-size: 12.5px; font-weight: 700; }
+        .cal-day .daycnt { font-size: 10.5px; color: #6E6E78; }
+
+        /* Histogram */
+        .hbar { display: flex; align-items: flex-end; gap: 6px; height: 120px; }
+        .hbar .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: 4px; height: 100%; }
+        .hbar .bar { width: 100%; border-radius: 4px 4px 0 0; min-height: 2px; }
+        .hbar .lbl { font-size: 9.5px; color: #6E6E78; white-space: nowrap; transform: rotate(-30deg); transform-origin: top left; margin-top: 4px; }
+
+        .divider { border-top: 1px solid #1F1F23; margin: 14px 0; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+
+        .conf { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; }
+        .conf .dot { width: 7px; height: 7px; border-radius: 999px; }
+
+        .kpi { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 14px 16px; }
+        .kpi .k-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6E6E78; margin-bottom: 6px; }
+        .kpi .k-val { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+        .kpi .k-sub { font-size: 11px; color: #6E6E78; margin-top: 3px; }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
+        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item active"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="analytics.html#calendar" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="#" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input type="text" class="search-input" placeholder="Ask anything… e.g. compare London FVG with New York">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                    <button class="account-select hide-when-collapsed">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Analytics</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">What does the data say? Filter → measure → compare → drill down → verify.</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <div class="flex items-center gap-1.5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1">
+                                <button class="period-chip active" data-period="7d">7D</button>
+                                <button class="period-chip" data-period="30d">30D</button>
+                                <button class="period-chip" data-period="90d">90D</button>
+                                <button class="period-chip" data-period="ytd">YTD</button>
+                                <button class="period-chip" data-period="all">All</button>
+                            </div>
+                            <span id="conf-badge" class="conf tag-gray"><span class="dot" style="background:#6E6E78"></span> —</span>
+                        </div>
+                    </div>
+
+                    <!-- Global filters -->
+                    <div class="panel p-3.5">
+                        <div class="flex flex-wrap items-center gap-2">
+                            <span class="label-xs mr-1">Filters</span>
+                            <select id="f-symbol" class="fsel"></select>
+                            <select id="f-setup" class="fsel"></select>
+                            <select id="f-session" class="fsel"></select>
+                            <select id="f-dir" class="fsel"></select>
+                            <select id="f-result" class="fsel"></select>
+                            <select id="f-risk" class="fsel"></select>
+                            <select id="f-emotion" class="fsel"></select>
+                            <select id="f-adherence" class="fsel"></select>
+                            <button id="f-reset" class="btn-ghost !py-1.5 !px-3 text-[12px]">Reset</button>
+                            <span id="f-count" class="text-[12px] text-[#6E6E78] num ml-auto"></span>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="panel p-1.5 flex gap-1 overflow-x-auto">
+                        <button class="ins-tab active" data-tab="overview">Overview</button>
+                        <button class="ins-tab" data-tab="performance">Performance</button>
+                        <button class="ins-tab" data-tab="equity">Equity &amp; Drawdown</button>
+                        <button class="ins-tab" data-tab="distribution">Distribution</button>
+                        <button class="ins-tab" data-tab="strategy">Strategy</button>
+                        <button class="ins-tab" data-tab="instrument">Instrument</button>
+                        <button class="ins-tab" data-tab="session">Session &amp; Time</button>
+                        <button class="ins-tab" data-tab="longshort">Long vs Short</button>
+                        <button class="ins-tab" data-tab="risk">Risk</button>
+                        <button class="ins-tab" data-tab="streaks">Streaks</button>
+                    </div>
+
+                    <div id="panel-overview" class="ins-panel active"></div>
+                    <div id="panel-performance" class="ins-panel"></div>
+                    <div id="panel-equity" class="ins-panel"></div>
+                    <div id="panel-distribution" class="ins-panel"></div>
+                    <div id="panel-strategy" class="ins-panel"></div>
+                    <div id="panel-instrument" class="ins-panel"></div>
+                    <div id="panel-session" class="ins-panel"></div>
+                    <div id="panel-longshort" class="ins-panel"></div>
+                    <div id="panel-risk" class="ins-panel"></div>
+                    <div id="panel-streaks" class="ins-panel"></div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Analytics demo build · metrics computed from the shared demo journal · data is illustrative</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const $ = id => document.getElementById(id);
+            const D = window.DemoTrades;
+            const { fmtMoney, fmtR, pct, stats, confidence, groupBy, SETUPS, SYMBOLS, SESSIONS, EMOTIONS, day } = D;
+
+            // Canonical single source of truth — analytics reads the local store
+            // (same trades the Journal, Dashboard, Risk and Insights see).
+            const core = window.TradeMindCore;
+            let ALL = [];
+            let ACCOUNT = 0;
+            let accountId = null;
+
+            function refreshData() {
+                if (core && core.Accounts && core.Accounts.length) {
+                    accountId = core.selectedAccountId() || core.Accounts[0].id;
+                    const acc = core.Accounts.find(a => a.id === accountId);
+                    ACCOUNT = acc ? acc.current_equity : 0;
+                    ALL = core.Trades.filter(t => t.account_id === accountId);
+                } else {
+                    accountId = null; ACCOUNT = 0; ALL = [];
+                }
+            }
+            refreshData();
+            const PERIODS = [
+                { id: '7d', label: '7D', days: 7 },
+                { id: '30d', label: '30D', days: 30 },
+                { id: '90d', label: '90D', days: 90 },
+                { id: 'ytd', label: 'YTD', days: null },
+                { id: 'all', label: 'All', days: Infinity }
+            ];
+            let periodId = '90d';
+            let unit = '$';
+
+            const filters = { symbol: 'all', setup: 'all', session: 'all', dir: 'all', result: 'all', risk: 'all', emotion: 'all', adherence: 'all' };
+
+            // ============ HELPERS ============
+            const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            const riskBucket = t => t.risk < 10 ? '< $10' : t.risk <= 20 ? '$10–$20' : t.risk <= 30 ? '$20–$30' : t.risk <= 40 ? '$30–$40' : '> $40';
+            const RISK_BUCKETS = ['< $10', '$10–$20', '$20–$30', '$30–$40', '> $40'];
+            const RESULT_LABEL = t => t.pnl > 0 ? 'Win' : t.pnl < 0 ? 'Loss' : 'Breakeven';
+            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+
+            function periodRange(p) {
+                const now = Date.now();
+                if (p.days === Infinity) return { from: 0, to: now };
+                if (p.days === null) { const y = new Date(); return { from: new Date(y.getFullYear(), 0, 1).getTime(), to: now }; }
+                return { from: now - p.days * day, to: now };
+            }
+            function prevRange(p) {
+                const r = periodRange(p);
+                const len = r.to - r.from;
+                return { from: r.from - len, to: r.from };
+            }
+
+            function applyFilters(list) {
+                const f = filters;
+                return list.filter(t => {
+                    if (f.symbol !== 'all' && t.symbol !== f.symbol) return false;
+                    if (f.setup !== 'all' && t.setup !== f.setup) return false;
+                    if (f.session !== 'all' && t.session !== f.session) return false;
+                    if (f.dir !== 'all' && t.dir !== f.dir) return false;
+                    if (f.result === 'win' && !(t.pnl > 0)) return false;
+                    if (f.result === 'loss' && !(t.pnl < 0)) return false;
+                    if (f.result === 'be' && t.pnl !== 0) return false;
+                    if (f.risk !== 'all' && riskBucket(t) !== f.risk) return false;
+                    if (f.emotion !== 'all' && t.emotion !== f.emotion) return false;
+                    if (f.adherence !== 'all' && t.adherence !== f.adherence) return false;
+                    return true;
+                });
+            }
+
+            function currentList() {
+                const r = periodRange(PERIODS.find(p => p.id === periodId));
+                // no upper bound: the demo journal is anchored at a fixed date, so
+                // trades near the anchor must always be included (matches Insights)
+                return applyFilters(ALL.filter(t => t.ts.getTime() >= r.from));
+            }
+            function prevList() {
+                const r = prevRange(PERIODS.find(p => p.id === periodId));
+                return applyFilters(ALL.filter(t => t.ts.getTime() >= r.from && t.ts.getTime() <= r.to));
+            }
+
+            const rUnit = (v, u) => u === 'R' ? fmtR(v) : fmtMoney(v);
+
+            // ============ CHART PRIMITIVES ============
+            function lineSvg(series, opts) {
+                opts = opts || {};
+                if (series.length < 2) return '<p class="text-[12.5px] text-[#6E6E78] py-6 text-center">Not enough data.</p>';
+                const values = series.map(p => p.v);
+                const min = opts.min !== undefined ? opts.min : Math.min(0, ...values);
+                const max = opts.max !== undefined ? opts.max : Math.max(...values);
+                const span = (max - min) || 1;
+                const W = opts.w || 640, H = opts.h || 170, P = opts.p !== undefined ? opts.p : 8;
+                const x = i => P + (i / (series.length - 1)) * (W - 2 * P);
+                const y = v => H - P - ((v - min) / span) * (H - 2 * P);
+                const line = series.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+                const area = line + ' L' + x(series.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + x(0).toFixed(1) + ' ' + (H - P) + ' Z';
+                const zeroY = y(0);
+                let grid = '';
+                if (opts.grid) {
+                    const g = 4;
+                    for (let i = 1; i < g; i++) {
+                        const gy = P + (i / g) * (H - 2 * P);
+                        grid += '<line x1="' + P + '" y1="' + gy.toFixed(1) + '" x2="' + (W - P) + '" y2="' + gy.toFixed(1) + '" stroke="#17171A" stroke-width="1"/>';
+                    }
+                }
+                const zero = (min < 0 && max > 0) ? '<line x1="' + P + '" y1="' + zeroY.toFixed(1) + '" x2="' + (W - P) + '" y2="' + zeroY.toFixed(1) + '" stroke="#26262B" stroke-width="1" stroke-dasharray="3 3"/>' : '';
+                return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full" style="height:auto">' + grid +
+                    '<path d="' + area + '" fill="' + (opts.fill || 'rgba(16,185,129,0.08)') + '"/>' +
+                    '<path d="' + line + '" fill="none" stroke="' + (opts.stroke || '#34D399') + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+                    zero + '</svg>';
+            }
+
+            function hist(list, getter, buckets) {
+                const counts = buckets.map(b => ({ label: b.label, n: 0 }));
+                list.forEach(t => {
+                    const v = getter(t);
+                    const idx = buckets.findIndex(b => v >= b.min && v < b.max);
+                    if (idx >= 0) counts[idx].n++;
+                });
+                const max = Math.max(1, ...counts.map(c => c.n));
+                return counts.map(c =>
+                    '<div class="col"><div class="bar" style="height:' + Math.max(4, (c.n / max) * 100) + '%;background:' + (c.cls || '#34D399') + ';opacity:0.85" title="' + c.label + ': ' + c.n + '"></div>' +
+                    '<span class="lbl num">' + c.label + '</span></div>').join('');
+            }
+
+            const panel = (title, body, extra) => '<div class="panel p-5"><div class="flex items-center justify-between mb-4"><div class="panel-title">' + title + '</div>' + (extra || '') + '</div>' + body + '</div>';
+            const kpi = (label, val, sub, cls) => '<div class="kpi"><div class="k-label">' + label + '</div><div class="k-val num ' + (cls || 'text-white') + '">' + val + '</div>' + (sub ? '<div class="k-sub">' + sub + '</div>' : '') + '</div>';
+            const confTag = n => {
+                const c = confidence(n);
+                return '<span class="conf ' + c.cls + '"><span class="dot" style="background:' + c.dot + '"></span>' + c.label + '</span>';
+            };
+
+            // ============ OVERVIEW ============
+            function renderOverview() {
+                const list = currentList(), s = stats(list), c = confidence(s.n);
+                const prev = stats(prevList());
+
+                const kpis = kpi('Net P&L', fmtMoney(s.pnl), 'realized, current period', s.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    kpi('Win rate', pct(s.winRate * 100, 100) + '%', s.n + ' closed trades', 'text-white') +
+                    kpi('Profit factor', s.pf.toFixed(2), 'gross win ÷ gross loss', s.pf >= 1 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    kpi('Expectancy', fmtR(s.expectancy), 'avg result per trade', s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    kpi('Average R', fmtR(s.expectancy), 'normalized by risk', 'text-white') +
+                    kpi('Max drawdown', fmtMoney(-s.maxDD), 'peak-to-trough', 'text-[#F87171]') +
+                    kpi('Avg trade', fmtMoney(s.avgTrade), 'net ÷ closed', s.avgTrade >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    kpi('Trade count', String(s.n), s.n ? (list.filter(t => t.pnl > 0).length + 'W · ' + list.filter(t => t.pnl < 0).length + 'L · ' + list.filter(t => t.pnl === 0).length + 'BE') : '', 'text-white');
+
+                // equity curve with previous-period overlay
+                const cur = equitySeries(list);
+                const prv = equitySeries(prevList());
+                const overlay = prv.map(p => ({ v: p.v, label: p.label, date: p.date })).slice(-cur.length);
+                const maxV = Math.max(...cur.map(p => p.v), 0);
+                const minV = Math.min(...cur.map(p => p.v), 0);
+                const both = cur.map(p => p.v).concat(overlay.map(p => p.v));
+                const eqChart = panel('Equity curve — current vs previous period',
+                    '<div class="flex items-center gap-3 mb-2">' +
+                        '<span class="flex items-center gap-1.5 text-[11.5px] text-[#8A8A93]"><span class="w-3 h-0.5 rounded" style="background:#34D399"></span> Current</span>' +
+                        '<span class="flex items-center gap-1.5 text-[11.5px] text-[#8A8A93]"><span class="w-3 h-0.5 rounded" style="background:#3B82F6"></span> Previous</span>' +
+                        '<button class="btn-ghost !py-1 !px-2.5 text-[11.5px] ml-auto" onclick="toggleUnit()">Unit: ' + unit + '</button>' +
+                    '</div>' +
+                    '<div class="relative">' +
+                        lineSvg(cur, { stroke: '#34D399', fill: 'rgba(16,185,129,0.08)', grid: true, min: Math.min(0, ...both), max: Math.max(0, ...both) }) +
+                        (overlay.length >= 2
+                            ? lineSvg(overlay, { stroke: '#3B82F6', fill: 'rgba(59,130,246,0.05)', min: Math.min(0, ...both), max: Math.max(0, ...both) }).replace('class="w-full"', 'class="w-full absolute inset-0 opacity-60"')
+                            : '<div class="absolute inset-0 flex items-center justify-center text-[11.5px] text-[#4A4A52]">No trades in the previous period to compare.</div>') +
+                    '</div>');
+
+                // top dimensions
+                const dim = (label, key, name) => {
+                    const g = groupBy(list, key);
+                    const rows = Object.entries(g).map(([k, tr]) => ({ name: k, s: stats(tr) })).sort((a, b) => b.s.expectancy - a.s.expectancy);
+                    if (!rows.length) return '<div class="metric-mini"><div class="label-xs">' + label + '</div><div class="text-[12.5px] text-[#6E6E78] mt-1">No data</div></div>';
+                    const best = rows[0];
+                    return '<div class="metric-mini"><div class="label-xs">' + label + '</div>' +
+                        '<div class="text-[14px] font-bold text-white mt-1 truncate">' + esc(best.name) + '</div>' +
+                        '<div class="text-[11.5px] text-[#8A8A93] mt-0.5 num">' + fmtR(best.s.expectancy) + ' exp · ' + best.s.n + ' trades</div></div>';
+                };
+
+                // risk snapshot
+                const ddPct = Math.round((s.maxDD / ACCOUNT) * 1000) / 10;
+                const riskSnap = '<div class="panel p-5"><div class="panel-title mb-4">Risk snapshot</div>' +
+                    '<div class="grid grid-cols-3 gap-3">' +
+                        kpi('Avg risk', '$' + Math.round(s.avgRisk), 'per trade', 'text-white') +
+                        kpi('Max risk', '$' + s.maxRisk, 'single trade', 'text-white') +
+                        kpi('Drawdown used', ddPct + '%', 'of $10,000 account', ddPct < 10 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    '</div>' +
+                    '<div class="mt-4"><div class="flex justify-between text-[11.5px] text-[#6E6E78] mb-1.5"><span>Risk consumed by max drawdown</span><span class="num">' + ddPct + '%</span></div>' +
+                    '<div class="bar-track"><div class="bar-fill" style="width:' + Math.min(100, ddPct * 4) + '%;background:' + (ddPct < 8 ? '#34D399' : ddPct < 15 ? '#F59E0B' : '#EF4444') + '"></div></div></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Account drawdown vs strategy drawdown are kept separate. Max drawdown here is equity-based.</p></div>';
+
+                // data quality
+                const quality = list.length ? Math.round((list.filter(t => t.session && t.emotion && t.adherence && t.notes).length / list.length) * 100) : 0;
+                const dq = '<div class="panel p-5"><div class="panel-title mb-4">Data quality</div>' +
+                    '<div class="flex items-center gap-3"><div class="num text-[26px] font-extrabold text-white">' + quality + '%</div><div class="text-[12.5px] text-[#8A8A93]">of trades fully tagged</div></div>' +
+                    '<div class="bar-track mt-3"><div class="bar-fill" style="width:' + quality + '%;background:#3B82F6"></div></div>' +
+                    '<div class="flex flex-wrap gap-1.5 mt-3">' +
+                        '<span class="tag tag-emerald">Session ✓</span><span class="tag tag-emerald">Emotion ✓</span><span class="tag tag-emerald">Rules ✓</span><span class="tag tag-emerald">Notes ✓</span>' +
+                    '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Analytics quality depends on journal quality. ' + (quality === 100 ? 'This dataset is fully tagged.' : 'Tag every trade to unlock deeper cuts.') + '</p></div>';
+
+                // comparison
+                const cmp = (lbl, a, b, good) => '<div class="flex justify-between py-2 border-b border-[#17171A] last:border-0"><span class="text-[#8A8A93]">' + lbl + '</span><span class="num font-semibold text-white">' + a + ' → ' + b + '</span></div>';
+                const cmpPanel = panel('Current vs previous period',
+                    cmp('Win rate', pct(prev.winRate * 100, 100) + '%', pct(s.winRate * 100, 100) + '%') +
+                    cmp('Expectancy', fmtR(prev.expectancy), fmtR(s.expectancy)) +
+                    cmp('Profit factor', prev.pf.toFixed(2), s.pf.toFixed(2)) +
+                    cmp('Max drawdown', fmtMoney(-prev.maxDD), fmtMoney(-s.maxDD)) +
+                    cmp('Trades', String(prev.n), String(s.n)));
+
+                $('panel-overview').innerHTML =
+                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' + kpis + '</div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">' + eqChart + '<div class="flex flex-col gap-4">' +
+                        '<div class="panel p-5"><div class="panel-title mb-4">Top dimensions</div><div class="grid grid-cols-2 gap-3">' +
+                            dim('Best setup', 'setup', 'Setup') + dim('Best instrument', 'symbol', 'Symbol') +
+                            dim('Best session', 'session', 'Session') + dim('Best direction', 'dir', 'Direction') +
+                        '</div></div>' + cmpPanel + '</div></div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">' + riskSnap + dq + cmpPanel.replace('Current vs previous period', 'Sample size · ' + c.label) + '</div>';
+            }
+
+            // ============ EQUITY SERIES ============
+            function equitySeries(list, agg) {
+                agg = agg || 'daily';
+                const sorted = list.slice().sort((a, b) => a.ts - b.ts);
+                const groups = [];
+                let cur = null;
+                sorted.forEach(t => {
+                    let k;
+                    if (agg === 'weekly') { const d = new Date(t.ts); const wd = (d.getDay() + 6) % 7; const w = new Date(d); w.setDate(d.getDate() - wd); k = iso(w); }
+                    else if (agg === 'monthly') k = t.ts.getFullYear() + '-' + String(t.ts.getMonth() + 1).padStart(2, '0');
+                    else k = iso(t.ts);
+                    if (!cur || cur.k !== k) { cur = { k, v: 0, date: k, label: k }; groups.push(cur); }
+                    cur.v += unit === 'R' ? t.r : t.pnl;
+                });
+                let cum = 0;
+                return groups.map(g => { cum += g.v; return { date: g.date, label: g.label, v: Math.round(cum * 100) / 100 }; });
+            }
+
+            // ============ PERFORMANCE ============
+            function renderPerformance() {
+                const list = currentList(), s = stats(list), prev = stats(prevList());
+                const row = (label, val, sub, cls) => '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A] last:border-0"><div><div class="text-[13px] font-semibold text-[#E8E8EC]">' + label + '</div><div class="text-[11px] text-[#55555E] mt-0.5">' + sub + '</div></div><div class="num font-bold ' + (cls || 'text-white') + '">' + val + '</div></div>';
+
+                const metrics = panel('Core performance metrics',
+                    row('Net P&L', fmtMoney(s.pnl), 'Total realized profit/loss', s.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    row('Gross profit', fmtMoney(s.grossWin), 'Sum of winning trades', 'text-[#34D399]') +
+                    row('Gross loss', fmtMoney(-s.grossLoss), 'Absolute sum of losing trades', 'text-[#F87171]') +
+                    row('Win rate', pct(s.winRate * 100, 100) + '%', s.n + ' closed trades', 'text-white') +
+                    row('Average trade', fmtMoney(s.avgTrade), 'Net P&L ÷ closed trades', s.avgTrade >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    row('Average winner', fmtMoney(s.avgWin$), 'Average P&L of winners', 'text-[#34D399]') +
+                    row('Average loser', fmtMoney(s.avgLoss$), 'Average P&L of losers', 'text-[#F87171]') +
+                    row('Profit factor', s.pf.toFixed(2), 'Gross profit ÷ gross loss', s.pf >= 1 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    row('Expectancy', fmtR(s.expectancy), 'Expected outcome per trade', s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    row('Average R', fmtR(s.expectancy), 'Normalized by initial risk', 'text-white') +
+                    row('Max drawdown', fmtMoney(-s.maxDD), 'Largest peak-to-trough decline', 'text-[#F87171]') +
+                    row('Recovery factor', s.recovery ? s.recovery.toFixed(2) : '—', 'Net profit ÷ max drawdown', 'text-white') +
+                    row('Trade count', String(s.n), list.filter(t => t.pnl > 0).length + ' winners · ' + list.filter(t => t.pnl < 0).length + ' losers · ' + list.filter(t => t.pnl === 0).length + ' breakeven', 'text-white'));
+
+                // rolling metrics
+                const sorted = list.slice().sort((a, b) => a.ts - b.ts);
+                const roll = (win) => {
+                    const pts = [];
+                    for (let i = win - 1; i < sorted.length; i++) {
+                        const w = sorted.slice(i - win + 1, i + 1);
+                        const ws = stats(w);
+                        pts.push({ v: Math.round(ws.winRate * 100), label: w[w.length - 1].ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) });
+                    }
+                    return pts;
+                };
+                const rollChart = (title, pts, color) => '<div class="metric-mini"><div class="label-xs mb-2">' + title + '</div>' + lineSvg(pts, { w: 300, h: 90, p: 4, stroke: color, fill: 'none' }) + '</div>';
+
+                const rolling = panel('Rolling performance (' + (sorted.length >= 30 ? '30-trade windows' : 'available windows') + ')',
+                    '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">' +
+                        rollChart('Rolling 10-trade win rate', roll(10), '#34D399') +
+                        rollChart('Rolling 20-trade expectancy (R)', (() => { const pts = []; for (let i = 19; i < sorted.length; i++) { const w = stats(sorted.slice(i - 19, i + 1)); pts.push({ v: Math.round(w.expectancy * 100) / 100, label: '' }); } return pts; })(), '#3B82F6') +
+                        rollChart('Rolling 30-trade profit factor', (() => { const pts = []; for (let i = 29; i < sorted.length; i++) { const w = stats(sorted.slice(i - 29, i + 1)); pts.push({ v: Math.round(w.pf * 100) / 100, label: '' }); } return pts; })(), '#F59E0B') +
+                    '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Rolling windows show whether performance is changing, not just the period average.</p>');
+
+                const cmp = (lbl, a, b) => '<div class="flex justify-between py-2 border-b border-[#17171A] last:border-0"><span class="text-[#8A8A93]">' + lbl + '</span><span class="num font-semibold text-white">' + a + ' → ' + b + '</span></div>';
+                const compare = panel('Current vs previous period',
+                    cmp('Win rate', pct(prev.winRate * 100, 100) + '%', pct(s.winRate * 100, 100) + '%') +
+                    cmp('Expectancy', fmtR(prev.expectancy), fmtR(s.expectancy)) +
+                    cmp('Profit factor', prev.pf.toFixed(2), s.pf.toFixed(2)) +
+                    cmp('Max drawdown', fmtMoney(-prev.maxDD), fmtMoney(-s.maxDD)));
+
+                $('panel-performance').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' + metrics + '<div class="flex flex-col gap-4 xl:col-span-2">' + rolling + compare + '</div></div>';
+            }
+
+            // ============ EQUITY & DRAWDOWN ============
+            function renderEquity() {
+                const list = currentList(), s = stats(list);
+                const aggButtons = ['daily', 'weekly', 'monthly'].map(a =>
+                    '<button class="period-chip' + (equityAgg === a ? ' active' : '') + '" data-agg="' + a + '">' + a[0].toUpperCase() + a.slice(1) + '</button>').join('');
+                const series = equitySeries(list, equityAgg);
+                const chart = panel('Cumulative equity curve',
+                    '<div class="flex items-center gap-2 mb-3"><div class="flex items-center gap-1.5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1">' + aggButtons + '</div>' +
+                    '<button class="btn-ghost !py-1 !px-2.5 text-[11.5px]" onclick="toggleUnit()">Unit: ' + unit + '</button>' +
+                    '<span class="text-[11.5px] text-[#55555E] ml-auto num">' + (series.length ? series[series.length - 1].v : 0) + '</span></div>' +
+                    lineSvg(series, { grid: true }));
+
+                // drawdown stats
+                const sorted = list.slice().sort((a, b) => a.ts - b.ts);
+                let eq = 0, peak = 0, peakI = 0, curDD = 0;
+                let periods = 0, inDD = false, ddLen = 0, ddStart = null, maxDD = 0, maxDDstart = null, maxDDend = null, longestStreak = 0, curStreak = 0;
+                sorted.forEach((t, i) => {
+                    eq += t.pnl;
+                    if (eq >= peak) { peak = eq; peakI = i; curDD = 0; if (inDD) { periods++; inDD = false; } }
+                    else {
+                        const dd = peak - eq;
+                        curDD = Math.max(curDD, dd);
+                        if (!inDD) { inDD = true; ddStart = t; }
+                        if (dd > maxDD) { maxDD = dd; maxDDstart = ddStart; maxDDend = t; }
+                    }
+                });
+                if (inDD) periods++;
+                // losing streak inside data
+                let ls = 0, ml = 0;
+                sorted.forEach(t => { ls = t.pnl < 0 ? ls + 1 : 0; ml = Math.max(ml, ls); });
+                const curEq = eq, peakEq = peak;
+                const ddStat = (l, v, sub) => '<div class="metric-mini"><div class="label-xs">' + l + '</div><div class="val num ' + (v && String(v).charAt(0) === '-' ? 'text-[#F87171]' : 'text-white') + '">' + v + '</div>' + (sub ? '<div class="text-[11px] text-[#6E6E78] mt-1">' + sub + '</div>' : '') + '</div>';
+                const ddPanel = panel('Drawdown analytics',
+                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+                        ddStat('Current drawdown', fmtMoney(Math.min(0, curEq - peakEq)), 'from equity peak') +
+                        ddStat('Max drawdown', fmtMoney(-maxDD), maxDDstart ? (iso(maxDDstart.ts) + ' → ' + iso(maxDDend.ts)) : '') +
+                        ddStat('Drawdown periods', String(periods), 'distinct decline phases') +
+                        ddStat('Largest losing streak', ml + ' trades', 'consecutive losses') +
+                    '</div>' +
+                    '<div class="flex justify-between py-2.5 border-b border-[#17171A] mt-4"><span class="text-[13px] font-semibold">Account drawdown</span><span class="num font-bold text-white">' + Math.round((maxDD / ACCOUNT) * 1000) / 10 + '% of $10,000</span></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Account drawdown and strategy drawdown are never mixed. This is equity-based, realized P&L only.</p>');
+
+                // drawdown area chart
+                let eq2 = 0, pk2 = 0;
+                const ddSeries = sorted.map(t => { eq2 += t.pnl; pk2 = Math.max(pk2, eq2); return { date: iso(t.ts), label: iso(t.ts), v: Math.round((pk2 - eq2) * -1) }; });
+                const ddChart = panel('Drawdown curve (negative = below peak)',
+                    lineSvg(ddSeries, { stroke: '#EF4444', fill: 'rgba(239,68,68,0.08)', grid: true, max: 0 }) +
+                    '<p class="text-[11px] text-[#55555E] mt-1">Distance below the running equity peak.</p>');
+
+                $('panel-equity').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' + chart + ddPanel + '</div>' +
+                    '<div class="mt-4">' + ddChart + '</div>';
+            }
+
+            // ============ DISTRIBUTION ============
+            function renderDistribution() {
+                const list = currentList(), s = stats(list);
+                if (!list.length) { $('panel-distribution').innerHTML = '<div class="panel p-8 text-center text-[#6E6E78]">No trades in this selection.</div>'; return; }
+
+                const rBuckets = [
+                    { label: '≤ -2', min: -99, max: -2 }, { label: '-2', min: -2, max: -1.5 }, { label: '-1.5', min: -1.5, max: -1 },
+                    { label: '-1', min: -1, max: -0.5 }, { label: '-0.5', min: -0.5, max: 0 }, { label: '0', min: 0, max: 0.5 },
+                    { label: '0.5', min: 0.5, max: 1 }, { label: '1', min: 1, max: 1.5 }, { label: '1.5', min: 1.5, max: 2 }, { label: '≥ 2', min: 2, max: 99 }
+                ];
+                const rHist = panel('R-multiple distribution',
+                    '<div class="hbar">' + hist(list, t => t.r, rBuckets) + '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-2">Shape of results, not just the average — does the edge come from many small wins or a few large ones?</p>');
+
+                const durBuckets = [
+                    { label: '<30m', min: 0, max: 30 }, { label: '30-60m', min: 30, max: 60 }, { label: '1-2h', min: 60, max: 120 },
+                    { label: '2-4h', min: 120, max: 240 }, { label: '>4h', min: 240, max: 9999 }
+                ];
+                const durHist = panel('Hold-time distribution', '<div class="hbar">' + hist(list, t => t.holdMin || 0, durBuckets) + '</div>');
+
+                const riskBuckets = [
+                    { label: '<$10', min: 0, max: 10 }, { label: '$10-20', min: 10, max: 20 }, { label: '$20-30', min: 20, max: 30 },
+                    { label: '$30-40', min: 30, max: 40 }, { label: '>$40', min: 40, max: 9999 }
+                ];
+                const riskHist = panel('Risk per trade distribution', '<div class="hbar">' + hist(list, t => t.risk, riskBuckets) + '</div>');
+
+                // daily P&L distribution
+                const perDay = groupBy(list, t => iso(t.ts));
+                const dayPnl = Object.values(perDay).map(tr => tr.reduce((x, y) => x + y.pnl, 0));
+                const dayBuckets = [
+                    { label: '<-200', min: -99999, max: -200 }, { label: '-200', min: -200, max: -100 }, { label: '-100', min: -100, max: 0 },
+                    { label: '0', min: 0, max: 100 }, { label: '100', min: 100, max: 200 }, { label: '>200', min: 200, max: 99999 }
+                ];
+                const maxAbs = Math.max(1, ...dayPnl.map(Math.abs));
+                const dayHist = panel('Daily P&L distribution (' + Object.keys(perDay).length + ' days)',
+                    '<div class="hbar">' + hist(dayPnl.map(v => ({ r: v })), t => t.r, dayBuckets) + '</div>');
+
+                // outlier identification
+                const wins = list.filter(t => t.pnl > 0).sort((a, b) => b.pnl - a.pnl);
+                const top3 = wins.slice(0, 3);
+                const top3share = s.grossWin ? Math.round((top3.reduce((x, y) => x + y.pnl, 0) / s.grossWin) * 100) : 0;
+                const outlier = panel('Do large winners carry the results?',
+                    top3.length ? '<div class="text-[22px] font-extrabold num text-white">' + top3share + '%</div>' +
+                        '<div class="text-[12.5px] text-[#8A8A93] mt-1">of gross profit comes from the top 3 winners' + (top3.length < wins.length ? '' : ' (all of them)') + '.</div>' +
+                        '<div class="flex flex-col gap-2 mt-4">' + top3.map(t =>
+                            '<div class="flex justify-between items-center px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23]"><span class="text-[12.5px] text-[#C4C4CC]">' + esc(t.symbol) + ' · ' + esc(t.setup) + ' · ' + iso(t.ts) + '</span><span class="num font-bold text-[#34D399]">+' + fmtMoney(t.pnl).slice(1) + '</span></div>').join('') + '</div>' +
+                        (top3share > 50 ? '<p class="text-[11.5px] text-[#FBBF24] mt-3">More than half of profit is concentrated — check consistency before scaling.</p>' : '<p class="text-[11.5px] text-[#55555E] mt-3">Profit is reasonably spread across winners.</p>')
+                        : '<p class="text-[12.5px] text-[#6E6E78]">No winning trades.</p>');
+
+                $('panel-distribution').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' + rHist + outlier + '</div>' +
+                    '<div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-4">' + durHist + riskHist + dayHist + '</div>';
+            }
+
+            // ============ STRATEGY ============
+            function renderStrategy() {
+                const list = currentList();
+                const bySetup = Object.entries(groupBy(list, 'setup')).map(([name, tr]) => ({ name, s: stats(tr), trades: tr }))
+                    .sort((a, b) => b.s.expectancy - a.s.expectancy);
+                const th = (l, al) => '<th' + (al ? ' style="text-align:' + al + '"' : '') + '>' + l + '</th>';
+                const rows = bySetup.map(r => {
+                    const best = r.trades.slice().sort((a, b) => b.pnl - a.pnl)[0];
+                    const worst = r.trades.slice().sort((a, b) => a.pnl - b.pnl)[0];
+                    return '<tr>' +
+                        '<td class="font-semibold text-white">' + esc(r.name) + '</td>' +
+                        '<td class="num">' + r.s.n + '</td>' +
+                        '<td class="num">' + pct(r.s.winRate * 100, 100) + '%</td>' +
+                        '<td class="num ' + (r.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(r.s.expectancy) + '</td>' +
+                        '<td class="num ' + (r.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(r.s.expectancy) + '</td>' +
+                        '<td class="num">' + r.s.pf.toFixed(2) + '</td>' +
+                        '<td class="num">$' + Math.round(r.s.avgRisk) + '</td>' +
+                        '<td class="num">' + Math.round(r.s.avgHold) + 'm</td>' +
+                        '<td class="num text-[#34D399]">' + (best ? fmtMoney(best.pnl) : '—') + '</td>' +
+                        '<td class="num text-[#F87171]">' + (worst ? fmtMoney(worst.pnl) : '—') + '</td>' +
+                        '<td>' + confTag(r.s.n) + '</td></tr>';
+                }).join('');
+
+                const leaderboard = panel('Strategy leaderboard',
+                    rows ? '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
+                        th('Strategy / setup') + th('Trades') + th('Win rate') + th('Expectancy') + th('Avg R') + th('PF') +
+                        th('Avg risk') + th('Avg hold') + th('Best') + th('Worst') + th('Confidence') +
+                        '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+                        '<p class="text-[11.5px] text-[#55555E] mt-3">Drill down: Strategy → Setup → Conditions → Individual trades. Small samples are never ranked as reliable.</p>'
+                        : '<p class="text-[12.5px] text-[#6E6E78]">No data.</p>');
+
+                // setup x session matrix
+                const sessions = ['London', 'New York', 'Asia'];
+                const setups = SETUPS;
+                const matrixHead = '<tr><th></th>' + sessions.map(s => th(s)).join('') + '</tr>';
+                const matrixRows = setups.map(st => {
+                    const cells = sessions.map(se => {
+                        const tr = list.filter(t => t.setup === st && t.session === se);
+                        const sc = stats(tr);
+                        const bg = !tr.length ? 'transparent' : sc.expectancy >= 0 ? 'rgba(16,185,129,' + Math.min(0.3, 0.06 + sc.expectancy * 0.08) + ')' : 'rgba(239,68,68,' + Math.min(0.3, 0.06 + Math.abs(sc.expectancy) * 0.08) + ')';
+                        return '<td><div class="heat" style="background:' + bg + ';min-width:90px">' +
+                            (tr.length ? '<div class="text-center"><div class="num text-[12px]">' + fmtR(sc.expectancy) + '</div><div class="text-[9.5px] opacity-70">' + tr.length + ' trades</div></div>' : '<span class="text-[#3A3A41]">—</span>') +
+                            '</div></td>';
+                    }).join('');
+                    return '<tr><td class="font-semibold text-white whitespace-nowrap">' + esc(st) + '</td>' + cells + '</tr>';
+                }).join('');
+
+                const matrix = panel('Setup × Session matrix (expectancy)',
+                    '<div class="tbl-wrap"><table class="tbl"><thead>' + matrixHead + '</thead><tbody>' + matrixRows + '</tbody></table></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Green = positive expectancy, red = negative. Intensity scales with magnitude.</p>');
+
+                const cmp = (lbl, a, b) => '<div class="flex justify-between py-2 border-b border-[#17171A] last:border-0"><span class="text-[#8A8A93]">' + lbl + '</span><span class="num font-semibold text-white">' + a + ' → ' + b + '</span></div>';
+                const best = bySetup[0];
+                const worst = bySetup[bySetup.length - 1];
+                const verdict = panel('What the numbers say',
+                    best ? cmp('Best', best.name, fmtR(best.s.expectancy) + ' exp · ' + best.s.n + ' trades') : cmp('Best', '—', '—') +
+                    (worst ? cmp('Worst', worst.name, fmtR(worst.s.expectancy) + ' exp · ' + worst.s.n + ' trades') : cmp('Worst', '—', '—')) +
+                    '<p class="text-[12.5px] text-[#C4C4CC] mt-3 leading-relaxed">' +
+                    (bySetup.length ? (best.s.expectancy > 0 ? esc(best.name) + ' is your most consistent setup. ' : '') + 'Samples under 10 trades are flagged, not ranked.' : 'No setups to compare.') + '</p>');
+
+                $('panel-strategy').innerHTML =
+                    leaderboard +
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">' + matrix + '<div class="xl:col-span-1">' + verdict + '</div></div>';
+            }
+
+            // ============ INSTRUMENT ============
+            function renderInstrument() {
+                const list = currentList();
+                const bySym = Object.entries(groupBy(list, 'symbol')).map(([name, tr]) => ({ name, s: stats(tr), trades: tr }))
+                    .sort((a, b) => b.s.pnl - a.s.pnl);
+                const byClass = Object.entries(groupBy(list, 'assetClass')).map(([name, tr]) => ({ name, s: stats(tr), trades: tr }))
+                    .sort((a, b) => b.s.pnl - a.s.pnl);
+                const th = (l, al) => '<th' + (al ? ' style="text-align:' + al + '"' : '') + '>' + l + '</th>';
+
+                const symRows = bySym.map(r => {
+                    const longs = r.trades.filter(t => t.dir === 'Long').length;
+                    const shorts = r.trades.length - longs;
+                    const lshare = r.trades.length ? Math.round((longs / r.trades.length) * 100) : 0;
+                    return '<tr>' +
+                        '<td class="font-semibold text-white">' + esc(r.name) + '</td>' +
+                        '<td class="text-[#55555E]">' + D.ASSET_CLASS[r.name] + '</td>' +
+                        '<td class="num">' + r.s.n + '</td>' +
+                        '<td class="num">' + pct(r.s.winRate * 100, 100) + '%</td>' +
+                        '<td class="num ' + (r.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(r.s.expectancy) + '</td>' +
+                        '<td class="num ">' + fmtR(r.s.expectancy) + '</td>' +
+                        '<td class="num ' + (r.s.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(r.s.pnl) + '</td>' +
+                        '<td style="min-width:120px"><div class="flex items-center gap-1.5"><div class="bar-track flex-1"><div class="bar-fill" style="width:' + lshare + '%;background:#3B82F6"></div></div><span class="num text-[10.5px] text-[#8A8A93]">' + lshare + '%L</span></div></td>' +
+                        '<td>' + confTag(r.s.n) + '</td></tr>';
+                }).join('');
+
+                const clsRows = byClass.map(r =>
+                    '<tr><td class="font-semibold text-white">' + esc(r.name) + '</td><td class="num">' + r.s.n + '</td>' +
+                    '<td class="num">' + pct(r.s.winRate * 100, 100) + '%</td>' +
+                    '<td class="num ' + (r.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(r.s.expectancy) + '</td>' +
+                    '<td class="num ' + (r.s.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(r.s.pnl) + '</td>' +
+                    '<td class="num">$' + Math.round(r.s.avgRisk) + '</td><td>' + confTag(r.s.n) + '</td></tr>').join('');
+
+                const bySymbol = panel('Performance by instrument',
+                    bySym.length ? '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
+                        th('Symbol') + th('Class') + th('Trades') + th('Win rate') + th('Expectancy') + th('Avg R') + th('Net P&L') + th('Long split') + th('Confidence') +
+                        '</tr></thead><tbody>' + symRows + '</tbody></table></div>' +
+                        '<p class="text-[11.5px] text-[#55555E] mt-3">Best/worst instruments carry sample-size guardrails — under 10 trades is flagged, not ranked.</p>'
+                        : '<p class="text-[12.5px] text-[#6E6E78]">No data.</p>');
+
+                const byClassPanel = panel('By asset class',
+                    '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
+                        th('Class') + th('Trades') + th('Win rate') + th('Expectancy') + th('Net P&L') + th('Avg risk') + th('Confidence') +
+                        '</tr></thead><tbody>' + clsRows + '</tbody></table></div>');
+
+                const best = bySym[0], worst = bySym[bySym.length - 1];
+                const verdict = panel('Best & worst instruments',
+                    (best ? '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A]"><div><div class="text-[13px] font-semibold text-white">' + esc(best.name) + '</div><div class="text-[11px] text-[#55555E]">' + best.s.n + ' trades · ' + pct(best.s.winRate * 100, 100) + '% WR</div></div><div class="num font-bold text-[#34D399]">' + fmtR(best.s.expectancy) + '</div></div>' : '') +
+                    (worst ? '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A] last:border-0"><div><div class="text-[13px] font-semibold text-white">' + esc(worst.name) + '</div><div class="text-[11px] text-[#55555E]">' + worst.s.n + ' trades · ' + pct(worst.s.winRate * 100, 100) + '% WR</div></div><div class="num font-bold text-[#F87171]">' + fmtR(worst.s.expectancy) + '</div></div>' : '') +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Rankings respect sample size — a 3-trade symbol is never presented as a reliable edge.</p>');
+
+                $('panel-instrument').innerHTML =
+                    bySymbol +
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">' + byClassPanel + verdict + '</div>';
+            }
+
+            // ============ SESSION & TIME ============
+            function renderSession() {
+                const list = currentList();
+                const bySession = SESSIONS.map(se => ({ name: se, s: stats(list.filter(t => t.session === se)) }));
+                const th = (l) => '<th>' + l + '</th>';
+                const sessRows = bySession.map(r =>
+                    '<tr><td class="font-semibold text-white">' + r.name + '</td><td class="num">' + r.s.n + '</td>' +
+                    '<td class="num ' + (r.s.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(r.s.pnl) + '</td>' +
+                    '<td class="num ' + (r.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(r.s.expectancy) + '</td>' +
+                    '<td class="num">' + pct(r.s.winRate * 100, 100) + '%</td>' +
+                    '<td class="num">$' + Math.round(r.s.avgRisk) + '</td></tr>').join('');
+                const sessTable = panel('Session performance',
+                    '<div class="tbl-wrap"><table class="tbl"><thead><tr>' + th('Session') + th('Trades') + th('Net P&L') + th('Expectancy') + th('Win rate') + th('Avg risk') + '</tr></thead><tbody>' + sessRows + '</tbody></table></div>');
+
+                // hourly heatmap
+                const hours = [];
+                for (let h = 0; h < 24; h++) hours.push(h);
+                const hourData = hours.map(h => {
+                    const tr = list.filter(t => t.hour === h);
+                    return { h, n: tr.length, pnl: tr.reduce((x, y) => x + y.pnl, 0) };
+                });
+                const maxAbsPnl = Math.max(1, ...hourData.map(d => Math.abs(d.pnl)));
+                const hourCells = hourData.map(d => {
+                    const a = d.n ? Math.max(0.05, Math.abs(d.pnl) / maxAbsPnl) : 0;
+                    const bg = !d.n ? '#0F0F11' : d.pnl >= 0 ? 'rgba(16,185,129,' + (0.1 + a * 0.7).toFixed(2) + ')' : 'rgba(239,68,68,' + (0.1 + a * 0.7).toFixed(2) + ')';
+                    return '<div class="heat" style="background:' + bg + ';flex:1" title="' + d.h + ':00 · ' + d.n + ' trades · ' + fmtMoney(d.pnl) + '">' + (d.n ? '<span class="num">' + d.h + ':00</span>' : '') + '</div>';
+                }).join('');
+                const hourHeat = panel('Hourly P&L heatmap (UTC hour)',
+                    '<div class="flex gap-1">' + hourCells + '</div>' +
+                    '<div class="flex items-center gap-2 mt-3 text-[10.5px] text-[#6E6E78]"><span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background:rgba(239,68,68,0.5)"></span> Loss</span><span>…</span><span class="flex items-center gap-1"><span class="w-3 h-3 rounded" style="background:rgba(16,185,129,0.5)"></span> Profit</span></div>');
+
+                // day-of-week heatmap
+                const dowNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+                const dowData = dowNames.map((n, i) => {
+                    const tr = list.filter(t => t.dow === i + 1);
+                    return { n: n, trades: tr, pnl: tr.reduce((x, y) => x + y.pnl, 0) };
+                });
+                const dowMax = Math.max(1, ...dowData.map(d => Math.abs(d.pnl)));
+                const dowCells = dowData.map(d => {
+                    const a = d.trades.length ? Math.max(0.05, Math.abs(d.pnl) / dowMax) : 0;
+                    const bg = !d.trades.length ? '#0F0F11' : d.pnl >= 0 ? 'rgba(16,185,129,' + (0.1 + a * 0.7).toFixed(2) + ')' : 'rgba(239,68,68,' + (0.1 + a * 0.7).toFixed(2) + ')';
+                    return '<div class="heat" style="background:' + bg + ';flex:1;flex-direction:column;gap:2px;min-height:52px" title="' + d.n + ' · ' + d.trades.length + ' trades · ' + fmtMoney(d.pnl) + '"><span class="text-[10px] opacity-80">' + d.n + '</span><span class="num text-[10.5px]">' + (d.trades.length ? fmtMoney(d.pnl) : '—') + '</span></div>';
+                }).join('');
+                const dowHeat = panel('Day-of-week P&L', '<div class="flex gap-1">' + dowCells + '</div>');
+
+                // session x strategy
+                const sessStrategies = panel('Session × Strategy (expectancy)',
+                    '<div class="tbl-wrap"><table class="tbl"><thead><tr><th></th>' + SESSIONS.map(s => th(s)).join('') + '</tr></thead><tbody>' +
+                    SETUPS.map(st => '<tr><td class="font-semibold text-white whitespace-nowrap">' + esc(st) + '</td>' +
+                        SESSIONS.map(se => {
+                            const tr = list.filter(t => t.setup === st && t.session === se);
+                            const sc = stats(tr);
+                            return '<td class="num ' + (sc.n && sc.expectancy >= 0 ? 'text-[#34D399]' : sc.n ? 'text-[#F87171]' : 'text-[#3A3A41]') + '">' + (sc.n ? fmtR(sc.expectancy) : '—') + '<div class="text-[9.5px] opacity-60">' + sc.n + '</div></td>';
+                        }).join('') + '</tr>').join('') + '</tbody></table></div>');
+
+                // before/after
+                const before = list.filter(t => t.hour < 12), after = list.filter(t => t.hour >= 12);
+                const bs = stats(before), as = stats(after);
+                const ba = panel('Before vs after 12:00 UTC',
+                    '<div class="grid grid-cols-2 gap-3">' +
+                        kpi('Before noon', fmtR(bs.expectancy), bs.n + ' trades', bs.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                        kpi('After noon', fmtR(as.expectancy), as.n + ' trades', as.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">ICT-oriented traders get session as a first-class dimension, not buried under time filters.</p>');
+
+                $('panel-session').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' + sessTable + ba + '</div>' +
+                    '<div class="mt-4">' + hourHeat + '</div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">' + dowHeat + sessStrategies + '</div>';
+            }
+
+            // ============ LONG VS SHORT ============
+            function renderLongShort() {
+                const list = currentList();
+                const ls = stats(list.filter(t => t.dir === 'Long'));
+                const ss = stats(list.filter(t => t.dir === 'Short'));
+                const th = (l) => '<th>' + l + '</th>';
+                const cell = (v, cls) => '<td class="num ' + (cls || 'text-white') + '">' + v + '</td>';
+                const row = (lbl, lv, sv, lcls, scls) => '<tr><td class="font-semibold text-[#C4C4CC]">' + lbl + '</td>' + cell(lv, lcls) + cell(sv, scls) + '</tr>';
+
+                const table = panel('Long vs Short',
+                    '<div class="tbl-wrap"><table class="tbl"><thead><tr>' + th('Metric') + th('Long') + th('Short') + '</tr></thead><tbody>' +
+                    row('Trade count', String(ls.n), String(ss.n)) +
+                    row('Win rate', pct(ls.winRate * 100, 100) + '%', pct(ss.winRate * 100, 100) + '%') +
+                    row('Net P&L', fmtMoney(ls.pnl), fmtMoney(ss.pnl), ls.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]', ss.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    row('Expectancy', fmtR(ls.expectancy), fmtR(ss.expectancy), ls.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]', ss.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    row('Average R', fmtR(ls.expectancy), fmtR(ss.expectancy)) +
+                    row('Profit factor', ls.pf.toFixed(2), ss.pf.toFixed(2)) +
+                    row('Average hold', Math.round(ls.avgHold) + 'm', Math.round(ss.avgHold) + 'm') +
+                    row('Average risk', '$' + Math.round(ls.avgRisk), '$' + Math.round(ss.avgRisk)) +
+                    '</tbody></table></div>');
+
+                const diff = ls.expectancy - ss.expectancy;
+                const verdict = panel('Asymmetry read',
+                    '<div class="text-[30px] font-extrabold num ' + (diff >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + (diff >= 0 ? '+' : '') + diff.toFixed(2) + 'R</div>' +
+                    '<div class="text-[12.5px] text-[#8A8A93] mt-1">expectancy difference, Long − Short</div>' +
+                    '<p class="text-[12.5px] text-[#C4C4CC] mt-4 leading-relaxed">' +
+                    (Math.abs(diff) < 0.1 ? 'No meaningful asymmetry yet — both directions perform similarly. Keep logging.' :
+                        (diff > 0 ? 'Longs are outperforming shorts this period. ' : 'Shorts are outperforming longs this period. ') + 'This is descriptive, not permanent — verify against growing samples before changing behavior.') + '</p>');
+
+                $('panel-longshort').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' + table + '<div class="xl:col-span-1">' + verdict + '</div></div>';
+            }
+
+            // ============ RISK ============
+            function renderRisk() {
+                const list = currentList();
+                const th = (l) => '<th>' + l + '</th>';
+                const bucketRows = RISK_BUCKETS.map(b => {
+                    const tr = list.filter(t => riskBucket(t) === b);
+                    const sc = stats(tr);
+                    return '<tr><td class="font-semibold text-white num">' + b + '</td>' +
+                        '<td class="num">' + sc.n + '</td>' +
+                        '<td class="num ' + (sc.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(sc.expectancy) + '</td>' +
+                        '<td class="num ' + (sc.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(sc.expectancy) + '</td>' +
+                        '<td class="num">' + sc.pf.toFixed(2) + '</td>' +
+                        '<td class="num ' + (sc.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(sc.pnl) + '</td>' +
+                        '<td class="num text-[#F87171]">' + fmtMoney(-sc.maxDD) + '</td></tr>';
+                }).join('');
+
+                const buckets = panel('Risk bucket analysis (risk-to-performance curve)',
+                    '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
+                        th('Risk per trade') + th('Trades') + th('Expectancy') + th('Avg R') + th('PF') + th('Net P&L') + th('Max DD') +
+                        '</tr></thead><tbody>' + bucketRows + '</tbody></table></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Higher raw P&L in a bucket never means "use more risk". Read expectancy and drawdown together.</p>');
+
+                const afterLoss = stats(list.filter(t => t.postLoss));
+                const afterWin = stats(list.filter(t => !t.postLoss));
+                const seq = panel('Risk after win vs after loss',
+                    '<div class="grid grid-cols-2 gap-3">' +
+                        kpi('After a win', '$' + Math.round(afterWin.avgRisk), fmtR(afterWin.expectancy) + ' exp · ' + afterWin.n + ' trades', 'text-white') +
+                        kpi('After a loss', '$' + Math.round(afterLoss.avgRisk), fmtR(afterLoss.expectancy) + ' exp · ' + afterLoss.n + ' trades', afterLoss.avgRisk > afterWin.avgRisk ? 'text-[#F87171]' : 'text-white') +
+                    '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">' + (afterLoss.avgRisk > afterWin.avgRisk ? 'Risk creeps up after losses — the classic revenge-risk pattern. Keep risk flat regardless of the previous result.' : 'Risk stays flat after losses — good discipline.') + '</p>');
+
+                // risk consistency score
+                const risks = list.map(t => t.risk);
+                const mean = risks.length ? risks.reduce((a, b) => a + b, 0) / risks.length : 0;
+                const sd = risks.length ? Math.sqrt(risks.reduce((a, b) => a + (b - mean) * (b - mean), 0) / risks.length) : 0;
+                const cv = mean ? sd / mean : 0;
+                const consistency = Math.max(0, Math.min(100, Math.round(100 - cv * 130)));
+                const consPanel = panel('Risk consistency score',
+                    '<div class="flex items-end gap-4"><div class="num text-[40px] font-extrabold ' + (consistency >= 80 ? 'text-[#34D399]' : consistency >= 60 ? 'text-[#FBBF24]' : 'text-[#F87171]') + '">' + consistency + '</div><div class="text-[12.5px] text-[#8A8A93] pb-2">/100 · ' + list.length + ' trades</div></div>' +
+                    '<div class="bar-track mt-3"><div class="bar-fill" style="width:' + consistency + '%;background:' + (consistency >= 80 ? '#34D399' : consistency >= 60 ? '#F59E0B' : '#EF4444') + '"></div></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Based on the coefficient of variation of risk per trade. Low variance = consistent position sizing.</p>');
+
+                const dailyRisk = panel('Daily risk consumption',
+                    (() => {
+                        const perDay = groupBy(list, t => iso(t.ts));
+                        const days = Object.entries(perDay).map(([d, tr]) => ({ d, risk: tr.reduce((x, y) => x + y.risk, 0) })).sort((a, b) => b.risk - a.risk);
+                        const budget = 250;
+                        const rows = days.slice(0, 6).map(x => {
+                            const p = Math.min(100, Math.round((x.risk / budget) * 100));
+                            return '<div class="mb-2"><div class="flex justify-between text-[11.5px] text-[#8A8A93] mb-1"><span class="num">' + x.d + '</span><span class="num">$' + x.risk + ' / $' + budget + '</span></div>' +
+                                '<div class="bar-track"><div class="bar-fill" style="width:' + p + '%;background:' + (p <= 70 ? '#34D399' : p <= 95 ? '#F59E0B' : '#EF4444') + '"></div></div></div>';
+                        }).join('');
+                        return rows + '<p class="text-[11.5px] text-[#55555E] mt-2">Top risk days vs the $250 daily budget. Funded-account traders: this is the number that protects the account.</p>';
+                    })());
+
+                $('panel-risk').innerHTML =
+                    buckets +
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">' + seq + consPanel + dailyRisk + '</div>';
+            }
+
+            // ============ STREAKS ============
+            function renderStreaks() {
+                const list = currentList();
+                const sorted = list.slice().sort((a, b) => a.ts - b.ts);
+                const th = (l) => '<th>' + l + '</th>';
+
+                function streakStats(arr) {
+                    let cur = 0, max = 0, curNow = 0, started = false, runs = [];
+                    arr.forEach(t => {
+                        const win = t.pnl > 0;
+                        if (win) { if (!started) { cur = 0; started = true; } cur++; }
+                        else { if (started) runs.push(cur); started = false; cur = 0; }
+                        max = Math.max(max, cur);
+                    });
+                    if (started) runs.push(cur);
+                    curNow = started ? cur : 0;
+                    const avg = runs.length ? runs.reduce((a, b) => a + b, 0) / runs.length : 0;
+                    return { max, avg, now: curNow };
+                }
+                function lossStats(arr) {
+                    let cur = 0, max = 0, started = false, runs = [];
+                    arr.forEach(t => {
+                        const loss = t.pnl < 0;
+                        if (loss) { if (!started) { cur = 0; started = true; } cur++; }
+                        else { if (started) runs.push(cur); started = false; cur = 0; }
+                        max = Math.max(max, cur);
+                    });
+                    if (started) runs.push(cur);
+                    const avg = runs.length ? runs.reduce((a, b) => a + b, 0) / runs.length : 0;
+                    return { max, avg, now: started ? cur : 0 };
+                }
+                const ws = streakStats(sorted), ls = lossStats(sorted);
+
+                // post-streak behavior
+                function postStreak(win) {
+                    let streak = 0;
+                    const posts = [];
+                    sorted.forEach(t => {
+                        const isW = t.pnl > 0;
+                        if (isW === win) streak++;
+                        else { if (streak >= 3 && posts.length < 5) posts.push(streak); streak = 0; }
+                    });
+                    return posts.length;
+                }
+                const afterWinRun = [];
+                let run = 0;
+                sorted.forEach((t, i) => {
+                    const isW = t.pnl > 0;
+                    if (isW) run++; else run = 0;
+                    if (run >= 3 && i + 1 < sorted.length) afterWinRun.push(sorted[i + 1]);
+                });
+                const afterLossRun = [];
+                run = 0;
+                sorted.forEach((t, i) => {
+                    const isL = t.pnl < 0;
+                    if (isL) run++; else run = 0;
+                    if (run >= 3 && i + 1 < sorted.length) afterLossRun.push(sorted[i + 1]);
+                });
+                const aws = stats(afterWinRun), als = stats(afterLossRun);
+
+                const statCard = (lbl, main, sub1, sub2, cls, unitLabel) => '<div class="metric-mini"><div class="label-xs">' + lbl + '</div>' +
+                    '<div class="flex items-end gap-3 mt-2"><div class="num text-[26px] font-extrabold ' + cls + '">' + main + '</div><div class="text-[11px] text-[#6E6E78] pb-1">' + unitLabel + '</div></div>' +
+                    '<div class="flex justify-between text-[11px] text-[#8A8A93] mt-1 num"><span>' + sub1 + '</span><span>' + sub2 + '</span></div></div>';
+
+                const grid = panel('Win & loss streaks',
+                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+                        statCard('Winning streak', ws.max, 'avg ' + ws.avg.toFixed(1), 'now ' + ws.now, 'text-[#34D399]', 'max') +
+                        statCard('Losing streak', ls.max, 'avg ' + ls.avg.toFixed(1), 'now ' + ls.now, 'text-[#F87171]', 'max') +
+                        statCard('Next trades after 3+ wins', afterWinRun.length, fmtR(aws.expectancy), 'exp', 'text-white', 'trades') +
+                        statCard('Next trades after 3+ losses', afterLossRun.length, fmtR(als.expectancy), 'exp', 'text-white', 'trades') +
+                    '</div>');
+
+                const postBehavior = panel('Behavior after long streaks',
+                    '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A]"><div><div class="text-[13px] font-semibold text-white">After 3+ consecutive wins</div><div class="text-[11px] text-[#55555E]">' + afterWinRun.length + ' next trades</div></div><div class="num font-bold ' + (aws.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(aws.expectancy) + '</div></div>' +
+                    '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A] last:border-0"><div><div class="text-[13px] font-semibold text-white">After 3+ consecutive losses</div><div class="text-[11px] text-[#55555E]">' + afterLossRun.length + ' next trades</div></div><div class="num font-bold ' + (als.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(als.expectancy) + '</div></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">' + (als.expectancy < 0 && afterLossRun.length >= 3 ? 'The data shows a post-loss dip — a cooldown rule after 3 losses could protect your P&L.' : 'No strong post-streak pattern yet. Keep the sample growing.') + '</p>');
+
+                // sequence strip
+                const seqCells = sorted.slice(-40).map(t => {
+                    const c = t.pnl > 0 ? '#34D399' : t.pnl < 0 ? '#EF4444' : '#6E6E78';
+                    return '<div class="heat-cell" style="background:' + c + ';flex:1;opacity:0.8" title="' + esc(t.symbol) + ' · ' + fmtMoney(t.pnl) + ' · ' + iso(t.ts) + '"></div>';
+                }).join('');
+                const sequence = panel('Last 40 trades — win/loss sequence',
+                    '<div class="flex gap-0.5 mb-3">' + seqCells + '</div>' +
+                    '<div class="flex items-center gap-3 text-[10.5px] text-[#6E6E78]"><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#34D399]"></span> Win</span><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#EF4444]"></span> Loss</span><span class="flex items-center gap-1"><span class="w-3 h-3 rounded-sm bg-[#6E6E78]"></span> BE</span></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Sequence analysis feeds Insights and stays inspectable here.</p>');
+
+                $('panel-streaks').innerHTML =
+                    grid +
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">' + postBehavior + sequence + '</div>';
+            }
+
+            // ============ RENDER ALL ============
+            function renderAll() {
+                refreshData();
+                if (!ALL.length || ALL.length < 3) {
+                    // insufficient data — show the real state, never fabricated stats
+                    const empty = '<div class="panel p-12 text-center">' +
+                        '<svg data-lucide="bar-chart-3" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
+                        '<h3 class="text-[18px] font-bold text-white">Not enough data yet</h3>' +
+                        '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Log more trades to unlock this analysis. Metrics here are computed from your actual journal — never fabricated.</p>' +
+                        '<div class="flex items-center justify-center gap-3 mt-6">' +
+                            '<a href="journal.html" class="btn-primary !py-2.5 !px-5 text-[13px]"><svg data-lucide="plus" class="w-4 h-4"></svg> Log a trade</a>' +
+                            '<a href="strategy-lab.html" class="btn-ghost !py-2.5 !px-5 text-[13px]"><svg data-lucide="flask-conical" class="w-4 h-4"></svg> Strategy Lab</a>' +
+                        '</div>' +
+                    '</div>';
+                    document.querySelectorAll('.ins-panel').forEach(p => { p.innerHTML = empty; });
+                    const badge = $('conf-badge');
+                    if (badge) { badge.innerHTML = '<span class="dot"></span> ' + ALL.length + ' trades'; badge.className = 'conf tag-gray'; }
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+                const list = currentList(), s = stats(list), c = confidence(s.n);
+                $('conf-badge').innerHTML = '<span class="dot" style="background:' + c.dot + '"></span> ' + c.label + ' · ' + s.n + ' trades';
+                $('conf-badge').className = 'conf ' + c.cls;
+
+                // period chips
+                document.querySelectorAll('.period-chip[data-period]').forEach(b => b.classList.toggle('active', b.dataset.period === periodId));
+
+                // active filter count
+                const active = Object.entries(filters).filter(([k, v]) => v !== 'all').length;
+                $('f-count').textContent = active ? active + ' active' : 'no filters';
+
+                renderOverview();
+                renderPerformance();
+                renderEquity();
+                renderDistribution();
+                renderStrategy();
+                renderInstrument();
+                renderSession();
+                renderLongShort();
+                renderRisk();
+                renderStreaks();
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ============ GLOBAL (inline onclick) ============
+            window.setPeriod = function (id) { periodId = id; renderAll(); };
+            window.toggleUnit = function () { unit = unit === '$' ? 'R' : '$'; renderAll(); };
+
+            // ============ FILTER WIRING ============
+            // NOTE: the key must match the property names used in applyFilters()
+            // (singular), while the option label is pluralized for display.
+            const FILTER_LABELS = { symbol: 'symbols', setup: 'setups', session: 'sessions', dir: 'directions', result: 'results', risk: 'risk', emotion: 'emotions', adherence: 'rule adherence' };
+            function fillSelect(id, options, key) {
+                const el = $(id);
+                el.innerHTML = '<option value="all">All ' + (FILTER_LABELS[key] || key) + '</option>' + options.map(o => '<option value="' + esc(o) + '">' + esc(o) + '</option>').join('');
+                el.value = filters[key];
+                el.addEventListener('change', () => { filters[key] = el.value; renderAll(); });
+            }
+            fillSelect('f-symbol', SYMBOLS, 'symbol');
+            fillSelect('f-setup', SETUPS, 'setup');
+            fillSelect('f-session', SESSIONS, 'session');
+            fillSelect('f-dir', ['Long', 'Short'], 'dir');
+            fillSelect('f-result', ['Win', 'Loss', 'Breakeven'], 'result');
+            fillSelect('f-risk', RISK_BUCKETS, 'risk');
+            const emotions = [...new Set(ALL.map(t => t.emotion))];
+            fillSelect('f-emotion', emotions, 'emotion');
+            const adherences = [...new Set(ALL.map(t => t.adherence))];
+            fillSelect('f-adherence', adherences, 'adherence');
+            $('f-result').addEventListener('change', e => {
+                const v = e.target.value;
+                filters.result = v === 'all' ? 'all' : v === 'Win' ? 'win' : v === 'Loss' ? 'loss' : 'be';
+                renderAll();
+            });
+            $('f-reset').addEventListener('click', () => {
+                Object.keys(filters).forEach(k => filters[k] = 'all');
+                document.querySelectorAll('.fsel').forEach(el => el.value = 'all');
+                renderAll();
+            });
+
+            // ============ TABS ============
+            let activeTab = 'overview';
+            function activateTab(tab) {
+                activeTab = tab;
+                document.querySelectorAll('.ins-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+                document.querySelectorAll('.ins-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+            }
+            document.querySelectorAll('.ins-tab').forEach(btn => {
+                btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+            });
+            document.querySelectorAll('.period-chip[data-period]').forEach(btn => {
+                btn.addEventListener('click', () => setPeriod(btn.dataset.period));
+            });
+
+            // ============ INIT ============
+            let equityAgg = 'daily';
+            window.setAgg = function (a) { equityAgg = a; renderEquity(); };
+
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            // delegated clicks (equity aggregation buttons)
+            document.addEventListener('click', e => {
+                const aggEl = e.target.closest ? e.target.closest('[data-agg]') : null;
+                if (aggEl) window.setAgg(aggEl.getAttribute('data-agg'));
+            });
+
+            // deep-link support for remaining tabs (e.g. analytics.html#risk)
+            const VALID_TABS = ['overview', 'performance', 'equity', 'distribution', 'strategy', 'instrument', 'session', 'longshort', 'risk', 'streaks'];
+            const hashTab = (location.hash || '').replace('#', '');
+            if (hashTab && VALID_TABS.includes(hashTab)) {
+                activateTab(hashTab);
+            }
+            window.addEventListener('hashchange', () => {
+                const t = (location.hash || '').replace('#', '');
+                if (t && VALID_TABS.includes(t)) activateTab(t);
+            });
+
+            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
+            // Downstream module: listens for domain events and updates itself —
+            // it never mutates configuration directly.
+            if (core) {
+                core.TradeMindBus.subscribe('trade.created', () => { renderAll(); });
+                core.TradeMindBus.subscribe('trade.updated', () => { renderAll(); });
+                core.TradeMindBus.subscribe('trade.deleted', () => { renderAll(); });
+                core.TradeMindBus.subscribe('config.version.created', () => { renderAll(); });
+                core.TradeMindBus.subscribe('config.changed', () => { renderAll(); });
+                core.TradeMindBus.subscribe('account.changed', () => { renderAll(); });
+            }
+
+            renderAll();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script src="reset.js"></script>
+</body>
+</html>

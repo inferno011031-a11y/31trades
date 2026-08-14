@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Risk</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN, Lucide & shared demo data -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: #0A0A0C;
+            color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 13px; font-weight: 700; color: #E8E8EC; }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+
+        .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
+        .tag-blue { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.25); }
+        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
+
+        .ins-tab {
+            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        }
+        .ins-tab:hover { color: #E8E8EC; }
+        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+
+        .ins-panel { display: none; animation: fadeIn 0.3s ease; }
+        .ins-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        .bar-track { height: 6px; background: #1F1F23; border-radius: 999px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 999px; }
+
+        .kpi { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 14px 16px; }
+        .kpi .k-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6E6E78; margin-bottom: 6px; }
+        .kpi .k-val { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+        .kpi .k-sub { font-size: 11px; color: #6E6E78; margin-top: 3px; }
+
+        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .tbl th {
+            text-align: left; padding: 8px 10px; color: #6E6E78; font-size: 10.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #1F1F23;
+            white-space: nowrap;
+        }
+        .tbl td { padding: 8px 10px; border-bottom: 1px solid #17171A; white-space: nowrap; }
+        .tbl tbody tr:hover { background: #16161A; }
+        .tbl tbody tr:last-child td { border-bottom: none; }
+        .tbl-wrap { overflow-x: auto; }
+
+        .finput {
+            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
+            padding: 7px 10px; font-size: 13px; color: #E8E8EC;
+            outline: none; width: 110px; transition: border-color 0.15s;
+        }
+        .finput:focus { border-color: #2E2E35; }
+        .fsel {
+            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
+            padding: 7px 10px; font-size: 12.5px; font-weight: 600; color: #C4C4CC;
+            outline: none; cursor: pointer;
+        }
+        .fsel option { background: #121214; color: #C4C4CC; }
+
+        .status-banner { border-radius: 14px; padding: 22px 24px; border: 1px solid; }
+        .status-label { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; }
+        .status-value { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
+
+        .state-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12.5px; }
+
+        .conf { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; }
+        .conf .dot { width: 7px; height: 7px; border-radius: 999px; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; cursor: pointer; }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
+        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item active"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="#" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input type="text" class="search-input" placeholder="Ask anything… e.g. how much risk do I have left?">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Live</div>
+                    <a href="journal.html" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                    <button id="account-btn" class="account-select hide-when-collapsed">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Risk</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">How much can I safely risk right now? Minimal screens, maximum decision clarity.</p>
+                        </div>
+                        <span id="freshness" class="conf tag-gray"><span class="dot" style="background:#34D399"></span> Live · just now</span>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="panel p-1.5 flex gap-1 overflow-x-auto">
+                        <button class="ins-tab active" data-tab="overview">Risk Overview</button>
+                        <button class="ins-tab" data-tab="limits">Risk Limits</button>
+                        <button class="ins-tab" data-tab="drawdown">Drawdown</button>
+                        <button class="ins-tab" data-tab="history">Risk History</button>
+                    </div>
+
+                    <div id="panel-overview" class="ins-panel active"></div>
+                    <div id="panel-limits" class="ins-panel"></div>
+                    <div id="panel-drawdown" class="ins-panel"></div>
+                    <div id="panel-history" class="ins-panel"></div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Risk demo build · one source of truth across Risk, Dashboard and Discipline · data is illustrative</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const $ = id => document.getElementById(id);
+            const D = window.DemoTrades;
+            const { fmtMoney, fmtR, pct, stats, groupBy, day } = D;
+
+            const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+            const TODAY = iso(new Date());
+
+            // ============ CANONICAL DATA (single source of truth) ============
+            // Trades, accounts AND limits all come from the local store — this
+            // page never keeps its own dataset. A $45-risk trade logged in the
+            // Journal is the same $45 this page sees, instantly.
+            const core = window.TradeMindCore;
+            const ACCOUNTS = {};
+            let ALL = [];
+            let accountId = null;
+            const LIMIT_LOG = [];
+
+            function refreshData() {
+                Object.keys(ACCOUNTS).forEach(k => delete ACCOUNTS[k]);
+                if (core && core.Accounts && core.Accounts.length) {
+                    core.Accounts.forEach(a => {
+                        const pol = core.activePolicy(a.id);
+                        const v = pol ? pol.values : {};
+                        ACCOUNTS[a.id] = {
+                            name: a.name, balance: a.current_equity, currency: a.currency,
+                            limits: {
+                                perTrade: v.riskPerTrade || 0,
+                                dailyRisk: v.maxDailyRisk || v.maxDailyLoss || 0,
+                                dailyLoss: v.maxDailyLoss || 0,
+                                drawdown: v.maxTotalDrawdown || 0,
+                                trades: v.maxTrades || 3,
+                                warnPct: (v.warn || [50, 70, 90])[0],
+                                highPct: (v.warn || [50, 70, 90])[2]
+                            },
+                            funded: null
+                        };
+                    });
+                    accountId = core.selectedAccountId() || core.Accounts[0].id;
+                    ALL = core.Trades.filter(t => t.account_id === accountId).map(t => ({ ...t, ts: new Date(t.ts) }));
+                } else {
+                    accountId = null;
+                    ALL = [];
+                }
+            }
+            refreshData();
+
+            const ANCHOR = new Date();
+            function account() { return accountId ? ACCOUNTS[accountId] : null; }
+            function limits() { const a = account(); return a ? a.limits : null; }
+
+            // ============ STATE COMPUTATION (one source of truth) ============
+            function computeState() {
+                const acc = account(), lim = limits();
+                const todays = (groupBy(ALL, t => iso(t.ts))[TODAY] || []).slice().sort((a, b) => a.ts - b.ts);
+                const riskUsed = todays.reduce((s, t) => s + t.risk, 0);
+                const dayLoss = Math.abs(todays.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
+                const dayPnl = todays.reduce((s, t) => s + t.pnl, 0);
+
+                // equity curve with peak
+                let eq = acc.balance, peak = acc.balance, maxDD = 0;
+                ALL.slice().sort((a, b) => a.ts - b.ts).forEach(t => { eq += t.pnl; if (eq > peak) peak = eq; maxDD = Math.max(maxDD, peak - eq); });
+                const curDD = peak - eq;
+
+                const riskRemaining = Math.max(0, lim.dailyRisk - riskUsed);
+                const lossRemaining = Math.max(0, lim.dailyLoss - dayLoss);
+                const ddRemaining = Math.max(0, lim.drawdown - curDD);
+                const tradesLeft = Math.max(0, lim.trades - todays.length);
+
+                const riskPct = Math.round((riskUsed / lim.dailyRisk) * 100);
+                const lossPct = Math.round((dayLoss / lim.dailyLoss) * 100);
+                const ddPct = Math.round((curDD / lim.drawdown) * 100);
+
+                // recommended max risk = min of all constraints
+                const maxNext = Math.max(0, Math.round(Math.min(lim.perTrade, riskRemaining, lossRemaining, ddRemaining)));
+
+                // status: Limit Reached > High Risk > Caution > Safe
+                let status = 'safe', statusLabel = 'SAFE';
+                if (riskUsed >= lim.dailyRisk || dayLoss >= lim.dailyLoss || curDD >= lim.drawdown) { status = 'limit'; statusLabel = 'LIMIT REACHED'; }
+                else if (riskPct >= lim.highPct || lossPct >= lim.highPct || ddPct >= lim.highPct) { status = 'high'; statusLabel = 'HIGH RISK'; }
+                else if (riskPct >= lim.warnPct || lossPct >= lim.warnPct || ddPct >= lim.warnPct) { status = 'caution'; statusLabel = 'CAUTION'; }
+
+                // one dominant warning only (highest priority)
+                let warning = null;
+                if (status === 'limit') warning = { level: 'Limit reached', msg: (riskUsed >= lim.dailyRisk ? 'Daily risk budget reached ($' + lim.dailyRisk + '). Consider the day done.' : dayLoss >= lim.dailyLoss ? 'Daily loss limit reached (-$' + lim.dailyLoss + '). Stop for the day.' : 'Overall drawdown limit reached. Pause and review.') };
+                else if (status === 'high') warning = { level: 'High risk', msg: (riskPct >= lim.highPct ? 'Only $' + riskRemaining + ' of daily risk remains (' + riskPct + '% used). Reduce size or stop.' : 'Close to the daily loss limit — $' + lossRemaining + ' left.') };
+                else if (status === 'caution') warning = { level: 'Caution', msg: 'Daily risk is ' + riskPct + '% consumed — $' + riskRemaining + ' of $' + lim.dailyRisk + ' remaining.' };
+                else {
+                    // safe: still surface a drawdown or spike note if relevant
+                    if (curDD > lim.drawdown * 0.5) warning = { level: 'Drawdown watch', msg: '$' + ddRemaining + ' of drawdown buffer remains (' + ddPct + '% used).' };
+                }
+
+                return { acc, lim, todays, riskUsed, dayLoss, dayPnl, eq, peak, maxDD, curDD, riskRemaining, lossRemaining, ddRemaining, tradesLeft, riskPct, lossPct, ddPct, maxNext, status, statusLabel, warning };
+            }
+
+            // ============ HELPERS ============
+            const kpi = (label, val, sub, cls) => '<div class="kpi"><div class="k-label">' + label + '</div><div class="k-val num ' + (cls || 'text-white') + '">' + val + '</div>' + (sub ? '<div class="k-sub">' + sub + '</div>' : '') + '</div>';
+            const panel = (title, body, extra) => '<div class="panel p-5"><div class="flex items-center justify-between mb-4"><div class="panel-title">' + title + '</div>' + (extra || '') + '</div>' + body + '</div>';
+            const statusColor = s => s === 'safe' ? { bg: 'rgba(16,185,129,0.08)', text: '#34D399', border: 'rgba(16,185,129,0.35)' } : s === 'caution' ? { bg: 'rgba(245,158,11,0.08)', text: '#FBBF24', border: 'rgba(245,158,11,0.35)' } : s === 'high' ? { bg: 'rgba(239,68,68,0.1)', text: '#F87171', border: 'rgba(239,68,68,0.4)' } : { bg: 'rgba(239,68,68,0.16)', text: '#FCA5A5', border: 'rgba(239,68,68,0.6)' };
+
+            function lineSvg(series, opts) {
+                opts = opts || {};
+                if (series.length < 2) return '<p class="text-[12.5px] text-[#6E6E78] py-6 text-center">Not enough data.</p>';
+                const values = series.map(p => p.v);
+                const min = opts.min !== undefined ? opts.min : Math.min(...values);
+                const max = opts.max !== undefined ? opts.max : Math.max(...values);
+                const span = (max - min) || 1;
+                const W = opts.w || 640, H = opts.h || 170, P = 8;
+                const x = i => P + (i / (series.length - 1)) * (W - 2 * P);
+                const y = v => H - P - ((v - min) / span) * (H - 2 * P);
+                const line = series.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+                const area = line + ' L' + x(series.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + x(0).toFixed(1) + ' ' + (H - P) + ' Z';
+                let grid = '';
+                for (let i = 1; i < 4; i++) {
+                    const gy = P + (i / 4) * (H - 2 * P);
+                    grid += '<line x1="' + P + '" y1="' + gy.toFixed(1) + '" x2="' + (W - P) + '" y2="' + gy.toFixed(1) + '" stroke="#17171A" stroke-width="1"/>';
+                }
+                let extra = '';
+                if (opts.markers) {
+                    opts.markers.forEach(m => {
+                        const mx = m.at !== undefined ? x(m.at) : x(series.length - 1);
+                        const my = y(m.v);
+                        extra += '<line x1="' + mx.toFixed(1) + '" y1="' + (P) + '" x2="' + mx.toFixed(1) + '" y2="' + (H - P) + '" stroke="' + m.color + '" stroke-width="1" stroke-dasharray="4 3"/>' +
+                            '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="4" fill="' + m.color + '"/>';
+                    });
+                }
+                return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full" style="height:auto">' + grid +
+                    '<path d="' + area + '" fill="' + (opts.fill || 'rgba(16,185,129,0.08)') + '"/>' +
+                    '<path d="' + line + '" fill="none" stroke="' + (opts.stroke || '#34D399') + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' + extra + '</svg>';
+            }
+
+            // ============ OVERVIEW ============
+            function renderOverview() {
+                const s = computeState();
+                const sc = statusColor(s.status);
+
+                const banner = '<div class="status-banner" style="background:' + sc.bg + ';border-color:' + sc.border + '">' +
+                    '<div class="flex flex-wrap items-center justify-between gap-4">' +
+                        '<div><div class="status-label" style="color:' + sc.text + '">RISK STATUS</div>' +
+                        '<div class="status-value" style="color:' + sc.text + '">' + s.statusLabel + '</div>' +
+                        '<div class="text-[13px] text-[#C4C4CC] mt-1">' + (s.status === 'limit' ? 'Trading should be considered stopped — optional hard block is on.' : s.status === 'high' ? 'Close to a limit. Reduce size or stop for the day.' : s.status === 'caution' ? 'Warning threshold reached. Stay inside remaining buffers.' : 'Comfortable distance from all limits.') + '</div></div>' +
+                        '<div class="grid grid-cols-2 gap-x-10 gap-y-3">' +
+                            '<div><div class="label-xs mb-1">Daily risk remaining</div><div class="num text-[24px] font-extrabold text-white">$' + s.riskRemaining + '</div></div>' +
+                            '<div><div class="label-xs mb-1">Daily loss remaining</div><div class="num text-[24px] font-extrabold text-white">$' + s.lossRemaining + '</div></div>' +
+                            '<div><div class="label-xs mb-1">Drawdown buffer</div><div class="num text-[24px] font-extrabold text-white">$' + s.ddRemaining + '</div></div>' +
+                            '<div><div class="label-xs mb-1">Recommended max risk</div><div class="num text-[24px] font-extrabold" style="color:' + sc.text + '">$' + s.maxNext + '</div></div>' +
+                        '</div>' +
+                    '</div>' +
+                    (s.warning ? '<div class="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#0A0A0C]/60 border border-[#26262B]"><svg data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0" style="color:' + sc.text + '"></svg><div><span class="text-[12px] font-bold" style="color:' + sc.text + '">' + s.warning.level + ' — </span><span class="text-[13px] text-[#C4C4CC]">' + s.warning.msg + '</span></div></div>' : '') +
+                    '<div class="flex flex-wrap gap-3 mt-4">' +
+                        '<button class="btn-ghost !py-2 !px-3.5 text-[12.5px]" data-go="limits"><svg data-lucide="sliders-horizontal" class="w-4 h-4"></svg> Open limits</button>' +
+                        '<button class="btn-ghost !py-2 !px-3.5 text-[12.5px]" data-go="drawdown"><svg data-lucide="trending-down" class="w-4 h-4"></svg> Review drawdown</button>' +
+                        '<a href="dashboard.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ml-auto"><svg data-lucide="layout-dashboard" class="w-4 h-4"></svg> Back to dashboard</a>' +
+                    '</div></div>';
+
+                // risk used today bar
+                const usedBar = panel('Risk used today',
+                    '<div class="flex items-end justify-between mb-2"><div class="num text-[28px] font-extrabold text-white">$' + s.riskUsed + '</div><div class="num text-[13px] text-[#6E6E78]">' + s.riskPct + '% of $' + s.lim.dailyRisk + ' budget</div></div>' +
+                    '<div class="bar-track !h-3"><div class="bar-fill" style="width:' + Math.min(100, s.riskPct) + '%;background:' + (s.riskPct >= 100 ? '#EF4444' : s.riskPct >= s.lim.highPct ? '#F59E0B' : s.riskPct >= s.lim.warnPct ? '#FBBF24' : '#34D399') + '"></div></div>' +
+                    '<div class="flex justify-between text-[10.5px] text-[#55555E] mt-2 num"><span>0</span><span>' + s.lim.warnPct + '% warn</span><span>' + s.lim.highPct + '% high</span><span>$' + s.lim.dailyRisk + ' limit</span></div>');
+
+                // pre-trade risk check
+                const pretrade = panel('Pre-trade risk check',
+                    '<div class="label-xs mb-2">Planned risk for next trade ($)</div>' +
+                    '<div class="flex items-center gap-3">' +
+                        '<input id="pt-risk" class="finput !w-32" type="number" value="' + Math.min(s.maxNext, s.lim.perTrade) + '">' +
+                        '<button id="pt-check" class="btn-primary !py-2 !px-4 text-[12.5px]">Check</button>' +
+                        '<span class="text-[12px] text-[#6E6E78]">max allowed now: <span class="num font-bold text-white">$' + s.maxNext + '</span></span>' +
+                    '</div>' +
+                    '<div id="pt-result" class="mt-3"></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-2">Maximum allowed = smallest of per-trade limit, daily risk remaining, daily loss remaining and drawdown buffer.</p>');
+
+                const kpis = '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+                    kpi('Risk used today', '$' + s.riskUsed, s.riskPct + '% of $' + s.lim.dailyRisk, s.riskPct >= s.lim.highPct ? 'text-[#F87171]' : s.riskPct >= s.lim.warnPct ? 'text-[#FBBF24]' : 'text-white') +
+                    kpi('Today\'s trades', s.todays.length + ' / ' + s.lim.trades, s.tradesLeft + ' remaining', s.todays.length >= s.lim.trades ? 'text-[#FBBF24]' : 'text-white') +
+                    kpi('Current drawdown', '$' + s.curDD, s.ddPct + '% of $' + s.lim.drawdown + ' limit', s.ddPct >= s.lim.highPct ? 'text-[#F87171]' : s.ddPct >= s.lim.warnPct ? 'text-[#FBBF24]' : 'text-white') +
+                    kpi('Day P&L', fmtMoney(s.dayPnl), 'realized today', s.dayPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                '</div>';
+
+                $('panel-overview').innerHTML =
+                    banner +
+                    '<div class="mt-4">' + kpis + '</div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">' + usedBar + pretrade + '</div>';
+            }
+
+            // ============ LIMITS ============
+            const LIMIT_FIELDS = [
+                { key: 'perTrade', label: 'Risk per trade', def: 'Maximum planned risk for a single trade.', unit: '$' },
+                { key: 'dailyRisk', label: 'Daily risk budget', def: 'Maximum total planned risk for the day.', unit: '$' },
+                { key: 'dailyLoss', label: 'Daily loss limit', def: 'Maximum daily realized loss.', unit: '$' },
+                { key: 'drawdown', label: 'Overall drawdown limit', def: 'Maximum account drawdown from peak.', unit: '$' },
+                { key: 'trades', label: 'Max trades per day', def: 'Optional discipline-linked trade limit.', unit: '' },
+                { key: 'warnPct', label: 'Warning threshold', def: 'Triggers the Caution state.', unit: '%' },
+                { key: 'highPct', label: 'High-risk threshold', def: 'Triggers the High Risk state.', unit: '%' }
+            ];
+
+            function renderLimits() {
+                const lim = limits();
+                const rows = LIMIT_FIELDS.map(f =>
+                    '<div class="flex items-center gap-4 py-3 border-b border-[#17171A] last:border-0">' +
+                        '<div class="flex-1"><div class="text-[13.5px] font-semibold text-white">' + f.label + '</div><div class="text-[11.5px] text-[#55555E]">' + f.def + '</div></div>' +
+                        '<div class="flex items-center gap-2"><span class="text-[#6E6E78]">' + (f.unit === '$' ? '$' : '') + '</span>' +
+                        '<input class="finput num" data-limit="' + f.key + '" type="number" value="' + lim[f.key] + '"' + (f.unit === '%' ? ' max="100" min="1"' : ' min="1"') + ' style="width:80px">' +
+                        (f.unit === '%' ? '<span class="text-[11px] text-[#55555E]">%</span>' : '') + '</div>' +
+                    '</div>').join('');
+
+                const log = LIMIT_LOG.slice().reverse().map(e =>
+                    '<div class="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23] mb-1.5">' +
+                        '<span class="text-[12.5px] text-[#C4C4CC]">' + esc(e.label) + '</span>' +
+                        '<span class="text-[11.5px] text-[#6E6E78] num">' + e.oldVal + ' → <b class="text-white">' + e.newVal + '</b> · ' + e.time + '</span></div>').join('');
+
+                $('panel-limits').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
+                        panel('Risk limits — ' + account().name, rows +
+                            '<p class="text-[11.5px] text-[#55555E] mt-3">Defaults are conservative. Every change is logged with a timestamp and preserved historically — old trades are never re-evaluated against new limits.</p>') +
+                        '<div class="flex flex-col gap-4 xl:col-span-1">' +
+                            panel('Change log', log || '<p class="text-[12.5px] text-[#6E6E78]">No changes yet — using conservative defaults.</p>') +
+                            panel('Status thresholds', '<div class="flex flex-col gap-2">' +
+                                '<div class="flex justify-between text-[12.5px]"><span class="text-[#C4C4CC]">Caution at</span><span class="num font-bold text-[#FBBF24]">' + lim.warnPct + '% consumed</span></div>' +
+                                '<div class="flex justify-between text-[12.5px]"><span class="text-[#C4C4CC]">High risk at</span><span class="num font-bold text-[#F87171]">' + lim.highPct + '% consumed</span></div>' +
+                                '<div class="flex justify-between text-[12.5px]"><span class="text-[#C4C4CC]">Limit at</span><span class="num font-bold text-white">100% consumed</span></div></div>' +
+                                '<p class="text-[11.5px] text-[#55555E] mt-2">The status banner always reflects the highest-priority constraint.</p>') +
+                        '</div>' +
+                    '</div>';
+            }
+
+            // ============ DRAWDOWN ============
+            function renderDrawdown() {
+                const s = computeState();
+                const sc = statusColor(s.status);
+                const peakVal = s.peak;
+                const curVal = s.eq;
+                const limitVal = s.acc.balance - s.lim.drawdown;
+
+                // equity series
+                let eq2 = s.acc.balance;
+                const series = ALL.slice().sort((a, b) => a.ts - b.ts).map(t => { eq2 += t.pnl; return { date: iso(t.ts), label: iso(t.ts), v: Math.round(eq2) }; });
+
+                const chart = panel('Drawdown — room left in dollars',
+                    '<div class="flex items-center gap-6 mb-3 text-[12.5px]">' +
+                        '<span class="num"><span class="text-[#6E6E78]">Peak </span><b class="text-white">$' + peakVal.toLocaleString() + '</b></span>' +
+                        '<span class="text-[#55555E]">→</span>' +
+                        '<span class="num"><span class="text-[#6E6E78]">Current </span><b class="text-white">$' + curVal.toLocaleString() + '</b></span>' +
+                        '<span class="text-[#55555E]">→</span>' +
+                        '<span class="num"><span class="text-[#6E6E78]">Limit </span><b class="text-[#F87171]">$' + limitVal.toLocaleString() + '</b></span>' +
+                    '</div>' +
+                    '<div class="relative">' +
+                        lineSvg(series, { stroke: '#34D399', fill: 'rgba(16,185,129,0.08)', min: Math.min(limitVal - 200, ...series.map(p => p.v)), max: Math.max(...series.map(p => p.v), peakVal), markers: [{ at: 0, v: peakVal, color: '#FBBF24' }, { at: series.length - 1, v: curVal, color: '#34D399' }] }) +
+                        '<div class="absolute inset-x-0 bottom-0 text-[10.5px] text-[#F87171] num" style="bottom:2px">limit $' + limitVal.toLocaleString() + '</div>' +
+                    '</div>');
+
+                const statsGrid = panel('Drawdown metrics',
+                    '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">' +
+                        kpi('Current drawdown', '$' + s.curDD, s.ddPct + '% of limit', s.ddPct >= s.lim.highPct ? 'text-[#F87171]' : s.ddPct >= s.lim.warnPct ? 'text-[#FBBF24]' : 'text-white') +
+                        kpi('Drawdown %', (Math.round((s.curDD / s.acc.balance) * 1000) / 10) + '%', 'of account equity', 'text-white') +
+                        kpi('Buffer remaining', '$' + s.ddRemaining, 'before limit', s.ddRemaining < s.lim.drawdown * 0.3 ? 'text-[#F87171]' : 'text-white') +
+                        kpi('Worst drawdown', '$' + s.maxDD, 'historical max', 'text-[#F87171]') +
+                        kpi('Recovered from peak', (peakVal - curVal >= 0 ? '-$' + (peakVal - curVal) : '+$' + (curVal - peakVal)), 'vs running peak', curVal >= peakVal ? 'text-[#34D399]' : 'text-[#FBBF24]') +
+                        kpi('Current state', s.statusLabel, 'from active limits', s.status === 'safe' ? 'text-[#34D399]' : s.status === 'caution' ? 'text-[#FBBF24]' : 'text-[#F87171]') +
+                    '</div>' +
+                    '<div class="mt-4"><div class="flex justify-between text-[11.5px] text-[#6E6E78] mb-1.5"><span>Drawdown progress</span><span class="num">' + s.ddPct + '% of $' + s.lim.drawdown + '</span></div>' +
+                    '<div class="bar-track !h-3"><div class="bar-fill" style="width:' + Math.min(100, s.ddPct) + '%;background:' + (s.ddPct >= s.lim.highPct ? '#EF4444' : s.ddPct >= s.lim.warnPct ? '#F59E0B' : '#3B82F6') + '"></div></div>' +
+                    '<div class="flex justify-between text-[10px] text-[#55555E] mt-1.5 num"><span>$0</span><span>$' + s.lim.drawdown + ' limit</span></div></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-4">Deep drawdown analytics live in Analytics. This screen answers one question: how much room is left?</p>');
+
+                $('panel-drawdown').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' + chart + '<div class="xl:col-span-1 flex flex-col gap-4">' + statsGrid + '</div></div>';
+            }
+
+            // ============ HISTORY ============
+            let histPeriod = '30d';
+            let drillDay = null;
+
+            function renderHistory() {
+                const lim = limits();
+                const days = Math.min(histPeriod === '7d' ? 7 : histPeriod === '30d' ? 30 : histPeriod === '90d' ? 90 : 9999, 90);
+                const cutoff = ANCHOR.getTime() - days * day;
+                const list = ALL.filter(t => t.ts.getTime() >= cutoff);
+                const perDay = groupBy(list, t => iso(t.ts));
+                const dayArr = Object.entries(perDay).sort((a, b) => a[0].localeCompare(b[0])).map(([d, tr]) => {
+                    const risk = tr.reduce((s, t) => s + t.risk, 0);
+                    const pnl = tr.reduce((s, t) => s + t.pnl, 0);
+                    const loss = Math.abs(tr.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
+                    return { d, risk, pnl, loss, n: tr.length, trades: tr };
+                });
+                const maxRisk = Math.max(1, ...dayArr.map(x => x.risk), lim.dailyRisk);
+                const maxPnl = Math.max(1, ...dayArr.map(x => Math.abs(x.pnl)));
+
+                const riskBars = dayArr.map(x => {
+                    const h = Math.max(4, (x.risk / maxRisk) * 100);
+                    const over = x.risk > lim.dailyRisk;
+                    return '<div class="flex-1 flex flex-col justify-end items-center gap-1" data-day="' + x.d + '" style="cursor:pointer" title="' + x.d + ' · $' + x.risk + ' risk">' +
+                        '<span class="num text-[9.5px] ' + (over ? 'text-[#F87171]' : 'text-[#6E6E78]') + '">' + x.risk + '</span>' +
+                        '<div class="w-full rounded-t" style="height:' + h + '%;background:' + (over ? '#EF4444' : x.risk >= lim.dailyRisk * 0.7 ? '#F59E0B' : '#3B82F6') + ';opacity:0.85"></div>' +
+                        '<span class="text-[9px] text-[#3A3A41]">' + x.d.slice(5).replace('-', '/') + '</span></div>';
+                }).join('');
+
+                const pnlBars = dayArr.map(x => {
+                    const h = Math.max(4, (Math.abs(x.pnl) / maxPnl) * 100);
+                    return '<div class="flex-1 flex flex-col justify-end items-center gap-1" data-day="' + x.d + '" style="cursor:pointer" title="' + x.d + ' · ' + fmtMoney(x.pnl) + '">' +
+                        '<span class="num text-[9.5px] ' + (x.pnl >= 0 ? 'text-[#6E6E78]' : 'text-[#6E6E78]') + '">' + (x.pnl > 0 ? '+' : '') + x.pnl + '</span>' +
+                        '<div class="w-full rounded-t" style="height:' + h + '%;background:' + (x.pnl >= 0 ? '#34D399' : '#EF4444') + ';opacity:0.85"></div>' +
+                        '<span class="text-[9px] text-[#3A3A41]">' + x.d.slice(5).replace('-', '/') + '</span></div>';
+                }).join('');
+
+                // events
+                const events = [];
+                dayArr.forEach(x => {
+                    if (x.risk >= lim.dailyRisk) events.push({ d: x.d, type: 'Limit breach', sev: 'red', msg: 'Daily risk budget hit — $' + x.risk + ' used vs $' + lim.dailyRisk + ' limit' });
+                    else if (x.risk >= lim.dailyRisk * (lim.highPct / 100)) events.push({ d: x.d, type: 'High risk day', sev: 'amber', msg: '$' + x.risk + ' risk used (' + Math.round((x.risk / lim.dailyRisk) * 100) + '% of budget)' });
+                    else if (x.risk >= lim.dailyRisk * (lim.warnPct / 100)) events.push({ d: x.d, type: 'Warning', sev: 'amber', msg: 'Approached daily risk budget — $' + x.risk + ' used' });
+                    if (x.loss >= lim.dailyLoss) events.push({ d: x.d, type: 'Daily loss limit', sev: 'red', msg: 'Day lost $' + x.loss + ' vs $' + lim.dailyLoss + ' limit' });
+                    const spikes = x.trades.filter(t => t.risk > lim.perTrade * 1.5);
+                    spikes.forEach(t => events.push({ d: x.d, type: 'Risk spike', sev: 'red', msg: t.symbol + ' risked $' + t.risk + ' vs $' + lim.perTrade + ' per-trade limit' }));
+                });
+                const eventsSorted = events.slice().sort((a, b) => b.d.localeCompare(a.d)).slice(0, 12);
+
+                // consistency
+                const avgRisk = list.length ? Math.round(list.reduce((s, t) => s + t.risk, 0) / list.length) : 0;
+                const risks = list.map(t => t.risk);
+                const mean = risks.length ? risks.reduce((a, b) => a + b, 0) / risks.length : 0;
+                const sd = risks.length ? Math.sqrt(risks.reduce((a, b) => a + (b - mean) * (b - mean), 0) / risks.length) : 0;
+                const cv = mean ? sd / mean : 0;
+                const consistency = Math.max(0, Math.min(100, Math.round(100 - cv * 130)));
+
+                const drill = drillDay && perDay[drillDay] ? panel('Trades on ' + drillDay + ' <button class="ml-2 text-[11px] text-[#F87171]" id="clear-drill">✕</button>',
+                    '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Symbol</th><th>Setup</th><th>Session</th><th>Risk</th><th>P&L</th><th>R</th></tr></thead><tbody>' +
+                    perDay[drillDay].slice().sort((a, b) => a.ts - b.ts).map(t =>
+                        '<tr><td class="num text-[#6E6E78]">' + t.ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + '</td>' +
+                        '<td class="font-semibold text-white">' + esc(t.symbol) + '</td><td>' + esc(t.setup) + '</td><td>' + t.session + '</td>' +
+                        '<td class="num">$' + t.risk + '</td>' +
+                        '<td class="num ' + (t.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(t.pnl) + '</td>' +
+                        '<td class="num ' + (t.r >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(t.r) + '</td></tr>').join('') +
+                    '</tbody></table></div>') : '';
+
+                const periodBtns = ['7d', '30d', '90d', 'all'].map(p =>
+                    '<button class="ins-tab' + (histPeriod === p ? ' active' : '') + '" data-hist="' + p + '" style="padding:6px 12px">' + (p === 'all' ? 'All' : p.toUpperCase()) + '</button>').join('');
+
+                $('panel-history').innerHTML =
+                    '<div class="panel p-1.5 flex gap-1 overflow-x-auto mb-4 w-fit">' + periodBtns + '</div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' +
+                        panel('Daily risk used', '<div class="flex items-end gap-0.5 h-[130px] mb-1">' + riskBars + '</div><p class="text-[11px] text-[#55555E] mt-1">Bars above the ' + '$' + lim.dailyRisk + ' budget line are breaches. Click a bar for that day\u2019s trades.</p>') +
+                        panel('Daily realized P&L', '<div class="flex items-end gap-0.5 h-[130px] mb-1">' + pnlBars + '</div><p class="text-[11px] text-[#55555E] mt-1">Click a bar to inspect that day\u2019s trades.</p>') +
+                    '</div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">' +
+                        panel('Risk consistency', '<div class="num text-[30px] font-extrabold ' + (consistency >= 80 ? 'text-[#34D399]' : consistency >= 60 ? 'text-[#FBBF24]' : 'text-[#F87171]') + '">' + consistency + '</div>' +
+                            '<div class="text-[12px] text-[#8A8A93] mt-1">' + list.length + ' trades · avg risk $' + avgRisk + ' · std dev $' + Math.round(sd) + '</div>' +
+                            '<div class="bar-track mt-3"><div class="bar-fill" style="width:' + consistency + '%;background:' + (consistency >= 80 ? '#34D399' : consistency >= 60 ? '#F59E0B' : '#EF4444') + '"></div></div>' +
+                            '<p class="text-[11.5px] text-[#55555E] mt-3">Lower variance = more consistent position sizing. Is your average risk creeping up?</p>') +
+                        panel('Major risk events', '<div class="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto">' +
+                            (eventsSorted.length ? eventsSorted.map(e =>
+                                '<div class="flex items-start gap-2.5 px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23]"><span class="tag ' + (e.sev === 'red' ? 'tag-red' : 'tag-amber') + ' !py-0.5 !px-1.5 flex-shrink-0">' + e.type + '</span>' +
+                                '<div class="min-w-0"><div class="text-[12.5px] text-[#C4C4CC]">' + e.msg + '</div><div class="text-[10.5px] text-[#6E6E78] num">' + e.d + '</div></div></div>').join('')
+                                : '<p class="text-[12.5px] text-[#6E6E78]">No limit events in this period.</p>') + '</div>') +
+                        panel('Key questions', '<div class="flex flex-col gap-2">' +
+                            '<div class="text-[12.5px] text-[#C4C4CC]"><b>Am I risking more than normal?</b> ' + (avgRisk > 25 ? 'Yes — avg risk $' + avgRisk + ' is above your $25 per-trade limit.' : 'No — avg risk $' + avgRisk + ' stays inside your limits.') + '</div>' +
+                            '<div class="text-[12.5px] text-[#C4C4CC]"><b>How often do I approach my limit?</b> ' + dayArr.filter(x => x.risk >= lim.dailyRisk * 0.7).length + ' of ' + dayArr.length + ' days at 70%+ of budget.</div>' +
+                            '<div class="text-[12.5px] text-[#C4C4CC]"><b>Are risk spikes tied to losses?</b> Check the events list for risk spikes and their day P&L.</div>' +
+                            '</div>') +
+                    '</div>' +
+                    drill +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">This is a lightweight audit trail. Deep distributions and risk-vs-expectancy analysis live in Analytics.</p>';
+            }
+
+            // ============ RENDER ALL ============
+            function renderAll() {
+                refreshData();
+                if (!account()) {
+                    const empty = '<div class="panel p-10 text-center">' +
+                        '<svg data-lucide="shield-alert" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
+                        '<h3 class="text-[18px] font-bold text-white">No account yet</h3>' +
+                        '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Risk is calculated from your account size and limits. Set up your first account to see your live risk state.</p>' +
+                        '<a href="strategy-lab.html" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5"><svg data-lucide="settings" class="w-4 h-4"></svg> Set up account</a>' +
+                    '</div>';
+                    ['panel-overview', 'panel-limits', 'panel-drawdown', 'panel-history'].forEach(id => { $(id).innerHTML = empty; });
+                    $('account-btn').innerHTML = '<span class="text-[#6E6E78]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>';
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+                const s = computeState();
+                // account selector in topbar
+                $('account-btn').innerHTML = '<span class="num text-[12px]">$' + account().balance.toLocaleString() + '</span><span class="text-[#6E6E78]">·</span><span>' + account().name + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>';
+                renderOverview();
+                renderLimits();
+                renderDrawdown();
+                renderHistory();
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ============ EVENTS ============
+            function activateTab(tab) {
+                document.querySelectorAll('.ins-tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+                document.querySelectorAll('.ins-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+            }
+            document.querySelectorAll('.ins-tab[data-tab]').forEach(btn => {
+                btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+            });
+
+            // quick actions in overview
+            document.addEventListener('click', e => {
+                const go = e.target.closest && e.target.closest('[data-go]');
+                if (go) activateTab(go.getAttribute('data-go'));
+                // history drill-down
+                const bar = e.target.closest && e.target.closest('[data-day]');
+                if (bar && document.getElementById('panel-history').contains(bar)) { drillDay = bar.getAttribute('data-day'); renderHistory(); }
+                if (e.target.id === 'clear-drill') { drillDay = null; renderHistory(); }
+                // pre-trade check
+                if (e.target.id === 'pt-check') runPreTradeCheck();
+            });
+
+            // limit edits — every change goes through ConfigAPI, which creates a
+            // NEW immutable policy version and re-points assignments (the single
+            // source of truth; the audit log + all pages update from that).
+            document.addEventListener('change', e => {
+                const k = e.target.getAttribute && e.target.getAttribute('data-limit');
+                if (k && accountId) {
+                    const lim = limits();
+                    if (!lim) return;
+                    const oldVal = lim[k];
+                    const v = Number(e.target.value);
+                    if (v && v > 0 && v !== oldVal) {
+                        const next = Object.assign({}, lim);
+                        next[k] = k === 'highPct' ? Math.min(100, v) : v;
+                        LIMIT_LOG.push({ label: LIMIT_FIELDS.find(f => f.key === k).label, oldVal: oldVal + (LIMIT_FIELDS.find(f => f.key === k).unit === '$' ? '$' : ''), newVal: next[k] + (LIMIT_FIELDS.find(f => f.key === k).unit === '$' ? '$' : ''), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) });
+                        if (core) {
+                            core.ConfigAPI.updateAccountLimits(accountId, {
+                                riskPerTrade: next.perTrade,
+                                maxDailyRisk: next.dailyRisk,
+                                maxDailyLoss: next.dailyLoss,
+                                maxTotalDrawdown: next.drawdown,
+                                maxTrades: next.trades,
+                                warn: [next.warnPct, Math.round((next.warnPct + next.highPct) / 2), next.highPct]
+                            }, LIMIT_FIELDS.find(f => f.key === k).label);
+                        }
+                        renderAll();
+                    }
+                }
+            });
+
+            // history period buttons (delegated, they have data-hist)
+            document.addEventListener('click', e => {
+                const h = e.target.closest && e.target.closest('[data-hist]');
+                if (h) { histPeriod = h.getAttribute('data-hist'); renderHistory(); }
+            });
+
+            // account switcher — cycles the SELECTED account (persisted, shared
+            // across every page). account.changed triggers a re-render.
+            $('account-btn').addEventListener('click', () => {
+                const ids = core && core.Accounts ? core.Accounts.map(a => a.id) : [];
+                if (ids.length < 2 || !accountId) return;
+                const idx = ids.indexOf(accountId);
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+            });
+
+            // pre-trade check
+            function runPreTradeCheck() {
+                const s = computeState();
+                const planned = Number($('pt-risk').value) || 0;
+                const el = $('pt-result');
+                if (planned <= 0) { el.innerHTML = '<p class="text-[12.5px] text-[#6E6E78]">Enter a planned risk.</p>'; return; }
+                if (planned <= s.maxNext) {
+                    el.innerHTML = '<div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.3)]"><span class="w-5 h-5 rounded-full bg-[rgba(16,185,129,0.2)] text-[#34D399] flex items-center justify-center text-[11px] font-bold">✓</span><span class="text-[13px] text-[#C4C4CC]"><b class="text-white">Safe</b> — $' + planned + ' fits inside all constraints (max $' + s.maxNext + ').</span></div>';
+                } else {
+                    const cut = planned - s.maxNext;
+                    el.innerHTML = '<div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.35)]"><span class="w-5 h-5 rounded-full bg-[rgba(239,68,68,0.2)] text-[#F87171] flex items-center justify-center text-[11px] font-bold">✕</span><span class="text-[13px] text-[#C4C4CC]"><b class="text-[#F87171]">Reduce risk</b> — planned $' + planned + ' exceeds the maximum allowed now ($' + s.maxNext + '). Reduce by at least $' + cut + '.</span></div>';
+                }
+            }
+
+            // ============ INIT ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            const VALID_TABS = ['overview', 'limits', 'drawdown', 'history'];
+            const hashTab = (location.hash || '').replace('#', '');
+            if (hashTab && VALID_TABS.includes(hashTab)) activateTab(hashTab);
+            window.addEventListener('hashchange', () => {
+                const t = (location.hash || '').replace('#', '');
+                if (t && VALID_TABS.includes(t)) activateTab(t);
+            });
+
+            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
+            // Downstream module: listens for domain events and updates itself —
+            // it never mutates configuration directly. refreshData() first so a
+            // config change (new policy version) is picked up before rendering.
+            if (core) {
+                core.TradeMindBus.subscribe('trade.created', () => { renderAll(); });
+                core.TradeMindBus.subscribe('trade.updated', () => { renderAll(); });
+                core.TradeMindBus.subscribe('trade.deleted', () => { renderAll(); });
+                core.TradeMindBus.subscribe('config.version.created', () => { renderAll(); });
+                core.TradeMindBus.subscribe('config.changed', () => { renderAll(); });
+                core.TradeMindBus.subscribe('account.changed', () => { renderAll(); });
+            }
+
+            renderAll();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script src="reset.js"></script>
+</body>
+</html>

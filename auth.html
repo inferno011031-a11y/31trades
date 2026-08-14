@@ -1,0 +1,1507 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Sign In / Create Account</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        /* Hide default cursor on fine pointers */
+        @media (pointer: fine) {
+            body, a, button, input, select, textarea, [role="button"] {
+                cursor: none !important;
+            }
+        }
+
+        /* Directional Smooth Cursor Pointer Container */
+        #smooth-cursor-container, #smooth-cursor-container * {
+            pointer-events: none !important;
+        }
+        #smooth-cursor-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: 99999;
+            will-change: transform;
+            transform: translate(-50%, -50%);
+            transition: opacity 0.2s ease;
+        }
+
+        html, body {
+            width: 100%;
+            min-height: 100vh;
+            background: linear-gradient(180deg, #1A1B1C 0%, #000000 100%) !important;
+            background-color: #000000 !important;
+            color: #FFFFFF !important;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* Header Navigation */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            width: 100%;
+            height: 80px;
+            background: rgba(26, 27, 28, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(136, 136, 136, 0.15);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .nav-container {
+            width: 100%;
+            max-width: 1280px;
+            padding: 0 24px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            color: #FFFFFF;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+        }
+
+        .logo-badge {
+            width: 32px;
+            height: 32px;
+            background: #FFFFFF;
+            color: #000000;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 14px;
+        }
+
+        .nav-capsule {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 6px 12px;
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(136, 136, 136, 0.2);
+            border-radius: 9999px;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            height: 44px;
+        }
+
+        .nav-capsule-item {
+            color: #888888;
+            font-size: 13.5px;
+            font-weight: 500;
+            padding: 6px 16px;
+            border-radius: 9999px;
+            text-decoration: none;
+            display: inline-block;
+            white-space: nowrap;
+            transition: color 0.15s ease, background-color 0.2s ease;
+        }
+
+        .nav-capsule-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            color: #FFFFFF;
+        }
+
+        .btn-primary {
+            background: #FFFFFF;
+            color: #000000;
+            font-weight: 700;
+            font-size: 14px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+        }
+
+        .btn-primary:hover {
+            background: #EBF2F5;
+            transform: scale(1.02);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.45;
+            pointer-events: none;
+            transform: none;
+        }
+
+        .btn-secondary {
+            background: rgba(235, 242, 245, 0.05);
+            color: #FFFFFF;
+            font-weight: 600;
+            font-size: 14px;
+            padding: 12px 24px;
+            border-radius: 10px;
+            border: 1px solid rgba(136, 136, 136, 0.3);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .btn-secondary:hover {
+            border-color: rgba(136, 136, 136, 0.6);
+            background: rgba(235, 242, 245, 0.1);
+        }
+
+        /* Auth glass card */
+        .auth-card {
+            background:
+                radial-gradient(circle at 85% -10%, rgba(52, 211, 153, 0.06), transparent 45%),
+                linear-gradient(160deg, #1C1C1E 0%, #121214 60%, #0b0b0c 100%);
+            border: 1px solid rgba(255, 255, 255, 0.10);
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+        }
+
+        /* Auth tabs */
+        .auth-tab {
+            flex: 1;
+            padding: 10px 16px;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            color: #888888;
+            text-align: center;
+            transition: all 0.2s ease;
+            background: transparent;
+            border: none;
+        }
+
+        .auth-tab.active {
+            background: #FFFFFF;
+            color: #000000;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.15);
+        }
+
+        .auth-tab:not(.active):hover {
+            color: #EBF2F5;
+        }
+
+        /* Form fields */
+        .field-label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            color: #A3A3A3;
+            margin-bottom: 8px;
+            letter-spacing: 0.2px;
+        }
+
+        .field-input {
+            width: 100%;
+            background: #141417;
+            border: 1px solid #27272A;
+            border-radius: 12px;
+            padding: 13px 16px 13px 44px;
+            font-size: 14.5px;
+            font-weight: 500;
+            color: #FFFFFF;
+            outline: none;
+            transition: all 0.2s ease;
+        }
+
+        .field-input::placeholder {
+            color: #555555;
+        }
+
+        .field-input:focus {
+            border-color: rgba(52, 211, 153, 0.5);
+            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12);
+            background: #16161A;
+        }
+
+        .input-wrap {
+            position: relative;
+        }
+
+        .input-wrap .field-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #555555;
+            pointer-events: none;
+        }
+
+        .input-wrap .prefix-symbol {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #888888;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 15px;
+            font-weight: 600;
+            pointer-events: none;
+        }
+
+        .input-wrap .toggle-pw {
+            position: absolute;
+            right: 12px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666666;
+            background: none;
+            border: none;
+            padding: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 6px;
+            transition: color 0.2s;
+        }
+
+        .input-wrap .toggle-pw:hover {
+            color: #FFFFFF;
+        }
+
+        .limit-input {
+            padding-left: 40px;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        /* Checkbox */
+        .check-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 13.5px;
+            color: #A3A3A3;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .check-item input {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 1px solid #3A3A3D;
+            border-radius: 5px;
+            background: #141417;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s ease;
+            flex-shrink: 0;
+        }
+
+        .check-item input:checked {
+            background: #34D399;
+            border-color: #34D399;
+        }
+
+        .check-item input:checked::after {
+            content: "";
+            width: 9px;
+            height: 5px;
+            border-left: 2px solid #000;
+            border-bottom: 2px solid #000;
+            transform: rotate(-45deg) translate(1px, -1px);
+        }
+
+        .check-item input:focus {
+            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.2);
+        }
+
+        /* Panel switching */
+        .auth-panel {
+            display: none;
+            animation: panelIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .auth-panel.active {
+            display: block;
+        }
+
+        @keyframes panelIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Subtle pulsing glow for the auth card */
+        @keyframes subtle-glow {
+            0%, 100% { box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 20px rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.1); }
+            50% { box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6), 0 0 35px rgba(255, 255, 255, 0.12); border-color: rgba(255,255,255,0.22); }
+        }
+
+        .glow-box {
+            animation: subtle-glow 4s ease-in-out infinite;
+        }
+
+        /* Brand panel mini stat chips */
+        @keyframes float-slow {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-12px); }
+        }
+
+        .float-slow {
+            animation: float-slow 6s ease-in-out infinite;
+        }
+
+        .success-icon {
+            animation: popIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.4); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .divider-line {
+            height: 1px;
+            background: #27272A;
+            flex: 1;
+        }
+
+        /* ============ ONBOARDING WIZARD ============ */
+        .onb-step {
+            display: none;
+            animation: panelIn 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .onb-step.active {
+            display: block;
+        }
+
+        .onb-progress-track {
+            height: 6px;
+            background: #1C1C20;
+            border: 1px solid #27272A;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .onb-progress-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, #34d399, #10b981);
+            border-radius: 999px;
+            transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        /* Option cards (radio-style selection) */
+        .opt-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 14px;
+            width: 100%;
+            background: #141417;
+            border: 1px solid #27272A;
+            border-radius: 14px;
+            padding: 16px;
+            text-align: left;
+            transition: all 0.2s ease;
+        }
+
+        .opt-card:hover {
+            border-color: #3A3A3D;
+            background: #16161A;
+        }
+
+        .opt-card.selected {
+            border-color: rgba(52, 211, 153, 0.55);
+            background: rgba(52, 211, 153, 0.06);
+            box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.12);
+        }
+
+        .opt-card .opt-radio {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            border: 2px solid #3A3A3D;
+            flex-shrink: 0;
+            margin-top: 2px;
+            display: grid;
+            place-items: center;
+            transition: all 0.2s ease;
+        }
+
+        .opt-card.selected .opt-radio {
+            border-color: #34D399;
+        }
+
+        .opt-card.selected .opt-radio::after {
+            content: "";
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #34D399;
+        }
+
+        .opt-card .opt-icon {
+            width: 38px;
+            height: 38px;
+            border-radius: 10px;
+            background: #1C1C20;
+            border: 1px solid #27272A;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #888888;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .opt-card.selected .opt-icon {
+            color: #34d399;
+            border-color: rgba(52, 211, 153, 0.4);
+            background: rgba(52, 211, 153, 0.08);
+        }
+
+        .opt-badge {
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #34d399;
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            border-radius: 6px;
+            padding: 2px 7px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+
+        /* Chips (multi/single select) */
+        .chip {
+            padding: 10px 18px;
+            border-radius: 9999px;
+            background: #141417;
+            border: 1px solid #27272A;
+            color: #D4D4D4;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.2s ease;
+        }
+
+        .chip:hover {
+            border-color: #3A3A3D;
+            color: #FFFFFF;
+        }
+
+        .chip.selected {
+            background: rgba(52, 211, 153, 0.12);
+            border-color: rgba(52, 211, 153, 0.55);
+            color: #34d399;
+            box-shadow: 0 0 0 2px rgba(52, 211, 153, 0.12);
+        }
+
+        /* Quick preset pills for risk limits */
+        .preset-pill {
+            padding: 8px 14px;
+            border-radius: 9999px;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #A3A3A3;
+            background: #141417;
+            border: 1px solid #27272A;
+            transition: all 0.2s ease;
+        }
+
+        .preset-pill:hover {
+            border-color: rgba(52, 211, 153, 0.5);
+            color: #34d399;
+        }
+
+        .onb-nav-btn {
+            flex: 1;
+        }
+
+        .skip-link {
+            background: none;
+            border: none;
+            color: #666666;
+            font-size: 13px;
+            font-weight: 600;
+            padding: 8px 12px;
+            border-radius: 8px;
+            transition: color 0.2s;
+        }
+
+        .skip-link:hover {
+            color: #FFFFFF;
+        }
+
+        /* Summary chips on the completion screen */
+        .summary-chip {
+            background: #141417;
+            border: 1px solid #27272A;
+            border-radius: 10px;
+            padding: 8px 14px;
+            font-size: 13px;
+            color: #D4D4D4;
+        }
+
+        .summary-chip strong {
+            color: #FFFFFF;
+            font-weight: 600;
+        }
+
+        @media (max-width: 1024px) {
+            .brand-panel { display: none; }
+        }
+
+        @media (max-width: 640px) {
+            .header-nav { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Grid Pattern Background Layer -->
+    <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden opacity-40">
+      <svg
+        aria-hidden="true"
+        class="pointer-events-none absolute inset-x-0 inset-y-[-30%] h-[200%] w-full skew-y-12 [mask-image:radial-gradient(600px_circle_at_center,white,transparent)] stroke-[#888888]/20"
+        stroke="rgb(156 163 175 / 0.2)"
+        stroke-width="1"
+      >
+        <defs>
+          <pattern id="magic-grid-pattern" width="40" height="40" patternUnits="userSpaceOnUse" x="-1" y="-1">
+            <path d="M.5 40V.5H40" fill="none" />
+          </pattern>
+        </defs>
+        <rect width="100%" height="100%" stroke-width="0" fill="url(#magic-grid-pattern)" />
+      </svg>
+    </div>
+
+    <!-- Directional Smooth Cursor Element -->
+    <div id="smooth-cursor-container">
+        <svg xmlns="http://www.w3.org/2000/svg" width="50" height="54" viewBox="0 0 50 54" fill="none" style="transform: scale(0.6);">
+            <g filter="url(#filter0_d_91_7928)">
+                <path d="M42.6817 41.1495L27.5103 6.79925C26.7269 5.02557 24.2082 5.02558 23.3927 6.79925L7.59814 41.1495C6.75833 42.9759 8.52712 44.8902 10.4125 44.1954L24.3757 39.0496C24.8829 38.8627 25.4385 38.8627 25.9422 39.0496L39.8121 44.1954C41.6849 44.8902 43.4884 42.9759 42.6817 41.1495Z" fill="black"/>
+                <path d="M43.7146 40.6933L28.5431 6.34306C27.3556 3.65428 23.5772 3.69516 22.3668 6.32755L6.57226 40.6778C5.3134 43.4156 7.97238 46.298 10.803 45.2549L24.7662 40.109C25.0221 40.0147 25.2999 40.0156 25.5494 40.1082L39.4193 45.254C42.2261 46.2953 44.9254 43.4347 43.7146 40.6933Z" stroke="white" stroke-width="2.25825"/>
+            </g>
+            <defs>
+                <filter id="filter0_d_91_7928" x="0.602397" y="0.952444" width="49.0584" height="52.428" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+                    <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+                    <feColorMatrix in="SourceAlpha" type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 127 0" result="hardAlpha"/>
+                    <feOffset dy="2.25825"/>
+                    <feGaussianBlur stdDeviation="2.25825"/>
+                    <feComposite in2="hardAlpha" operator="out"/>
+                    <feColorMatrix type="matrix" values="0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0.08 0"/>
+                    <feBlend mode="normal" in2="BackgroundImageFix" result="effect1_dropShadow_91_7928"/>
+                    <feBlend mode="normal" in="SourceGraphic" in2="effect1_dropShadow_91_7928" result="shape"/>
+                </filter>
+            </defs>
+        </svg>
+    </div>
+
+    <!-- Header -->
+    <header>
+        <div class="nav-container">
+            <a href="index.html" class="logo">
+                <div class="logo-badge">31</div>
+                <span>31TRADES</span>
+            </a>
+
+            <nav class="nav-capsule header-nav">
+                <a href="index.html#features" class="nav-capsule-item">Features</a>
+                <a href="index.html#pricing" class="nav-capsule-item">Pricing</a>
+                <a href="index.html#backtesting" class="nav-capsule-item">Backtesting</a>
+                <a href="index.html#strategy-lab" class="nav-capsule-item">Strategy Lab</a>
+            </nav>
+
+            <div>
+                <a href="index.html" class="btn-secondary">← Back to site</a>
+            </div>
+        </div>
+    </header>
+
+    <!-- Ambient Glows -->
+    <div class="fixed top-10 left-[10%] w-[500px] h-[500px] bg-emerald-500/10 rounded-full blur-[120px] pointer-events-none mix-blend-screen animate-pulse z-0" style="animation-duration: 8s;"></div>
+    <div class="fixed bottom-[-10%] right-[10%] w-[600px] h-[600px] bg-blue-600/10 rounded-full blur-[150px] pointer-events-none mix-blend-screen animate-pulse z-0" style="animation-duration: 12s; animation-delay: 2s;"></div>
+
+    <!-- MAIN AUTH -->
+    <main class="relative z-10 w-full flex items-center justify-center px-4 sm:px-6 py-12 sm:py-16 min-h-[calc(100vh-80px)]">
+        <div class="w-full max-w-[1100px] grid lg:grid-cols-[1fr_1.05fr] gap-10 lg:gap-16 items-center">
+
+            <!-- LEFT: BRAND PANEL -->
+            <div class="brand-panel flex flex-col gap-8">
+
+                <div>
+                    <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/5 border border-white/10 text-[13px] font-semibold text-[#EBF2F5] mb-6">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_8px_#34d399]"></span>
+                        Journal · Replay · Analytics
+                    </div>
+                    <h1 class="text-[42px] xl:text-[48px] font-extrabold leading-[1.12] tracking-[-1px] mb-5">
+                        Trade with proof,<br>not memory.
+                    </h1>
+                    <p class="text-[17px] text-[#888888] leading-relaxed max-w-[460px] mb-8">
+                        Keep your trades, replays and performance in one place—and see what's actually working.
+                    </p>
+
+                    <ul class="flex flex-col gap-3.5">
+                        <li class="flex items-center gap-3 text-[15px] font-medium text-[#D4D4D4]">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </span>
+                            Everything syncs automatically
+                        </li>
+                        <li class="flex items-center gap-3 text-[15px] font-medium text-[#D4D4D4]">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </span>
+                            See the full picture of your performance
+                        </li>
+                        <li class="flex items-center gap-3 text-[15px] font-medium text-[#D4D4D4]">
+                            <span class="w-5 h-5 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                <svg class="w-3 h-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                            </span>
+                            Privacy-first design — your data stays yours
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Floating mini stat chips -->
+                <div class="relative h-[130px]">
+                    <div class="float-slow absolute left-0 top-2 bg-[#18181B] border border-[#27272A] rounded-xl px-5 py-3 flex items-center gap-3 shadow-2xl">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_8px_#34d399]"></span>
+                        <span class="font-mono text-lg font-bold text-white">+3.84R</span>
+                        <span class="text-xs text-[#888] font-medium">Best trade today</span>
+                    </div>
+                    <div class="float-slow absolute right-0 bottom-0 bg-[#18181B] border border-[#27272A] rounded-xl px-5 py-3 flex items-center gap-3 shadow-2xl" style="animation-delay: -3s;">
+                        <span class="font-mono text-lg font-bold text-white">68.4%</span>
+                        <span class="text-xs text-[#888] font-medium">Win rate · last 60 trades</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: AUTH CARD -->
+            <div class="auth-card glow-box w-full p-6 sm:p-10">
+
+                <!-- Tabs -->
+                <div id="auth-tabs" class="flex bg-[#141417] border border-[#27272A] rounded-xl p-1 mb-8">
+                    <button type="button" id="tab-signin" class="auth-tab">Sign in</button>
+                    <button type="button" id="tab-signup" class="auth-tab active">Create account</button>
+                </div>
+
+                <!-- Inline error (auth API failures) -->
+                <div id="auth-error" class="hidden mb-5 text-[13.5px] font-semibold text-red-400 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 leading-snug"></div>
+
+                <!-- ============ SIGN UP PANEL ============ -->
+                <div id="panel-signup" class="auth-panel active">
+                    <h2 class="text-2xl font-bold tracking-tight mb-1.5">Start journaling for free</h2>
+                    <p class="text-[14px] text-[#888888] mb-7">No credit card required. Set up in under a minute.</p>
+
+                    <form id="form-signup" novalidate>
+                        <div class="flex flex-col gap-5">
+                            <div>
+                                <label class="field-label" for="su-name">Full name</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                                    <input id="su-name" class="field-input" type="text" placeholder="Alex Turner" autocomplete="name">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="su-email">Email address</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                    <input id="su-email" class="field-input" type="email" placeholder="you@example.com" autocomplete="email">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="su-password">Password</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                    <input id="su-password" class="field-input" type="password" placeholder="Minimum 8 characters" autocomplete="new-password">
+                                    <button type="button" class="toggle-pw" data-target="su-password">
+                                        <svg class="w-[18px] h-[18px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <label class="check-item">
+                                <input type="checkbox" id="su-terms" checked>
+                                <span>I agree to the <a href="#" class="text-emerald-400 hover:text-emerald-300 font-semibold no-underline">Terms of Service</a> and <a href="#" class="text-emerald-400 hover:text-emerald-300 font-semibold no-underline">Privacy Policy</a></span>
+                            </label>
+
+                            <button type="submit" class="btn-primary w-full !py-4 text-[15px]">
+                                Create free account
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="flex items-center gap-4 my-7">
+                        <div class="divider-line"></div>
+                        <span class="text-[12px] font-medium text-[#555555] tracking-wider uppercase">or continue with</span>
+                        <div class="divider-line"></div>
+                    </div>
+
+                    <button type="button" class="btn-secondary w-full !py-3.5 !text-[14px] font-semibold">
+                        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
+                        Continue with Google
+                    </button>
+
+                    <p class="text-center text-[13.5px] text-[#888888] mt-7">
+                        Already have an account?
+                        <button type="button" id="switch-to-signin" class="text-emerald-400 hover:text-emerald-300 font-semibold bg-transparent border-none p-0">Sign in</button>
+                    </p>
+                </div>
+
+                <!-- ============ SIGN IN PANEL ============ -->
+                <div id="panel-signin" class="auth-panel">
+                    <h2 class="text-2xl font-bold tracking-tight mb-1.5">Welcome back</h2>
+                    <p class="text-[14px] text-[#888888] mb-7">Sign in to your trading workspace.</p>
+
+                    <form id="form-signin" novalidate>
+                        <div class="flex flex-col gap-5">
+                            <div>
+                                <label class="field-label" for="si-email">Email address</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                    <input id="si-email" class="field-input" type="email" placeholder="you@example.com" autocomplete="email">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="field-label" for="si-password">Password</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                    <input id="si-password" class="field-input" type="password" placeholder="Your password" autocomplete="current-password">
+                                    <button type="button" class="toggle-pw" data-target="si-password">
+                                        <svg class="w-[18px] h-[18px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between">
+                                <label class="check-item">
+                                    <input type="checkbox" id="si-remember" checked>
+                                    <span>Remember me</span>
+                                </label>
+                                <a href="#" class="text-[13.5px] text-emerald-400 hover:text-emerald-300 font-semibold no-underline">Forgot password?</a>
+                            </div>
+
+                            <button type="submit" class="btn-primary w-full !py-4 text-[15px]">
+                                Sign in
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                            </button>
+                        </div>
+                    </form>
+
+                    <div class="flex items-center gap-4 my-7">
+                        <div class="divider-line"></div>
+                        <span class="text-[12px] font-medium text-[#555555] tracking-wider uppercase">or continue with</span>
+                        <div class="divider-line"></div>
+                    </div>
+
+                    <button type="button" class="btn-secondary w-full !py-3.5 !text-[14px] font-semibold">
+                        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" fill="currentColor"><path d="M12.48 10.92v3.28h7.84c-.24 1.84-.853 3.187-1.787 4.133-1.147 1.147-2.933 2.4-6.053 2.4-4.827 0-8.6-3.893-8.6-8.72s3.773-8.72 8.6-8.72c2.6 0 4.507 1.027 5.907 2.347l2.307-2.307C18.747 1.44 16.133 0 12.48 0 5.867 0 .307 5.387.307 12s5.56 12 12.173 12c3.573 0 6.267-1.173 8.373-3.36 2.16-2.16 2.84-5.213 2.84-7.667 0-.76-.053-1.467-.173-2.053H12.48z"/></svg>
+                        Continue with Google
+                    </button>
+
+                    <p class="text-center text-[13.5px] text-[#888888] mt-7">
+                        New to 31TRADES?
+                        <button type="button" id="switch-to-signup" class="text-emerald-400 hover:text-emerald-300 font-semibold bg-transparent border-none p-0">Create an account</button>
+                    </p>
+                </div>
+
+                <!-- ============ SIGN-IN SUCCESS PANEL ============ -->
+                <div id="panel-signin-success" class="auth-panel text-center py-6">
+                    <div class="success-icon w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold tracking-tight mb-2">Welcome back!</h2>
+                    <p class="text-[14.5px] text-[#888888] leading-relaxed mb-8 max-w-[380px] mx-auto">
+                        Signed in successfully. Redirecting to your dashboard…
+                    </p>
+                    <a href="dashboard.html" class="btn-primary w-full !py-4 text-[15px]">
+                        Go to Dashboard
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                    </a>
+                    <p class="text-[12px] text-[#555555] mt-6">Signed in — your data syncs to your account.</p>
+                </div>
+
+                <!-- ============ ONBOARDING WIZARD ============ -->
+                <div id="panel-onboarding" class="auth-panel">
+                    <div class="mb-8">
+                        <div class="flex items-center justify-between mb-3">
+                            <span id="onb-count" class="text-[12px] font-bold text-[#888888] tracking-wider uppercase"></span>
+                            <span id="onb-title-mini" class="text-[12px] font-semibold text-[#34d399]"></span>
+                        </div>
+                        <div class="onb-progress-track">
+                            <div id="onb-fill" class="onb-progress-fill"></div>
+                        </div>
+                    </div>
+
+                    <div id="onb-body"></div>
+
+                    <div id="onb-nav" class="mt-8 flex items-center gap-3">
+                        <button type="button" id="onb-back" class="btn-secondary onb-nav-btn">
+                            <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                            Back
+                        </button>
+                        <button type="button" id="onb-next" class="btn-primary onb-nav-btn !py-3.5">
+                            Continue
+                            <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- ============ ONBOARDING COMPLETE ============ -->
+                <div id="panel-onboard-done" class="auth-panel text-center py-2">
+                    <div class="success-icon w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h2 id="done-title" class="text-2xl font-bold tracking-tight mb-2">You're all set!</h2>
+                    <p class="text-[14.5px] text-[#888888] leading-relaxed mb-6 max-w-[380px] mx-auto">
+                        Your workspace is ready. Here's what we set up:
+                    </p>
+
+                    <div id="done-summary" class="flex flex-wrap justify-center gap-2 mb-8"></div>
+
+                    <p id="onboard-setup-note" class="hidden mb-6 text-[13px] font-semibold text-red-400 bg-red-500/10 border border-red-500/30 rounded-xl px-4 py-3 leading-snug"></p>
+
+                    <a href="dashboard.html" class="btn-primary w-full !py-4 text-[15px]">
+                        Go to Dashboard
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                    </a>
+                    <p class="text-[12px] text-[#555555] mt-6">Signed in — your data syncs to your account.</p>
+                </div>
+
+            </div>
+        </div>
+    </main>
+
+    <footer class="relative z-10 w-full border-t border-[#27272A] bg-black/60 backdrop-blur-xl py-6 text-center">
+        <p class="text-[12.5px] text-[#666666] font-medium">
+            © 2026 31TRADES · Privacy-first trading journal — <a href="index.html" class="text-[#888888] hover:text-white transition-colors no-underline">Back to home</a>
+        </p>
+    </footer>
+
+    <!-- Shared core (booted lazily via TradeMindBoot once a session exists) -->
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+
+    <script>
+        (function() {
+            // ----- Smooth cursor follow -----
+            const cursor = document.getElementById('smooth-cursor-container');
+            if (cursor && window.matchMedia('(pointer: fine)').matches) {
+                let tx = innerWidth / 2, ty = innerHeight / 2, x = tx, y = ty;
+                window.addEventListener('mousemove', e => { tx = e.clientX; ty = e.clientY; });
+                (function loop() {
+                    x += (tx - x) * 0.18;
+                    y += (ty - y) * 0.18;
+                    cursor.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
+                    requestAnimationFrame(loop);
+                })();
+            }
+
+            // ============ TAB / PANEL SWITCHING ============
+            const tabs = { signin: document.getElementById('tab-signin'), signup: document.getElementById('tab-signup') };
+            const panels = {
+                signup: document.getElementById('panel-signup'),
+                signin: document.getElementById('panel-signin'),
+                signinSuccess: document.getElementById('panel-signin-success'),
+                onboarding: document.getElementById('panel-onboarding'),
+                onboardDone: document.getElementById('panel-onboard-done')
+            };
+            const authTabs = document.getElementById('auth-tabs');
+
+            function showPanel(name) {
+                Object.entries(panels).forEach(([key, el]) => el.classList.toggle('active', key === name));
+                const inAuth = (name === 'signup' || name === 'signin');
+                authTabs.style.display = inAuth ? 'flex' : 'none';
+                if (inAuth) {
+                    tabs.signin.classList.toggle('active', name === 'signin');
+                    tabs.signup.classList.toggle('active', name === 'signup');
+                    history.replaceState(null, '', name === 'signin' ? '#signin' : '#signup');
+                }
+            }
+
+            tabs.signin.addEventListener('click', () => showPanel('signin'));
+            tabs.signup.addEventListener('click', () => showPanel('signup'));
+            document.getElementById('switch-to-signin').addEventListener('click', () => showPanel('signin'));
+            document.getElementById('switch-to-signup').addEventListener('click', () => showPanel('signup'));
+
+            // Deep-link: auth.html#signin opens the sign-in tab
+            if (location.hash === '#signin') showPanel('signin');
+
+            // ----- Password visibility toggle -----
+            document.querySelectorAll('.toggle-pw').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = document.getElementById(btn.dataset.target);
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    btn.querySelector('svg').classList.toggle('icon-eye');
+                });
+            });
+
+            // ----- REAL form submits → the backend's Supabase GoTrue proxy -----
+            function busy(btn, on) {
+                btn.style.pointerEvents = on ? 'none' : '';
+                btn.style.opacity = on ? '0.6' : '';
+            }
+
+            const authError = document.getElementById('auth-error');
+            function showAuthError(msg) {
+                authError.textContent = msg;
+                authError.classList.remove('hidden');
+            }
+            function hideAuthError() {
+                authError.classList.add('hidden');
+            }
+
+            async function api(path, body) {
+                const r = await fetch(path, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body || {})
+                });
+                const data = await r.json().catch(() => ({}));
+                if (!r.ok) throw new Error(data.error || data.msg || 'Request failed (' + r.status + ')');
+                return data;
+            }
+
+            function saveSession(session) {
+                try { localStorage.setItem('31trades.session.v1', JSON.stringify(session)); } catch (e) {}
+            }
+
+            document.getElementById('form-signup').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const btn = this.querySelector('button[type="submit"]');
+                const name = document.getElementById('su-name').value.trim();
+                const email = document.getElementById('su-email').value.trim();
+                const password = document.getElementById('su-password').value;
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showAuthError('Enter a valid email address.');
+                if (password.length < 6) return showAuthError('Password must be at least 6 characters.');
+                if (!document.getElementById('su-terms').checked) return showAuthError('Please accept the Terms of Service to continue.');
+                busy(btn, true);
+                hideAuthError();
+                try {
+                    const res = await api('/api/auth/signup', { email, password, name });
+                    if (res.needsConfirmation) {
+                        showAuthError('Check your inbox — confirm your email address, then sign in.');
+                        busy(btn, false);
+                        return;
+                    }
+                    saveSession(res.session);
+                    startOnboarding();   // PRD §19 — experience → markets → risk → limits
+                } catch (err) {
+                    showAuthError(err.message);
+                    busy(btn, false);
+                }
+            });
+
+            document.getElementById('form-signin').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const btn = this.querySelector('button[type="submit"]');
+                const email = document.getElementById('si-email').value.trim();
+                const password = document.getElementById('si-password').value;
+                if (!email || !password) return showAuthError('Enter your email and password.');
+                busy(btn, true);
+                hideAuthError();
+                try {
+                    const res = await api('/api/auth/login', { email, password });
+                    saveSession(res.session);
+                    showPanel('signinSuccess');
+                } catch (err) {
+                    showAuthError(err.message);
+                    busy(btn, false);
+                }
+            });
+
+            // Hide the error whenever the panel/tab changes
+            const origShowPanel = showPanel;
+            showPanel = function(name) {
+                hideAuthError();
+                return origShowPanel(name);
+            };
+
+
+            // ============ ONBOARDING WIZARD (PRD §19) ============
+            // Steps: experience → markets → primary strategy → risk model →
+            //        risk limits → connect data → first strategy → done
+            const ONBOARDING_STEPS = [
+                {
+                    id: 'experience', required: true,
+                    title: 'What\u2019s your trading experience?',
+                    subtitle: 'We\u2019ll tailor the workspace to your level.',
+                    type: 'radio', multi: false,
+                    options: [
+                        { label: 'New to trading', desc: 'Just getting started', icon: 'GraduationCap' },
+                        { label: 'Some experience', desc: 'Trading for under a year', icon: 'TrendingUp' },
+                        { label: 'Consistent for 1+ years', desc: 'Established process', icon: 'Award' },
+                        { label: 'Professional / funded', desc: 'Full-time or prop account', icon: 'Rocket' }
+                    ]
+                },
+                {
+                    id: 'markets', required: true,
+                    title: 'Which markets do you trade?',
+                    subtitle: 'Select all that apply.',
+                    type: 'chips', multi: true,
+                    options: ['Forex', 'Futures', 'Indices', 'Crypto', 'Stocks', 'Options']
+                },
+                {
+                    id: 'primary-strategy', required: false,
+                    title: 'What\u2019s your primary strategy?',
+                    subtitle: 'Pick the closest match — you can add more later.',
+                    type: 'chips', multi: false,
+                    options: ['ICT / SMC', 'Price Action', 'Breakout', 'Trend Following', 'Mean Reversion', 'Scalping', 'News Trading', 'No strategy yet']
+                },
+                {
+                    id: 'risk-model', required: true,
+                    title: 'How do you want to size risk?',
+                    subtitle: 'This defines how your risk limits are calculated.',
+                    type: 'radio', multi: false,
+                    options: [
+                        { label: 'Fixed % per trade', desc: 'Risk a set percentage of your account each trade', icon: 'Percent', recommended: true },
+                        { label: 'Fixed dollar amount', desc: 'Risk the same dollar amount every trade', icon: 'DollarSign' },
+                        { label: 'R-based (ATR / volatility)', desc: 'Scale risk with market volatility', icon: 'Activity' },
+                        { label: 'Not sure — recommend for me', desc: 'We\u2019ll pick a sensible default', icon: 'Sparkles' }
+                    ]
+                },
+                {
+                    id: 'limits', required: true,
+                    title: 'Set your risk limits',
+                    subtitle: 'Your safety rails. Adjust anytime in the Risk Center.',
+                    type: 'limits'
+                },
+                {
+                    id: 'connect', required: false,
+                    title: 'Connect your trading data',
+                    subtitle: 'Optional — start journaling manually and connect later.',
+                    type: 'connect'
+                },
+                {
+                    id: 'first-strategy', required: false,
+                    title: 'Name your first strategy',
+                    subtitle: 'Optional — links your journal trades to a system.',
+                    type: 'strategy'
+                }
+            ];
+
+            let stepIndex = 0;
+            let answers = {};
+            let selections = {};
+
+            const onbBody = document.getElementById('onb-body');
+            const onbCount = document.getElementById('onb-count');
+            const onbTitleMini = document.getElementById('onb-title-mini');
+            const onbFill = document.getElementById('onb-fill');
+            const onbBack = document.getElementById('onb-back');
+            const onbNext = document.getElementById('onb-next');
+
+            function startOnboarding() {
+                stepIndex = 0;
+                answers = {};
+                selections = {};
+                showPanel('onboarding');
+                renderStep();
+            }
+
+            function step() { return ONBOARDING_STEPS[stepIndex]; }
+
+            function updateProgress() {
+                onbCount.textContent = 'Step ' + (stepIndex + 1) + ' of ' + ONBOARDING_STEPS.length;
+                onbTitleMini.textContent = step().title;
+                onbFill.style.width = ((stepIndex) / (ONBOARDING_STEPS.length - 1) * 100) + '%';
+                onbBack.style.visibility = stepIndex === 0 ? 'hidden' : 'visible';
+                onbNext.querySelector('span') && onbNext.removeChild(onbNext.querySelector('span'));
+                const isLast = stepIndex === ONBOARDING_STEPS.length - 1;
+                onbNext.innerHTML = (isLast ? 'Finish setup' : 'Continue') +
+                    ' <svg class="w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 5l7 7-7 7"></path></svg>';
+                // Skip link visibility
+                let skip = onbBody.querySelector('.skip-link');
+                if (skip) skip.style.display = step().required ? 'none' : 'inline-block';
+            }
+
+            function renderStep() {
+                const s = step();
+                onbBody.innerHTML = '';
+
+                const heading = document.createElement('div');
+                heading.className = 'mb-6';
+                heading.innerHTML = '<h2 class="text-xl sm:text-2xl font-bold tracking-tight mb-1.5"></h2>' +
+                    '<p class="text-[14px] text-[#888888]"></p>' +
+                    '<button type="button" class="skip-link mt-3" style="display:none">Skip this step</button>';
+                heading.querySelector('h2').textContent = s.title;
+                heading.querySelector('p').textContent = s.subtitle;
+                onbBody.appendChild(heading);
+
+                let content = document.createElement('div');
+                content.className = 'flex flex-col gap-3';
+
+                if (s.type === 'radio') renderRadio(content, s);
+                else if (s.type === 'chips') renderChips(content, s);
+                else if (s.type === 'limits') renderLimits(content);
+                else if (s.type === 'connect') renderConnect(content);
+                else if (s.type === 'strategy') renderStrategy(content);
+
+                onbBody.appendChild(content);
+                updateProgress();
+                updateNextState();
+                if (window.lucide) lucide.createIcons();
+            }
+
+            function selectedValues(s) {
+                const sel = selections[s.id] || [];
+                if (!Array.isArray(sel)) return [sel];
+                return sel;
+            }
+
+            function isSelected(s, index) {
+                return selectedValues(s).includes(index);
+            }
+
+            function setSelection(s, index, multi) {
+                let sel = selections[s.id];
+                if (!sel) sel = selections[s.id] = multi ? [] : null;
+                if (multi) {
+                    const i = sel.indexOf(index);
+                    if (i > -1) sel.splice(i, 1); else sel.push(index);
+                } else {
+                    selections[s.id] = index;
+                }
+                updateNextState();
+            }
+
+            function renderRadio(content, s) {
+                const grid = document.createElement('div');
+                grid.className = 'grid sm:grid-cols-2 gap-3';
+                s.options.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'opt-card' + (isSelected(s, i) ? ' selected' : '');
+                    btn.innerHTML =
+                        '<span class="opt-icon"><i data-lucide="' + opt.icon + '"></i></span>' +
+                        '<span class="flex-1">' +
+                            '<span class="block text-[14.5px] font-semibold text-white">' + opt.label +
+                                (opt.recommended ? '<span class="opt-badge">Recommended</span>' : '') +
+                            '</span>' +
+                            '<span class="block text-[12.5px] text-[#888888] mt-1 leading-snug">' + opt.desc + '</span>' +
+                        '</span>' +
+                        '<span class="opt-radio"></span>';
+                    btn.addEventListener('click', () => {
+                        selections[s.id] = i;
+                        grid.querySelectorAll('.opt-card').forEach((c, ci) => c.classList.toggle('selected', ci === i));
+                        updateNextState();
+                    });
+                    grid.appendChild(btn);
+                });
+                content.appendChild(grid);
+            }
+
+            function renderChips(content, s) {
+                const wrap = document.createElement('div');
+                wrap.className = 'flex flex-wrap gap-2.5';
+                s.options.forEach((opt, i) => {
+                    const chip = document.createElement('button');
+                    chip.type = 'button';
+                    chip.className = 'chip' + (isSelected(s, i) ? ' selected' : '');
+                    chip.textContent = opt;
+                    chip.addEventListener('click', () => {
+                        setSelection(s, i, s.multi);
+                        chip.classList.toggle('selected', isSelected(s, i));
+                    });
+                    wrap.appendChild(chip);
+                });
+                content.appendChild(wrap);
+            }
+
+            function renderLimits(content) {
+                const grid = document.createElement('div');
+                grid.className = 'grid sm:grid-cols-2 gap-3';
+                const fields = [
+                    { id: 'limit-daily', label: 'Daily loss limit', hint: 'Stop trading for the day at this loss', def: answers.limitsDaily || '250' },
+                    { id: 'limit-drawdown', label: 'Max drawdown limit', hint: 'Hard stop for the account / period', def: answers.limitsDrawdown || '1000' }
+                ];
+                fields.forEach(f => {
+                    const wrap = document.createElement('div');
+                    wrap.innerHTML =
+                        '<label class="field-label" for="' + f.id + '">' + f.label + '</label>' +
+                        '<div class="input-wrap">' +
+                            '<span class="prefix-symbol">$</span>' +
+                            '<input id="' + f.id + '" class="field-input limit-input" type="number" min="0" step="50" value="' + f.def + '" inputmode="numeric">' +
+                        '</div>' +
+                        '<p class="text-[12px] text-[#666666] mt-1.5">' + f.hint + '</p>';
+                    wrap.querySelector('input').addEventListener('input', updateNextState);
+                    content.appendChild(wrap);
+                });
+
+                const presets = document.createElement('div');
+                presets.className = 'mt-5';
+                presets.innerHTML = '<p class="text-[12px] font-semibold text-[#888888] mb-2.5 tracking-wide uppercase">Quick presets</p>' +
+                    '<div class="flex flex-wrap gap-2">' +
+                        '<button type="button" class="preset-pill" data-d="100" data-dw="500">Conservative · $100 / $500</button>' +
+                        '<button type="button" class="preset-pill" data-d="250" data-dw="1000">Standard · $250 / $1,000</button>' +
+                        '<button type="button" class="preset-pill" data-d="500" data-dw="2500">Aggressive · $500 / $2,500</button>' +
+                    '</div>';
+                presets.querySelectorAll('.preset-pill').forEach(p => {
+                    p.addEventListener('click', () => {
+                        document.getElementById('limit-daily').value = p.dataset.d;
+                        document.getElementById('limit-drawdown').value = p.dataset.dw;
+                        updateNextState();
+                    });
+                });
+                content.appendChild(presets);
+            }
+
+            function renderConnect(content) {
+                const opts = [
+                    { icon: 'Plug', label: 'Connect a broker', desc: 'MetaTrader, TradingView, cTrader & more — auto-import live trades' },
+                    { icon: 'FileDown', label: 'Import existing data', desc: 'Upload a CSV / MT4 statement to backfill your journal' },
+                    { icon: 'PencilLine', label: 'Start manually', desc: 'Journal trades by hand and connect later' }
+                ];
+                opts.forEach((opt, i) => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'opt-card' + (isSelected({ id: 'connect' }, i) ? ' selected' : '');
+                    btn.innerHTML =
+                        '<span class="opt-icon"><i data-lucide="' + opt.icon + '"></i></span>' +
+                        '<span class="flex-1">' +
+                            '<span class="block text-[14.5px] font-semibold text-white">' + opt.label + '</span>' +
+                            '<span class="block text-[12.5px] text-[#888888] mt-1 leading-snug">' + opt.desc + '</span>' +
+                        '</span>' +
+                        '<span class="opt-radio"></span>';
+                    btn.addEventListener('click', () => {
+                        selections['connect'] = i;
+                        document.querySelectorAll('#onb-body .opt-card').forEach((c, ci) => c.classList.toggle('selected', ci === i));
+                        updateNextState();
+                    });
+                    content.appendChild(btn);
+                });
+            }
+
+            function renderStrategy(content) {
+                const wrap = document.createElement('div');
+                wrap.innerHTML =
+                    '<label class="field-label" for="strategy-name">Strategy name</label>' +
+                    '<div class="input-wrap">' +
+                        '<svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"></path></svg>' +
+                        '<input id="strategy-name" class="field-input" type="text" placeholder="e.g. London MSS + FVG" value="' + (answers.strategyName || '') + '">' +
+                    '</div>' +
+                    '<p class="text-[12.5px] text-[#666666] mt-3 leading-relaxed">' +
+                        'A strategy groups your trades so Analytics and Insights can compare them. ' +
+                        'You can also skip this and create one inside Strategy Lab later.' +
+                    '</p>';
+                wrap.querySelector('input').addEventListener('input', () => updateNextState());
+                content.appendChild(wrap);
+            }
+
+            function updateNextState() {
+                const s = step();
+                let valid = true;
+
+                if (s.type === 'limits') {
+                    const d = document.getElementById('limit-daily');
+                    const dw = document.getElementById('limit-drawdown');
+                    valid = d && dw && Number(d.value) > 0 && Number(dw.value) > 0;
+                } else if (s.type === 'strategy') {
+                    valid = true; // optional
+                } else if (s.type === 'radio' || s.type === 'connect') {
+                    valid = !s.required || selections[s.id] !== undefined && selections[s.id] !== null;
+                } else if (s.type === 'chips') {
+                    const sel = selections[s.id];
+                    valid = !s.required || (Array.isArray(sel) && sel.length > 0) || (typeof sel === 'number');
+                }
+
+                onbNext.disabled = !valid;
+            }
+
+            function recordCurrent() {
+                const s = step();
+                if (s.type === 'limits') {
+                    answers.limitsDaily = document.getElementById('limit-daily').value;
+                    answers.limitsDrawdown = document.getElementById('limit-drawdown').value;
+                } else if (s.type === 'strategy') {
+                    answers.strategyName = document.getElementById('strategy-name').value.trim();
+                } else if (s.type === 'chips') {
+                    answers[s.id] = (selections[s.id] === undefined ? [] : selections[s.id]);
+                } else {
+                    answers[s.id] = selections[s.id];
+                }
+            }
+
+            onbNext.addEventListener('click', () => {
+                if (onbNext.disabled) return;
+                recordCurrent();
+                if (stepIndex < ONBOARDING_STEPS.length - 1) {
+                    stepIndex++;
+                    renderStep();
+                } else {
+                    finishOnboarding();
+                }
+            });
+
+            onbBack.addEventListener('click', () => {
+                recordCurrent();
+                if (stepIndex > 0) {
+                    stepIndex--;
+                    renderStep();
+                }
+            });
+
+            onbBody.addEventListener('click', (e) => {
+                if (e.target.closest('.skip-link')) {
+                    if (stepIndex < ONBOARDING_STEPS.length - 1) {
+                        stepIndex++;
+                        renderStep();
+                    } else {
+                        finishOnboarding();
+                    }
+                }
+            });
+
+            // ---- provisioning state (ids captured so a retry is idempotent) ----
+            let onbAccountId = null, onbStrategyId = null;
+
+            function provisionWorkspace() {
+                let accountName = '', strategyName = '';
+                try {
+                    const Core = window.TradeMindBoot ? window.TradeMindBoot() : window.TradeMindCore;
+                    if (Core && Core.ConfigAPI) {
+                        const firstName = (document.getElementById('su-name').value.trim().split(' ')[0] || 'Trader');
+                        const dailyLoss = Number(answers.limitsDaily) || 250;
+                        const maxDD = Number(answers.limitsDrawdown) || 1000;
+                        const start = 10000;
+                        const riskModel = answers['risk-model'];   // 0 = % · 1 = $ · 2 = R · 3 = recommend
+                        let basis = 'money', riskVal = 25;
+                        if (riskModel === 0) { basis = 'percent'; riskVal = 1; }
+                        else if (riskModel === 3) { basis = 'percent'; riskVal = 0.5; }
+                        else if (riskModel === 1) { riskVal = Math.max(10, Math.round(dailyLoss * 0.1 / 5) * 5); }
+
+                        accountName = firstName + "'s Account";
+                        onbAccountId = Core.ConfigAPI.createAccount({
+                            name: accountName, start, dailyLoss, maxDD, risk: riskVal, basis
+                        }, onbAccountId);   // preId → idempotent retry
+
+                        const marketLabels = ['Forex', 'Futures', 'Indices', 'Crypto', 'Stocks', 'Options'];
+                        const markets = (answers.markets || []).map(i => marketLabels[i]).filter(Boolean);
+                        const primary = ['ICT / SMC', 'Price Action', 'Breakout', 'Trend Following', 'Mean Reversion', 'Scalping', 'News Trading', 'No strategy yet'][answers['primary-strategy']];
+                        strategyName = answers.strategyName || (primary && primary !== 'No strategy yet' ? primary : 'Manual Trading');
+                        onbStrategyId = Core.ConfigAPI.createStrategy({
+                            name: strategyName, desc: '', color: '#10B981',
+                            markets: markets.join(', '), sessions: [],
+                            setup: primary && primary !== 'No strategy yet' ? primary : '',
+                            riskPerTrade: basis === 'percent' ? riskVal + '%' : '$' + riskVal,
+                            minRR: 1.5, stopRequired: true,
+                            entry: '', exit: '', behavior: [], evidence: ['Chart screenshot'], tags: markets
+                        }, onbStrategyId);   // preId → idempotent retry
+
+                        Core.setSelectedAccount(onbAccountId);
+                        Core.TradeMindBus.publish('config.changed', { account_id: onbAccountId, onboarded: true });
+                        if (Core.connectBackend) Core.connectBackend();   // push the fresh state to the API now
+                        return { ok: true, accountName, strategyName };
+                    }
+                    return { ok: false, message: 'core not available' };
+                } catch (err) {
+                    console.warn('[onboarding] provisioning failed: ' + err.message);
+                    return { ok: false, message: err.message };
+                }
+            }
+
+            function finishOnboarding() {
+                const setup = provisionWorkspace();
+                showPanel('onboardDone');
+                const name = (document.getElementById('su-name').value || '').trim();
+                document.getElementById('done-title').textContent = name ? "You're all set, " + name.split(' ')[0] + '!' : "You're all set!";
+
+                const note = document.getElementById('onboard-setup-note');
+                if (!setup.ok) {
+                    note.textContent = 'Workspace setup hit a snag (' + setup.message + '). Your account is safe — create it in Strategy Lab instead.';
+                    note.classList.remove('hidden');
+                } else {
+                    note.classList.add('hidden');
+                }
+
+                const sum = document.getElementById('done-summary');
+                sum.innerHTML = '';
+                const chips = [];
+
+                const exp = ONBOARDING_STEPS[0].options[answers.experience];
+                if (exp) chips.push(['Experience', exp.label]);
+
+                const markets = (answers.markets || []).map(i => ONBOARDING_STEPS[1].options[i]);
+                if (markets.length) chips.push(['Markets', markets.join(', ')]);
+
+                const strat = ONBOARDING_STEPS[2].options[answers['primary-strategy']];
+                if (strat && strat !== 'No strategy yet') chips.push(['Strategy', strat]);
+
+                const rm = ONBOARDING_STEPS[3].options[answers['risk-model']];
+                if (rm) chips.push(['Risk model', rm.label]);
+
+                chips.push(['Limits', '$' + (answers.limitsDaily || '250') + ' / day · $' + (answers.limitsDrawdown || '1,000') + ' max']);
+
+                const connectOpts = ['Connect a broker', 'Import existing data', 'Start manually'];
+                const conn = connectOpts[answers.connect];
+                if (conn && conn !== 'Start manually') chips.push(['Data', conn]);
+
+                if (setup.ok) {
+                    chips.push(['Account', setup.accountName]);
+                    chips.push(['First strategy', setup.strategyName]);
+                } else if (answers.strategyName) {
+                    chips.push(['First strategy', answers.strategyName]);
+                }
+
+                chips.forEach(([label, value]) => {
+                    const el = document.createElement('span');
+                    el.className = 'summary-chip';
+                    el.innerHTML = '<strong>' + label + ':</strong> ' + value;
+                    sum.appendChild(el);
+                });
+            }
+
+            if (window.lucide) lucide.createIcons();
+
+            // ----- already signed in? go straight to the dashboard -----
+            (async function autoSignIn() {
+                try {
+                    const raw = localStorage.getItem('31trades.session.v1');
+                    if (!raw) return;
+                    const s = JSON.parse(raw);
+                    if (!s || !s.token) return;
+                    const r = await fetch('/api/auth/me', {
+                        headers: { Authorization: 'Bearer ' + s.token }
+                    });
+                    if (r.ok) window.location.replace('dashboard.html');
+                    else localStorage.removeItem('31trades.session.v1');   // stale session
+                } catch (e) { /* offline — stay on the sign-in page */ }
+            })();
+        })();
+    </script>
+</body>
+</html>

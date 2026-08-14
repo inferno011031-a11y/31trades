@@ -1,0 +1,1622 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Dashboard</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            background: #0A0A0C;
+            color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        /* App shell */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #8A8A93;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+        }
+
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: #FFFFFF;
+            box-shadow: inset 2px 0 0 #10B981;
+        }
+
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* Panels */
+        .panel {
+            background: #121214;
+            border: 1px solid #1F1F23;
+            border-radius: 12px;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: #E8E8EC;
+        }
+
+        .panel-sub {
+            font-size: 12px;
+            color: #6E6E78;
+        }
+
+        .label-xs {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6E6E78;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: #FFFFFF;
+            color: #0A0A0C;
+            font-weight: 700;
+            font-size: 13.5px;
+            padding: 9px 16px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s, transform 0.15s;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover { background: #E8E8EC; }
+
+        .btn-ghost {
+            background: transparent;
+            color: #B4B4BD;
+            font-weight: 600;
+            font-size: 13.5px;
+            padding: 9px 16px;
+            border-radius: 8px;
+            border: 1px solid #26262B;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s;
+            text-decoration: none;
+        }
+
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: #121214;
+            border: 1px solid #1F1F23;
+            font-size: 13px;
+            font-weight: 600;
+            color: #C4C4CC;
+            transition: all 0.15s;
+        }
+
+        .quick-action:hover { border-color: #2E2E35; color: #FFFFFF; background: #16161A; }
+        .quick-action svg { width: 16px; height: 16px; color: #10B981; }
+
+        /* KPI cards */
+        .kpi { position: relative; }
+
+        .kpi-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+        .kpi-value.pos { color: #34D399; }
+        .kpi-value.neg { color: #F87171; }
+
+        .mini-track {
+            height: 4px;
+            background: #1F1F23;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .mini-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        /* Risk meter */
+        .risk-track {
+            height: 10px;
+            border-radius: 999px;
+            background: #1F1F23;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .risk-consumed {
+            height: 100%;
+            border-radius: 999px;
+            background: #10B981;
+            transition: width 0.5s ease;
+        }
+
+        .risk-level-normal .risk-consumed { background: #10B981; }
+        .risk-level-caution .risk-consumed { background: #F59E0B; }
+        .risk-level-high .risk-consumed { background: #F97316; }
+        .risk-level-critical .risk-consumed { background: #EF4444; }
+
+        /* Drawdown threshold markers */
+        .dd-track {
+            height: 8px;
+            border-radius: 999px;
+            background: #1F1F23;
+            position: relative;
+            overflow: visible;
+        }
+
+        .dd-fill { height: 100%; border-radius: 999px; background: #10B981; }
+
+        .dd-marker {
+            position: absolute;
+            top: -4px;
+            width: 2px;
+            height: 16px;
+            border-radius: 1px;
+            background: #4A4A52;
+        }
+
+        /* Segmented control (chart period switch) */
+        .seg {
+            display: inline-flex;
+            background: #0F0F11;
+            border: 1px solid #1F1F23;
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .seg button {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6E6E78;
+            transition: all 0.15s;
+            border: none;
+            background: transparent;
+        }
+
+        .seg button.active { background: #1F1F23; color: #FFFFFF; }
+
+        /* Tables */
+        .tbl th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6E6E78;
+            padding: 8px 12px;
+            border-bottom: 1px solid #1F1F23;
+            white-space: nowrap;
+        }
+
+        .tbl td {
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #B4B4BD;
+            border-bottom: 1px solid #17171A;
+            white-space: nowrap;
+        }
+
+        .tbl tr:last-child td { border-bottom: none; }
+        .tbl tbody tr:hover { background: #16161A; }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .tag-emerald { background: rgba(16, 185, 129, 0.1); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.25); }
+        .tag-red { background: rgba(239, 68, 68, 0.1); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+        .tag-amber { background: rgba(245, 158, 11, 0.1); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.25); }
+        .tag-gray { background: rgba(255, 255, 255, 0.04); color: #8A8A93; border: 1px solid #232327; }
+
+        .dot { width: 6px; height: 6px; border-radius: 999px; display: inline-block; }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
+        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+
+        /* Top bar */
+        .topbar {
+            height: 56px;
+            background: #0D0D0F;
+            border-bottom: 1px solid #1C1C20;
+        }
+
+        .search-input {
+            background: #121214;
+            border: 1px solid #1F1F23;
+            border-radius: 8px;
+            padding: 8px 12px 8px 36px;
+            font-size: 13px;
+            color: #E8E8EC;
+            width: 320px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+
+        .session-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 8px;
+            background: #121214;
+            border: 1px solid #1F1F23;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #B4B4BD;
+        }
+
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+
+        /* AI brief */
+        .brief-section { border-left: 2px solid #26262B; padding-left: 14px; }
+        .brief-section.happened { border-color: #8A8A93; }
+        .brief-section.why { border-color: #3B82F6; }
+        .brief-section.next { border-color: #10B981; }
+
+        /* Position rows */
+        .pos-row { border: 1px solid #1F1F23; border-radius: 8px; padding: 10px 12px; background: #0F0F11; }
+
+        .account-select {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 8px;
+            background: #121214;
+            border: 1px solid #1F1F23;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #E8E8EC;
+        }
+
+        /* Equity chart */
+        .eq-chart { display: none; }
+        .eq-chart.active { display: block; }
+
+        /* Sidebar collapse chevron */
+        .collapse-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6E6E78;
+            border: none;
+            background: transparent;
+            transition: all 0.15s;
+        }
+
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+        /* Avatar */
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #052E1F;
+            font-weight: 800;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: #FFFFFF;
+            color: #0A0A0C;
+            font-weight: 900;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            body.collapsed .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ LEFT SIDEBAR (PRD §3.1) ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="#" class="nav-item active">
+                    <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
+                </a>
+                <a href="journal.html" class="nav-item">
+                    <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
+                </a>
+                <a href="insights.html" class="nav-item">
+                    <svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span>
+                    <span class="nav-label ml-auto text-[10px] font-bold text-[#10B981] bg-[rgba(16,185,129,0.1)] px-1.5 py-0.5 rounded">NEW</span>
+                </a>
+                <a href="analytics.html" class="nav-item">
+                    <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                </a>
+                <a href="strategy-lab.html" class="nav-item">
+                    <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
+                </a>
+                <a href="risk.html" class="nav-item">
+                    <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
+                </a>
+                <a href="discipline.html" class="nav-item">
+                    <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
+                </a>
+                <a href="calendar.html" class="nav-item">
+                    <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg data-lucide="users"></svg><span class="nav-label">Community</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
+                </a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="#" class="nav-item">
+                    <svg data-lucide="bell"></svg><span class="nav-label">Notifications</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg data-lucide="help-circle"></svg><span class="nav-label">Help</span>
+                </a>
+                <a href="#" class="nav-item">
+                    <svg data-lucide="settings"></svg><span class="nav-label">Settings</span>
+                </a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN AREA ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top global bar (PRD §3.1) -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input type="text" class="search-input" placeholder="Search trades, symbols, strategies…">
+                </div>
+
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                        London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed">
+                        <span class="conn-dot"></span> Connected
+                    </div>
+                    <button class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed">
+                        <span class="num text-[12px]">$10,000</span>
+                        <span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div id="dash-content" class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+
+                    <!-- Page header (PRD §5.1) -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Good morning, Alex</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Tuesday, Aug 11, 2026 · London session · 2 trades today</p>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <a href="#" class="btn-ghost">Start Review</a>
+                            <a href="#" class="btn-primary">Log Trade</a>
+                        </div>
+                    </div>
+
+                    <!-- KPI row — above the fold (PRD §5.1) -->
+                    <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+
+                        <div class="panel kpi p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="label-xs">Net P&amp;L Today</span>
+                                <span class="tag tag-emerald">+1.25R</span>
+                            </div>
+                            <div class="kpi-value pos num">+$312.50</div>
+                            <div class="flex items-center gap-1.5 mt-2 text-[12px] text-[#6E6E78]">
+                                <svg data-lucide="trending-up" class="w-3.5 h-3.5 text-[#34D399]"></svg>
+                                <span class="text-[#34D399] num font-semibold">+$128.30</span>
+                                vs yesterday (+$184.20)
+                            </div>
+                        </div>
+
+                        <div class="panel kpi p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="label-xs">Daily Risk Budget</span>
+                                <span class="tag tag-emerald">Normal</span>
+                            </div>
+                            <div class="kpi-value num">$180</div>
+                            <div class="text-[12px] text-[#6E6E78] mt-0.5">remaining of $250</div>
+                            <div class="mini-track mt-3">
+                                <div class="mini-fill bg-[#10B981]" style="width:28%"></div>
+                            </div>
+                            <div class="flex justify-between mt-1.5 text-[11px] text-[#6E6E78]">
+                                <span class="num">Used $70 · 28%</span><span class="num">72% left</span>
+                            </div>
+                        </div>
+
+                        <div class="panel kpi p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="label-xs">Drawdown Remaining</span>
+                                <span class="tag tag-gray">18% used</span>
+                            </div>
+                            <div class="kpi-value num">$820</div>
+                            <div class="text-[12px] text-[#6E6E78] mt-0.5">of $1,000 limit</div>
+                            <div class="mini-track mt-3">
+                                <div class="mini-fill bg-[#10B981]" style="width:18%"></div>
+                            </div>
+                            <div class="flex justify-between mt-1.5 text-[11px] text-[#6E6E78]">
+                                <span class="num">Caution at $300</span><span class="num">Safe</span>
+                            </div>
+                        </div>
+
+                        <div class="panel kpi p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="label-xs">Discipline Score</span>
+                                <span class="tag tag-emerald">On track</span>
+                            </div>
+                            <div class="kpi-value num">92<span class="text-[14px] text-[#6E6E78] font-semibold">/100</span></div>
+                            <div class="text-[12px] text-[#6E6E78] mt-0.5">rule adherence 94%</div>
+                            <div class="mini-track mt-3">
+                                <div class="mini-fill bg-[#10B981]" style="width:92%"></div>
+                            </div>
+                            <div class="flex justify-between mt-1.5 text-[11px] text-[#6E6E78]">
+                                <span class="num">0 violations today</span><span>▲ 3 pts</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Quick actions (PRD §5.2) -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
+                        <button class="quick-action"><svg data-lucide="plus"></svg> Log Trade</button>
+                        <button class="quick-action"><svg data-lucide="file-down"></svg> Import Trade</button>
+                        <button class="quick-action"><svg data-lucide="check-circle-2"></svg> Review Day</button>
+                        <button class="quick-action"><svg data-lucide="play"></svg> Open Replay</button>
+                        <button class="quick-action"><svg data-lucide="flask-conical"></svg> Test Strategy</button>
+                    </div>
+
+                    <!-- Equity + Risk meter (PRD §5.2) -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="panel p-5 lg:col-span-2">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <div class="panel-title">Equity Curve</div>
+                                    <div class="panel-sub mt-0.5">Last 7 days · +$312.50 today</div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <div class="seg" id="eq-units">
+                                        <button type="button" data-unit="r">R</button>
+                                        <button type="button" data-unit="usd" class="active">$</button>
+                                        <button type="button" data-unit="pct">%</button>
+                                    </div>
+                                    <div class="seg" id="eq-period">
+                                        <button type="button" data-period="daily" class="active">Daily</button>
+                                        <button type="button" data-period="weekly">Weekly</button>
+                                        <button type="button" data-period="monthly">Monthly</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- DAILY -->
+                            <div class="eq-chart active" data-chart="daily" data-zoom="usd">
+                                <svg viewBox="0 0 760 220" class="w-full" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="eqfill-d" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#10B981" stop-opacity="0.22"/>
+                                            <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <g stroke="#1F1F23" stroke-width="1">
+                                        <line x1="0" y1="30" x2="760" y2="30"/><line x1="0" y1="75" x2="760" y2="75"/>
+                                        <line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="165" x2="760" y2="165"/>
+                                        <line x1="0" y1="210" x2="760" y2="210"/>
+                                    </g>
+                                    <path d="M0 178 L108 168 L217 152 L326 160 L435 132 L544 108 L653 74 L760 30 L760 210 L0 210 Z" fill="url(#eqfill-d)"/>
+                                    <polyline points="0,178 108,168 217,152 326,160 435,132 544,108 653,74 760,30" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <g fill="#0A0A0C" stroke="#10B981" stroke-width="2">
+                                        <circle cx="0" cy="178" r="4"/><circle cx="108" cy="168" r="4"/><circle cx="217" cy="152" r="4"/><circle cx="326" cy="160" r="4"/>
+                                        <circle cx="435" cy="132" r="4"/><circle cx="544" cy="108" r="4"/><circle cx="653" cy="74" r="4"/><circle cx="760" cy="30" r="5" fill="#10B981"/>
+                                    </g>
+                                    <g fill="#6E6E78" font-family="JetBrains Mono, monospace" font-size="10">
+                                        <text x="0" y="212">May 14</text><text x="108" y="212">15</text><text x="217" y="212">16</text>
+                                        <text x="326" y="212">17</text><text x="435" y="212">18</text><text x="544" y="212">19</text>
+                                        <text x="653" y="212">20</text><text x="720" y="212">21</text>
+                                    </g>
+                                </svg>
+                            </div>
+
+                            <!-- WEEKLY -->
+                            <div class="eq-chart" data-chart="weekly">
+                                <svg viewBox="0 0 760 220" class="w-full" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="eqfill-w" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#10B981" stop-opacity="0.22"/>
+                                            <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <g stroke="#1F1F23" stroke-width="1">
+                                        <line x1="0" y1="30" x2="760" y2="30"/><line x1="0" y1="75" x2="760" y2="75"/>
+                                        <line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="165" x2="760" y2="165"/>
+                                        <line x1="0" y1="210" x2="760" y2="210"/>
+                                    </g>
+                                    <path d="M0 190 L152 172 L304 150 L456 140 L608 96 L760 40 L760 210 L0 210 Z" fill="url(#eqfill-w)"/>
+                                    <polyline points="0,190 152,172 304,150 456,140 608,96 760,40" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <g fill="#0A0A0C" stroke="#10B981" stroke-width="2">
+                                        <circle cx="0" cy="190" r="4"/><circle cx="152" cy="172" r="4"/><circle cx="304" cy="150" r="4"/><circle cx="456" cy="140" r="4"/><circle cx="608" cy="96" r="4"/><circle cx="760" cy="40" r="5" fill="#10B981"/>
+                                    </g>
+                                    <g fill="#6E6E78" font-family="JetBrains Mono, monospace" font-size="10">
+                                        <text x="0" y="212">W21</text><text x="152" y="212">W22</text><text x="304" y="212">W23</text>
+                                        <text x="456" y="212">W24</text><text x="608" y="212">W25</text><text x="720" y="212">W26</text>
+                                    </g>
+                                </svg>
+                            </div>
+
+                            <!-- MONTHLY -->
+                            <div class="eq-chart" data-chart="monthly">
+                                <svg viewBox="0 0 760 220" class="w-full" preserveAspectRatio="none">
+                                    <defs>
+                                        <linearGradient id="eqfill-m" x1="0" y1="0" x2="0" y2="1">
+                                            <stop offset="0%" stop-color="#10B981" stop-opacity="0.22"/>
+                                            <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                                        </linearGradient>
+                                    </defs>
+                                    <g stroke="#1F1F23" stroke-width="1">
+                                        <line x1="0" y1="30" x2="760" y2="30"/><line x1="0" y1="75" x2="760" y2="75"/>
+                                        <line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="165" x2="760" y2="165"/>
+                                        <line x1="0" y1="210" x2="760" y2="210"/>
+                                    </g>
+                                    <path d="M0 180 L217 158 L434 128 L651 92 L760 60 L760 210 L0 210 Z" fill="url(#eqfill-m)"/>
+                                    <polyline points="0,180 217,158 434,128 651,92 760,60" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+                                    <g fill="#0A0A0C" stroke="#10B981" stroke-width="2">
+                                        <circle cx="0" cy="180" r="4"/><circle cx="217" cy="158" r="4"/><circle cx="434" cy="128" r="4"/><circle cx="651" cy="92" r="4"/><circle cx="760" cy="60" r="5" fill="#10B981"/>
+                                    </g>
+                                    <g fill="#6E6E78" font-family="JetBrains Mono, monospace" font-size="10">
+                                        <text x="0" y="212">Mar</text><text x="217" y="212">Apr</text><text x="434" y="212">May</text>
+                                        <text x="651" y="212">Jun</text><text x="720" y="212">Jul</text>
+                                    </g>
+                                </svg>
+                            </div>
+
+                            <div class="flex items-center gap-6 mt-3 text-[11.5px] text-[#6E6E78]">
+                                <span class="flex items-center gap-1.5"><span class="dot bg-[#10B981]"></span> Equity</span>
+                                <span class="num">Best day: <span class="text-[#34D399]">+$128.30 (May 19)</span></span>
+                                <span class="num">Worst day: <span class="text-[#F87171]">-$42.00 (May 17)</span></span>
+                            </div>
+                        </div>
+
+                        <!-- Risk meter + drawdown proximity (PRD §5.2) -->
+                        <div class="flex flex-col gap-4">
+                            <div class="panel p-5 risk-level-normal">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="panel-title">Risk Meter</div>
+                                    <span class="tag tag-emerald"><span class="dot bg-[#34D399]"></span> Normal</span>
+                                </div>
+                                <p class="text-[12px] text-[#6E6E78] mb-4">Daily loss limit $250</p>
+
+                                <div class="risk-track">
+                                    <div class="risk-consumed" style="width:28%"></div>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2 mt-4">
+                                    <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
+                                        <div class="label-xs mb-1">Limit</div>
+                                        <div class="num text-[16px] font-bold">$250</div>
+                                    </div>
+                                    <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
+                                        <div class="label-xs mb-1">Consumed</div>
+                                        <div class="num text-[16px] font-bold text-[#F59E0B]">$70</div>
+                                    </div>
+                                    <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
+                                        <div class="label-xs mb-1">Remaining</div>
+                                        <div class="num text-[16px] font-bold text-[#34D399]">$180</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="panel p-5">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="panel-title">Drawdown Proximity</div>
+                                    <span class="tag tag-gray">Safe</span>
+                                </div>
+                                <p class="text-[12px] text-[#6E6E78] mb-4">$180 of $1,000 used</p>
+
+                                <div class="dd-track">
+                                    <div class="dd-fill" style="width:18%"></div>
+                                    <div class="dd-marker" style="left:70%"></div>
+                                    <div class="dd-marker" style="left:85%; background:#F59E0B;"></div>
+                                    <div class="dd-marker" style="left:95%; background:#EF4444;"></div>
+                                </div>
+
+                                <div class="flex justify-between mt-3 text-[11px] text-[#6E6E78]">
+                                    <span class="num">70% · Caution</span>
+                                    <span class="num text-[#F59E0B]">85% · High</span>
+                                    <span class="num text-[#F87171]">95% · Critical</span>
+                                </div>
+                                <p class="text-[12px] text-[#6E6E78] mt-4 leading-relaxed">
+                                    <span class="text-[#34D399] font-semibold">$820</span> of buffer left before the 70% caution threshold.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Performance + Positions + AI brief -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                        <!-- Performance snapshot (PRD §5.2) -->
+                        <div class="panel p-5">
+                            <div class="panel-title mb-4">Performance Snapshot</div>
+                            <div class="flex flex-col divide-y divide-[#17171A]">
+                                <div class="flex items-center justify-between py-2.5">
+                                    <span class="text-[13px] text-[#8A8A93]">Win rate</span>
+                                    <span class="num text-[15px] font-bold text-white">68.4%</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2.5">
+                                    <span class="text-[13px] text-[#8A8A93]">Profit factor</span>
+                                    <span class="num text-[15px] font-bold text-white">2.18</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2.5">
+                                    <span class="text-[13px] text-[#8A8A93]">Expectancy</span>
+                                    <span class="num text-[15px] font-bold text-[#34D399]">+1.82R</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2.5">
+                                    <span class="text-[13px] text-[#8A8A93]">Average R</span>
+                                    <span class="num text-[15px] font-bold text-[#34D399]">+1.42R</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2.5">
+                                    <span class="text-[13px] text-[#8A8A93]">Max drawdown</span>
+                                    <span class="num text-[15px] font-bold text-[#F87171]">-1.06R</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2.5">
+                                    <span class="text-[13px] text-[#8A8A93]">Trades (60d)</span>
+                                    <span class="num text-[15px] font-bold text-white">60</span>
+                                </div>
+                            </div>
+                            <a href="analytics.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-3 hover:text-[#34D399] transition-colors">
+                                View full analytics <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                            </a>
+                        </div>
+
+                        <!-- Open positions (PRD §5.2) -->
+                        <div class="panel p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="panel-title">Open Positions</div>
+                                <span class="tag tag-gray">2 open</span>
+                            </div>
+                            <div class="flex flex-col gap-2.5">
+                                <div class="pos-row flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-[#34D399]">EU</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-[13.5px] font-semibold text-white">EURUSD <span class="tag tag-emerald ml-1 !px-1.5 !py-0.5 text-[10px]">LONG</span></div>
+                                        <div class="text-[11.5px] text-[#6E6E78] num">1.08912 · 0.50 lots · risk $25</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="num text-[13.5px] font-bold text-[#34D399]">+$85.20</div>
+                                        <div class="num text-[11px] text-[#6E6E78]">+0.34R</div>
+                                    </div>
+                                </div>
+                                <div class="pos-row flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-[#F87171]">NQ</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="text-[13.5px] font-semibold text-white">NAS100 <span class="tag tag-red ml-1 !px-1.5 !py-0.5 text-[10px]">SHORT</span></div>
+                                        <div class="text-[11.5px] text-[#6E6E78] num">21,845 · 1 contract · risk $30</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="num text-[13.5px] font-bold text-[#34D399]">+$124.00</div>
+                                        <div class="num text-[11px] text-[#6E6E78]">+0.50R</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-between mt-4 pt-3 border-t border-[#17171A]">
+                                <span class="text-[12.5px] text-[#8A8A93]">Total exposure</span>
+                                <span class="num text-[13px] font-bold text-white">$209.20 <span class="text-[#6E6E78] font-semibold">· 0.84R at risk</span></span>
+                            </div>
+                        </div>
+
+                        <!-- AI Daily Brief (PRD §5.2) -->
+                        <div class="panel p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="panel-title flex items-center gap-2">
+                                    <svg data-lucide="sparkles" class="w-4 h-4 text-[#10B981]"></svg>
+                                    AI Daily Brief
+                                </div>
+                                <span class="text-[11px] text-[#6E6E78] num">09:40 · generated</span>
+                            </div>
+
+                            <div class="flex flex-col gap-4">
+                                <div class="brief-section happened">
+                                    <div class="label-xs mb-1">What happened</div>
+                                    <p class="text-[13px] text-[#C4C4CC] leading-relaxed">Both trades followed the MSS + FVG plan in London. 1 win (+2.4R), 1 scratch — no rule breaks detected.</p>
+                                </div>
+                                <div class="brief-section why">
+                                    <div class="label-xs mb-1">Why it matters</div>
+                                    <p class="text-[13px] text-[#C4C4CC] leading-relaxed">Your best setup has now produced <span class="text-white font-semibold">72% of this month's profit</span> — consistency is compounding.</p>
+                                </div>
+                                <div class="brief-section next">
+                                    <div class="label-xs mb-1">What to do next</div>
+                                    <p class="text-[13px] text-[#C4C4CC] leading-relaxed">Stop for the morning. NY session bias is unclear — wait for the 10:00 CPI print before considering a new entry.</p>
+                                </div>
+                            </div>
+
+                            <a href="#" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-4 hover:text-[#34D399] transition-colors">
+                                View insights <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                            </a>
+                        </div>
+                    </div>
+
+                    <!-- Recent trades + Behavior -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                        <!-- Recent trades table (PRD §5.2) -->
+                        <div class="panel lg:col-span-2 overflow-hidden">
+                            <div class="flex items-center justify-between px-5 pt-5 pb-3">
+                                <div>
+                                    <div class="panel-title">Recent Trades</div>
+                                    <div class="panel-sub mt-0.5">Today · London session</div>
+                                </div>
+                                <a href="journal.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] hover:text-[#34D399] transition-colors">
+                                    Open journal <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                                </a>
+                            </div>
+                            <div class="overflow-x-auto">
+                                <table class="tbl w-full">
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th><th>Symbol</th><th>Dir</th><th>Setup</th><th>Session</th><th>Result</th><th>R</th><th>Discipline</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr>
+                                            <td class="num text-[#6E6E78]">09:32</td>
+                                            <td class="font-semibold text-white">EURUSD</td>
+                                            <td><span class="tag tag-emerald">Long</span></td>
+                                            <td>MSS + FVG</td>
+                                            <td class="num text-[#6E6E78]">London</td>
+                                            <td class="num font-bold text-[#34D399]">+240.00</td>
+                                            <td class="num font-bold text-[#34D399]">+2.4R</td>
+                                            <td><span class="flex items-center gap-1.5 text-[#34D399]"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="num text-[#6E6E78]">08:14</td>
+                                            <td class="font-semibold text-white">XAUUSD</td>
+                                            <td><span class="tag tag-emerald">Long</span></td>
+                                            <td>FVG</td>
+                                            <td class="num text-[#6E6E78]">London</td>
+                                            <td class="num font-bold text-[#6E6E78]">0.00</td>
+                                            <td class="num font-bold text-[#6E6E78]">0.0R</td>
+                                            <td><span class="flex items-center gap-1.5 text-[#34D399]"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="num text-[#6E6E78]">May 20</td>
+                                            <td class="font-semibold text-white">GBPUSD</td>
+                                            <td><span class="tag tag-red">Short</span></td>
+                                            <td>MSS + FVG</td>
+                                            <td class="num text-[#6E6E78]">New York</td>
+                                            <td class="num font-bold text-[#34D399]">+110.00</td>
+                                            <td class="num font-bold text-[#34D399]">+1.1R</td>
+                                            <td><span class="flex items-center gap-1.5 text-[#34D399]"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="num text-[#6E6E78]">May 19</td>
+                                            <td class="font-semibold text-white">EURUSD</td>
+                                            <td><span class="tag tag-red">Short</span></td>
+                                            <td>FVG</td>
+                                            <td class="num text-[#6E6E78]">London</td>
+                                            <td class="num font-bold text-[#F87171]">-100.00</td>
+                                            <td class="num font-bold text-[#F87171]">-1.0R</td>
+                                            <td><span class="flex items-center gap-1.5 text-[#F59E0B]"><svg data-lucide="alert-triangle" class="w-3.5 h-3.5"></svg> Early exit</span></td>
+                                        </tr>
+                                        <tr>
+                                            <td class="num text-[#6E6E78]">May 19</td>
+                                            <td class="font-semibold text-white">NAS100</td>
+                                            <td><span class="tag tag-emerald">Long</span></td>
+                                            <td>Breakout</td>
+                                            <td class="num text-[#6E6E78]">New York</td>
+                                            <td class="num font-bold text-[#34D399]">+384.00</td>
+                                            <td class="num font-bold text-[#34D399]">+3.84R</td>
+                                            <td><span class="flex items-center gap-1.5 text-[#34D399]"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Today's behavior + journal completion (PRD §5.2) -->
+                        <div class="panel p-5">
+                            <div class="panel-title mb-4">Today's Behavior</div>
+
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
+                                    <div class="label-xs mb-1">Trades</div>
+                                    <div class="num text-[18px] font-bold text-white">2</div>
+                                    <div class="text-[11px] text-[#6E6E78] num">1W / 1L</div>
+                                </div>
+                                <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
+                                    <div class="label-xs mb-1">Overtrading</div>
+                                    <div class="num text-[18px] font-bold text-[#34D399]">Low</div>
+                                    <div class="text-[11px] text-[#6E6E78]">2 of 5 trade budget</div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-2.5 text-[13px]">
+                                <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
+                                    <span class="text-[#8A8A93]">Best setup today</span>
+                                    <span class="font-semibold text-white">MSS + FVG <span class="num text-[#34D399]">+2.4R</span></span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
+                                    <span class="text-[#8A8A93]">Worst setup today</span>
+                                    <span class="text-[#6E6E78]">—</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
+                                    <span class="text-[#8A8A93]">Best behavior</span>
+                                    <span class="font-semibold text-white">Waited for confirmation</span>
+                                </div>
+                                <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
+                                    <span class="text-[#8A8A93]">Worst behavior</span>
+                                    <span class="text-[#6E6E78]">None flagged</span>
+                                </div>
+                            </div>
+
+                            <div class="mt-4 pt-4 border-t border-[#17171A]">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[12.5px] font-semibold text-white">Journal completion</span>
+                                    <span class="num text-[12px] text-[#F59E0B]">1 of 2 reviewed</span>
+                                </div>
+                                <div class="mini-track">
+                                    <div class="mini-fill bg-[#F59E0B]" style="width:50%"></div>
+                                </div>
+                                <a href="#" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-3 hover:text-[#34D399] transition-colors">
+                                    Review pending trade <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Market events + Weekly focus -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                        <div class="panel p-5 lg:col-span-2">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="panel-title">Market Events</div>
+                                <span class="tag tag-gray">Today · London</span>
+                            </div>
+                            <div class="flex flex-col divide-y divide-[#17171A]">
+                                <div class="flex items-center gap-4 py-3">
+                                    <span class="num text-[12.5px] text-[#6E6E78] w-14">10:00</span>
+                                    <div class="flex-1">
+                                        <div class="text-[13.5px] font-semibold text-white">US CPI (YoY)</div>
+                                        <div class="text-[12px] text-[#6E6E78]">High impact · consensus 2.9%</div>
+                                    </div>
+                                    <span class="tag tag-amber">High</span>
+                                </div>
+                                <div class="flex items-center gap-4 py-3">
+                                    <span class="num text-[12.5px] text-[#6E6E78] w-14">13:30</span>
+                                    <div class="flex-1">
+                                        <div class="text-[13.5px] font-semibold text-white">US Jobless Claims</div>
+                                        <div class="text-[12px] text-[#6E6E78]">Medium impact</div>
+                                    </div>
+                                    <span class="tag tag-gray">Medium</span>
+                                </div>
+                                <div class="flex items-center gap-4 py-3">
+                                    <span class="num text-[12.5px] text-[#6E6E78] w-14">18:00</span>
+                                    <div class="flex-1">
+                                        <div class="text-[13.5px] font-semibold text-white">FOMC Meeting Minutes</div>
+                                        <div class="text-[12px] text-[#6E6E78]">High impact · volatility expected</div>
+                                    </div>
+                                    <span class="tag tag-amber">High</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weekly focus -->
+                        <div class="panel p-5">
+                            <div class="panel-title mb-4">Weekly Focus</div>
+                            <div class="flex flex-col gap-4">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[12.5px] text-[#8A8A93]">Trade budget</span>
+                                        <span class="num text-[12px] font-bold text-white">14 / 25</span>
+                                    </div>
+                                    <div class="mini-track"><div class="mini-fill bg-[#10B981]" style="width:56%"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[12.5px] text-[#8A8A93]">Reviews completed</span>
+                                        <span class="num text-[12px] font-bold text-white">9 / 12</span>
+                                    </div>
+                                    <div class="mini-track"><div class="mini-fill bg-[#10B981]" style="width:75%"></div></div>
+                                </div>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[12.5px] text-[#8A8A93]">Replay practice</span>
+                                        <span class="num text-[12px] font-bold text-white">2 / 3</span>
+                                    </div>
+                                    <div class="mini-track"><div class="mini-fill bg-[#10B981]" style="width:66%"></div></div>
+                                </div>
+                                <p class="text-[12px] text-[#6E6E78] leading-relaxed mt-1">
+                                    On pace for a <span class="text-white font-semibold">green week</span> — 3 reviews behind target, 1 replay session left.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Dashboard demo build · data is illustrative</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        (function() {
+            // Sidebar collapse
+            const collapseBtn = document.getElementById('collapse-btn');
+            collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            // Log Trade — every "Log Trade" button opens the Journal's canonical
+            // entry modal (single source of truth — the Journal owns trade entry).
+            document.querySelectorAll('button, a').forEach(el => {
+                if ((el.textContent || '').trim().includes('Log Trade')) {
+                    el.addEventListener('click', e => {
+                        e.preventDefault();
+                        window.location.href = 'journal.html?log=1';
+                    });
+                }
+            });
+
+            // Equity chart period switch
+            document.querySelectorAll('#eq-period button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#eq-period button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const period = btn.dataset.period;
+                    document.querySelectorAll('.eq-chart').forEach(c =>
+                        c.classList.toggle('active', c.dataset.chart === period));
+                });
+            });
+
+            // Equity chart unit switch (R / $ / %) — demo: toggles active state
+            document.querySelectorAll('#eq-units button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('#eq-units button').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                });
+            });
+
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script>
+        /* ------------------------------------------------------------------
+           Live Dashboard sync — headline numbers are read from the canonical
+           core store (RiskService / DisciplineService), never hardcoded.
+           The static layout stays untouched; only values are replaced.
+           ------------------------------------------------------------------ */
+        (function () {
+            'use strict';
+            var money = function (n) {
+                return (n >= 0 ? '+' : '-') + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
+            };
+            var byTitle = function (root, title) {
+                var panels = root.querySelectorAll('.panel');
+                for (var i = 0; i < panels.length; i++) {
+                    var t = panels[i].querySelector('.panel-title');
+                    if (t && t.textContent.trim() === title) return panels[i];
+                }
+                return null;
+            };
+
+            // First-user empty state: with zero trades (or no account yet) the
+            // dashboard shows a clear "start here" state instead of static demo
+            // numbers. Everything derives from the canonical local store.
+            function applyEmptyState() {
+                var core = window.TradeMindCore;
+                var wrapper = document.getElementById('dash-content');
+                if (!wrapper) return true;
+                var empty = document.getElementById('dash-empty');
+                var hasAccount = !!(core && core.Accounts && core.Accounts.length);
+                var hasTrades = !!(core && core.Trades && core.Trades.length);
+                if (hasAccount && hasTrades) {
+                    if (empty) empty.classList.add('hidden');
+                    var kids = wrapper.children;
+                    for (var i = 0; i < kids.length; i++) if (kids[i].id !== 'dash-empty') kids[i].style.display = '';
+                    return false;
+                }
+                if (!empty) {
+                    empty = document.createElement('div');
+                    empty.id = 'dash-empty';
+                    empty.className = 'py-24 text-center';
+                    if (hasAccount) {
+                        empty.innerHTML =
+                            '<svg data-lucide="line-chart" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
+                            '<h2 class="text-[20px] font-bold text-white">No trades yet</h2>' +
+                            '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Your trading intelligence starts with your first trade. Create a strategy, then log a trade — every screen updates from the same local dataset.</p>' +
+                            '<div class="flex items-center justify-center gap-3 mt-6">' +
+                                '<a href="strategy-lab.html" class="btn-ghost !py-2.5 !px-5 text-[13px]"><svg data-lucide="flask-conical" class="w-4 h-4"></svg> Create First Strategy</a>' +
+                                '<a href="journal.html" class="btn-primary !py-2.5 !px-5 text-[13px]"><svg data-lucide="plus" class="w-4 h-4"></svg> Log First Trade</a>' +
+                            '</div>';
+                    } else {
+                        empty.innerHTML =
+                            '<svg data-lucide="user-plus" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
+                            '<h2 class="text-[20px] font-bold text-white">Welcome to 31Trades</h2>' +
+                            '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Set up your first account (name, size, risk limits), then create a strategy and log your first trade.</p>' +
+                            '<a href="strategy-lab.html" class="btn-primary mt-6 !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2"><svg data-lucide="settings" class="w-4 h-4"></svg> Set up account</a>';
+                    }
+                    wrapper.prepend(empty);
+                    if (window.lucide) lucide.createIcons();
+                }
+                empty.classList.remove('hidden');
+                var kids2 = wrapper.children;
+                for (var j = 0; j < kids2.length; j++) if (kids2[j].id !== 'dash-empty') kids2[j].style.display = 'none';
+                var sub2 = null;
+                var mainP = document.querySelectorAll('main p');
+                for (var s3 = 0; s3 < mainP.length; s3++) {
+                    if (mainP[s3].className.indexOf('text-[13px]') !== -1) { sub2 = mainP[s3]; break; }
+                }
+                if (sub2) sub2.textContent = hasAccount ? 'No trades yet — everything below fills in as you journal' : 'Set up your account to begin';
+                return true;
+            }
+
+            function sync() {
+                var core = window.TradeMindCore;
+                if (!core || !core.riskState) return;
+                if (applyEmptyState()) return;
+                var accountId = core.selectedAccountId() || (core.Accounts.length ? core.Accounts[0].id : null);
+                if (!accountId) return;
+                var rs = core.riskState(accountId);
+                var today = core.Trades.filter(function (t) {
+                    return t.account_id === accountId && core.sameDay(t.ts, new Date());
+                });
+                var pnl = today.reduce(function (s, t) { return s + t.pnl; }, 0);
+                var rSum = today.reduce(function (s, t) { return s + t.r; }, 0);
+
+                // header subtitle
+                var sub = document.querySelector('main p.text-\\[13px\\]');
+                if (sub) {
+                    var d = new Date();
+                    var h = d.getHours();
+                    var session = h >= 7 && h < 12 ? 'London' : h >= 12 && h < 18 ? 'New York' : 'Asia';
+                    sub.textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) +
+                        ' · ' + session + ' session · ' + today.length + ' trades today';
+                }
+
+                // equity panel subtitle
+                var eqSub = document.querySelector('.panel-sub');
+                if (eqSub && eqSub.textContent.indexOf('Last 7 days') === 0) {
+                    eqSub.textContent = 'Last 7 days · ' + money(pnl) + ' today';
+                }
+
+                // KPI cards
+                var cards = document.querySelectorAll('.panel.kpi');
+                for (var c = 0; c < cards.length; c++) {
+                    var card = cards[c];
+                    var label = card.querySelector('.label-xs');
+                    if (!label) continue;
+                    var key = label.textContent.trim();
+                    var value = card.querySelector('.kpi-value');
+                    var track = card.querySelector('.mini-fill');
+                    var tag = card.querySelector('.tag');
+                    var sub1 = card.querySelector('.text-\\[12px\\]');
+                    var stats = Array.prototype.slice.call(card.querySelectorAll('.num')).filter(function (el) { return el !== value; });
+                    var pct;
+                    if (key === 'Net P&L Today') {
+                        if (value) { value.textContent = money(pnl); value.className = 'kpi-value num ' + (pnl >= 0 ? 'pos' : 'neg'); }
+                        if (tag) tag.textContent = (rSum >= 0 ? '+' : '') + rSum.toFixed(2) + 'R';
+                    } else if (key === 'Daily Risk Budget') {
+                        var st = rs.statusLabel;
+                        if (tag) { tag.textContent = st; tag.className = 'tag ' + (st === 'SAFE' ? 'tag-emerald' : st === 'CAUTION' ? 'tag-amber' : 'tag-red'); }
+                        if (value) value.textContent = '$' + rs.riskRemaining;
+                        if (sub1) sub1.textContent = 'remaining of $' + rs.dailyRiskBudget;
+                        pct = rs.dailyRiskBudget ? Math.round(rs.riskUsed / rs.dailyRiskBudget * 100) : 0;
+                        if (track) track.style.width = Math.min(100, pct) + '%';
+                        if (stats[0]) stats[0].textContent = 'Used $' + rs.riskUsed + ' · ' + pct + '%';
+                        if (stats[1]) stats[1].textContent = (100 - pct) + '% left';
+                    } else if (key === 'Drawdown Remaining') {
+                        pct = rs.drawdownLimit ? Math.round(rs.currentDrawdown / rs.drawdownLimit * 100) : 0;
+                        if (tag) { tag.textContent = pct + '% used'; tag.className = 'tag ' + (pct >= 70 ? 'tag-red' : pct >= 50 ? 'tag-amber' : 'tag-gray'); }
+                        if (value) value.textContent = '$' + rs.drawdownRemaining;
+                        if (sub1) sub1.textContent = 'of $' + rs.drawdownLimit.toLocaleString() + ' limit';
+                        if (track) track.style.width = Math.min(100, pct) + '%';
+                        if (stats[0]) stats[0].textContent = pct + '% of limit used';
+                        if (stats[1]) stats[1].textContent = rs.statusLabel;
+                    } else if (key === 'Discipline Score') {
+                        var disc = core.disciplineState(accountId);
+                        if (value) value.innerHTML = (disc.score == null ? '—' : disc.score) + '<span class="text-[14px] text-[#6E6E78] font-semibold">/100</span>';
+                        if (track) track.style.width = Math.min(100, disc.score || 0) + '%';
+                        if (sub1) sub1.textContent = 'sample ' + disc.sample + ' trades';
+                        if (stats[0]) stats[0].textContent = disc.violations + ' violations';
+                    }
+                }
+
+                // Risk Meter panel
+                var riskPanel = byTitle(document, 'Risk Meter');
+                if (riskPanel) {
+                    var rtag = riskPanel.querySelector('.tag');
+                    var rsub = riskPanel.querySelector('p');
+                    var rfill = riskPanel.querySelector('.risk-consumed');
+                    var rvals = riskPanel.querySelectorAll('.num');
+                    var rpct = rs.dailyRiskBudget ? Math.round(rs.riskUsed / rs.dailyRiskBudget * 100) : 0;
+                    if (rtag) { rtag.innerHTML = '<span class="dot bg-[#34D399]"></span> ' + rs.statusLabel; rtag.className = 'tag ' + (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'tag-red' : rs.status === 'CAUTION' ? 'tag-amber' : 'tag-emerald'); }
+                    if (rsub) rsub.textContent = 'Daily loss limit $' + rs.dailyLossLimit + ' · risk budget $' + rs.dailyRiskBudget;
+                    if (rfill) rfill.style.width = Math.min(100, rpct) + '%';
+                    if (rvals[0]) rvals[0].textContent = '$' + rs.dailyRiskBudget;
+                    if (rvals[1]) rvals[1].textContent = '$' + rs.riskUsed;
+                    if (rvals[2]) rvals[2].textContent = '$' + rs.riskRemaining;
+                }
+
+                // Drawdown Proximity panel
+                var ddPanel = byTitle(document, 'Drawdown Proximity');
+                if (ddPanel) {
+                    var dtag = ddPanel.querySelector('.tag');
+                    var dsub = ddPanel.querySelector('p');
+                    var dfill = ddPanel.querySelector('.dd-fill');
+                    var dpct = rs.drawdownLimit ? Math.round(rs.currentDrawdown / rs.drawdownLimit * 100) : 0;
+                    if (dtag) { dtag.textContent = rs.statusLabel; dtag.className = 'tag ' + (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'tag-red' : rs.status === 'CAUTION' ? 'tag-amber' : 'tag-gray'); }
+                    if (dsub) dsub.textContent = '$' + rs.currentDrawdown + ' of $' + rs.drawdownLimit.toLocaleString() + ' used';
+                    if (dfill) dfill.style.width = Math.min(100, dpct) + '%';
+                    var bufferSpan = null;
+                    var ddSpans = ddPanel.querySelectorAll('span');
+                    for (var s2 = 0; s2 < ddSpans.length; s2++) {
+                        if (ddSpans[s2].className.indexOf('text-[#34D399]') !== -1) { bufferSpan = ddSpans[s2]; break; }
+                    }
+                    if (bufferSpan) bufferSpan.textContent = '$' + rs.drawdownRemaining;
+                }
+
+                // Performance Snapshot — real numbers from the canonical analytics
+                var perfPanel = byTitle(document, 'Performance Snapshot');
+                if (perfPanel && core.analytics) {
+                    var a = core.analytics(accountId);
+                    var pRows = [].slice.call(perfPanel.querySelectorAll('.flex')).filter(function (el) {
+                        return el.className.indexOf('py-2.5') !== -1;
+                    });
+                    var pMap = {};
+                    for (var p = 0; p < pRows.length; p++) {
+                        var plbl = null;
+                        var plabels = pRows[p].querySelectorAll('span, div');
+                        for (var pl = 0; pl < plabels.length; pl++) {
+                            if (plabels[pl].className.indexOf('text-[13px]') !== -1) { plbl = plabels[pl]; break; }
+                        }
+                        if (plbl) pMap[plbl.textContent.trim()] = pRows[p].querySelector('.num');
+                    }
+                    if (pMap['Win rate']) pMap['Win rate'].textContent = Math.round(a.winRate * 100) + '%';
+                    if (pMap['Profit factor']) pMap['Profit factor'].textContent = (a.pf || 0).toFixed(2);
+                    if (pMap['Expectancy']) { pMap['Expectancy'].textContent = (a.expectancy >= 0 ? '+' : '') + a.expectancy.toFixed(2) + 'R'; pMap['Expectancy'].className = 'num text-[15px] font-bold ' + (a.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'); }
+                    if (pMap['Average R']) { pMap['Average R'].textContent = (a.avgR >= 0 ? '+' : '') + a.avgR.toFixed(2) + 'R'; pMap['Average R'].className = 'num text-[15px] font-bold ' + (a.avgR >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'); }
+                    if (pMap['Max drawdown']) pMap['Max drawdown'].textContent = '-$' + a.maxDD;
+                    if (pMap['Trades (60d)']) pMap['Trades (60d)'].textContent = a.n;
+                }
+
+                // Recent Trades table — the actual ledger (last 5)
+                var rtPanel = byTitle(document, 'Recent Trades');
+                if (rtPanel) {
+                    var rtBody = rtPanel.querySelector('tbody');
+                    var recent = core.Trades.filter(function (t) { return t.account_id === accountId; })
+                        .slice().sort(function (x, y) { return new Date(y.ts) - new Date(x.ts); }).slice(0, 5);
+                    if (rtBody) {
+                        rtBody.innerHTML = recent.map(function (t) {
+                            var d = new Date(t.ts);
+                            var time = core.sameDay(t.ts, new Date())
+                                ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                                : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                            var dirCls = t.dir === 'Long' ? 'tag-emerald' : 'tag-red';
+                            var pnlCls = t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]';
+                            var rCls = t.r > 0 ? 'text-[#34D399]' : t.r < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]';
+                            var adhere = t.adherence === 'followed' ? 'Followed' : (t.adherence || '—');
+                            var adhereCls = t.adherence === 'followed' ? 'text-[#34D399]' : 'text-[#F59E0B]';
+                            var adhereIcon = t.adherence === 'followed' ? 'check' : 'alert-triangle';
+                            return '<tr>' +
+                                '<td class="num text-[#6E6E78]">' + time + '</td>' +
+                                '<td class="font-semibold text-white">' + t.symbol + '</td>' +
+                                '<td><span class="tag ' + dirCls + '">' + t.dir + '</span></td>' +
+                                '<td>' + (t.setup || '—') + '</td>' +
+                                '<td class="num text-[#6E6E78]">' + (t.session || '—') + '</td>' +
+                                '<td class="num font-bold ' + pnlCls + '">' + money(t.pnl) + '</td>' +
+                                '<td class="num font-bold ' + rCls + '">' + (t.r > 0 ? '+' : '') + Number(t.r).toFixed(1) + 'R</td>' +
+                                '<td><span class="flex items-center gap-1.5 ' + adhereCls + '"><svg data-lucide="' + adhereIcon + '" class="w-3.5 h-3.5"></svg> ' + adhere + '</span></td>' +
+                                '</tr>';
+                        }).join('');
+                    }
+                    var rtSub = rtPanel.querySelector('.panel-sub');
+                    if (rtSub) rtSub.textContent = 'Last ' + Math.min(5, recent.length) + ' trades from your local ledger';
+                }
+
+                // Today's Behavior — trades + W/L from the ledger
+                var behPanel = byTitle(document, "Today's Behavior");
+                if (behPanel) {
+                    var dayTrades = core.Trades.filter(function (t) { return t.account_id === accountId && core.sameDay(t.ts, new Date()); });
+                    var w = dayTrades.filter(function (t) { return t.pnl > 0; }).length;
+                    var l = dayTrades.filter(function (t) { return t.pnl < 0; }).length;
+                    var numEls = behPanel.querySelectorAll('.num');
+                    if (numEls[0]) numEls[0].textContent = dayTrades.length;
+                    var wl = null;
+                    var wlEls = behPanel.querySelectorAll('div, span');
+                    for (var wi = 0; wi < wlEls.length; wi++) {
+                        if (wlEls[wi].className.indexOf('text-[11px]') !== -1 && wlEls[wi].textContent.indexOf('W /') !== -1) { wl = wlEls[wi]; break; }
+                    }
+                    if (wl) wl.textContent = w + 'W / ' + l + 'L';
+
+                    // overtrading level + trade budget (real limits from the policy)
+                    var policy = core.activePolicy ? core.activePolicy(accountId) : null;
+                    var maxPerDay = policy && policy.values.maxTrades ? policy.values.maxTrades : 5;
+                    var otLevel = dayTrades.length > maxPerDay ? 'High' : dayTrades.length >= Math.ceil(maxPerDay * 0.7) ? 'Medium' : 'Low';
+                    var otBox = behPanel.querySelectorAll('.bg-\\[\\#0F0F11\\]');
+                    if (otBox[1]) {
+                        var otVal = otBox[1].querySelector('.num');
+                        if (otVal) { otVal.textContent = otLevel; otVal.className = 'num text-[18px] font-bold ' + (otLevel === 'High' ? 'text-[#F87171]' : otLevel === 'Medium' ? 'text-[#F59E0B]' : 'text-[#34D399]'); }
+                        var otSub = otBox[1].querySelector('.text-\\[11px\\]');
+                        if (otSub) otSub.textContent = dayTrades.length + ' of ' + maxPerDay + ' trade budget';
+                    }
+
+                    // best / worst setup today (from the ledger)
+                    var bySetup = {};
+                    dayTrades.forEach(function (t) {
+                        bySetup[t.setup || '—'] = (bySetup[t.setup || '—'] || 0) + (t.r || 0);
+                    });
+                    var setupKeys = Object.keys(bySetup).sort(function (a, b) { return bySetup[b] - bySetup[a]; });
+                    var rowsB = behPanel.querySelectorAll('.border-b');
+                    if (rowsB[0] && setupKeys.length) {
+                        var bestR = bySetup[setupKeys[0]];
+                        rowsB[0].querySelector('.font-semibold').innerHTML = setupKeys[0] + ' <span class="num text-[#34D399]">' + (bestR >= 0 ? '+' : '') + bestR.toFixed(1) + 'R</span>';
+                    }
+                    if (rowsB[1]) {
+                        if (setupKeys.length > 1) {
+                            var worstR = bySetup[setupKeys[setupKeys.length - 1]];
+                            rowsB[1].innerHTML = '<span class="text-[#8A8A93]">Worst setup today</span><span class="font-semibold text-white">' + setupKeys[setupKeys.length - 1] + ' <span class="num text-[#F87171]">' + (worstR >= 0 ? '+' : '') + worstR.toFixed(1) + 'R</span></span>';
+                        } else {
+                            rowsB[1].innerHTML = '<span class="text-[#8A8A93]">Worst setup today</span><span class="text-[#6E6E78]">—</span>';
+                        }
+                    }
+
+                    // best / worst behavior today (adherence from the ledger)
+                    var violToday = dayTrades.filter(function (t) { return t.adherence && t.adherence !== 'followed'; });
+                    if (rowsB[2]) {
+                        var bestBeh = dayTrades.length ? (violToday.length < dayTrades.length ? 'Followed the plan' : '—') : '—';
+                        rowsB[2].innerHTML = '<span class="text-[#8A8A93]">Best behavior</span><span class="font-semibold text-white">' + bestBeh + '</span>';
+                    }
+                    if (rowsB[3]) {
+                        var worstBeh = violToday.length ? 'Rule break: ' + violToday[0].adherence : 'None flagged';
+                        rowsB[3].innerHTML = '<span class="text-[#8A8A93]">Worst behavior</span><span class="' + (violToday.length ? 'text-[#F59E0B]' : 'text-[#6E6E78]') + '">' + worstBeh + '</span>';
+                    }
+
+                    // journal completion
+                    var revEls = behPanel.querySelectorAll('.text-\\[12px\\]');
+                    if (revEls.length) {
+                        var reviewed = dayTrades.filter(function (t) { return t.reviewed; }).length;
+                        revEls[0].textContent = reviewed + ' of ' + dayTrades.length + ' reviewed';
+                        var revFill = behPanel.querySelector('.mini-fill');
+                        if (revFill) revFill.style.width = (dayTrades.length ? Math.round(reviewed / dayTrades.length * 100) : 0) + '%';
+                    }
+                }
+
+                // ---- HEADER GREETING (account name + time of day) ----
+                var acc = core.Accounts.find(function (a) { return a.id === accountId; });
+                var h1 = document.querySelector('#dash-content h1');
+                if (h1 && acc) {
+                    var hh = new Date().getHours();
+                    var greet = hh < 12 ? 'Good morning' : hh < 18 ? 'Good afternoon' : 'Good evening';
+                    h1.textContent = greet + ', ' + acc.name;
+                }
+
+                // ---- EQUITY CURVE (all three charts, real ledger equity) ----
+                var startBal = acc ? acc.starting_balance : 0;
+                var acctTrades = core.Trades.filter(function (t) { return t.account_id === accountId; })
+                    .slice().sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
+                var weekNum = function (d) {
+                    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                    t.setUTCDate(t.getUTCDate() + 4 - ((t.getUTCDay() + 6) % 7));
+                    var first = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+                    return 1 + Math.round((t - first) / 604800000);
+                };
+                var eqSeries = function (span, count) {
+                    var now = new Date();
+                    var offOf = function (d) {
+                        if (span === 'daily') return Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+                        if (span === 'weekly') return weekNum(d) - weekNum(now);
+                        return (d.getFullYear() * 12 + d.getMonth()) - (now.getFullYear() * 12 + now.getMonth());
+                    };
+                    var buckets = [];
+                    for (var i = count - 1; i >= 0; i--) {
+                        var d = new Date(now);
+                        if (span === 'daily') d.setDate(now.getDate() - i);
+                        else if (span === 'weekly') d.setDate(now.getDate() - i * 7);
+                        else d.setMonth(now.getMonth() - i);
+                        buckets.push({ label: span === 'daily' ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : span === 'weekly' ? 'W' + weekNum(d) : d.toLocaleDateString('en-US', { month: 'short' }), pnl: 0, off: -i });
+                    }
+                    acctTrades.forEach(function (t) {
+                        var off = offOf(new Date(t.ts));
+                        for (var b = 0; b < buckets.length; b++) {
+                            if (off === buckets[b].off) { buckets[b].pnl += t.pnl; break; }
+                        }
+                    });
+                    var eq = startBal, series = [];
+                    buckets.forEach(function (b) { eq += b.pnl; series.push(eq); });
+                    return { buckets: buckets, series: series };
+                };
+                var W = 760, T = 30, B = 205;
+                var plotEq = function (svg) {
+                    var host = svg.closest ? svg.closest('.eq-chart') : null;
+                    var span = host ? host.getAttribute('data-chart') : 'daily';
+                    var count = span === 'weekly' ? 6 : span === 'monthly' ? 5 : 8;
+                    var data = eqSeries(span, count);
+                    var minV = Math.min.apply(null, data.series), maxV = Math.max.apply(null, data.series);
+                    if (minV === maxV) { minV -= 1; maxV += 1; }
+                    var y = function (v) { return B - ((v - minV) / (maxV - minV)) * (B - T); };
+                    var x = function (i) { return (i / (data.buckets.length - 1)) * W; };
+                    var pts = data.series.map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); });
+                    var fill = 'M0 ' + y(data.series[0]).toFixed(1) + ' L' + pts.join(' L') + ' L' + W + ' 210 L0 210 Z';
+                    var gid = span === 'weekly' ? 'eqfill-w' : span === 'monthly' ? 'eqfill-m' : 'eqfill-d';
+                    var circles = pts.map(function (p, i) {
+                        var r = i === pts.length - 1 ? 5 : 4, f = i === pts.length - 1 ? '#10B981' : '#0A0A0C';
+                        return '<circle cx="' + p.split(',')[0] + '" cy="' + p.split(',')[1] + '" r="' + r + '" fill="' + f + '" stroke="#10B981" stroke-width="2"/>';
+                    }).join('');
+                    var labels = data.buckets.map(function (b, i) {
+                        return '<text x="' + x(i).toFixed(0) + '" y="212">' + b.label + '</text>';
+                    }).join('');
+                    svg.innerHTML = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+                        '<stop offset="0%" stop-color="#10B981" stop-opacity="0.22"/><stop offset="100%" stop-color="#10B981" stop-opacity="0"/></linearGradient></defs>' +
+                        '<g stroke="#1F1F23" stroke-width="1"><line x1="0" y1="30" x2="760" y2="30"/><line x1="0" y1="75" x2="760" y2="75"/><line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="165" x2="760" y2="165"/><line x1="0" y1="210" x2="760" y2="210"/></g>' +
+                        '<path d="' + fill + '" fill="url(#' + gid + ')"/>' +
+                        '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                        '<g fill="#0A0A0C" stroke="#10B981" stroke-width="2">' + circles + '</g>' +
+                        '<g fill="#6E6E78" font-family="JetBrains Mono, monospace" font-size="10">' + labels + '</g>';
+                };
+                document.querySelectorAll('.eq-chart').forEach(function (c) { if (c.querySelector('svg')) plotEq(c.querySelector('svg')); });
+
+                // best / worst day footer (real daily pnl)
+                var dayPnl = {};
+                acctTrades.forEach(function (t) {
+                    var ts = new Date(t.ts);
+                    var k = ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    dayPnl[k] = (dayPnl[k] || 0) + t.pnl;
+                });
+                var dayKeys = Object.keys(dayPnl);
+                var bestDay = null, worstDay = null;
+                dayKeys.forEach(function (k) {
+                    if (!bestDay || dayPnl[k] > dayPnl[bestDay]) bestDay = k;
+                    if (!worstDay || dayPnl[k] < dayPnl[worstDay]) worstDay = k;
+                });
+                var bestWorst = null;
+                var eqPanel = document.querySelector('.eq-chart') ? document.querySelector('.eq-chart').closest('.panel') : null;
+                if (eqPanel) {
+                    var eqSpans = eqPanel.querySelectorAll('span');
+                    for (var es = 0; es < eqSpans.length; es++) {
+                        if (eqSpans[es].className.indexOf('text-[#34D399]') !== -1 && eqSpans[es].textContent.indexOf('Best day') === -1 && eqSpans[es].parentElement && eqSpans[es].parentElement.textContent.indexOf('Best day') !== -1) bestWorst = eqSpans[es];
+                    }
+                }
+                // simpler: rewrite the two labeled spans directly
+                var eqFoot = eqPanel ? eqPanel.querySelector('.flex.items-center.gap-6') : null;
+                if (eqFoot) {
+                    var bSpans = eqFoot.querySelectorAll('span.num');
+                    if (bSpans[0] && bestDay) bSpans[0].innerHTML = 'Best day: <span class="text-[#34D399]">' + money(dayPnl[bestDay]) + ' (' + bestDay + ')</span>';
+                    if (bSpans[1] && worstDay) bSpans[1].innerHTML = 'Worst day: <span class="text-[#F87171]">' + money(dayPnl[worstDay]) + ' (' + worstDay + ')</span>';
+                }
+
+                // ---- OPEN POSITIONS → today's real trades (model logs closed trades) ----
+                var opPanel = byTitle(document, 'Open Positions');
+                if (opPanel) {
+                    var opTag = opPanel.querySelector('.tag');
+                    if (opTag) opTag.textContent = today.length ? today.length + ' today' : '0 open';
+                    var opBody = opPanel.querySelector('.flex.flex-col');
+                    if (opBody) {
+                        if (!today.length) {
+                            opBody.innerHTML = '<div class="py-6 text-center"><p class="text-[13px] text-[#6E6E78]">No trades yet today. Log a trade and it shows up here.</p></div>';
+                        } else {
+                            opBody.innerHTML = today.slice().sort(function (a, b) { return new Date(b.ts) - new Date(a.ts); }).slice(0, 3).map(function (t) {
+                                var sym = t.symbol || '—', dirCls = t.dir === 'Short' ? 'tag-red' : 'tag-emerald';
+                                var pnlCls = t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]';
+                                return '<div class="flex items-center gap-3">' +
+                                    '<div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-[#10B981]">' + sym.slice(0, 2).toUpperCase() + '</div>' +
+                                    '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white">' + sym + ' <span class="tag ' + dirCls + ' ml-1 !px-1.5 !py-0.5 text-[10px]">' + (t.dir || '—').toUpperCase() + '</span></div>' +
+                                    '<div class="text-[11.5px] text-[#6E6E78] num">' + (t.setup || '—') + ' · risk $' + (t.risk || 0) + '</div></div>' +
+                                    '<div class="text-right"><div class="num text-[13.5px] font-bold ' + pnlCls + '">' + money(t.pnl) + '</div>' +
+                                    '<div class="num text-[11px] ' + pnlCls + '">' + (t.r >= 0 ? '+' : '') + t.r.toFixed(1) + 'R</div></div></div>';
+                            }).join('');
+                        }
+                    }
+                    var opFoot = opPanel.querySelector('.border-t');
+                    if (opFoot) {
+                        var opLbl = opFoot.querySelector('[class*="text-[12.5px]"]');
+                        var opVal = opFoot.querySelector('.num');
+                        if (opLbl) opLbl.textContent = 'Total P&L today';
+                        if (opVal) opVal.innerHTML = money(pnl) + ' <span class="text-[#6E6E78] font-semibold">· ' + today.length + ' trades</span>';
+                    }
+                }
+
+                // ---- AI DAILY BRIEF (real data + evidence-backed insights) ----
+                var brief = byTitle(document, 'AI Daily Brief');
+                if (brief) {
+                    var ins = core.insights ? core.insights(accountId) : [];
+                    var pos = null;
+                    for (var ii = 0; ii < ins.length; ii++) if (ins[ii].severity === 'positive' && ins[ii].type === 'strength') { pos = ins[ii]; break; }
+                    var secs = brief.querySelectorAll('.brief-section');
+                    if (secs[0]) {
+                        var violCount = core.Violations ? core.Violations.filter(function (v) { return v.account_id === accountId && core.sameDay(new Date(v.ts), new Date()); }).length : 0;
+                        secs[0].querySelector('p').textContent = dayTrades.length + ' trades today · ' + w + 'W / ' + l + 'L · net ' + money(pnl) + (violCount ? ' · ' + violCount + ' rule violations' : '');
+                    }
+                    if (secs[1]) {
+                        var why = pos ? pos.title + ': ' + pos.detail : (ins.length && ins[0].type === 'developing' ? ins[0].detail : 'Keep journaling — patterns emerge as your sample grows.');
+                        secs[1].querySelector('p').textContent = why;
+                    }
+                    if (secs[2]) {
+                        var next = 'Remaining daily risk budget: $' + rs.riskRemaining + '.';
+                        if (rs.riskRemaining <= 0) next = 'Daily risk budget is exhausted — stop for the day.';
+                        else if (rs.statusLabel === 'HIGH' || rs.statusLabel === 'LIMIT') next = 'High risk warning — stay small or stop for the day.';
+                        else if (w + l > 0 && l > w) next = 'Down ' + (l - w) + ' trade' + (l - w > 1 ? 's' : '') + ' today — wait for a confirmed setup before re-entering.';
+                        secs[2].querySelector('p').textContent = next;
+                    }
+                    var briefStamp = brief.querySelector('[class*="text-[11px]"]');
+                    if (briefStamp) briefStamp.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' · generated';
+                }
+
+                // ---- WEEKLY FOCUS (real week-to-date progress) ----
+                var focus = byTitle(document, 'Weekly Focus');
+                if (focus) {
+                    var weekAgo = new Date(Date.now() - 7 * 86400000);
+                    var weekTrades = core.Trades.filter(function (t) {
+                        return t.account_id === accountId && new Date(t.ts) >= weekAgo;
+                    });
+                    var weekReviewed = weekTrades.filter(function (t) { return t.reviewed; }).length;
+                    var weekPnl = weekTrades.reduce(function (s, t) { return s + t.pnl; }, 0);
+                    var weekBudget = maxPerDay * 5;
+                    var focusItems = focus.querySelectorAll('.flex.flex-col.gap-4 > div');
+                    if (focusItems[0]) {
+                        var f0 = focusItems[0].querySelector('.num');
+                        if (f0) f0.textContent = weekTrades.length + ' / ' + weekBudget;
+                        var f0fill = focusItems[0].querySelector('.mini-fill');
+                        if (f0fill) f0fill.style.width = Math.min(100, Math.round(weekTrades.length / weekBudget * 100)) + '%';
+                    }
+                    if (focusItems[1]) {
+                        var f1 = focusItems[1].querySelector('.num');
+                        if (f1) f1.textContent = weekReviewed + ' / ' + weekTrades.length;
+                        var f1fill = focusItems[1].querySelector('.mini-fill');
+                        if (f1fill) f1fill.style.width = (weekTrades.length ? Math.round(weekReviewed / weekTrades.length * 100) : 0) + '%';
+                    }
+                    var focusP = focus.querySelector('p');
+                    if (focusP) {
+                        var mood = weekPnl >= 0 ? 'green week' : 'red week';
+                        var pending = weekTrades.length - weekReviewed;
+                        focusP.innerHTML = 'On pace for a <span class="text-white font-semibold">' + mood + '</span>' + (pending ? ' — ' + pending + ' review' + (pending > 1 ? 's' : '') + ' pending.' : '.');
+                    }
+                }
+            }
+
+            function boot() {
+                if (window.TradeMindCore) {
+                    var bus = window.TradeMindCore.TradeMindBus;
+                    ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.changed'].forEach(function (ev) { bus.subscribe(ev, sync); });
+                    sync();
+                }
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+        })();
+    </script>
+    <script src="reset.js"></script>
+</body>
+</html>

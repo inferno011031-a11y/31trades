@@ -1,0 +1,999 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — App</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html, body {
+            height: 100%;
+            background: #0A0A0C;
+            color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        /* App shell */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 9px 12px;
+            border-radius: 8px;
+            font-size: 13.5px;
+            font-weight: 500;
+            color: #8A8A93;
+            text-decoration: none;
+            transition: background 0.15s, color 0.15s;
+            white-space: nowrap;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            width: 100%;
+            text-align: left;
+        }
+
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: #FFFFFF;
+            box-shadow: inset 2px 0 0 #10B981;
+        }
+
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* Panels */
+        .panel {
+            background: #121214;
+            border: 1px solid #1F1F23;
+            border-radius: 12px;
+        }
+
+        .panel-title {
+            font-size: 13px;
+            font-weight: 700;
+            letter-spacing: 0.02em;
+            color: #E8E8EC;
+        }
+
+        .panel-sub {
+            font-size: 12px;
+            color: #6E6E78;
+        }
+
+        .label-xs {
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6E6E78;
+        }
+
+        /* Buttons */
+        .btn-primary {
+            background: #FFFFFF;
+            color: #0A0A0C;
+            font-weight: 700;
+            font-size: 13.5px;
+            padding: 9px 16px;
+            border-radius: 8px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background 0.15s, transform 0.15s;
+            text-decoration: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover { background: #E8E8EC; }
+
+        .btn-ghost {
+            background: transparent;
+            color: #B4B4BD;
+            font-weight: 600;
+            font-size: 13.5px;
+            padding: 9px 16px;
+            border-radius: 8px;
+            border: 1px solid #26262B;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.15s;
+            text-decoration: none;
+            cursor: pointer;
+        }
+
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+
+        .quick-action {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 14px;
+            border-radius: 8px;
+            background: #121214;
+            border: 1px solid #1F1F23;
+            font-size: 13px;
+            font-weight: 600;
+            color: #C4C4CC;
+            transition: all 0.15s;
+            cursor: pointer;
+        }
+
+        .quick-action:hover { border-color: #2E2E35; color: #FFFFFF; background: #16161A; }
+        .quick-action svg { width: 16px; height: 16px; color: #10B981; }
+
+        /* KPI cards */
+        .kpi { position: relative; }
+
+        .kpi-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
+        .kpi-value.pos { color: #34D399; }
+        .kpi-value.neg { color: #F87171; }
+
+        .mini-track {
+            height: 4px;
+            background: #1F1F23;
+            border-radius: 999px;
+            overflow: hidden;
+        }
+
+        .mini-fill {
+            height: 100%;
+            border-radius: 999px;
+        }
+
+        /* Risk meter */
+        .risk-track {
+            height: 10px;
+            border-radius: 999px;
+            background: #1F1F23;
+            overflow: hidden;
+            position: relative;
+        }
+
+        .risk-consumed {
+            height: 100%;
+            border-radius: 999px;
+            background: #10B981;
+            transition: width 0.5s ease;
+        }
+
+        .risk-level-normal .risk-consumed { background: #10B981; }
+        .risk-level-caution .risk-consumed { background: #F59E0B; }
+        .risk-level-high .risk-consumed { background: #F97316; }
+        .risk-level-critical .risk-consumed { background: #EF4444; }
+
+        /* Drawdown threshold markers */
+        .dd-track {
+            height: 8px;
+            border-radius: 999px;
+            background: #1F1F23;
+            position: relative;
+            overflow: visible;
+        }
+
+        .dd-fill { height: 100%; border-radius: 999px; background: #10B981; }
+
+        .dd-marker {
+            position: absolute;
+            top: -4px;
+            width: 2px;
+            height: 16px;
+            border-radius: 1px;
+            background: #4A4A52;
+        }
+
+        /* Segmented control (chart period switch) */
+        .seg {
+            display: inline-flex;
+            background: #0F0F11;
+            border: 1px solid #1F1F23;
+            border-radius: 8px;
+            padding: 2px;
+        }
+
+        .seg button {
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            color: #6E6E78;
+            transition: all 0.15s;
+            border: none;
+            background: transparent;
+            cursor: pointer;
+        }
+
+        .seg button.active { background: #1F1F23; color: #FFFFFF; }
+
+        /* Tables */
+        .tbl { width: 100%; border-collapse: collapse; }
+        .tbl th {
+            text-align: left;
+            font-size: 11px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #6E6E78;
+            padding: 8px 12px;
+            border-bottom: 1px solid #1F1F23;
+            white-space: nowrap;
+        }
+
+        .tbl td {
+            padding: 10px 12px;
+            font-size: 13px;
+            color: #B4B4BD;
+            border-bottom: 1px solid #17171A;
+            white-space: nowrap;
+        }
+
+        .tbl tr:last-child td { border-bottom: none; }
+        .tbl tbody tr:hover { background: #16161A; }
+
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 3px 9px;
+            border-radius: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+        }
+
+        .tag-emerald { background: rgba(16, 185, 129, 0.1); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.25); }
+        .tag-red { background: rgba(239, 68, 68, 0.1); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.25); }
+        .tag-amber { background: rgba(245, 158, 11, 0.1); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.25); }
+        .tag-gray { background: rgba(255, 255, 255, 0.04); color: #8A8A93; border: 1px solid #232327; }
+
+        .dot { width: 6px; height: 6px; border-radius: 999px; display: inline-block; }
+
+        /* Scrollbars */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
+        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+
+        /* Top bar */
+        .topbar {
+            height: 56px;
+            background: #0D0D0F;
+            border-bottom: 1px solid #1C1C20;
+        }
+
+        .search-input {
+            background: #121214;
+            border: 1px solid #1F1F23;
+            border-radius: 8px;
+            padding: 8px 12px 8px 36px;
+            font-size: 13px;
+            color: #E8E8EC;
+            width: 320px;
+            outline: none;
+            transition: border-color 0.15s;
+        }
+
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+
+        .session-chip {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 8px;
+            background: #121214;
+            border: 1px solid #1F1F23;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #B4B4BD;
+        }
+
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+
+        /* AI brief */
+        .brief-section { border-left: 2px solid #26262B; padding-left: 14px; }
+        .brief-section.happened { border-color: #8A8A93; }
+        .brief-section.why { border-color: #3B82F6; }
+        .brief-section.next { border-color: #10B981; }
+
+        /* Position rows */
+        .pos-row { border: 1px solid #1F1F23; border-radius: 8px; padding: 10px 12px; background: #0F0F11; }
+
+        .account-select {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 7px 12px;
+            border-radius: 8px;
+            background: #121214;
+            border: 1px solid #1F1F23;
+            font-size: 12.5px;
+            font-weight: 600;
+            color: #E8E8EC;
+            cursor: pointer;
+        }
+
+        /* Equity chart */
+        .eq-chart { display: none; }
+        .eq-chart.active { display: block; }
+
+        /* Sidebar collapse chevron */
+        .collapse-btn {
+            width: 28px;
+            height: 28px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6E6E78;
+            border: none;
+            background: transparent;
+            transition: all 0.15s;
+        }
+
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+        /* Avatar */
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #052E1F;
+            font-weight: 800;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .logo-badge {
+            width: 30px;
+            height: 30px;
+            border-radius: 8px;
+            background: #FFFFFF;
+            color: #0A0A0C;
+            font-weight: 900;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            body.collapsed .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ LEFT SIDEBAR (PRD §3.1) ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5" id="main-nav">
+                <button class="nav-item active" data-view="dashboard" data-icon="layout-dashboard">
+                    <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
+                </button>
+                <button class="nav-item" data-view="journal" data-icon="book-open">
+                    <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
+                </button>
+                <button class="nav-item" data-view="insights" data-icon="sparkles">
+                    <svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span>
+                    <span class="nav-label ml-auto text-[10px] font-bold text-[#10B981] bg-[rgba(16,185,129,0.1)] px-1.5 py-0.5 rounded">NEW</span>
+                </button>
+                <button class="nav-item" data-view="analytics" data-icon="bar-chart-3">
+                    <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
+                </button>
+                <button class="nav-item" data-view="backtesting" data-icon="flask-conical">
+                    <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                </button>
+                <button class="nav-item" data-view="strategy-lab" data-icon="beaker">
+                    <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
+                </button>
+                <button class="nav-item" data-view="replay" data-icon="history">
+                    <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
+                </button>
+                <button class="nav-item" data-view="risk" data-icon="shield-alert">
+                    <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
+                </button>
+                <button class="nav-item" data-view="discipline" data-icon="target">
+                    <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
+                </button>
+                <button class="nav-item" data-view="calendar" data-icon="calendar-days">
+                    <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
+                </button>
+                <button class="nav-item" data-view="community" data-icon="users">
+                    <svg data-lucide="users"></svg><span class="nav-label">Community</span>
+                </button>
+                <button class="nav-item" data-view="reports" data-icon="file-text">
+                    <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
+                </button>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <button class="nav-item" data-view="notifications" data-icon="bell">
+                    <svg data-lucide="bell"></svg><span class="nav-label">Notifications</span>
+                </button>
+                <button class="nav-item" data-view="help" data-icon="help-circle">
+                    <svg data-lucide="help-circle"></svg><span class="nav-label">Help</span>
+                </button>
+                <button class="nav-item" data-view="settings" data-icon="settings">
+                    <svg data-lucide="settings"></svg><span class="nav-label">Settings</span>
+                </button>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN AREA ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top global bar (PRD §3.1) -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search trades, symbols, strategies…">
+                </div>
+
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                        London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed">
+                        <span class="conn-dot"></span> Connected
+                    </div>
+                    <button id="log-trade-btn" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button id="account-btn" class="account-select hide-when-collapsed">
+                        <span id="account-balance" class="num text-[12px]">$10,000</span>
+                        <span class="text-[#6E6E78]">·</span>
+                        <span id="account-name">Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content — the active view renders into #view-root -->
+            <main id="app-main" class="flex-1 overflow-y-auto">
+                <div id="view-root" class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-5"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast container (for placeholder feedback) -->
+    <div id="toasts" class="fixed bottom-4 right-4 z-50 flex flex-col gap-2"></div>
+
+    <script>
+        /* ============================================================================
+           ⚙️  APP CORE — routing, state, views, and backend placeholders
+           ----------------------------------------------------------------------------
+           This file is a FUNCTIONAL SHELL. The visual design is unchanged from the
+           static pages. What's new:
+
+             1. `App`  — central state store + hash router (`#/journal`, `#/risk`, ...)
+             2. `views` — one controller per board; each renders into #view-root
+             3. `API`  — every backend call lives here. The stubs below return demo
+                         data so the app runs today. REPLACE the body of each stub
+                         with your real fetch() calls — that's your TODO.
+           ============================================================================ */
+
+        (function () {
+            'use strict';
+
+            /* ------------------------------------------------------------------
+               1. STATE STORE (simple pub/sub — swap for Zustand/Redux later)
+               ------------------------------------------------------------------ */
+            const initialAccounts = [
+                { id: 'prop-a',  name: 'Prop Firm A', balance: 10000, dailyLossLimit: 100, maxDrawdown: 500, riskPerTrade: 25, currency: 'USD' },
+                { id: 'personal', name: 'Personal',   balance: 25000, dailyLossLimit: 250, maxDrawdown: 1500, riskPerTrade: 50, currency: 'USD' },
+            ];
+
+            const App = {
+                state: {
+                    view: 'dashboard',          // active view key (matches data-view)
+                    accounts: initialAccounts,
+                    selectedAccountId: 'prop-a',
+                    period: '30d',               // 7d | 30d | 90d | all
+                    filters: { symbol: '', setup: '', session: '', result: '' },
+                    search: '',
+                    lastAction: null,            // { name, at } for audit / toasts
+                    loading: false,
+                },
+
+                listeners: new Set(),
+
+                // setState(patch) — the ONLY way to mutate state. Re-renders active view.
+                setState(patch) {
+                    Object.assign(this.state, patch);
+                    this.listeners.forEach(fn => fn(this.state));
+                },
+
+                subscribe(fn) {
+                    this.listeners.add(fn);
+                    return () => this.listeners.delete(fn); // returns an unsubscribe fn
+                },
+
+                get selectedAccount() {
+                    return this.state.accounts.find(a => a.id === this.state.selectedAccountId) || this.state.accounts[0];
+                },
+            };
+
+            /* ------------------------------------------------------------------
+               2. ROUTER — hash based:  app.html#/journal  →  view "journal"
+               Back/forward buttons work. Deep links work. No server config needed.
+               ------------------------------------------------------------------ */
+            const VIEW_KEYS = ['dashboard', 'journal', 'insights', 'analytics', 'backtesting',
+                               'strategy-lab', 'replay', 'risk', 'discipline', 'calendar',
+                               'community', 'reports', 'notifications', 'help', 'settings'];
+
+            function parseHash() {
+                // "#/risk"  →  { view: 'risk', params: {} }
+                // "#/journal?action=log-trade"  →  { view: 'journal', params: { action: 'log-trade' } }
+                const raw = (location.hash || '').replace(/^#\/?/, '');
+                const [viewPart, query] = raw.split('?');
+                const view = VIEW_KEYS.includes(viewPart) ? viewPart : 'dashboard';
+                const params = {};
+                if (query) new URLSearchParams(query).forEach((v, k) => { params[k] = v; });
+                return { view, params };
+            }
+
+            function navigate(view, params) {
+                const q = params ? '?' + new URLSearchParams(params).toString() : '';
+                const target = '#/' + view + q;
+                if (location.hash === target) { render(); return; } // same view → just re-render
+                location.hash = target;
+            }
+
+            window.addEventListener('hashchange', () => {
+                const { view, params } = parseHash();
+                App.setState({ view, lastAction: params.action ? { name: params.action, at: Date.now() } : App.state.lastAction });
+            });
+
+            /* ------------------------------------------------------------------
+               3. VIEWS — one controller per board. Each receives the #view-root
+               element, the current state, and the API. Write your view code in
+               the functions marked  // TODO(you).
+               ------------------------------------------------------------------ */
+            const views = {
+                /* ------------------------- DASHBOARD ------------------------- */
+                dashboard: {
+                    title: 'Good morning, Alex',
+                    render(el, state, api) {
+                        // NOTE: every number below comes from api.getDashboard().
+                        // Replace the stub with your real endpoint and this view
+                        // lights up with live data automatically.
+                        api.getDashboard(state.selectedAccountId, state.period).then(data => {
+                            el.innerHTML = `
+                                <div class="flex flex-wrap items-end justify-between gap-4">
+                                    <div>
+                                        <h1 class="text-[22px] font-bold tracking-tight">Good morning, Alex</h1>
+                                        <p class="text-[13px] text-[#6E6E78] mt-0.5">${data.dateLine}</p>
+                                    </div>
+                                    <div class="flex items-center gap-2.5">
+                                        <button class="btn-ghost" data-action="start-review">Start Review</button>
+                                        <button class="btn-primary" data-action="log-trade">Log Trade</button>
+                                    </div>
+                                </div>
+
+                                <!-- KPI row -->
+                                <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                                    ${kpiCard('Net P&L Today', data.netPnl.tag, data.netPnl.value, 'pos', data.netPnl.delta, data.netPnl.deltaLabel, data.netPnl.pct)}
+                                    ${kpiCard('Daily Risk Budget', data.dailyRisk.tag, data.dailyRisk.value, '', data.dailyRisk.remaining, 'remaining of $' + data.dailyRisk.limit, '')}
+                                    ${kpiCard('Drawdown Remaining', data.drawdown.tag, data.drawdown.value, '', data.drawdown.detail, '', '')}
+                                    ${kpiCard('Discipline Score', data.discipline.tag, data.discipline.value, '', data.discipline.sub, '', data.discipline.trend)}
+                                </div>
+
+                                <!-- Quick actions -->
+                                <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
+                                    ${quickAction('plus', 'Log Trade', 'log-trade')}
+                                    ${quickAction('file-down', 'Import Trade', 'import-trade')}
+                                    ${quickAction('check-circle-2', 'Review Day', 'review-day')}
+                                    ${quickAction('play', 'Open Replay', 'open-replay')}
+                                    ${quickAction('settings', 'Open Strategy Lab', 'strategy-lab')}
+                                </div>
+
+                                <!-- Placeholder data panels — wire these to api.getDashboard() -->
+                                <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                                    <div class="xl:col-span-2 panel p-5">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <div>
+                                                <div class="panel-title">Equity Curve</div>
+                                                <div class="panel-sub">${data.periodLabel}</div>
+                                            </div>
+                                            ${segControl(state.period, ['7d', '30d', '90d'], 'period')}
+                                        </div>
+                                        <div class="flex items-center justify-center h-[220px] rounded-lg border border-dashed border-[#26262B] text-[13px] text-[#6E6E78]">
+                                            Equity chart goes here — feed it ${data.equityPoints.length} points from API
+                                        </div>
+                                    </div>
+
+                                    <div class="panel p-5">
+                                        <div class="flex items-center justify-between mb-4">
+                                            <div class="panel-title">Risk Summary</div>
+                                            <span class="tag tag-emerald">Normal</span>
+                                        </div>
+                                        <div class="flex items-end justify-between mb-2">
+                                            <span class="label-xs">Daily Limit</span>
+                                            <span class="num text-[16px] font-bold">$${data.risk.limit}</span>
+                                        </div>
+                                        <div class="flex items-end justify-between mb-1">
+                                            <span class="label-xs">Used</span>
+                                            <span class="num text-[13px]">$${data.risk.used} (${data.risk.pct}%)</span>
+                                        </div>
+                                        <div class="risk-track mt-2"><div class="risk-consumed" style="width:${data.risk.pct}%"></div></div>
+                                        <div class="flex justify-between mt-1.5 text-[11px] text-[#6E6E78]">
+                                            <span class="num">$${data.risk.remaining} remaining</span><span>${100 - data.risk.pct}% left</span>
+                                        </div>
+                                        <div class="mt-4 pt-3 border-t border-[#1F1F23]">
+                                            <div class="panel-title mb-2">Best Setup</div>
+                                            <div class="flex items-center justify-between text-[13px]">
+                                                <span class="text-[#C4C4CC]">${data.bestSetup.name}</span>
+                                                <span class="tag tag-emerald">${data.bestSetup.winRate}% WR</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        }).catch(err => renderError(el, err));
+                    }
+                },
+
+                /* ------------------------- PLACEHOLDER VIEWS ------------------------- */
+                // Each of these is a working skeleton: correct header + a frame that
+                // shows exactly which API function it will call. Replace `render`
+                // with your own implementation — the routing/state already works.
+            };
+
+            // Build placeholder controllers for every remaining board.
+            const PLACEHOLDER_VIEWS = {
+                journal:    { title: 'Journal',      icon: 'book-open',     api: 'getTrades',       note: 'Trade table, filters, saved views, fast/detailed entry' },
+                insights:   { title: 'Insights',     icon: 'sparkles',      api: 'getInsights',     note: 'Performance score, 3 things to know, deep-dive tabs' },
+                analytics:  { title: 'Analytics',    icon: 'bar-chart-3',   api: 'getAnalytics',    note: 'Overview, equity, distribution, strategy, session, risk' },
+                'backtesting': { title: 'Backtesting', icon: 'flask-conical', api: 'getBacktest',   note: 'Strategy backtests using your Strategy Lab risk model' },
+                'strategy-lab': { title: 'Strategy Lab', icon: 'beaker',    api: 'getSystemConfig', note: 'Accounts, strategies, rule sets, tags, system map' },
+                replay:     { title: 'Market Replay', icon: 'history',      api: 'getReplaySession', note: 'Relive the market like a movie' },
+                risk:       { title: 'Risk',         icon: 'shield-alert',  api: 'getRiskState',    note: 'Status, remaining buffers, drawdown, history' },
+                discipline: { title: 'Discipline',   icon: 'target',        api: 'getDiscipline',   note: 'Score vs YOUR system, rules, violations, reviews' },
+                calendar:   { title: 'Calendar',     icon: 'calendar-days', api: 'getCalendar',     note: 'Monthly P&L, session reviews, risk consumed' },
+                community:  { title: 'Community',    icon: 'users',         api: 'getCommunity',    note: 'Channels, mentors, events' },
+                reports:    { title: 'Reports',      icon: 'file-text',     api: 'getReports',      note: 'Period reports with rule context' },
+                notifications: { title: 'Notifications', icon: 'bell',      api: 'getNotifications', note: 'Alerts, breaches, review reminders' },
+                help:       { title: 'Help',         icon: 'help-circle',   api: null,              note: 'Docs, guides, support' },
+                settings:   { title: 'Settings',     icon: 'settings',      api: 'getSettings',     note: 'Profile, workspace, billing' },
+            };
+
+            Object.keys(PLACEHOLDER_VIEWS).forEach(key => {
+                const v = PLACEHOLDER_VIEWS[key];
+                views[key] = {
+                    title: v.title,
+                    render(el, state, api) {
+                        const apiCall = v.api ? `<code class="num text-[#34D399]">api.${v.api}(${state.selectedAccountId ? "accountId" : ""})</code>` : 'no backend call';
+                        el.innerHTML = `
+                            <div class="flex flex-wrap items-end justify-between gap-4">
+                                <div>
+                                    <h1 class="text-[22px] font-bold tracking-tight">${v.title}</h1>
+                                    <p class="text-[13px] text-[#6E6E78] mt-0.5">${v.note} · account: <b class="text-[#C4C4CC]">${App.selectedAccount.name}</b> · period: <b class="text-[#C4C4CC]">${state.period}</b></p>
+                                </div>
+                                <button class="btn-primary" data-action="back-to-dashboard">Back to Dashboard</button>
+                            </div>
+
+                            <div class="panel p-6">
+                                <div class="panel-title mb-1">This view is wired to routing & state ✓</div>
+                                <p class="panel-sub mb-4">The sidebar click, hash route and account/period state all work. Now implement the view — your data hook is:</p>
+                                <div class="px-4 py-3 rounded-lg bg-[#0F0F11] border border-[#1F1F23] mb-4">${apiCall}</div>
+                                <p class="text-[12.5px] text-[#6E6E78] leading-relaxed">
+                                    Replace the <code class="num">render</code> function for <code class="num">views['${key}']</code> in the
+                                    <code class="num">views</code> registry with your own UI. State is already available:
+                                    <code class="num">state.filters</code>, <code class="num">state.period</code>, <code class="num">App.selectedAccount</code>.
+                                    Last action: <b class="text-[#C4C4CC]">${state.lastAction ? state.lastAction.name : '—'}</b>
+                                </p>
+                            </div>
+                        `;
+                    }
+                };
+            });
+
+            /* ------------------------------------------------------------------
+               4. RENDER — applies active nav state + calls the active view
+               Multiple setState() calls within one frame are coalesced into a
+               single render (no flicker, no loops).
+               ------------------------------------------------------------------ */
+            let renderQueued = false;
+            function render() {
+                if (renderQueued) return;
+                renderQueued = true;
+                requestAnimationFrame(() => {
+                    renderQueued = false;
+                    try {
+                        // active nav highlight
+                        document.querySelectorAll('#main-nav .nav-item').forEach(btn => {
+                            btn.classList.toggle('active', btn.dataset.view === App.state.view);
+                        });
+                        // account chip
+                        const acc = App.selectedAccount;
+                        document.getElementById('account-balance').textContent = '$' + acc.balance.toLocaleString();
+                        document.getElementById('account-name').textContent = acc.name;
+
+                        // view
+                        const root = document.getElementById('view-root');
+                        const view = views[App.state.view] || views.dashboard;
+                        view.render(root, App.state, API);
+                        if (window.lucide) lucide.createIcons();
+                    } catch (err) {
+                        renderError(document.getElementById('view-root'), err);
+                    }
+                });
+            }
+
+            function renderError(el, err) {
+                el.innerHTML = `<div class="panel p-6 border-[rgba(239,68,68,0.3)]">
+                    <div class="panel-title text-[#F87171]">Failed to load view</div>
+                    <p class="text-[12.5px] text-[#6E6E78] mt-1">${String(err && err.message || err)}</p>
+                </div>`;
+            }
+
+            /* ------------------------------------------------------------------
+               5. API LAYER — ⬇️⬇️⬇️  YOUR BACKEND HOOKS  ⬇️⬇️⬇️
+               Every function returns a Promise so swapping in real fetch() calls
+               is a drop-in change. The demo values below keep the shell running.
+               ------------------------------------------------------------------ */
+            const API = {
+                // ---- Dashboard ----
+                getDashboard(accountId, period) {
+                    // TODO(you): replace with  fetch('/api/dashboard?account=' + accountId + '&period=' + period).then(r => r.json())
+                    const periodLabel = { '7d': 'Last 7 days', '30d': 'Last 30 days', '90d': 'Last 90 days' }[period] || 'Last 30 days';
+                    return new Promise(resolve => setTimeout(() => resolve({
+                        dateLine: 'Tuesday, Aug 11, 2026 · London session · 2 trades today',
+                        netPnl:   { value: '+$312.50', tag: '+1.25R', delta: '+$128.30', deltaLabel: 'vs yesterday (+$184.20)', pct: '' },
+                        dailyRisk: { value: '$180', tag: 'Normal', remaining: '$180', limit: 250 },
+                        drawdown:  { value: '$820', tag: '18% used', detail: 'of $1,000 limit' },
+                        discipline: { value: '92<span class="text-[14px] text-[#6E6E78] font-semibold">/100</span>', tag: 'On track', sub: 'rule adherence 94%', trend: '▲ 3 pts' },
+                        periodLabel: periodLabel,
+                        equityPoints: [/* TODO(you): pass real equity series here */],
+                        risk: { limit: 250, used: 70, pct: 28, remaining: 180 },
+                        bestSetup: { name: 'FVG + MSS (NY Session)', winRate: 72 },
+                    }), 120));
+                },
+
+                // ---- Journal ----
+                getTrades(filters) {
+                    // TODO(you): fetch('/api/trades', { body: JSON.stringify(filters) })
+                    return Promise.resolve([]); // ← return the trade rows
+                },
+                saveTrade(trade) {
+                    // TODO(you): POST /api/trades
+                    return Promise.resolve({ ok: true, id: 'T-' + Date.now() });
+                },
+
+                // ---- Insights / Analytics / Risk / Discipline ----
+                getInsights(accountId)      { /* TODO(you) */ return Promise.resolve({ score: 84, thingsToKnow: [] }); },
+                getAnalytics(accountId)     { /* TODO(you) */ return Promise.resolve({ metrics: {}, equity: [] }); },
+                getRiskState(accountId)     { /* TODO(you) */ return Promise.resolve({ status: 'normal', dailyRemaining: 180, drawdownRemaining: 820 }); },
+                getDiscipline(accountId)    { /* TODO(you) */ return Promise.resolve({ score: 92, adherence: 94, violations: 0 }); },
+
+                // ---- Strategy Lab / Backtesting / Replay ----
+                getSystemConfig()           { /* TODO(you) */ return Promise.resolve({ accounts: App.state.accounts, strategies: [] }); },
+                saveStrategy(strategy)      { /* TODO(you) */ return Promise.resolve({ ok: true }); },
+                getBacktest(config)         { /* TODO(you) */ return Promise.resolve({ trades: [], equity: [] }); },
+                getReplaySession(symbol)    { /* TODO(you) */ return Promise.resolve({ candles: [], trades: [] }); },
+
+                // ---- Calendar / Community / Reports / Misc ----
+                getCalendar(month)          { /* TODO(you) */ return Promise.resolve({ days: [] }); },
+                getCommunity()              { /* TODO(you) */ return Promise.resolve({ channels: [] }); },
+                getReports(period)          { /* TODO(you) */ return Promise.resolve({ reports: [] }); },
+                getNotifications()          { /* TODO(you) */ return Promise.resolve({ items: [] }); },
+                getSettings()               { /* TODO(you) */ return Promise.resolve({ profile: {} }); },
+
+                // ---- Global search (top bar) ----
+                search(query) {
+                    // TODO(you): fetch('/api/search?q=' + encodeURIComponent(query))
+                    return Promise.resolve({ trades: [], strategies: [], tags: [] });
+                },
+            };
+
+            /* ------------------------------------------------------------------
+               6. CLICK HANDLERS — sidebar, top bar, in-view actions
+               ------------------------------------------------------------------ */
+            // Sidebar navigation (delegated — works for every button)
+            document.getElementById('main-nav').addEventListener('click', e => {
+                const btn = e.target.closest('.nav-item[data-view]');
+                if (btn) navigate(btn.dataset.view);
+            });
+
+            // Collapse toggle (unchanged behavior)
+            document.getElementById('collapse-btn').addEventListener('click', () => {
+                document.body.classList.toggle('collapsed');
+            });
+
+            // Top bar — account switcher cycles demo accounts
+            document.getElementById('account-btn').addEventListener('click', () => {
+                const ids = App.state.accounts.map(a => a.id);
+                const i = ids.indexOf(App.state.selectedAccountId);
+                App.setState({ selectedAccountId: ids[(i + 1) % ids.length] });
+                toast('Switched account → ' + App.selectedAccount.name);
+            });
+
+            // Top bar — Log Trade jumps to the Journal view
+            document.getElementById('log-trade-btn').addEventListener('click', () => {
+                navigate('journal', { action: 'log-trade' });
+            });
+
+            // Top bar — global search (debounced)
+            const searchInput = document.getElementById('global-search');
+            let searchTimer;
+            searchInput.addEventListener('input', () => {
+                clearTimeout(searchTimer);
+                searchTimer = setTimeout(() => {
+                    App.setState({ search: searchInput.value });
+                    if (searchInput.value.trim()) {
+                        API.search(searchInput.value).then(() => {
+                            toast('Searched "' + searchInput.value.trim() + '" — wire api.search() to your backend');
+                        });
+                    }
+                }, 300);
+            });
+
+            // In-view actions (delegated from #view-root)
+            document.getElementById('view-root').addEventListener('click', e => {
+                const act = e.target.closest('[data-action]');
+                if (!act) return;
+                const action = act.getAttribute('data-action');
+
+                // quick actions → routes
+                if (action === 'log-trade') return navigate('journal', { action: 'log-trade' });
+                if (action === 'strategy-lab') return navigate('strategy-lab');
+                if (action === 'open-replay') return navigate('replay');
+                if (action === 'back-to-dashboard') return navigate('dashboard');
+                if (action === 'start-review') return navigate('discipline', { action: 'review' });
+
+                // quick actions that need backend work — placeholder
+                if (action === 'import-trade') return toast('Import Trade — hook up API.importTrades()');
+                if (action === 'review-day') return toast('Review Day — hook up API.getDayReview()');
+
+                toast('Action "' + action + '" fired');
+            });
+
+            // Period segmented control (in Dashboard) — delegated
+            document.getElementById('view-root').addEventListener('click', e => {
+                const seg = e.target.closest('[data-period]');
+                if (seg) {
+                    App.setState({ period: seg.getAttribute('data-period') });
+                    document.querySelectorAll('#view-root [data-period]').forEach(b => b.classList.toggle('active', b === seg));
+                }
+            });
+
+            /* ------------------------------------------------------------------
+               7. SMALL UI HELPERS
+               ------------------------------------------------------------------ */
+            const kpiCard = (label, tag, value, cls, sub1, sub2, sub3) => `
+                <div class="panel kpi p-4">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="label-xs">${label}</span>
+                        ${tag ? `<span class="tag tag-emerald">${tag}</span>` : ''}
+                    </div>
+                    <div class="kpi-value ${cls} num">${value}</div>
+                    ${sub1 ? `<div class="flex items-center gap-1.5 mt-2 text-[12px] text-[#6E6E78]"><span class="text-[#34D399] num font-semibold">${sub1}</span> ${sub2 || ''}</div>` : (sub2 ? `<div class="text-[12px] text-[#6E6E78] mt-0.5">${sub2}</div>` : '')}
+                    ${sub3 ? `<div class="flex justify-between mt-1.5 text-[11px] text-[#6E6E78]"><span class="num"></span><span>${sub3}</span></div>` : ''}
+                </div>`;
+
+            const quickAction = (icon, label, action) => `
+                <button class="quick-action" data-action="${action}">
+                    <svg data-lucide="${icon}"></svg> ${label}
+                </button>`;
+
+            const segControl = (active, options, attr) => `
+                <div class="seg">
+                    ${options.map(o => `<button class="${o === active ? 'active' : ''}" data-${attr}="${o}">${o.toUpperCase()}</button>`).join('')}
+                </div>`;
+
+            function toast(msg) {
+                const el = document.createElement('div');
+                el.className = 'px-4 py-2.5 rounded-lg bg-[#16161A] border border-[#26262B] text-[12.5px] text-[#E8E8EC] shadow-lg';
+                el.textContent = msg;
+                document.getElementById('toasts').appendChild(el);
+                setTimeout(() => el.remove(), 2600);
+            }
+
+            /* ------------------------------------------------------------------
+               8. BOOT
+               ------------------------------------------------------------------ */
+            // Expose the core to your own scripts / devtools
+            window.App = App;
+            // Reset hook — resetDemo() / ?reset=1 calls this before reloading
+            window.resetAppState = function () {
+                App.state.accounts = JSON.parse(JSON.stringify(initialAccounts));
+                App.state.selectedAccountId = 'prop-a';
+                App.state.period = '30d';
+                App.state.search = '';
+                App.state.lastAction = null;
+                App.state.filters = { symbol: '', setup: '', session: '', result: '' };
+            };
+            window.API = API;
+            window.views = views;
+            window.navigate = navigate;
+
+            // Subscribe re-render to every state change
+            App.subscribe(() => render());
+
+            // First paint
+            const { view, params } = parseHash();
+            App.state.view = view;
+            if (params.action) App.state.lastAction = { name: params.action, at: Date.now() };
+            render();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+</body>
+</html>

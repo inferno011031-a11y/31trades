@@ -1,0 +1,1148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Discipline</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN, Lucide & shared demo data -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: #0A0A0C;
+            color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+
+        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 13px; font-weight: 700; color: #E8E8EC; }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+
+        .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
+        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
+        .tag-blue { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.25); }
+        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
+
+        .ins-tab {
+            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        }
+        .ins-tab:hover { color: #E8E8EC; }
+        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+
+        .ins-panel { display: none; animation: fadeIn 0.3s ease; }
+        .ins-panel.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        .bar-track { height: 5px; background: #1F1F23; border-radius: 999px; overflow: hidden; }
+        .bar-fill { height: 100%; border-radius: 999px; }
+
+        .metric-mini { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 12px 14px; }
+        .metric-mini .label-xs { margin-bottom: 6px; }
+        .metric-mini .val { font-size: 18px; font-weight: 700; }
+
+        .kpi { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 14px 16px; }
+        .kpi .k-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6E6E78; margin-bottom: 6px; }
+        .kpi .k-val { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
+        .kpi .k-sub { font-size: 11px; color: #6E6E78; margin-top: 3px; }
+
+        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .tbl th {
+            text-align: left; padding: 8px 10px; color: #6E6E78; font-size: 10.5px; font-weight: 700;
+            text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #1F1F23;
+            white-space: nowrap; user-select: none;
+        }
+        .tbl td { padding: 8px 10px; border-bottom: 1px solid #17171A; white-space: nowrap; vertical-align: top; }
+        .tbl tbody tr:hover { background: #16161A; }
+        .tbl tbody tr:last-child td { border-bottom: none; }
+        .tbl-wrap { overflow-x: auto; }
+
+        .fsel {
+            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
+            padding: 7px 10px; font-size: 12.5px; font-weight: 600; color: #C4C4CC;
+            outline: none; cursor: pointer; transition: border-color 0.15s;
+        }
+        .fsel:hover, .fsel:focus { border-color: #2E2E35; color: #FFFFFF; }
+        .fsel option { background: #121214; color: #C4C4CC; }
+
+        .finput {
+            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
+            padding: 7px 10px; font-size: 12.5px; color: #E8E8EC;
+            outline: none; width: 90px; transition: border-color 0.15s;
+        }
+        .finput:focus { border-color: #2E2E35; }
+
+        .toggle { position: relative; width: 38px; height: 22px; flex-shrink: 0; cursor: pointer; }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle .track {
+            position: absolute; inset: 0; border-radius: 999px; background: #1F1F23;
+            border: 1px solid #2E2E35; transition: all 0.2s;
+        }
+        .toggle .knob {
+            position: absolute; top: 2px; left: 2px; width: 16px; height: 16px; border-radius: 999px;
+            background: #8A8A93; transition: all 0.2s;
+        }
+        .toggle input:checked + .track { background: rgba(16,185,129,0.25); border-color: rgba(16,185,129,0.5); }
+        .toggle input:checked + .track + .knob, .toggle input:checked ~ .knob { transform: translateX(16px); background: #10B981; }
+
+        .rule-row { display: flex; align-items: center; gap: 14px; padding: 13px 16px; border-radius: 10px; background: #0F0F11; border: 1px solid #1F1F23; margin-bottom: 8px; }
+        .rule-row:hover { border-color: #2E2E35; }
+
+        .check-row { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border-radius: 10px; background: #0F0F11; border: 1px solid #1F1F23; margin-bottom: 8px; }
+
+        .state-pill { display: inline-flex; align-items: center; gap: 8px; padding: 10px 18px; border-radius: 10px; font-weight: 800; font-size: 14px; letter-spacing: 0.02em; }
+        .conf { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; }
+        .conf .dot { width: 7px; height: 7px; border-radius: 999px; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
+        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item active"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="#" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input type="text" class="search-input" placeholder="Ask anything… e.g. why did I break my rules this week?">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                    <button class="account-select hide-when-collapsed">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Discipline</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Did I follow my plan? Define rules → check before trade → detect → review → adapt.</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <button id="open-reset" class="btn-ghost !py-2 !px-3.5 text-[12.5px]">
+                                <svg data-lucide="rotate-ccw" class="w-4 h-4"></svg> Recovery / Reset
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Tabs -->
+                    <div class="panel p-1.5 flex gap-1 overflow-x-auto">
+                        <button class="ins-tab active" data-tab="overview">Overview</button>
+                        <button class="ins-tab" data-tab="rules">My Rules</button>
+                        <button class="ins-tab" data-tab="pretrade">Pre-Trade Check</button>
+                        <button class="ins-tab" data-tab="live">Live Monitor</button>
+                        <button class="ins-tab" data-tab="violations">Violations</button>
+                        <button class="ins-tab" data-tab="patterns">Behavior Patterns</button>
+                        <button class="ins-tab" data-tab="consistency">Consistency</button>
+                        <button class="ins-tab" data-tab="reviews">Reviews</button>
+                    </div>
+
+                    <div id="panel-overview" class="ins-panel active"></div>
+                    <div id="panel-rules" class="ins-panel"></div>
+                    <div id="panel-pretrade" class="ins-panel"></div>
+                    <div id="panel-live" class="ins-panel"></div>
+                    <div id="panel-violations" class="ins-panel"></div>
+                    <div id="panel-patterns" class="ins-panel"></div>
+                    <div id="panel-consistency" class="ins-panel"></div>
+                    <div id="panel-reviews" class="ins-panel"></div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Discipline demo build · process score, never a measure of trading skill · data is illustrative</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Recovery / Reset modal -->
+    <div id="reset-modal" class="hidden fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
+        <div class="panel w-full max-w-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div class="panel-title text-[15px]">Recovery / Reset</div>
+                <button id="close-reset" class="text-[#6E6E78] hover:text-white text-[18px] leading-none">✕</button>
+            </div>
+            <div id="reset-body"></div>
+            <div class="flex gap-3 mt-5">
+                <button id="reset-step" class="btn-primary flex-1 justify-center">Begin reset</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        (function () {
+            const $ = id => document.getElementById(id);
+            const D = window.DemoTrades;
+            const { fmtMoney, fmtR, pct, stats, groupBy, SETUPS, SESSIONS, day } = D;
+
+            // Canonical single source of truth — discipline evaluates the same
+            // local trades every other screen reads.
+            const core = window.TradeMindCore;
+            const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
+            const TODAY = iso(new Date());
+            const ANCHOR = new Date();
+            let ALL = [];
+            let accountId = null;
+
+            // Numeric rule thresholds are sourced from the account's active risk
+            // policy (ConfigAPI) — the same source Risk and the Journal use.
+            function syncRules() {
+                const pol = accountId && core ? core.activePolicy(accountId) : null;
+                const v = pol ? pol.values : {};
+                const byId = {}; RULES.forEach(r => { byId[r.id] = r; });
+                if (byId.risk && v.riskPerTrade) byId.risk.threshold = v.riskPerTrade;
+                if (byId['daily-loss'] && v.maxDailyLoss) byId['daily-loss'].threshold = v.maxDailyLoss;
+                if (byId['trades-day'] && v.maxTrades) byId['trades-day'].threshold = v.maxTrades;
+                if (byId.cooldown && v.cooldown) byId.cooldown.threshold = v.cooldown;
+            }
+
+            function refreshData() {
+                if (core && core.Accounts && core.Accounts.length) {
+                    accountId = core.selectedAccountId() || core.Accounts[0].id;
+                    ALL = core.Trades.filter(t => t.account_id === accountId);
+                    buildDayContext();
+                    syncRules();
+                } else {
+                    accountId = null; ALL = [];
+                }
+            }
+
+            // ============ RULES (trading plan) ============
+            const PRIORITY_COLOR = { Critical: 'tag-red', High: 'tag-amber', Medium: 'tag-blue', Low: 'tag-gray' };
+            const RULES = [
+                { id: 'risk', name: 'Max risk per trade', type: 'Numeric', threshold: 25, unit: '$', priority: 'Critical', block: true, enabled: true, desc: 'Planned risk per trade stays within limit' },
+                { id: 'daily-loss', name: 'Max daily loss', type: 'Numeric', threshold: 250, unit: '$', priority: 'Critical', block: true, enabled: true, desc: 'Stop for the day when the loss budget is gone' },
+                { id: 'trades-day', name: 'Max trades per day', type: 'Count', threshold: 3, unit: ' trades', priority: 'High', block: false, enabled: true, desc: 'Trade limit — quality over frequency' },
+                { id: 'cooldown', name: 'Cooldown after loss', type: 'Time', threshold: 15, unit: ' min', priority: 'High', block: false, enabled: true, desc: 'No new entry right after a loss' },
+                { id: 'session', name: 'Allowed sessions', type: 'Strategy', values: ['London', 'New York'], priority: 'Medium', block: false, enabled: true, desc: 'Trade only in your best windows' },
+                { id: 'setups', name: 'Approved setups', type: 'Strategy', values: ['MSS + FVG', 'FVG'], priority: 'Medium', block: false, enabled: true, desc: 'Only setups on the plan' },
+                { id: 'execution', name: 'Stop & exit execution', type: 'Execution', priority: 'High', block: false, enabled: true, desc: 'Planned stop, no moving, no early exits' },
+                { id: 'confirmation', name: 'Required confirmation', type: 'Manual', priority: 'Medium', block: false, enabled: true, desc: 'Wait for MSS before entry (tag-based)' }
+            ];
+
+            // ============ VIOLATION DETECTION ============
+            // Returns a structured violation event per broken rule, PRD §15.
+            function evalTrade(t, rules, ctx) {
+                const v = [];
+                const byId = {};
+                rules.forEach(r => byId[r.id] = r);
+
+                if (byId.risk && t.risk > byId.risk.threshold) {
+                    v.push({ rule: byId.risk, expected: '$' + byId.risk.threshold + ' max risk', actual: '$' + t.risk + ' risked', severity: byId.risk.priority });
+                }
+                if (byId.trades-day) {
+                    const ord = ctx.dayOrdinal(t);
+                    if (ord > byId.trades-day.threshold) {
+                        v.push({ rule: byId['trades-day'], expected: 'Max ' + byId['trades-day'].threshold + ' trades/day', actual: 'Trade #' + ord + ' of the day', severity: byId['trades-day'].priority });
+                    }
+                }
+                if (byId.cooldown && t.postLoss && t.delayMin !== null && t.delayMin < byId.cooldown.threshold) {
+                    v.push({ rule: byId.cooldown, expected: 'Wait ' + byId.cooldown.threshold + ' min after a loss', actual: 'Entered ' + t.delayMin + ' min after loss', severity: byId.cooldown.priority });
+                }
+                if (byId.session && !byId.session.values.includes(t.session)) {
+                    v.push({ rule: byId.session, expected: 'Sessions: ' + byId.session.values.join(', '), actual: 'Traded in ' + t.session, severity: byId.session.priority });
+                }
+                if (byId.setups && !byId.setups.values.includes(t.setup)) {
+                    v.push({ rule: byId.setups, expected: 'Setups: ' + byId.setups.values.join(', '), actual: 'Traded ' + t.setup, severity: byId.setups.priority });
+                }
+                if (byId.execution && t.adherence !== 'followed') {
+                    v.push({ rule: byId.execution, expected: 'Planned stop & exit', actual: 'Execution: ' + t.adherence, severity: byId.execution.priority });
+                }
+                if (byId['daily-loss']) {
+                    if (ctx.dayCumLoss(t) < -byId['daily-loss'].threshold) {
+                        v.push({ rule: byId['daily-loss'], expected: 'Daily loss budget $' + byId['daily-loss'].threshold, actual: 'Day loss exceeded budget', severity: byId['daily-loss'].priority });
+                    }
+                }
+                return v;
+            }
+
+            // Pre-compute day ordinals & cumulative losses (rebuilt on every
+            // refresh so newly logged trades are always evaluated correctly)
+            let dayTrades = {};
+            let dayOrdinalMap = {};
+            let dayCumLossMap = {};
+            const ctx = {
+                dayOrdinal: t => dayOrdinalMap[t] || 1,
+                dayCumLoss: t => dayCumLossMap[t] || 0
+            };
+
+            function buildDayContext() {
+                dayTrades = groupBy(ALL, t => iso(t.ts));
+                dayOrdinalMap = {}; dayCumLossMap = {};
+                Object.entries(dayTrades).forEach(([d, tr]) => {
+                    tr.slice().sort((a, b) => a.ts - b.ts).forEach((t, i) => {
+                        dayOrdinalMap[t] = i + 1;
+                        let loss = 0;
+                        for (let j = 0; j <= i; j++) if (tr[j].pnl < 0) loss += tr[j].pnl;
+                        dayCumLossMap[t] = loss;
+                    });
+                });
+            }
+            refreshData();
+
+            function activeRules() { return RULES.filter(r => r.enabled); }
+
+            function violationsFor(list) {
+                const rules = activeRules();
+                const out = [];
+                list.forEach(t => {
+                    evalTrade(t, rules, ctx).forEach(v => {
+                        out.push(Object.assign({ trade: t, ts: t.ts }, v));
+                    });
+                });
+                return out;
+            }
+
+            // ============ DISCIPLINE SCORE (§7) ============
+            const DIMENSIONS = [
+                { id: 'risk', label: 'Risk adherence', weight: 25, rules: ['risk', 'daily-loss'] },
+                { id: 'strategy', label: 'Strategy adherence', weight: 20, rules: ['setups', 'confirmation'] },
+                { id: 'execution', label: 'Execution adherence', weight: 20, rules: ['execution'] },
+                { id: 'frequency', label: 'Trade-frequency adherence', weight: 15, rules: ['trades-day'] },
+                { id: 'session', label: 'Session/time adherence', weight: 10, rules: ['session'] },
+                { id: 'behavior', label: 'Behavioral adherence', weight: 10, rules: ['cooldown'] }
+            ];
+
+            function dimensionScores(list) {
+                const rules = activeRules();
+                const enabled = DIMENSIONS.filter(d => d.rules.some(id => rules.some(r => r.id === id)));
+                return enabled.map(d => {
+                    // count applicable trades: at least one rule in this dimension applies
+                    let applicable = 0, compliant = 0;
+                    list.forEach(t => {
+                        const vs = evalTrade(t, rules, ctx).filter(v => d.rules.includes(v.rule.id));
+                        // a trade is "applicable" for the dimension if any dimension rule applies to it
+                        const applies = d.rules.some(id => ruleApplies(t, id, rules));
+                        if (applies) { applicable++; if (vs.length === 0) compliant++; }
+                    });
+                    return { id: d.id, label: d.label, weight: d.weight, score: applicable ? Math.round((compliant / applicable) * 100) : 100, applicable, compliant };
+                });
+            }
+            function ruleApplies(t, id, rules) {
+                const r = rules.find(x => x.id === id);
+                if (!r) return false;
+                if (id === 'cooldown') return !!t.postLoss;
+                if (id === 'trades-day') return true;
+                if (id === 'execution') return true;
+                if (id === 'confirmation') return true;
+                if (id === 'setups') return true;
+                if (id === 'session') return true;
+                if (id === 'risk' || id === 'daily-loss') return true;
+                return false;
+            }
+            function disciplineScore(list) {
+                const dims = dimensionScores(list);
+                const totalW = dims.reduce((s, d) => s + d.weight, 0);
+                const score = totalW ? Math.round(dims.reduce((s, d) => s + d.score * d.weight, 0) / totalW) : 100;
+                return { score, dims };
+            }
+
+            // ============ ADHERENCE BY RULE ============
+            function ruleAdherence(list) {
+                const rules = activeRules();
+                return rules.map(r => {
+                    let opp = 0, comp = 0;
+                    list.forEach(t => {
+                        if (!ruleApplies(t, r.id, rules)) return;
+                        opp++;
+                        const vs = evalTrade(t, rules, ctx).filter(v => v.rule.id === r.id);
+                        if (!vs.length) comp++;
+                    });
+                    return { rule: r, opp, comp, rate: opp ? Math.round((comp / opp) * 100) : 100 };
+                });
+            }
+
+            // ============ HELPERS ============
+            const kpi = (label, val, sub, cls) => '<div class="kpi"><div class="k-label">' + label + '</div><div class="k-val num ' + (cls || 'text-white') + '">' + val + '</div>' + (sub ? '<div class="k-sub">' + sub + '</div>' : '') + '</div>';
+            const prioTag = p => '<span class="tag ' + (PRIORITY_COLOR[p] || 'tag-gray') + '">' + p + '</span>';
+            const panel = (title, body, extra) => '<div class="panel p-5"><div class="flex items-center justify-between mb-4"><div class="panel-title">' + title + '</div>' + (extra || '') + '</div>' + body + '</div>';
+            const bar = (rate, color) => '<div class="bar-track"><div class="bar-fill" style="width:' + rate + '%;background:' + (color || (rate >= 80 ? '#34D399' : rate >= 60 ? '#F59E0B' : '#EF4444')) + '"></div></div>';
+
+            // ============ OVERVIEW ============
+            function renderOverview() {
+                const list = ALL;
+                const ds = disciplineScore(list);
+                const adherence = ruleAdherence(list);
+                const viols = violationsFor(list);
+                const crit = viols.filter(v => v.severity === 'Critical');
+                const recent = viols.slice(-5).reverse();
+
+                const scoreCls = ds.score >= 80 ? 'text-[#34D399]' : ds.score >= 60 ? 'text-[#FBBF24]' : 'text-[#F87171]';
+                const scoreCard =
+                    '<div class="panel p-6 flex flex-col items-center justify-center text-center">' +
+                        '<div class="label-xs mb-2">Discipline score</div>' +
+                        '<div class="num text-[54px] font-extrabold leading-none ' + scoreCls + '">' + ds.score + '</div>' +
+                        '<div class="text-[12px] text-[#6E6E78] mt-1">/ 100 · process-based, not profitability</div>' +
+                        '<div class="w-full mt-4">' + bar(ds.score, scoreCls === 'text-[#34D399]' ? '#34D399' : scoreCls === 'text-[#FBBF24]' ? '#F59E0B' : '#EF4444') + '</div>' +
+                        '<div class="text-[11px] text-[#55555E] mt-3">A losing trade that followed the plan is not a failure. A winning trade that broke a rule is still a violation.</div>' +
+                    '</div>';
+
+                // today status
+                const todayTrades = dayTrades[TODAY] || [];
+                const todayRisk = todayTrades.reduce((s, t) => s + t.risk, 0);
+                const todayViols = todayTrades.length ? violationsFor(todayTrades) : [];
+                const todayCard = panel('Today',
+                    '<div class="grid grid-cols-3 gap-3">' +
+                        kpi('Trades', String(todayTrades.length), '', 'text-white') +
+                        kpi('Risk used', '$' + todayRisk, 'of $' + (RULES.find(r => r.id === 'risk').threshold * 3) + ' typical day', todayRisk > 75 ? 'text-[#F87171]' : 'text-white') +
+                        kpi('Violations', String(todayViols.length), todayViols.filter(v => v.severity === 'Critical').length + ' critical', todayViols.length ? 'text-[#F87171]' : 'text-[#34D399]') +
+                    '</div>' +
+                    (todayViols.length ? '<div class="mt-3 flex flex-col gap-1.5">' + todayViols.slice(0, 3).map(v =>
+                        '<div class="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23]"><span class="text-[12px] text-[#C4C4CC]">' + esc(v.rule.name) + '</span>' + prioTag(v.severity) + '</div>').join('') + '</div>'
+                        : '<div class="mt-3 text-[12.5px] text-[#34D399] font-semibold">No violations today — clean session.</div>'));
+
+                // adherence rows
+                const strong = adherence.slice().sort((a, b) => b.rate - a.rate)[0];
+                const weak = adherence.slice().sort((a, b) => a.rate - b.rate)[0];
+                const adherencePanel = panel('Rule adherence',
+                    '<div class="flex flex-col gap-2.5">' +
+                        adherence.map(a => {
+                            const color = a.rate >= 80 ? '#34D399' : a.rate >= 60 ? '#F59E0B' : '#EF4444';
+                            return '<div><div class="flex justify-between text-[12.5px] mb-1"><span class="text-[#C4C4CC]">' + esc(a.rule.name) + '</span><span class="num font-bold ' + (a.rate >= 80 ? 'text-[#34D399]' : a.rate >= 60 ? 'text-[#FBBF24]' : 'text-[#F87171]') + '">' + a.rate + '%</span></div>' +
+                                '<div class="bar-track"><div class="bar-fill" style="width:' + a.rate + '%;background:' + color + '"></div></div></div>';
+                        }).join('') +
+                    '</div>');
+
+                // strongest / weakest / focus
+                const focusPanel = panel('Current focus',
+                    '<div class="flex items-center gap-3 mb-4"><div class="flex-1"><div class="label-xs mb-1">Strongest rule</div><div class="text-[13.5px] font-bold text-white">' + (strong ? esc(strong.rule.name) : '—') + '</div><div class="text-[11px] text-[#8A8A93]">' + (strong ? strong.rate + '% adherence' : '') + '</div></div></div>' +
+                    '<div class="flex items-center gap-3"><div class="flex-1"><div class="label-xs mb-1">Weakest rule</div><div class="text-[13.5px] font-bold text-[#F87171]">' + (weak ? esc(weak.rule.name) : '—') + '</div><div class="text-[11px] text-[#8A8A93]">' + (weak ? weak.rate + '% adherence' : '') + '</div></div></div>' +
+                    '<div class="divider mt-4 pt-4 border-t border-[#1F1F23]">' +
+                    '<div class="label-xs mb-2">Focus for the next 20 trades</div>' +
+                    '<div class="text-[14px] font-bold text-white">' + (weak ? 'Wait for ' + (weak.rule.id === 'execution' ? 'your planned exit' : weak.rule.id === 'cooldown' ? 'the cooldown after losses' : weak.rule.id === 'session' ? 'your allowed session' : weak.rule.name.toLowerCase()) : 'Keep the streak going') + '</div>' +
+                    '<p class="text-[12px] text-[#8A8A93] mt-1.5 leading-relaxed">' + (weak ? 'Trades that broke this rule historically averaged ' + fmtR(violPerf(weak.rule)) + '. Measure the next 20 compliant entries.' : '') + '</p></div>');
+
+                // streak
+                const streak = disciplineStreak();
+                const streakCard = panel('Discipline streak',
+                    '<div class="flex items-end gap-4"><div class="num text-[40px] font-extrabold ' + (streak.days >= 3 ? 'text-[#34D399]' : 'text-white') + '">' + streak.days + '</div><div class="text-[12.5px] text-[#8A8A93] pb-2">consecutive clean days<br>(no critical violations)</div></div>' +
+                    '<div class="flex justify-between text-[12px] text-[#6E6E78] mt-3 num"><span>Longest: ' + streak.max + '</span><span>Current: ' + streak.now + '</span></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Streaks count only actual opportunities — no credit for days you simply did not trade.</p>');
+
+                // recent violations
+                const recentPanel = panel('Recent violations',
+                    recent.length ? '<div class="flex flex-col gap-2">' + recent.map(v =>
+                        '<div class="flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg bg-[#0F0F11] border border-[#1F1F23]">' +
+                            '<div class="min-w-0"><div class="text-[12.5px] font-semibold text-white truncate">' + esc(v.rule.name) + '</div>' +
+                            '<div class="text-[11px] text-[#8A8A93]">' + esc(v.trade.symbol) + ' · ' + fmtMoney(v.trade.pnl) + ' · ' + v.ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</div></div>' +
+                            '<div class="flex items-center gap-2 flex-shrink-0">' + prioTag(v.severity) + '<span class="num text-[11px] ' + (v.trade.r >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(v.trade.r) + '</span></div></div>').join('') + '</div>'
+                        : '<p class="text-[12.5px] text-[#6E6E78]">No rule violations in the dataset.</p>');
+
+                $('panel-overview').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' + scoreCard + todayCard + streakCard + '</div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">' + adherencePanel + focusPanel + recentPanel + '</div>' +
+                    '<div class="panel p-5 mt-4">' +
+                        '<div class="panel-title mb-3">Score breakdown — every point is explainable</div>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">' +
+                            ds.dims.map(d => {
+                                const c = d.score >= 80 ? '#34D399' : d.score >= 60 ? '#F59E0B' : '#EF4444';
+                                return '<div class="metric-mini"><div class="label-xs mb-1.5">' + d.label + '</div><div class="num text-[20px] font-extrabold" style="color:' + c + '">' + d.score + '</div>' +
+                                    '<div class="text-[10.5px] text-[#6E6E78] mt-1">weight ' + d.weight + '% · ' + d.applicable + ' trades</div>' +
+                                    '<div class="mt-2">' + bar(d.score, c) + '</div></div>';
+                            }).join('') +
+                        '</div></div>';
+            }
+
+            function violPerf(rule) {
+                const vs = violationsFor(ALL).filter(v => v.rule.id === rule.id);
+                return stats(vs.map(v => v.trade)).expectancy;
+            }
+
+            // ============ MY RULES ============
+            function renderRules() {
+                const rows = RULES.map(r => {
+                    const thresholdInput = (r.type === 'Numeric' || r.type === 'Count' || r.type === 'Time')
+                        ? '<input class="finput num" data-threshold="' + r.id + '" type="number" value="' + r.threshold + '" style="width:70px" title="Edit threshold">' + '<span class="text-[11px] text-[#55555E]">' + (r.unit || '') + '</span>'
+                        : (r.type === 'Strategy' ? '<span class="text-[11.5px] text-[#8A8A93]">' + r.values.join(' · ') + '</span>' : '<span class="text-[11.5px] text-[#8A8A93]">tag-based</span>');
+                    return '<div class="rule-row">' +
+                        '<label class="toggle"><input type="checkbox" data-enabled="' + r.id + '"' + (r.enabled ? ' checked' : '') + '><span class="track"></span><span class="knob"></span></label>' +
+                        '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white">' + esc(r.name) + '</div>' +
+                        '<div class="text-[11.5px] text-[#55555E]">' + esc(r.desc) + '</div></div>' +
+                        '<div class="flex items-center gap-2">' + thresholdInput + '</div>' +
+                        prioTag(r.priority) +
+                        '<span class="tag ' + (r.block ? 'tag-red' : 'tag-gray') + '">' + (r.block ? 'Blocking' : 'Warning') + '</span>' +
+                    '</div>';
+                }).join('');
+
+                const ds = disciplineScore(ALL);
+                $('panel-rules').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
+                        panel('Trading plan — your rules, your thresholds', rows +
+                            '<p class="text-[11.5px] text-[#55555E] mt-3">Disabling a rule removes it from the score — rules you have not enabled never penalize you. Blocking rules require explicit override in the pre-trade check.</p>') +
+                        '<div class="flex flex-col gap-4">' +
+                            panel('Effect on your score',
+                                '<div class="num text-[34px] font-extrabold ' + (ds.score >= 80 ? 'text-[#34D399]' : ds.score >= 60 ? 'text-[#FBBF24]' : 'text-[#F87171]') + '">' + ds.score + '</div>' +
+                                '<div class="text-[12.5px] text-[#8A8A93] mt-1">with ' + activeRules().length + ' of ' + RULES.length + ' rules active</div>' +
+                                '<div class="mt-4 flex flex-col gap-2">' + ds.dims.map(d =>
+                                    '<div class="flex justify-between text-[12px]"><span class="text-[#C4C4CC]">' + d.label + '</span><span class="num font-bold text-white">' + d.score + '</span></div>').join('') + '</div>') +
+                            panel('Rule versions', '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed">Historical trades are always evaluated against the rule version active at the time of the trade. Changing a threshold here never retroactively marks old trades as violations (demo: single-version rule set).</p>') +
+                        '</div>' +
+                    '</div>';
+            }
+
+            // ============ PRE-TRADE CHECK ============
+            let pt = { risk: 25, session: 'London', setup: 'MSS + FVG', tradeNo: 3, lastWasLoss: true, minsSinceLoss: 8, confirmation: true, rr: 1.8 };
+            function renderPreTrade() {
+                const checks = [];
+                const rules = activeRules();
+                const byId = {};
+                rules.forEach(r => byId[r.id] = r);
+                let blocked = null, violations = [];
+
+                const add = (name, pass, detail, hard, ruleId) => {
+                    checks.push({ name, pass, detail, hard, ruleId });
+                    if (!pass) violations.push({ name, hard, ruleId });
+                };
+
+                if (byId.risk) add('Risk within limit', pt.risk <= byId.risk.threshold, 'Planned risk $' + pt.risk + ' vs limit $' + byId.risk.threshold, true, 'risk');
+                if (byId['trades-day']) add('Trade count', pt.tradeNo <= byId['trades-day'].threshold, 'This would be trade #' + pt.tradeNo + ' (limit ' + byId['trades-day'].threshold + ')', true, 'trades-day');
+                if (byId.session) add('Allowed session', byId.session.values.includes(pt.session), 'Session: ' + pt.session + ' · allowed: ' + byId.session.values.join(', '), false, 'session');
+                if (byId.setups) add('Approved setup', byId.setups.values.includes(pt.setup), 'Setup: ' + pt.setup, false, 'setups');
+                if (byId.confirmation) add('Confirmation present', pt.confirmation, 'MSS confirmation required', false, 'confirmation');
+                if (byId.cooldown) add('Cooldown respected', !(pt.lastWasLoss && pt.minsSinceLoss < byId.cooldown.threshold), pt.lastWasLoss ? pt.minsSinceLoss + ' min since last loss (cooldown ' + byId.cooldown.threshold + ')' : 'No recent loss', true, 'cooldown');
+                if (byId['daily-loss']) add('Daily loss budget', pt.dailyLossUsed !== undefined ? pt.dailyLossUsed <= byId['daily-loss'].threshold : true, 'Budget $' + byId['daily-loss'].threshold, true, 'daily-loss');
+
+                // derive state
+                let state = 'clear', stateLabel = 'CLEAR', stateCls = 'bg-[rgba(16,185,129,0.12)] text-[#34D399] border border-[rgba(16,185,129,0.35)]';
+                const hardFails = violations.filter(v => v.hard);
+                const softFails = violations.filter(v => !v.hard);
+                if (hardFails.length) {
+                    const blocking = hardFails.filter(f => {
+                        const r = rules.find(x => x.id === f.ruleId);
+                        return r && r.block;
+                    });
+                    if (blocking.length) { state = 'blocked'; stateLabel = 'BLOCKED'; stateCls = 'bg-[rgba(239,68,68,0.12)] text-[#F87171] border border-[rgba(239,68,68,0.4)]'; }
+                    else { state = 'violation'; stateLabel = 'VIOLATION'; stateCls = 'bg-[rgba(239,68,68,0.1)] text-[#FBBF24] border border-[rgba(239,68,68,0.3)]'; }
+                } else if (softFails.length) {
+                    state = 'caution'; stateLabel = 'CAUTION'; stateCls = 'bg-[rgba(245,158,11,0.1)] text-[#FBBF24] border border-[rgba(245,158,11,0.3)]';
+                }
+
+                const rows = checks.map(c =>
+                    '<div class="check-row">' +
+                        (c.pass
+                            ? '<span class="w-5 h-5 rounded-full bg-[rgba(16,185,129,0.15)] text-[#34D399] flex items-center justify-center text-[11px] font-bold flex-shrink-0">✓</span>'
+                            : '<span class="w-5 h-5 rounded-full bg-[rgba(239,68,68,0.15)] text-[#F87171] flex items-center justify-center text-[11px] font-bold flex-shrink-0">✕</span>') +
+                        '<div class="flex-1"><div class="text-[13px] font-semibold ' + (c.pass ? 'text-white' : 'text-[#F87171]') + '">' + c.name + '</div>' +
+                        '<div class="text-[11.5px] text-[#6E6E78]">' + c.detail + '</div></div>' +
+                        (c.hard ? '<span class="tag tag-amber">hard</span>' : '<span class="tag tag-gray">soft</span>') +
+                    '</div>').join('');
+
+                $('panel-pretrade').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' +
+                        panel('Pre-trade check — fast enough to use every trade',
+                            '<div class="grid grid-cols-2 gap-3 mb-4">' +
+                                '<div><div class="label-xs mb-1.5">Planned risk ($)</div><input id="pt-risk" class="finput w-full" type="number" value="' + pt.risk + '"></div>' +
+                                '<div><div class="label-xs mb-1.5">Trade number today</div><input id="pt-tradeno" class="finput w-full" type="number" value="' + pt.tradeNo + '"></div>' +
+                                '<div><div class="label-xs mb-1.5">Session</div><select id="pt-session" class="fsel w-full"><option>London</option><option>New York</option><option>Asia</option></select></div>' +
+                                '<div><div class="label-xs mb-1.5">Setup</div><select id="pt-setup" class="fsel w-full"><option>MSS + FVG</option><option>FVG</option><option>Breakout</option><option>Order Block</option></select></div>' +
+                                '<div class="col-span-2"><div class="label-xs mb-1.5">Last trade was a loss?</div>' +
+                                '<div class="flex items-center gap-3">' +
+                                    '<select id="pt-lastloss" class="fsel"><option value="yes" ' + (pt.lastWasLoss ? 'selected' : '') + '>Yes</option><option value="no" ' + (!pt.lastWasLoss ? 'selected' : '') + '>No</option></select>' +
+                                    '<input id="pt-mins" class="finput" type="number" value="' + pt.minsSinceLoss + '" title="Minutes since the loss">' +
+                                    '<span class="text-[11px] text-[#6E6E78]">min since loss</span></div></div>' +
+                                '<div><label class="flex items-center gap-2 text-[12.5px] text-[#C4C4CC] cursor-pointer"><input id="pt-conf" type="checkbox" ' + (pt.confirmation ? 'checked' : '') + ' class="accent-[#10B981]"> MSS confirmation present</label></div>' +
+                            '</div>' +
+                            '<div id="pt-state" class="' + stateCls + ' state-pill w-full justify-center">' + stateLabel + '</div>' +
+                            (state === 'blocked' ? '<p class="text-[12px] text-[#F87171] mt-2 text-center">A blocking rule is broken. You can override below, but the violation is recorded.</p>' : '') +
+                            '<div class="flex gap-3 mt-4">' +
+                                '<button id="pt-eval" class="btn-primary flex-1 justify-center">Run check</button>' +
+                                (state === 'blocked' ? '<button id="pt-override" class="btn-ghost flex-1 justify-center !border-[#F87171] !text-[#F87171]">Override anyway</button>' : '') +
+                            '</div>') +
+                        panel('Checklist result', rows +
+                            (state === 'clear' ? '<p class="text-[12px] text-[#34D399] mt-3">All checks pass. Your plan supports this trade.</p>' :
+                             state === 'caution' ? '<p class="text-[12px] text-[#FBBF24] mt-3">A soft rule is uncertain or incomplete. Proceed with awareness.</p>' :
+                             state === 'violation' ? '<p class="text-[12px] text-[#FBBF24] mt-3">A hard rule is broken. The system will record this violation with expected vs actual.</p>' :
+                             '<p class="text-[12px] text-[#F87171] mt-3">Blocked — a Critical rule would be broken. Override only if your plan truly changed.</p>')) +
+                    '</div>';
+            }
+
+            // ============ LIVE MONITOR ============
+            function renderLive() {
+                const todayTrades = (dayTrades[TODAY] || []).slice().sort((a, b) => a.ts - b.ts);
+                const riskRule = RULES.find(r => r.id === 'risk');
+                const lossRule = RULES.find(r => r.id === 'daily-loss');
+                const tradeRule = RULES.find(r => r.id === 'trades-day');
+                const cooldownRule = RULES.find(r => r.id === 'cooldown');
+
+                const riskUsed = todayTrades.reduce((s, t) => s + t.risk, 0);
+                const lossUsed = todayTrades.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0);
+                const trades = todayTrades.length;
+                const last = todayTrades[todayTrades.length - 1];
+                const inCooldown = last && last.pnl < 0 && cooldownRule && todayTrades.length < 2 ? true : false;
+                let consecLosses = 0;
+                for (let i = todayTrades.length - 1; i >= 0; i--) {
+                    if (todayTrades[i].pnl < 0) consecLosses++; else break;
+                }
+                const riskRemaining = riskUsed <= (riskRule ? riskRule.threshold * 3 : 75) ? (riskRule ? riskRule.threshold * 3 : 75) - riskUsed : 0;
+                const maxNext = riskRule ? Math.max(0, riskRule.threshold - (riskUsed - (todayTrades.length ? todayTrades[todayTrades.length - 1].risk : 0))) : 0;
+
+                const warn = [];
+                if (riskRule && riskUsed > riskRule.threshold * 2) warn.push('Daily risk usage is above 2× your per-trade limit.');
+                if (tradeRule && trades >= tradeRule.threshold) warn.push('You have reached your ' + tradeRule.threshold + '-trade daily limit.');
+                if (consecLosses >= 2) warn.push(consecLosses + ' consecutive losses — check your state before the next entry.');
+                if (last && last.pnl < 0 && cooldownRule) warn.push('Last trade was a loss. Cooldown applies for ' + cooldownRule.threshold + ' minutes.');
+
+                $('panel-live').innerHTML =
+                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+                        kpi('Trades today', String(trades), tradeRule ? 'limit ' + tradeRule.threshold + '/day' : '', trades >= (tradeRule ? tradeRule.threshold : 99) ? 'text-[#FBBF24]' : 'text-white') +
+                        kpi('Risk used', '$' + riskUsed, riskRule ? 'typical day budget $' + riskRule.threshold * 3 : '', riskUsed > (riskRule ? riskRule.threshold * 2 : 50) ? 'text-[#FBBF24]' : 'text-white') +
+                        kpi('Loss used today', fmtMoney(lossUsed), lossRule ? 'budget $' + lossRule.threshold : '', lossUsed < -(lossRule ? lossRule.threshold * 0.6 : 150) ? 'text-[#F87171]' : 'text-white') +
+                        kpi('Consecutive losses', String(consecLosses), 'current run', consecLosses >= 2 ? 'text-[#F87171]' : 'text-white') +
+                    '</div>' +
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">' +
+                        panel('Real-dollar discipline state',
+                            '<div class="flex justify-between py-2.5 border-b border-[#17171A]"><span class="text-[#8A8A93]">Risk remaining today</span><span class="num font-bold ' + (riskRemaining > 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">$' + riskRemaining + '</span></div>' +
+                            '<div class="flex justify-between py-2.5 border-b border-[#17171A]"><span class="text-[#8A8A93]">Loss remaining today</span><span class="num font-bold ' + (lossUsed > -250 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(250 + lossUsed) + '</span></div>' +
+                            '<div class="flex justify-between py-2.5 border-b border-[#17171A]"><span class="text-[#8A8A93]">Trades remaining</span><span class="num font-bold text-white">' + Math.max(0, (tradeRule ? tradeRule.threshold : 3) - trades) + '</span></div>' +
+                            '<div class="flex justify-between py-2.5 border-b border-[#17171A]"><span class="text-[#8A8A93]">Max allowed risk for next trade</span><span class="num font-bold text-white">$' + maxNext + '</span></div>' +
+                            '<div class="flex justify-between py-2.5"><span class="text-[#8A8A93]">Current session</span><span class="num font-bold text-white">London</span></div>') +
+                        panel('Active warnings & cooldown',
+                            (warn.length ? '<div class="flex flex-col gap-2">' + warn.map(w =>
+                                '<div class="flex items-start gap-2.5 px-3 py-2.5 rounded-lg bg-[rgba(245,158,11,0.06)] border border-[rgba(245,158,11,0.25)]"><svg data-lucide="alert-triangle" class="w-4 h-4 text-[#F59E0B] mt-0.5 flex-shrink-0"></svg><span class="text-[12.5px] text-[#C4C4CC]">' + w + '</span></div>').join('') + '</div>'
+                                : '<p class="text-[12.5px] text-[#34D399] font-semibold">No active warnings — within all limits.</p>') +
+                            (last && last.pnl < 0 && cooldownRule ? '<div class="mt-4"><div class="label-xs mb-2">Cooldown</div><div class="flex items-center gap-3"><div class="num text-[24px] font-extrabold text-[#FBBF24]">' + cooldownRule.threshold + ' min</div><div class="text-[11.5px] text-[#8A8A93]">since last loss — do not re-enter inside this window</div></div></div>' : '') +
+                            '<p class="text-[11.5px] text-[#55555E] mt-4">This monitor focuses on behavior and rule adherence. The Risk page handles account mathematics.</p>') +
+                    '</div>' +
+                    (last ? panel('Session timeline',
+                        '<div class="flex flex-col gap-1.5">' + todayTrades.map(t =>
+                            '<div class="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23]"><span class="num text-[12px] text-[#6E6E78]">' + t.ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + '</span>' +
+                            '<span class="text-[12.5px] text-[#C4C4CC]">' + esc(t.symbol) + ' · ' + esc(t.setup) + '</span>' +
+                            '<span class="num font-bold ' + (t.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(t.pnl) + '</span>' +
+                            '<span class="num text-[11px] ' + (t.r >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(t.r) + '</span></div>').join('') + '</div>') : '');
+            }
+
+            // ============ VIOLATIONS ============
+            function renderViolations() {
+                const viols = violationsFor(ALL).slice().reverse();
+                const rules = activeRules();
+
+                // impact analysis (§17)
+                const compliant = ALL.filter(t => !evalTrade(t, rules, ctx).length);
+                const violating = ALL.filter(t => evalTrade(t, rules, ctx).length);
+                const cs = stats(compliant), vs = stats(violating);
+                const impact = panel('Violation impact — what rule-breaking costs you',
+                    '<div class="grid grid-cols-2 gap-3">' +
+                        kpi('Compliant trades', fmtR(cs.expectancy), cs.n + ' trades · ' + pct(cs.winRate * 100, 100) + '% WR', 'text-[#34D399]') +
+                        kpi('Rule-violating trades', fmtR(vs.expectancy), vs.n + ' trades · ' + pct(vs.winRate * 100, 100) + '% WR', vs.expectancy < cs.expectancy ? 'text-[#F87171]' : 'text-white') +
+                    '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Neutral language on purpose: trades that violated rules <b>performed worse historically</b>. That is association, not a claim of cause.</p>');
+
+                // per-rule impact table
+                const ruleImpact = rules.map(r => {
+                    const rv = viols.filter(v => v.rule.id === r.id);
+                    const per = stats(rv.map(v => v.trade)).expectancy;
+                    return '<tr><td class="font-semibold text-white">' + esc(r.name) + '</td>' +
+                        '<td class="num">' + rv.length + '</td>' +
+                        '<td>' + prioTag(r.priority) + '</td>' +
+                        '<td class="num ' + (per >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(per) + '</td>' +
+                        '<td class="num text-[#8A8A93]">' + pct(rv.length, Math.max(1, viols.length)) + '%</td></tr>';
+                }).join('');
+
+                const rows = viols.slice(0, 30).map(v =>
+                    '<tr>' +
+                    '<td class="font-semibold text-white">' + esc(v.rule.name) + '</td>' +
+                    '<td class="num text-[#6E6E78]">' + v.ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' + v.ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + '</td>' +
+                    '<td>' + esc(v.trade.symbol) + '</td>' +
+                    '<td>' + prioTag(v.severity) + '</td>' +
+                    '<td class="text-[11.5px] text-[#8A8A93] max-w-[200px] truncate" title="' + esc(v.expected) + '">' + esc(v.expected) + '</td>' +
+                    '<td class="text-[11.5px] text-[#F87171] max-w-[200px] truncate" title="' + esc(v.actual) + '">' + esc(v.actual) + '</td>' +
+                    '<td class="num ' + (v.trade.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(v.trade.pnl) + '</td>' +
+                    '<td class="num ' + (v.trade.r >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(v.trade.r) + '</td>' +
+                    '<td><span class="tag tag-gray">Unreviewed</span></td></tr>').join('');
+
+                $('panel-violations').innerHTML =
+                    impact +
+                    '<div class="mt-4">' +
+                        panel('Impact by rule', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rule</th><th>Violations</th><th>Priority</th><th>Avg result when broken</th><th>Share</th></tr></thead><tbody>' + ruleImpact + '</tbody></table></div>' +
+                        '<p class="text-[11.5px] text-[#55555E] mt-3">A profitable rule violation is still a violation — the plan is the standard, not the outcome.</p>') +
+                    '</div>' +
+                    '<div class="mt-4">' +
+                        panel('Violation log — expected vs actual', '<div class="tbl-wrap"><table class="tbl"><thead><tr>' +
+                            '<th>Rule</th><th>When</th><th>Symbol</th><th>Severity</th><th>Expected</th><th>Actual</th><th>P&L</th><th>R</th><th>Status</th>' +
+                            '</tr></thead><tbody>' + rows + '</tbody></table></div>' +
+                        '<p class="text-[11.5px] text-[#55555E] mt-3">Showing ' + Math.min(30, viols.length) + ' of ' + viols.length + ' violation events. Each links to its trade and can be acknowledged in review.</p>') +
+                    '</div>';
+            }
+
+            // ============ BEHAVIOR PATTERNS ============
+            function renderPatterns() {
+                const list = ALL;
+                const postLoss = list.filter(t => t.postLoss);
+                const normal = list.filter(t => !t.postLoss);
+                const pl = stats(postLoss), nl = stats(normal);
+
+                const delayAvg = postLoss.length ? postLoss.reduce((s, t) => s + (t.delayMin || 0), 0) / postLoss.length : 0;
+                const normalDelay = ALL.filter(t => !t.postLoss && t.delayMin !== null).reduce((s, t) => s + t.delayMin, 0) / Math.max(1, ALL.filter(t => !t.postLoss && t.delayMin !== null).length);
+                const riskDelta = nl.avgRisk ? Math.round(((pl.avgRisk - nl.avgRisk) / nl.avgRisk) * 100) : 0;
+                const revengeEvidence = postLoss.length >= 3 && pl.expectancy < 0 && (delayAvg < normalDelay || riskDelta > 10);
+                const revengeConf = postLoss.length >= 5 ? 'pattern detected' : postLoss.length >= 3 ? 'possible pattern' : 'insufficient data';
+
+                const revenge = panel('Revenge trading detection',
+                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+                        kpi('Post-loss delay', Math.round(delayAvg) + ' min', 'vs normal ' + Math.round(normalDelay) + ' min', delayAvg < normalDelay ? 'text-[#F87171]' : 'text-white') +
+                        kpi('Risk change after loss', (riskDelta >= 0 ? '+' : '') + riskDelta + '%', 'vs normal trades', riskDelta > 10 ? 'text-[#F87171]' : 'text-white') +
+                        kpi('Post-loss expectancy', fmtR(pl.expectancy), pl.n + ' trades', pl.expectancy < 0 ? 'text-[#F87171]' : 'text-[#34D399]') +
+                        kpi('Normal expectancy', fmtR(nl.expectancy), nl.n + ' trades', nl.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                    '</div>' +
+                    '<div class="mt-4 flex items-center gap-3"><span class="tag ' + (revengeEvidence ? 'tag-red' : postLoss.length >= 3 ? 'tag-amber' : 'tag-gray') + '">' + (revengeEvidence ? 'Pattern detected' : revengeConf === 'possible pattern' ? 'Possible pattern' : 'Insufficient evidence') + '</span>' +
+                    '<span class="text-[11.5px] text-[#6E6E78]">LOSS → SHORT DELAY → NEW TRADE → RISK INCREASE · sample: ' + postLoss.length + ' post-loss trades</span></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Labeled as a pattern only with repeated evidence. One quick post-loss trade is never flagged.</p>');
+
+                // overtrading
+                const byOrdinal = { first: [], over: [] };
+                Object.values(dayTrades).forEach(tr => {
+                    tr.slice().sort((a, b) => a.ts - b.ts).forEach((t, i) => { (i < 3 ? byOrdinal.first : byOrdinal.over).push(t); });
+                });
+                const fs = stats(byOrdinal.first), os = stats(byOrdinal.over);
+                const overtrade = panel('Overtrading detection',
+                    '<div class="grid grid-cols-2 gap-3">' +
+                        kpi('Trades 1–3 of the day', fmtR(fs.expectancy), fs.n + ' trades · ' + pct(fs.winRate * 100, 100) + '% WR', fs.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                        kpi('Trades 4+ of the day', fmtR(os.expectancy), os.n + ' trades · ' + pct(os.winRate * 100, 100) + '% WR', os.expectancy < fs.expectancy ? 'text-[#F87171]' : 'text-white') +
+                    '</div>' +
+                    '<div class="mt-4"><div class="label-xs mb-2">Expectancy by trade number of the day</div>' +
+                    '<div class="flex items-end gap-1.5 h-[90px]">' + [1, 2, 3, 4, 5].map(n => {
+                        const tr = Object.values(dayTrades).map(d => d.slice().sort((a, b) => a.ts - b.ts)[n - 1]).filter(Boolean);
+                        const sc = stats(tr);
+                        const h = Math.max(6, Math.abs(sc.expectancy) / Math.max(0.01, Math.abs(fs.expectancy), Math.abs(os.expectancy), 0.3) * 80);
+                        const c = sc.expectancy >= 0 ? '#34D399' : '#EF4444';
+                        return '<div class="flex-1 flex flex-col justify-end items-center gap-1"><div class="num text-[10px] text-[#8A8A93]">' + fmtR(sc.expectancy) + '</div><div class="w-full rounded-t" style="height:' + h + 'px;background:' + c + ';opacity:0.85"></div><div class="text-[10px] text-[#6E6E78]">#' + n + '</div></div>';
+                    }).join('') + '</div></div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">' + (os.expectancy < fs.expectancy ? 'Expectancy deteriorates after trade #3 — your trade limit is earning its keep.' : 'No clear deterioration past trade #3 yet.') + '</p>');
+
+                // risk escalation
+                const esc = panel('Risk escalation after losses',
+                    '<div class="flex items-center gap-4">' +
+                        '<div class="flex-1"><div class="label-xs mb-1">Avg risk — normal trades</div><div class="num text-[22px] font-extrabold text-white">$' + Math.round(nl.avgRisk) + '</div></div>' +
+                        '<div class="flex-1"><div class="label-xs mb-1">Avg risk — after a loss</div><div class="num text-[22px] font-extrabold ' + (riskDelta > 10 ? 'text-[#F87171]' : 'text-white') + '">$' + Math.round(pl.avgRisk) + '</div></div>' +
+                        '<div class="text-[13px] font-bold ' + (riskDelta > 10 ? 'text-[#F87171]' : 'text-[#34D399]') + '">' + (riskDelta >= 0 ? '+' : '') + riskDelta + '%</div>' +
+                    '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">' + (riskDelta > 10 ? 'Risk creeps up after losses — the classic revenge-sizing pattern. Keep risk flat regardless of the previous result.' : 'Risk stays flat after losses — clean behavior.') + '</p>');
+
+                $('panel-patterns').innerHTML =
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' + revenge + overtrade + '</div>' +
+                    '<div class="mt-4">' + esc + '</div>';
+            }
+
+            // ============ CONSISTENCY ============
+            function disciplineStreak() {
+                const days = Object.keys(dayTrades).sort();
+                let now = 0, max = 0;
+                const critByDay = {};
+                Object.entries(dayTrades).forEach(([d, tr]) => {
+                    const crit = tr.filter(t => evalTrade(t, activeRules(), ctx).some(v => v.severity === 'Critical'));
+                    critByDay[d] = crit.length;
+                });
+                for (let i = days.length - 1; i >= 0; i--) {
+                    if (critByDay[days[i]] === 0) now++; else break;
+                }
+                let run = 0;
+                days.forEach(d => { run = critByDay[d] === 0 ? run + 1 : 0; max = Math.max(max, run); });
+                return { now, max, days: now };
+            }
+
+            function renderConsistency() {
+                const ds = disciplineScore(ALL);
+                const days = Object.keys(dayTrades).sort();
+                const perDay = days.map(d => {
+                    const tr = dayTrades[d];
+                    const vs = violationsFor(tr);
+                    return { d, n: tr.length, viols: vs.length, crit: vs.filter(v => v.severity === 'Critical').length };
+                });
+                const cleanDays = perDay.filter(x => x.viols === 0).length;
+                const rate = Math.round((cleanDays / Math.max(1, days.length)) * 100);
+
+                const streak = disciplineStreak();
+                const mini = panel('Discipline streaks',
+                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
+                        kpi('Clean days (no violations)', String(cleanDays), 'of ' + days.length + ' active days', 'text-[#34D399]') +
+                        kpi('Clean-day rate', rate + '%', 'consistency', rate >= 70 ? 'text-[#34D399]' : rate >= 50 ? 'text-[#FBBF24]' : 'text-[#F87171]') +
+                        kpi('Current clean streak', String(streak.now), 'consecutive days', streak.now >= 3 ? 'text-[#34D399]' : 'text-white') +
+                        kpi('Longest clean streak', String(streak.max), 'consecutive days', 'text-white') +
+                    '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Streaks count only real opportunities — no credit for days you did not trade.</p>');
+
+                const daily = panel('Clean / violation days',
+                    '<div class="flex flex-wrap gap-1.5">' + days.map(d => {
+                        const x = perDay.find(p => p.d === d);
+                        const cls = !x.viols ? 'tag-emerald' : x.crit ? 'tag-red' : 'tag-amber';
+                        const short = d.slice(5).replace('-', '/');
+                        return '<span class="tag ' + cls + '" title="' + d + ' · ' + x.viols + ' violations">' + short + '</span>';
+                    }).join('') + '</div>' +
+                    '<div class="flex items-center gap-3 mt-3 text-[10.5px] text-[#6E6E78]"><span class="tag tag-emerald !py-0.5 !px-1.5">clean</span><span class="tag tag-amber !py-0.5 !px-1.5">violation</span><span class="tag tag-red !py-0.5 !px-1.5">critical</span></div>');
+
+                const dvs = ds.dims;
+                const best = dvs.slice().sort((a, b) => b.score - a.score)[0];
+                const worst = dvs.slice().sort((a, b) => a.score - b.score)[0];
+                const profile = panel('Consistency profile',
+                    '<div class="flex flex-col gap-2.5">' + dvs.map(d => {
+                        const c = d.score >= 80 ? '#34D399' : d.score >= 60 ? '#F59E0B' : '#EF4444';
+                        return '<div><div class="flex justify-between text-[12px] mb-1"><span class="text-[#C4C4CC]">' + d.label + '</span><span class="num font-bold text-white">' + d.score + '</span></div>' + bar(d.score, c) + '</div>';
+                    }).join('') + '</div>' +
+                    '<div class="mt-4 pt-4 border-t border-[#1F1F23]">' +
+                    '<div class="flex justify-between text-[12.5px]"><span class="text-[#8A8A93]">Strongest dimension</span><span class="font-bold text-[#34D399]">' + (best ? best.label + ' · ' + best.score : '—') + '</span></div>' +
+                    '<div class="flex justify-between text-[12.5px] mt-2"><span class="text-[#8A8A93]">Weakest dimension</span><span class="font-bold text-[#F87171]">' + (worst ? worst.label + ' · ' + worst.score : '—') + '</span></div>' +
+                    '</div>');
+
+                $('panel-consistency').innerHTML =
+                    mini +
+                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">' + daily + profile + '</div>';
+            }
+
+            // ============ REVIEWS ============
+            function renderReviews() {
+                // DAILY — anchor day
+                const todayTrades = (dayTrades[TODAY] || []).slice().sort((a, b) => a.ts - b.ts);
+                const todayViols = violationsFor(todayTrades);
+                const todayPlan = activeRules().filter(r => ['risk', 'trades-day', 'session', 'setups', 'cooldown'].includes(r.id));
+                const daily = panel('Daily discipline review',
+                    '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">' +
+                        kpi('Trades', String(todayTrades.length), 'executed', 'text-white') +
+                        kpi('Violations', String(todayViols.length), todayViols.filter(v => v.severity === 'Critical').length + ' critical', todayViols.length ? 'text-[#F87171]' : 'text-[#34D399]') +
+                        kpi('Plan', todayPlan.length + ' rules', 'active today', 'text-white') +
+                    '</div>' +
+                    '<div class="grid grid-cols-1 md:grid-cols-2 gap-4">' +
+                        '<div class="metric-mini"><div class="label-xs mb-2">Plan</div><div class="text-[13px] text-[#C4C4CC] leading-relaxed">' + todayPlan.map(r => r.name.toLowerCase()).join(' · ') + '</div></div>' +
+                        '<div class="metric-mini"><div class="label-xs mb-2">Execution</div><div class="text-[13px] text-[#C4C4CC]">' + todayTrades.length + ' trades · ' + (todayTrades.length - todayViols.length) + ' compliant · ' + todayViols.length + ' violations</div></div>' +
+                        '<div class="metric-mini"><div class="label-xs mb-2">Strongest behavior</div><div class="text-[13px] font-semibold text-[#34D399]">' + (todayTrades.filter(t => t.adherence === 'followed').length === todayTrades.length ? 'Plan followed throughout' : 'Risk respected') + '</div></div>' +
+                        '<div class="metric-mini"><div class="label-xs mb-2">Impact of violations</div><div class="text-[13px] ' + (stats(todayViols.map(v => v.trade)).expectancy < 0 ? 'text-[#F87171]' : 'text-white') + '">' + (todayViols.length ? fmtR(stats(todayViols.map(v => v.trade)).expectancy) + ' avg on violating trades' : 'No violations to cost you') + '</div></div>' +
+                    '</div>' +
+                    '<div class="mt-4 p-4 rounded-xl bg-[#0F0F11] border border-[#1F1F23]"><div class="label-xs mb-2">Tomorrow\\u2019s focus</div>' +
+                    '<div class="text-[14px] font-bold text-white">' + (todayViols.length ? 'Wait for confirmation before every entry' : 'Keep the clean streak — same plan, same process') + '</div></div>');
+
+                // WEEKLY
+                const weekCut = ANCHOR.getTime() - 7 * day;
+                const weekTrades = ALL.filter(t => t.ts.getTime() >= weekCut);
+                const weekViols = violationsFor(weekTrades);
+                const byRule = groupBy(weekViols, v => v.rule.name);
+                const freq = Object.entries(byRule).sort((a, b) => b[1].length - a[1].length);
+                const mostFreq = freq[0];
+                const costly = freq.slice().sort((a, b) => stats(a[1].map(v => v.trade)).expectancy - stats(b[1].map(v => v.trade)).expectancy)[0];
+                const wds = disciplineScore(weekTrades);
+                const prevCut = weekCut - 7 * day;
+                const prevWeek = ALL.filter(t => t.ts.getTime() >= prevCut && t.ts.getTime() < weekCut);
+                const prevScore = disciplineScore(prevWeek).score;
+                const trend = wds.score - prevScore;
+
+                const weekly = panel('Weekly discipline review',
+                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
+                        kpi('Week discipline score', String(wds.score), (trend >= 0 ? '▲ +' : '▼ ') + trend + ' vs last week', wds.score >= 80 ? 'text-[#34D399]' : wds.score >= 60 ? 'text-[#FBBF24]' : 'text-[#F87171]') +
+                        kpi('Violations', String(weekViols.length), weekViols.filter(v => v.severity === 'Critical').length + ' critical', weekViols.length ? 'text-[#F87171]' : 'text-[#34D399]') +
+                        kpi('Most frequent', mostFreq ? esc(mostFreq[0]) : '—', mostFreq ? mostFreq[1].length + ' times' : '', 'text-white') +
+                        kpi('Most costly', costly && costly[1].length ? esc(costly[0]) : '—', costly && costly[1].length ? fmtR(stats(costly[1].map(v => v.trade)).expectancy) + ' avg when broken' : '', 'text-[#F87171]') +
+                    '</div>' +
+                    '<div class="mt-4 p-4 rounded-xl bg-[#0F0F11] border border-[#1F1F23]"><div class="label-xs mb-2">Next week\\u2019s focus</div>' +
+                    '<div class="text-[14px] font-bold text-white">' + (mostFreq ? 'Fix "' + esc(mostFreq[0]) + '" — it is your highest-impact discipline leak' : 'Keep the plan — nothing is leaking yet') + '</div>' +
+                    '<p class="text-[11.5px] text-[#8A8A93] mt-1">Pick one change, define it as a rule, and measure it over the next 20 trades.</p></div>');
+
+                // MONTHLY profile
+                const dims = dimensionScores(ALL);
+                const mBest = dims.slice().sort((a, b) => b.score - a.score)[0];
+                const mWorst = dims.slice().sort((a, b) => a.score - b.score)[0];
+                const monthly = panel('Monthly discipline profile',
+                    '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">' + dims.map(d => {
+                        const c = d.score >= 80 ? '#34D399' : d.score >= 60 ? '#F59E0B' : '#EF4444';
+                        return '<div class="metric-mini"><div class="label-xs mb-1.5">' + d.label + '</div><div class="num text-[24px] font-extrabold" style="color:' + c + '">' + d.score + '</div><div class="mt-2">' + bar(d.score, c) + '</div></div>';
+                    }).join('') + '</div>' +
+                    '<div class="mt-4 pt-4 border-t border-[#1F1F23] grid grid-cols-1 md:grid-cols-3 gap-3">' +
+                        '<div class="metric-mini"><div class="label-xs mb-1.5">Strongest area</div><div class="text-[13px] font-bold text-[#34D399]">' + (mBest ? mBest.label : '—') + '</div></div>' +
+                        '<div class="metric-mini"><div class="label-xs mb-1.5">Weakest area</div><div class="text-[13px] font-bold text-[#F87171]">' + (mWorst ? mWorst.label : '—') + '</div></div>' +
+                        '<div class="metric-mini"><div class="label-xs mb-1.5">Recommended focus</div><div class="text-[13px] font-bold text-white">' + (mWorst ? 'Raise ' + mWorst.label.toLowerCase().replace(' adherence', '') : '—') + '</div></div>' +
+                    '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">Recurring leak: ' + (freq[0] ? esc(freq[0][0]) + ' (' + freq[0][1].length + '×)' : 'none') + ' · improvement trend: ' + (trend >= 0 ? 'rising' : 'flat/declining') + '.</p>');
+
+                $('panel-reviews').innerHTML = daily + '<div class="mt-4">' + weekly + '</div>' + '<div class="mt-4">' + monthly + '</div>';
+            }
+
+            // ============ RENDER ALL ============
+            function renderAll() {
+                refreshData();
+                if (!accountId) {
+                    const empty = '<div class="panel p-10 text-center">' +
+                        '<svg data-lucide="shield-alert" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
+                        '<h3 class="text-[18px] font-bold text-white">No account yet</h3>' +
+                        '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Discipline is scored against your trading plan. Set up an account to begin.</p>' +
+                        '<a href="strategy-lab.html" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5"><svg data-lucide="settings" class="w-4 h-4"></svg> Set up account</a>' +
+                    '</div>';
+                    document.querySelectorAll('.ins-panel').forEach(p => { p.innerHTML = empty; });
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+                if (!ALL.length) {
+                    const empty = '<div class="panel p-12 text-center">' +
+                        '<svg data-lucide="shield-check" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
+                        '<h3 class="text-[18px] font-bold text-white">No trades yet — no discipline profile</h3>' +
+                        '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Discipline is scored from actual behavior: rule adherence, violations, cooldowns, plan execution. Log trades to build your profile.</p>' +
+                        '<a href="journal.html" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5"><svg data-lucide="plus" class="w-4 h-4"></svg> Log a trade</a>' +
+                    '</div>';
+                    document.querySelectorAll('.ins-panel').forEach(p => { p.innerHTML = empty; });
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+                renderOverview();
+                renderRules();
+                renderPreTrade();
+                renderLive();
+                renderViolations();
+                renderPatterns();
+                renderConsistency();
+                renderReviews();
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ============ EVENTS ============
+            function activateTab(tab) {
+                document.querySelectorAll('.ins-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+                document.querySelectorAll('.ins-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+            }
+            document.querySelectorAll('.ins-tab').forEach(btn => {
+                btn.addEventListener('click', () => activateTab(btn.dataset.tab));
+            });
+
+            // My Rules interactions (delegated)
+            document.addEventListener('change', e => {
+                const en = e.target.getAttribute && e.target.getAttribute('data-enabled');
+                if (en) {
+                    const r = RULES.find(x => x.id === en);
+                    if (r) { r.enabled = e.target.checked; renderAll(); }
+                }
+                const th = e.target.getAttribute && e.target.getAttribute('data-threshold');
+                if (th) {
+                    const r = RULES.find(x => x.id === th);
+                    if (r && e.target.value) { r.threshold = Math.max(1, Number(e.target.value)); renderAll(); }
+                }
+            });
+
+            // Pre-trade check inputs
+            document.addEventListener('input', e => {
+                const id = e.target.id;
+                if (id === 'pt-risk') pt.risk = Number(e.target.value) || 0;
+                if (id === 'pt-tradeno') pt.tradeNo = Number(e.target.value) || 0;
+                if (id === 'pt-mins') pt.minsSinceLoss = Number(e.target.value) || 0;
+            });
+            document.addEventListener('change', e => {
+                if (e.target.id === 'pt-session') pt.session = e.target.value;
+                if (e.target.id === 'pt-setup') pt.setup = e.target.value;
+                if (e.target.id === 'pt-lastloss') pt.lastWasLoss = e.target.value === 'yes';
+                if (e.target.id === 'pt-conf') pt.confirmation = e.target.checked;
+            });
+            document.addEventListener('click', e => {
+                if (e.target.id === 'pt-eval') renderPreTrade();
+                if (e.target.id === 'pt-override') {
+                    // record an override and acknowledge it
+                    $('panel-pretrade').insertAdjacentHTML('beforeend',
+                        '<div class="panel p-4 mt-4 border-l-2 !border-l-[#F87171]"><div class="text-[13px] font-bold text-[#F87171]">Override recorded</div>' +
+                        '<p class="text-[12px] text-[#8A8A93] mt-1">The violation is logged with expected vs actual and linked to the resulting trade. The plan did not change — awareness does.</p></div>');
+                    e.target.remove();
+                }
+            });
+
+            // Reset modal
+            const resetSteps = [
+                'Pause trading — no new entries for now.',
+                'Review the last trade: what was the plan, what happened?',
+                'Confirm current risk state: budget, losses, cooldown.',
+                'Re-read your rules below and re-commit to them.',
+                'Resume only when the cooldown has passed and your state is calm.'
+            ];
+            let resetStep = 0;
+            function openReset() {
+                resetStep = 0;
+                $('reset-body').innerHTML =
+                    '<div class="label-xs mb-2">Reset steps</div>' +
+                    '<div class="flex flex-col gap-2 mb-4">' + resetSteps.map((s, i) =>
+                        '<div class="flex items-start gap-2.5 px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23]"><span class="num text-[11px] text-[#6E6E78] mt-0.5">' + (i + 1) + '</span><span class="text-[12.5px] text-[#C4C4CC]">' + s + '</span></div>').join('') + '</div>' +
+                    '<div class="label-xs mb-2">Your rules</div>' +
+                    '<div class="flex flex-wrap gap-1.5">' + activeRules().map(r => '<span class="tag tag-gray">' + esc(r.name) + '</span>').join('') + '</div>' +
+                    '<p class="text-[11.5px] text-[#55555E] mt-3">This is a trading workflow reset — not a substitute for professional support if you need it.</p>';
+                $('reset-step').textContent = 'Begin reset';
+                $('reset-modal').classList.remove('hidden');
+            }
+            function stepReset() {
+                resetStep++;
+                if (resetStep < resetSteps.length) {
+                    $('reset-step').textContent = 'Step ' + (resetStep + 1) + ' of ' + resetSteps.length + ' — continue';
+                } else {
+                    $('reset-modal').classList.add('hidden');
+                    resetStep = 0;
+                }
+            }
+            $('open-reset').addEventListener('click', openReset);
+            $('reset-step').addEventListener('click', stepReset);
+            $('close-reset').addEventListener('click', () => $('reset-modal').classList.add('hidden'));
+            $('reset-modal').addEventListener('click', e => { if (e.target === $('reset-modal')) $('reset-modal').classList.add('hidden'); });
+
+            // ============ INIT ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            const VALID_TABS = ['overview', 'rules', 'pretrade', 'live', 'violations', 'patterns', 'consistency', 'reviews'];
+            const hashTab = (location.hash || '').replace('#', '');
+            if (hashTab && VALID_TABS.includes(hashTab)) activateTab(hashTab);
+            window.addEventListener('hashchange', () => {
+                const t = (location.hash || '').replace('#', '');
+                if (t && VALID_TABS.includes(t)) activateTab(t);
+            });
+
+            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
+            // Downstream module: listens for domain events and updates itself —
+            // it never mutates configuration directly.
+            if (core) {
+                core.TradeMindBus.subscribe('trade.created', () => { renderAll(); });
+                core.TradeMindBus.subscribe('trade.updated', () => { renderAll(); });
+                core.TradeMindBus.subscribe('trade.deleted', () => { renderAll(); });
+                core.TradeMindBus.subscribe('config.version.created', () => { renderAll(); });
+                core.TradeMindBus.subscribe('config.changed', () => { renderAll(); });
+                core.TradeMindBus.subscribe('account.changed', () => { renderAll(); });
+            }
+
+            renderAll();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script src="reset.js"></script>
+</body>
+</html>
