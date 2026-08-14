@@ -616,12 +616,28 @@
             const old = activeStrategyVersion(strategyId);
             const m = StrategyMaster.find(x => x.id === strategyId);
             if (!m) return null;
+            const prev = old ? old.values : {};
             const oldVer = old ? old.version : 'v0.0';
+            // Partial edits are merged with the previous version's values so the
+            // new immutable version inherits every unchanged setting (v2 keeps
+            // v1's untouched fields). Guarded slices — a caller sending only
+            // { name, minRR } must not throw on undefined arrays.
             const v = newConfigVersion('Strategy', strategyId, bumpVer(oldVer), {
-                name: fields.name, markets: fields.markets, sessions: fields.sessions.slice(),
-                setup: fields.setup, risk: { riskPerTrade: fields.riskPerTrade, minRR: Number(fields.minRR) || 1.5, stopRequired: fields.stopRequired, maxPositions: 1 },
-                entry: fields.entry, exit: fields.exit, behavior: fields.behavior.slice(),
-                evidence: fields.evidence || ['Chart screenshot'], tags: fields.tags.slice()
+                name: fields.name || prev.name || m.name,
+                markets: fields.markets !== undefined ? fields.markets : prev.markets,
+                sessions: (fields.sessions || prev.sessions || []).slice(),
+                setup: fields.setup !== undefined ? fields.setup : prev.setup,
+                risk: {
+                    riskPerTrade: fields.riskPerTrade !== undefined ? fields.riskPerTrade : (prev.risk || {}).riskPerTrade,
+                    minRR: Number(fields.minRR) || (prev.risk || {}).minRR || 1.5,
+                    stopRequired: fields.stopRequired !== undefined ? fields.stopRequired : (prev.risk || {}).stopRequired,
+                    maxPositions: (prev.risk || {}).maxPositions || 1
+                },
+                entry: fields.entry !== undefined ? fields.entry : prev.entry,
+                exit: fields.exit !== undefined ? fields.exit : prev.exit,
+                behavior: (fields.behavior || prev.behavior || []).slice(),
+                evidence: fields.evidence || prev.evidence || ['Chart screenshot'],
+                tags: (fields.tags || prev.tags || []).slice()
             }, note || 'Strategy edit');
             StrategyAssignments.filter(a => a.strategy_id === strategyId).forEach(a => reAssign(a.account_id, strategyId, a.policy_id, v.id));
             logEvent({

@@ -109,44 +109,45 @@ function makeUserCore(user) {
 
     // Postgres is primary; a per-user JSON file mirrors every write so a
     // transient DB outage never loses data (and file mode needs no DB at all).
-    const persist = () => {
+    //
+    // persist() is async and ALWAYS resolves (never returns null, never throws
+    // synchronously). Earlier versions returned null from the file mirror when
+    // Postgres was unavailable — scheduleSave's persist().catch(...) then hit
+    // null.catch and the uncaught TypeError killed the whole process (the
+    // Railway 502: a DB-mode fallback + any mutation = crash).
+    const persist = async () => {
         let counts = null;
         if (DB_MODE) {
-            return PostgresRepo.save(serializeCore(core), user)
-                .then(c => {
-                    console.log('[31trades] saved ' + core.Trades.length + ' trades → Supabase Postgres');
-                    return c;
-                })
-                .catch(err => {
-                    console.error('[31trades] postgres save failed: ' + err.message);
-                    return mirror();
-                });
-        }
-        return mirror();
-        function mirror() {
             try {
-                fs.mkdirSync(DATA_DIR, { recursive: true });
-                const tmp = file() + '.tmp';
-                fs.writeFileSync(tmp, JSON.stringify(serializeCore(core), null, 2));
-                fs.renameSync(tmp, file());
-                if (!counts) console.log('[31trades] saved ' + core.Trades.length + ' trades → ' + file());
+                counts = await PostgresRepo.save(serializeCore(core), user);
+                console.log('[31trades] saved ' + core.Trades.length + ' trades → Supabase Postgres');
+                return counts;
             } catch (err) {
-                console.error('[31trades] save failed: ' + err.message);
+                console.error('[31trades] postgres save failed: ' + err.message + ' — mirroring to ' + file());
             }
-            return counts;
         }
+        try {
+            fs.mkdirSync(DATA_DIR, { recursive: true });
+            const tmp = file() + '.tmp';
+            fs.writeFileSync(tmp, JSON.stringify(serializeCore(core), null, 2));
+            fs.renameSync(tmp, file());
+            if (counts === null) console.log('[31trades] saved ' + core.Trades.length + ' trades → ' + file());
+        } catch (err) {
+            console.error('[31trades] save failed: ' + err.message);
+        }
+        return counts;
     };
 
     let saveTimer = null;
     const scheduleSave = () => {
         clearTimeout(saveTimer);
         saveTimer = setTimeout(() => {
-            persist().catch(err => console.error('[31trades] postgres save failed: ' + err.message));
+            persist().catch(err => console.error('[31trades] save failed: ' + err.message));
         }, 120);
     };
     const flush = () => {
         clearTimeout(saveTimer);
-        return persist();
+        return Promise.resolve().then(persist);   // never throw synchronously (shutdown safety)
     };
 
     const uc = { userId: uid, user, core, serialize: () => serializeCore(core), scheduleSave, flush, pristine: null };
@@ -420,6 +421,7 @@ async function handleApi(req, res, url) {
                 return json(res, 200, Core.reviews(q.get('accountId') || 'acc-prop', { period: q.get('period'), date: q.get('date') }));
             }
         } catch (err) {
+            console.error('[31trades] GET ' + p + ' failed: ' + err.message);
             return json(res, 400, { error: err.message });
         }
         return json(res, 404, { error: 'unknown endpoint: ' + p });
@@ -583,6 +585,8 @@ async function handleApi(req, res, url) {
 
         return json(res, 404, { error: 'unknown endpoint: ' + p });
     } catch (err) {
+        // Labeled so Railway logs show WHICH endpoint failed, not just a 400.
+        console.error('[31trades] ' + req.method + ' ' + p + ' failed: ' + err.message);
         return json(res, 400, { error: err.message });
     }
 }
@@ -651,6 +655,16 @@ function shutdown(signal) {
 
 process.on('SIGINT', () => shutdown('SIGINT'));
 process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+// Safety net: a single bad query / malformed row / failed write must NEVER take
+// the whole server down (that's the 502). Log it and keep serving — the next
+// request still answers. Uncaught errors are still visible in Railway logs.
+process.on('uncaughtException', err => {
+    console.error('[31trades] UNCAUGHT EXCEPTION (kept alive): ' + (err && err.stack ? err.stack : err));
+});
+process.on('unhandledRejection', err => {
+    console.error('[31trades] UNHANDLED REJECTION (kept alive): ' + (err && err.stack ? err.stack : err));
+});
 
 boot().then(() => {
     http.createServer((req, res) => {
