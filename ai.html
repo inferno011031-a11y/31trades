@@ -139,11 +139,14 @@
         .kpi .k-val { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
         .kpi .k-sub { font-size: 11px; color: #6E6E78; margin-top: 3px; }
 
-        /* Finding cards */
         .fcard { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; padding: 14px 16px; transition: border-color 0.15s; }
         .fcard:hover { border-color: #2E2E35; }
         .fcard .sev-bar { width: 3px; border-radius: 999px; margin-right: 12px; align-self: stretch; }
         .ev-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px; background: #16161A; border: 1px solid #1F1F23; font-size: 10.5px; font-weight: 600; color: #8A8A93; font-family: 'JetBrains Mono', monospace; }
+        .ai-action { padding: 3px 7px; border-radius: 6px; background: transparent; border: 1px solid transparent; color: #6E6E78; cursor: pointer; transition: all 0.12s; font-size: 11px; }
+        .ai-action:hover { background: #1F1F23; color: #E8E8EC; }
+        .ai-action.on { background: rgba(16,185,129,0.12); color: #34D399; border-color: rgba(16,185,129,0.3); }
+        .ai-action.off { background: rgba(239,68,68,0.12); color: #F87171; border-color: rgba(239,68,68,0.3); }
 
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
@@ -241,7 +244,7 @@
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
                             <h1 class="text-[22px] font-bold tracking-tight">AI Mentor</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Evidence-backed coaching from your own journal — every finding cites the trades behind it. No generic advice.</p>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Evidence-backed coaching from your own journal — every finding cites the trades behind it. Dismiss what is noise; the coach remembers.</p>
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <div class="flex items-center gap-1.5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1">
@@ -249,6 +252,7 @@
                                 <button class="period-chip" data-period="90d">90D</button>
                                 <button class="period-chip" data-period="all">All</button>
                             </div>
+                            <span id="ai-source" class="tag tag-gray !py-1 !px-2.5">computing…</span>
                         </div>
                     </div>
 
@@ -273,7 +277,7 @@
                     <div id="panel-sessions" class="ins-panel"></div>
                     <div id="panel-tilt" class="ins-panel"></div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · AI Mentor · findings computed from your actual journal (canonical ledger) · evidence-linked · data is illustrative in demo mode</p>
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · AI Mentor · findings computed server-side from your actual journal (canonical ledger) · cached in ai_findings · offline falls back to local heuristics</p>
                 </div>
             </main>
         </div>
@@ -287,7 +291,6 @@
             const { fmtMoney, fmtR, pct, groupBy } = D;
             const core = window.TradeMindCore;
             const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const now = () => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             const $money = n => (n >= 0 ? '' : '-') + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
             const panel = (title, body, extra) => '<div class="panel p-5"><div class="flex items-center justify-between mb-4"><div class="panel-title">' + title + '</div>' + (extra || '') + '</div>' + body + '</div>';
             const kpi = (label, val, sub, cls) => '<div class="kpi"><div class="k-label">' + label + '</div><div class="k-val num ' + (cls || 'text-white') + '">' + val + '</div>' + (sub ? '<div class="k-sub">' + sub + '</div>' : '') + '</div>';
@@ -295,309 +298,175 @@
             const sevTag = sev => sev === 'critical' ? '<span class="tag tag-red !py-0.5">critical</span>' : sev === 'warning' ? '<span class="tag tag-amber !py-0.5">warning</span>' : sev === 'positive' ? '<span class="tag tag-emerald !py-0.5">strength</span>' : '<span class="tag tag-blue !py-0.5">observation</span>';
 
             // ====================================================================
-            // MENTOR CONTEXT — the AI layer reads the SAME canonical ledger every
-            // screen reads. It never mutates; every finding carries evidence.
+            // STATE — the mentor bundle comes from the SERVER (/api/ai/mentor)
+            // when the backend is reachable; offline it falls back to the same
+            // heuristics bundled below. Renderers only ever consume DATA.
             // ====================================================================
-            let ctx = null;
             let PERIOD = '30d';
+            let DATA = null;
+            let SOURCE = 'offline';
+            const localPrefs = {};        // { findingId: { suppressed, feedback } } offline-only
 
-            function inPeriod(t) {
-                if (PERIOD === 'all') return true;
-                const days = PERIOD === '30d' ? 30 : 90;
-                return (new Date() - new Date(t.ts)) <= days * 86400000;
+            // ---- finding prefs: dismiss (×) / thumbs — POST to the server when
+            // online so they persist in ai_findings; offline they apply in-page.
+            window.aiPref = function (kind, id, val) {
+                const find = f => f && (f.id === id);
+                if (core && typeof core.isBackendOnline === 'function' && core.isBackendOnline()) {
+                    const path = kind === 'suppress' ? '/api/ai/findings/suppress' : '/api/ai/findings/feedback';
+                    const body = kind === 'suppress' ? { finding_id: id, suppressed: val } : { finding_id: id, value: val };
+                    fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
+                    if (DATA) {
+                        const all = allFindings(DATA);
+                        const f = all.find(find);
+                        if (f) { if (kind === 'suppress') f.suppressed = !!val; else f.feedback = val; }
+                    }
+                } else {
+                    const p = localPrefs[id] = localPrefs[id] || { suppressed: false, feedback: null };
+                    if (kind === 'suppress') p.suppressed = !!val; else p.feedback = val;
+                    if (DATA) {
+                        const f = allFindings(DATA).find(find);
+                        if (f) { if (kind === 'suppress') f.suppressed = !!val; else f.feedback = val; }
+                    }
+                }
+                renderAll();
+            };
+            function allFindings(b) {
+                return b ? [].concat(b.patterns, b.psychology.findings, b.risk.findings, b.discipline.findings, b.sessions.findings, b.tilt) : [];
             }
 
-            function refreshCtx() {
-                if (!core || !core.Accounts || !core.Accounts.length) { ctx = null; return; }
+            // ====================================================================
+            // LOCAL ENGINE — offline fallback, mirrors server/ai-mentor.js
+            // ====================================================================
+            function inPeriod(ts) {
+                if (PERIOD === 'all') return true;
+                const days = PERIOD === '90d' ? 90 : 30;
+                return (Date.now() - new Date(ts).getTime()) <= days * 86400000;
+            }
+            function buildCtx() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
                 const accountId = core.selectedAccountId() || core.Accounts[0].id;
-                const acc = core.Accounts.find(a => a.id === accountId);
-                const all = core.Trades
-                    .filter(t => t.account_id === accountId)
-                    .map(t => ({ ...t, ts: new Date(t.ts) }))
-                    .sort((a, b) => b.ts - a.ts);          // newest first
-                ctx = {
-                    accountId,
-                    account: acc || null,
-                    trades: all,                            // newest first
-                    period: all.filter(inPeriod),
+                const account = core.Accounts.find(a => a.id === accountId);
+                const all = core.Trades.filter(t => t.account_id === accountId)
+                    .map(t => ({ ...t, ts: new Date(t.ts) })).sort((a, b) => b.ts - a.ts);
+                return {
+                    accountId, account, trades: all, period: all.filter(t => inPeriod(t.ts)),
                     a: core.analytics(accountId, {}),
                     disc: core.disciplineState(accountId, {}),
                     policy: (core.activePolicy && core.activePolicy(accountId)) || null,
                     viols: core.Violations.filter(v => v.account_id === accountId)
                 };
             }
-
-            function sumPnl(list) { return Math.round(list.reduce((s, t) => s + (t.pnl || 0), 0)); }
-            function avg(list, f) { return list.length ? list.reduce((s, t) => s + (f(t) || 0), 0) / list.length : 0; }
-
-            // A finding: { id, type, sev, title, msg, ev, cost, confidence }
+            const sumPnl = list => Math.round(list.reduce((s, t) => s + (t.pnl || 0), 0));
+            const avg = (list, f) => list.length ? list.reduce((s, t) => s + (f(t) || 0), 0) / list.length : 0;
             function finding(type, sev, title, msg, ev, cost) {
-                return {
-                    id: 'ai-' + type + '-' + (ctx.trades.length) + '-' + ev.length,
-                    type, sev, title, msg,
-                    ev: ev.slice(0, 8).map(t => t.id),
-                    count: ev.length, cost: cost != null ? Math.round(cost) : null,
-                    confidence: ev.length >= 8 ? 'high' : ev.length >= 4 ? 'medium' : 'low'
-                };
+                const count = ev.length;
+                return { id: 'ai-' + type + '-' + count + '-' + (ev[0] || 'none'), type, sev, title, msg,
+                    ev: ev.slice(0, 8).map(t => (typeof t === 'string' ? t : t.id)), count,
+                    cost: cost != null ? Math.round(cost) : null, confidence: count >= 8 ? 'high' : count >= 4 ? 'medium' : 'low' };
             }
-            const costTxt = c => c == null ? '' : (c >= 0 ? ' — ' + $money(c) : ' — cost ' + $money(c));
 
-            // ====================================================================
-            // PATTERN DETECTION — recurring behaviors from the user's own ledger
-            // ====================================================================
-            function detectPatterns() {
+            function detectPatterns(ctx) {
                 const out = [];
-                const T = ctx.period;                       // newest first
-                const n = T.length;
+                const T = ctx.period, n = T.length;
                 if (n < 5) return out;
                 const baseRisk = avg(ctx.trades, t => t.risk) || 0;
                 const sel = cond => T.filter(t => cond(t));
-                const push = (type, sev, title, msg, ev, cost) => {
-                    if (ev.length >= 3) out.push(finding(type, sev, title, msg + costTxt(cost), ev, cost));
-                };
-
+                const push = (type, sev, title, msg, ev, cost) => { if (ev.length >= 3) out.push(finding(type, sev, title, msg, ev, cost)); };
                 const early = sel(t => t.adherence === 'early exit');
-                push('early-exit', 'warning', 'Cutting trades early',
-                    'You exited early ' + early.length + ' of your last ' + n + ' trades — the same early-exit pattern, ' + early.length + ' times.',
-                    early, sumPnl(early));
-
+                push('early-exit', 'warning', 'Cutting trades early', 'You exited early ' + early.length + ' of your last ' + n + ' trades — the same early-exit pattern, ' + early.length + ' times.', early, sumPnl(early));
                 const revenge = sel(t => t.emotion === 'Revenge');
-                push('revenge', 'critical', 'Revenge entries after losses',
-                    revenge.length + ' trades were marked Revenge — entries taken emotionally right after a loss.',
-                    revenge, sumPnl(revenge));
-
+                push('revenge', 'critical', 'Revenge entries after losses', revenge.length + ' trades were marked Revenge — entries taken emotionally right after a loss.', revenge, sumPnl(revenge));
                 const fomo = sel(t => t.emotion === 'FOMO');
-                push('fomo', 'warning', 'FOMO entries',
-                    fomo.length + ' trades were marked FOMO — chasing the move instead of waiting for your setup.',
-                    fomo, sumPnl(fomo));
-
+                push('fomo', 'warning', 'FOMO entries', fomo.length + ' trades were marked FOMO — chasing the move instead of waiting for your setup.', fomo, sumPnl(fomo));
                 const movStop = sel(t => t.adherence === 'moving stop');
-                push('moving-stop', 'warning', 'Moving the stop',
-                    'You moved your stop mid-trade ' + movStop.length + ' times — the "moving stop" violation appears again and again.',
-                    movStop, sumPnl(movStop));
-
+                push('moving-stop', 'warning', 'Moving the stop', 'You moved your stop mid-trade ' + movStop.length + ' times — the "moving stop" violation appears again and again.', movStop, sumPnl(movStop));
                 const noPlan = sel(t => t.adherence === 'no-plan');
-                push('no-plan', 'warning', 'Trading without a plan',
-                    noPlan.length + ' trades were taken with no plan at all.',
-                    noPlan, sumPnl(noPlan));
-
-                const chrono = T.slice().reverse();          // oldest first for sequence logic
+                push('no-plan', 'warning', 'Trading without a plan', noPlan.length + ' trades were taken with no plan at all.', noPlan, sumPnl(noPlan));
+                const chrono = T.slice().reverse();
                 const escalated = [];
-                for (let i = 1; i < chrono.length; i++) {
-                    const prev = chrono[i - 1], t = chrono[i];
-                    if (prev.pnl < 0 && (t.risk || 0) > (prev.risk || 0)) escalated.push(t);
-                }
-                push('risk-escalation', 'critical', 'Risk escalates right after a loss',
-                    'After ' + escalated.length + ' losses you immediately took MORE risk on the next trade — the escalation signature.',
-                    escalated, sumPnl(escalated));
-
+                for (let i = 1; i < chrono.length; i++) { const prev = chrono[i - 1], t = chrono[i]; if (prev.pnl < 0 && (t.risk || 0) > (prev.risk || 0)) escalated.push(t); }
+                push('risk-escalation', 'critical', 'Risk escalates right after a loss', 'After ' + escalated.length + ' losses you immediately took MORE risk on the next trade — the escalation signature.', escalated, sumPnl(escalated));
                 const cutWins = sel(t => t.adherence === 'early exit' && t.pnl > 0);
-                push('cut-winners', 'warning', 'Cutting winners short',
-                    'You closed ' + cutWins.length + ' winning trades early — leaving money on the table.',
-                    cutWins, null);
-
+                push('cut-winners', 'warning', 'Cutting winners short', 'You closed ' + cutWins.length + ' winning trades early — leaving money on the table.', cutWins, null);
                 const oversize = sel(t => baseRisk > 0 && (t.risk || 0) > baseRisk * 1.5);
-                push('oversize', 'warning', 'Oversized positions',
-                    oversize.length + ' trades risked more than 1.5× your average $' + Math.round(baseRisk) + ' risk per trade.',
-                    oversize, sumPnl(oversize));
-
+                push('oversize', 'warning', 'Oversized positions', oversize.length + ' trades risked more than 1.5× your average $' + Math.round(baseRisk) + ' risk per trade.', oversize, sumPnl(oversize));
                 const quick = sel(t => t.postLoss && t.delayMin != null && t.delayMin < 30);
-                push('quick-reentry', 'warning', 'Re-entering too fast after a loss',
-                    quick.length + ' times you were back in the market within 30 minutes of a loss.',
-                    quick, sumPnl(quick));
-
+                push('quick-reentry', 'warning', 'Re-entering too fast after a loss', quick.length + ' times you were back in the market within 30 minutes of a loss.', quick, sumPnl(quick));
                 return out;
             }
-
-            // ====================================================================
-            // PSYCHOLOGY — emotions × outcomes, post-loss behavior
-            // ====================================================================
-            function psychologyAnalysis() {
-                const out = [];
-                const T = ctx.period;
-                if (T.length < 5) return out;
-                const emotions = Object.keys(groupBy(T, t => t.emotion || 'Unmarked')).map(k => {
-                    const g = groupBy(T, t => t.emotion || 'Unmarked')[k];
-                    return { key: k, n: g.length, pnl: sumPnl(g), winRate: g.filter(t => t.pnl > 0).length / g.length, avgR: avg(g, t => t.r) };
-                }).sort((a, b) => b.pnl - a.pnl);
-
-                const emo = emotions.find(e => e.key === 'Revenge');
-                if (emo && emo.n >= 2) {
-                    out.push(finding('psych-revenge', 'critical', 'Revenge costs money, not just discipline',
-                        'Revenge trades netted ' + $money(emo.pnl) + ' with a ' + Math.round(emo.winRate * 100) + '% win rate across ' + emo.n + ' trades — your worst emotional state by far.',
-                        T.filter(t => t.emotion === 'Revenge'), emo.pnl));
-                }
-                const fomo2 = emotions.find(e => e.key === 'FOMO');
-                if (fomo2 && fomo2.n >= 2 && fomo2.pnl < 0) {
-                    out.push(finding('psych-fomo', 'warning', 'FOMO correlates with losses',
-                        'FOMO trades netted ' + $money(fomo2.pnl) + ' across ' + fomo2.n + ' trades.',
-                        T.filter(t => t.emotion === 'FOMO'), fomo2.pnl));
-                }
-                const calm = emotions.find(e => e.key === 'Calm');
-                if (calm && calm.n >= 4) {
-                    out.push(finding('psych-calm', 'positive', 'Your calm state is your edge',
-                        'When you traded Calm you netted ' + $money(calm.pnl) + ' with a ' + Math.round(calm.winRate * 100) + '% win rate across ' + calm.n + ' trades.',
-                        T.filter(t => t.emotion === 'Calm'), calm.pnl));
-                }
-                const noted = T.filter(t => (t.note || t.notes || '').trim().length > 0);
-                const unNoted = T.filter(t => !(t.note || t.notes || '').trim().length);
-                if (noted.length >= 5 && unNoted.length >= 5) {
-                    const a = noted.filter(t => t.pnl > 0).length / noted.length;
-                    const b = unNoted.filter(t => t.pnl > 0).length / unNoted.length;
-                    if (Math.abs(a - b) > 0.1) {
-                        out.push(finding('psych-notes', a > b ? 'positive' : 'warning',
-                            a > b ? 'Writing the thesis helps you win' : 'Trades without a written thesis win more',
-                            'Trades with a journal note won ' + Math.round(a * 100) + '% (' + noted.length + '), without a note ' + Math.round(b * 100) + '% (' + unNoted.length + ').',
-                            a > b ? noted : unNoted, null));
+            function psychologyAnalysis(ctx) {
+                const out = [], T = ctx.period;
+                const group = key => { const m = {}; T.forEach(t => { const k = t[key] || 'Unmarked'; (m[k] = m[k] || []).push(t); }); return Object.keys(m).map(k => { const g = m[k]; return { key: k, n: g.length, pnl: sumPnl(g), winRate: g.filter(t => t.pnl > 0).length / g.length, avgR: avg(g, t => t.r) }; }).sort((a, b) => b.pnl - a.pnl); };
+                const emotions = group('emotion');
+                if (T.length >= 5) {
+                    const emo = k => emotions.find(e => e.key === k);
+                    const revenge = emo('Revenge');
+                    if (revenge && revenge.n >= 2) out.push(finding('psych-revenge', 'critical', 'Revenge costs money, not just discipline', 'Revenge trades netted ' + $money(revenge.pnl) + ' with a ' + Math.round(revenge.winRate * 100) + '% win rate across ' + revenge.n + ' trades — your worst emotional state by far.', T.filter(t => t.emotion === 'Revenge'), revenge.pnl));
+                    const fomoE = emo('FOMO');
+                    if (fomoE && fomoE.n >= 2 && fomoE.pnl < 0) out.push(finding('psych-fomo', 'warning', 'FOMO correlates with losses', 'FOMO trades netted ' + $money(fomoE.pnl) + ' across ' + fomoE.n + ' trades.', T.filter(t => t.emotion === 'FOMO'), fomoE.pnl));
+                    const calm = emo('Calm');
+                    if (calm && calm.n >= 4) out.push(finding('psych-calm', 'positive', 'Your calm state is your edge', 'When you traded Calm you netted ' + $money(calm.pnl) + ' with a ' + Math.round(calm.winRate * 100) + '% win rate across ' + calm.n + ' trades.', T.filter(t => t.emotion === 'Calm'), calm.pnl));
+                    const noted = T.filter(t => (t.note || t.notes || '').trim().length > 0);
+                    const unNoted = T.filter(t => !(t.note || t.notes || '').trim().length);
+                    if (noted.length >= 5 && unNoted.length >= 5) {
+                        const a = noted.filter(t => t.pnl > 0).length / noted.length;
+                        const b = unNoted.filter(t => t.pnl > 0).length / unNoted.length;
+                        if (Math.abs(a - b) > 0.1) out.push(finding('psych-notes', a > b ? 'positive' : 'warning', a > b ? 'Writing the thesis helps you win' : 'Trades without a written thesis win more', 'Trades with a journal note won ' + Math.round(a * 100) + '% (' + noted.length + '), without a note ' + Math.round(b * 100) + '% (' + unNoted.length + ').', a > b ? noted : unNoted, null));
                     }
                 }
-                return out;
+                return { findings: out, emotionTable: emotions };
             }
-
-            // ====================================================================
-            // RISK ANALYSIS — consistency, oversizing, R:R quality, drawdown
-            // ====================================================================
-            function riskAnalysis() {
-                const out = [];
-                const T = ctx.period;
-                const a = ctx.a;
-                if (T.length < 5 || !a) return out;
-                const risks = T.map(t => t.risk || 0).filter(r => r > 0);
-                const mean = risks.length ? risks.reduce((s, r) => s + r, 0) / risks.length : 0;
-                const sd = risks.length ? Math.sqrt(risks.reduce((s, r) => s + (r - mean) * (r - mean), 0) / risks.length) : 0;
-                const cv = mean ? sd / mean : 0;
-                if (risks.length >= 5 && cv > 0.45) {
-                    out.push(finding('risk-inconsistent', 'warning', 'Risk sizing is inconsistent',
-                        'Your risk per trade swings with a coefficient of variation of ' + Math.round(cv * 100) + '% (avg $' + Math.round(mean) + ', σ $' + Math.round(sd) + ') — same-size risk is what makes your stats readable.',
-                        T.filter(t => t.risk && Math.abs(t.risk - mean) > sd), null));
+            function riskAnalysis(ctx) {
+                const out = [], T = ctx.period, a = ctx.a;
+                if (T.length >= 5 && a) {
+                    const risks = T.map(t => t.risk || 0).filter(r => r > 0);
+                    const mean = risks.length ? risks.reduce((s, r) => s + r, 0) / risks.length : 0;
+                    const sd = risks.length ? Math.sqrt(risks.reduce((s, r) => s + (r - mean) * (r - mean), 0) / risks.length) : 0;
+                    const cv = mean ? sd / mean : 0;
+                    if (risks.length >= 5 && cv > 0.45) out.push(finding('risk-inconsistent', 'warning', 'Risk sizing is inconsistent', 'Your risk per trade swings with a coefficient of variation of ' + Math.round(cv * 100) + '% (avg $' + Math.round(mean) + ', σ $' + Math.round(sd) + ') — same-size risk is what makes your stats readable.', T.filter(t => t.risk && Math.abs(t.risk - mean) > sd), null));
+                    const policy = ctx.policy && ctx.policy.values;
+                    if (policy && policy.riskPerTrade) { const over = T.filter(t => t.risk > policy.riskPerTrade); if (over.length >= 2) out.push(finding('risk-over-policy', 'critical', 'Risking more than your own policy', over.length + ' trades risked more than your configured $' + policy.riskPerTrade + ' per trade.', over, sumPnl(over))); }
+                    const winners = T.filter(t => t.pnl > 0);
+                    if (winners.length >= 5) { const avgWinR = avg(winners, t => t.r); if (avgWinR < 1.2) out.push(finding('risk-small-wins', 'warning', 'Winners are too small', 'Your average winner is ' + avgWinR.toFixed(2) + 'R across ' + winners.length + ' wins — below 1.2R your edge barely survives the losers.', winners.slice().sort((x, y) => x.r - y.r).slice(0, 8), null)); }
+                    if (a.maxDD > 0) { const rec = a.n ? (a.net / a.maxDD) : 0; if (rec < 1) out.push(finding('risk-recovery', 'warning', 'Drawdown recovery is slow', 'Your max drawdown was ' + $money(-a.maxDD) + ' and your recovery factor is ' + rec.toFixed(2) + ' — you make back less than the drawdown cost.', [], null)); }
                 }
-                const policy = ctx.policy && ctx.policy.values;
-                if (policy && policy.riskPerTrade) {
-                    const over = T.filter(t => t.risk > policy.riskPerTrade);
-                    if (over.length >= 2) {
-                        out.push(finding('risk-over-policy', 'critical', 'Risking more than your own policy',
-                            over.length + ' trades risked more than your configured $' + policy.riskPerTrade + ' per trade.',
-                            over, sumPnl(over)));
-                    }
-                }
-                const winners = T.filter(t => t.pnl > 0);
-                if (winners.length >= 5) {
-                    const avgWinR = avg(winners, t => t.r);
-                    if (avgWinR < 1.2) {
-                        out.push(finding('risk-small-wins', 'warning', 'Winners are too small',
-                            'Your average winner is ' + avgWinR.toFixed(2) + 'R across ' + winners.length + ' wins — below 1.2R your edge barely survives the losers.',
-                            winners.slice().sort((x, y) => x.r - y.r).slice(0, 8), null));
-                    }
-                }
-                if (a.maxDD > 0) {
-                    const rec = a.n ? (a.net / a.maxDD) : 0;
-                    if (rec < 1) {
-                        out.push(finding('risk-recovery', 'warning', 'Drawdown recovery is slow',
-                            'Your max drawdown was ' + $money(-a.maxDD) + ' and your recovery factor is ' + rec.toFixed(2) + ' — you make back less than the drawdown cost.',
-                            [], null));
-                    }
-                }
-                return out;
+                return { findings: out, histogram: [], avgRisk: 0, riskSd: 0 };
             }
-
-            // ====================================================================
-            // DISCIPLINE COACH — the user's OWN rules are the rubric
-            // ====================================================================
-            function disciplineCoach() {
-                const out = [];
-                const d = ctx.disc;
-                const T = ctx.period;
-                if (!d || T.length < 5) return out;
-                const viols = ctx.viols;
-                const byRule = {};
-                viols.forEach(v => {
-                    (byRule[v.ruleKey] = byRule[v.ruleKey] || { key: v.ruleKey, label: v.ruleLabel, n: 0, cost: 0 });
-                    byRule[v.ruleKey].n++;
-                    byRule[v.ruleKey].cost += (v.pnl || 0);
-                });
-                const ranked = Object.values(byRule).sort((x, y) => y.n - x.n);
-                const top = ranked[0];
-                if (top && top.n >= 3) {
-                    out.push(finding('disc-violation', 'critical', 'Your most broken rule: ' + top.label,
-                        'You broke "' + top.label + '" ' + top.n + ' times — costing ' + $money(top.cost) + ' in net P&L. This is the single biggest leak in your process.',
-                        viols.filter(v => v.ruleKey === top.key).map(v => v.tradeId), top.cost));
+            function disciplineCoach(ctx) {
+                const out = [], d = ctx.disc, T = ctx.period;
+                const dims = (d && d.dims || []).map(dim => ({ key: dim.key, label: dim.label, score: dim.score, passed: dim.passed, total: dim.total }));
+                const rules = (d && d.rules || []).slice(0, 8).map(r => ({ label: r.label, rate: r.rate, passed: r.passed, total: r.total }));
+                if (d && T.length >= 5) {
+                    const byRule = {};
+                    ctx.viols.forEach(v => { (byRule[v.ruleKey] = byRule[v.ruleKey] || { key: v.ruleKey, label: v.ruleLabel, n: 0, cost: 0 }); byRule[v.ruleKey].n++; byRule[v.ruleKey].cost += (v.pnl || 0); });
+                    const top = Object.values(byRule).sort((x, y) => y.n - x.n)[0];
+                    if (top && top.n >= 3) out.push(finding('disc-violation', 'critical', 'Your most broken rule: ' + top.label, 'You broke "' + top.label + '" ' + top.n + ' times — costing ' + $money(top.cost) + ' in net P&L. This is the single biggest leak in your process.', ctx.viols.filter(v => v.ruleKey === top.key).map(v => v.tradeId), top.cost));
+                    const weakest = rules[rules.length - 1];
+                    if (weakest && weakest.total >= 5) out.push(finding('disc-weakest', 'warning', 'Weakest rule adherence: ' + weakest.label, 'Your adherence on "' + weakest.label + '" is ' + weakest.rate + '% over ' + weakest.total + ' checks.', [], null));
+                    if (d.cleanDayStreak > 0) out.push(finding('disc-streak', 'positive', 'Clean streak: ' + d.cleanDayStreak + ' days', 'You have ' + d.cleanDayStreak + ' clean trading day' + (d.cleanDayStreak === 1 ? '' : 's') + ' in a row — no hard-rule violations. Best ever: ' + d.bestCleanDayStreak + '.', [], null));
                 }
-                const rules = d.rules || [];
-                const weakest = rules[rules.length - 1];
-                if (weakest && weakest.total >= 5) {
-                    out.push(finding('disc-weakest', 'warning', 'Weakest rule adherence: ' + weakest.label,
-                        'Your adherence on "' + weakest.label + '" is ' + weakest.rate + '% over ' + weakest.total + ' checks.',
-                        [], null));
-                }
-                if (d.cleanDayStreak > 0) {
-                    out.push(finding('disc-streak', 'positive', 'Clean streak: ' + d.cleanDayStreak + ' days',
-                        'You have ' + d.cleanDayStreak + ' clean trading day' + (d.cleanDayStreak === 1 ? '' : 's') + ' in a row — no hard-rule violations. Best ever: ' + d.bestCleanDayStreak + '.',
-                        [], null));
-                }
-                return out;
+                return { findings: out, dims, rules };
             }
-
-            // ====================================================================
-            // SESSION INTELLIGENCE — which conditions produce your best/worst
-            // ====================================================================
-            function sessionIntel() {
-                const out = [];
-                const T = ctx.period;
-                if (T.length < 10) return out;
-                const rank = key => {
-                    const m = groupBy(T, t => t[key] || '—');
-                    return Object.keys(m).map(k => {
-                        const g = m[k];
-                        return { key: k, n: g.length, pnl: sumPnl(g), winRate: g.filter(t => t.pnl > 0).length / g.length, avgR: avg(g, t => t.r) };
-                    }).filter(r => r.n >= 5).sort((x, y) => y.avgR - x.avgR);
-                };
-                const bySession = rank('session');
-                const bySetup = rank('setup');
-                const bySymbol = rank('symbol');
+            function sessionIntel(ctx) {
+                const out = [], T = ctx.period;
+                const empty = { findings: out, tables: {} };
+                if (T.length < 10) return empty;
+                const rank = key => { const m = {}; T.forEach(t => { const k = t[key] || '—'; (m[k] = m[k] || []).push(t); }); return Object.keys(m).map(k => { const g = m[k]; return { key: k, n: g.length, pnl: sumPnl(g), winRate: g.filter(t => t.pnl > 0).length / g.length, avgR: avg(g, t => t.r) }; }).filter(r => r.n >= 5).sort((x, y) => y.avgR - x.avgR); };
+                const bySession = rank('session'), bySetup = rank('setup'), bySymbol = rank('symbol'), byDirection = rank('dir');
                 if (bySession.length) {
                     const best = bySession[0], worst = bySession[bySession.length - 1];
-                    if (best.avgR > 0 && best.n >= 5) {
-                        out.push(finding('ses-best', 'positive', 'Your edge is the ' + best.key + ' session',
-                            best.key + ' is your best session — ' + Math.round(best.winRate * 100) + '% win rate, ' + best.avgR.toFixed(2) + 'R average across ' + best.n + ' trades (' + $money(best.pnl) + ').',
-                            T.filter(t => t.session === best.key), best.pnl));
-                    }
-                    if (worst.avgR < 0 && worst.key !== best.key && worst.n >= 5) {
-                        out.push(finding('ses-worst', 'warning', 'The ' + worst.key + ' session drains you',
-                            worst.key + ' averages ' + worst.avgR.toFixed(2) + 'R across ' + worst.n + ' trades (' + $money(worst.pnl) + ') — your worst session by expectancy.',
-                            T.filter(t => t.session === worst.key), worst.pnl));
-                    }
+                    if (best.avgR > 0 && best.n >= 5) out.push(finding('ses-best', 'positive', 'Your edge is the ' + best.key + ' session', best.key + ' is your best session — ' + Math.round(best.winRate * 100) + '% win rate, ' + best.avgR.toFixed(2) + 'R average across ' + best.n + ' trades (' + $money(best.pnl) + ').', T.filter(t => t.session === best.key), best.pnl));
+                    if (worst.avgR < 0 && worst.key !== best.key && worst.n >= 5) out.push(finding('ses-worst', 'warning', 'The ' + worst.key + ' session drains you', worst.key + ' averages ' + worst.avgR.toFixed(2) + 'R across ' + worst.n + ' trades (' + $money(worst.pnl) + ') — your worst session by expectancy.', T.filter(t => t.session === worst.key), worst.pnl));
                 }
-                if (bySetup.length) {
-                    const best = bySetup[0];
-                    if (best.avgR > 0 && best.n >= 5) {
-                        out.push(finding('setup-best', 'positive', best.key + ' is your highest-conviction setup',
-                            best.key + ': ' + Math.round(best.winRate * 100) + '% win rate, ' + best.avgR.toFixed(2) + 'R across ' + best.n + ' trades.',
-                            T.filter(t => t.setup === best.key), best.pnl));
-                    }
-                }
-                if (bySymbol.length) {
-                    const best = bySymbol[0], worst = bySymbol[bySymbol.length - 1];
-                    if (best.avgR > 0 && worst.avgR < 0 && best.key !== worst.key) {
-                        out.push(finding('sym-spread', 'observation', best.key + ' vs ' + worst.key + ': a ' + (best.avgR - worst.avgR).toFixed(2) + 'R expectancy spread',
-                            best.key + ' averages ' + best.avgR.toFixed(2) + 'R (' + best.n + ' trades) while ' + worst.key + ' averages ' + worst.avgR.toFixed(2) + 'R (' + worst.n + ' trades). The data is telling you where to concentrate.',
-                            [...T.filter(t => t.symbol === best.key), ...T.filter(t => t.symbol === worst.key)], null));
-                    }
-                }
-                return out;
+                if (bySetup.length) { const best = bySetup[0]; if (best.avgR > 0 && best.n >= 5) out.push(finding('setup-best', 'positive', best.key + ' is your highest-conviction setup', best.key + ': ' + Math.round(best.winRate * 100) + '% win rate, ' + best.avgR.toFixed(2) + 'R across ' + best.n + ' trades.', T.filter(t => t.setup === best.key), best.pnl)); }
+                if (bySymbol.length) { const best = bySymbol[0], worst = bySymbol[bySymbol.length - 1]; if (best.avgR > 0 && worst.avgR < 0 && best.key !== worst.key) out.push(finding('sym-spread', 'observation', best.key + ' vs ' + worst.key + ': a ' + (best.avgR - worst.avgR).toFixed(2) + 'R expectancy spread', best.key + ' averages ' + best.avgR.toFixed(2) + 'R (' + best.n + ' trades) while ' + worst.key + ' averages ' + worst.avgR.toFixed(2) + 'R (' + worst.n + ' trades). The data is telling you where to concentrate.', [...T.filter(t => t.symbol === best.key), ...T.filter(t => t.symbol === worst.key)], null)); }
+                return { findings: out, tables: { session: bySession, setup: bySetup, symbol: bySymbol, dir: byDirection } };
             }
-
-            // ====================================================================
-            // TILT / OVERTRADING — compare the current window to the user's OWN
-            // historical tilt episodes (personalized by construction)
-            // ====================================================================
-            function tiltAnalysis() {
-                const T = ctx.trades;                       // newest first (full history)
+            function tiltAnalysis(ctx) {
+                const T = ctx.trades;
                 if (T.length < 8) return [];
                 const chrono = T.slice().reverse();
                 const baseRisk = avg(T, t => t.risk) || 1;
-
-                // an episode = any 3 consecutive trades with ≥2 losses AND
-                // (risk escalation after a loss OR an emotional tag)
                 const episodes = [];
                 for (let i = 0; i + 3 <= chrono.length; i++) {
                     const win = chrono.slice(i, i + 3);
@@ -605,13 +474,7 @@
                     let escal = 0;
                     for (let j = 1; j < win.length; j++) if (win[j - 1].pnl < 0 && win[j].risk > win[j - 1].risk) escal++;
                     const emo = win.some(t => t.emotion === 'Revenge' || t.emotion === 'FOMO');
-                    if (losses >= 2 && (escal > 0 || emo)) {
-                        episodes.push({
-                            trades: win, losses,
-                            riskMult: avg(win, t => t.risk) / baseRisk,
-                            pnl: sumPnl(win), escal, emo, start: win[0].ts
-                        });
-                    }
+                    if (losses >= 2 && (escal > 0 || emo)) episodes.push({ trades: win, losses, riskMult: avg(win, t => t.risk) / baseRisk, pnl: sumPnl(win), escal, emo });
                 }
                 const recent = T.slice(0, Math.min(5, T.length));
                 const recentLosses = recent.filter(t => t.pnl < 0).length;
@@ -619,72 +482,110 @@
                 for (let i = 0; i + 1 < recent.length; i++) if (recent[i + 1].pnl < 0 && recent[i].risk > recent[i + 1].risk) recentEscal++;
                 const recentEmo = recent.some(t => t.emotion === 'Revenge' || t.emotion === 'FOMO');
                 const recentRiskMult = avg(recent, t => t.risk) / baseRisk;
-
                 const inTilt = recentLosses >= 2 && (recentEscal > 0 || recentEmo || recentRiskMult > 1.15);
                 const avgEpPnl = episodes.length ? avg(episodes, e => e.pnl) : 0;
                 const avgEpRisk = episodes.length ? avg(episodes, e => e.riskMult) : 0;
-
                 const msg = inTilt
                     ? 'Your last ' + recent.length + ' trades match your tilt signature: ' + recentLosses + ' losses, ' + (recentEscal ? 'risk escalation' : 'emotional entries') + (recentRiskMult > 1.15 ? ', ' + Math.round(recentRiskMult * 100) + '% of your normal risk' : '') + '. You have ' + episodes.length + ' similar episode' + (episodes.length === 1 ? '' : 's') + ' in your history' + (episodes.length ? ' averaging ' + $money(avgEpPnl) + ' and ' + Math.round(avgEpRisk * 100) + '% risk — this is how your bad periods look before they happen.' : '.') + ' Step away or cut size to your minimum.'
-                    : (episodes.length
-                        ? 'No active tilt signal in your last ' + recent.length + ' trades. You have ' + episodes.length + ' historical tilt episode' + (episodes.length === 1 ? '' : 's') + ' (avg ' + $money(avgEpPnl) + ', ' + Math.round(avgEpRisk * 100) + '% risk) — the current calm is the right state to protect.'
-                        : 'No tilt episodes detected in your history yet — keep logging; the mentor learns your signature as your sample grows.');
+                    : (episodes.length ? 'No active tilt signal in your last ' + recent.length + ' trades. You have ' + episodes.length + ' historical tilt episode' + (episodes.length === 1 ? '' : 's') + ' (avg ' + $money(avgEpPnl) + ', ' + Math.round(avgEpRisk * 100) + '% risk) — the current calm is the right state to protect.' : 'No tilt episodes detected in your history yet — keep logging; the mentor learns your signature as your sample grows.');
                 const ev = episodes.length ? episodes.slice(-3).flatMap(e => e.trades) : recent;
-                return [{
-                    id: 'ai-tilt-' + T.length,
-                    type: 'tilt', sev: inTilt ? 'critical' : 'positive',
-                    title: inTilt ? 'Tilt pattern active — this is how your bad periods start' : 'Tilt watch: ' + episodes.length + ' historical episode' + (episodes.length === 1 ? '' : 's') + ' on record',
-                    msg, ev: ev.map(t => t.id), count: recent.length,
-                    cost: episodes.length ? Math.round(avgEpPnl) : null,
-                    confidence: episodes.length >= 3 ? 'high' : 'medium'
-                }];
+                return [{ id: 'ai-tilt-' + T.length + '-' + (ev[0] ? ev[0].id : 'none'), type: 'tilt', sev: inTilt ? 'critical' : 'positive', title: inTilt ? 'Tilt pattern active — this is how your bad periods start' : 'Tilt watch: ' + episodes.length + ' historical episode' + (episodes.length === 1 ? '' : 's') + ' on record', msg, ev: ev.map(t => t.id), count: recent.length, cost: episodes.length ? Math.round(avgEpPnl) : null, confidence: episodes.length >= 3 ? 'high' : 'medium' }];
             }
-
-            // ====================================================================
-            // TRADE AUTOPSY — one trade, fully dissected (immutable evidence)
-            // ====================================================================
-            function autopsy(t) {
+            function autopsyData(t) {
                 const spec = core.assetSpecFor ? core.assetSpecFor(t.symbol) : null;
-                const unit = spec ? spec.unit : 'units';
                 const strat = core.StrategyMaster.find(m => m.id === t.strategy_id);
-                const evals = (core.TradeService && core.TradeService.evaluationsFor)
-                    ? core.TradeService.evaluationsFor(t.id)
-                    : [];
+                const evals = (core.TradeService && core.TradeService.evaluationsFor) ? core.TradeService.evaluationsFor(t.id) : [];
                 const fails = evals.filter(e => e.state === 'FAIL');
-                const verdict = t.adherence_result === 'BLOCK' ? ['Blocked', 'tag-red']
-                    : fails.length ? ['Violation', 'tag-amber'] : ['Followed plan', 'tag-emerald'];
-
-                const ruleRows = (evals.length ? evals : []).map(e =>
-                    '<tr><td>' + esc(e.ruleLabel || e.ruleKey) + '</td><td class="num">' + esc(e.expected) + '</td><td class="num">' + esc(e.actual) + '</td>' +
-                    '<td>' + (e.state === 'PASS' ? '<span class="tag tag-emerald !py-0.5">PASS</span>' : '<span class="tag tag-red !py-0.5">FAIL</span>') + '</td></tr>').join('');
-
-                return panel('Autopsy — ' + esc(t.symbol) + ' ' + esc(t.dir) + ' · ' + fmtTs(t.ts),
-                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
-                        kpi('P&L', $money(t.pnl), t.r != null ? (t.r >= 0 ? '+' : '') + t.r.toFixed(2) + 'R' : '', t.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
-                        kpi('Risk', '$' + Math.round(t.risk || 0), 'per trade · ' + unit.toLowerCase(), 'text-white') +
-                        kpi('Prices', (t.entry != null ? esc((core.fmtPrice ? core.fmtPrice(t.symbol, t.entry) : t.entry)) : '—') + ' → ' + (t.exit != null ? esc((core.fmtPrice ? core.fmtPrice(t.symbol, t.exit) : t.exit)) : '—'), 'size ' + (t.size != null ? t.size : '—') + ' ' + (spec ? spec.sizeLabel.toLowerCase() : 'units'), 'text-white') +
-                        kpi('Execution', esc(t.adherence || '—'), esc(t.emotion || '—') + ' · ' + esc(t.session || '—'), 'text-white') +
-                    '</div>' +
-                    '<div class="flex flex-wrap gap-2 mb-4">' +
-                        '<span class="tag ' + verdict[1] + '">' + verdict[0] + '</span>' +
-                        '<span class="tag tag-blue">' + esc(t.setup || '—') + '</span>' +
-                        '<span class="tag tag-gray">' + esc(strat ? strat.name : (t.strategy || '—')) + '</span>' +
-                        '<span class="tag tag-gray">' + esc(spec ? spec.assetClass : 'Other') + '</span>' +
-                    '</div>' +
-                    (fails.length ? '<div class="mb-3 text-[12.5px] text-[#F87171]"><b>What went against the plan:</b> ' + esc(fails.map(f => f.explanation).join(' · ')) + '</div>' : '') +
-                    (t.note ? '<div class="mb-4 px-3 py-2.5 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12.5px] text-[#C4C4CC]"><b class="text-white">Your note:</b> ' + esc(t.note) + '</div>' : '') +
-                    (ruleRows ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rule</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead><tbody>' + ruleRows + '</tbody></table></div>' : ''),
-                    '<span class="ev-chip">' + confTag(evals.length) + '</span>');
+                return {
+                    tradeId: t.id, symbol: t.symbol, dir: t.dir, ts: new Date(t.ts).toISOString(),
+                    pnl: t.pnl, r: t.r, risk: t.risk, entry: t.entry, exit: t.exit, size: t.size,
+                    unit: spec ? spec.unit : 'units', sizeLabel: spec ? spec.sizeLabel : 'units',
+                    assetClass: spec ? spec.assetClass : 'Other',
+                    adherence: t.adherence, emotion: t.emotion, session: t.session, setup: t.setup,
+                    strategy: strat ? strat.name : (t.strategy || '—'), note: t.note || '',
+                    verdict: t.adherence_result === 'BLOCK' ? 'Blocked' : fails.length ? 'Violation' : 'Followed plan',
+                    fails: fails.map(f => f.explanation),
+                    rules: evals.map(e => ({ label: e.ruleLabel || e.ruleKey, expected: e.expected, actual: e.actual, state: e.state }))
+                };
             }
-            function fmtTs(ts) {
+            function buildLocalBundle() {
+                const ctx = buildCtx();
+                if (!ctx) return null;
+                const patterns = detectPatterns(ctx);
+                const psychology = psychologyAnalysis(ctx);
+                const risk = riskAnalysis(ctx);
+                const discipline = disciplineCoach(ctx);
+                const sessions = sessionIntel(ctx);
+                const tilt = tiltAnalysis(ctx);
+                const T = ctx.period, a = ctx.a, d = ctx.disc;
+                const criticals = patterns.filter(f => f.sev === 'critical');
+                const warnings = patterns.filter(f => f.sev === 'warning');
+                const strengths = patterns.filter(f => f.sev === 'positive').concat(discipline.findings.filter(f => f.sev === 'positive'));
+                const top = criticals.concat(warnings).slice(0, 3);
+                const coachMsg = T.length < 10
+                    ? 'Your sample is still small (' + T.length + ' trades in range). Keep journaling — evidence-backed findings unlock at 10+.'
+                    : (top.length ? 'Your biggest leak right now: "' + top[0].title + '" — ' + top[0].count + ' occurrences in the current range. ' + (tilt[0] && tilt[0].sev === 'critical' ? 'And the tilt detector is flashing. Today is a day to protect capital.' : 'Fix this one thing and your process improves more than any other change.') : 'No critical patterns in range. ' + (strengths.length ? 'Double down on what works: ' + strengths[0].title + '.' : 'Keep logging.'));
+                const bundle = {
+                    accountId: ctx.accountId, period: PERIOD,
+                    account: { name: ctx.account.name, equity: ctx.account.current_equity },
+                    context: {
+                        tradeCount: T.length, totalTrades: ctx.trades.length,
+                        netPnl: Math.round(a.net), winRate: a.n ? Math.round(a.winRate * 100) : 0,
+                        expectancy: Math.round(a.expectancy * 100) / 100, maxDD: Math.round(a.maxDD),
+                        recovery: a.maxDD ? Math.round(a.recovery * 100) / 100 : 0,
+                        disciplineScore: d && d.score != null ? d.score : null,
+                        violations: ctx.viols.length,
+                        cleanStreak: d ? d.cleanDayStreak : 0, bestCleanStreak: d ? d.bestCleanDayStreak : 0,
+                        avgRisk: risk.avgRisk, riskSd: risk.riskSd,
+                        policyRiskPerTrade: (ctx.policy && ctx.policy.values && ctx.policy.values.riskPerTrade) || null
+                    },
+                    coach: { message: coachMsg, patterns: top, strengths: strengths.slice(0, 2) },
+                    patterns,
+                    psychology: { findings: psychology.findings, emotionTable: psychology.emotionTable },
+                    risk: { findings: risk.findings, histogram: risk.histogram },
+                    discipline: { findings: discipline.findings, dims: discipline.dims, rules: discipline.rules },
+                    sessions: { findings: sessions.findings, tables: sessions.tables },
+                    tilt,
+                    autopsies: ctx.trades.slice(0, Math.min(3, ctx.trades.length)).map(t => autopsyData(t))
+                };
+                // apply offline prefs
+                const apply = f => { const p = localPrefs[f.id]; if (p) { f.suppressed = p.suppressed; f.feedback = p.feedback; } return f; };
+                bundle.patterns = bundle.patterns.map(apply); bundle.psychology.findings = bundle.psychology.findings.map(apply);
+                bundle.risk.findings = bundle.risk.findings.map(apply); bundle.discipline.findings = bundle.discipline.findings.map(apply);
+                bundle.sessions.findings = bundle.sessions.findings.map(apply); bundle.tilt = bundle.tilt.map(apply);
+                return bundle;
+            }
+
+            // ====================================================================
+            // DATA LOADING — server bundle when online, local engine otherwise
+            // ====================================================================
+            async function loadMentorData() {
+                const online = core && typeof core.isBackendOnline === 'function' && core.isBackendOnline();
+                if (online) {
+                    try {
+                        const accId = core.selectedAccountId ? core.selectedAccountId() : (core.Accounts[0] ? core.Accounts[0].id : null);
+                        if (!accId) return null;
+                        const r = await fetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD);
+                        if (r.ok) {
+                            const j = await r.json();
+                            if (j && j.bundle) { SOURCE = 'api'; return j.bundle; }
+                        }
+                    } catch (e) { /* fall through */ }
+                }
+                SOURCE = 'offline';
+                return buildLocalBundle();
+            }
+
+            // ====================================================================
+            // RENDERERS — pure consumers of DATA
+            // ====================================================================
+            function fmtTs(iso) {
+                const ts = new Date(iso);
                 const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][ts.getMonth()];
                 return m + ' ' + ts.getDate() + ', ' + ts.getFullYear() + ' · ' + ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2);
             }
-
-            // ====================================================================
-            // RENDERERS
-            // ====================================================================
             function findingCard(f) {
+                if (!f) return '';
                 const sevColor = f.sev === 'critical' ? '#F87171' : f.sev === 'warning' ? '#FBBF24' : f.sev === 'positive' ? '#34D399' : '#93C5FD';
                 return '<div class="fcard flex gap-3">' +
                     '<div class="sev-bar" style="background:' + sevColor + '"></div>' +
@@ -694,207 +595,195 @@
                             '<span class="ml-auto flex items-center gap-2">' +
                                 '<span class="ev-chip">' + f.count + ' evidence</span>' +
                                 (f.confidence ? '<span class="ev-chip">' + f.confidence + '</span>' : '') +
+                                '<button class="ai-action ' + (f.feedback === 1 ? 'on' : '') + '" title="This finding helped" onclick="aiPref(\'feedback\',\'' + f.id + '\',1)">👍</button>' +
+                                '<button class="ai-action ' + (f.feedback === -1 ? 'off' : '') + '" title="Not relevant to me" onclick="aiPref(\'feedback\',\'' + f.id + '\',-1)">👎</button>' +
+                                '<button class="ai-action" title="Dismiss this finding" onclick="aiPref(\'suppress\',\'' + f.id + '\',true)">✕</button>' +
                             '</span></div>' +
                         '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed">' + esc(f.msg) + '</p>' +
                         (f.ev && f.ev.length ? '<div class="flex flex-wrap gap-1.5 mt-2">' + f.ev.slice(0, 6).map(id => '<span class="ev-chip">' + esc(String(id).slice(0, 12)) + '</span>').join('') + (f.ev.length > 6 ? '<span class="ev-chip">+' + (f.ev.length - 6) + ' more</span>' : '') + '</div>' : '') +
                     '</div></div>';
             }
-            function emptyState(title, sub, action) {
+            function findingGrid(list) {
+                const vis = list.filter(f => !f.suppressed);
+                return vis.length
+                    ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + vis.map(findingCard).join('') + '</div>'
+                    : (list.length ? '<p class="text-[12.5px] text-[#6E6E78]">All findings in this section are dismissed — use the ✕ on a card to hide it, and it stays hidden.</p>' : '<p class="text-[12.5px] text-[#6E6E78]">No findings in this range yet.</p>');
+            }
+            function emptyState(title, sub) {
                 return '<div class="panel p-10 text-center"><div class="text-[15px] font-bold text-white">' + title + '</div>' +
-                    '<p class="text-[12.5px] text-[#6E6E78] mt-1.5 max-w-md mx-auto">' + sub + '</p>' + (action || '') + '</div>';
+                    '<p class="text-[12.5px] text-[#6E6E78] mt-1.5 max-w-md mx-auto">' + sub + '</p></div>';
             }
 
-            function renderCoach() {
+            function renderCoach(b) {
                 const p = $('panel-coach');
-                if (!ctx) { p.innerHTML = emptyState('No account yet', 'Create an account in Strategy Lab and log your first trade — the mentor only speaks from real data.'); return; }
-                if (!ctx.trades.length) { p.innerHTML = emptyState('No trades yet', 'Log your first trade and the mentor will start dissecting your execution, patterns and risk from real data.'); return; }
-                const T = ctx.period;
-                const a = ctx.a, d = ctx.disc;
-                const patterns = detectPatterns();
-                const tilt = tiltAnalysis()[0];
-                const top = patterns.filter(f => f.sev === 'critical').concat(patterns.filter(f => f.sev === 'warning')).slice(0, 3);
-                const strengths = patterns.filter(f => f.sev === 'positive').concat(disciplineCoach().filter(f => f.sev === 'positive')).slice(0, 2);
-
-                const coachMsg = T.length < 10
-                    ? 'Your sample is still small (' + T.length + ' trades in range). Keep journaling — evidence-backed findings unlock at 10+.'
-                    : (top.length ? 'Your biggest leak right now: "' + top[0].title + '" — ' + top[0].count + ' occurrences in the current range. ' + (tilt && tilt.sev === 'critical' ? 'And the tilt detector is flashing. Today is a day to protect capital.' : 'Fix this one thing and your process improves more than any other change.') : 'No critical patterns in range. ' + (strengths.length ? 'Double down on what works: ' + strengths[0].title + '.' : 'Keep logging.'));
-
+                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account in Strategy Lab and log your first trade — the mentor only speaks from real data.'); return; }
+                const c = b.context;
+                if (!c || !c.totalTrades) { p.innerHTML = emptyState('No trades yet', 'Log your first trade and the mentor will start dissecting your execution, patterns and risk from real data.'); return; }
+                const top = b.coach.patterns.filter(f => !f.suppressed);
+                const tilt = b.tilt[0];
+                const strengths = b.coach.strengths.filter(f => !f.suppressed);
                 p.innerHTML =
                     '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
-                        kpi('Discipline score', d && d.score != null ? d.score + '/100' : '—', 'process adherence, not profit', d && d.score >= 70 ? 'text-[#34D399]' : d && d.score >= 45 ? 'text-[#FBBF24]' : 'text-[#F87171]') +
-                        kpi('Net P&L', $money(a.net), a.n + ' trades in range', a.net >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
-                        kpi('Win rate', a.n ? Math.round(a.winRate * 100) + '%' : '—', 'expectancy ' + (a.expectancy >= 0 ? '+' : '') + a.expectancy.toFixed(2) + 'R', 'text-white') +
-                        kpi('Max drawdown', $money(-a.maxDD), 'recovery ' + (a.maxDD ? a.recovery.toFixed(2) : '—'), 'text-[#F87171]') +
+                        kpi('Discipline score', c.disciplineScore != null ? c.disciplineScore + '/100' : '—', 'process adherence, not profit', c.disciplineScore >= 70 ? 'text-[#34D399]' : c.disciplineScore >= 45 ? 'text-[#FBBF24]' : 'text-[#F87171]') +
+                        kpi('Net P&L', $money(c.netPnl), c.tradeCount + ' trades in range', c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                        kpi('Win rate', c.winRate ? c.winRate + '%' : '—', 'expectancy ' + (c.expectancy >= 0 ? '+' : '') + c.expectancy.toFixed(2) + 'R', 'text-white') +
+                        kpi('Max drawdown', $money(-c.maxDD), 'recovery ' + (c.recovery ? c.recovery.toFixed(2) : '—'), 'text-[#F87171]') +
                     '</div>' +
                     '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
                         '<div class="xl:col-span-2 flex flex-col gap-4">' +
-                            panel('Coach — grounded in your ' + T.length + ' trades', '<div class="px-4 py-3.5 rounded-xl bg-[rgba(16,185,129,0.05)] border border-[rgba(16,185,129,0.2)] text-[13.5px] text-[#E8E8EC] leading-relaxed"><svg data-lucide="brain-circuit" class="w-4 h-4 inline mr-1.5 text-[#34D399]"></svg>' + esc(coachMsg) + '</div>') +
-                            panel('Patterns found', '<div class="flex flex-col gap-2.5">' + (patterns.length ? patterns.slice(0, 4).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No recurring patterns in this range yet.</p>') + '</div>') +
+                            panel('Coach — grounded in your ' + c.tradeCount + ' trades', '<div class="px-4 py-3.5 rounded-xl bg-[rgba(16,185,129,0.05)] border border-[rgba(16,185,129,0.2)] text-[13.5px] text-[#E8E8EC] leading-relaxed">' + esc(b.coach.message) + '</div>') +
+                            panel('Patterns found', '<div class="flex flex-col gap-2.5">' + (b.patterns.filter(f => !f.suppressed).length ? b.patterns.filter(f => !f.suppressed).slice(0, 4).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No recurring patterns in this range yet.</p>') + '</div>') +
                         '</div>' +
                         '<div class="flex flex-col gap-4">' +
-                            panel('Tilt watch', tilt ? findingCard(tilt) : '<p class="text-[12.5px] text-[#6E6E78]">Insufficient history for tilt detection.</p>') +
+                            panel('Tilt watch', tilt && !tilt.suppressed ? findingCard(tilt) : '<p class="text-[12.5px] text-[#6E6E78]">' + (tilt && tilt.suppressed ? 'Dismissed.' : 'Insufficient history for tilt detection.') + '</p>') +
                             panel('What is working', '<div class="flex flex-col gap-2.5">' + (strengths.length ? strengths.map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No strengths to report yet — keep logging.</p>') + '</div>') +
                         '</div>' +
                     '</div>';
             }
 
-            function renderAutopsy() {
+            function renderAutopsy(b) {
                 const p = $('panel-autopsy');
-                if (!ctx) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                if (!ctx.trades.length) { p.innerHTML = emptyState('No trades yet', 'Log a trade to get its full autopsy.'); return; }
-                const recent = ctx.trades.slice(0, Math.min(3, ctx.trades.length));
-                p.innerHTML = '<div class="flex flex-col gap-4">' + recent.map(t => autopsy(t)).join('') + '</div>';
+                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
+                if (!b.autopsies.length) { p.innerHTML = emptyState('No trades yet', 'Log a trade to get its full autopsy.'); return; }
+                p.innerHTML = '<div class="flex flex-col gap-4">' + b.autopsies.map(a => {
+                    const verdictCls = a.verdict === 'Blocked' ? 'tag-red' : a.verdict === 'Violation' ? 'tag-amber' : 'tag-emerald';
+                    const ruleRows = a.rules.map(e => '<tr><td>' + esc(e.label) + '</td><td class="num">' + esc(e.expected) + '</td><td class="num">' + esc(e.actual) + '</td><td>' + (e.state === 'PASS' ? '<span class="tag tag-emerald !py-0.5">PASS</span>' : '<span class="tag tag-red !py-0.5">FAIL</span>') + '</td></tr>').join('');
+                    return panel('Autopsy — ' + esc(a.symbol) + ' ' + esc(a.dir) + ' · ' + fmtTs(a.ts),
+                        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
+                            kpi('P&L', $money(a.pnl), a.r != null ? (a.r >= 0 ? '+' : '') + a.r.toFixed(2) + 'R' : '', a.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                            kpi('Risk', '$' + Math.round(a.risk || 0), 'per trade · ' + String(a.unit || '').toLowerCase(), 'text-white') +
+                            kpi('Prices', (a.entry != null ? esc((core.fmtPrice ? core.fmtPrice(a.symbol, a.entry) : a.entry)) : '—') + ' → ' + (a.exit != null ? esc((core.fmtPrice ? core.fmtPrice(a.symbol, a.exit) : a.exit)) : '—'), 'size ' + (a.size != null ? a.size : '—') + ' ' + String(a.sizeLabel || 'units').toLowerCase(), 'text-white') +
+                            kpi('Execution', esc(a.adherence || '—'), esc(a.emotion || '—') + ' · ' + esc(a.session || '—'), 'text-white') +
+                        '</div>' +
+                        '<div class="flex flex-wrap gap-2 mb-4">' +
+                            '<span class="tag ' + verdictCls + '">' + esc(a.verdict) + '</span>' +
+                            '<span class="tag tag-blue">' + esc(a.setup || '—') + '</span>' +
+                            '<span class="tag tag-gray">' + esc(a.strategy) + '</span>' +
+                            '<span class="tag tag-gray">' + esc(a.assetClass) + '</span>' +
+                        '</div>' +
+                        (a.fails.length ? '<div class="mb-3 text-[12.5px] text-[#F87171]"><b>What went against the plan:</b> ' + esc(a.fails.join(' · ')) + '</div>' : '') +
+                        (a.note ? '<div class="mb-4 px-3 py-2.5 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12.5px] text-[#C4C4CC]"><b class="text-white">Your note:</b> ' + esc(a.note) + '</div>' : '') +
+                        (ruleRows ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rule</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead><tbody>' + ruleRows + '</tbody></table></div>' : ''),
+                        '<span class="ev-chip">' + confTag(a.rules.length) + '</span>');
+                }).join('') + '</div>';
             }
 
-            function renderPatterns() {
-                const p = $('panel-patterns');
-                if (!ctx) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const list = detectPatterns();
-                p.innerHTML = list.length
-                    ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + list.map(findingCard).join('') + '</div>'
-                    : emptyState('No patterns in range yet', 'Recurring behaviors need a sample — ' + (ctx.trades.length || 0) + ' trades in range. Each finding below lists the exact trades behind it.');
+            function renderPatterns(b) {
+                $('panel-patterns').innerHTML = b ? findingGrid(b.patterns) : emptyState('No account yet', 'Create an account first.');
             }
 
-            function renderPsychology() {
+            function renderPsychology(b) {
                 const p = $('panel-psychology');
-                if (!ctx) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const T = ctx.period;
-                const list = psychologyAnalysis();
-                const emoRows = Object.keys(groupBy(T, t => t.emotion || 'Unmarked')).map(k => {
-                    const g = groupBy(T, t => t.emotion || 'Unmarked')[k];
-                    const wr = g.filter(t => t.pnl > 0).length / g.length;
-                    return '<tr><td class="font-semibold text-white">' + esc(k) + '</td><td class="num">' + g.length + '</td>' +
-                        '<td class="num">' + Math.round(wr * 100) + '%</td><td class="num">' + avg(g, t => t.r).toFixed(2) + 'R</td>' +
-                        '<td class="num ' + (sumPnl(g) >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + $money(sumPnl(g)) + '</td></tr>';
-                }).join('');
+                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
+                const emoRows = (b.psychology.emotionTable || []).map(r => '<tr><td class="font-semibold text-white">' + esc(r.key) + '</td><td class="num">' + r.n + '</td><td class="num">' + Math.round(r.winRate * 100) + '%</td><td class="num">' + r.avgR.toFixed(2) + 'R</td><td class="num ' + (r.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + $money(r.pnl) + '</td></tr>').join('');
                 p.innerHTML =
-                    (T.length ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4"><div class="flex flex-col gap-2.5">' + (list.length ? list.map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No psychology findings in range yet.</p>') + '</div></div>' : '') +
-                    (T.length ? panel('Emotion × outcome', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Emotion</th><th>Trades</th><th>Win rate</th><th>Avg R</th><th>Net P&L</th></tr></thead><tbody>' + emoRows + '</tbody></table></div>') : emptyState('No trades yet', 'Psychology analysis needs journaled emotion tags.'));
+                    (b.context.totalTrades ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4"><div class="flex flex-col gap-2.5">' + (b.psychology.findings.filter(f => !f.suppressed).length ? b.psychology.findings.filter(f => !f.suppressed).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No psychology findings in range yet.</p>') + '</div></div>' : '') +
+                    (b.context.totalTrades ? panel('Emotion × outcome', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Emotion</th><th>Trades</th><th>Win rate</th><th>Avg R</th><th>Net P&L</th></tr></thead><tbody>' + (emoRows || '<tr><td colspan="5" class="text-[#6E6E78]">No emotion-tagged trades.</td></tr>') + '</tbody></table></div>') : emptyState('No trades yet', 'Psychology analysis needs journaled emotion tags.'));
             }
 
-            function renderRisk() {
+            function renderRisk(b) {
                 const p = $('panel-risk');
-                if (!ctx) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const list = riskAnalysis();
-                const T = ctx.period;
-                const risks = T.map(t => t.risk || 0).filter(r => r > 0);
-                const mean = risks.length ? risks.reduce((s, r) => s + r, 0) / risks.length : 0;
-                const sd = risks.length ? Math.sqrt(risks.reduce((s, r) => s + (r - mean) * (r - mean), 0) / risks.length) : 0;
-                const policy = ctx.policy && ctx.policy.values;
+                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
+                const c = b.context;
+                const hist = b.risk.histogram || [];
+                const maxCount = hist.length ? Math.max(...hist.map(h => h.count)) : 0;
                 p.innerHTML =
                     '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
-                        kpi('Avg risk / trade', '$' + Math.round(mean), 'σ $' + Math.round(sd), 'text-white') +
-                        kpi('Policy risk / trade', policy && policy.riskPerTrade ? '$' + policy.riskPerTrade : '—', 'your configured limit', 'text-white') +
-                        kpi('Max drawdown', $money(-ctx.a.maxDD), 'peak to trough', 'text-[#F87171]') +
-                        kpi('Recovery factor', ctx.a.maxDD ? ctx.a.recovery.toFixed(2) : '—', 'net ÷ max DD', ctx.a.recovery >= 1 ? 'text-[#34D399]' : 'text-[#F87171]') +
+                        kpi('Avg risk / trade', c.avgRisk ? '$' + c.avgRisk : '—', 'σ $' + (c.riskSd || 0), 'text-white') +
+                        kpi('Policy risk / trade', c.policyRiskPerTrade ? '$' + c.policyRiskPerTrade : '—', 'your configured limit', 'text-white') +
+                        kpi('Max drawdown', $money(-c.maxDD), 'peak to trough', 'text-[#F87171]') +
+                        kpi('Recovery factor', c.recovery ? c.recovery.toFixed(2) : '—', 'net ÷ max DD', c.recovery >= 1 ? 'text-[#34D399]' : 'text-[#F87171]') +
                     '</div>' +
                     '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
-                        '<div class="flex flex-col gap-2.5">' + (list.length ? list.map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No risk findings in range.</p>') + '</div>' +
-                        (T.length ? panel('Risk per trade distribution', riskBars(risks)) : '') +
+                        '<div class="flex flex-col gap-2.5">' + (b.risk.findings.filter(f => !f.suppressed).length ? b.risk.findings.filter(f => !f.suppressed).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No risk findings in range.</p>') + '</div>' +
+                        (hist.length ? panel('Risk per trade distribution', '<div class="hbar">' + hist.map(h => '<div class="col"><div class="bar" style="height:' + Math.round((h.count / maxCount) * 100) + '%;background:#3B82F6"></div><div class="lbl num">' + h.key + '</div></div>').join('') + '</div><p class="text-[11.5px] text-[#6E6E78] mt-3">Each bar = trades sized in that $ band. Tight clusters = consistent risk; wide bars = the inconsistency the mentor flags.</p>') : '') +
                     '</div>';
             }
-            function riskBars(risks) {
-                if (!risks.length) return '<p class="text-[12.5px] text-[#6E6E78]">No trades in range.</p>';
-                const max = Math.max(...risks);
-                const hist = {};
-                risks.forEach(r => { const b = Math.floor(r / 10) * 10; hist[b] = (hist[b] || 0) + 1; });
-                const keys = Object.keys(hist).sort((x, y) => x - y);
-                return '<div class="hbar">' + keys.map(k => {
-                    const h = Math.round((hist[k] / Math.max(...Object.values(hist))) * 100);
-                    return '<div class="col"><div class="bar" style="height:' + h + '%;background:#3B82F6"></div><div class="lbl num">$' + k + '</div></div>';
-                }).join('') + '</div><p class="text-[11.5px] text-[#6E6E78] mt-3">Each bar = trades sized in that $ band. Tight clusters = consistent risk; wide bars = the inconsistency the mentor flags.</p>';
-            }
 
-            function renderDiscipline() {
+            function renderDiscipline(b) {
                 const p = $('panel-discipline');
-                if (!ctx) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const d = ctx.disc;
-                const list = disciplineCoach();
-                const dims = (d && d.dims || []).map(dim =>
-                    '<div class="metric-mini"><div class="label-xs">' + esc(dim.label) + '</div><div class="val num ' + (dim.score >= 70 ? 'text-[#34D399]' : dim.score >= 45 ? 'text-[#FBBF24]' : 'text-[#F87171]') + '">' + (dim.score != null ? dim.score + '/100' : '—') + '</div>' +
-                    '<div class="bar-track mt-2"><div class="bar-fill" style="width:' + (dim.score != null ? dim.score : 0) + '%;background:' + (dim.score >= 70 ? '#10B981' : dim.score >= 45 ? '#F59E0B' : '#EF4444') + '"></div></div>' +
-                    (dim.total ? '<div class="text-[10.5px] text-[#6E6E78] mt-1 num">' + dim.passed + '/' + dim.total + ' checks passed</div>' : '') + '</div>').join('');
-                const rules = (d && d.rules || []).slice(0, 8).map(r =>
-                    '<tr><td class="font-semibold text-white">' + esc(r.label) + '</td><td class="num">' + r.rate + '%</td><td class="num">' + r.passed + '/' + r.total + '</td>' +
-                    '<td><div class="bar-track" style="width:90px"><div class="bar-fill" style="width:' + r.rate + '%;background:' + (r.rate >= 70 ? '#10B981' : r.rate >= 45 ? '#F59E0B' : '#EF4444') + '"></div></div></td></tr>').join('');
+                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
+                const c = b.context;
+                const dims = (b.discipline.dims || []).map(dim => '<div class="metric-mini"><div class="label-xs">' + esc(dim.label) + '</div><div class="val num ' + (dim.score >= 70 ? 'text-[#34D399]' : dim.score >= 45 ? 'text-[#FBBF24]' : 'text-[#F87171]') + '">' + (dim.score != null ? dim.score + '/100' : '—') + '</div>' +
+                    '<div class="bar-track mt-2"><div class="bar-fill" style="width:' + (dim.score != null ? dim.score : 0) + '%;background:' + (dim.score >= 70 ? '#10B981' : dim.score >= 45 ? '#F59E0B' : '#EF4444') + '"></div></div>' + (dim.total ? '<div class="text-[10.5px] text-[#6E6E78] mt-1 num">' + dim.passed + '/' + dim.total + ' checks passed</div>' : '') + '</div>').join('');
+                const rules = (b.discipline.rules || []).map(r => '<tr><td class="font-semibold text-white">' + esc(r.label) + '</td><td class="num">' + r.rate + '%</td><td class="num">' + r.passed + '/' + r.total + '</td>' + '<td><div class="bar-track" style="width:90px"><div class="bar-fill" style="width:' + r.rate + '%;background:' + (r.rate >= 70 ? '#10B981' : r.rate >= 45 ? '#F59E0B' : '#EF4444') + '"></div></div></td></tr>').join('');
                 p.innerHTML =
                     '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
-                        kpi('Discipline score', d && d.score != null ? d.score + '/100' : '—', 'weighted across dimensions', d && d.score >= 70 ? 'text-[#34D399]' : 'text-[#FBBF24]') +
-                        kpi('Violations', ctx.viols.length, 'hard-rule breaks', ctx.viols.length ? 'text-[#F87171]' : 'text-[#34D399]') +
-                        kpi('Clean-day streak', d ? d.cleanDayStreak : 0, 'best ' + (d ? d.bestCleanDayStreak : 0), d && d.cleanDayStreak >= 3 ? 'text-[#34D399]' : 'text-white') +
-                        kpi('Strongest rule', d && d.strongest ? d.strongest.rate + '%' : '—', d && d.strongest ? d.strongest.label : 'no data', 'text-[#34D399]') +
+                        kpi('Discipline score', c.disciplineScore != null ? c.disciplineScore + '/100' : '—', 'weighted across dimensions', c.disciplineScore >= 70 ? 'text-[#34D399]' : 'text-[#FBBF24]') +
+                        kpi('Violations', c.violations, 'hard-rule breaks', c.violations ? 'text-[#F87171]' : 'text-[#34D399]') +
+                        kpi('Clean-day streak', c.cleanStreak, 'best ' + c.bestCleanStreak, c.cleanStreak >= 3 ? 'text-[#34D399]' : 'text-white') +
+                        kpi('Strongest rule', b.discipline.rules && b.discipline.rules[0] ? b.discipline.rules[0].rate + '%' : '—', b.discipline.rules && b.discipline.rules[0] ? b.discipline.rules[0].label : 'no data', 'text-[#34D399]') +
                     '</div>' +
                     '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
-                        '<div class="flex flex-col gap-2.5">' + (list.length ? list.map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">Discipline findings unlock at 5+ trades in range.</p>') + '</div>' +
+                        '<div class="flex flex-col gap-2.5">' + (b.discipline.findings.filter(f => !f.suppressed).length ? b.discipline.findings.filter(f => !f.suppressed).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">Discipline findings unlock at 5+ trades in range.</p>') + '</div>' +
                         '<div class="flex flex-col gap-2.5">' + (dims || '<p class="text-[12.5px] text-[#6E6E78]">No dimension data yet.</p>') + '</div>' +
                         (rules ? panel('Rule adherence (your actual rule set)', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rule</th><th>Rate</th><th>Checks</th><th></th></tr></thead><tbody>' + rules + '</tbody></table></div>') : '') +
                     '</div>';
             }
 
-            function renderSessions() {
+            function renderSessions(b) {
                 const p = $('panel-sessions');
-                if (!ctx) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const list = sessionIntel();
-                const T = ctx.period;
-                const rankTable = (label, key) => {
-                    const m = groupBy(T, t => t[key] || '—');
-                    const rows = Object.keys(m).map(k => {
-                        const g = m[k];
-                        const wr = g.filter(t => t.pnl > 0).length / g.length;
-                        return '<tr><td class="font-semibold text-white">' + esc(k) + '</td><td class="num">' + g.length + '</td>' +
-                            '<td class="num">' + Math.round(wr * 100) + '%</td><td class="num">' + avg(g, t => t.r).toFixed(2) + 'R</td>' +
-                            '<td class="num ' + (sumPnl(g) >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + $money(sumPnl(g)) + '</td></tr>';
-                    }).sort((a, b) => a.localeCompare(b)).join('');
-                    return panel('By ' + label, '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + label[0].toUpperCase() + label.slice(1) + '</th><th>Trades</th><th>Win rate</th><th>Avg R</th><th>Net P&L</th></tr></thead><tbody>' + rows + '</tbody></table></div>');
-                };
+                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
+                const rankTable = (label, rows) => panel('By ' + label, '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + label[0].toUpperCase() + label.slice(1) + '</th><th>Trades</th><th>Win rate</th><th>Avg R</th><th>Net P&L</th></tr></thead><tbody>' +
+                    (rows && rows.length ? rows.map(r => '<tr><td class="font-semibold text-white">' + esc(r.key) + '</td><td class="num">' + r.n + '</td><td class="num">' + Math.round(r.winRate * 100) + '%</td><td class="num">' + r.avgR.toFixed(2) + 'R</td><td class="num ' + (r.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + $money(r.pnl) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-[#6E6E78]">Needs ≥5 trades per group.</td></tr>') + '</tbody></table></div>');
+                const t = b.sessions.tables || {};
                 p.innerHTML =
-                    (T.length ? '<div class="flex flex-col gap-2.5 mb-4">' + (list.length ? list.map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">Session findings need ≥5 trades per condition and 10+ trades in range.</p>') + '</div>' : '') +
-                    (T.length ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + rankTable('session', 'session') + rankTable('setup', 'setup') + rankTable('symbol', 'symbol') + rankTable('direction', 'dir') + '</div>' : emptyState('No trades yet', 'Session intelligence needs journaled trades.'));
+                    (b.context.totalTrades ? '<div class="flex flex-col gap-2.5 mb-4">' + (b.sessions.findings.filter(f => !f.suppressed).length ? b.sessions.findings.filter(f => !f.suppressed).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">Session findings need ≥5 trades per condition and 10+ trades in range.</p>') + '</div>' : '') +
+                    (b.context.totalTrades ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + rankTable('session', t.session) + rankTable('setup', t.setup) + rankTable('symbol', t.symbol) + rankTable('direction', t.dir) + '</div>' : emptyState('No trades yet', 'Session intelligence needs journaled trades.'));
             }
 
-            function renderTilt() {
+            function renderTilt(b) {
                 const p = $('panel-tilt');
-                if (!ctx) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const t = tiltAnalysis()[0];
+                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
+                const t = b.tilt[0];
                 if (!t) { p.innerHTML = emptyState('Insufficient history', 'Tilt detection needs at least 8 trades — it learns YOUR signature (risk multiple, re-entry speed, emotional tags) from your own episodes.'); return; }
-                p.innerHTML = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><div class="flex flex-col gap-2.5">' + findingCard(t) + '</div></div>';
+                p.innerHTML = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><div class="flex flex-col gap-2.5">' + (t.suppressed ? '<p class="text-[12.5px] text-[#6E6E78]">Dismissed.</p>' : findingCard(t)) + '</div></div>';
             }
 
             // ====================================================================
-            // TAB SWITCHING + BUS INTEGRATION
+            // WIRING
             // ====================================================================
             const VALID_TABS = ['coach', 'autopsy', 'patterns', 'psychology', 'risk', 'discipline', 'sessions', 'tilt'];
+            const RENDERERS = { coach: renderCoach, autopsy: renderAutopsy, patterns: renderPatterns, psychology: renderPsychology, risk: renderRisk, discipline: renderDiscipline, sessions: renderSessions, tilt: renderTilt };
             function activateTab(tab) {
-                document.querySelectorAll('.ins-tab').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+                document.querySelectorAll('.ins-tab').forEach(bn => bn.classList.toggle('active', bn.dataset.tab === tab));
                 document.querySelectorAll('.ins-panel').forEach(pn => pn.classList.toggle('active', pn.id === 'panel-' + tab));
             }
-            document.querySelectorAll('.ins-tab').forEach(b => b.addEventListener('click', () => activateTab(b.dataset.tab)));
-
-            document.querySelectorAll('.period-chip').forEach(ch => ch.addEventListener('click', () => {
+            document.querySelectorAll('.ins-tab').forEach(bn => bn.addEventListener('click', () => activateTab(bn.dataset.tab)));
+            document.querySelectorAll('.period-chip').forEach(ch => ch.addEventListener('click', async () => {
                 PERIOD = ch.dataset.period;
                 document.querySelectorAll('.period-chip').forEach(x => x.classList.toggle('active', x === ch));
-                renderAll();
+                await refresh();
             }));
 
-            const RENDERERS = { coach: renderCoach, autopsy: renderAutopsy, patterns: renderPatterns, psychology: renderPsychology, risk: renderRisk, discipline: renderDiscipline, sessions: renderSessions, tilt: renderTilt };
-            function renderAll() {
-                refreshCtx();
-                if (ctx && ctx.account) {
-                    $('top-account').textContent = ctx.account.name;
-                    $('top-equity').textContent = '$' + Math.round(ctx.account.current_equity || 0).toLocaleString();
+            let lastRefresh = 0;
+            async function refresh() {
+                const src = $('ai-source');
+                if (src) src.textContent = 'computing…';
+                const b = await loadMentorData();
+                if (b) {
+                    DATA = b;
+                    const all = allFindings(b);
+                    // hidden by suppressed are still in DATA (renderers filter);
+                    if (src) src.textContent = SOURCE === 'api' ? 'server · cached' : 'offline · local';
+                    if (b.account) { $('top-account').textContent = b.account.name; $('top-equity').textContent = '$' + Math.round(b.account.equity || 0).toLocaleString(); }
+                } else {
+                    DATA = null;
+                    if (src) src.textContent = SOURCE === 'api' ? 'server' : 'local';
                 }
-                VALID_TABS.forEach(t => { try { RENDERERS[t](); } catch (e) { console.error('[ai] render ' + t + ' failed: ' + e.message); } });
+                VALID_TABS.forEach(t => { try { RENDERERS[t](b); } catch (e) { console.error('[ai] render ' + t + ' failed: ' + e.message); } });
                 if (window.lucide) lucide.createIcons();
             }
+            function renderAll() { VALID_TABS.forEach(t => { try { RENDERERS[t](DATA); } catch (e) { console.error('[ai] render ' + t + ' failed: ' + e.message); } }); if (window.lucide) lucide.createIcons(); }
 
             if (core) {
-                ['trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'account.changed'].forEach(ev => core.TradeMindBus.subscribe(ev, renderAll));
+                ['trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'account.changed'].forEach(ev => core.TradeMindBus.subscribe(ev, () => { refresh(); }));
+                core.TradeMindBus.subscribe('backend.online', () => { refresh(); });
             }
             const collapseBtn = $('collapse-btn');
             if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
 
-            renderAll();
-            if (window.lucide) lucide.createIcons();
+            refresh();
         })();
     </script>
     <script src="reset.js"></script>

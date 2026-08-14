@@ -37,6 +37,7 @@ const path = require('node:path');
 const { loadEnv } = require('./server/env.js');
 const db = require('./server/db.js');
 const auth = require('./server/auth.js');
+const AI = require('./server/ai-mentor.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -420,6 +421,24 @@ async function handleApi(req, res, url) {
             if (p === '/api/reviews') {
                 return json(res, 200, Core.reviews(q.get('accountId') || 'acc-prop', { period: q.get('period'), date: q.get('date') }));
             }
+
+            // ---------- AI Mentor (Phase 2 service layer — server module) ----------
+            if (p === '/api/ai/mentor') {
+                const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
+                if (!accountId) return json(res, 200, { ok: true, bundle: null });
+                const bundle = await AI.mentorWithPrefs(Core, accountId, { period: q.get('period') || '30d', userId: uc.userId });
+                return json(res, 200, { ok: true, bundle });
+            }
+            if (p === '/api/ai/tilt') {
+                const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
+                const ctx = accountId ? AI.buildContext(Core, accountId, 'all') : null;
+                return json(res, 200, { ok: true, tilt: ctx ? AI.tiltAnalysis(ctx) : [] });
+            }
+            if ((m = p.match(/^\/api\/ai\/autopsy\/([^/]+)$/))) {
+                const t = Core.Trades.find(x => x.id === m[1]);
+                if (!t) return json(res, 404, { error: 'unknown trade: ' + m[1] });
+                return json(res, 200, { ok: true, autopsy: AI.autopsy(Core, t) });
+            }
         } catch (err) {
             console.error('[31trades] GET ' + p + ' failed: ' + err.message);
             return json(res, 400, { error: err.message });
@@ -494,6 +513,19 @@ async function handleApi(req, res, url) {
             const r = Core.completeReview(body.account_id, body.period || 'daily', body.note);
             uc.scheduleSave();
             return json(res, 200, r);
+        }
+
+        // ---- AI Mentor findings prefs (dismiss / rate a finding) ----
+        if (p === '/api/ai/findings/suppress') {
+            if (!body.finding_id) return json(res, 400, { error: 'finding_id required' });
+            const ok = await AI.setPref(uc.userId, body.finding_id, { suppressed: !!body.suppressed });
+            return json(res, 200, { ok: true, finding_id: body.finding_id, suppressed: !!body.suppressed, persisted: ok });
+        }
+        if (p === '/api/ai/findings/feedback') {
+            if (!body.finding_id) return json(res, 400, { error: 'finding_id required' });
+            const value = body.value === 1 ? 1 : body.value === -1 ? -1 : null;
+            const ok = await AI.setPref(uc.userId, body.finding_id, { feedback: value });
+            return json(res, 200, { ok: true, finding_id: body.finding_id, feedback: value, persisted: ok });
         }
 
         // ---- audit-log entries ----
