@@ -1778,6 +1778,10 @@
         logTradePipeline, TradeService,
         evaluateRules, preTradeCheck,
         riskState, disciplineState, analytics, calendarMonth, insights,
+        // the SAME analytics math, runnable over any trade-shaped list — the
+        // practice/backtest and battle views feed it flattened simulated trades
+        // so they share one canonical calculation instead of a parallel one.
+        analyticsFrom: computeAnalytics,
         reviews, dailyReview, weeklyReview, monthlyReview, completeReview,
         backfillEvaluations,
         // convenience accessors (delegated to the ConfigAPI)

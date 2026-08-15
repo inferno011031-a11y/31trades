@@ -47,6 +47,9 @@ const Backtest = require('./server/backtest.js');
 const MarketData = require('./server/marketdata.js');
 const Replay = require('./server/replay.js');
 const Sim = require('./server/backtest-sim.js');
+const Practice = require('./server/practice.js');
+const Battle = require('./server/battle.js');
+const AICoach = require('./server/ai-coach.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -516,6 +519,52 @@ async function handleApi(req, res, url) {
                 return json(res, 200, { ok: true, results: s.results() });
             }
 
+            // ---------- Practice view (same canonical analytics/insights over
+            // flattened backtest records — strictly separate from live) ----------
+            if (p === '/api/practice/trades') {
+                return json(res, 200, { ok: true, trades: Practice.flattenTrades(uc.userId) });
+            }
+            if (p === '/api/practice/analytics') {
+                return json(res, 200, Practice.analytics(uc.userId, Core, {
+                    symbol: q.get('symbol'), setup: q.get('setup'), session: q.get('session'),
+                    direction: q.get('direction'), result: q.get('result'),
+                    from: q.get('from'), to: q.get('to')
+                }));
+            }
+            if (p === '/api/practice/insights') {
+                return json(res, 200, { ok: true, findings: Practice.insights(uc.userId, Core) });
+            }
+
+            // ---------- AI Backtest Coach (reviews a finished practice session) ----------
+            if (p === '/api/ai/backtest-coach') {
+                const id = q.get('sessionId');
+                const s = id ? Sim.getSession(uc.userId, id) : null;
+                if (!s) return json(res, 404, { error: 'unknown practice session' });
+                return json(res, 200, AICoach.coach(s));
+            }
+
+            // ---------- Online Battles (canonical timeline, private seats) ----------
+            if (p === '/api/battles' && req.method === 'GET') {
+                return json(res, 200, { ok: true, battles: Battle.listBattles(uc.userId) });
+            }
+            if ((m = p.match(/^\/api\/battles\/([^/]+)$/))) {
+                const b = Battle.getBattle(uc.userId, m[1]);
+                if (!b) return json(res, 404, { error: 'unknown battle' });
+                return json(res, 200, { ok: true, state: b.publicState() });
+            }
+            if ((m = p.match(/^\/api\/battles\/([^/]+)\/seat$/))) {
+                const b = Battle.loadActive(uc.userId, m[1]);
+                if (!b) return json(res, 404, { error: 'unknown battle' });
+                const seat = q.get('seat');
+                const s = b.seat(seat);
+                if (!s) return json(res, 404, { error: 'unknown seat' });
+                // the seat's own userId must match (or host viewing an open seat)
+                if (s.userId && s.userId !== uc.userId && s.userId !== 'seat-' + s.id) {
+                    return json(res, 403, { error: 'not your seat' });
+                }
+                return json(res, 200, { ok: true, state: b.seatState(seat) });
+            }
+
             // ---------- Market Replay (bar-by-bar playback sessions) ----------
             if (p === '/api/replay/start') {
                 return json(res, 200, await Replay.start({
@@ -634,6 +683,91 @@ async function handleApi(req, res, url) {
         if (req.method === 'DELETE' && (m = p.match(/^\/api\/backtest\/sessions\/([^/]+)$/))) {
             Sim.deleteSession(uc.userId, m[1]);
             Sim.pause(uc.userId, m[1]);
+            return json(res, 200, { ok: true });
+        }
+
+        // ---- Online Battles (write: create / control / enter / close / join) ----
+        if (p === '/api/battles' && req.method === 'POST') {
+            const symbol = String(body.symbol || 'EURUSD').toUpperCase();
+            const timeframe = String(body.timeframe || '1h');
+            const window = Math.max(30, Math.min(1500, Number(body.window) || 300));
+            const md = await MarketData.getCandles({ symbol, timeframe, count: window });
+            if (!md.ok || !md.candles.length) return json(res, 400, { error: 'no candles for ' + symbol });
+            const startIndex = Math.max(0, Math.min(Number(body.startBars) || Math.min(30, md.candles.length - 1), md.candles.length - 1));
+            const seatNames = Array.isArray(body.seats) ? body.seats.slice(0, 10).map(s => String(s).trim()) : ['Trader 1', 'Trader 2'];
+            const teams = Array.isArray(body.teams) && body.teams.length === seatNames.length ? body.teams.map(t => String(t).trim() || null) : null;
+            const b = new Battle.Battle({
+                hostId: uc.userId,
+                title: String(body.title || symbol + ' ' + timeframe + ' battle'),
+                symbol, timeframe,
+                category: (md.meta && md.meta.category) || 'Other',
+                candles: md.candles, startIndex,
+                startingBalance: Number(body.startingBalance) || 10000,
+                riskModel: body.riskModel || { basis: 'money', perTrade: 25 },
+                status: 'lobby',
+                seats: seatNames.map((name, i) => ({
+                    id: 's' + i, name, team: teams ? teams[i] : null, userId: i === 0 ? uc.userId : null
+                }))
+            });
+            b._ensureSeats();
+            Battle.saveBattle(uc.userId, b);
+            return json(res, 200, { ok: true, battle: b.id, hostSeat: b.seats[0].id, state: b.publicState() });
+        }
+        if ((m = p.match(/^\/api\/battles\/([^/]+)\/join$/))) {
+            const b = Battle.loadActive(uc.userId, m[1]);
+            if (!b) return json(res, 404, { error: 'unknown battle' });
+            const free = b.seats.find(s => !s.userId);
+            if (!free) return json(res, 400, { error: 'battle is full' });
+            if (b.status !== 'lobby' && b.status !== 'running') return json(res, 400, { error: 'battle already over' });
+            free.userId = uc.userId;
+            free.name = String(body.name || free.name);
+            Battle.saveBattle(uc.userId, b);
+            return json(res, 200, { ok: true, seat: free.id, state: b.publicState() });
+        }
+        if ((m = p.match(/^\/api\/battles\/([^/]+)\/control$/))) {
+            const id = m[1];
+            // only the host drives the canonical replay
+            const host = Battle.getBattle(uc.userId, id);
+            if (!host || host.hostId !== uc.userId) return json(res, 403, { error: 'only the host can control the replay' });
+            if (body.action === 'play') return json(res, 200, Battle.play(uc.userId, id, body.speedMs));
+            if (body.action === 'pause') return json(res, 200, Battle.pause(uc.userId, id));
+            if (body.action === 'step') return json(res, 200, Battle.step(uc.userId, id));
+            if (body.action === 'seek') return json(res, 200, Battle.seek(uc.userId, id, Number(body.cursor)));
+            if (body.action === 'reset') return json(res, 200, Battle.reset(uc.userId, id));
+            if (body.action === 'complete') return json(res, 200, Battle.complete(uc.userId, id));
+            return json(res, 400, { error: 'unknown control action' });
+        }
+        if ((m = p.match(/^\/api\/battles\/([^/]+)\/enter$/))) {
+            const b = Battle.loadActive(uc.userId, m[1]);
+            if (!b) return json(res, 404, { error: 'unknown battle' });
+            const seat = b.seat(String(body.seat));
+            if (!seat) return json(res, 404, { error: 'unknown seat' });
+            if (seat.userId && seat.userId !== uc.userId) return json(res, 403, { error: 'not your seat' });
+            const r = b.enter(seat.id, {
+                direction: body.direction, entry: body.entry, sl: body.sl, tp: body.tp,
+                riskAmount: body.riskAmount, riskPct: body.riskPct, size: body.size,
+                notes: body.notes, setup: body.setup
+            });
+            if (!r.ok) return json(res, 400, { error: r.error });
+            Battle.saveBattle(uc.userId, b);
+            return json(res, 200, { ok: true, position: r.position, state: b.seatState(seat.id) });
+        }
+        if ((m = p.match(/^\/api\/battles\/([^/]+)\/close$/))) {
+            const b = Battle.loadActive(uc.userId, m[1]);
+            if (!b) return json(res, 404, { error: 'unknown battle' });
+            const seat = b.seat(String(body.seat));
+            if (!seat) return json(res, 404, { error: 'unknown seat' });
+            if (seat.userId && seat.userId !== uc.userId) return json(res, 403, { error: 'not your seat' });
+            const r = b.close(seat.id, { price: body.price, reason: body.reason });
+            if (!r.ok) return json(res, 400, { error: r.error });
+            Battle.saveBattle(uc.userId, b);
+            return json(res, 200, { ok: true, trade: r.trade, state: b.seatState(seat.id) });
+        }
+        if (req.method === 'DELETE' && (m = p.match(/^\/api\/battles\/([^/]+)$/))) {
+            const b = Battle.getBattle(uc.userId, m[1]);
+            if (!b || b.hostId !== uc.userId) return json(res, 403, { error: 'only the host can delete' });
+            Battle.pause(uc.userId, m[1]);
+            Battle.deleteBattle(uc.userId, m[1]);
             return json(res, 200, { ok: true });
         }
 

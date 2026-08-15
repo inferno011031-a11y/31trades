@@ -189,6 +189,7 @@
                 <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
                 <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
                 <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
                 <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
                 <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
                 <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
@@ -248,6 +249,10 @@
                         </div>
                         <div class="flex items-center gap-2 flex-wrap">
                             <div id="period-chips" class="flex items-center gap-1.5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1"></div>
+                            <div class="flex items-center gap-1.5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1" id="mode-toggle">
+                                <button class="period-chip active" data-mode="live">Live</button>
+                                <button class="period-chip" data-mode="practice" title="Insights from backtest practice sessions — isolated from live P&L">Practice</button>
+                            </div>
                             <span id="conf-badge" class="conf"></span>
                         </div>
                     </div>
@@ -363,9 +368,32 @@
             const core = window.TradeMindCore;
             let ALL = [];
             let accountId = null;
+            let dataMode = 'live';
+            let practiceTrades = null;
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
+            async function loadPracticeTrades() {
+                try {
+                    const r = await apiFetch('/api/practice/trades');
+                    const j = await r.json();
+                    practiceTrades = (j && Array.isArray(j.trades)) ? j.trades : [];
+                } catch (e) { practiceTrades = []; }
+            }
+            window.setMode = function (m) {
+                if (m !== 'live' && m !== 'practice') return;
+                dataMode = m;
+                document.querySelectorAll('#mode-toggle [data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
+                if (m === 'practice') {
+                    loadPracticeTrades().then(() => { refreshData(); renderAll(); });
+                } else {
+                    refreshData(); renderAll();
+                }
+            };
 
             function refreshData() {
-                if (core && core.Accounts && core.Accounts.length) {
+                if (dataMode === 'practice') {
+                    accountId = 'practice';
+                    ALL = practiceTrades || [];
+                } else if (core && core.Accounts && core.Accounts.length) {
                     accountId = core.selectedAccountId() || core.Accounts[0].id;
                     ALL = core.Trades.filter(t => t.account_id === accountId);
                 } else {
@@ -384,7 +412,7 @@
 
             function tradesForPeriod(period) {
                 const cutoff = period.days === Infinity ? 0 : Date.now() - period.days * day;
-                return ALL.filter(t => t.ts.getTime() >= cutoff);
+                return ALL.filter(t => new Date(t.ts).getTime() >= cutoff);
             }
 
             function score(s) {
@@ -898,8 +926,8 @@
             }
 
             function renderWeekly(list) {
-                const week = list.filter(t => t.ts.getTime() >= Date.now() - 7 * day);
-                const prev = list.filter(t => t.ts.getTime() >= Date.now() - 14 * day && t.ts.getTime() < Date.now() - 7 * day);
+                const week = list.filter(t => new Date(t.ts).getTime() >= Date.now() - 7 * day);
+                const prev = list.filter(t => new Date(t.ts).getTime() >= Date.now() - 14 * day && new Date(t.ts).getTime() < Date.now() - 7 * day);
                 const ws = stats(week), ps = stats(prev);
                 const bySetup = ranked(week, 'setup', 1);
                 const bySession = ranked(week, 'session', 1);
@@ -951,6 +979,9 @@
 
             // ============ INIT ============
             $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            document.querySelectorAll('#mode-toggle [data-mode]').forEach(btn => {
+                btn.addEventListener('click', () => window.setMode(btn.dataset.mode));
+            });
             // ============ EVENT BUS INTEGRATION (PRD architecture) ============
             // Downstream module: listens for domain events and updates itself —
             // it never mutates configuration directly.

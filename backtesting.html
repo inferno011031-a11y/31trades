@@ -254,6 +254,7 @@
                 <a href="backtesting.html" class="nav-item active"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
                 <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
                 <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
                 <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
                 <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
                 <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
@@ -500,6 +501,22 @@
 
                             <div class="text-[12px] font-bold text-white mb-1.5">Recorded trades (<span id="trade-count-label">0</span>)</div>
                             <div class="flex flex-col gap-1.5 max-h-[260px] overflow-y-auto" id="trade-list"></div>
+
+                            <div class="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-[#17171A]">
+                                <div class="flex items-center gap-2">
+                                    <div class="panel-title">AI Coach</div>
+                                    <span class="status-badge" style="background:rgba(139,92,246,0.12);color:#C084FC;">practice review</span>
+                                </div>
+                                <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" id="coach-btn">
+                                    <svg data-lucide="brain-circuit" class="w-3.5 h-3.5"></svg> Run AI review
+                                </button>
+                            </div>
+                            <p class="text-[11.5px] text-[#6E6E78] mt-2 leading-relaxed">
+                                Grounded in this session's recorded trades — flags premature entries, weak setups, inconsistent risk and exit quality.
+                            </p>
+                            <div class="flex flex-col gap-2 mt-3" id="coach-findings">
+                                <div class="text-[12px] text-[#6E6E78]">No review yet — finish a session (or replay it) and run the review.</div>
+                            </div>
                         </div>
                     </div>
 
@@ -1451,6 +1468,43 @@
                 }
             }
 
+            // ================= AI COACH =================
+            async function runCoach() {
+                if (!currentSession) return showToast('Create a session first');
+                const btn = $('coach-btn');
+                btn.disabled = true;
+                btn.style.opacity = 0.5;
+                try {
+                    const r = await api('/api/ai/backtest-coach?sessionId=' + encodeURIComponent(currentSession.id));
+                    const box = $('coach-findings');
+                    const sum = r.summary;
+                    if (!sum.trades) {
+                        box.innerHTML = '<div class="text-[12px] text-[#6E6E78]">No recorded trades to review yet — replay forward and enter a position.</div>';
+                        return;
+                    }
+                    const sevColor = { positive: '#34D399', warning: '#FBBF24', info: '#818CF8' };
+                    const sevBg = { positive: 'rgba(16,185,129,0.12)', warning: 'rgba(245,158,11,0.12)', info: 'rgba(99,102,241,0.12)' };
+                    const findings = (r.findings || []).length
+                        ? r.findings.map(f =>
+                            '<div class="trade-row !flex-col !items-stretch !gap-2">' +
+                            '<div class="flex items-center gap-2"><span class="status-badge" style="background:' + (sevBg[f.sev] || 'rgba(255,255,255,0.06)') + ';color:' + (sevColor[f.sev] || '#B4B4BD') + '">' + (f.sev === 'positive' ? '✓ ' : f.sev === 'warning' ? '⚠ ' : 'ℹ ') + f.title + '</span>' +
+                            '<span class="text-[10.5px] text-[#55555E] font-semibold uppercase tracking-wide ml-auto">' + f.count + ' trade' + (f.count === 1 ? '' : 's') + ' · ' + f.confidence + '</span></div>' +
+                            '<div class="text-[12px] text-[#C4C4CC] leading-relaxed">' + f.detail + '</div>' +
+                            '</div>'
+                        ).join('')
+                        : '<div class="text-[12px] text-[#34D399]">No recurring issues found across ' + sum.trades + ' trades — clean execution.</div>';
+                    box.innerHTML =
+                        '<div class="trade-row !py-2.5"><span class="text-[11.5px] text-[#6E6E78]">' + sum.symbol + ' · ' + sum.timeframe + ' · ' + sum.trades + ' trades · ' + sum.winRate + '% WR · ' + (sum.net >= 0 ? '+' : '') + '$' + Math.round(sum.net).toLocaleString() + '</span>' +
+                        '<span class="ml-auto text-[11.5px] text-[#6E6E78] num">' + sum.strategy + '</span></div>' +
+                        findings;
+                } catch (e) {
+                    showToast('AI review failed: ' + e.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.style.opacity = 1;
+                }
+            }
+
             // ================= ACCOUNT HELPERS =================
             function selectedAccount() {
                 const core = window.TradeMindCore;
@@ -1583,6 +1637,7 @@
                 }));
                 ['t-entry', 't-sl', 't-tp', 't-risk'].forEach(id => $(id).addEventListener('input', computePreview));
                 $('enter-btn').addEventListener('click', enterTrade);
+                $('coach-btn').addEventListener('click', runCoach);
 
                 // breakdown tabs
                 document.querySelectorAll('#bd-tabs .bd-tab').forEach(t => t.addEventListener('click', () => {
