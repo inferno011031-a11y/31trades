@@ -193,6 +193,107 @@
         .pos-field .k { font-size: 10px; color: #6E6E78; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
         .pos-field .v { font-size: 13px; font-weight: 700; margin-top: 1px; }
 
+        /* ============ FULL-PAGE TERMINAL MODE (TradingView-style) ============ */
+        body.terminal { overflow: hidden; }
+        body.terminal .sidebar, body.terminal .topbar, body.terminal .app-header, body.terminal .app-content { display: none; }
+        body.terminal main { overflow: hidden !important; }
+        .terminal-shell {
+            display: none;
+            position: fixed; inset: 0; z-index: 40;
+            background: #0A0C10;
+            flex-direction: column;
+        }
+        body.terminal .terminal-shell { display: flex; }
+        /* top floating replay bar */
+        .tv-topbar {
+            height: 46px; flex-shrink: 0;
+            display: flex; align-items: center; gap: 10px;
+            padding: 0 12px;
+            background: rgba(13, 15, 19, 0.92);
+            border-bottom: 1px solid #1C1F28;
+            backdrop-filter: blur(8px);
+        }
+        .tv-topbar .tv-btn {
+            background: none; border: none; color: #8A93A6; cursor: pointer;
+            padding: 5px 9px; border-radius: 6px; font-size: 12px;
+            display: inline-flex; align-items: center; gap: 5px;
+            transition: all 0.15s;
+        }
+        .tv-topbar .tv-btn:hover { background: rgba(255,255,255,0.06); color: #E8EAED; }
+        .tv-topbar .tv-btn.active { background: rgba(16,185,129,0.14); color: #34D399; }
+        .tv-topbar .tv-btn svg { width: 14px; height: 14px; }
+        .tv-topbar .tv-sep { width: 1px; height: 22px; background: #1F232E; flex-shrink: 0; }
+        .tv-topbar .tv-tf {
+            background: none; border: none; color: #8A93A6; cursor: pointer;
+            padding: 4px 8px; border-radius: 5px; font-size: 12px; font-weight: 600;
+        }
+        .tv-topbar .tv-tf:hover { color: #E8EAED; background: rgba(255,255,255,0.05); }
+        .tv-topbar .tv-tf.active { color: #34D399; background: rgba(16,185,129,0.12); }
+        .tv-topbar .tv-symbol {
+            font-weight: 700; font-size: 13px; color: #FFF; letter-spacing: 0.02em;
+            padding: 4px 10px; border: 1px solid #262B36; border-radius: 6px;
+            background: #12151B; white-space: nowrap;
+        }
+        .tv-topbar .tv-symbol .cat { color: #5B6472; font-weight: 500; font-size: 11px; margin-left: 6px; }
+        .tv-topbar .tv-spacer { flex: 1; }
+        /* left drawing toolbar */
+        .tv-toolbar {
+            width: 44px; flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: center; gap: 2px;
+            padding: 8px 0;
+            background: #0D0F14;
+            border-right: 1px solid #1C1F28;
+        }
+        .tv-toolbar .tool-btn {
+            width: 32px; height: 32px; border-radius: 6px;
+            background: none; border: none; color: #8A93A6; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            transition: all 0.15s;
+        }
+        .tv-toolbar .tool-btn:hover { background: rgba(255,255,255,0.06); color: #E8EAED; }
+        .tv-toolbar .tool-btn.active { background: rgba(16,185,129,0.14); color: #34D399; }
+        .tv-toolbar .tool-btn svg { width: 16px; height: 16px; }
+        /* chart area */
+        .tv-body { flex: 1; display: flex; min-height: 0; }
+        .tv-chart-wrap { flex: 1; position: relative; min-width: 0; }
+        .tv-chart-wrap .tv-draw-hint {
+            position: absolute; top: 10px; left: 50%; transform: translateX(-50%);
+            background: rgba(13,15,19,0.92); border: 1px solid #2A2F3B; border-radius: 6px;
+            color: #B8C0CC; font-size: 11.5px; padding: 5px 12px; z-index: 5;
+            display: none; white-space: nowrap;
+        }
+        .tv-chart-wrap.drawing .tv-draw-hint { display: block; }
+        /* bottom execution + analytics bar */
+        .tv-bottom {
+            height: 52px; flex-shrink: 0;
+            display: flex; align-items: center; gap: 16px;
+            padding: 0 14px;
+            background: rgba(13, 15, 19, 0.95);
+            border-top: 1px solid #1C1F28;
+        }
+        .tv-bottom .buy, .tv-bottom .sell {
+            border: none; cursor: pointer; color: #fff; font-weight: 700; font-size: 12.5px;
+            padding: 7px 22px; border-radius: 6px; display: inline-flex; align-items: center; gap: 6px;
+            transition: all 0.15s;
+        }
+        .tv-bottom .buy { background: rgba(16,185,129,0.9); }
+        .tv-bottom .buy:hover { background: #10B981; box-shadow: 0 0 14px rgba(16,185,129,0.35); }
+        .tv-bottom .sell { background: rgba(239,68,68,0.9); }
+        .tv-bottom .sell:hover { background: #EF4444; box-shadow: 0 0 14px rgba(239,68,68,0.35); }
+        .tv-bottom .stat { display: flex; flex-direction: column; gap: 1px; }
+        .tv-bottom .stat .k { font-size: 10px; color: #5B6472; text-transform: uppercase; letter-spacing: 0.06em; }
+        .tv-bottom .stat .v { font-size: 13px; font-weight: 700; }
+        .tv-bottom .tv-spacer { flex: 1; }
+        /* quick action panel (Go To / Order / News / Journal) */
+        .tv-panel {
+            display: none;
+            position: absolute; top: 46px; right: 14px; z-index: 20;
+            width: 300px; max-height: 60vh; overflow-y: auto;
+            background: #12151B; border: 1px solid #262B36; border-radius: 10px;
+            padding: 14px; box-shadow: 0 16px 44px rgba(0,0,0,0.6);
+        }
+        .tv-panel.open { display: block; }
+        .tv-panel h4 { font-size: 12px; font-weight: 700; color: #E8EAED; margin-bottom: 10px; }
         .bmini { height: 5px; border-radius: 999px; min-width: 2px; }
 
         .modal-backdrop {
@@ -232,6 +333,77 @@
     <link rel="stylesheet" href="assets/trademind-theme.css">
 </head>
 <body>
+
+    <!-- ============ FULL-PAGE TERMINAL (TradingView-style) ============ -->
+    <div class="terminal-shell" id="terminal-shell">
+        <!-- top replay & nav bar -->
+        <div class="tv-topbar">
+            <button class="tv-btn" id="tv-back" title="Back to Backtesting"><svg data-lucide="arrow-left"></svg></button>
+            <div class="tv-symbol" id="tv-symbol">—<span class="cat"></span></div>
+            <div class="tv-sep"></div>
+            <button class="tv-btn" id="tv-play"><svg data-lucide="play" id="tv-play-ico"></svg></button>
+            <button class="tv-btn" id="tv-step"><svg data-lucide="chevrons-right"></svg></button>
+            <button class="tv-btn" id="tv-reset"><svg data-lucide="rotate-ccw"></svg></button>
+            <input type="range" id="tv-speed" min="60" max="900" step="20" value="300" title="Replay speed (ms/bar)" style="width:110px;accent-color:#10B981">
+            <div class="tv-sep"></div>
+            <button class="tv-tf" data-tf="1m">1m</button>
+            <button class="tv-tf" data-tf="5m">5m</button>
+            <button class="tv-tf active" data-tf="1h">1H</button>
+            <button class="tv-tf" data-tf="4h">4H</button>
+            <button class="tv-tf" data-tf="1d">1D</button>
+            <div class="tv-spacer"></div>
+            <button class="tv-btn" data-panel="goto"><svg data-lucide="locate-fixed"></svg> Go To</button>
+            <button class="tv-btn" data-panel="order"><svg data-lucide="shopping-cart"></svg> Order</button>
+            <button class="tv-btn" data-panel="news"><svg data-lucide="newspaper"></svg> News</button>
+            <button class="tv-btn" data-panel="journal"><svg data-lucide="book-open"></svg> Journal</button>
+            <div class="tv-sep"></div>
+            <span class="text-[11px] text-[#5B6472] num" id="tv-src"></span>
+        </div>
+
+        <div class="tv-body">
+            <!-- left drawing toolbar -->
+            <div class="tv-toolbar">
+                <button class="tool-btn active" data-tool="cursor" title="Pointer"><svg data-lucide="mouse-pointer-2"></svg></button>
+                <button class="tool-btn" data-tool="trend" title="Trend line"><svg data-lucide="trending-up"></svg></button>
+                <button class="tool-btn" data-tool="hline" title="Horizontal line"><svg data-lucide="minus"></svg></button>
+                <button class="tool-btn" data-tool="measure" title="Measure"><svg data-lucide="ruler"></svg></button>
+                <button class="tool-btn" data-tool="fib" title="Fib retracement"><svg data-lucide="git-branch"></svg></button>
+            </div>
+
+            <div class="tv-chart-wrap" id="tv-chart-wrap">
+                <div class="tv-draw-hint" id="tv-draw-hint">Click to place the first point…</div>
+                <div id="tv-chart"></div>
+                <div class="tv-panel" id="panel-goto">
+                    <h4>Go To</h4>
+                    <div class="flex gap-2">
+                        <input type="number" id="tv-goto" class="bg-[#0E1013] border border-[#262B36] rounded-md text-[12px] px-2.5 py-1.5 w-full outline-none focus:border-[#3A4150]" placeholder="Bar index (0–" min="0" step="1">
+                        <button class="tv-btn active" id="tv-goto-go">Go</button>
+                    </div>
+                </div>
+                <div class="tv-panel" id="panel-news">
+                    <h4>Market events</h4>
+                    <div class="text-[12px] text-[#8A93A6]" id="tv-news-list">Loading…</div>
+                </div>
+                <div class="tv-panel" id="panel-journal">
+                    <h4>Session trades</h4>
+                    <div id="tv-trade-list"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- bottom execution + analytics bar -->
+        <div class="tv-bottom">
+            <button class="buy" id="tv-buy"><svg data-lucide="trending-up" class="w-3.5 h-3.5"></svg> BUY</button>
+            <button class="sell" id="tv-sell"><svg data-lucide="trending-down" class="w-3.5 h-3.5"></svg> SELL</button>
+            <div class="tv-sep"></div>
+            <div class="stat"><div class="k">Account balance</div><div class="v num text-white" id="tv-balance">—</div></div>
+            <div class="stat"><div class="k">Realized PnL</div><div class="v num" id="tv-realized">—</div></div>
+            <div class="stat"><div class="k">Unrealized PnL</div><div class="v num" id="tv-unrealized">—</div></div>
+            <div class="tv-spacer"></div>
+            <div class="stat"><div class="k">Replay</div><div class="v num" id="tv-pos">—</div></div>
+            <div class="stat"><div class="k">Risk / trade</div><div class="v num" id="tv-risk">—</div></div>
+        </div>
+    </div>
 
     <div class="flex h-screen">
 
@@ -313,6 +485,9 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <select id="session-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[240px]"></select>
+                            <button class="btn-ghost !py-2 !px-3.5" id="fullpage-btn" title="Open the active session in the full-page terminal">
+                                <svg data-lucide="maximize-2" class="w-4 h-4"></svg> Full page
+                            </button>
                             <button class="btn-primary !py-2 !px-3.5" id="new-session-btn">
                                 <svg data-lucide="plus" class="w-4 h-4"></svg> New session
                             </button>
@@ -1460,6 +1635,8 @@
                     showToast('Session created — ' + body.symbol + ' · ' + modalTF);
                     await loadSessions();
                     await loadSession(r.session, true);
+                    // open the fresh session straight into the full-page terminal
+                    setTimeout(() => openTerminal(r.session), 350);
                 } catch (e) {
                     showToast('Create failed: ' + e.message);
                 } finally {
@@ -1562,6 +1739,226 @@
                 showToast('Chart theme: ' + name.charAt(0).toUpperCase() + name.slice(1));
             }
 
+            // ================= FULL-PAGE TERMINAL (TradingView-style) =================
+            // Activated via backtesting.html?full=1&session=<id>. Renders the SAME
+            // canonical session into a full-screen workstation with a top replay bar,
+            // left drawing toolbar and bottom execution/analytics bar.
+            const TERMINAL = new URLSearchParams(location.search).get('full') === '1';
+            const TERMINAL_SESSION = new URLSearchParams(location.search).get('session');
+            let tvChart = null, tvCandles = null, tvPosLines = [], tvDrawings = [];
+            let tvTool = 'cursor', tvDrawPts = [];
+            let tvTimer = null;
+
+            function openTerminal(sessionId) {
+                window.open(location.pathname + '?full=1&session=' + encodeURIComponent(sessionId), '_blank');
+            }
+
+            function buildTvChart() {
+                const el = $('tv-chart');
+                tvChart = LightweightCharts.createChart(el, {
+                    height: el.clientHeight || 500,
+                    layout: { background: { type: 'solid', color: '#0A0C10' }, textColor: '#8A93A6', fontFamily: "'JetBrains Mono', monospace" },
+                    grid: { vertLines: { color: '#131720' }, horzLines: { color: '#131720' } },
+                    rightPriceScale: { borderColor: '#1F232E', scaleMargins: { top: 0.08, bottom: 0.22 } },
+                    timeScale: { borderColor: '#1F232E', timeVisible: true, secondsVisible: false, rightOffset: 4 },
+                    crosshair: { mode: LightweightCharts.CrosshairMode.Normal }
+                });
+                tvCandles = tvChart.addSeries(LightweightCharts.CandlestickSeries, {
+                    upColor: '#10B981', downColor: '#EF4444', borderUpColor: '#10B981', borderDownColor: '#EF4444', wickUpColor: '#10B981', wickDownColor: '#EF4444'
+                });
+                new ResizeObserver(() => { if (tvChart) tvChart.applyOptions({ width: el.clientWidth, height: el.clientHeight }); }).observe(el);
+                tvChart.subscribeClick(param => { if (tvTool !== 'cursor' && param && param.time != null && param.seriesData && param.seriesData.get(tvCandles)) {
+                    const d = param.seriesData.get(tvCandles);
+                    const pt = { time: param.time, price: (d && d.close != null) ? d.close : (param.point ? param.price : null) };
+                    if (pt.price != null) tvDrawClick(pt);
+                } });
+            }
+
+            function tvDrawClick(pt) {
+                tvDrawPts.push(pt);
+                const hint = $('tv-draw-hint');
+                if (tvDrawPts.length === 1) {
+                    hint.textContent = tvTool === 'hline' ? 'Horizontal line placed.' : 'Click a second point…';
+                    if (tvTool === 'hline') { tvDrawPts = []; addTvDrawing('hline', pt); return; }
+                    return;
+                }
+                if (tvTool === 'measure') {
+                    const [a, b] = tvDrawPts;
+                    const priceDiff = Math.abs(b.price - a.price);
+                    const barDiff = Math.abs(b.time - a.time);
+                    hint.textContent = 'Δ ' + priceDiff.toFixed(5) + ' price · ' + barDiff + ' bars';
+                    addTvDrawing('measure', a, b);
+                } else {
+                    addTvDrawing(tvTool === 'fib' ? 'fib' : 'trend', tvDrawPts[0], tvDrawPts[1]);
+                    hint.textContent = 'Drawing placed — pick another tool or click pointer.';
+                }
+                tvDrawPts = [];
+            }
+
+            function addTvDrawing(kind, a, b) {
+                const colors = { trend: '#60A5FA', hline: '#FBBF24', measure: '#A78BFA', fib: '#34D399' };
+                const color = colors[kind] || '#60A5FA';
+                try {
+                    const s = tvChart.addSeries(LightweightCharts.LineSeries, { color, lineWidth: 1, priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false });
+                    if (kind === 'hline') {
+                        const t0 = tvCandles && tvCandles.data ? tvCandles.data()[0] : null;
+                        const last = currentSession && currentSession.candles && currentSession.candles.length ? currentSession.candles[currentSession.candles.length - 1] : null;
+                        s.setData([{ time: (t0 && t0.time) || (last && last.time) || a.time, value: a.price }]);
+                    } else if (kind === 'fib') {
+                        const lo = Math.min(a.price, b.price), hi = Math.max(a.price, b.price);
+                        const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1].map(f => ({
+                            time: a.time, value: lo + (hi - lo) * f
+                        }));
+                        levels.push({ time: b.time, value: levels[levels.length - 1].value });
+                        s.setData(levels);
+                    } else {
+                        s.setData([{ time: a.time, value: a.price }, { time: b.time, value: b.price }]);
+                    }
+                    tvDrawings.push(s);
+                } catch (e) { /* ignore */ }
+            }
+
+            function renderTvChart() {
+                const st = currentSession;
+                if (!tvChart) return;
+                const candles = (st && st.candles) || [];
+                tvCandles.setData(candles.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close })));
+                $('tv-symbol').innerHTML = (st ? st.symbol : '—') + '<span class="cat">' + (st ? (st.timeframe || '').toUpperCase() : '') + '</span>';
+                $('tv-pos').textContent = st ? (st.cursor + 1) + ' / ' + st.total : '—';
+                $('tv-risk').textContent = st ? (st.riskModel.basis === 'pct' ? st.riskModel.perTrade + '%' : '$' + st.riskModel.perTrade) : '—';
+                const bal = st ? st.balance : 0;
+                const realized = st ? st.trades.reduce((s2, t) => s2 + t.pnl, 0) : 0;
+                const unrealized = st && st.position ? st.position.unrealized : 0;
+                $('tv-balance').textContent = '$' + Math.round(bal).toLocaleString();
+                const rEl = $('tv-realized'), uEl = $('tv-unrealized');
+                rEl.textContent = (realized >= 0 ? '+' : '') + '$' + Math.round(Math.abs(realized)).toLocaleString();
+                rEl.style.color = realized >= 0 ? '#34D399' : '#F87171';
+                uEl.textContent = (unrealized >= 0 ? '+' : '') + '$' + Math.round(Math.abs(unrealized)).toLocaleString();
+                uEl.style.color = unrealized >= 0 ? '#34D399' : '#F87171';
+                // source badge
+                const src = $('tv-src');
+                if (src && st && st.source) src.textContent = st.source;
+                else if (src) src.textContent = '';
+                renderTvTrades();
+            }
+
+            function renderTvTrades() {
+                const el = $('tv-trade-list');
+                if (!el) return;
+                const ts = (currentSession && currentSession.trades) || [];
+                if (!ts.length) { el.innerHTML = '<div class="text-[12px] text-[#5B6472]">No trades yet in this session.</div>'; return; }
+                el.innerHTML = ts.slice(-10).reverse().map(t =>
+                    '<div class="flex items-center justify-between py-1.5 border-b border-[#1F232E] last:border-0">' +
+                    '<div class="text-[11.5px] text-[#8A93A6]">' + t.direction + ' · ' + t.exitReason + '</div>' +
+                    '<div class="num text-[11.5px] font-bold" style="color:' + (t.pnl >= 0 ? '#34D399' : '#F87171') + '">' + (t.pnl >= 0 ? '+' : '') + '$' + Math.round(Math.abs(t.pnl)).toLocaleString() + '</div></div>'
+                ).join('');
+            }
+
+            async function tvControl(action, extra) {
+                if (!currentSession) return;
+                await api('/api/backtest/sessions/' + currentSession.id + '/control', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(Object.assign({ action }, extra || {}))
+                });
+                const r = await api('/api/backtest/sessions/' + currentSession.id);
+                currentSession = r.state;
+                renderTvChart();
+            }
+
+            async function tvBuySell(dir) {
+                if (!currentSession) return showToast('No session loaded');
+                if (currentSession.position) return showToast('A position is already open');
+                const bar = currentSession.candle;
+                if (!bar) return showToast('Replay is at the start — step forward first');
+                const entry = bar.close;
+                const risk = currentSession.riskModel.basis === 'pct' ? currentSession.balance * (currentSession.riskModel.perTrade / 100) : currentSession.riskModel.perTrade;
+                const dist = entry * 0.0025;   // default 0.25% stop
+                const sl = dir === 'long' ? entry - dist : entry + dist;
+                const tp = dir === 'long' ? entry + dist * 2 : entry - dist * 2;
+                try {
+                    const r = await api('/api/backtest/sessions/' + currentSession.id + '/enter', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ direction: dir, entry, sl, tp, riskAmount: Math.round(risk * 100) / 100, setup: 'Terminal', notes: 'One-click from full-page terminal' })
+                    });
+                    currentSession = r.state;
+                    showToast('Entered ' + dir.toUpperCase() + ' @ ' + priceFmt(entry));
+                    renderTvChart();
+                } catch (e) { showToast('Entry rejected: ' + e.message); }
+            }
+
+            async function loadTvNews() {
+                try {
+                    const r = await apiFetch('/api/ecocal');
+                    const j = await r.json();
+                    const ev = (j && j.events) || [];
+                    const el = $('tv-news-list');
+                    if (!el) return;
+                    el.innerHTML = ev.length
+                        ? ev.slice(0, 8).map(e => '<div class="py-1.5 border-b border-[#1F232E] last:border-0"><div class="text-[12px] text-white font-semibold">' + e.title + '</div><div class="text-[11px] text-[#8A93A6]">' + (e.impact || '') + ' impact · ' + (e.country || e.currency || '') + (e.forecast ? ' · f ' + e.forecast : '') + '</div></div>').join('')
+                        : '<div class="text-[12px] text-[#5B6472]">No scheduled events right now — the calendar is real.</div>';
+                } catch (e) { if ($('tv-news-list')) $('tv-news-list').innerHTML = '<div class="text-[12px] text-[#5B6472]">News feed unavailable.</div>'; }
+            }
+
+            function initTerminal() {
+                document.body.classList.add('terminal');
+                buildTvChart();
+                $('tv-back').addEventListener('click', () => location.href = 'backtesting.html');
+                $('tv-play').addEventListener('click', async () => {
+                    if (playing) { await tvControl('pause'); playing = false; stopPoll(); updateTvPlayIco(); }
+                    else {
+                        playing = true; updateTvPlayIco();
+                        await tvControl('play', { speedMs: Number($('tv-speed').value) || 300 });
+                        startPoll();
+                    }
+                });
+                $('tv-step').addEventListener('click', async () => { await tvControl('step'); });
+                $('tv-reset').addEventListener('click', async () => { await tvControl('reset'); showToast('Session reset'); });
+                $('tv-speed').addEventListener('input', () => { /* live speed is read at each play click */ });
+                document.querySelectorAll('#terminal-shell .tv-tf').forEach(b => b.addEventListener('click', () => {
+                    document.querySelectorAll('#terminal-shell .tv-tf').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    if (currentSession) {
+                        modalTF = b.dataset.tf;
+                        $('modal-symbol').value = currentSession.symbol;
+                        $('modal-window').value = Math.min(600, currentSession.total);
+                        $('modal-balance').value = currentSession.startingBalance;
+                        $('modal-basis').value = currentSession.riskModel.basis;
+                        $('modal-pertrade').value = currentSession.riskModel.perTrade;
+                        createSession();   // switch timeframe → new canonical session
+                    }
+                }));
+                $('tv-goto-go').addEventListener('click', async () => {
+                    const v = parseInt($('tv-goto').value, 10);
+                    if (!(v >= 0)) return showToast('Enter a bar index');
+                    await tvControl('seek', { cursor: v });
+                });
+                $('tv-buy').addEventListener('click', () => tvBuySell('long'));
+                $('tv-sell').addEventListener('click', () => tvBuySell('short'));
+                document.querySelectorAll('#terminal-shell [data-panel]').forEach(b => b.addEventListener('click', () => {
+                    const p = 'panel-' + b.dataset.panel;
+                    document.querySelectorAll('.tv-panel').forEach(x => x.classList.remove('open'));
+                    document.querySelectorAll('#terminal-shell [data-panel]').forEach(x => x.classList.remove('active'));
+                    if (b.dataset.panel === 'order') { $('tv-panel').classList.remove('open'); return; }
+                    const panel = $(p);
+                    if (panel) { panel.classList.add('open'); b.classList.add('active'); }
+                    if (b.dataset.panel === 'news') loadTvNews();
+                }));
+                document.querySelectorAll('#terminal-shell .tool-btn').forEach(b => b.addEventListener('click', () => {
+                    document.querySelectorAll('#terminal-shell .tool-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    tvTool = b.dataset.tool;
+                    tvDrawPts = [];
+                    const wrap = $('tv-chart-wrap');
+                    const hint = $('tv-draw-hint');
+                    if (tvTool === 'cursor') { wrap.classList.remove('drawing'); hint.textContent = ''; }
+                    else { wrap.classList.add('drawing'); hint.textContent = 'Click to place the first point…'; }
+                }));
+                updateTvPlayIco();
+            }
+            function updateTvPlayIco() {
+                $('tv-play-ico').setAttribute('data-lucide', playing ? 'pause' : 'play');
+                if (window.lucide) lucide.createIcons();
+            }
+
             // ================= INIT =================
             function boot() {
                 $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
@@ -1569,6 +1966,10 @@
                 // session management
                 $('new-session-btn').addEventListener('click', openModal);
                 $('empty-cta').addEventListener('click', openModal);
+                $('fullpage-btn').addEventListener('click', () => {
+                    if (!currentSession) return showToast('Create a session first');
+                    openTerminal(currentSession.id);
+                });
                 $('modal-close').addEventListener('click', closeModal);
                 $('session-modal').addEventListener('click', e => { if (e.target === $('session-modal')) closeModal(); });
                 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -1664,6 +2065,21 @@
                 buildModalSymbols();
                 prefillModalFromAccount();
                 if (window.lucide) lucide.createIcons();
+                if (TERMINAL) {
+                    // full-page workstation: load the requested session straight in
+                    initTerminal();
+                    if (TERMINAL_SESSION) {
+                        api('/api/backtest/sessions/' + TERMINAL_SESSION).then(r => {
+                            currentSession = r.state;
+                            renderTvChart();
+                        }).catch(e => showToast('Could not load terminal session: ' + e.message));
+                    } else {
+                        loadSessions().then(() => {
+                            if (currentSession) renderTvChart();
+                        });
+                    }
+                    return;
+                }
                 loadSessions();
             }
             let currentSpeedMs = 300;

@@ -28,6 +28,11 @@
         }
         .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
+        /* full-page battle mode — hide app chrome, maximize the workstation */
+        body.terminal { overflow: hidden; }
+        body.terminal .sidebar, body.terminal .topbar { display: none; }
+        body.terminal main { overflow: hidden !important; }
+        body.terminal main > div { max-width: none !important; padding: 0 !important; height: 100%; overflow-y: auto; }
         .sidebar { width: 224px; transition: width 0.25s cubic-bezier(0.4,0,0.2,1); background: #0D0D0F; border-right: 1px solid #1C1C20; display: flex; flex-direction: column; }
         body.collapsed .sidebar { width: 64px; }
         .logo-badge { width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 14px; display: flex; align-items: center; justify-content: center; }
@@ -156,6 +161,7 @@
                         <div class="flex items-center gap-2">
                             <select id="battle-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[260px]"></select>
                             <button class="btn-ghost !py-2 !px-3.5" id="invite-btn"><svg data-lucide="send" class="w-4 h-4"></svg> Invite</button>
+                            <button class="btn-ghost !py-2 !px-3.5" id="fullpage-btn" title="Open this battle in the full-page workstation"><svg data-lucide="maximize-2" class="w-4 h-4"></svg> Full page</button>
                             <button class="btn-primary !py-2 !px-3.5" id="new-battle-btn"><svg data-lucide="swords" class="w-4 h-4"></svg> New battle</button>
                         </div>
                     </div>
@@ -893,6 +899,16 @@ Mia:ICT</textarea>
                 if (window.lucide) lucide.createIcons();
                 loadBattles();
                 resolveInviteParam();
+                // full-page battle mode
+                if (new URLSearchParams(location.search).get('full') === '1') {
+                    document.body.classList.add('terminal');
+                    var bid = new URLSearchParams(location.search).get('battle');
+                    if (bid) loadBattle(bid);
+                }
+                $('fullpage-btn').addEventListener('click', () => {
+                    if (!battle) return showToast('Open a battle first');
+                    window.open(location.pathname + '?full=1&battle=' + encodeURIComponent(battle.id), '_blank');
+                });
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();

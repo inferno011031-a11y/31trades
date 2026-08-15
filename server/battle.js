@@ -519,7 +519,37 @@ function battlesFeed(hostId) {
             seats: x.seats.length, taken, teams: [...new Set(x.seats.map(s => s.team).filter(Boolean))]
         };
         if (x.status === 'lobby' || x.status === 'running') {
-            if (mySeat) { base.mySeat = mySeat.id; active.push(base); }
+            if (mySeat) {
+                base.mySeat = mySeat.id;
+                // live own-seat readout: balance, realized + unrealized P&L, and
+                // rank vs the other seated participants (all derived from the
+                // canonical session results — no separate calculations)
+                const st = x.seatState(mySeat.id);
+                const realized = (st.trades || []).reduce((s, t) => s + t.pnl, 0);
+                const unrealized = (st.position && st.position.unrealized) || 0;
+                const equity = st.balance + unrealized;
+                // rank: my equity vs every seated session's equity (sessions the
+                // server owns; we only expose the rank, never their trades)
+                let above = 1;
+                x.seats.forEach(s => {
+                    if (!s.userId || s.id === mySeat.id) return;
+                    if (!s.session) return;
+                    const o = s.session.results();
+                    const oUn = s.session.position ? s.session._pnlAt(s.session.position, (s.session.candles[s.cursor] || s.session.position).close) : 0;
+                    if (o.balance + oUn > equity + 0.0001) above++;
+                });
+                base.myStats = {
+                    balance: Math.round(st.balance * 100) / 100,
+                    realized: Math.round(realized * 100) / 100,
+                    unrealized: Math.round(unrealized * 100) / 100,
+                    equity: Math.round(equity * 100) / 100,
+                    trades: (st.trades || []).length,
+                    wins: (st.trades || []).filter(t => t.pnl > 0).length,
+                    rank: above,
+                    seated: x.seats.filter(s => s.userId).length
+                };
+                active.push(base);
+            }
             else if (free) { base.canJoin = true; invites.push(base); }
             else active.push(base);
         } else if (x.status === 'completed') {
