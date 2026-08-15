@@ -12,6 +12,8 @@ const fs = require('node:fs');
 // runs the identical derivation when the backend is unreachable).
 //
 // Sources (all canonical, never hardcoded per page):
+//   0. onboarding checklist  — next step for a brand-new workspace (account →
+//                              strategy → first trade), derived from the state
 //   1. riskState()            — caution / high / limit bands from live policy
 //   2. Trades.adherence_result — trades the rule engine BLOCKED
 //   3. Violations             — hard-rule discipline breaches (canonical table)
@@ -21,7 +23,7 @@ const fs = require('node:fs');
 //                               server from the ecocal service; optional)
 // ============================================================================
 
-const CATS = ['Risk', 'Discipline', 'Reviews', 'System', 'Market'];
+const CATS = ['Onboarding', 'Risk', 'Discipline', 'Reviews', 'System', 'Market'];
 
 const SEV = {
     critical: 'critical',
@@ -47,7 +49,44 @@ function nowISO() {
 function buildNotifications(Core, accountId, opts) {
     const o = opts || {};
     const out = [];
-    if (!Core || !Core.Accounts || !Core.Accounts.length) return out;
+    if (!Core) return out;
+
+    // 0 · ONBOARDING CHECKLIST — derived from the workspace state, so it
+    // appears for brand-new users and each step disappears the moment it is
+    // done. Never hardcoded: it reads Accounts / StrategyMaster / Trades.
+    const hasAccounts = !!(Core.Accounts && Core.Accounts.length);
+    const hasStrategies = !!(Core.StrategyMaster && Core.StrategyMaster.length);
+    const hasTrades = !!(Core.Trades && Core.Trades.length);
+    const steps = [];
+    if (!hasAccounts) {
+        steps.push({
+            id: 'onb-account', title: 'Create your first account',
+            body: 'Set an account name, size, currency and risk limits — every screen reads from it.',
+            href: 'strategy-lab.html?tab=accounts'
+        });
+    } else if (!hasStrategies) {
+        steps.push({
+            id: 'onb-strategy', title: 'Create your first strategy',
+            body: 'Define setups, sessions, instruments and risk rules — the rule engine evaluates every trade against it.',
+            href: 'strategy-lab.html?tab=strategies'
+        });
+    } else if (!hasTrades) {
+        steps.push({
+            id: 'onb-trade', title: 'Log your first trade',
+            body: 'One trade activates risk, discipline, analytics, insights and the calendar — all from the same ledger.',
+            href: 'journal.html'
+        });
+    }
+    steps.forEach((s, i) => {
+        out.push({
+            id: s.id, cat: 'Onboarding', sev: SEV.info, at: nowISO(),
+            icon: i === 0 ? 'rocket' : i === 1 ? 'beaker' : 'book-open',
+            tint: 'emerald',
+            title: s.title, body: s.body, href: s.href
+        });
+    });
+
+    if (!hasAccounts) return out;
 
     const acc = Core.Accounts.find(a => a.id === accountId) || Core.Accounts[0];
     if (!acc) return out;

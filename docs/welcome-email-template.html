@@ -1,0 +1,128 @@
+<!--
+  ============================================================================
+  31TRADES — Welcome email template (Supabase Auth)
+  ----------------------------------------------------------------------------
+  HOW TO INSTALL (2 minutes, no code):
+
+  1. Open the Supabase dashboard → your project → Authentication → Emails.
+  2. Edit the "Confirm signup" template (this is the email sent the moment a
+     user signs up — the welcome lands in their inbox immediately).
+     If email confirmation is DISABLED on your project, use the "Invite user"
+     template instead, or enable confirmation so this template fires.
+  3. Paste the HTML below into the template body.
+  4. Save. That's it — every new signup now receives this welcome message.
+
+  TEMPLATE VARIABLES (GoTrue, resolved by Supabase):
+     {{ .ConfirmationURL }}  — the confirm-your-email link
+     {{ .Email }}            — the user's email address
+     {{ .Data.full_name }}   — the name captured at signup (auth.html sends it)
+     {{ .SiteURL }}          — your app URL
+     {{ .Token }}            — the confirmation token (rarely needed in HTML)
+
+  The template is fully responsive, dark-mode styled to match the app, and
+  works in Gmail / Outlook / Apple Mail (inline styles only, no <style>).
+  ============================================================================
+-->
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Welcome to 31Trades</title>
+</head>
+<body style="margin:0;padding:0;background-color:#0A0A0C;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;">
+
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#0A0A0C;padding:32px 16px;">
+    <tr>
+      <td align="center">
+
+        <!-- Card -->
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background-color:#121214;border:1px solid #1F1F23;border-radius:16px;overflow:hidden;">
+          <tr>
+            <td style="padding:8px 32px;background:linear-gradient(135deg,#10B981,#059669);">
+              <table role="presentation" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td style="font-size:20px;font-weight:800;color:#052E1F;letter-spacing:0.08em;">31TRADES</td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding:32px;">
+              <h1 style="margin:0 0 8px;font-size:24px;font-weight:700;color:#FFFFFF;">
+                Welcome to 31Trades{{ if .Data.full_name }}, {{ .Data.full_name }}{{ end }} 🎉
+              </h1>
+              <p style="margin:0 0 20px;font-size:15px;line-height:1.6;color:#8A8A93;">
+                Your trading journal, risk engine, discipline coach and AI mentor are ready.
+                Log your first trade and every screen — Dashboard, Risk, Discipline,
+                Analytics, Insights and the Calendar — updates from the same single
+                source of truth.
+              </p>
+
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:24px 0;width:100%;">
+                <tr>
+                  <td style="background-color:#16161A;border:1px solid #1F1F23;border-radius:12px;padding:16px;">
+                    <table role="presentation" cellpadding="0" cellspacing="0" width="100%">
+                      <tr>
+                        <td style="width:28px;vertical-align:top;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" style="width:20px;height:20px;border-radius:50%;background-color:#10B981;">
+                            <tr><td style="text-align:center;font-size:11px;font-weight:800;color:#052E1F;">1</td></tr>
+                          </table>
+                        </td>
+                        <td style="font-size:14px;color:#E8E8EC;font-weight:600;">Create your account setup</td>
+                      </tr>
+                      <tr><td colspan="2" style="height:10px;"></td></tr>
+                      <tr>
+                        <td style="width:28px;vertical-align:top;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" style="width:20px;height:20px;border-radius:50%;background-color:#10B981;">
+                            <tr><td style="text-align:center;font-size:11px;font-weight:800;color:#052E1F;">2</td></tr>
+                          </table>
+                        </td>
+                        <td style="font-size:14px;color:#E8E8EC;font-weight:600;">Define your first strategy &amp; rules</td>
+                      </tr>
+                      <tr><td colspan="2" style="height:10px;"></td></tr>
+                      <tr>
+                        <td style="width:28px;vertical-align:top;">
+                          <table role="presentation" cellpadding="0" cellspacing="0" style="width:20px;height:20px;border-radius:50%;background-color:#10B981;">
+                            <tr><td style="text-align:center;font-size:11px;font-weight:800;color:#052E1F;">3</td></tr>
+                          </table>
+                        </td>
+                        <td style="font-size:14px;color:#E8E8EC;font-weight:600;">Log your first trade — the intelligence kicks in</td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+
+              <!-- Primary CTA -->
+              <table role="presentation" cellpadding="0" cellspacing="0" style="margin:28px 0;" align="center">
+                <tr>
+                  <td style="border-radius:10px;background-color:#FFFFFF;">
+                    <a href="{{ .ConfirmationURL }}"
+                       style="display:inline-block;padding:14px 32px;font-size:15px;font-weight:700;color:#0A0A0C;text-decoration:none;border-radius:10px;">
+                      Confirm my email &amp; start journaling
+                    </a>
+                  </td>
+                </tr>
+              </table>
+
+              <p style="margin:0 0 24px;font-size:14px;line-height:1.6;color:#8A8A93;">
+                If the button doesn't work, copy and paste this link into your browser:
+                <br>
+                <a href="{{ .ConfirmationURL }}" style="color:#10B981;font-size:13px;word-break:break-all;">{{ .ConfirmationURL }}</a>
+              </p>
+
+              <p style="margin:0 0 4px;font-size:13px;color:#6E6E78;">Trade with proof, not memory.</p>
+              <p style="margin:0;font-size:12px;color:#4A4A52;">This email was sent to {{ .Email }}. No credit card required — your account is ready when you are.</p>
+            </td>
+          </tr>
+        </table>
+
+        <p style="margin:20px 0 0;font-size:12px;color:#4A4A52;text-align:center;">31TRADES · Privacy-first trading journal</p>
+      </td>
+    </tr>
+  </table>
+
+</body>
+</html>

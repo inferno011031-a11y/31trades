@@ -316,9 +316,24 @@
             function buildNotifsLocal() {
                 const core = window.TradeMindCore;
                 const out = [];
-                const accId = core && core.selectedAccountId ? core.selectedAccountId() : null;
-                const account = core && core.Accounts.length ? core.Accounts.find(a => a.id === (accId || core.Accounts[0].id)) || core.Accounts[0] : null;
-                if (!core || !account) return out;
+                const now = new Date().toISOString();
+                if (!core) return out;
+
+                // onboarding checklist (same derivation as the server engine)
+                const hasAccounts = !!(core.Accounts && core.Accounts.length);
+                const hasStrategies = !!(core.StrategyMaster && core.StrategyMaster.length);
+                const hasTrades = !!(core.Trades && core.Trades.length);
+                if (!hasAccounts) {
+                    out.push({ id: 'onb-account', cat: 'Onboarding', sev: 'info', at: now, icon: 'rocket', tint: 'emerald', title: 'Create your first account', body: 'Set an account name, size, currency and risk limits — every screen reads from it.', href: 'strategy-lab.html?tab=accounts' });
+                } else if (!hasStrategies) {
+                    out.push({ id: 'onb-strategy', cat: 'Onboarding', sev: 'info', at: now, icon: 'beaker', tint: 'emerald', title: 'Create your first strategy', body: 'Define setups, sessions, instruments and risk rules — the rule engine evaluates every trade against it.', href: 'strategy-lab.html?tab=strategies' });
+                } else if (!hasTrades) {
+                    out.push({ id: 'onb-trade', cat: 'Onboarding', sev: 'info', at: now, icon: 'book-open', tint: 'emerald', title: 'Log your first trade', body: 'One trade activates risk, discipline, analytics, insights and the calendar — all from the same ledger.', href: 'journal.html' });
+                }
+
+                const accId = core.selectedAccountId ? core.selectedAccountId() : null;
+                const account = core.Accounts.length ? core.Accounts.find(a => a.id === (accId || core.Accounts[0].id)) || core.Accounts[0] : null;
+                if (!account) return out;
 
                 try {
                     const rs = core.riskState(account.id);
@@ -414,16 +429,16 @@
 
             // ---- render ----
             const CAT_ICON = {
-                Risk: 'shield-alert', Discipline: 'target', Reviews: 'message-square',
+                Onboarding: 'rocket', Risk: 'shield-alert', Discipline: 'target', Reviews: 'message-square',
                 System: 'settings', Market: 'newspaper'
             };
             const CAT_TINT = {
-                Risk: 'rgba(239,68,68,0.12)', Discipline: 'rgba(245,158,11,0.12)',
+                Onboarding: 'rgba(16,185,129,0.12)', Risk: 'rgba(239,68,68,0.12)', Discipline: 'rgba(245,158,11,0.12)',
                 Reviews: 'rgba(59,130,246,0.12)', System: 'rgba(148,163,184,0.12)',
                 Market: 'rgba(139,92,246,0.12)'
             };
             const CAT_COLOR = {
-                Risk: '#F87171', Discipline: '#FBBF24', Reviews: '#60A5FA',
+                Onboarding: '#34D399', Risk: '#F87171', Discipline: '#FBBF24', Reviews: '#60A5FA',
                 System: '#94A3B8', Market: '#A78BFA'
             };
             const TINT_BG = { red: 'rgba(239,68,68,0.12)', amber: 'rgba(245,158,11,0.12)', blue: 'rgba(59,130,246,0.12)', gray: 'rgba(148,163,184,0.12)', emerald: 'rgba(16,185,129,0.12)', purple: 'rgba(139,92,246,0.12)' };

@@ -471,8 +471,9 @@ async function handleApi(req, res, url) {
             }
             // ---------- Notifications (engine module — server-derived) ----------
             if (p === '/api/notifications') {
+                // accountId can be null for a brand-new user — the engine still
+                // derives the onboarding checklist (account → strategy → trade).
                 const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
-                if (!accountId) return json(res, 200, { ok: true, notifications: [], unread: 0 });
                 const upcoming = await EcoCal.getCalendar().then(c => EcoCal.upcomingHighImpact(c, 12)).catch(() => []);
                 const notifications = Notif.buildNotifications(Core, accountId, { upcomingEvents: upcoming });
                 const read = await Notif.readSetOf(uc.userId);

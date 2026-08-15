@@ -47,11 +47,11 @@ function ok(cond, label) {
 
 console.log('\n== Notifications engine ==');
 
-// ---- 1 · empty core → no notifications --------------------------------------
+// ---- 1 · bare core → only the onboarding checklist step -----------------------
 {
-    const c = makeCore([]);
+    const c = makeCore([], [], [], []);   // no accounts, no trades
     const out = Notif.buildNotifications(c, 'acc-prop');
-    ok(Array.isArray(out) && out.length === 0, 'empty core → empty feed');
+    ok(Array.isArray(out) && out.length === 1 && out[0].id === 'onb-account', 'bare core → onboarding account step only');
 }
 
 // ---- 2 · risk limit breached → critical Risk notification -------------------
@@ -109,6 +109,39 @@ console.log('\n== Notifications engine ==');
     const s = out.find(n => n.id.indexOf('sys-') === 0);
     ok(!!s, 'audit event → System notification');
     ok(s && s.cat === 'System' && s.sev === 'info', 'system category + severity');
+}
+
+// ---- 5b · onboarding checklist (derived, disappears as steps complete) --------
+{
+    // no accounts → only the account step
+    const c = makeCore([], [], [], []);   // explicitly empty accounts
+    const out = Notif.buildNotifications(c, 'acc-prop');
+    const onb = out.filter(n => n.cat === 'Onboarding');
+    ok(onb.length === 1 && onb[0].id === 'onb-account', 'no account → account checklist step');
+    ok(onb[0] && onb[0].href === 'strategy-lab.html?tab=accounts', 'account step links to Strategy Lab accounts');
+}
+{
+    // account but no strategies → strategy step
+    const c = makeCore([{ reviewed: true }]);   // fixture always creates 1 account
+    const out = Notif.buildNotifications(c, 'acc-prop');
+    const onb = out.filter(n => n.cat === 'Onboarding');
+    ok(onb.length === 1 && onb[0].id === 'onb-strategy', 'account w/o strategy → strategy checklist step');
+}
+{
+    // account + strategy but no trades → trade step
+    const c = makeCore([]);
+    c.StrategyMaster = [{ id: 's1', name: 'Breakout' }];
+    const out = Notif.buildNotifications(c, 'acc-prop');
+    const onb = out.filter(n => n.cat === 'Onboarding');
+    ok(onb.length === 1 && onb[0].id === 'onb-trade', 'account + strategy w/o trades → trade checklist step');
+    ok(onb[0] && onb[0].href === 'journal.html', 'trade step links to the journal');
+}
+{
+    // account + strategy + trades → checklist gone (onboarding done)
+    const c = makeCore([{ reviewed: true, symbol: 'EURUSD' }]);
+    c.StrategyMaster = [{ id: 's1', name: 'Breakout' }];
+    const out = Notif.buildNotifications(c, 'acc-prop');
+    ok(!out.some(n => n.cat === 'Onboarding'), 'onboarding checklist disappears once a trade exists');
 }
 
 // ---- 6b · welcome message (logged once at signup) -----------------------------

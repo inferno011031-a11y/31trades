@@ -1113,6 +1113,54 @@
                 return null;
             };
 
+            // ---- first-run welcome hero (dismissible, persists per browser) ----
+            var WELCOME_KEY = '31trades.welcome.dismissed.v1';
+            window.dismissWelcome = function () {
+                try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
+                var hero = document.getElementById('dash-hero');
+                if (hero) hero.remove();
+            };
+            function welcomeFirstName() {
+                try {
+                    var s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
+                    var n = s && s.user && s.user.name;
+                    if (n) return String(n).split(/[\s@]/)[0];
+                } catch (e) {}
+                return 'trader';
+            }
+            function renderWelcomeHero(wrapper, hasAccount) {
+                var core = window.TradeMindCore;
+                var hasTrades = !!(core && core.Trades && core.Trades.length);
+                var dismissed = false;
+                try { dismissed = localStorage.getItem(WELCOME_KEY) === '1'; } catch (e) {}
+                var existing = document.getElementById('dash-hero');
+                if (dismissed || hasTrades) { if (existing) existing.remove(); return; }
+                if (existing) return;
+                var hero = document.createElement('div');
+                hero.id = 'dash-hero';
+                hero.className = 'panel p-5 relative overflow-hidden';
+                var name = welcomeFirstName();
+                var step1 = hasAccount ? 'ok' : 'next';
+                var step2 = hasAccount ? 'next' : 'todo';
+                var step3 = 'todo';
+                hero.innerHTML =
+                    '<button onclick="window.dismissWelcome()" title="Dismiss" class="absolute top-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-white hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                    '<div class="flex items-start gap-4">' +
+                        '<div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(59,130,246,0.12));border:1px solid rgba(16,185,129,0.3)"><svg data-lucide="sparkles" class="w-5 h-5 text-[#34D399]"></svg></div>' +
+                        '<div class="min-w-0">' +
+                            '<div class="text-[17px] font-bold tracking-tight">Welcome to 31Trades, <span class="text-[#34D399]">' + name + '</span> 👋</div>' +
+                            '<p class="text-[13px] text-[#8A8A93] mt-1 max-w-2xl leading-relaxed">Your journal, risk engine and AI mentor are ready. Set up your workspace and log your first trade — every screen reads the same ledger.</p>' +
+                            '<div class="flex flex-wrap items-center gap-2 mt-4">' +
+                                '<a href="strategy-lab.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ' + (step1 === 'ok' ? 'opacity-50' : '') + '"><svg data-lucide="' + (step1 === 'ok' ? 'check-circle-2' : 'wallet') + '" class="w-4 h-4"></svg> Account</a>' +
+                                '<a href="strategy-lab.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ' + (step2 === 'ok' ? 'opacity-50' : '') + '"><svg data-lucide="' + (step2 === 'ok' ? 'check-circle-2' : 'beaker') + '" class="w-4 h-4"></svg> Strategy</a>' +
+                                '<a href="journal.html" class="btn-primary !py-2 !px-3.5 text-[12.5px]"><svg data-lucide="plus" class="w-4 h-4"></svg> Log first trade</a>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                wrapper.prepend(hero);
+                if (window.lucide) lucide.createIcons();
+            }
+
             // First-user empty state: with zero trades (or no account yet) the
             // dashboard shows a clear "start here" state instead of static demo
             // numbers. Everything derives from the canonical local store.
@@ -1120,20 +1168,31 @@
                 var core = window.TradeMindCore;
                 var wrapper = document.getElementById('dash-content');
                 if (!wrapper) return true;
+                renderWelcomeHero(wrapper, !!(core && core.Accounts && core.Accounts.length));
                 var empty = document.getElementById('dash-empty');
                 var hasAccount = !!(core && core.Accounts && core.Accounts.length);
                 var hasTrades = !!(core && core.Trades && core.Trades.length);
                 if (hasAccount && hasTrades) {
                     if (empty) empty.classList.add('hidden');
                     var kids = wrapper.children;
-                    for (var i = 0; i < kids.length; i++) if (kids[i].id !== 'dash-empty') kids[i].style.display = '';
+                    for (var i = 0; i < kids.length; i++) if (kids[i].id !== 'dash-empty' && kids[i].id !== 'dash-hero') kids[i].style.display = '';
                     return false;
                 }
+                var heroVisible = !!document.getElementById('dash-hero');
                 if (!empty) {
                     empty = document.createElement('div');
                     empty.id = 'dash-empty';
                     empty.className = 'py-24 text-center';
-                    if (hasAccount) {
+                    if (heroVisible) {
+                        // the first-run hero already greets the user — keep the
+                        // empty state as a quiet note instead of a second welcome
+                        empty.innerHTML =
+                            '<p class="text-[13.5px] text-[#6E6E78] max-w-md mx-auto">' +
+                            (hasAccount
+                                ? 'No trades yet — everything below fills in as you journal.'
+                                : 'Your workspace is ready — complete the steps above and log your first trade.') +
+                            '</p>';
+                    } else if (hasAccount) {
                         empty.innerHTML =
                             '<svg data-lucide="line-chart" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
                             '<h2 class="text-[20px] font-bold text-white">No trades yet</h2>' +
@@ -1154,7 +1213,7 @@
                 }
                 empty.classList.remove('hidden');
                 var kids2 = wrapper.children;
-                for (var j = 0; j < kids2.length; j++) if (kids2[j].id !== 'dash-empty') kids2[j].style.display = 'none';
+                for (var j = 0; j < kids2.length; j++) if (kids2[j].id !== 'dash-empty' && kids2[j].id !== 'dash-hero') kids2[j].style.display = 'none';
                 var sub2 = null;
                 var mainP = document.querySelectorAll('main p');
                 for (var s3 = 0; s3 < mainP.length; s3++) {
