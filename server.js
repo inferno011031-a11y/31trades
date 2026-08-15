@@ -398,6 +398,15 @@ async function handleApi(req, res, url) {
         await auth.logout(bearerToken(req));
         return json(res, 200, { ok: true });
     }
+    if (p === '/api/auth/oauth/start' && req.method === 'GET') {
+        const q = new URL(req.url, 'http://localhost').searchParams;
+        // The callback must land back on this deployment's auth page. Prefer the
+        // browser's Origin/Host so local dev and Railway both work without config.
+        const origin = (req.headers.origin || ('http://' + (req.headers.host || 'localhost:3000'))).replace(/\/+$/, '');
+        try {
+            return json(res, 200, auth.oauthStart({ provider: q.get('provider') || 'google', redirectTo: origin + '/auth.html' }));
+        } catch (err) { return json(res, err.code || 500, { error: err.message }); }
+    }
     if (p === '/api/auth/change-password' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }

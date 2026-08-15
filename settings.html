@@ -98,6 +98,11 @@
 
         .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
         .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+        .strength-bar { height: 4px; flex: 1; border-radius: 999px; background: #26272B; transition: background 0.2s ease; }
+        .strength-bar.on-weak { background: #F87171; }
+        .strength-bar.on-fair { background: #FBBF24; }
+        .strength-bar.on-good { background: #60A5FA; }
+        .strength-bar.on-strong { background: #34D399; }
 
         /* Profile + broker rows */
         .copy-chip {
@@ -332,9 +337,26 @@
                                     </button>
                                 </div>
                             </div>
+                            <!-- Password strength meter -->
+                            <div class="mt-4 md:max-w-[50%]">
+                                <div class="flex items-center justify-between mb-1.5">
+                                    <span class="text-[11.5px] font-semibold uppercase tracking-wider text-[#6E6E78]">Strength</span>
+                                    <span id="cp-strength-label" class="text-[11.5px] font-semibold text-[#6E6E78]">—</span>
+                                </div>
+                                <div class="flex gap-1.5" id="cp-strength-bars">
+                                    <div class="strength-bar" data-i="0"></div>
+                                    <div class="strength-bar" data-i="1"></div>
+                                    <div class="strength-bar" data-i="2"></div>
+                                    <div class="strength-bar" data-i="3"></div>
+                                </div>
+                            </div>
                             <div class="flex items-center gap-3 mt-5">
                                 <button type="submit" class="btn-primary !py-2 !px-5 text-[13px]">Update password</button>
                                 <span id="cp-msg" class="text-[12.5px] text-[#6E6E78]"></span>
+                            </div>
+                            <div id="cp-last-changed" class="hidden text-[12px] text-[#6E6E78] flex items-center gap-2 mt-1">
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                <span id="cp-last-changed-text"></span>
                             </div>
                         </form>
                     </div>
@@ -565,6 +587,42 @@
 
             document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBrokerPicker(); });
 
+            // ---- password strength meter ----
+            function passwordStrength(pw) {
+                if (!pw) return { score: 0, label: '—', cls: '' };
+                let score = 0;
+                if (pw.length >= 8) score++;
+                if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
+                if (/\d/.test(pw)) score++;
+                if (/[^A-Za-z0-9]/.test(pw)) score++;
+                if (score === 0) score = 1;   // non-empty but no criteria met → Weak
+                const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
+                const classes = ['', 'on-weak', 'on-fair', 'on-good', 'on-strong'];
+                return { score, label: labels[score], cls: classes[score] };
+            }
+            function renderStrength() {
+                const { score, label, cls } = passwordStrength($('cp-new').value);
+                $('cp-strength-label').textContent = label;
+                document.querySelectorAll('#cp-strength-bars .strength-bar').forEach((bar, i) => {
+                    bar.className = 'strength-bar' + (i < score ? ' ' + cls : '');
+                });
+            }
+            $('cp-new').addEventListener('input', renderStrength);
+
+            // ---- last password change (local record; also updated on success) ----
+            function fmtDate(ts) {
+                try { return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); }
+                catch (e) { return ''; }
+            }
+            function renderLastChanged() {
+                try {
+                    const ts = localStorage.getItem('31trades.password.changedAt');
+                    if (!ts) { $('cp-last-changed').classList.add('hidden'); return; }
+                    $('cp-last-changed-text').textContent = 'Last changed ' + fmtDate(Number(ts));
+                    $('cp-last-changed').classList.remove('hidden');
+                } catch (e) {}
+            }
+
             // ---- change password ----
             function cpMsg(text, ok) {
                 const el = $('cp-msg');
@@ -594,6 +652,9 @@
                     $('cp-current').value = '';
                     $('cp-new').value = '';
                     $('cp-confirm').value = '';
+                    try { localStorage.setItem('31trades.password.changedAt', String(Date.now())); } catch (e) {}
+                    renderStrength();
+                    renderLastChanged();
                     cpMsg('Password updated.', true);
                     showToast('Password updated');
                 } catch (err) {
@@ -630,6 +691,8 @@
                 }
                 renderProfile();
                 loadBrokers();
+                renderLastChanged();
+                renderStrength();
                 if (window.lucide) lucide.createIcons();
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();

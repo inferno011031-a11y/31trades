@@ -109,6 +109,23 @@ async function login({ email, password }) {
     return { session };
 }
 
+// ---- OAuth (Google) ----------------------------------------------------------
+// GoTrue's /auth/v1/authorize is a browser redirect, so we hand the client a
+// ready-made URL (anon key embedded server-side) and the callback lands back on
+// auth.html#access_token=..&refresh_token=..&provider_token=..
+
+function oauthStart({ provider, redirectTo }) {
+    const base = supabaseBase();
+    if (!base || !anonKey()) {
+        throw Object.assign(new Error('Supabase auth is not configured (SUPABASE_URL / SUPABASE_ANON_KEY missing in .env)'), { code: 500 });
+    }
+    const redirect = redirectTo || 'http://localhost:3000/auth.html';
+    const url = base + '/auth/v1/authorize' +
+        '?provider=' + encodeURIComponent(provider || 'google') +
+        '&redirect_to=' + encodeURIComponent(redirect);
+    return { url };
+}
+
 // ---- password recovery ------------------------------------------------------
 // GoTrue recovery flow, proxied exactly like login/signup:
 //   requestPasswordReset(email)  → POST /auth/v1/recover → GoTrue emails the
@@ -211,4 +228,4 @@ async function logout(token) {
     }
 }
 
-module.exports = { signup, login, verify, logout, invalidate, requestPasswordReset, resetPassword, changePassword };
+module.exports = { signup, login, verify, logout, invalidate, requestPasswordReset, resetPassword, changePassword, oauthStart };
