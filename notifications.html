@@ -294,6 +294,9 @@
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
+            // authed API fetch: attaches the session token so requests work with auth ON;
+            // falls back to plain fetch when the core isn't booted or auth is off.
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
 
             // ---- unread tracking: server-side per user (the /api/notifications
             // engine persists it). A local mirror keeps the page usable offline;
@@ -311,7 +314,7 @@
             const pushRead = () => {
                 // best-effort: tell the backend engine which ids are read
                 try {
-                    fetch('/api/notifications/read', {
+                    apiFetch('/api/notifications/read', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ ids: [...read] })
                     }).catch(() => {});
@@ -333,7 +336,7 @@
             // ---- fetch from the backend engine, fall back to the local core ----
             async function loadNotifs() {
                 try {
-                    const res = await fetch('/api/notifications');
+                    const res = await apiFetch('/api/notifications');
                     if (res.ok) {
                         const data = await res.json();
                         if (data && Array.isArray(data.notifications)) {
@@ -647,7 +650,7 @@
 
             window.connectBroker = async function (name, notifId) {
                 try {
-                    const res = await fetch('/api/brokers/connect', {
+                    const res = await apiFetch('/api/brokers/connect', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ broker: name })
                     });
@@ -672,7 +675,7 @@
             // ---- live market events feed (same endpoint as Dashboard/Journal) ----
             async function loadEco() {
                 try {
-                    const res = await fetch('/api/ecocal');
+                    const res = await apiFetch('/api/ecocal');
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const data = await res.json();
                     window.__ecoUpcoming = (data && data.upcoming) || [];

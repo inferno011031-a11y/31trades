@@ -349,6 +349,7 @@
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
             const D = window.DemoTrades;
             const { fmtMoney, fmtR, pct, groupBy } = D;
             const core = window.TradeMindCore;
@@ -630,7 +631,7 @@
                         // includeSuppressed=1 returns ALL findings with their
                         // suppressed flags so the Dismissed view can restore them
                         // (renderers filter f.suppressed themselves).
-                        const r = await fetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD + '&includeSuppressed=1');
+                        const r = await apiFetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD + '&includeSuppressed=1');
                         if (r.ok) {
                             const j = await r.json();
                             if (j && j.bundle) { SOURCE = 'api'; return j.bundle; }
@@ -1014,7 +1015,7 @@
                         if (accId) {
                             // Send the remembered context so a server restart can't
                             // lose the thread; the server returns its updated memory.
-                            const res = await fetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, accountId: accId, period: PERIOD, memory: chat.memory }) });
+                            const res = await apiFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, accountId: accId, period: PERIOD, memory: chat.memory }) });
                             if (res.ok) { r = await res.json(); if (r.ok) r = r; }
                         }
                     } catch (e) { /* fall through to local */ }

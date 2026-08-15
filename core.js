@@ -197,6 +197,29 @@
         Object.defineProperty(window.TradeMindCore, 'storageKey', { get: () => STORAGE_KEY });
         window.TradeMindCore.isBackendOnline = () => backendOnline;
 
+        // ---- authed fetch for page-level API calls (notifications, settings,
+        // backtesting, market replay…). Attaches the session Bearer token so
+        // requests work when auth is ON (deployed), and redirects to auth.html
+        // on 401 exactly like the core's own sync calls. When auth is off or
+        // the core isn't booted it behaves as a plain fetch. ----
+        window.TradeMindCore.apiFetch = (url, options) => {
+            const opts = options || {};
+            const headers = Object.assign({}, opts.headers || {});
+            const sess = BYPASS ? null : getSession();
+            if (sess && sess.token) headers.Authorization = 'Bearer ' + sess.token;
+            if (opts.body && typeof opts.body !== 'string' && !headers['Content-Type']) {
+                headers['Content-Type'] = 'application/json';
+            }
+            return fetch(API_ROOT + url, Object.assign({}, opts, { headers }))
+                .then(r => {
+                    if (r.status === 401 && !BYPASS && !/auth\.html/.test(window.location.pathname)) {
+                        clearSession();
+                        window.location.replace('auth.html');
+                    }
+                    return r;
+                });
+        };
+
         // ---- flip the backend mirror ON: adopt the local store when the API
         // is reachable, then replay mutations. Retry every 30s while offline.
         (function connectLoop() {

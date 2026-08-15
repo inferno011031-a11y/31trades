@@ -305,6 +305,9 @@
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
+            // authed API fetch: attaches the session token so requests work with auth ON;
+            // falls back to plain fetch when the core isn't booted or auth is off.
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
 
             // ---- toast ----
             let toastTimer;
@@ -430,7 +433,7 @@
             async function loadBrokers() {
                 $('broker-list').innerHTML = '<div class="py-14 text-center text-[13px] text-[#6E6E78]">Loading brokers…</div>';
                 try {
-                    const res = await fetch('/api/brokers');
+                    const res = await apiFetch('/api/brokers');
                     if (res.ok) {
                         const data = await res.json();
                         if (data && Array.isArray(data.brokers)) {
@@ -485,7 +488,7 @@
 
             window.connectBroker = async function (name) {
                 try {
-                    const res = await fetch('/api/brokers/connect', {
+                    const res = await apiFetch('/api/brokers/connect', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ broker: name })
                     });
@@ -499,7 +502,7 @@
 
             window.disconnectBroker = async function (name) {
                 try {
-                    const res = await fetch('/api/brokers/disconnect', {
+                    const res = await apiFetch('/api/brokers/disconnect', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ broker: name })
                     });

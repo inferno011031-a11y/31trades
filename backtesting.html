@@ -398,6 +398,9 @@
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
+            // authed API fetch: attaches the session token so requests work with auth ON;
+            // falls back to plain fetch when the core isn't booted or auth is off.
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
 
             // ---- toast ----
             let toastTimer;
@@ -758,7 +761,7 @@
                 stopPlayback();
                 $('chart-sub').textContent = 'Loading ' + currentSymbol + ' · ' + currentTF + ' history…';
                 try {
-                    const res = await fetch('/api/backtest/candles?symbol=' + encodeURIComponent(currentSymbol) + '&timeframe=' + currentTF);
+                    const res = await apiFetch('/api/backtest/candles?symbol=' + encodeURIComponent(currentSymbol) + '&timeframe=' + currentTF);
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const data = await res.json();
                     if (!data || !Array.isArray(data.candles) || !data.candles.length) throw new Error('empty series');

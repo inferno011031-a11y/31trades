@@ -597,6 +597,7 @@
         (function() {
             // ============ HELPERS ============
             const $ = id => document.getElementById(id);
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
             const fmt = n => (n >= 0 ? '+' : '') + n.toFixed(2);
             const day = 864e5;
 
@@ -1458,7 +1459,7 @@
             }
             async function loadEco() {
                 try {
-                    const res = await fetch('/api/ecocal');
+                    const res = await apiFetch('/api/ecocal');
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     ecoData = await res.json();
                 } catch (e) {

@@ -324,6 +324,9 @@
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
+            // authed API fetch: attaches the session token so requests work with auth ON;
+            // falls back to plain fetch when the core isn't booted or auth is off.
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
 
             // ---- toast ----
             let toastTimer;
@@ -418,7 +421,7 @@
                 bars = []; lastRenderedTime = 0;
                 $('chart-sub').textContent = 'Starting replay for ' + currentSymbol + ' · ' + currentTF + '…';
                 try {
-                    const res = await fetch('/api/replay/start?symbol=' + encodeURIComponent(currentSymbol) + '&timeframe=' + currentTF + '&window=' + currentWin);
+                    const res = await apiFetch('/api/replay/start?symbol=' + encodeURIComponent(currentSymbol) + '&timeframe=' + currentTF + '&window=' + currentWin);
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const d = await res.json();
                     if (!d.ok) throw new Error(d.error || 'start failed');
@@ -451,7 +454,7 @@
             async function poll() {
                 if (!sessionId) return;
                 try {
-                    const res = await fetch('/api/replay/status?id=' + encodeURIComponent(sessionId) + '&from=' + bars.length);
+                    const res = await apiFetch('/api/replay/status?id=' + encodeURIComponent(sessionId) + '&from=' + bars.length);
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     const d = await res.json();
                     if (!d.ok) { showToast(d.error || 'replay session lost'); stopPolling(); playing = false; updatePlayIco(); return; }
@@ -478,7 +481,7 @@
             async function control(action) {
                 if (!sessionId) return;
                 try {
-                    const res = await fetch('/api/replay/control', {
+                    const res = await apiFetch('/api/replay/control', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ id: sessionId, action, speedMs })
                     });
