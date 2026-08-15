@@ -34,3 +34,23 @@ npm start          # = node server.js  → http://127.0.0.1:8080
 npm test                # repo mapping + migration column consistency (no DB)
 node server/sync-e2e.js # browser⇄server sync e2e (needs a reachable Postgres)
 ```
+
+## One-page chart hub (Backtesting / Battles / Market Replay)
+
+All three chart experiences now live on ONE page — `backtesting.html`:
+
+- **Practice** (default, `?mode=practice` or no param) — the original backtest
+  simulation page.
+- **Battle** (`backtesting.html?mode=battle`) — the Online Battle workstation,
+  ported into `assets/battle-mode.js` (bl- prefixed ids, its own chart).
+- **Market Replay** (`backtesting.html?mode=replay`) — the replay page, ported
+  into `assets/replay-mode.js` (rp- prefixed ids, client-side dataset cache).
+- `battles.html` and `replay.html` are thin redirects that preserve query
+  params (`?invite=CODE`, `?full=1&battle=ID`) so old links keep working.
+- Mode switching is SPA-style within the page (no reload except Practice,
+  which boots on page load).
+
+Theme: every shell page includes `assets/theme-toggle.js` + a sun/moon button;
+`html[data-theme="light"]` re-points the semantic token layer in
+`assets/trademind-theme.css` (flip point for the whole app). Charts listen for
+the `tm:theme` CustomEvent to re-theme live.

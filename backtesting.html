@@ -332,6 +332,7 @@
         }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
 </head>
 <body>
 
@@ -424,10 +425,10 @@
                 <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
                 <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
                 <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
-                <a href="backtesting.html" class="nav-item active"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="backtesting.html" class="nav-item active" id="nav-practice"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
                 <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
-                <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
-                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
+                <a href="backtesting.html?mode=replay" class="nav-item" id="nav-replay"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="backtesting.html?mode=battle" class="nav-item" id="nav-battle"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
                 <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
                 <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
                 <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
@@ -460,6 +461,7 @@
                     <input id="global-search" type="text" class="search-input" placeholder="Search instruments, strategies…">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
+                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
                     <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
@@ -475,6 +477,16 @@
             <!-- Content -->
             <main class="flex-1 overflow-y-auto">
                 <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- ============ ONE-PAGE MODE SWITCHER ============ -->
+                    <div class="panel p-2 flex flex-wrap items-center gap-1.5" id="mode-bar">
+                        <button class="bd-tab active" data-mode="practice"><svg data-lucide="flask-conical" class="w-3.5 h-3.5"></svg> Practice</button>
+                        <button class="bd-tab" data-mode="battle"><svg data-lucide="swords" class="w-3.5 h-3.5"></svg> Battle</button>
+                        <button class="bd-tab" data-mode="replay"><svg data-lucide="history" class="w-3.5 h-3.5"></svg> Market Replay</button>
+                        <span class="ml-auto text-[11.5px] text-[#6E6E78] hidden sm:inline">One engine · many modes — Practice vs history, Battle vs rivals on the same timeline, Replay any market.</span>
+                    </div>
+
+                    <section id="mode-practice">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
@@ -697,6 +709,271 @@
                     </div>
 
                     <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Backtesting · practice simulation engine · live TradingView data via /api/backtest/candles · TradingView Lightweight Charts</p>
+
+                    </section>
+
+                    <!-- ============ BATTLE MODE (one chart page) ============ -->
+                    <section id="mode-battle" class="hidden">
+                        <div class="flex flex-wrap items-end justify-between gap-4">
+                            <div>
+                                <h1 class="text-[22px] font-bold tracking-tight">Online Battles</h1>
+                                <p class="text-[13px] text-[#6E6E78] mt-0.5">
+                                    Everyone trades the exact same market timeline — decisions stay private until the battle ends. Host a battle, claim a seat, and trade the shared replay.
+                                </p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <select id="bl-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[260px]"></select>
+                                <button class="btn-ghost !py-2 !px-3.5" id="bl-invite-btn"><svg data-lucide="send" class="w-4 h-4"></svg> Invite</button>
+                                <button class="btn-primary !py-2 !px-3.5" id="bl-new"><svg data-lucide="swords" class="w-4 h-4"></svg> New battle</button>
+                            </div>
+                        </div>
+
+                        <div class="panel p-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-[12.5px]" id="bl-meta">
+                            <span class="text-[#6E6E78]">No battle yet — host one to start.</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                            <div class="xl:col-span-1 flex flex-col gap-4">
+                                <div class="panel p-4">
+                                    <div class="flex items-center justify-between gap-3 mb-3">
+                                        <div class="panel-title">Seats</div>
+                                        <span class="status-badge" style="background:rgba(99,102,241,0.12);color:#818CF8;" id="bl-seat-badge">—</span>
+                                    </div>
+                                    <div class="flex flex-col gap-1.5" id="bl-seats"></div>
+                                    <div class="mt-3 text-[12px] text-[#6E6E78]" id="bl-hint"></div>
+                                </div>
+                                <div class="panel p-4">
+                                    <div class="panel-title mb-3">Your ticket</div>
+                                    <div id="bl-ticket"></div>
+                                </div>
+                            </div>
+
+                            <div class="xl:col-span-2 flex flex-col gap-4">
+                                <div class="panel p-4">
+                                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                                        <div>
+                                            <div class="text-[15px] font-bold" id="bl-title">—</div>
+                                            <div class="text-[12px] text-[#6E6E78]" id="bl-sub">—</div>
+                                        </div>
+                                        <div class="legend-row num" id="bl-legend"></div>
+                                    </div>
+                                    <div id="bl-pos" class="pos-banner hidden"></div>
+                                    <div class="chart-box w-full"><div id="bl-chart" style="height:440px"></div></div>
+
+                                    <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
+                                        <div class="flex items-center gap-2">
+                                            <button class="play-btn" id="bl-play" title="Play / pause (host)"><svg data-lucide="play" class="w-4 h-4 ml-0.5" id="bl-play-ico"></svg></button>
+                                            <button class="step-btn" id="bl-step" title="Step forward (host)"><svg data-lucide="chevrons-right" class="w-4 h-4"></svg></button>
+                                            <button class="step-btn" id="bl-reset" title="Reset (host)"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg></button>
+                                            <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" id="bl-end"><svg data-lucide="flag" class="w-3.5 h-3.5"></svg> End battle</button>
+                                        </div>
+                                        <div class="flex items-center gap-1.5" id="bl-speed">
+                                            <button class="speed-btn active" data-ms="300">1×</button>
+                                            <button class="speed-btn" data-ms="150">2×</button>
+                                            <button class="speed-btn" data-ms="80">5×</button>
+                                        </div>
+                                        <div class="flex-1 flex items-center gap-3 min-w-[200px]">
+                                            <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="bl-pos-text">0 / 0</span>
+                                            <input type="range" class="scrub" id="bl-scrub" min="0" max="100" value="0">
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="panel p-4" id="bl-results">
+                                    <div class="flex items-center justify-between gap-3 mb-3">
+                                        <div class="panel-title">Leaderboard</div>
+                                        <span class="text-[11.5px] text-[#6E6E78]" id="bl-note">Available once the battle ends</span>
+                                    </div>
+                                    <div id="bl-lb"></div>
+                                    <div id="bl-team"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Online Battles · canonical timeline · private decisions · blended scoring (execution + risk + consistency)</p>
+
+                        <!-- New battle modal -->
+                        <div class="modal-backdrop hidden" id="bl-modal">
+                            <div class="modal-card">
+                                <div class="flex items-center justify-between gap-3 mb-5">
+                                    <div>
+                                        <div class="text-[16px] font-bold">Host a battle</div>
+                                        <div class="text-[12px] text-[#6E6E78] mt-0.5">One market, one timeline — every seat trades the same replay.</div>
+                                    </div>
+                                    <button class="collapse-btn" id="bl-modal-close"><svg data-lucide="x" class="w-5 h-5"></svg></button>
+                                </div>
+                                <div class="flex flex-col gap-4">
+                                    <div>
+                                        <div class="ticket-label">Title</div>
+                                        <input type="text" id="bl-m-title" class="ticket-input !font-[inherit]" placeholder="ICT vs SMC — EURUSD" value="ICT vs SMC — EURUSD">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <div class="ticket-label">Symbol</div>
+                                            <select id="bl-m-symbol" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41]"></select>
+                                        </div>
+                                        <div>
+                                            <div class="ticket-label">Timeframe</div>
+                                            <div class="flex items-center gap-1.5" id="bl-m-tf">
+                                                <button class="tf-btn" data-tf="15m">15m</button>
+                                                <button class="tf-btn active" data-tf="1h">1H</button>
+                                                <button class="tf-btn" data-tf="4h">4H</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <div class="ticket-label">History window</div>
+                                            <select id="bl-m-window" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41]">
+                                                <option value="120">120 bars</option>
+                                                <option value="300" selected>300 bars</option>
+                                                <option value="600">600 bars</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <div class="ticket-label">Starting balance ($)</div>
+                                            <input type="number" step="any" id="bl-m-balance" class="ticket-input" value="10000">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <div class="ticket-label">Seats (one per line — team after a colon)</div>
+                                        <textarea id="bl-m-seats" rows="3" class="ticket-input !font-[inherit] resize-none" placeholder="Alex:ICT&#10;Sam:SMC&#10;Jordan:SMC">Alex:ICT
+Sam:SMC
+Jordan:SMC
+Mia:ICT</textarea>
+                                        <p class="text-[11px] text-[#55555E] mt-1.5">You (the host) take the first seat. Unbound seats can be claimed by others via Join.</p>
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <div class="ticket-label">Risk model</div>
+                                            <select id="bl-m-basis" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41]">
+                                                <option value="money">Money per trade</option>
+                                                <option value="pct">% of balance</option>
+                                            </select>
+                                        </div>
+                                        <div>
+                                            <div class="ticket-label">Risk per trade</div>
+                                            <input type="number" step="any" id="bl-m-pertrade" class="ticket-input" value="25">
+                                        </div>
+                                    </div>
+                                    <button class="btn-primary w-full justify-center !py-3" id="bl-m-create"><svg data-lucide="swords" class="w-4 h-4"></svg> Host battle</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Invite modal -->
+                        <div class="modal-backdrop hidden" id="bl-inv-modal">
+                            <div class="modal-card">
+                                <div class="flex items-center justify-between gap-3 mb-5">
+                                    <div>
+                                        <div class="text-[16px] font-bold">Invite traders</div>
+                                        <div class="text-[12px] text-[#6E6E78] mt-0.5" id="bl-inv-title">—</div>
+                                    </div>
+                                    <button class="text-[#6E6E78] hover:text-white transition-colors" id="bl-inv-close"><svg data-lucide="x" class="w-5 h-5"></svg></button>
+                                </div>
+                                <div class="flex flex-col gap-4">
+                                    <div>
+                                        <div class="ticket-label">Shareable invite link</div>
+                                        <div class="flex items-center gap-2 mt-1.5">
+                                            <input type="text" id="bl-inv-link" readonly class="bg-[#0F0F11] border border-[#26262B] rounded-lg text-[12.5px] text-[#B4B4BD] px-3 py-2 flex-1 min-w-0 font-mono outline-none focus:border-[#3A3A41]">
+                                            <button class="btn-ghost !py-2 !px-3" id="bl-inv-copy"><svg data-lucide="copy" class="w-3.5 h-3.5"></svg> Copy</button>
+                                        </div>
+                                        <p class="text-[11.5px] text-[#55555E] mt-1.5 leading-relaxed">Anyone with this link can claim a free seat — no coordination needed.</p>
+                                    </div>
+                                    <div>
+                                        <div class="ticket-label">Email invites <span class="text-[#55555E] font-normal">(optional, comma-separated)</span></div>
+                                        <input type="text" id="bl-inv-emails" placeholder="friend@example.com, partner@propfirm.com" class="bg-[#0F0F11] border border-[#26262B] rounded-lg text-[12.5px] text-white px-3 py-2 w-full outline-none focus:border-[#3A3A41] mt-1.5">
+                                        <div class="flex items-center gap-2 mt-3">
+                                            <button class="btn-primary flex-1 justify-center !py-2.5" id="bl-inv-send"><svg data-lucide="send" class="w-4 h-4"></svg> Send invites</button>
+                                            <a class="btn-ghost !py-2.5 !px-4 flex items-center gap-1.5" id="bl-inv-mailto" target="_blank" rel="noopener"><svg data-lucide="mail" class="w-3.5 h-3.5"></svg> Open email</a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ============ MARKET REPLAY MODE (one chart page) ============ -->
+                    <section id="mode-replay" class="hidden">
+                        <div class="flex flex-wrap items-end justify-between gap-4">
+                            <div>
+                                <h1 class="text-[22px] font-bold tracking-tight">Market Replay</h1>
+                                <p class="text-[13px] text-[#6E6E78] mt-0.5">
+                                    Relive the market like a movie — real TradingView candles, bar by bar.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="panel p-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+                            <div class="flex items-center gap-2.5">
+                                <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide">Symbol</span>
+                                <select id="rp-symbol" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[180px]"></select>
+                            </div>
+                            <div class="flex items-center gap-1.5" id="rp-tf">
+                                <button class="tf-btn" data-tf="1m">1m</button>
+                                <button class="tf-btn" data-tf="5m">5m</button>
+                                <button class="tf-btn" data-tf="15m">15m</button>
+                                <button class="tf-btn active" data-tf="1h">1H</button>
+                                <button class="tf-btn" data-tf="4h">4H</button>
+                                <button class="tf-btn" data-tf="1d">1D</button>
+                            </div>
+                            <div class="flex items-center gap-1.5" id="rp-win-bar">
+                                <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Window</span>
+                                <button class="tf-btn" data-win="100">100</button>
+                                <button class="tf-btn active" data-win="400">400</button>
+                                <button class="tf-btn" data-win="800">800</button>
+                            </div>
+                            <button class="btn-primary !py-2 !px-4 text-[12.5px] ml-auto" id="rp-new">
+                                <svg data-lucide="refresh-cw" class="w-4 h-4"></svg> New replay
+                            </button>
+                        </div>
+
+                        <div class="panel p-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                                <div class="flex items-center gap-3">
+                                    <div id="rp-badge"></div>
+                                    <div>
+                                        <div class="text-[15px] font-bold" id="rp-title">EURUSD · 1H</div>
+                                        <div class="text-[12px] text-[#6E6E78]" id="rp-sub">Starting replay…</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-3">
+                                    <span class="source-badge" id="rp-src"><span class="dot"></span><span id="rp-src-label">TradingView</span></span>
+                                    <div class="legend-row num" id="rp-legend"></div>
+                                </div>
+                            </div>
+                            <div id="rp-chart" class="w-full" style="height:470px"></div>
+
+                            <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
+                                <div class="flex items-center gap-2">
+                                    <button class="step-btn" id="rp-reset" title="Reset to start"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg></button>
+                                    <button class="step-btn" id="rp-step-back" title="Step back"><svg data-lucide="chevrons-left" class="w-4 h-4"></svg></button>
+                                    <button class="play-btn" id="rp-play" title="Play / pause"><svg data-lucide="play" class="w-4 h-4 ml-0.5" id="rp-play-ico"></svg></button>
+                                    <button class="step-btn" id="rp-step-fwd" title="Step forward"><svg data-lucide="chevrons-right" class="w-4 h-4"></svg></button>
+                                </div>
+                                <div class="flex items-center gap-1.5" id="rp-speed">
+                                    <span class="text-[10.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Speed</span>
+                                    <button class="speed-btn" data-speed="1000">Slow</button>
+                                    <button class="speed-btn active" data-speed="400">Normal</button>
+                                    <button class="speed-btn" data-speed="150">Fast</button>
+                                    <button class="speed-btn" data-speed="60">Turbo</button>
+                                </div>
+                                <div class="ml-auto flex items-center gap-2 text-[11.5px] text-[#6E6E78]">
+                                    <span class="num font-bold text-white" id="rp-pos">—</span>
+                                    <span id="rp-time">—</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel p-4">
+                            <div class="panel-title mb-2">How it works</div>
+                            <p class="text-[12.5px] text-[#6E6E78] leading-relaxed">
+                                Press <b>Play</b> to step through real historical candles bar by bar. The engine streams from the server, which pulls live TradingView data (cached for speed). With your TradingView account cookies set on the server (<span class="num">TRADEMIND_TV_SESSION</span> + <span class="num">TRADEMIND_TV_SIGNATURE</span>), playback uses TradingView's native replay mode. Datasets are cached client-side too — coming back to a market you opened this session paints instantly.
+                            </p>
+                        </div>
+
+                        <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Market Replay · bar-by-bar playback via /api/replay · TradingView Lightweight Charts</p>
+                    </section>
                 </div>
             </main>
         </div>
@@ -1014,14 +1291,21 @@
                 return out;
             }
 
-            function rebuildIndicators(full) {
-                const data = full ? candles : candles;
+            // Indicator series are created ONCE per enabled-set and then updated
+            // in place on every tick — the poll loop never removes/re-adds them,
+            // which was the single biggest per-tick latency cost in replay.
+            let indSignature = '';
+            function ensureIndicators() {
+                const sig = Object.keys(indState).filter(k => indState[k]).sort().join(',');
+                if (sig === indSignature) return false;
+                indSignature = sig;
                 Object.keys(indSeries).forEach(k => {
                     try { chart.removeSeries(indSeries[k]); } catch (e) {}
                 });
                 indSeries = {};
-                if (!indState.ema) { renderIndLegend(); return; }
+                if (!Object.keys(indState).some(k => indState[k])) { renderIndLegend(); return true; }
                 const calc = computeAll();
+                const data = candles;
                 if (indState.ema) {
                     addIndicatorSeries('ema20', { color: '#F59E0B', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'EMA 20' }).setData(pack(data, calc.ema20));
                     addIndicatorSeries('ema50', { color: '#F59E0B', lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false, title: 'EMA 50' }).setData(pack(data, calc.ema50));
@@ -1047,6 +1331,27 @@
                     chart.priceScale('macd').applyOptions({ scaleMargins: { top: 0.86, bottom: 0 }, visible: false });
                 }
                 renderIndLegend();
+                return true;
+            }
+            function rebuildIndicators(full) {
+                if (!ensureIndicators()) {
+                    // enabled set unchanged — cheap in-place update of every series
+                    const calc = computeAll();
+                    Object.keys(indSeries).forEach(k => {
+                        try {
+                            const s = indSeries[k];
+                            if (k === 'ema20') s.setData(pack(candles, calc.ema20));
+                            else if (k === 'ema50') s.setData(pack(candles, calc.ema50));
+                            else if (k === 'sma20') s.setData(pack(candles, calc.sma20));
+                            else if (k === 'bbu') s.setData(pack(candles, calc.bb.up));
+                            else if (k === 'bbl') s.setData(pack(candles, calc.bb.lo));
+                            else if (k === 'vwap') s.setData(pack(candles, calc.vwap));
+                            else if (k === 'rsi') s.setData(pack(candles, calc.rsi));
+                            else if (k === 'macd') s.setData(pack(candles, calc.macd.line));
+                            else if (k === 'macdsig') s.setData(pack(candles, calc.macd.signal));
+                        } catch (e) { /* ignore */ }
+                    });
+                }
             }
 
             function pack(data, arr) {
@@ -1744,7 +2049,9 @@
             // Activated via backtesting.html?full=1&session=<id>. Renders the SAME
             // canonical session into a full-screen workstation with a top replay bar,
             // left drawing toolbar and bottom execution/analytics bar.
-            const TERMINAL = new URLSearchParams(location.search).get('full') === '1';
+            // full-page terminal is a PRACTICE-mode feature — battle/replay deep
+            // links (?mode=battle&full=1) must not trigger it
+            const TERMINAL = new URLSearchParams(location.search).get('full') === '1' && !new URLSearchParams(location.search).get('mode');
             const TERMINAL_SESSION = new URLSearchParams(location.search).get('session');
             let tvChart = null, tvCandles = null, tvPosLines = [], tvDrawings = [];
             let tvTool = 'cursor', tvDrawPts = [];
@@ -2084,7 +2391,74 @@
                 loadSessions();
             }
             let currentSpeedMs = 300;
-            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+
+            // ---- theme sync: the global toggle re-points the app palette; the
+            // chart follows so the terminal never looks wrong in light mode ----
+            document.addEventListener('tm:theme', function (e) {
+                var m = e && e.detail && e.detail.mode;
+                if (!m || !chart) return;
+                if (m === 'light') applyPreset('light');
+                else if (theme.bg !== THEMES.obsidian.bg || theme.text !== THEMES.obsidian.text) applyPreset('obsidian');
+            });
+
+            // ---- one-page hub: only boot the practice engine when practice mode is active ----
+            // (the full-page terminal (?full=1) always boots — it handles itself and returns early)
+            var HUB_MODE = new URLSearchParams(location.search).get('mode') || 'practice';
+            if (TERMINAL || HUB_MODE === 'practice') {
+                if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+            }
+        })();
+    </script>
+
+    <!-- Mode modules (battle + replay) -- same engines, one page -->
+    <script src="assets/battle-mode.js"></script>
+    <script src="assets/replay-mode.js"></script>
+
+    <script>
+        (function () {
+            'use strict';
+            // ============ ONE-PAGE MODE SWITCHER ============
+            var params = new URLSearchParams(location.search);
+            var mode = params.get('mode') || 'practice';
+            var sections = { practice: 'mode-practice', battle: 'mode-battle', replay: 'mode-replay' };
+            var booted = { battle: false, replay: false };
+
+            function showMode(m) {
+                if (!sections[m]) return;
+                Object.keys(sections).forEach(function (k) {
+                    var el = document.getElementById(sections[k]);
+                    if (el) el.classList.toggle('hidden', k !== m);
+                });
+                document.querySelectorAll('#mode-bar .bd-tab').forEach(function (t) {
+                    t.classList.toggle('active', t.dataset.mode === m);
+                });
+                ['nav-practice', 'nav-battle', 'nav-replay'].forEach(function (id) {
+                    var el = document.getElementById(id);
+                    if (el) el.classList.toggle('active', id === 'nav-' + m || (id === 'nav-practice' && m === 'practice'));
+                });
+                // keep the URL shareable without a reload
+                var p = new URLSearchParams(location.search);
+                if (m === 'practice') p.delete('mode'); else p.set('mode', m);
+                var qs = p.toString();
+                history.replaceState(null, '', location.pathname + (qs ? '?' + qs : '') + location.hash);
+            }
+
+            function activate(m) {
+                showMode(m);
+                if (m === 'battle' && !booted.battle && window.BattleMode) { booted.battle = true; window.BattleMode.boot(); }
+                if (m === 'replay' && !booted.replay && window.ReplayMode) { booted.replay = true; window.ReplayMode.boot(); }
+            }
+
+            document.querySelectorAll('#mode-bar .bd-tab').forEach(function (tab) {
+                tab.addEventListener('click', function () {
+                    var m = tab.dataset.mode;
+                    if (m === 'practice') { location.href = 'backtesting.html'; return; } // practice boots on page load only
+                    activate(m);
+                });
+            });
+
+            activate(mode);
+            if (window.lucide) lucide.createIcons();
         })();
     </script>
     <script src="assets/tour.js"></script>

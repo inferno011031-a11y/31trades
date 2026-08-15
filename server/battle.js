@@ -482,7 +482,7 @@ function invitationFor(userId, battleId, code) {
         id: 'inv_' + b.id, battleId: b.id, code,
         title: b.title, symbol: b.symbol, timeframe: b.timeframe, status: b.status,
         hostId: found.hostId, seats: b.seats.length, taken, free,
-        createdAt: b.createdAt, href: 'battles.html?invite=' + code
+        createdAt: b.createdAt, href: 'backtesting.html?mode=battle&invite=' + code
     };
 }
 function pendingInvites(userId) {
