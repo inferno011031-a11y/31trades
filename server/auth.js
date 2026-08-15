@@ -128,6 +128,39 @@ async function requestPasswordReset({ email }) {
     return { ok: true };
 }
 
+async function changePassword({ token, currentPassword, newPassword }) {
+    // For a signed-in user: verify the current password via a fresh password
+    // grant, then update with the (fresh) session token. GoTrue's PUT /auth/v1/user
+    // requires an authenticated token; logging in again also validates the current
+    // password server-side so a wrong old password fails cleanly.
+    if (!token) throw Object.assign(new Error('Authentication required — sign in first.'), { code: 401 });
+    if (!currentPassword || !newPassword) throw Object.assign(new Error('Current and new passwords are required'), { code: 400 });
+    if (newPassword.length < 6) throw Object.assign(new Error('New password must be at least 6 characters.'), { code: 400 });
+
+    // Resolve the user's email from their existing session token.
+    const user = await verify(token);
+    if (!user || !user.email) throw Object.assign(new Error('Unable to resolve your account email'), { code: 401 });
+
+    // 1. Re-auth with the current password (also fails fast if it's wrong).
+    const data = await gotrue('/auth/v1/token?grant_type=password', {
+        method: 'POST',
+        body: { email: user.email, password: currentPassword }
+    });
+    const accessToken = data.access_token || data.session?.access_token;
+    if (!accessToken) {
+        throw Object.assign(new Error('Current password is incorrect.'), { code: 401 });
+    }
+
+    // 2. Update the password with the fresh session token.
+    await gotrue('/auth/v1/user', {
+        method: 'PUT',
+        token: accessToken,
+        body: { password: newPassword }
+    });
+
+    return { ok: true };
+}
+
 async function resetPassword({ token, password }) {
     if (!token) throw Object.assign(new Error('Recovery token is missing — open the link from your email again.'), { code: 400 });
     if (!password || password.length < 6) throw Object.assign(new Error('New password must be at least 6 characters.'), { code: 400 });
@@ -178,4 +211,4 @@ async function logout(token) {
     }
 }
 
-module.exports = { signup, login, verify, logout, invalidate, requestPasswordReset, resetPassword };
+module.exports = { signup, login, verify, logout, invalidate, requestPasswordReset, resetPassword, changePassword };

@@ -291,6 +291,54 @@
                         </div>
                     </div>
 
+                    <!-- Security: change password -->
+                    <div class="panel p-5">
+                        <div class="flex items-center justify-between gap-3 mb-1">
+                            <div class="panel-title">Security</div>
+                            <svg data-lucide="shield" class="w-4 h-4 text-[#34D399]"></svg>
+                        </div>
+                        <p class="text-[12px] text-[#6E6E78] mb-4">Update your sign-in password. You'll stay signed in on this device.</p>
+
+                        <form id="form-change-password" novalidate>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="field-label" for="cp-current">Current password</label>
+                                    <div class="input-wrap">
+                                        <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                        <input id="cp-current" class="field-input" type="password" placeholder="Your current password" autocomplete="current-password">
+                                        <button type="button" class="toggle-pw" data-target="cp-current">
+                                            <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="field-label" for="cp-new">New password</label>
+                                    <div class="input-wrap">
+                                        <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                        <input id="cp-new" class="field-input" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
+                                        <button type="button" class="toggle-pw" data-target="cp-new">
+                                            <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-4 md:max-w-[50%]">
+                                <label class="field-label" for="cp-confirm">Confirm new password</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                    <input id="cp-confirm" class="field-input" type="password" placeholder="Re-enter new password" autocomplete="new-password">
+                                    <button type="button" class="toggle-pw" data-target="cp-confirm">
+                                        <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3 mt-5">
+                                <button type="submit" class="btn-primary !py-2 !px-5 text-[13px]">Update password</button>
+                                <span id="cp-msg" class="text-[12.5px] text-[#6E6E78]"></span>
+                            </div>
+                        </form>
+                    </div>
+
                     <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Settings · connected brokers sync through /api/brokers</p>
                 </div>
             </main>
@@ -516,6 +564,53 @@
             };
 
             document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBrokerPicker(); });
+
+            // ---- change password ----
+            function cpMsg(text, ok) {
+                const el = $('cp-msg');
+                el.textContent = text;
+                el.style.color = ok ? '#34D399' : '#F87171';
+            }
+
+            $('form-change-password').addEventListener('submit', async function (e) {
+                e.preventDefault();
+                const btn = this.querySelector('button[type="submit"]');
+                const currentPassword = $('cp-current').value;
+                const newPassword = $('cp-new').value;
+                const confirm = $('cp-confirm').value;
+                if (!currentPassword || !newPassword) return cpMsg('Enter your current and new password.', false);
+                if (newPassword.length < 6) return cpMsg('New password must be at least 6 characters.', false);
+                if (newPassword !== confirm) return cpMsg('New passwords do not match.', false);
+                btn.disabled = true;
+                cpMsg('Updating…', true);
+                try {
+                    const res = await apiFetch('/api/auth/change-password', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ currentPassword, newPassword })
+                    });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) throw new Error(data.error || data.msg || 'Request failed (' + res.status + ')');
+                    $('cp-current').value = '';
+                    $('cp-new').value = '';
+                    $('cp-confirm').value = '';
+                    cpMsg('Password updated.', true);
+                    showToast('Password updated');
+                } catch (err) {
+                    cpMsg(err.message, false);
+                } finally {
+                    btn.disabled = false;
+                }
+            });
+
+            document.querySelectorAll('.toggle-pw').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const input = document.getElementById(btn.dataset.target);
+                    const isPassword = input.type === 'password';
+                    input.type = isPassword ? 'text' : 'password';
+                    btn.querySelector('svg').classList.toggle('icon-eye');
+                });
+            });
 
             // ---- init ----
             function boot() {

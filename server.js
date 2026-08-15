@@ -398,6 +398,17 @@ async function handleApi(req, res, url) {
         await auth.logout(bearerToken(req));
         return json(res, 200, { ok: true });
     }
+    if (p === '/api/auth/change-password' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        try {
+            return json(res, 200, await auth.changePassword({
+                token: bearerToken(req),
+                currentPassword: b.currentPassword,
+                newPassword: b.newPassword
+            }));
+        } catch (err) { return json(res, err.code || 400, { error: err.message }); }
+    }
     if (p === '/api/auth/forgot' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
