@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Community</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0C; color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+        .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        /* App shell */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        .logo-badge {
+            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #052E1F; font-weight: 800; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .collapse-btn {
+            background: none; border: none; color: #6E6E78; cursor: pointer;
+            padding: 6px; border-radius: 6px; transition: all 0.15s;
+        }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: #FFFFFF;
+            box-shadow: inset 2px 0 0 #10B981;
+        }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .btn-danger {
+            background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+
+        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+
+        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .tag-emerald { background: rgba(16,185,129,0.12); color: #34D399; }
+        .tag-red { background: rgba(239,68,68,0.12); color: #F87171; }
+        .tag-amber { background: rgba(245,158,11,0.12); color: #FBBF24; }
+        .tag-blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
+        .tag-purple { background: rgba(139,92,246,0.12); color: #A78BFA; }
+        .tag-gray { background: rgba(148,163,184,0.12); color: #94A3B8; }
+
+        .ins-tab {
+            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        }
+        .ins-tab:hover { color: #E8E8EC; }
+        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+
+        .notif-row { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #17171A; transition: background 0.12s; cursor: pointer; }
+        .notif-row:hover { background: rgba(255,255,255,0.03); }
+        .notif-row:last-child { border-bottom: none; }
+        .notif-ico {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .notif-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; margin-top: 6px; }
+        .notif-action {
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 9px;
+            padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;
+            color: #34D399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
+            cursor: pointer; transition: all 0.15s;
+        }
+        .notif-action:hover { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.45); }
+        .broker-overlay {
+            position: fixed; inset: 0; z-index: 90;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .broker-card {
+            width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto;
+            background: #121620; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+            padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+        }
+        .broker-close {
+            width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.04); color: #8A8A93; transition: all 0.15s;
+        }
+        .broker-close:hover { background: rgba(255,255,255,0.1); color: #E8E8EC; }
+        .broker-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+        .broker-row {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.15s;
+        }
+        .broker-row:hover { background: rgba(255,255,255,0.06); }
+        .broker-ico {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(16,185,129,0.12); color: #34D399;
+        }
+        .broker-connect {
+            flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
+            color: #0A0C10; background: #34D399; border: none; cursor: pointer; transition: all 0.15s;
+        }
+        .broker-connect:hover { background: #10B981; box-shadow: 0 0 18px rgba(16,185,129,0.35); }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="backtesting.html?mode=replay" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="backtesting.html?mode=battle" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="community.html" class="nav-item active"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed" id="account-chip">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1100px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+
+                    <div>
+                        <h1 class="text-[22px] font-bold tracking-tight">Community</h1>
+                        <p class="text-[13px] text-[#6E6E78] mt-0.5">Your public identity, recent battle results and the week's top performers.</p>
+                    </div>
+
+                    <!-- Identity card -->
+                    <div class="panel p-5 flex flex-wrap items-center gap-4">
+                        <div class="avatar !w-12 !h-12 !rounded-2xl !text-[16px]" id="com-avatar">TR</div>
+                        <div class="min-w-0 flex-1">
+                            <div class="text-[15px] font-bold text-white" id="com-name">Trader</div>
+                            <div class="text-[12px] text-[#6E6E78] mt-0.5">Unique user ID — share this for Discord verification, role sync and giveaways.</div>
+                        </div>
+                        <button class="copy-chip num" id="com-uid" title="Click to copy"><span id="com-uid-text">user-••••••••</span></button>
+                    </div>
+
+                    <!-- Battle results -->
+                    <div class="panel overflow-hidden">
+                        <div class="px-4 py-3 border-b border-[#1C1C20] flex items-center justify-between">
+                            <div class="panel-title">Recent battles</div>
+                            <span class="text-[11px] text-[#6E6E78]">canonical timeline · private seats</span>
+                        </div>
+                        <div id="com-battles" class="flex flex-col">
+                            <div class="py-12 text-center text-[13px] text-[#6E6E78]">Loading battle results…</div>
+                        </div>
+                    </div>
+
+                    <!-- Leaderboard -->
+                    <div class="panel overflow-hidden">
+                        <div class="px-4 py-3 border-b border-[#1C1C20]"><div class="panel-title">Top traders this week</div></div>
+                        <div id="com-leaderboard" class="flex flex-col">
+                            <div class="py-12 text-center text-[13px] text-[#6E6E78]">Build a track record by finishing battles — the leaderboard fills from completed results.</div>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Community · compete, learn, share your ID</p>
+                </div>
+            </main>
+</main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    
+    <script>
+
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
+            let toastTimer;
+            window.showToast = function (msg) {
+                const t = $('toast');
+                if (!t) return;
+                $('toast-msg').textContent = msg;
+                t.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+            };
+            function bootShell() {
+                const cb = $('collapse-btn');
+                if (cb) cb.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+                const chip = $('account-chip');
+                if (chip) {
+                    const core = window.TradeMindCore;
+                    if (core && core.selectedAccountId) {
+                        const acc = core.Accounts.find(a => a.id === core.selectedAccountId()) || core.Accounts[0];
+                        if (acc) {
+                            const num = chip.querySelector('.num');
+                            if (num) num.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
+                            const spans = chip.querySelectorAll('span');
+                            if (spans.length > 2) spans[2].textContent = acc.name;
+                        }
+                    }
+                }
+                if (window.lucide) lucide.createIcons();
+            }
+
+            async function loadBattles() {
+                try {
+                    const r = await apiFetch('/api/battles');
+                    if (!r.ok) throw new Error('battles ' + r.status);
+                    const data = await r.json();
+                    const list = (data && (data.battles || data.results || [])) || [];
+                    const el = $('com-battles');
+                    if (!el) return;
+                    if (!list.length) {
+                        el.innerHTML = '<div class="py-10 text-center text-[13px] text-[#6E6E78]">No battles yet — host one from Backtesting → Battle and invite your squad.</div>';
+                        return;
+                    }
+                    el.innerHTML = list.slice(0, 10).map(b => {
+                        const title = b.title || (b.symbol + ' ' + b.timeframe);
+                        const seats = Array.isArray(b.seats) ? b.seats.length : Number(b.seats || b.taken || 0);
+                        const winner = b.winner ? (typeof b.winner === 'string' ? b.winner : (b.winner.name || '—')) : '—';
+                        const at = b.createdAt || b.endedAt;
+                        return '<div class="flex items-center gap-3 px-4 py-3 border-b border-[#141419] last:border-0">' +
+                            '<span class="status-badge" style="background:' + (b.status === 'completed' ? 'rgba(245,158,11,0.12);color:#FBBF24' : 'rgba(16,185,129,0.12);color:#34D399') + '">' + (b.status === 'completed' ? 'DONE' : 'LIVE') + '</span>' +
+                            '<div class="min-w-0 flex-1"><div class="text-[13px] font-semibold truncate">' + title + '</div>' +
+                            '<div class="text-[11.5px] text-[#6E6E78]">' + (b.symbol || '—') + ' ' + (b.timeframe || '') + ' · ' + seats + ' seats' + (at ? ' · ' + new Date(at).toLocaleDateString() : '') + '</div></div>' +
+                            '<div class="text-right"><div class="text-[11px] text-[#6E6E78] uppercase">winner</div><div class="num text-[13px] font-semibold">' + winner + '</div></div></div>';
+                    }).join('');
+                    // leaderboard from completed results
+                    const done = list.filter(b => b.status === 'completed');
+                    const scores = {};
+                    done.forEach(b => { const ss = Array.isArray(b.seats) ? b.seats : []; ss.forEach(s => {
+                        const k = s.name || s.id || 'Trader';
+                        scores[k] = scores[k] || { n: 0, pnl: 0 };
+                        scores[k].n++;
+                        scores[k].pnl += Number(s.pnl || s.net || 0);
+                    }); });
+                    const lb = $('com-leaderboard');
+                    const top = Object.keys(scores).map(k => ({ k, ...scores[k] })).sort((a, b) => b.pnl - a.pnl).slice(0, 5);
+                    if (top.length) {
+                        lb.innerHTML = top.map((t, i) => '<div class="flex items-center gap-3 px-4 py-3 border-b border-[#141419] last:border-0">' +
+                            '<span class="num text-[13px] font-bold w-5" style="color:' + (i === 0 ? '#FBBF24' : i === 1 ? '#94A3B8' : i === 2 ? '#B45309' : '#6E6E78') + '">' + (i + 1) + '</span>' +
+                            '<div class="flex-1 text-[13px] font-semibold">' + t.k + '</div>' +
+                            '<span class="text-[11.5px] text-[#6E6E78]">' + t.n + ' battle' + (t.n === 1 ? '' : 's') + '</span>' +
+                            '<span class="num text-[13px]" style="color:' + (t.pnl >= 0 ? '#34D399' : '#F87171') + '">' + (t.pnl >= 0 ? '+' : '') + '$' + Math.round(t.pnl).toLocaleString() + '</span></div>').join('');
+                    }
+                } catch (e) {
+                    const el = $('com-battles');
+                    if (el) el.innerHTML = '<div class="py-10 text-center text-[13px] text-[#6E6E78]">Battles are offline right now — check back soon.</div>';
+                }
+            }
+            function boot() {
+                bootShell();
+                const core = window.TradeMindCore;
+                let uid = null;
+                if (core) {
+                    try { uid = core.currentUserId ? core.currentUserId() : null; } catch (e) {}
+                    const nm = core.userName || core.user;
+                    if (nm) { $('com-name').textContent = nm; const a = $('com-avatar'); if (a) a.textContent = String(nm).slice(0, 2).toUpperCase(); }
+                }
+                if (!uid) { try { uid = localStorage.getItem('31trades.userId'); } catch (e) {} }
+                const chip = $('com-uid');
+                if (uid) {
+                    $('com-uid-text').textContent = uid;
+                    chip.addEventListener('click', () => {
+                        try { navigator.clipboard.writeText(uid); } catch (e) {}
+                        showToast('User ID copied');
+                    });
+                } else {
+                    chip.addEventListener('click', () => showToast('Create an account to get your unique ID'));
+                }
+                loadBattles();
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+        })();
+
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>

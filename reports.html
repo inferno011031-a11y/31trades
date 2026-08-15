@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Reports</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0C; color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+        .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        /* App shell */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        .logo-badge {
+            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #052E1F; font-weight: 800; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .collapse-btn {
+            background: none; border: none; color: #6E6E78; cursor: pointer;
+            padding: 6px; border-radius: 6px; transition: all 0.15s;
+        }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: #FFFFFF;
+            box-shadow: inset 2px 0 0 #10B981;
+        }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .btn-danger {
+            background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+
+        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+
+        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .tag-emerald { background: rgba(16,185,129,0.12); color: #34D399; }
+        .tag-red { background: rgba(239,68,68,0.12); color: #F87171; }
+        .tag-amber { background: rgba(245,158,11,0.12); color: #FBBF24; }
+        .tag-blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
+        .tag-purple { background: rgba(139,92,246,0.12); color: #A78BFA; }
+        .tag-gray { background: rgba(148,163,184,0.12); color: #94A3B8; }
+
+        .ins-tab {
+            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        }
+        .ins-tab:hover { color: #E8E8EC; }
+        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+
+        .notif-row { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #17171A; transition: background 0.12s; cursor: pointer; }
+        .notif-row:hover { background: rgba(255,255,255,0.03); }
+        .notif-row:last-child { border-bottom: none; }
+        .notif-ico {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .notif-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; margin-top: 6px; }
+        .notif-action {
+            display: inline-flex; align-items: center; gap: 6px; margin-top: 9px;
+            padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;
+            color: #34D399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
+            cursor: pointer; transition: all 0.15s;
+        }
+        .notif-action:hover { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.45); }
+        .broker-overlay {
+            position: fixed; inset: 0; z-index: 90;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .broker-card {
+            width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto;
+            background: #121620; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+            padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+        }
+        .broker-close {
+            width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.04); color: #8A8A93; transition: all 0.15s;
+        }
+        .broker-close:hover { background: rgba(255,255,255,0.1); color: #E8E8EC; }
+        .broker-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+        .broker-row {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.15s;
+        }
+        .broker-row:hover { background: rgba(255,255,255,0.06); }
+        .broker-ico {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(16,185,129,0.12); color: #34D399;
+        }
+        .broker-connect {
+            flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
+            color: #0A0C10; background: #34D399; border: none; cursor: pointer; transition: all 0.15s;
+        }
+        .broker-connect:hover { background: #10B981; box-shadow: 0 0 18px rgba(16,185,129,0.35); }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="backtesting.html?mode=replay" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="backtesting.html?mode=battle" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="reports.html" class="nav-item active"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed" id="account-chip">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1100px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Reports</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Export and review your journal — CSV, JSON backup, and month-by-month performance.</p>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <button id="export-csv" class="btn-primary !py-2 !px-4 text-[12.5px]"><svg data-lucide="download" class="w-4 h-4"></svg> Export CSV</button>
+                            <button id="export-json" class="btn-ghost !py-2 !px-4 text-[12.5px]"><svg data-lucide="archive" class="w-4 h-4"></svg> JSON backup</button>
+                        </div>
+                    </div>
+
+                    <!-- Summary tiles -->
+                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" id="report-summary"></div>
+
+                    <!-- Export note -->
+                    <div class="panel p-4 flex items-start gap-3">
+                        <svg data-lucide="info" class="w-4 h-4 text-[#818CF8] mt-0.5 flex-shrink-0"></svg>
+                        <p class="text-[12.5px] text-[#6E6E78]">Reports are generated from the same single source of truth as every screen — your journal, accounts and strategies. The CSV includes every trade with entry/exit, R-multiple, setup, session and discipline flags; the JSON backup is a full machine-readable snapshot.</p>
+                    </div>
+
+                    <!-- Month-by-month -->
+                    <div class="panel overflow-hidden">
+                        <div class="px-4 py-3 border-b border-[#1C1C20] flex items-center justify-between">
+                            <div class="panel-title">Month by month</div>
+                            <span class="text-[11px] text-[#6E6E78]">from your journal</span>
+                        </div>
+                        <div class="overflow-x-auto"><table class="w-full text-[12.5px]"><thead><tr class="text-left text-[#6E6E78] text-[11px] uppercase tracking-wide border-b border-[#1C1C20]">
+                            <th class="px-4 py-2.5">Month</th><th class="px-4 py-2.5 text-right">Trades</th><th class="px-4 py-2.5 text-right">Wins</th>
+                            <th class="px-4 py-2.5 text-right">Net P&L</th><th class="px-4 py-2.5 text-right">Avg R</th><th class="px-4 py-2.5 text-right">Win rate</th>
+                        </tr></thead><tbody id="report-months"></tbody></table></div>
+                    </div>
+
+                    <!-- By symbol / by setup -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                        <div class="panel overflow-hidden">
+                            <div class="px-4 py-3 border-b border-[#1C1C20]"><div class="panel-title">By symbol</div></div>
+                            <div class="overflow-x-auto"><table class="w-full text-[12.5px]"><tbody id="report-symbols"></tbody></table></div>
+                        </div>
+                        <div class="panel overflow-hidden">
+                            <div class="px-4 py-3 border-b border-[#1C1C20]"><div class="panel-title">By setup</div></div>
+                            <div class="overflow-x-auto"><table class="w-full text-[12.5px]"><tbody id="report-setups"></tbody></table></div>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Reports · exports from the single source of truth</p>
+                </div>
+            </main>
+</main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    
+    <script>
+
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
+            let toastTimer;
+            window.showToast = function (msg) {
+                const t = $('toast');
+                if (!t) return;
+                $('toast-msg').textContent = msg;
+                t.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+            };
+            function bootShell() {
+                const cb = $('collapse-btn');
+                if (cb) cb.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+                const chip = $('account-chip');
+                if (chip) {
+                    const core = window.TradeMindCore;
+                    if (core && core.selectedAccountId) {
+                        const acc = core.Accounts.find(a => a.id === core.selectedAccountId()) || core.Accounts[0];
+                        if (acc) {
+                            const num = chip.querySelector('.num');
+                            if (num) num.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
+                            const spans = chip.querySelectorAll('span');
+                            if (spans.length > 2) spans[2].textContent = acc.name;
+                        }
+                    }
+                }
+                if (window.lucide) lucide.createIcons();
+            }
+
+            const num = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
+            const money = n => (n >= 0 ? '+' : '') + '$' + Math.round(n).toLocaleString();
+            function trades() {
+                const core = window.TradeMindCore;
+                if (!core || !core.Trades) return [];
+                return (core.Trades || []).map(t => ({ ...t }));
+            }
+            function rows(t) {
+                // Trades carry their own pnl / r (single source of truth). Fall back
+                // to a price-based calc only when those are missing (e.g. API trades).
+                return t.map(tr => {
+                    let pnl = tr.pnl;
+                    if (pnl == null && tr.entry != null && tr.exit != null) {
+                        pnl = (Number(tr.exit) - Number(tr.entry)) * (tr.dir === 'Short' ? -1 : 1) * Number(tr.size || 0);
+                    }
+                    pnl = Number(pnl == null ? 0 : pnl);
+                    let rr = tr.r;
+                    if (rr == null && tr.risk != null && Number(tr.risk) > 0) rr = pnl / Number(tr.risk);
+                    rr = Number(rr == null ? 0 : rr);
+                    return { ...tr, pnl, rr };
+                });
+            }
+            function summarize(list) {
+                const n = list.length;
+                const net = list.reduce((s, t) => s + t.pnl, 0);
+                const wins = list.filter(t => t.pnl > 0).length;
+                const grossWin = list.filter(t => t.pnl > 0).reduce((s, t) => s + t.pnl, 0);
+                const grossLoss = Math.abs(list.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
+                const avgR = n ? list.reduce((s, t) => s + t.rr, 0) / n : 0;
+                return {
+                    n, net, wins, avgR,
+                    winRate: n ? wins / n : 0,
+                    pf: grossLoss > 0 ? grossWin / grossLoss : (grossWin > 0 ? Infinity : 0)
+                };
+            }
+            function renderSummary() {
+                const s = summarize(rows(trades()));
+                const el = $('report-summary');
+                if (!el) return;
+                el.innerHTML = [
+                    { k: 'NET P&L', v: money(s.net), c: s.net >= 0 ? '#34D399' : '#F87171' },
+                    { k: 'WIN RATE', v: (s.winRate * 100).toFixed(0) + '%', c: '#E8E8EC' },
+                    { k: 'PROFIT FACTOR', v: s.pf === Infinity ? '∞' : s.pf.toFixed(2), c: s.pf >= 1 ? '#34D399' : '#F87171' },
+                    { k: 'TRADES', v: String(s.n), c: '#E8E8EC' }
+                ].map(x => '<div class="panel p-4"><div class="k text-[11px] text-[#6E6E78] font-semibold uppercase tracking-wide">' + x.k + '</div><div class="num text-[20px] font-bold mt-1" style="color:' + x.c + '">' + x.v + '</div></div>').join('');
+            }
+            function renderMonths() {
+                const byMonth = {};
+                rows(trades()).forEach(t => {
+                    const d = new Date(t.ts || t.opened_at || t.entry_time || t.created_at || Date.now());
+                    const m = isNaN(d.getTime()) ? 'unknown' : d.toISOString().slice(0, 7);
+                    byMonth[m] = byMonth[m] || [];
+                    byMonth[m].push(t);
+                });
+                const el = $('report-months');
+                el.innerHTML = Object.keys(byMonth).sort().reverse().map(m => {
+                    const s = summarize(byMonth[m]);
+                    return '<tr class="border-b border-[#141419]">' +
+                        '<td class="px-4 py-2.5 font-semibold">' + m + '</td>' +
+                        '<td class="px-4 py-2.5 text-right num">' + s.n + '</td>' +
+                        '<td class="px-4 py-2.5 text-right num">' + s.wins + '</td>' +
+                        '<td class="px-4 py-2.5 text-right num" style="color:' + (s.net >= 0 ? '#34D399' : '#F87171') + '">' + money(s.net) + '</td>' +
+                        '<td class="px-4 py-2.5 text-right num">' + (s.avgR >= 0 ? '+' : '') + s.avgR.toFixed(2) + 'R</td>' +
+                        '<td class="px-4 py-2.5 text-right num">' + (s.winRate * 100).toFixed(0) + '%</td></tr>';
+                }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-[#6E6E78]">No trades yet — log one and it lands here.</td></tr>';
+            }
+            function renderGroups() {
+                const bySym = {}, bySetup = {};
+                rows(trades()).forEach(t => {
+                    (bySym[t.symbol || '—'] = bySym[t.symbol || '—'] || []).push(t);
+                    (bySetup[t.setup || 'No setup'] = bySetup[t.setup || 'No setup'] || []).push(t);
+                });
+                const groupRows = (g) => Object.keys(g).map(k => {
+                    const s = summarize(g[k]);
+                    return '<tr class="border-b border-[#141419]"><td class="px-4 py-2.5">' + k + '</td>' +
+                        '<td class="px-4 py-2.5 text-right num">' + s.n + '</td>' +
+                        '<td class="px-4 py-2.5 text-right num" style="color:' + (s.net >= 0 ? '#34D399' : '#F87171') + '">' + money(s.net) + '</td>' +
+                        '<td class="px-4 py-2.5 text-right num">' + (s.winRate * 100).toFixed(0) + '%</td></tr>';
+                }).sort((a, b) => b - a).join('');
+                $('report-symbols').innerHTML = '<tr class="text-left text-[#6E6E78] text-[11px] uppercase tracking-wide border-b border-[#1C1C20]"><th class="px-4 py-2.5">Symbol</th><th class="px-4 py-2.5 text-right">Trades</th><th class="px-4 py-2.5 text-right">Net</th><th class="px-4 py-2.5 text-right">Win rate</th></tr>' + groupRows(bySym);
+                $('report-setups').innerHTML = '<tr class="text-left text-[#6E6E78] text-[11px] uppercase tracking-wide border-b border-[#1C1C20]"><th class="px-4 py-2.5">Setup</th><th class="px-4 py-2.5 text-right">Trades</th><th class="px-4 py-2.5 text-right">Net</th><th class="px-4 py-2.5 text-right">Win rate</th></tr>' + groupRows(bySetup);
+            }
+            function csv() {
+                const cols = ['symbol', 'dir', 'setup', 'strategy', 'session', 'emotion', 'adherence', 'risk', 'r', 'pnl', 'ts', 'notes'];
+                const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+                const head = cols.join(',');
+                const body = rows(trades()).map(t => cols.map(c => esc(c === 'pnl' ? t.pnl : c === 'r' ? t.rr : t[c])).join(',')).join('\n');
+                return head + '\n' + body;
+            }
+            function download(name, text, mime) {
+                const blob = new Blob([text], { type: mime || 'text/plain' });
+                const a = document.createElement('a');
+                a.href = URL.createObjectURL(blob);
+                a.download = name;
+                a.click();
+                setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+            }
+            function boot() {
+                bootShell();
+                renderSummary(); renderMonths(); renderGroups();
+                $('export-csv').addEventListener('click', () => { download('31trades-journal.csv', csv(), 'text/csv'); showToast('CSV exported'); });
+                $('export-json').addEventListener('click', () => {
+                    const core = window.TradeMindCore;
+                    const payload = core ? { trades: core.Trades || [], accounts: core.Accounts || [], strategies: core.Strategies || [] } : { trades: trades() };
+                    download('31trades-backup.json', JSON.stringify(payload, null, 2), 'application/json');
+                    showToast('JSON backup exported');
+                });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+        })();
+
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>
