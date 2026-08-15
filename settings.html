@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Settings</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0C; color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+        .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        /* App shell */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        .logo-badge {
+            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #052E1F; font-weight: 800; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .collapse-btn {
+            background: none; border: none; color: #6E6E78; cursor: pointer;
+            padding: 6px; border-radius: 6px; transition: all 0.15s;
+        }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: #FFFFFF;
+            box-shadow: inset 2px 0 0 #10B981;
+        }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .btn-danger {
+            background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+
+        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+
+        /* Profile + broker rows */
+        .copy-chip {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: #121214; border: 1px solid #26262B; border-radius: 8px;
+            padding: 7px 10px; font-size: 12px; color: #B4B4BD; cursor: pointer; transition: all 0.15s;
+        }
+        .copy-chip:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .broker-row {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 16px; border-bottom: 1px solid #17171A; transition: background 0.12s;
+        }
+        .broker-row:last-child { border-bottom: none; }
+        .broker-row:hover { background: rgba(255,255,255,0.03); }
+        .broker-ico {
+            width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(16,185,129,0.12); color: #34D399;
+        }
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
+            background: rgba(16,185,129,0.12); color: #34D399;
+        }
+        .status-badge .dot { width: 6px; height: 6px; border-radius: 999px; background: #34D399; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+
+        /* Broker picker modal */
+        .broker-overlay {
+            position: fixed; inset: 0; z-index: 90;
+            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .broker-card {
+            width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto;
+            background: #121620; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
+            padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+        }
+        .broker-close {
+            width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.04); color: #8A8A93; transition: all 0.15s;
+        }
+        .broker-close:hover { background: rgba(255,255,255,0.1); color: #E8E8EC; }
+        .broker-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
+        .broker-pick {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            transition: background 0.15s;
+        }
+        .broker-pick:hover { background: rgba(255,255,255,0.06); }
+        .broker-connect {
+            flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
+            color: #0A0C10; background: #34D399; border: none; cursor: pointer; transition: all 0.15s;
+        }
+        .broker-connect:hover { background: #10B981; box-shadow: 0 0 18px rgba(16,185,129,0.35); }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item active"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar" id="nav-avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate" id="nav-name">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search settings…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed" id="account-chip">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1100px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Settings</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">
+                                Profile, connected brokers and workspace details.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Profile -->
+                    <div class="panel p-5">
+                        <div class="flex items-center justify-between gap-3 mb-4">
+                            <div class="panel-title">User Profile</div>
+                            <span class="status-badge"><span class="dot"></span> Active</span>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-4">
+                            <div class="avatar !w-14 !h-14 !rounded-2xl !text-[18px]" id="profile-avatar">AJ</div>
+                            <div class="flex-1 min-w-0">
+                                <div class="text-[16px] font-bold text-white" id="profile-name">—</div>
+                                <div class="text-[12.5px] text-[#8A8A93]" id="profile-email">—</div>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
+                            <div class="text-[12px] text-[#6E6E78]">Unique user ID (for Discord verification &amp; giveaways)</div>
+                            <button class="copy-chip num" id="user-id-chip" title="Click to copy">
+                                <span id="user-id-text">—</span>
+                                <svg data-lucide="copy" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                            </button>
+                            <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" onclick="window.signOut()">
+                                <svg data-lucide="log-out" class="w-3.5 h-3.5"></svg> Sign out
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Connected Brokers -->
+                    <div class="panel">
+                        <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-[#17171A]">
+                            <div>
+                                <div class="panel-title">Connected Brokers</div>
+                                <div class="text-[12px] text-[#6E6E78] mt-0.5">Live trade auto-import arrives soon — this syncs your platform choice across devices.</div>
+                            </div>
+                            <button class="btn-primary !py-2 !px-4 text-[12.5px]" id="add-broker-btn">
+                                <svg data-lucide="plus" class="w-4 h-4"></svg> Connect a broker
+                            </button>
+                        </div>
+                        <div id="broker-list">
+                            <div class="py-14 text-center text-[13px] text-[#6E6E78]">Loading brokers…</div>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Settings · connected brokers sync through /api/brokers</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+
+            // ---- toast ----
+            let toastTimer;
+            window.showToast = function (msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+
+            // ---- session helpers (mirrors dashboard's resolver) ----
+            function sessionUser() {
+                try {
+                    const s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
+                    return (s && s.user) || null;
+                } catch (e) { return null; }
+            }
+            function firstName() {
+                const u = sessionUser();
+                if (u && u.name) return String(u.name).split(/[\s@]/)[0];
+                if (u && u.email) return String(u.email).split('@')[0].split(/[._-]/)[0];
+                return 'trader';
+            }
+            function userId() {
+                const u = sessionUser();
+                if (u && u.id) return u.id;
+                try {
+                    let id = localStorage.getItem('31trades.anon.uid');
+                    if (!id) {
+                        id = 'user-' + Math.random().toString(36).slice(2, 10);
+                        localStorage.setItem('31trades.anon.uid', id);
+                    }
+                    return id;
+                } catch (e) { return 'anon'; }
+            }
+
+            // ---- profile render ----
+            function renderProfile() {
+                const u = sessionUser();
+                const name = firstName();
+                const email = (u && u.email) || '—';
+                const id = userId();
+                $('nav-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                $('nav-avatar').textContent = name.slice(0, 2).toUpperCase();
+                $('profile-avatar').textContent = name.slice(0, 2).toUpperCase();
+                $('profile-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                $('profile-email').textContent = email;
+                $('user-id-text').textContent = id;
+                const chip = $('user-id-chip');
+                chip.onclick = async () => {
+                    try { await navigator.clipboard.writeText(id); } catch (e) {
+                        const t = document.createElement('textarea');
+                        t.value = id; document.body.appendChild(t); t.select();
+                        try { document.execCommand('copy'); } catch (e2) {}
+                        t.remove();
+                    }
+                    chip.querySelector('svg').setAttribute('data-lucide', 'check');
+                    if (window.lucide) lucide.createIcons();
+                    showToast('User ID copied to clipboard');
+                    setTimeout(() => {
+                        chip.querySelector('svg').setAttribute('data-lucide', 'copy');
+                        if (window.lucide) lucide.createIcons();
+                    }, 1600);
+                };
+            }
+
+            window.signOut = function () {
+                try {
+                    if (window.TradeMindAuth && window.TradeMindAuth.clearSession) window.TradeMindAuth.clearSession();
+                    location.href = 'auth.html';
+                } catch (e) { location.href = 'auth.html'; }
+            };
+
+            // ---- brokers: fetch from the backend, fall back to the local flag ----
+            const BROKERS = [
+                { name: 'MetaTrader', icon: 'trending-up', desc: 'MT4 / MT5 — the classic retail terminal' },
+                { name: 'TradingView', icon: 'candlestick-chart', desc: 'Charting-first platform with paper trading' },
+                { name: 'cTrader', icon: 'bar-chart-3', desc: 'Fast execution with a clean DOM interface' },
+                { name: 'NinjaTrader', icon: 'activity', desc: 'Futures-focused platform with advanced analytics' },
+                { name: 'ThinkOrSwim', icon: 'line-chart', desc: 'TD Ameritrade / Schwab all-in-one platform' },
+                { name: 'Sierra Chart', icon: 'chart-spline', desc: 'Highly configurable professional charting' },
+                { name: 'Interactive Brokers', icon: 'landmark', desc: 'Global multi-asset brokerage' }
+            ];
+            const BROKER_ICON = {}; BROKERS.forEach(b => { BROKER_ICON[b.name] = b.icon; });
+
+            let connectedBrokers = [];
+            function localConnected() {
+                try { return localStorage.getItem('31trades.broker.connected') === '1'; } catch (e) { return false; }
+            }
+
+            function fmtTime(iso) {
+                if (!iso) return '';
+                try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
+                catch (e) { return ''; }
+            }
+
+            function renderBrokers() {
+                const list = $('broker-list');
+                if (!connectedBrokers.length) {
+                    list.innerHTML =
+                        '<div class="py-14 text-center">' +
+                            '<svg data-lucide="plug" class="w-10 h-10 mx-auto text-[#3A3A41] mb-3"></svg>' +
+                            '<p class="text-[14px] font-semibold text-[#B4B4BD]">No brokers connected</p>' +
+                            '<p class="text-[12.5px] text-[#6E6E78] mt-1">Connect MetaTrader, TradingView, cTrader and more — auto-import for live trades lands soon.</p>' +
+                        '</div>';
+                } else {
+                    list.innerHTML = connectedBrokers.map(b =>
+                        '<div class="broker-row">' +
+                            '<div class="broker-ico"><svg data-lucide="' + (BROKER_ICON[b.broker] || 'plug') + '" class="w-[18px] h-[18px]"></svg></div>' +
+                            '<div class="flex-1 min-w-0">' +
+                                '<div class="text-[14px] font-semibold text-white">' + b.broker + '</div>' +
+                                '<div class="text-[12px] text-[#6E6E78] mt-0.5">Connected ' + fmtTime(b.connected_at) + '</div>' +
+                            '</div>' +
+                            '<span class="status-badge hide-when-collapsed"><span class="dot"></span> Active</span>' +
+                            '<button class="btn-danger !py-1.5 !px-3 !text-[12px]" onclick="window.disconnectBroker(\'' + b.broker.replace(/'/g, "\\'") + '\')">' +
+                                '<svg data-lucide="unplug" class="w-3.5 h-3.5"></svg> Disconnect</button>' +
+                        '</div>'
+                    ).join('');
+                }
+                if (window.lucide) lucide.createIcons();
+            }
+
+            async function loadBrokers() {
+                $('broker-list').innerHTML = '<div class="py-14 text-center text-[13px] text-[#6E6E78]">Loading brokers…</div>';
+                try {
+                    const res = await fetch('/api/brokers');
+                    if (res.ok) {
+                        const data = await res.json();
+                        if (data && Array.isArray(data.brokers)) {
+                            connectedBrokers = data.brokers;
+                            renderBrokers();
+                            return;
+                        }
+                    }
+                } catch (e) { /* offline — fall through to local flag */ }
+                // offline mirror: a local flag marks the step connected
+                connectedBrokers = localConnected() ? [{ broker: 'Local (offline)', status: 'active', connected_at: null }] : [];
+                renderBrokers();
+            }
+
+            // ---- broker picker (same modal as the onboarding notification) ----
+            let brokerModalEl = null;
+            window.openBrokerPicker = function () {
+                closeBrokerPicker();
+                const connected = new Set(connectedBrokers.map(b => b.broker));
+                const ov = document.createElement('div');
+                ov.className = 'broker-overlay';
+                ov.innerHTML =
+                    '<div class="broker-card">' +
+                        '<div class="flex items-start justify-between gap-4">' +
+                            '<div><div class="text-[16px] font-bold text-white">Connect a broker</div>' +
+                            '<p class="text-[12.5px] text-[#8A8A93] mt-1">Pick your platform — auto-import for live trades arrives later; this syncs your choice across devices.</p></div>' +
+                            '<button class="broker-close" onclick="window.closeBrokerPicker()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                        '</div>' +
+                        '<div class="broker-list">' +
+                            BROKERS.map(b =>
+                                '<div class="broker-pick">' +
+                                    '<div class="broker-ico"><svg data-lucide="' + b.icon + '" class="w-[18px] h-[18px]"></svg></div>' +
+                                    '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white">' + b.name + '</div>' +
+                                    '<div class="text-[12px] text-[#6E6E78]">' + b.desc + '</div></div>' +
+                                    (connected.has(b.name)
+                                        ? '<span class="status-badge"><span class="dot"></span> Connected</span>'
+                                        : '<button class="broker-connect" onclick="window.connectBroker(\'' + b.name.replace(/'/g, "\\'") + '\')">Connect</button>')
+                                + '</div>'
+                            ).join('') +
+                        '</div>' +
+                        '<div class="text-[11px] text-[#55555E]">Or keep logging manually — connecting just marks your preference.</div>' +
+                    '</div>';
+                ov.addEventListener('click', e => { if (e.target === ov) closeBrokerPicker(); });
+                document.body.appendChild(ov);
+                brokerModalEl = ov;
+                if (window.lucide) lucide.createIcons();
+            };
+
+            window.closeBrokerPicker = function () {
+                if (brokerModalEl) { brokerModalEl.remove(); brokerModalEl = null; }
+            };
+
+            window.connectBroker = async function (name) {
+                try {
+                    const res = await fetch('/api/brokers/connect', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ broker: name })
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                } catch (e) { /* offline — the local flag still completes the step */ }
+                try { localStorage.setItem('31trades.broker.connected', '1'); } catch (e) {}
+                closeBrokerPicker();
+                showToast(name + ' connected');
+                loadBrokers();
+            };
+
+            window.disconnectBroker = async function (name) {
+                try {
+                    const res = await fetch('/api/brokers/disconnect', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ broker: name })
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                } catch (e) { /* offline */ }
+                try { localStorage.removeItem('31trades.broker.connected'); } catch (e) {}
+                showToast(name + ' disconnected');
+                loadBrokers();
+            };
+
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBrokerPicker(); });
+
+            // ---- init ----
+            function boot() {
+                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+                $('add-broker-btn').addEventListener('click', () => window.openBrokerPicker());
+                const core = window.TradeMindCore;
+                if (core && core.selectedAccountId) {
+                    const sel = core.selectedAccountId();
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    const chip = $('account-chip');
+                    if (acc && chip) {
+                        const numEl = chip.querySelector('.num');
+                        if (numEl) numEl.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
+                        const spans = chip.querySelectorAll('span');
+                        if (spans.length > 2) spans[2].textContent = acc.name;
+                    }
+                }
+                renderProfile();
+                loadBrokers();
+                if (window.lucide) lucide.createIcons();
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+        })();
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>
