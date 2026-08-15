@@ -46,6 +46,7 @@ const Brokers = require('./server/brokers.js');
 const Backtest = require('./server/backtest.js');
 const MarketData = require('./server/marketdata.js');
 const Replay = require('./server/replay.js');
+const Sim = require('./server/backtest-sim.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -500,6 +501,21 @@ async function handleApi(req, res, url) {
                 return json(res, 200, data);
             }
 
+            // ---------- Backtest practice sessions (simulation engine) ----------
+            if (p === '/api/backtest/sessions' && req.method === 'GET') {
+                return json(res, 200, { ok: true, sessions: Sim.listSessions(uc.userId) });
+            }
+            if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)$/))) {
+                const s = Sim.getSession(uc.userId, m[1]);
+                if (!s) return json(res, 404, { error: 'unknown session' });
+                return json(res, 200, { ok: true, state: Sim.stateOf(s) });
+            }
+            if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/results$/))) {
+                const s = Sim.getSession(uc.userId, m[1]);
+                if (!s) return json(res, 404, { error: 'unknown session' });
+                return json(res, 200, { ok: true, results: s.results() });
+            }
+
             // ---------- Market Replay (bar-by-bar playback sessions) ----------
             if (p === '/api/replay/start') {
                 return json(res, 200, await Replay.start({
@@ -559,9 +575,66 @@ async function handleApi(req, res, url) {
     try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
 
     try {
+        let m;
+
         // ---- market replay controls ----
         if (p === '/api/replay/control') {
             return json(res, 200, await Replay.control(body.id, body.action, body.speedMs));
+        }
+
+        // ---- backtest practice session lifecycle ----
+        if (p === '/api/backtest/sessions' && req.method === 'POST') {
+            const symbol = String(body.symbol || 'EURUSD').toUpperCase();
+            const timeframe = String(body.timeframe || '1h');
+            const window = Math.max(30, Math.min(1500, Number(body.window) || 300));
+            const md = await MarketData.getCandles({ symbol, timeframe, count: window });
+            if (!md.ok || !md.candles.length) return json(res, 400, { error: 'no candles for ' + symbol });
+            const startIndex = Math.max(0, Math.min(Number(body.startBars) || Math.min(30, md.candles.length - 1), md.candles.length - 1));
+            const sess = new Sim.BacktestSession({
+                userId: uc.userId, symbol, timeframe,
+                category: (md.meta && md.meta.category) || 'Other',
+                strategy: String(body.strategy || 'Manual practice'),
+                startingBalance: Number(body.startingBalance) || 10000,
+                riskModel: body.riskModel || { basis: 'money', perTrade: 25 },
+                candles: md.candles,
+                startIndex
+            });
+            Sim.saveSession(uc.userId, sess);
+            return json(res, 200, { ok: true, session: sess.id, state: Sim.stateOf(sess) });
+        }
+        if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/control$/))) {
+            const id = m[1];
+            if (body.action === 'play') return json(res, 200, Sim.play(uc.userId, id, body.speedMs));
+            if (body.action === 'pause') return json(res, 200, Sim.pause(uc.userId, id));
+            if (body.action === 'step') return json(res, 200, Sim.stepSession(uc.userId, id));
+            if (body.action === 'seek') return json(res, 200, Sim.seekSession(uc.userId, id, Number(body.cursor)));
+            if (body.action === 'reset') return json(res, 200, Sim.resetSession(uc.userId, id));
+            return json(res, 400, { error: 'unknown control action' });
+        }
+        if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/enter$/))) {
+            const s = Sim.loadActive(uc.userId, m[1]);
+            if (!s) return json(res, 404, { error: 'unknown session' });
+            const r = s.enter({
+                direction: body.direction, entry: body.entry, sl: body.sl, tp: body.tp,
+                riskAmount: body.riskAmount, riskPct: body.riskPct, size: body.size,
+                notes: body.notes, setup: body.setup
+            });
+            if (!r.ok) return json(res, 400, { error: r.error });
+            Sim.saveSession(uc.userId, s);
+            return json(res, 200, { ok: true, position: r.position, state: Sim.stateOf(s) });
+        }
+        if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/close$/))) {
+            const s = Sim.loadActive(uc.userId, m[1]);
+            if (!s) return json(res, 404, { error: 'unknown session' });
+            const r = s.close({ price: body.price, reason: body.reason });
+            if (!r.ok) return json(res, 400, { error: r.error });
+            Sim.saveSession(uc.userId, s);
+            return json(res, 200, { ok: true, trade: r.trade, state: Sim.stateOf(s) });
+        }
+        if (req.method === 'DELETE' && (m = p.match(/^\/api\/backtest\/sessions\/([^/]+)$/))) {
+            Sim.deleteSession(uc.userId, m[1]);
+            Sim.pause(uc.userId, m[1]);
+            return json(res, 200, { ok: true });
         }
 
         // ---- notifications read state (engine module) ----
@@ -620,7 +693,6 @@ async function handleApi(req, res, url) {
         }
 
         // ---- trade edit / delete (full downstream recalculation) ----
-        let m;
         if (req.method === 'PATCH' && (m = p.match(/^\/api\/trades\/([^/]+)$/))) {
             const t = Core.TradeService.update(m[1], body.fields || body);
             uc.scheduleSave();

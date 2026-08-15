@@ -159,6 +159,64 @@
             border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); font-size: 12px;
         }
 
+        /* ---- practice environment additions ---- */
+        .dir-btn {
+            flex: 1; display: flex; align-items: center; justify-content: center; gap: 8px;
+            padding: 10px 12px; border-radius: 10px; font-size: 13px; font-weight: 800;
+            border: 1px solid #26262B; background: rgba(255,255,255,0.03); color: #8A8A93;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .dir-btn.long.active { background: rgba(16,185,129,0.14); border-color: rgba(16,185,129,0.5); color: #34D399; box-shadow: 0 0 18px rgba(16,185,129,0.12); }
+        .dir-btn.short.active { background: rgba(239,68,68,0.14); border-color: rgba(239,68,68,0.5); color: #F87171; box-shadow: 0 0 18px rgba(239,68,68,0.12); }
+        .dir-btn:hover { border-color: #3A3A41; color: #E8E8EC; }
+
+        .ticket-input {
+            width: 100%; background: #121214; border: 1px solid #26262B; border-radius: 8px;
+            padding: 8px 10px; font-size: 13px; color: #E8E8EC; outline: none; font-family: 'JetBrains Mono', monospace;
+        }
+        .ticket-input:focus { border-color: #3A3A41; }
+        .ticket-input::placeholder { color: #4A4A52; }
+        .ticket-label { font-size: 10.5px; color: #6E6E78; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 4px; }
+
+        .mode-chip {
+            padding: 5px 11px; border-radius: 999px; font-size: 11px; font-weight: 700;
+            background: rgba(255,255,255,0.04); border: 1px solid #26262B; color: #8A8A93; cursor: pointer; transition: all 0.15s;
+        }
+        .mode-chip.active { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+
+        .pos-banner {
+            display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px;
+            padding: 11px 14px; border-radius: 10px; margin-bottom: 10px;
+            background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.22);
+        }
+        .pos-banner.short { background: rgba(239,68,68,0.05); border-color: rgba(239,68,68,0.22); }
+        .pos-field .k { font-size: 10px; color: #6E6E78; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; }
+        .pos-field .v { font-size: 13px; font-weight: 700; margin-top: 1px; }
+
+        .bmini { height: 5px; border-radius: 999px; min-width: 2px; }
+
+        .modal-backdrop {
+            position: fixed; inset: 0; z-index: 60;
+            background: rgba(0,0,0,0.72); backdrop-filter: blur(6px);
+            display: flex; align-items: center; justify-content: center; padding: 16px;
+        }
+        .modal-card {
+            width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto;
+            background: #121620; border: 1px solid rgba(255,255,255,0.08); border-radius: 16px; padding: 22px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.6);
+        }
+
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; white-space: nowrap;
+        }
+
+        .bd-tab {
+            padding: 6px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+            background: rgba(255,255,255,0.04); border: 1px solid #26262B; color: #8A8A93; cursor: pointer; transition: all 0.15s;
+        }
+        .bd-tab.active { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+
         @media (max-width: 640px) {
             .search-input { display: none; }
             .topbar { padding-left: 12px; padding-right: 12px; }
@@ -249,37 +307,88 @@
                         <div>
                             <h1 class="text-[22px] font-bold tracking-tight">Backtesting</h1>
                             <p class="text-[13px] text-[#6E6E78] mt-0.5">
-                                Replay real TradingView candles, stack indicators and run a strategy against your account's risk model.
+                                Practice environment — replay real history bar by bar, log simulated trades with full risk control, and review your execution. Practice trades stay separate from your live journal.
                             </p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <select id="session-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[240px]"></select>
+                            <button class="btn-primary !py-2 !px-3.5" id="new-session-btn">
+                                <svg data-lucide="plus" class="w-4 h-4"></svg> New session
+                            </button>
                         </div>
                     </div>
 
-                    <!-- Toolbar -->
-                    <div class="panel p-4 flex flex-wrap items-center gap-x-5 gap-y-3">
-                        <div class="flex items-center gap-2.5">
-                            <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide">Symbol</span>
-                            <select id="symbol-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[180px]"></select>
+                    <!-- Session meta strip -->
+                    <div class="panel p-3 flex flex-wrap items-center gap-x-6 gap-y-2 text-[12.5px]" id="session-meta">
+                        <span class="text-[#6E6E78]">No session yet — create one to start practicing.</span>
+                    </div>
+
+                    <!-- Empty state -->
+                    <div class="panel p-10 flex flex-col items-center gap-3 text-center" id="empty-state">
+                        <div class="w-14 h-14 rounded-2xl bg-[#121214] border border-[#1F1F23] flex items-center justify-center">
+                            <svg data-lucide="flask-conical" class="w-7 h-7 text-[#34D399]"></svg>
                         </div>
-                        <div class="flex items-center gap-1.5" id="tf-bar">
-                            <button class="tf-btn" data-tf="1m">1m</button>
-                            <button class="tf-btn" data-tf="5m">5m</button>
-                            <button class="tf-btn" data-tf="15m">15m</button>
-                            <button class="tf-btn active" data-tf="1h">1H</button>
-                            <button class="tf-btn" data-tf="4h">4H</button>
-                            <button class="tf-btn" data-tf="1d">1D</button>
+                        <div class="text-[16px] font-bold">Create your first practice session</div>
+                        <p class="text-[13px] text-[#6E6E78] max-w-[420px] leading-relaxed">
+                            Pick a market and timeframe, set your starting balance and risk model, then replay history and trade it like live — entry, stop loss, take profit, sizing and all.
+                        </p>
+                        <button class="btn-primary mt-1" id="empty-cta"><svg data-lucide="play" class="w-4 h-4"></svg> Start a session</button>
+                    </div>
+
+                    <!-- Chart card -->
+                    <div class="panel p-4" id="chart-card">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                            <div class="flex items-center gap-3">
+                                <div id="asset-badge"></div>
+                                <div>
+                                    <div class="text-[15px] font-bold" id="chart-title">—</div>
+                                    <div class="text-[12px] text-[#6E6E78]" id="chart-sub">—</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" id="customize-btn">
+                                    <svg data-lucide="palette" class="w-3.5 h-3.5"></svg> Customize colors
+                                </button>
+                                <div class="legend-row num" id="ohlc-legend"></div>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1.5 flex-wrap">
-                            <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Indicators</span>
-                            <button class="ind-tag" data-ind="ema">EMA</button>
-                            <button class="ind-tag" data-ind="sma">SMA</button>
-                            <button class="ind-tag" data-ind="bb">Bollinger</button>
-                            <button class="ind-tag" data-ind="vwap">VWAP</button>
-                            <button class="ind-tag" data-ind="rsi">RSI</button>
-                            <button class="ind-tag" data-ind="macd">MACD</button>
+
+                        <!-- Position banner -->
+                        <div id="position-banner" class="pos-banner hidden"></div>
+
+                        <div class="chart-box" id="chart-box"><div id="chart"></div></div>
+
+                        <!-- Replay bar -->
+                        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
+                            <div class="flex items-center gap-2">
+                                <button class="play-btn" id="play-btn" title="Play / pause"><svg data-lucide="play" class="w-4 h-4 ml-0.5" id="play-ico"></svg></button>
+                                <button class="step-btn" id="step-fwd" title="Step forward"><svg data-lucide="chevrons-right" class="w-4 h-4"></svg></button>
+                                <button class="step-btn" id="reset-btn" title="Reset to start"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg></button>
+                            </div>
+                            <div class="flex items-center gap-1.5" id="speed-bar">
+                                <button class="speed-btn" data-ms="600">0.5×</button>
+                                <button class="speed-btn active" data-ms="300">1×</button>
+                                <button class="speed-btn" data-ms="150">2×</button>
+                                <button class="speed-btn" data-ms="80">5×</button>
+                            </div>
+                            <div class="flex-1 flex items-center gap-3 min-w-[220px]">
+                                <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="play-pos">0 / 0</span>
+                                <input type="range" class="scrub" id="scrub" min="0" max="100" value="0">
+                                <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="window-label">—</span>
+                            </div>
+                            <div class="flex items-center gap-1.5 flex-wrap">
+                                <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Indicators</span>
+                                <button class="ind-tag" data-ind="ema">EMA</button>
+                                <button class="ind-tag" data-ind="sma">SMA</button>
+                                <button class="ind-tag" data-ind="bb">Bollinger</button>
+                                <button class="ind-tag" data-ind="vwap">VWAP</button>
+                                <button class="ind-tag" data-ind="rsi">RSI</button>
+                                <button class="ind-tag" data-ind="macd">MACD</button>
+                            </div>
                         </div>
-                        <button class="btn-ghost !py-1.5 !px-3 !text-[12px] ml-auto" id="customize-btn">
-                            <svg data-lucide="palette" class="w-3.5 h-3.5"></svg> Customize colors
-                        </button>
+
+                        <!-- Indicator legend -->
+                        <div class="legend-row num mt-3" id="ind-legend"></div>
                     </div>
 
                     <!-- Color customization -->
@@ -296,95 +405,179 @@
                         <div class="flex flex-wrap gap-5" id="color-swatches"></div>
                     </div>
 
-                    <!-- Chart card -->
-                    <div class="panel p-4">
-                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-                            <div class="flex items-center gap-3">
-                                <div id="asset-badge"></div>
-                                <div>
-                                    <div class="text-[15px] font-bold" id="chart-title">EURUSD · 1H</div>
-                                    <div class="text-[12px] text-[#6E6E78]" id="chart-sub">Loading historical data…</div>
-                                </div>
-                            </div>
-                            <div class="legend-row num" id="ohlc-legend"></div>
-                        </div>
-                        <div class="chart-box" id="chart-box"><div id="chart"></div></div>
-
-                        <!-- Playback bar -->
-                        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
-                            <div class="flex items-center gap-2">
-                                <button class="step-btn" id="step-back" title="Step back"><svg data-lucide="chevrons-left" class="w-4 h-4"></svg></button>
-                                <button class="play-btn" id="play-btn" title="Play / pause"><svg data-lucide="play" class="w-4 h-4 ml-0.5" id="play-ico"></svg></button>
-                                <button class="step-btn" id="step-fwd" title="Step forward"><svg data-lucide="chevrons-right" class="w-4 h-4"></svg></button>
-                                <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" id="live-btn"><svg data-lucide="fast-forward" class="w-3.5 h-3.5"></svg> Latest</button>
-                            </div>
-                            <div class="flex items-center gap-1.5" id="speed-bar">
-                                <button class="speed-btn" data-speed="1">1×</button>
-                                <button class="speed-btn active" data-speed="5">5×</button>
-                                <button class="speed-btn" data-speed="20">20×</button>
-                                <button class="speed-btn" data-speed="60">60×</button>
-                            </div>
-                            <div class="flex-1 flex items-center gap-3 min-w-[220px]">
-                                <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="play-pos">0 / 0</span>
-                                <input type="range" class="scrub" id="scrub" min="0" max="100" value="100">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Right column: backtest engine + results -->
+                    <!-- Grid: order ticket + results -->
                     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
-                        <div class="xl:col-span-1 panel p-4 self-start">
-                            <div class="flex items-center justify-between gap-3 mb-3">
-                                <div class="panel-title">Strategy Backtest</div>
-                                <span class="status-badge" style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(16,185,129,0.12);color:#34D399;" id="bt-status">Ready</span>
-                            </div>
-                            <div class="flex flex-col gap-3">
-                                <div>
-                                    <label class="text-[11px] text-[#6E6E78] font-semibold uppercase tracking-wide">Strategy</label>
-                                    <select id="strategy-select" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] mt-1"></select>
-                                </div>
-                                <div class="flex items-center justify-between text-[12.5px] bg-[#121214] border border-[#1F1F23] rounded-lg px-3 py-2">
-                                    <span class="text-[#8A8A93]">Risk per trade</span>
-                                    <span class="num font-bold text-white" id="risk-readout">$25</span>
-                                </div>
-                                <div class="flex items-center justify-between text-[12.5px] bg-[#121214] border border-[#1F1F23] rounded-lg px-3 py-2">
-                                    <span class="text-[#8A8A93]">Risk model</span>
-                                    <span class="num font-bold text-white" id="risk-model-readout">Money · account</span>
-                                </div>
-                                <button class="btn-primary w-full justify-center" id="run-bt">
-                                    <svg data-lucide="play" class="w-4 h-4"></svg> Run backtest
-                                </button>
-                                <p class="text-[11px] text-[#55555E] leading-relaxed">
-                                    EMA(9/21) cross on <span id="bt-symbol-label">EURUSD</span> · stop = 1.5× ATR(14), target = min RR × risk from the active strategy version. Runs against the selected account's risk limits.
-                                </p>
-                            </div>
 
-                            <!-- Results -->
-                            <div class="hidden mt-4 pt-4 border-t border-[#17171A]" id="results-wrap">
-                                <div class="grid grid-cols-2 gap-2" id="results-grid"></div>
-                                <div class="text-[12px] font-bold text-white mt-4 mb-1.5">Equity curve</div>
-                                <div id="equity-chart" class="w-full" style="height:140px"></div>
-                                <div class="text-[12px] font-bold text-white mt-4 mb-1.5">Trades (<span id="trade-count-label">0</span>)</div>
-                                <div class="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto" id="trade-list"></div>
+                        <!-- Order ticket -->
+                        <div class="xl:col-span-1 flex flex-col gap-4">
+                            <div class="panel p-4">
+                                <div class="flex items-center justify-between gap-3 mb-3">
+                                    <div class="panel-title">Order Ticket</div>
+                                    <span class="status-badge" style="background:rgba(99,102,241,0.12);color:#818CF8;">Practice · not live</span>
+                                </div>
+
+                                <div class="flex gap-2 mb-4">
+                                    <button class="dir-btn long active" id="dir-long"><svg data-lucide="trending-up" class="w-4 h-4"></svg> Long</button>
+                                    <button class="dir-btn short" id="dir-short"><svg data-lucide="trending-down" class="w-4 h-4"></svg> Short</button>
+                                </div>
+
+                                <div class="flex flex-col gap-3">
+                                    <div>
+                                        <div class="ticket-label">Entry price</div>
+                                        <input type="number" step="any" id="t-entry" class="ticket-input" placeholder="0.0000">
+                                    </div>
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <div class="ticket-label">Stop loss</div>
+                                            <input type="number" step="any" id="t-sl" class="ticket-input" placeholder="0.0000">
+                                        </div>
+                                        <div>
+                                            <div class="ticket-label">Take profit</div>
+                                            <input type="number" step="any" id="t-tp" class="ticket-input" placeholder="optional">
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="ticket-label">Risk</div>
+                                        <div class="flex items-center gap-1.5 mb-2">
+                                            <button class="mode-chip active" data-mode="money">$ Money</button>
+                                            <button class="mode-chip" data-mode="pct">% Balance</button>
+                                        </div>
+                                        <input type="number" step="any" id="t-risk" class="ticket-input" placeholder="25">
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-3">
+                                        <div>
+                                            <div class="ticket-label">Position size</div>
+                                            <div class="ticket-input !bg-[#0D0D0F] !text-[#6E6E78] select-none" id="size-readout">—</div>
+                                        </div>
+                                        <div>
+                                            <div class="ticket-label">Planned R:R</div>
+                                            <div class="ticket-input !bg-[#0D0D0F] !text-[#6E6E78] select-none" id="rr-readout">—</div>
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <div class="ticket-label">Setup tag</div>
+                                        <input type="text" id="t-setup" class="ticket-input !font-[inherit]" placeholder="e.g. Breakout retest, 1H supply…">
+                                    </div>
+                                    <div>
+                                        <div class="ticket-label">Notes</div>
+                                        <textarea id="t-notes" rows="2" class="ticket-input !font-[inherit] resize-none" placeholder="Why this trade? What's the thesis?"></textarea>
+                                    </div>
+
+                                    <button class="btn-primary w-full justify-center !py-3" id="enter-btn">
+                                        <svg data-lucide="log-in" class="w-4 h-4"></svg> Enter position
+                                    </button>
+                                    <p class="text-[11px] text-[#55555E] leading-relaxed" id="ticket-hint">
+                                        Entry defaults to the current bar's close. Size is derived from your risk and stop distance. Stop loss is required.
+                                    </p>
+                                </div>
                             </div>
                         </div>
 
+                        <!-- Results dashboard -->
                         <div class="xl:col-span-2 panel p-4">
-                            <div class="flex items-center justify-between gap-3 mb-3">
-                                <div class="panel-title">Replay Window</div>
-                                <div class="text-[11.5px] text-[#6E6E78] num" id="window-label">—</div>
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                                <div class="panel-title">Results</div>
+                                <div class="text-[11.5px] text-[#6E6E78] num" id="results-note">No trades recorded yet</div>
                             </div>
-                            <div class="legend-row num mb-2" id="ind-legend"></div>
-                            <p class="text-[12px] text-[#6E6E78] leading-relaxed">
-                                Scroll to zoom, drag to pan, hover for the crosshair. Press <b>Play</b> to replay the history like a movie —
-                                backtest trades appear as markers on the chart as they are taken.
-                            </p>
+
+                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4" id="results-grid"></div>
+
+                            <div class="text-[12px] font-bold text-white mb-1.5">Equity curve</div>
+                            <div id="equity-chart" class="w-full mb-4" style="height:150px"></div>
+
+                            <div class="text-[12px] font-bold text-white mb-2">Breakdowns</div>
+                            <div class="flex items-center gap-1.5 mb-3 flex-wrap" id="bd-tabs">
+                                <button class="bd-tab active" data-bd="bySetup">Setup</button>
+                                <button class="bd-tab" data-bd="byDirection">Direction</button>
+                                <button class="bd-tab" data-bd="bySession">Session</button>
+                                <button class="bd-tab" data-bd="byTimeOfDay">Time of day</button>
+                                <button class="bd-tab" data-bd="byExitReason">Exit</button>
+                            </div>
+                            <div class="flex flex-col gap-2 mb-4" id="bd-body"></div>
+
+                            <div class="text-[12px] font-bold text-white mb-1.5">Recorded trades (<span id="trade-count-label">0</span>)</div>
+                            <div class="flex flex-col gap-1.5 max-h-[260px] overflow-y-auto" id="trade-list"></div>
                         </div>
                     </div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Backtesting · live TradingView data via /api/backtest/candles · TradingView Lightweight Charts</p>
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Backtesting · practice simulation engine · live TradingView data via /api/backtest/candles · TradingView Lightweight Charts</p>
                 </div>
             </main>
+        </div>
+    </div>
+
+    <!-- New session modal -->
+    <div class="modal-backdrop hidden" id="session-modal">
+        <div class="modal-card">
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <div>
+                    <div class="text-[16px] font-bold">New practice session</div>
+                    <div class="text-[12px] text-[#6E6E78] mt-0.5">Pick a market, timeframe and your risk setup.</div>
+                </div>
+                <button class="collapse-btn" id="modal-close"><svg data-lucide="x" class="w-5 h-5"></svg></button>
+            </div>
+
+            <div class="flex flex-col gap-4">
+                <div>
+                    <div class="ticket-label">Symbol</div>
+                    <select id="modal-symbol" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41]"></select>
+                </div>
+                <div>
+                    <div class="ticket-label">Timeframe</div>
+                    <div class="flex items-center gap-1.5" id="modal-tf">
+                        <button class="tf-btn" data-tf="1m">1m</button>
+                        <button class="tf-btn" data-tf="5m">5m</button>
+                        <button class="tf-btn" data-tf="15m">15m</button>
+                        <button class="tf-btn active" data-tf="1h">1H</button>
+                        <button class="tf-btn" data-tf="4h">4H</button>
+                        <button class="tf-btn" data-tf="1d">1D</button>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <div class="ticket-label">History window</div>
+                        <select id="modal-window" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41]">
+                            <option value="120">120 bars</option>
+                            <option value="300" selected>300 bars</option>
+                            <option value="800">800 bars</option>
+                        </select>
+                    </div>
+                    <div>
+                        <div class="ticket-label">Start replay at</div>
+                        <select id="modal-start" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41]">
+                            <option value="30">After 30 bars (warm-up)</option>
+                            <option value="60">After 60 bars</option>
+                            <option value="0">From the very start</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <div class="ticket-label">Starting balance ($)</div>
+                        <input type="number" step="any" id="modal-balance" class="ticket-input" value="10000">
+                    </div>
+                    <div>
+                        <div class="ticket-label">Strategy tag</div>
+                        <input type="text" id="modal-strategy" class="ticket-input !font-[inherit]" placeholder="Manual practice">
+                    </div>
+                </div>
+                <div>
+                    <div class="ticket-label">Risk model</div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <select id="modal-basis" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41]">
+                            <option value="money">Money per trade</option>
+                            <option value="pct">% of balance</option>
+                        </select>
+                        <input type="number" step="any" id="modal-pertrade" class="ticket-input" value="25" placeholder="Risk per trade">
+                    </div>
+                </div>
+                <button class="btn-primary w-full justify-center !py-3" id="modal-create">
+                    <svg data-lucide="play" class="w-4 h-4"></svg> Create &amp; start replay
+                </button>
+            </div>
         </div>
     </div>
 
@@ -445,8 +638,8 @@
             let chart = null, candleSeries = null, volumeSeries = null;
             let seriesMarkers = null; // v5 markers primitive (createSeriesMarkers)
             let indSeries = {};      // name -> series api
+            let posLines = [];       // entry / SL / TP line series for the open position
             let candles = [];
-            let currentSymbol = 'EURUSD', currentTF = '1h';
             let pricePrecision = 5;
 
             function priceFmt(p) {
@@ -629,7 +822,7 @@
             }
 
             function rebuildIndicators(full) {
-                const data = full ? candles : candles.slice(0, playback.step);
+                const data = full ? candles : candles;
                 Object.keys(indSeries).forEach(k => {
                     try { chart.removeSeries(indSeries[k]); } catch (e) {}
                 });
@@ -709,99 +902,556 @@
                     '<span class="legend-item num"><span class="sw" style="background:' + col + '"></span>C <b>' + priceFmt(bar.close) + '</b></span>';
             }
 
-            // ================= PLAYBACK ENGINE =================
-            const playback = { step: 0, total: 0, playing: false, speed: 5, timer: null, visible: 90 };
-            const SPEED_MULT = { 1: 1, 5: 3, 20: 10, 60: 25 };
+            // ================= POSITION LINES =================
+            function clearPosLines() {
+                posLines.forEach(s => { try { chart.removeSeries(s); } catch (e) {} });
+                posLines = [];
+            }
+            function drawPosLines() {
+                clearPosLines();
+                const st = currentSession;
+                if (!st || !st.position) return;
+                const p = st.position;
+                const long = p.direction === 'Long';
+                const add = (price, color, dash, title) => {
+                    if (!(price > 0)) return;
+                    try {
+                        const s = chart.addSeries(LightweightCharts.LineSeries, {
+                            color, lineWidth: 1, lineStyle: dash ? 2 : 0,
+                            priceLineVisible: false, lastValueVisible: false, title,
+                            crosshairMarkerVisible: false
+                        });
+                        const pts = [];
+                        candles.forEach(c => pts.push({ time: c.time, value: price }));
+                        s.setData(pts);
+                        posLines.push(s);
+                    } catch (e) {}
+                };
+                add(p.entry, long ? theme.up : theme.down, false, 'Entry');
+                add(p.sl, '#F87171', true, 'SL');
+                if (p.tp) add(p.tp, '#34D399', true, 'TP');
+            }
 
-            function stopPlayback() {
-                playback.playing = false;
-                if (playback.timer) { clearInterval(playback.timer); playback.timer = null; }
-                updatePlayIco();
-            }
-            function startPlayback() {
-                if (playback.step >= playback.total) playback.step = Math.min(60, playback.total);
-                playback.playing = true;
-                if (playback.timer) clearInterval(playback.timer);
-                playback.timer = setInterval(() => {
-                    if (!playback.playing) return;
-                    playback.step = Math.min(playback.total, playback.step + SPEED_MULT[playback.speed] || 3);
-                    applyStep();
-                    if (playback.step >= playback.total) stopPlayback();
-                }, 150);
-                updatePlayIco();
-            }
-            function updatePlayIco() {
-                $('play-ico').setAttribute('data-lucide', playback.playing ? 'pause' : 'play');
-                if (window.lucide) lucide.createIcons();
-            }
-            function applyStep() {
-                const data = candles.slice(0, playback.step);
-                candleSeries.setData(data.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close })));
-                volumeSeries.setData(data.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? theme.up : theme.down })));
-                rebuildIndicators(false);
-                if (window.__btMarkers && seriesMarkers) seriesMarkers.setMarkers(window.__btMarkers.filter(m => m.time <= (data.length ? data[data.length - 1].time : Infinity)));
-                $('play-pos').textContent = playback.step + ' / ' + playback.total;
-                $('scrub').value = playback.total ? Math.round(playback.step / playback.total * 100) : 0;
-                $('window-label').textContent = data.length ? new Date(data[data.length - 1].time * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
-                if (playback.step < playback.total && playback.playing) {
-                    const from = Math.max(0, playback.step - playback.visible);
-                    chart.timeScale().setVisibleLogicalRange({ from, to: playback.step });
+            // ================= SESSION / API LAYER =================
+            let sessions = [];
+            let currentSession = null;   // server state (stateOf)
+            let pollTimer = null;
+            let playing = false;
+            let currentBd = 'bySetup';
+            let currentDir = 'long';
+            let riskMode = 'money';
+            let resultsCache = null;
+            let lastTradeCount = -1;
+
+            async function api(url, options) {
+                const res = await apiFetch(url, options);
+                if (!res.ok) {
+                    let msg = 'HTTP ' + res.status;
+                    try { const j = await res.json(); if (j && j.error) msg = j.error; } catch (e) {}
+                    throw new Error(msg);
                 }
-                renderLegend(null);
-            }
-            function toLatest() {
-                stopPlayback();
-                playback.step = playback.total;
-                applyStep();
-                chart.timeScale().fitContent();
+                return res.json();
             }
 
-            // ================= DATA LOADING =================
-            async function loadData() {
-                stopPlayback();
-                $('chart-sub').textContent = 'Loading ' + currentSymbol + ' · ' + currentTF + ' history…';
+            function stopPoll() {
+                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            }
+
+            async function loadSessions() {
                 try {
-                    const res = await apiFetch('/api/backtest/candles?symbol=' + encodeURIComponent(currentSymbol) + '&timeframe=' + currentTF);
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const data = await res.json();
-                    if (!data || !Array.isArray(data.candles) || !data.candles.length) throw new Error('empty series');
-                    candles = data.candles;
-                    pricePrecision = candles[0].close < 1 ? 6 : candles[0].close < 100 ? 3 : candles[0].close < 1000 ? 2 : 1;
-                    buildChart();
-                    applyTheme();
-                    playback.total = candles.length;
-                    playback.step = candles.length;
-                    applyStep();
-                    chart.timeScale().fitContent();
-                    $('chart-title').textContent = currentSymbol + ' · ' + currentTF;
-                    const src = data.meta && data.meta.source;
-                    const srcLabel = src === 'tradingview' ? 'TradingView · live data'
-                        : src === 'cache' ? 'TradingView · cached'
-                        : 'estimated · offline fallback';
-                    $('chart-sub').textContent = (data.meta && data.meta.category ? data.meta.category + ' · ' : '') + candles.length + ' bars · ' + srcLabel;
-                    $('bt-symbol-label').textContent = currentSymbol;
-                    renderAssetBadge();
-                    renderRiskReadout();
-                    renderStrategyOptions();
-                    if ($('results-wrap').classList.contains('hidden') === false) runBacktest();
+                    const r = await api('/api/backtest/sessions');
+                    sessions = (r && r.sessions) || [];
+                    renderSessionSelect();
+                    if (!currentSession) {
+                        const pick = sessions.find(s => s.status === 'running') || sessions[sessions.length - 1];
+                        if (pick) await loadSession(pick.id);
+                    }
                 } catch (e) {
-                    $('chart-sub').textContent = 'Failed to load history: ' + e.message;
-                    showToast('Could not load candles — is the server running?');
+                    showToast('Could not load sessions: ' + e.message);
                 }
+            }
+
+            async function loadSession(id, opts) {
+                stopPoll();
+                playing = false;
+                try {
+                    const r = await api('/api/backtest/sessions/' + id);
+                    currentSession = r.state;
+                    lastTradeCount = currentSession.trades.length;
+                    resultsCache = null;   // never show the previous session's numbers
+                    renderAll(!opts || opts.results !== false);
+                } catch (e) {
+                    showToast('Could not load session: ' + e.message);
+                }
+            }
+
+            async function control(action, extra) {
+                if (!currentSession) return;
+                const body = Object.assign({ action }, extra || {});
+                await api('/api/backtest/sessions/' + currentSession.id + '/control', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+                });
+            }
+
+            function startPoll() {
+                stopPoll();
+                playing = true;
+                updatePlayIco();
+                pollTimer = setInterval(async () => {
+                    try {
+                        const r = await api('/api/backtest/sessions/' + currentSession.id);
+                        currentSession = r.state;
+                        renderSessionMeta();
+                        renderChart();
+                        renderPositionBanner();
+                        renderReplayBar();
+                        renderTradeListLive();   // fills appear the moment they happen
+                        if (currentSession.trades.length !== lastTradeCount) {
+                            lastTradeCount = currentSession.trades.length;
+                            fetchResults();      // refresh metrics/equity/breakdowns
+                        }
+                        if (currentSession.status === 'completed' || currentSession.cursor >= currentSession.total - 1) {
+                            stopPoll();
+                            playing = false;
+                            updatePlayIco();
+                            await fetchResults();
+                        }
+                    } catch (e) { /* transient — keep polling */ }
+                }, 500);
+            }
+
+            async function fetchResults() {
+                if (!currentSession) return;
+                try {
+                    const r = await api('/api/backtest/sessions/' + currentSession.id + '/results');
+                    resultsCache = r.results;
+                    renderResults();
+                } catch (e) { /* ignore */ }
+            }
+
+            // ================= RENDER =================
+            function renderSessionSelect() {
+                const sel = $('session-select');
+                let html = '<option value="" disabled>' + (sessions.length ? 'Switch session…' : 'No sessions yet') + '</option>';
+                sessions.forEach(s => {
+                    const label = s.symbol + ' · ' + s.timeframe + ' — ' + s.trades + ' trades · ' + (s.status === 'running' ? 'running' : 'done') + ' · ' + (s.net >= 0 ? '+' : '') + '$' + Math.round(s.net).toLocaleString();
+                    html += '<option value="' + s.id + '"' + (currentSession && s.id === currentSession.id ? ' selected' : '') + '>' + label + '</option>';
+                });
+                sel.innerHTML = html;
+            }
+
+            function renderSessionMeta() {
+                const el = $('session-meta');
+                if (!currentSession) {
+                    el.innerHTML = '<span class="text-[#6E6E78]">No session yet — create one to start practicing.</span>';
+                    return;
+                }
+                const st = currentSession;
+                const net = resultsCache ? resultsCache.net : 0;
+                const pos = st.position;
+                el.innerHTML =
+                    '<div class="flex items-center gap-2"><span class="status-badge" style="background:rgba(99,102,241,0.12);color:#818CF8;">Practice</span>' +
+                    '<span class="status-badge" style="background:' + (st.status === 'completed' ? 'rgba(245,158,11,0.12);color:#FBBF24' : 'rgba(16,185,129,0.12);color:#34D399') + '">' + st.status + '</span></div>' +
+                    '<div class="text-[#6E6E78]">Strategy <b class="text-white">' + st.strategy + '</b></div>' +
+                    '<div class="text-[#6E6E78]">Balance <b class="num text-white">$' + Number(st.balance).toLocaleString() + '</b></div>' +
+                    '<div class="text-[#6E6E78]">Net P&L <b class="num" style="color:' + (net >= 0 ? '#34D399' : '#F87171') + '">' + (net >= 0 ? '+' : '') + '$' + Math.round(net).toLocaleString() + '</b></div>' +
+                    '<div class="text-[#6E6E78]">Risk <b class="num text-white">' + (st.riskModel.basis === 'pct' ? st.riskModel.perTrade + '%' : '$' + Number(st.riskModel.perTrade).toLocaleString()) + '</b> / trade</div>' +
+                    '<div class="text-[#6E6E78]">' + (pos ? '<span style="color:#FBBF24">Position open</span>' : 'Flat') + '</div>';
+            }
+
+            function renderAll(fetchRes) {
+                renderSessionSelect();
+                renderSessionMeta();
+                renderChart();
+                renderPositionBanner();
+                renderReplayBar();
+                renderTicket();
+                if (fetchRes !== false) fetchResults();
+            }
+
+            function renderChart() {
+                const st = currentSession;
+                const empty = $('empty-state'), card = $('chart-card');
+                if (!st || !st.candles || !st.candles.length) {
+                    empty.classList.remove('hidden');
+                    card.classList.add('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+                card.classList.remove('hidden');
+                candles = st.candles;
+                pricePrecision = candles[0].close < 1 ? 6 : candles[0].close < 100 ? 3 : candles[0].close < 1000 ? 2 : 1;
+                if (!chart) buildChart();
+                applyTheme();
+                candleSeries.setData(candles.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close })));
+                volumeSeries.setData(candles.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? theme.up : theme.down })));
+                rebuildIndicators(true);
+                // recorded trade markers
+                const markers = (st.trades || []).map(t => ({
+                    time: t.entryTime,
+                    position: t.direction === 'Long' ? 'belowBar' : 'aboveBar',
+                    color: t.direction === 'Long' ? theme.up : theme.down,
+                    shape: t.direction === 'Long' ? 'arrowUp' : 'arrowDown',
+                    text: (t.realizedR >= 0 ? '+' : '') + t.realizedR.toFixed(1) + 'R'
+                }));
+                if (seriesMarkers) seriesMarkers.setMarkers(markers);
+                drawPosLines();
+                $('chart-title').textContent = st.symbol + ' · ' + st.timeframe;
+                $('chart-sub').textContent = st.strategy + ' · cursor ' + (st.cursor + 1) + ' / ' + st.total + ' · balance $' + Number(st.balance).toLocaleString();
+                renderAssetBadge();
             }
 
             function renderAssetBadge() {
                 const el = $('asset-badge');
                 el.innerHTML = '';
+                if (!currentSession) return;
                 try {
-                    const id = window.TMAssets && window.TMAssets.identityFor(currentSymbol);
+                    const id = window.TMAssets && window.TMAssets.identityFor(currentSession.symbol);
                     if (id && id.badge) { el.innerHTML = id.badge; return; }
                 } catch (e) {}
-                el.innerHTML = '<span class="num text-[13px] font-bold text-white">' + currentSymbol + '</span>';
+                el.innerHTML = '<span class="num text-[13px] font-bold text-white">' + currentSession.symbol + '</span>';
             }
 
-            // ================= STRATEGY BACKTEST (client, canonical risk) =================
-            let btTrades = [];
+            function renderPositionBanner() {
+                const el = $('position-banner');
+                const p = currentSession && currentSession.position;
+                if (!p) {
+                    el.classList.add('hidden');
+                    el.classList.remove('short');
+                    return;
+                }
+                el.classList.remove('hidden');
+                el.classList.toggle('short', p.direction === 'Short');
+                const long = p.direction === 'Long';
+                const uCol = p.unrealized >= 0 ? '#34D399' : '#F87171';
+                el.innerHTML =
+                    '<div class="flex items-center gap-2">' +
+                    '<span class="status-badge" style="background:' + (long ? 'rgba(16,185,129,0.14);color:#34D399' : 'rgba(239,68,68,0.14);color:#F87171') + '">' + (long ? '▲ LONG' : '▼ SHORT') + '</span>' +
+                    '<span class="text-[#6E6E78] text-[12px]">since ' + new Date(p.openedAt * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) + '</span></div>' +
+                    '<div class="pos-field"><div class="k">Entry</div><div class="v num">' + priceFmt(p.entry) + '</div></div>' +
+                    '<div class="pos-field"><div class="k">SL</div><div class="v num text-[#F87171]">' + priceFmt(p.sl) + '</div></div>' +
+                    '<div class="pos-field"><div class="k">TP</div><div class="v num text-[#34D399]">' + (p.tp ? priceFmt(p.tp) : '—') + '</div></div>' +
+                    '<div class="pos-field"><div class="k">Size</div><div class="v num">' + Number(p.size).toLocaleString(undefined, { maximumFractionDigits: 4 }) + '</div></div>' +
+                    '<div class="pos-field"><div class="k">Risk</div><div class="v num">$' + Number(p.riskAmount).toLocaleString() + ' (' + p.riskPct + '%)</div></div>' +
+                    '<div class="pos-field"><div class="k">Unrealized</div><div class="v num" style="color:' + uCol + '">' + (p.unrealized >= 0 ? '+' : '') + '$' + Math.round(p.unrealized).toLocaleString() + ' · ' + (p.unrealizedR >= 0 ? '+' : '') + p.unrealizedR.toFixed(2) + 'R</div></div>' +
+                    '<button class="btn-ghost !py-1.5 !px-3 !text-[12px] ml-auto" id="close-pos-btn"><svg data-lucide="log-out" class="w-3.5 h-3.5"></svg> Close at market</button>';
+                const btn = $('close-pos-btn');
+                if (btn) btn.addEventListener('click', closePosition);
+                if (window.lucide) lucide.createIcons();
+            }
+
+            function renderReplayBar() {
+                const st = currentSession;
+                if (!st) return;
+                $('play-pos').textContent = (st.cursor + 1) + ' / ' + st.total;
+                $('scrub').max = Math.max(1, st.total - 1);
+                $('scrub').value = st.cursor;
+                $('window-label').textContent = st.candles.length
+                    ? new Date(st.candles[st.candles.length - 1].time * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' })
+                    : '—';
+                $('play-btn').disabled = st.status === 'completed';
+                $('play-btn').style.opacity = st.status === 'completed' ? 0.4 : 1;
+                $('step-fwd').disabled = st.cursor >= st.total - 1;
+                $('step-fwd').style.opacity = st.cursor >= st.total - 1 ? 0.4 : 1;
+            }
+
+            function updatePlayIco() {
+                $('play-ico').setAttribute('data-lucide', playing ? 'pause' : 'play');
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ================= ORDER TICKET =================
+            function renderTicket() {
+                const st = currentSession;
+                const disabled = !st;
+                ['t-entry', 't-sl', 't-tp', 't-risk', 't-setup', 't-notes'].forEach(id => { $(id).disabled = disabled; });
+                $('enter-btn').disabled = disabled || !!st.position;
+                $('enter-btn').style.opacity = ($('enter-btn').disabled) ? 0.4 : 1;
+                if (!st) {
+                    $('ticket-hint').textContent = 'Create a session first — your ticket will prefill from the current bar.';
+                    return;
+                }
+                if (st.position) {
+                    $('ticket-hint').textContent = 'A position is open — close it (or let SL/TP fill) before entering another.';
+                    return;
+                }
+                if (!st.candle) { $('ticket-hint').textContent = 'Replay is at the start — step forward to reach tradable candles.'; return; }
+                $('ticket-hint').textContent = 'Entry defaults to the current bar close (' + priceFmt(st.candle.close) + '). Size derives from risk ÷ stop distance.';
+                // prefill entry + risk on first render / symbol change
+                const entryEl = $('t-entry');
+                if (!entryEl.value || entryEl.dataset.sym !== st.symbol) {
+                    entryEl.value = Number(st.candle.close).toFixed(pricePrecision);
+                    entryEl.dataset.sym = st.symbol;
+                    $('t-risk').value = st.riskModel.basis === 'pct' ? st.riskModel.perTrade : st.riskModel.perTrade;
+                    $('t-sl').value = '';
+                    $('t-tp').value = '';
+                }
+                computePreview();
+            }
+
+            function riskAmountFromInput() {
+                const st = currentSession;
+                if (!st) return 0;
+                const v = parseFloat($('t-risk').value);
+                if (!(v > 0)) return 0;
+                return riskMode === 'pct' ? st.balance * (v / 100) : v;
+            }
+
+            function computePreview() {
+                const st = currentSession;
+                const entry = parseFloat($('t-entry').value);
+                const sl = parseFloat($('t-sl').value);
+                const tp = parseFloat($('t-tp').value);
+                const risk = riskAmountFromInput();
+                const long = currentDir === 'long';
+                let size = null, rr = null;
+                if (entry > 0 && sl > 0) {
+                    const dist = Math.abs(entry - sl);
+                    if (dist > 0 && risk > 0) size = risk / dist;
+                    if (tp > 0 && dist > 0) rr = Math.abs(tp - entry) / dist;
+                }
+                const sizeEl = $('size-readout');
+                const rrEl = $('rr-readout');
+                if (size != null) {
+                    sizeEl.textContent = Number(size).toLocaleString(undefined, { maximumFractionDigits: 4 });
+                    sizeEl.style.color = '#E8E8EC';
+                } else { sizeEl.textContent = '—'; sizeEl.style.color = '#6E6E78'; }
+                if (rr != null) {
+                    rrEl.textContent = rr.toFixed(2) + 'R';
+                    rrEl.style.color = rr >= 1.5 ? '#34D399' : '#FBBF24';
+                } else { rrEl.textContent = '—'; rrEl.style.color = '#6E6E78'; }
+                // mark invalid SL side
+                const longOk = !(long && entry > 0 && sl > 0 && sl >= entry);
+                const shortOk = !(!long && entry > 0 && sl > 0 && sl <= entry);
+                $('t-sl').style.borderColor = (sl > 0 && !(long ? longOk : shortOk)) ? 'rgba(239,68,68,0.6)' : '';
+            }
+
+            async function enterTrade() {
+                if (!currentSession) return showToast('Create a session first');
+                if (currentSession.position) return showToast('A position is already open');
+                const entry = parseFloat($('t-entry').value);
+                const sl = parseFloat($('t-sl').value);
+                const tpRaw = $('t-tp').value;
+                const body = {
+                    direction: currentDir,
+                    entry,
+                    sl,
+                    tp: tpRaw ? parseFloat(tpRaw) : undefined,
+                    setup: $('t-setup').value.trim(),
+                    notes: $('t-notes').value.trim()
+                };
+                const riskV = parseFloat($('t-risk').value);
+                if (riskMode === 'pct' && riskV > 0) body.riskPct = riskV;
+                else if (riskV > 0) body.riskAmount = riskV;
+                if (window.lucide) { $('enter-btn').querySelector('svg').setAttribute('data-lucide', 'loader-circle'); lucide.createIcons(); }
+                try {
+                    const r = await api('/api/backtest/sessions/' + currentSession.id + '/enter', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+                    });
+                    currentSession = r.state;
+                    showToast('Entered ' + (currentDir === 'long' ? 'LONG' : 'SHORT') + ' @ ' + priceFmt(entry));
+                    renderAll(true);
+                } catch (e) {
+                    showToast('Entry rejected: ' + e.message);
+                } finally {
+                    if (window.lucide) { $('enter-btn').querySelector('svg').setAttribute('data-lucide', 'log-in'); lucide.createIcons(); }
+                }
+            }
+
+            async function closePosition() {
+                if (!currentSession || !currentSession.position) return;
+                try {
+                    const r = await api('/api/backtest/sessions/' + currentSession.id + '/close', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reason: 'manual' })
+                    });
+                    const t = r.trade;
+                    currentSession = r.state;
+                    showToast('Closed @ ' + priceFmt(t.exit) + ' · ' + (t.pnl >= 0 ? '+' : '') + '$' + Math.round(t.pnl).toLocaleString() + ' (' + (t.realizedR >= 0 ? '+' : '') + t.realizedR.toFixed(2) + 'R)');
+                    renderAll(true);
+                } catch (e) {
+                    showToast('Close failed: ' + e.message);
+                }
+            }
+
+            // ================= RESULTS =================
+            function renderResults() {
+                const r = resultsCache;
+                const grid = $('results-grid');
+                if (!r) {
+                    grid.innerHTML = '';
+                    $('results-note').textContent = 'No trades recorded yet';
+                    $('trade-count-label').textContent = '0';
+                    $('trade-list').innerHTML = '<div class="text-[12px] text-[#6E6E78]">Enter a trade and let it run — SL/TP fills and manual closes are recorded here, separate from your live journal.</div>';
+                    $('bd-body').innerHTML = '<div class="text-[12px] text-[#6E6E78]">Breakdowns appear once trades are recorded.</div>';
+                    const eqEl = $('equity-chart');
+                    eqEl.innerHTML = '';
+                    return;
+                }
+                $('results-note').textContent = 'Derived from this session only — never touches live data';
+                const stats = [
+                    { k: 'Net P&L', v: (r.net >= 0 ? '+' : '') + '$' + Math.round(r.net).toLocaleString(), c: r.net >= 0 ? '#34D399' : '#F87171' },
+                    { k: 'Win rate', v: r.winRate.toFixed(0) + '%', c: '#FFFFFF' },
+                    { k: 'Profit factor', v: r.profitFactor === Infinity ? '∞' : r.profitFactor.toFixed(2), c: r.profitFactor >= 1 ? '#34D399' : '#F87171' },
+                    { k: 'Expectancy', v: (r.expectancy >= 0 ? '+' : '') + r.expectancy.toFixed(2) + 'R', c: r.expectancy >= 0 ? '#34D399' : '#F87171' },
+                    { k: 'Avg R', v: (r.avgR >= 0 ? '+' : '') + r.avgR.toFixed(2) + 'R', c: r.avgR >= 0 ? '#34D399' : '#F87171' },
+                    { k: 'Max drawdown', v: '-$' + Math.round(r.maxDrawdown).toLocaleString(), c: '#FBBF24' },
+                    { k: 'Trades', v: r.trades + ' (' + r.wins + 'W / ' + r.losses + 'L)', c: '#FFFFFF' },
+                    { k: 'Best streak', v: r.bestWinStreak + 'W · ' + r.worstLossStreak + 'L', c: '#FFFFFF' },
+                    { k: 'Avg winner', v: '+$' + Math.round(r.avgWinner).toLocaleString(), c: '#34D399' },
+                    { k: 'Avg loser', v: '-$' + Math.round(r.avgLoser).toLocaleString(), c: '#F87171' },
+                    { k: 'Balance', v: '$' + Number(r.endingBalance).toLocaleString(), c: '#FFFFFF' },
+                    { k: 'Risk / trade', v: (r.startingBalance ? '$' : '') + (r.trades ? Math.round(r.avgR * 25) : 0) + 'R', c: '#8A8A93' }
+                ];
+                // last tile: realized risk per trade average in $ when possible
+                stats[11] = { k: 'Return', v: (r.net >= 0 ? '+' : '') + (r.startingBalance ? (r.net / r.startingBalance * 100).toFixed(1) : '0.0') + '%', c: r.net >= 0 ? '#34D399' : '#F87171' };
+                grid.innerHTML = stats.map(s =>
+                    '<div class="stat-tile"><div class="k">' + s.k + '</div><div class="v num" style="color:' + s.c + '">' + s.v + '</div></div>'
+                ).join('');
+
+                drawEquity(r.equity);
+                renderBreakdown();
+                renderTradeList(r);
+            }
+
+            function renderBreakdown() {
+                const r = resultsCache;
+                if (!r) return;
+                const data = r[currentBd] || {};
+                const keys = Object.keys(data).sort((a, b) => data[b].net - data[a].net);
+                if (!keys.length) {
+                    $('bd-body').innerHTML = '<div class="text-[12px] text-[#6E6E78]">Nothing yet — close a trade to populate this breakdown.</div>';
+                    return;
+                }
+                const maxNet = Math.max.apply(null, keys.map(k => Math.abs(data[k].net))) || 1;
+                const long = currentDir; // unused
+                $('bd-body').innerHTML = keys.map(k => {
+                    const g = data[k];
+                    const netCol = g.net >= 0 ? '#34D399' : '#F87171';
+                    const barCol = g.net >= 0 ? 'rgba(16,185,129,0.5)' : 'rgba(239,68,68,0.5)';
+                    const w = Math.max(4, Math.round(Math.abs(g.net) / maxNet * 100));
+                    return '<div class="flex items-center gap-3">' +
+                        '<span class="num w-[90px] text-[11px] font-bold text-white truncate">' + k + '</span>' +
+                        '<div class="flex-1 bg-[#17171A] rounded-full h-[5px] overflow-hidden"><div class="bmini" style="width:' + w + '%;background:' + barCol + '"></div></div>' +
+                        '<span class="num w-[70px] text-right text-[11px] font-bold" style="color:' + netCol + '">' + (g.net >= 0 ? '+' : '') + '$' + Math.round(g.net).toLocaleString() + '</span>' +
+                        '<span class="num w-[64px] text-right text-[11px] text-[#6E6E78]">' + g.trades + 'T · ' + g.winRate.toFixed(0) + '%</span>' +
+                        '<span class="num w-[52px] text-right text-[11px] text-[#6E6E78]">' + (g.avgR >= 0 ? '+' : '') + g.avgR.toFixed(1) + 'R</span>' +
+                    '</div>';
+                }).join('');
+            }
+
+            function tradeRowHtml(x) {
+                const col = x.pnl >= 0 ? '#34D399' : '#F87171';
+                return '<div class="trade-row">' +
+                    '<span class="num text-[11px] font-bold" style="color:' + (x.direction === 'Long' ? '#34D399' : '#F87171') + '">' + (x.direction === 'Long' ? 'L' : 'S') + '</span>' +
+                    '<span class="num text-[11px] text-[#8A8A93]">' + new Date(x.exitTime * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</span>' +
+                    '<span class="text-[11px] text-[#6E6E78] truncate">' + (x.setup || '—') + '</span>' +
+                    '<span class="num flex-1 text-[11px] text-[#6E6E78] truncate">' + priceFmt(x.entry) + ' → ' + priceFmt(x.exit) + '</span>' +
+                    '<span class="status-badge" style="background:' + (x.exitReason === 'SL' ? 'rgba(239,68,68,0.12);color:#F87171' : x.exitReason === 'TP' ? 'rgba(16,185,129,0.12);color:#34D399' : 'rgba(99,102,241,0.12);color:#818CF8') + '">' + x.exitReason + '</span>' +
+                    '<span class="num text-[11px] font-bold" style="color:' + col + '">' + (x.realizedR >= 0 ? '+' : '') + x.realizedR.toFixed(2) + 'R</span>' +
+                    '<span class="num text-[11px] font-bold" style="color:' + col + '">' + (x.pnl >= 0 ? '+' : '') + '$' + Math.round(x.pnl).toLocaleString() + '</span>' +
+                '</div>';
+            }
+            function renderTradeListLive() {
+                const st = currentSession;
+                const listEl = $('trade-list');
+                if (!st || !st.trades || !st.trades.length) {
+                    $('trade-count-label').textContent = '0';
+                    listEl.innerHTML = '<div class="text-[12px] text-[#6E6E78]">No trades yet — replay forward and enter a position.</div>';
+                    return;
+                }
+                $('trade-count-label').textContent = st.trades.length;
+                listEl.innerHTML = st.trades.slice().reverse().map(tradeRowHtml).join('');
+            }
+            function renderTradeList(r) {
+                $('results-note').textContent = 'Derived from this session only — never touches live data';
+                renderTradeListLive();
+            }
+
+            function drawEquity(equity) {
+                const el = $('equity-chart');
+                el.innerHTML = '';
+                if (!equity || !equity.length) {
+                    el.innerHTML = '<div class="w-full h-full flex items-center justify-center text-[12px] text-[#6E6E78]">Equity curve appears after the first close.</div>';
+                    return;
+                }
+                const pts = equity.map(e => ({ time: currentSession.candles[e.idx] ? currentSession.candles[e.idx].time : currentSession.candles[currentSession.candles.length - 1].time, value: e.balance }));
+                const c = LightweightCharts.createChart(el, {
+                    height: 150,
+                    layout: { background: { type: 'solid', color: theme.bg }, textColor: theme.text, fontFamily: "'JetBrains Mono', monospace" },
+                    grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+                    rightPriceScale: { borderColor: theme.border },
+                    timeScale: { borderColor: theme.border, timeVisible: true, secondsVisible: false },
+                    localization: { priceFormatter: p => '$' + Math.round(p).toLocaleString() }
+                });
+                const s = c.addSeries(LightweightCharts.AreaSeries, { color: theme.up, topColor: 'rgba(16,185,129,0.25)', bottomColor: 'rgba(16,185,129,0.02)', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+                s.setData(pts);
+                c.timeScale().fitContent();
+                el.__lc = c;
+            }
+
+            // ================= NEW SESSION MODAL =================
+            let modalTF = '1h';
+            function openModal() {
+                $('session-modal').classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+            }
+            function closeModal() {
+                $('session-modal').classList.add('hidden');
+            }
+            function buildModalSymbols() {
+                const sel = $('modal-symbol');
+                if (!window.TMAssets || !window.TMAssets.SYMBOLS || sel.options.length) return;
+                let html = '';
+                window.TMAssets.CATEGORIES.forEach(cat => {
+                    const syms = window.TMAssets.SYMBOLS.filter(s => s.cat === cat);
+                    if (!syms.length) return;
+                    html += '<optgroup label="' + cat + '">' + syms.map(s => '<option value="' + s.sym + '">' + s.sym + ' — ' + s.name + '</option>').join('') + '</optgroup>';
+                });
+                sel.innerHTML = html;
+            }
+            function prefillModalFromAccount() {
+                const acc = selectedAccount();
+                if (acc && $('modal-balance').value === '10000') {
+                    $('modal-balance').value = Number(acc.starting_balance || 10000);
+                    const pol = accountPolicy(acc);
+                    const r = riskPerTradeMoney(acc, pol);
+                    $('modal-pertrade').value = r.risk;
+                    $('modal-basis').value = r.basis === 'pct' ? 'pct' : 'money';
+                }
+            }
+            async function createSession() {
+                const body = {
+                    symbol: $('modal-symbol').value,
+                    timeframe: modalTF,
+                    window: Number($('modal-window').value),
+                    startBars: Number($('modal-start').value),
+                    startingBalance: Number($('modal-balance').value) || 10000,
+                    strategy: $('modal-strategy').value.trim() || 'Manual practice',
+                    riskModel: {
+                        basis: $('modal-basis').value,
+                        perTrade: Number($('modal-pertrade').value) || 25
+                    }
+                };
+                const btn = $('modal-create');
+                btn.disabled = true;
+                btn.style.opacity = 0.5;
+                try {
+                    const r = await api('/api/backtest/sessions', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+                    });
+                    closeModal();
+                    showToast('Session created — ' + body.symbol + ' · ' + modalTF);
+                    await loadSessions();
+                    await loadSession(r.session, true);
+                } catch (e) {
+                    showToast('Create failed: ' + e.message);
+                } finally {
+                    btn.disabled = false;
+                    btn.style.opacity = 1;
+                }
+            }
+
+            // ================= ACCOUNT HELPERS =================
             function selectedAccount() {
                 const core = window.TradeMindCore;
                 if (!core || !core.Accounts || !core.Accounts.length) return null;
@@ -826,177 +1476,6 @@
                 }
                 return { risk: Number(risk) || 25, basis };
             }
-            function renderRiskReadout() {
-                const acc = selectedAccount();
-                const pol = accountPolicy(acc);
-                const r = riskPerTradeMoney(acc, pol);
-                $('risk-readout').textContent = '$' + r.risk.toLocaleString();
-                $('risk-model-readout').textContent = r.basis === 'pct' ? 'Percent · account' : 'Money · ' + (acc ? acc.name : 'account');
-            }
-            function renderStrategyOptions() {
-                const core = window.TradeMindCore;
-                const sel = $('strategy-select');
-                let html = '<option value="__ema">EMA Cross (9/21) — default</option>';
-                if (core && core.StrategyMaster && core.StrategyMaster.length) {
-                    core.StrategyMaster.forEach(s => {
-                        html += '<option value="' + s.id + '">' + s.name + '</option>';
-                    });
-                }
-                sel.innerHTML = html;
-            }
-
-            function runBacktest() {
-                const core = window.TradeMindCore;
-                if (!candles.length) return showToast('Load a chart first');
-                const acc = selectedAccount();
-                const pol = accountPolicy(acc);
-                const r = riskPerTradeMoney(acc, pol);
-                const risk = r.risk;
-
-                // strategy params: EMA cross + ATR stop, RR from the strategy version
-                const stratSel = $('strategy-select').value;
-                let minRR = 2, stopMult = 1.5;
-                if (stratSel !== '__ema' && core && core.ConfigVersions) {
-                    const cv = core.ConfigVersions.find(x => x.entity_type === 'Strategy' && x.entity_id === stratSel);
-                    const rr = cv && cv.values && cv.values.risk && cv.values.risk.minRR;
-                    if (rr) minRR = Number(rr);
-                }
-
-                const closes = candles.map(c => c.close);
-                const emaF = emaArr(closes, 9), emaS = emaArr(closes, 21);
-                const atr = atrArr(candles, 14);
-                const trades = [];
-                let pos = null, equity = 0, peak = 0, maxDD = 0, net = 0;
-
-                for (let i = 21; i < candles.length; i++) {
-                    if (!pos) {
-                        const crossUp = emaF[i - 1] <= emaS[i - 1] && emaF[i] > emaS[i];
-                        const crossDn = emaF[i - 1] >= emaS[i - 1] && emaF[i] < emaS[i];
-                        if ((crossUp || crossDn) && atr[i] != null) {
-                            const long = crossUp;
-                            const entry = candles[i + 1] ? candles[i + 1].open : candles[i].close;
-                            const stopDist = Math.max(atr[i] * stopMult, entry * 0.0005);
-                            const sl = long ? entry - stopDist : entry + stopDist;
-                            const tp = long ? entry + stopDist * minRR : entry - stopDist * minRR;
-                            const size = stopDist > 0 ? risk / stopDist : 1;
-                            pos = { long, entry, sl, tp, size, risk, dir: long ? 'Long' : 'Short', entryTime: candles[i + 1] ? candles[i + 1].time : candles[i].time };
-                            continue;
-                        }
-                        continue;
-                    }
-                    const bar = candles[i];
-                    let exit = null, rMult = 0;
-                    if (pos.long) {
-                        if (bar.low <= pos.sl) { exit = pos.sl; rMult = -(pos.entry - pos.sl) / (pos.entry - pos.sl); }
-                        else if (bar.high >= pos.tp) { exit = pos.tp; rMult = (pos.tp - pos.entry) / (pos.entry - pos.sl); }
-                    } else {
-                        if (bar.high >= pos.sl) { exit = pos.sl; rMult = (pos.entry - pos.sl) / (pos.sl - pos.entry); }
-                        else if (bar.low <= pos.tp) { exit = pos.tp; rMult = (pos.entry - pos.tp) / (pos.sl - pos.entry); }
-                    }
-                    if (exit != null) {
-                        const pnl = pos.risk * rMult;
-                        trades.push({
-                            time: bar.time, entryTime: pos.entryTime, exitTime: bar.time,
-                            dir: pos.dir, entry: pos.entry, exit, sl: pos.sl, tp: pos.tp, risk: pos.risk, r: rMult, pnl
-                        });
-                        net += pnl; equity += pnl;
-                        if (equity > peak) peak = equity;
-                        maxDD = Math.max(maxDD, peak - equity);
-                        pos = null;
-                        continue;
-                    }
-                    if (i === candles.length - 1 && pos) {
-                        const exit = bar.close;
-                        const rMult = pos.long
-                            ? (exit - pos.entry) / (pos.entry - pos.sl)
-                            : (pos.entry - exit) / (pos.sl - pos.entry);
-                        const pnl = pos.risk * rMult;
-                        trades.push({ time: bar.time, entryTime: pos.entryTime, exitTime: bar.time, dir: pos.dir, entry: pos.entry, exit, sl: pos.sl, tp: pos.tp, risk: pos.risk, r: rMult, pnl });
-                        net += pnl; equity += pnl;
-                        if (equity > peak) peak = equity;
-                        maxDD = Math.max(maxDD, peak - equity);
-                        pos = null;
-                    }
-                }
-
-                btTrades = trades;
-                renderResults(trades, { net, maxDD, risk, minRR });
-                drawMarkers(trades);
-                drawEquity(trades);
-            }
-
-            function renderResults(trades, meta) {
-                const wrap = $('results-wrap');
-                wrap.classList.remove('hidden');
-                $('bt-status').textContent = trades.length + ' trades';
-                $('bt-status').style.color = '#34D399';
-                const wins = trades.filter(t => t.r > 0).length;
-                const losses = trades.filter(t => t.r <= 0).length;
-                const grossP = trades.filter(t => t.pnl > 0).reduce((a, t) => a + t.pnl, 0);
-                const grossL = Math.abs(trades.filter(t => t.pnl <= 0).reduce((a, t) => a + t.pnl, 0));
-                const winRate = trades.length ? wins / trades.length : 0;
-                const pf = grossL ? grossP / grossL : (grossP > 0 ? Infinity : 0);
-                const expect = trades.length ? trades.reduce((a, t) => a + t.r, 0) / trades.length : 0;
-                const stats = [
-                    { k: 'Net P&L', v: (meta.net >= 0 ? '+' : '') + '$' + Math.round(meta.net).toLocaleString(), c: meta.net >= 0 ? '#34D399' : '#F87171' },
-                    { k: 'Win rate', v: (winRate * 100).toFixed(0) + '%', c: '#FFFFFF' },
-                    { k: 'Profit factor', v: pf === Infinity ? '∞' : pf.toFixed(2), c: pf >= 1 ? '#34D399' : '#F87171' },
-                    { k: 'Expectancy', v: (expect >= 0 ? '+' : '') + expect.toFixed(2) + 'R', c: expect >= 0 ? '#34D399' : '#F87171' },
-                    { k: 'Max drawdown', v: '-$' + Math.round(meta.maxDD).toLocaleString(), c: '#FBBF24' },
-                    { k: 'Trades', v: String(trades.length), c: '#FFFFFF' },
-                    { k: 'Risk / trade', v: '$' + meta.risk.toLocaleString(), c: '#8A8A93' },
-                    { k: 'Min R:R', v: meta.minRR.toFixed(1) + 'R', c: '#8A8A93' }
-                ];
-                $('results-grid').innerHTML = stats.map(s =>
-                    '<div class="stat-tile"><div class="k">' + s.k + '</div><div class="v num" style="color:' + s.c + '">' + s.v + '</div></div>'
-                ).join('');
-                $('trade-count-label').textContent = trades.length;
-                const list = trades.slice().reverse().slice(0, 40).map(t => {
-                    const col = t.r >= 0 ? '#34D399' : '#F87171';
-                    return '<div class="trade-row">' +
-                        '<span class="num text-[11px] font-bold" style="color:' + (t.dir === 'Long' ? '#34D399' : '#F87171') + '">' + t.dir + '</span>' +
-                        '<span class="num text-[11px] text-[#8A8A93]">' + new Date(t.exitTime * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</span>' +
-                        '<span class="num flex-1 text-[11px] text-[#6E6E78] truncate">' + priceFmt(t.entry) + ' → ' + priceFmt(t.exit) + '</span>' +
-                        '<span class="num text-[11px] font-bold" style="color:' + col + '">' + (t.r >= 0 ? '+' : '') + t.r.toFixed(2) + 'R</span>' +
-                        '<span class="num text-[11px] font-bold" style="color:' + col + '">' + (t.pnl >= 0 ? '+' : '') + '$' + Math.round(t.pnl).toLocaleString() + '</span>' +
-                    '</div>';
-                }).join('');
-                $('trade-list').innerHTML = list || '<div class="text-[12px] text-[#6E6E78]">No trades generated — adjust strategy or timeframe.</div>';
-            }
-
-            function drawMarkers(trades) {
-                const markers = trades.map(t => {
-                    const long = t.dir === 'Long';
-                    return {
-                        time: t.entryTime,
-                        position: long ? 'belowBar' : 'aboveBar',
-                        color: long ? '#10B981' : '#EF4444',
-                        shape: long ? 'arrowUp' : 'arrowDown',
-                        text: (t.r >= 0 ? '+' : '') + t.r.toFixed(1) + 'R'
-                    };
-                });
-                window.__btMarkers = markers;
-                if (seriesMarkers) seriesMarkers.setMarkers(markers.filter(m => m.time <= (candles[playback.step - 1] ? candles[playback.step - 1].time : Infinity)));
-            }
-
-            function drawEquity(trades) {
-                const el = $('equity-chart');
-                el.innerHTML = '';
-                let eq = 0;
-                const pts = trades.map(t => { eq += t.pnl; return { time: t.exitTime, value: Math.round(eq) }; });
-                const c = LightweightCharts.createChart(el, {
-                    height: 140,
-                    layout: { background: { type: 'solid', color: theme.bg }, textColor: theme.text, fontFamily: "'JetBrains Mono', monospace" },
-                    grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
-                    rightPriceScale: { borderColor: theme.border },
-                    timeScale: { borderColor: theme.border, timeVisible: true, secondsVisible: false },
-                    localization: { priceFormatter: p => '$' + Math.round(p).toLocaleString() }
-                });
-                const s = c.addSeries(LightweightCharts.AreaSeries, { color: theme.up, topColor: 'rgba(16,185,129,0.25)', bottomColor: 'rgba(16,185,129,0.02)', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
-                s.setData(pts);
-                c.timeScale().fitContent();
-                el.__lc = c;
-            }
 
             // ================= COLOR CUSTOMIZATION =================
             function renderSwatches() {
@@ -1012,7 +1491,7 @@
                     inp.addEventListener('input', () => {
                         theme[inp.dataset.key] = inp.value;
                         applyTheme();
-                        applyStep();
+                        renderChart();
                         saveTheme();
                     });
                 });
@@ -1024,63 +1503,65 @@
                 theme = Object.assign({}, THEMES[name] || THEMES.obsidian);
                 saveTheme();
                 applyTheme();
-                applyStep();
+                renderChart();
                 renderSwatches();
                 showToast('Chart theme: ' + name.charAt(0).toUpperCase() + name.slice(1));
-            }
-
-            // ================= SYMBOL PICKER =================
-            function buildSymbolPicker() {
-                const sel = $('symbol-select');
-                if (!window.TMAssets || !window.TMAssets.SYMBOLS) return;
-                let html = '';
-                window.TMAssets.CATEGORIES.forEach(cat => {
-                    const syms = window.TMAssets.SYMBOLS.filter(s => s.cat === cat);
-                    if (!syms.length) return;
-                    html += '<optgroup label="' + cat + '">' + syms.map(s => '<option value="' + s.sym + '">' + s.sym + ' — ' + s.name + '</option>').join('') + '</optgroup>';
-                });
-                sel.innerHTML = html;
-                sel.value = currentSymbol;
-                sel.addEventListener('change', () => {
-                    currentSymbol = sel.value;
-                    loadData();
-                });
             }
 
             // ================= INIT =================
             function boot() {
                 $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
 
-                // toolbar
-                $('tf-bar').querySelectorAll('.tf-btn').forEach(b => b.addEventListener('click', () => {
-                    $('tf-bar').querySelectorAll('.tf-btn').forEach(x => x.classList.remove('active'));
+                // session management
+                $('new-session-btn').addEventListener('click', openModal);
+                $('empty-cta').addEventListener('click', openModal);
+                $('modal-close').addEventListener('click', closeModal);
+                $('session-modal').addEventListener('click', e => { if (e.target === $('session-modal')) closeModal(); });
+                document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+                $('modal-tf').querySelectorAll('.tf-btn').forEach(b => b.addEventListener('click', () => {
+                    $('modal-tf').querySelectorAll('.tf-btn').forEach(x => x.classList.remove('active'));
                     b.classList.add('active');
-                    currentTF = b.dataset.tf;
-                    loadData();
+                    modalTF = b.dataset.tf;
                 }));
+                $('modal-create').addEventListener('click', createSession);
+                $('session-select').addEventListener('change', e => { if (e.target.value) loadSession(e.target.value, true); });
+
+                // replay
+                $('play-btn').addEventListener('click', async () => {
+                    if (playing) { await control('pause'); stopPoll(); playing = false; updatePlayIco(); }
+                    else {
+                        try {
+                            await control('play', { speedMs: currentSpeedMs });
+                            const r = await api('/api/backtest/sessions/' + currentSession.id);
+                            currentSession = r.state;
+                            startPoll();
+                        } catch (e) { showToast('Play failed: ' + e.message); }
+                    }
+                });
+                $('step-fwd').addEventListener('click', async () => {
+                    try { await control('step'); await loadSession(currentSession.id, true); } catch (e) { showToast('Step failed: ' + e.message); }
+                });
+                $('reset-btn').addEventListener('click', async () => {
+                    try { await control('reset'); await loadSession(currentSession.id, true); showToast('Session reset to start'); } catch (e) { showToast('Reset failed: ' + e.message); }
+                });
+                document.querySelectorAll('#speed-bar .speed-btn').forEach(b => b.addEventListener('click', () => {
+                    document.querySelectorAll('#speed-bar .speed-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    currentSpeedMs = Number(b.dataset.ms);
+                }));
+                $('scrub').addEventListener('input', async () => {
+                    if (playing) { await control('pause'); stopPoll(); playing = false; updatePlayIco(); }
+                    try { await control('seek', { cursor: Number($('scrub').value) }); await loadSession(currentSession.id, true); } catch (e) {}
+                });
+
+                // indicators
                 document.querySelectorAll('.ind-tag').forEach(t => t.addEventListener('click', () => {
                     const k = t.dataset.ind;
                     indState[k] = !indState[k];
                     t.classList.toggle('on', indState[k]);
-                    applyStep();
+                    if (currentSession) renderChart();
                 }));
                 document.querySelectorAll('.ind-tag').forEach(t => t.classList.toggle('on', indState[t.dataset.ind]));
-
-                // playback
-                $('play-btn').addEventListener('click', () => playback.playing ? stopPlayback() : startPlayback());
-                $('step-back').addEventListener('click', () => { stopPlayback(); playback.step = Math.max(30, playback.step - 1); applyStep(); });
-                $('step-fwd').addEventListener('click', () => { stopPlayback(); playback.step = Math.min(playback.total, playback.step + 1); applyStep(); });
-                $('live-btn').addEventListener('click', toLatest);
-                document.querySelectorAll('#speed-bar .speed-btn').forEach(b => b.addEventListener('click', () => {
-                    document.querySelectorAll('#speed-bar .speed-btn').forEach(x => x.classList.remove('active'));
-                    b.classList.add('active');
-                    playback.speed = Number(b.dataset.speed);
-                }));
-                $('scrub').addEventListener('input', () => {
-                    stopPlayback();
-                    playback.step = Math.max(30, Math.round($('scrub').value / 100 * playback.total));
-                    applyStep();
-                });
 
                 // colors
                 $('customize-btn').addEventListener('click', () => {
@@ -1091,9 +1572,25 @@
                 });
                 document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => applyPreset(b.dataset.theme)));
 
-                // backtest
-                $('run-bt').addEventListener('click', runBacktest);
-                $('strategy-select').addEventListener('change', renderRiskReadout);
+                // order ticket
+                $('dir-long').addEventListener('click', () => { currentDir = 'long'; $('dir-long').classList.add('active'); $('dir-short').classList.remove('active'); computePreview(); });
+                $('dir-short').addEventListener('click', () => { currentDir = 'short'; $('dir-short').classList.add('active'); $('dir-long').classList.remove('active'); computePreview(); });
+                document.querySelectorAll('.mode-chip').forEach(c => c.addEventListener('click', () => {
+                    document.querySelectorAll('.mode-chip').forEach(x => x.classList.remove('active'));
+                    c.classList.add('active');
+                    riskMode = c.dataset.mode;
+                    computePreview();
+                }));
+                ['t-entry', 't-sl', 't-tp', 't-risk'].forEach(id => $(id).addEventListener('input', computePreview));
+                $('enter-btn').addEventListener('click', enterTrade);
+
+                // breakdown tabs
+                document.querySelectorAll('#bd-tabs .bd-tab').forEach(t => t.addEventListener('click', () => {
+                    document.querySelectorAll('#bd-tabs .bd-tab').forEach(x => x.classList.remove('active'));
+                    t.classList.add('active');
+                    currentBd = t.dataset.bd;
+                    renderBreakdown();
+                }));
 
                 // account chip
                 const core = window.TradeMindCore;
@@ -1109,13 +1606,12 @@
                     }
                 }
 
-                buildSymbolPicker();
-                renderRiskReadout();
-                renderStrategyOptions();
-                renderIndLegend();
+                buildModalSymbols();
+                prefillModalFromAccount();
                 if (window.lucide) lucide.createIcons();
-                loadData();
+                loadSessions();
             }
+            let currentSpeedMs = 300;
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();
     </script>
