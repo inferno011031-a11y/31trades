@@ -23,6 +23,7 @@
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
+    <script src="assets/workspace.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -1499,9 +1500,15 @@ Mia:Alpha</textarea>
                 }
             }
 
+            // Workspaces are keyed by SYMBOL + TIMEFRAME, not session id: switching
+            // 1H→5M→1H creates a fresh session each time, but the 1H workspace
+            // (drawings + indicators + chart state) must survive and come back.
+            function wsKey() {
+                return (currentSession.symbol || '?') + ':' + (currentSession.timeframe || '?');
+            }
             function saveWorkspace() {
                 if (!currentSession) return;
-                const ws = TMWorkspace.forSession(currentSession.id, currentSession.timeframe);
+                const ws = TMWorkspace.forSession(wsKey(), currentSession.timeframe);
                 ws.drawings = mainDrawings.map(d => ({ ...d }));
                 ws.indicators = Object.assign({}, indState);
                 ws.chartState.theme = Object.assign({}, theme);
@@ -1509,12 +1516,12 @@ Mia:Alpha</textarea>
                     const r = chart.timeScale().getVisibleLogicalRange();
                     if (r) ws.chartState.rightOffset = Math.max(0, Math.round(r.right));
                 }
-                TMWorkspace.saveSession(currentSession.id, currentSession.timeframe, ws);
+                TMWorkspace.saveSession(wsKey(), currentSession.timeframe, ws);
             }
 
             function restoreWorkspace() {
                 if (!currentSession) return;
-                const ws = TMWorkspace.forSession(currentSession.id, currentSession.timeframe);
+                const ws = TMWorkspace.forSession(wsKey(), currentSession.timeframe);
                 // indicators
                 Object.keys(indState).forEach(k => { indState[k] = ws.indicators[k] === true; });
                 // theme (only if a saved theme exists)
@@ -1783,7 +1790,6 @@ Mia:Alpha</textarea>
                 }));
                 if (seriesMarkers) seriesMarkers.setMarkers(markers);
                 drawPosLines();
-                $('chart-title').textContent = st.symbol + ' · ' + st.timeframe;
                 $('chart-sub').textContent = st.strategy + ' · cursor ' + (st.cursor + 1) + ' / ' + st.total + ' · balance $' + Number(st.balance).toLocaleString();
                 renderAssetBadge();
             }
