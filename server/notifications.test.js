@@ -121,11 +121,11 @@ console.log('\n== Notifications engine ==');
     ok(onb[0] && onb[0].href === 'strategy-lab.html?tab=accounts', 'account step links to Strategy Lab accounts');
 }
 {
-    // account but no strategies → strategy step
+    // account but no strategies → strategy step (broker step may also fire)
     const c = makeCore([{ reviewed: true }]);   // fixture always creates 1 account
     const out = Notif.buildNotifications(c, 'acc-prop');
     const onb = out.filter(n => n.cat === 'Onboarding');
-    ok(onb.length === 1 && onb[0].id === 'onb-strategy', 'account w/o strategy → strategy checklist step');
+    ok(onb.some(n => n.id === 'onb-strategy'), 'account w/o strategy → strategy checklist step');
 }
 {
     // account + strategy but no trades → trade step
@@ -137,11 +137,37 @@ console.log('\n== Notifications engine ==');
     ok(onb[0] && onb[0].href === 'journal.html', 'trade step links to the journal');
 }
 {
-    // account + strategy + trades → checklist gone (onboarding done)
+    // account + strategy + trades (all reviewed) + broker connected → checklist gone
     const c = makeCore([{ reviewed: true, symbol: 'EURUSD' }]);
     c.StrategyMaster = [{ id: 's1', name: 'Breakout' }];
+    const out = Notif.buildNotifications(c, 'acc-prop', { brokerConnected: true });
+    ok(!out.some(n => n.cat === 'Onboarding'), 'onboarding checklist disappears once the full setup exists');
+}
+{
+    // unreviewed trade → review step; no broker → broker step
+    const c = makeCore([{ reviewed: false, symbol: 'EURUSD' }]);
+    c.StrategyMaster = [{ id: 's1', name: 'Breakout' }];
     const out = Notif.buildNotifications(c, 'acc-prop');
-    ok(!out.some(n => n.cat === 'Onboarding'), 'onboarding checklist disappears once a trade exists');
+    const ids = out.filter(n => n.cat === 'Onboarding').map(n => n.id);
+    ok(ids.indexOf('onb-review') !== -1, 'unreviewed trade → review checklist step');
+    ok(ids.indexOf('onb-broker') !== -1, 'no broker connected → broker checklist step');
+    const r = out.find(n => n.id === 'onb-review');
+    ok(r && r.href === 'journal.html?view=unreviewed', 'review step links to the unreviewed journal view');
+}
+{
+    // all reviewed + broker connected → no extra steps
+    const c = makeCore([{ reviewed: true, symbol: 'EURUSD' }]);
+    c.StrategyMaster = [{ id: 's1', name: 'Breakout' }];
+    const out = Notif.buildNotifications(c, 'acc-prop', { brokerConnected: true });
+    ok(!out.some(n => n.cat === 'Onboarding'), 'all reviewed + broker connected → no onboarding steps');
+}
+{
+    // trade unreviewed but broker connected → review only
+    const c = makeCore([{ reviewed: false, symbol: 'EURUSD' }]);
+    c.StrategyMaster = [{ id: 's1', name: 'Breakout' }];
+    const out = Notif.buildNotifications(c, 'acc-prop', { brokerConnected: true });
+    const ids = out.filter(n => n.cat === 'Onboarding').map(n => n.id);
+    ok(ids.indexOf('onb-review') !== -1 && ids.indexOf('onb-broker') === -1, 'broker connected → broker step disappears');
 }
 
 // ---- 6b · welcome message (logged once at signup) -----------------------------

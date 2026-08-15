@@ -53,7 +53,8 @@ function buildNotifications(Core, accountId, opts) {
 
     // 0 · ONBOARDING CHECKLIST — derived from the workspace state, so it
     // appears for brand-new users and each step disappears the moment it is
-    // done. Never hardcoded: it reads Accounts / StrategyMaster / Trades.
+    // done. Never hardcoded: it reads Accounts / StrategyMaster / Trades,
+    // the unreviewed-trade queue and the event log (for reviews).
     const hasAccounts = !!(Core.Accounts && Core.Accounts.length);
     const hasStrategies = !!(Core.StrategyMaster && Core.StrategyMaster.length);
     const hasTrades = !!(Core.Trades && Core.Trades.length);
@@ -77,10 +78,28 @@ function buildNotifications(Core, accountId, opts) {
             href: 'journal.html'
         });
     }
+    // after the first trade: complete the review, then connect a broker
+    if (hasTrades) {
+        const anyUnreviewed = Core.Trades.some(t => !t.reviewed);
+        if (anyUnreviewed) {
+            steps.push({
+                id: 'onb-review', title: 'Complete your first review',
+                body: 'Review your recent trades while they are fresh — mark them reviewed in the Journal to keep discipline accurate.',
+                href: 'journal.html?view=unreviewed'
+            });
+        }
+        if (!(o.brokerConnected)) {
+            steps.push({
+                id: 'onb-broker', title: 'Connect a broker',
+                body: 'Auto-import live trades from MetaTrader, TradingView, cTrader and more — or keep logging manually.',
+                href: 'journal.html'
+            });
+        }
+    }
     steps.forEach((s, i) => {
         out.push({
             id: s.id, cat: 'Onboarding', sev: SEV.info, at: nowISO(),
-            icon: i === 0 ? 'rocket' : i === 1 ? 'beaker' : 'book-open',
+            icon: i === 0 ? 'rocket' : i === 1 ? 'beaker' : i === 2 ? 'book-open' : i === 3 ? 'clipboard-check' : 'plug',
             tint: 'emerald',
             title: s.title, body: s.body, href: s.href
         });

@@ -1119,12 +1119,20 @@
                 try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
                 var hero = document.getElementById('dash-hero');
                 if (hero) hero.remove();
+                // first-run tour: walk the sidebar screens once, right after the
+                // hero is dismissed — unless it has already been completed.
+                if (window.startTour && window.tourCompleted && !window.tourCompleted()) {
+                    window.setTimeout(window.startTour, 250);
+                }
             };
             function welcomeFirstName() {
                 try {
+                    // real signed-in user from the Supabase session (auth.html
+                    // stores it); falls back to the email prefix, then 'trader'
                     var s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
-                    var n = s && s.user && s.user.name;
-                    if (n) return String(n).split(/[\s@]/)[0];
+                    var u = s && s.user;
+                    if (u && u.name) return String(u.name).split(/[\s@]/)[0];
+                    if (u && u.email) return String(u.email).split('@')[0].split(/[._-]/)[0];
                 } catch (e) {}
                 return 'trader';
             }
@@ -1144,7 +1152,10 @@
                 var step2 = hasAccount ? 'next' : 'todo';
                 var step3 = 'todo';
                 hero.innerHTML =
-                    '<button onclick="window.dismissWelcome()" title="Dismiss" class="absolute top-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-white hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                    '<div class="absolute top-3 right-3 flex items-center gap-1.5">' +
+                        '<button onclick="window.startTour && window.startTour()" title="Take a guided tour" class="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-[#34D399] hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="compass" class="w-4 h-4"></svg></button>' +
+                        '<button onclick="window.dismissWelcome()" title="Dismiss" class="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-white hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                    '</div>' +
                     '<div class="flex items-start gap-4">' +
                         '<div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(59,130,246,0.12));border:1px solid rgba(16,185,129,0.3)"><svg data-lucide="sparkles" class="w-5 h-5 text-[#34D399]"></svg></div>' +
                         '<div class="min-w-0">' +
@@ -1729,6 +1740,7 @@
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();
     </script>
+    <script src="assets/tour.js"></script>
     <script src="reset.js"></script>
 </body>
 </html>

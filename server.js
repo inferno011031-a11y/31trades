@@ -42,6 +42,7 @@ const Bot = require('./server/ai-bot.js');
 const EcoCal = require('./server/ecocal.js');
 const LLM = require('./server/llm.js');
 const Notif = require('./server/notifications.js');
+const Brokers = require('./server/brokers.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -472,13 +473,18 @@ async function handleApi(req, res, url) {
             // ---------- Notifications (engine module — server-derived) ----------
             if (p === '/api/notifications') {
                 // accountId can be null for a brand-new user — the engine still
-                // derives the onboarding checklist (account → strategy → trade).
+                // derives the onboarding checklist (account → strategy → trade →
+                // review → broker).
                 const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
                 const upcoming = await EcoCal.getCalendar().then(c => EcoCal.upcomingHighImpact(c, 12)).catch(() => []);
-                const notifications = Notif.buildNotifications(Core, accountId, { upcomingEvents: upcoming });
+                const brokerConnected = await Brokers.isConnected(uc.userId);
+                const notifications = Notif.buildNotifications(Core, accountId, { upcomingEvents: upcoming, brokerConnected });
                 const read = await Notif.readSetOf(uc.userId);
                 const unread = notifications.filter(n => !read.has(n.id)).length;
-                return json(res, 200, { ok: true, notifications, unread, readIds: [...read] });
+                return json(res, 200, { ok: true, notifications, unread, readIds: [...read], brokerConnected });
+            }
+            if (p === '/api/brokers') {
+                return json(res, 200, { ok: true, brokers: await Brokers.list(uc.userId), connected: await Brokers.isConnected(uc.userId) });
             }
 
 
@@ -530,6 +536,16 @@ async function handleApi(req, res, url) {
         // ---- notifications read state (engine module) ----
         if (p === '/api/notifications/read') {
             await Notif.markRead(uc.userId, Array.isArray(body.ids) ? body.ids : []);
+            return json(res, 200, { ok: true });
+        }
+
+        // ---- broker connections (per-user; onboarding checklist depends on it) ----
+        if (p === '/api/brokers/connect') {
+            const b = await Brokers.connect(uc.userId, body.broker);
+            return json(res, 200, { ok: true, broker: b });
+        }
+        if (p === '/api/brokers/disconnect') {
+            await Brokers.disconnect(uc.userId, body.broker);
             return json(res, 200, { ok: true });
         }
 

@@ -323,12 +323,22 @@
                 const hasAccounts = !!(core.Accounts && core.Accounts.length);
                 const hasStrategies = !!(core.StrategyMaster && core.StrategyMaster.length);
                 const hasTrades = !!(core.Trades && core.Trades.length);
+                let brokerConnected = false;
+                try { brokerConnected = localStorage.getItem('31trades.broker.connected') === '1'; } catch (e) {}
                 if (!hasAccounts) {
                     out.push({ id: 'onb-account', cat: 'Onboarding', sev: 'info', at: now, icon: 'rocket', tint: 'emerald', title: 'Create your first account', body: 'Set an account name, size, currency and risk limits — every screen reads from it.', href: 'strategy-lab.html?tab=accounts' });
                 } else if (!hasStrategies) {
                     out.push({ id: 'onb-strategy', cat: 'Onboarding', sev: 'info', at: now, icon: 'beaker', tint: 'emerald', title: 'Create your first strategy', body: 'Define setups, sessions, instruments and risk rules — the rule engine evaluates every trade against it.', href: 'strategy-lab.html?tab=strategies' });
                 } else if (!hasTrades) {
                     out.push({ id: 'onb-trade', cat: 'Onboarding', sev: 'info', at: now, icon: 'book-open', tint: 'emerald', title: 'Log your first trade', body: 'One trade activates risk, discipline, analytics, insights and the calendar — all from the same ledger.', href: 'journal.html' });
+                }
+                if (hasTrades) {
+                    if (core.Trades.some(t => !t.reviewed)) {
+                        out.push({ id: 'onb-review', cat: 'Onboarding', sev: 'info', at: now, icon: 'clipboard-check', tint: 'emerald', title: 'Complete your first review', body: 'Review your recent trades while they are fresh — mark them reviewed in the Journal to keep discipline accurate.', href: 'journal.html?view=unreviewed' });
+                    }
+                    if (!brokerConnected) {
+                        out.push({ id: 'onb-broker', cat: 'Onboarding', sev: 'info', at: now, icon: 'plug', tint: 'emerald', title: 'Connect a broker', body: 'Auto-import live trades from MetaTrader, TradingView, cTrader and more — or keep logging manually.', href: 'journal.html' });
+                    }
                 }
 
                 const accId = core.selectedAccountId ? core.selectedAccountId() : null;
@@ -580,6 +590,7 @@
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();
     </script>
+    <script src="assets/tour.js"></script>
     <script src="reset.js"></script>
 </body>
 </html>
