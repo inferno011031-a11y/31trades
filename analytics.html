@@ -17,6 +17,7 @@
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
+    <script src="assets/asset-meta.js"></script>
 
 
     <style>
@@ -828,7 +829,9 @@
                     const lshare = r.trades.length ? Math.round((longs / r.trades.length) * 100) : 0;
                     const sp = specOf(r.name) || {};
                     return '<tr>' +
-                        '<td class="font-semibold text-white">' + esc(r.name) + '</td>' +
+                        '<td class="tm-sym-cell">' + (window.TMAssets && TMAssets.badgeHtml
+                            ? '<span class="tm-sym-badge">' + TMAssets.badgeHtml(r.name) + '</span>'
+                            : '') + '<span class="tm-sym-name">' + esc(r.name) + '</span></td>' +
                         '<td class="text-[#55555E]">' + esc(sp.assetClass || 'Other') + '</td>' +
                         '<td class="text-[#55555E]">' + esc(sp.unit || '—') + '</td>' +
                         '<td class="num">' + r.s.n + '</td>' +
@@ -861,8 +864,8 @@
 
                 const best = bySym[0], worst = bySym[bySym.length - 1];
                 const verdict = panel('Best & worst instruments',
-                    (best ? '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A]"><div><div class="text-[13px] font-semibold text-white">' + esc(best.name) + '</div><div class="text-[11px] text-[#55555E]">' + best.s.n + ' trades · ' + pct(best.s.winRate * 100, 100) + '% WR</div></div><div class="num font-bold text-[#34D399]">' + fmtR(best.s.expectancy) + '</div></div>' : '') +
-                    (worst ? '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A] last:border-0"><div><div class="text-[13px] font-semibold text-white">' + esc(worst.name) + '</div><div class="text-[11px] text-[#55555E]">' + worst.s.n + ' trades · ' + pct(worst.s.winRate * 100, 100) + '% WR</div></div><div class="num font-bold text-[#F87171]">' + fmtR(worst.s.expectancy) + '</div></div>' : '') +
+                    (best ? '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A]"><div class="flex items-center gap-2.5">' + (window.TMAssets && TMAssets.badgeHtml ? '<span class="tm-sym-badge">' + TMAssets.badgeHtml(best.name) + '</span>' : '') + '<div><div class="text-[13px] font-semibold text-white tm-sym-name">' + esc(best.name) + '</div><div class="text-[11px] text-[#55555E]">' + best.s.n + ' trades · ' + pct(best.s.winRate * 100, 100) + '% WR</div></div></div><div class="num font-bold text-[#34D399]">' + fmtR(best.s.expectancy) + '</div></div>' : '') +
+                    (worst ? '<div class="flex items-center justify-between py-2.5 border-b border-[#17171A] last:border-0"><div class="flex items-center gap-2.5">' + (window.TMAssets && TMAssets.badgeHtml ? '<span class="tm-sym-badge">' + TMAssets.badgeHtml(worst.name) + '</span>' : '') + '<div><div class="text-[13px] font-semibold text-white tm-sym-name">' + esc(worst.name) + '</div><div class="text-[11px] text-[#55555E]">' + worst.s.n + ' trades · ' + pct(worst.s.winRate * 100, 100) + '% WR</div></div></div><div class="num font-bold text-[#F87171]">' + fmtR(worst.s.expectancy) + '</div></div>' : '') +
                     '<p class="text-[11.5px] text-[#55555E] mt-3">Rankings respect sample size — a 3-trade symbol is never presented as a reliable edge.</p>');
 
                 $('panel-instrument').innerHTML =
