@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Backtesting</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- TradingView Lightweight Charts (open source — github.com/tradingview/lightweight-charts) -->
+    <script src="https://unpkg.com/lightweight-charts@5.2.0/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="demo-trades.js"></script>
+    <script src="assets/asset-meta.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0C; color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+        .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        /* App shell */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        .logo-badge {
+            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #052E1F; font-weight: 800; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .collapse-btn {
+            background: none; border: none; color: #6E6E78; cursor: pointer;
+            padding: 6px; border-radius: 6px; transition: all 0.15s;
+        }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: #FFFFFF;
+            box-shadow: inset 2px 0 0 #10B981;
+        }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .btn-ghost.on { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+
+        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+
+        /* Chart + toolbar */
+        .chart-box { position: relative; width: 100%; }
+        .legend-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; }
+        .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+        .legend-item .sw { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+        .tf-btn {
+            padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 700;
+            color: #8A8A93; border: 1px solid #26262B; background: transparent; cursor: pointer; transition: all 0.15s;
+        }
+        .tf-btn:hover { color: #E8E8EC; border-color: #3A3A41; }
+        .tf-btn.active { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+
+        .ind-tag {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700;
+            background: rgba(255,255,255,0.04); border: 1px solid #26262B; color: #8A8A93; cursor: pointer; transition: all 0.15s;
+        }
+        .ind-tag.on { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+        .ind-tag:hover { border-color: #3A3A41; }
+
+        /* Playback bar */
+        .play-btn {
+            width: 34px; height: 34px; border-radius: 999px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s;
+            background: #FFFFFF; color: #0A0A0C; border: none;
+        }
+        .play-btn:hover { background: #E8E8EC; box-shadow: 0 0 16px rgba(255,255,255,0.2); }
+        .step-btn {
+            width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s;
+            background: rgba(255,255,255,0.05); color: #B4B4BD; border: 1px solid #26262B;
+        }
+        .step-btn:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .speed-btn {
+            padding: 5px 10px; border-radius: 7px; font-size: 11.5px; font-weight: 700;
+            color: #8A8A93; background: transparent; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+        }
+        .speed-btn.active { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+        .scrub { -webkit-appearance: none; appearance: none; width: 100%; height: 4px; border-radius: 999px; background: #26262B; outline: none; cursor: pointer; }
+        .scrub::-webkit-slider-thumb { -webkit-appearance: none; width: 12px; height: 12px; border-radius: 999px; background: #34D399; cursor: pointer; box-shadow: 0 0 8px rgba(16,185,129,0.5); }
+        .scrub::-moz-range-thumb { width: 12px; height: 12px; border-radius: 999px; background: #34D399; border: none; cursor: pointer; }
+
+        /* Color pickers */
+        .color-swatch { display: flex; flex-direction: column; gap: 4px; }
+        .color-swatch label { font-size: 10.5px; color: #6E6E78; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .color-swatch input[type="color"] {
+            width: 52px; height: 30px; padding: 0; border: 1px solid #26262B; border-radius: 7px;
+            background: #121214; cursor: pointer;
+        }
+
+        /* Result stat tiles */
+        .stat-tile { background: #121214; border: 1px solid #1F1F23; border-radius: 10px; padding: 10px 12px; }
+        .stat-tile .k { font-size: 10.5px; color: #6E6E78; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; }
+        .stat-tile .v { font-size: 16px; font-weight: 800; margin-top: 3px; }
+        .trade-row {
+            display: flex; align-items: center; gap: 10px; padding: 9px 12px;
+            border-radius: 8px; background: rgba(255,255,255,0.02); border: 1px solid rgba(255,255,255,0.04); font-size: 12px;
+        }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item active"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search instruments, strategies…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed" id="account-chip">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Backtesting</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">
+                                Replay historical candles, stack indicators and run a strategy against your account's risk model.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Toolbar -->
+                    <div class="panel p-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide">Symbol</span>
+                            <select id="symbol-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[180px]"></select>
+                        </div>
+                        <div class="flex items-center gap-1.5" id="tf-bar">
+                            <button class="tf-btn" data-tf="1m">1m</button>
+                            <button class="tf-btn" data-tf="5m">5m</button>
+                            <button class="tf-btn" data-tf="15m">15m</button>
+                            <button class="tf-btn active" data-tf="1h">1H</button>
+                            <button class="tf-btn" data-tf="4h">4H</button>
+                            <button class="tf-btn" data-tf="1d">1D</button>
+                        </div>
+                        <div class="flex items-center gap-1.5 flex-wrap">
+                            <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Indicators</span>
+                            <button class="ind-tag" data-ind="ema">EMA</button>
+                            <button class="ind-tag" data-ind="sma">SMA</button>
+                            <button class="ind-tag" data-ind="bb">Bollinger</button>
+                            <button class="ind-tag" data-ind="vwap">VWAP</button>
+                            <button class="ind-tag" data-ind="rsi">RSI</button>
+                            <button class="ind-tag" data-ind="macd">MACD</button>
+                        </div>
+                        <button class="btn-ghost !py-1.5 !px-3 !text-[12px] ml-auto" id="customize-btn">
+                            <svg data-lucide="palette" class="w-3.5 h-3.5"></svg> Customize colors
+                        </button>
+                    </div>
+
+                    <!-- Color customization -->
+                    <div class="panel p-4 hidden flex-col gap-4" id="color-panel">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="panel-title">Chart Appearance</div>
+                            <div class="flex items-center gap-1.5">
+                                <button class="theme-btn tf-btn" data-theme="obsidian">Obsidian</button>
+                                <button class="theme-btn tf-btn" data-theme="onyx">Onyx</button>
+                                <button class="theme-btn tf-btn" data-theme="classic">Classic</button>
+                                <button class="theme-btn tf-btn" data-theme="light">Light</button>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-5" id="color-swatches"></div>
+                    </div>
+
+                    <!-- Chart card -->
+                    <div class="panel p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                            <div class="flex items-center gap-3">
+                                <div id="asset-badge"></div>
+                                <div>
+                                    <div class="text-[15px] font-bold" id="chart-title">EURUSD · 1H</div>
+                                    <div class="text-[12px] text-[#6E6E78]" id="chart-sub">Loading historical data…</div>
+                                </div>
+                            </div>
+                            <div class="legend-row num" id="ohlc-legend"></div>
+                        </div>
+                        <div class="chart-box" id="chart-box"><div id="chart"></div></div>
+
+                        <!-- Playback bar -->
+                        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
+                            <div class="flex items-center gap-2">
+                                <button class="step-btn" id="step-back" title="Step back"><svg data-lucide="chevrons-left" class="w-4 h-4"></svg></button>
+                                <button class="play-btn" id="play-btn" title="Play / pause"><svg data-lucide="play" class="w-4 h-4 ml-0.5" id="play-ico"></svg></button>
+                                <button class="step-btn" id="step-fwd" title="Step forward"><svg data-lucide="chevrons-right" class="w-4 h-4"></svg></button>
+                                <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" id="live-btn"><svg data-lucide="fast-forward" class="w-3.5 h-3.5"></svg> Latest</button>
+                            </div>
+                            <div class="flex items-center gap-1.5" id="speed-bar">
+                                <button class="speed-btn" data-speed="1">1×</button>
+                                <button class="speed-btn active" data-speed="5">5×</button>
+                                <button class="speed-btn" data-speed="20">20×</button>
+                                <button class="speed-btn" data-speed="60">60×</button>
+                            </div>
+                            <div class="flex-1 flex items-center gap-3 min-w-[220px]">
+                                <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="play-pos">0 / 0</span>
+                                <input type="range" class="scrub" id="scrub" min="0" max="100" value="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Right column: backtest engine + results -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                        <div class="xl:col-span-1 panel p-4 self-start">
+                            <div class="flex items-center justify-between gap-3 mb-3">
+                                <div class="panel-title">Strategy Backtest</div>
+                                <span class="status-badge" style="display:inline-flex;align-items:center;gap:6px;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;background:rgba(16,185,129,0.12);color:#34D399;" id="bt-status">Ready</span>
+                            </div>
+                            <div class="flex flex-col gap-3">
+                                <div>
+                                    <label class="text-[11px] text-[#6E6E78] font-semibold uppercase tracking-wide">Strategy</label>
+                                    <select id="strategy-select" class="w-full bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] mt-1"></select>
+                                </div>
+                                <div class="flex items-center justify-between text-[12.5px] bg-[#121214] border border-[#1F1F23] rounded-lg px-3 py-2">
+                                    <span class="text-[#8A8A93]">Risk per trade</span>
+                                    <span class="num font-bold text-white" id="risk-readout">$25</span>
+                                </div>
+                                <div class="flex items-center justify-between text-[12.5px] bg-[#121214] border border-[#1F1F23] rounded-lg px-3 py-2">
+                                    <span class="text-[#8A8A93]">Risk model</span>
+                                    <span class="num font-bold text-white" id="risk-model-readout">Money · account</span>
+                                </div>
+                                <button class="btn-primary w-full justify-center" id="run-bt">
+                                    <svg data-lucide="play" class="w-4 h-4"></svg> Run backtest
+                                </button>
+                                <p class="text-[11px] text-[#55555E] leading-relaxed">
+                                    EMA(9/21) cross on <span id="bt-symbol-label">EURUSD</span> · stop = 1.5× ATR(14), target = min RR × risk from the active strategy version. Runs against the selected account's risk limits.
+                                </p>
+                            </div>
+
+                            <!-- Results -->
+                            <div class="hidden mt-4 pt-4 border-t border-[#17171A]" id="results-wrap">
+                                <div class="grid grid-cols-2 gap-2" id="results-grid"></div>
+                                <div class="text-[12px] font-bold text-white mt-4 mb-1.5">Equity curve</div>
+                                <div id="equity-chart" class="w-full" style="height:140px"></div>
+                                <div class="text-[12px] font-bold text-white mt-4 mb-1.5">Trades (<span id="trade-count-label">0</span>)</div>
+                                <div class="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto" id="trade-list"></div>
+                            </div>
+                        </div>
+
+                        <div class="xl:col-span-2 panel p-4">
+                            <div class="flex items-center justify-between gap-3 mb-3">
+                                <div class="panel-title">Replay Window</div>
+                                <div class="text-[11.5px] text-[#6E6E78] num" id="window-label">—</div>
+                            </div>
+                            <div class="legend-row num mb-2" id="ind-legend"></div>
+                            <p class="text-[12px] text-[#6E6E78] leading-relaxed">
+                                Scroll to zoom, drag to pan, hover for the crosshair. Press <b>Play</b> to replay the history like a movie —
+                                backtest trades appear as markers on the chart as they are taken.
+                            </p>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Backtesting · deterministic history via /api/backtest/candles · TradingView Lightweight Charts</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+
+            // ---- toast ----
+            let toastTimer;
+            window.showToast = function (msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+
+            // ================= CHART THEME (custom colors, persisted) =================
+            const THEMES = {
+                obsidian: {
+                    bg: '#0F0F11', text: '#B4B4BD', grid: '#1A1A1E', up: '#10B981', down: '#EF4444',
+                    crosshair: '#3A3A41', border: '#1F1F23', volume: '#2A2A31'
+                },
+                onyx: {
+                    bg: '#0A0A0C', text: '#94A3B8', grid: '#141418', up: '#22D3EE', down: '#F43F5E',
+                    crosshair: '#334155', border: '#1E293B', volume: '#1E293B'
+                },
+                classic: {
+                    bg: '#0D0D0F', text: '#B4B4BD', grid: '#18181B', up: '#22C55E', down: '#DC2626',
+                    crosshair: '#3F3F46', border: '#27272A', volume: '#27272A'
+                },
+                light: {
+                    bg: '#F8FAFC', text: '#475569', grid: '#E2E8F0', up: '#059669', down: '#DC2626',
+                    crosshair: '#94A3B8', border: '#CBD5E1', volume: '#CBD5E1'
+                }
+            };
+            const THEME_KEY = '31trades.bt.theme.v1';
+            let theme = Object.assign({}, THEMES.obsidian);
+            try {
+                const saved = JSON.parse(localStorage.getItem(THEME_KEY));
+                if (saved && saved.bg) theme = Object.assign(theme, saved);
+            } catch (e) {}
+
+            // ================= INDICATOR STATE =================
+            const indState = { ema: true, sma: false, bb: true, vwap: false, rsi: true, macd: true };
+            const IND_COLORS = { ema: '#F59E0B', sma: '#38BDF8', bb: '#A78BFA', vwap: '#F472B6', rsi: '#C084FC', macd: '#60A5FA' };
+
+            // ================= CHART =================
+            let chart = null, candleSeries = null, volumeSeries = null;
+            let seriesMarkers = null; // v5 markers primitive (createSeriesMarkers)
+            let indSeries = {};      // name -> series api
+            let candles = [];
+            let currentSymbol = 'EURUSD', currentTF = '1h';
+            let pricePrecision = 5;
+
+            function priceFmt(p) {
+                if (p == null) return '—';
+                return p.toLocaleString('en-US', { minimumFractionDigits: pricePrecision, maximumFractionDigits: pricePrecision });
+            }
+
+            function applyTheme() {
+                if (!chart) return;
+                chart.applyOptions({
+                    layout: { background: { type: 'solid', color: theme.bg }, textColor: theme.text },
+                    grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+                    rightPriceScale: { borderColor: theme.border },
+                    timeScale: { borderColor: theme.border },
+                    crosshair: {
+                        vertLine: { color: theme.crosshair, labelBackgroundColor: theme.crosshair },
+                        horzLine: { color: theme.crosshair, labelBackgroundColor: theme.crosshair }
+                    }
+                });
+                if (candleSeries) candleSeries.applyOptions({
+                    upColor: theme.up, downColor: theme.down,
+                    borderUpColor: theme.up, borderDownColor: theme.down,
+                    wickUpColor: theme.up, wickDownColor: theme.down
+                });
+                if (volumeSeries) volumeSeries.applyOptions({ color: theme.volume });
+            }
+
+            function buildChart() {
+                const el = $('chart');
+                el.innerHTML = '';
+                chart = LightweightCharts.createChart(el, {
+                    height: 460,
+                    layout: { background: { type: 'solid', color: theme.bg }, textColor: theme.text, fontFamily: "'JetBrains Mono', monospace" },
+                    grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+                    rightPriceScale: { borderColor: theme.border, scaleMargins: { top: 0.08, bottom: 0.22 } },
+                    timeScale: { borderColor: theme.border, timeVisible: true, secondsVisible: false, rightOffset: 4 },
+                    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                    localization: { priceFormatter: p => priceFmt(p) }
+                });
+                candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+                    upColor: theme.up, downColor: theme.down,
+                    borderUpColor: theme.up, borderDownColor: theme.down,
+                    wickUpColor: theme.up, wickDownColor: theme.down
+                });
+                seriesMarkers = LightweightCharts.createSeriesMarkers(candleSeries, []);
+                volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
+                    priceFormat: { type: 'volume' }, priceScaleId: '',
+                    lastValueVisible: false, priceLineVisible: false
+                });
+                volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.86, bottom: 0 } });
+
+                chart.subscribeCrosshairMove(param => {
+                    const d = param && param.seriesData && param.seriesData.get(candleSeries);
+                    renderLegend(d, param.time);
+                });
+                new ResizeObserver(() => {
+                    if (chart) chart.applyOptions({ width: el.clientWidth });
+                }).observe(el);
+            }
+
+            function addIndicatorSeries(key, opts) {
+                if (!chart) return null;
+                try {
+                    const s = chart.addSeries(LightweightCharts.LineSeries, Object.assign({}, opts));
+                    indSeries[key] = s;
+                    return s;
+                } catch (e) { return null; }
+            }
+
+            // ================= INDICATOR MATH (pure functions) =================
+            function smaArr(values, n) {
+                const out = new Array(values.length).fill(null);
+                let sum = 0;
+                for (let i = 0; i < values.length; i++) {
+                    sum += values[i];
+                    if (i >= n) sum -= values[i - n];
+                    if (i >= n - 1) out[i] = sum / n;
+                }
+                return out;
+            }
+            function emaArr(values, n) {
+                const out = new Array(values.length).fill(null);
+                if (values.length < n) return out;
+                const k = 2 / (n + 1);
+                let prev = 0;
+                for (let i = 0; i < n; i++) prev += values[i];
+                prev /= n;
+                out[n - 1] = prev;
+                for (let i = n; i < values.length; i++) { prev = values[i] * k + prev * (1 - k); out[i] = prev; }
+                return out;
+            }
+            function rsiArr(values, n) {
+                const out = new Array(values.length).fill(null);
+                let gain = 0, loss = 0;
+                for (let i = 1; i <= n && i < values.length; i++) {
+                    const ch = values[i] - values[i - 1];
+                    if (ch >= 0) gain += ch; else loss -= ch;
+                }
+                if (n < values.length) {
+                    gain /= n; loss /= n;
+                    out[n] = loss === 0 ? 100 : 100 - 100 / (1 + gain / loss);
+                }
+                for (let i = n + 1; i < values.length; i++) {
+                    const ch = values[i] - values[i - 1];
+                    gain = (gain * (n - 1) + Math.max(ch, 0)) / n;
+                    loss = (loss * (n - 1) + Math.max(-ch, 0)) / n;
+                    out[i] = loss === 0 ? 100 : 100 - 100 / (1 + gain / loss);
+                }
+                return out;
+            }
+            function macdArr(values, fast, slow, sig) {
+                const ef = emaArr(values, fast), es = emaArr(values, slow);
+                const line = values.map((_, i) => (ef[i] != null && es[i] != null) ? ef[i] - es[i] : null);
+                const valid = line.map((v, i) => v == null ? null : i).filter(i => i != null);
+                const signal = new Array(values.length).fill(null);
+                if (valid.length >= sig) {
+                    const k = 2 / (sig + 1);
+                    let prev = 0;
+                    for (let j = 0; j < sig; j++) prev += line[valid[j]];
+                    prev /= sig;
+                    signal[valid[sig - 1]] = prev;
+                    for (let j = sig; j < valid.length; j++) {
+                        prev = line[valid[j]] * k + prev * (1 - k);
+                        signal[valid[j]] = prev;
+                    }
+                }
+                const hist = values.map((_, i) => (line[i] != null && signal[i] != null) ? line[i] - signal[i] : null);
+                return { line, signal, hist };
+            }
+            function bbArr(values, n, mult) {
+                const mid = smaArr(values, n);
+                const up = new Array(values.length).fill(null), lo = new Array(values.length).fill(null);
+                for (let i = n - 1; i < values.length; i++) {
+                    let sum = 0;
+                    for (let j = i - n + 1; j <= i; j++) sum += (values[j] - mid[i]) * (values[j] - mid[i]);
+                    const sd = Math.sqrt(sum / n);
+                    up[i] = mid[i] + mult * sd; lo[i] = mid[i] - mult * sd;
+                }
+                return { up, mid, lo };
+            }
+            function atrArr(cs, n) {
+                const tr = new Array(cs.length).fill(null);
+                for (let i = 0; i < cs.length; i++) {
+                    if (i === 0) { tr[i] = cs[i].high - cs[i].low; continue; }
+                    tr[i] = Math.max(
+                        cs[i].high - cs[i].low,
+                        Math.abs(cs[i].high - cs[i - 1].close),
+                        Math.abs(cs[i].low - cs[i - 1].close)
+                    );
+                }
+                const out = new Array(cs.length).fill(null);
+                let prev = 0;
+                for (let i = 0; i < n && i < cs.length; i++) prev += tr[i];
+                if (n <= cs.length) {
+                    prev /= n; out[n - 1] = prev;
+                    for (let i = n; i < cs.length; i++) { prev = (prev * (n - 1) + tr[i]) / n; out[i] = prev; }
+                }
+                return out;
+            }
+
+            // ================= INDICATOR RENDERING =================
+            function computeAll() {
+                const closes = candles.map(c => c.close);
+                const out = { closes };
+                out.ema20 = emaArr(closes, 20); out.ema50 = emaArr(closes, 50);
+                out.sma20 = smaArr(closes, 20);
+                out.rsi = rsiArr(closes, 14);
+                out.macd = macdArr(closes, 12, 26, 9);
+                out.bb = bbArr(closes, 20, 2);
+                // session-agnostic anchored VWAP over the whole window
+                const vw = new Array(closes.length).fill(null);
+                let cp = 0, cv = 0;
+                for (let i = 0; i < candles.length; i++) {
+                    const tp = (candles[i].high + candles[i].low + candles[i].close) / 3;
+                    cp += tp * candles[i].volume; cv += candles[i].volume;
+                    vw[i] = cv ? cp / cv : null;
+                }
+                out.vwap = vw;
+                return out;
+            }
+
+            function rebuildIndicators(full) {
+                const data = full ? candles : candles.slice(0, playback.step);
+                Object.keys(indSeries).forEach(k => {
+                    try { chart.removeSeries(indSeries[k]); } catch (e) {}
+                });
+                indSeries = {};
+                if (!indState.ema) { renderIndLegend(); return; }
+                const calc = computeAll();
+                if (indState.ema) {
+                    addIndicatorSeries('ema20', { color: '#F59E0B', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'EMA 20' }).setData(pack(data, calc.ema20));
+                    addIndicatorSeries('ema50', { color: '#F59E0B', lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false, title: 'EMA 50' }).setData(pack(data, calc.ema50));
+                }
+                if (indState.sma) {
+                    addIndicatorSeries('sma20', { color: '#38BDF8', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'SMA 20' }).setData(pack(data, calc.sma20));
+                }
+                if (indState.bb) {
+                    addIndicatorSeries('bbu', { color: '#A78BFA', lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false, title: 'BB up' }).setData(pack(data, calc.bb.up));
+                    addIndicatorSeries('bbl', { color: '#A78BFA', lineWidth: 1, lineStyle: 2, priceLineVisible: false, lastValueVisible: false, title: 'BB low' }).setData(pack(data, calc.bb.lo));
+                }
+                if (indState.vwap) {
+                    addIndicatorSeries('vwap', { color: '#F472B6', lineWidth: 1, priceLineVisible: false, lastValueVisible: false, title: 'VWAP' }).setData(pack(data, calc.vwap));
+                }
+                if (indState.rsi) {
+                    addIndicatorSeries('rsi', { color: '#C084FC', lineWidth: 1, priceScaleId: 'rsi', priceLineVisible: false, lastValueVisible: false, title: 'RSI 14' }).setData(pack(data, calc.rsi));
+                    chart.priceScale('rsi').applyOptions({ scaleMargins: { top: 0.78, bottom: 0 }, visible: false });
+                }
+                if (indState.macd) {
+                    const m = calc.macd;
+                    addIndicatorSeries('macd', { color: '#60A5FA', lineWidth: 1, priceScaleId: 'macd', priceLineVisible: false, lastValueVisible: false, title: 'MACD' }).setData(pack(data, m.line));
+                    addIndicatorSeries('macdsig', { color: '#F59E0B', lineWidth: 1, priceScaleId: 'macd', priceLineVisible: false, lastValueVisible: false, title: 'Signal' }).setData(pack(data, m.signal));
+                    chart.priceScale('macd').applyOptions({ scaleMargins: { top: 0.86, bottom: 0 }, visible: false });
+                }
+                renderIndLegend();
+            }
+
+            function pack(data, arr) {
+                const out = [];
+                for (let i = 0; i < data.length; i++) {
+                    const v = arr[i];
+                    if (v == null) continue;
+                    out.push({ time: data[i].time, value: v });
+                }
+                return out;
+            }
+
+            function renderIndLegend() {
+                const el = $('ind-legend');
+                const parts = [];
+                if (indState.ema) parts.push('<span class="legend-item"><span class="sw" style="background:#F59E0B"></span>EMA 20/50</span>');
+                if (indState.sma) parts.push('<span class="legend-item"><span class="sw" style="background:#38BDF8"></span>SMA 20</span>');
+                if (indState.bb) parts.push('<span class="legend-item"><span class="sw" style="background:#A78BFA"></span>BB 20,2</span>');
+                if (indState.vwap) parts.push('<span class="legend-item"><span class="sw" style="background:#F472B6"></span>VWAP</span>');
+                if (indState.rsi) parts.push('<span class="legend-item"><span class="sw" style="background:#C084FC"></span>RSI 14</span>');
+                if (indState.macd) parts.push('<span class="legend-item"><span class="sw" style="background:#60A5FA"></span>MACD 12/26/9</span>');
+                el.innerHTML = parts.length ? parts.join('') : '<span class="text-[#55555E]">No indicators enabled</span>';
+            }
+
+            // ================= LEGEND =================
+            function renderLegend(bar, time) {
+                const el = $('ohlc-legend');
+                if (!bar || bar.close == null) {
+                    const last = candles[candles.length - 1];
+                    if (last) {
+                        el.innerHTML =
+                            '<span class="legend-item num"><span class="sw" style="background:' + theme.up + '"></span>O <b>' + priceFmt(last.open) + '</b></span>' +
+                            '<span class="legend-item num"><span class="sw" style="background:' + theme.up + '"></span>H <b>' + priceFmt(last.high) + '</b></span>' +
+                            '<span class="legend-item num"><span class="sw" style="background:' + theme.down + '"></span>L <b>' + priceFmt(last.low) + '</b></span>' +
+                            '<span class="legend-item num"><span class="sw" style="background:' + theme.up + '"></span>C <b>' + priceFmt(last.close) + '</b></span>' +
+                            '<span class="legend-item num text-[#6E6E78]">Vol <b>' + (last.volume || 0).toLocaleString() + '</b></span>';
+                    }
+                    return;
+                }
+                const up = bar.close >= bar.open;
+                const col = up ? theme.up : theme.down;
+                el.innerHTML =
+                    '<span class="legend-item num"><span class="sw" style="background:' + col + '"></span>O <b>' + priceFmt(bar.open) + '</b></span>' +
+                    '<span class="legend-item num"><span class="sw" style="background:' + col + '"></span>H <b>' + priceFmt(bar.high) + '</b></span>' +
+                    '<span class="legend-item num"><span class="sw" style="background:' + col + '"></span>L <b>' + priceFmt(bar.low) + '</b></span>' +
+                    '<span class="legend-item num"><span class="sw" style="background:' + col + '"></span>C <b>' + priceFmt(bar.close) + '</b></span>';
+            }
+
+            // ================= PLAYBACK ENGINE =================
+            const playback = { step: 0, total: 0, playing: false, speed: 5, timer: null, visible: 90 };
+            const SPEED_MULT = { 1: 1, 5: 3, 20: 10, 60: 25 };
+
+            function stopPlayback() {
+                playback.playing = false;
+                if (playback.timer) { clearInterval(playback.timer); playback.timer = null; }
+                updatePlayIco();
+            }
+            function startPlayback() {
+                if (playback.step >= playback.total) playback.step = Math.min(60, playback.total);
+                playback.playing = true;
+                if (playback.timer) clearInterval(playback.timer);
+                playback.timer = setInterval(() => {
+                    if (!playback.playing) return;
+                    playback.step = Math.min(playback.total, playback.step + SPEED_MULT[playback.speed] || 3);
+                    applyStep();
+                    if (playback.step >= playback.total) stopPlayback();
+                }, 150);
+                updatePlayIco();
+            }
+            function updatePlayIco() {
+                $('play-ico').setAttribute('data-lucide', playback.playing ? 'pause' : 'play');
+                if (window.lucide) lucide.createIcons();
+            }
+            function applyStep() {
+                const data = candles.slice(0, playback.step);
+                candleSeries.setData(data.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close })));
+                volumeSeries.setData(data.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? theme.up : theme.down })));
+                rebuildIndicators(false);
+                if (window.__btMarkers && seriesMarkers) seriesMarkers.setMarkers(window.__btMarkers.filter(m => m.time <= (data.length ? data[data.length - 1].time : Infinity)));
+                $('play-pos').textContent = playback.step + ' / ' + playback.total;
+                $('scrub').value = playback.total ? Math.round(playback.step / playback.total * 100) : 0;
+                $('window-label').textContent = data.length ? new Date(data[data.length - 1].time * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '—';
+                if (playback.step < playback.total && playback.playing) {
+                    const from = Math.max(0, playback.step - playback.visible);
+                    chart.timeScale().setVisibleLogicalRange({ from, to: playback.step });
+                }
+                renderLegend(null);
+            }
+            function toLatest() {
+                stopPlayback();
+                playback.step = playback.total;
+                applyStep();
+                chart.timeScale().fitContent();
+            }
+
+            // ================= DATA LOADING =================
+            async function loadData() {
+                stopPlayback();
+                $('chart-sub').textContent = 'Loading ' + currentSymbol + ' · ' + currentTF + ' history…';
+                try {
+                    const res = await fetch('/api/backtest/candles?symbol=' + encodeURIComponent(currentSymbol) + '&timeframe=' + currentTF);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const data = await res.json();
+                    if (!data || !Array.isArray(data.candles) || !data.candles.length) throw new Error('empty series');
+                    candles = data.candles;
+                    pricePrecision = candles[0].close < 1 ? 6 : candles[0].close < 100 ? 3 : candles[0].close < 1000 ? 2 : 1;
+                    buildChart();
+                    applyTheme();
+                    playback.total = candles.length;
+                    playback.step = candles.length;
+                    applyStep();
+                    chart.timeScale().fitContent();
+                    $('chart-title').textContent = currentSymbol + ' · ' + currentTF;
+                    $('chart-sub').textContent = data.meta && data.meta.category ? data.meta.category + ' · ' + candles.length + ' bars · deterministic history' : candles.length + ' bars';
+                    $('bt-symbol-label').textContent = currentSymbol;
+                    renderAssetBadge();
+                    renderRiskReadout();
+                    renderStrategyOptions();
+                    if ($('results-wrap').classList.contains('hidden') === false) runBacktest();
+                } catch (e) {
+                    $('chart-sub').textContent = 'Failed to load history: ' + e.message;
+                    showToast('Could not load candles — is the server running?');
+                }
+            }
+
+            function renderAssetBadge() {
+                const el = $('asset-badge');
+                el.innerHTML = '';
+                try {
+                    const id = window.TMAssets && window.TMAssets.identityFor(currentSymbol);
+                    if (id && id.badge) { el.innerHTML = id.badge; return; }
+                } catch (e) {}
+                el.innerHTML = '<span class="num text-[13px] font-bold text-white">' + currentSymbol + '</span>';
+            }
+
+            // ================= STRATEGY BACKTEST (client, canonical risk) =================
+            let btTrades = [];
+            function selectedAccount() {
+                const core = window.TradeMindCore;
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                const id = core.selectedAccountId ? core.selectedAccountId() : null;
+                return core.Accounts.find(a => a.id === id) || core.Accounts[0];
+            }
+            function accountPolicy(acc) {
+                const core = window.TradeMindCore;
+                if (!core || !core.ConfigVersions) return null;
+                return core.ConfigVersions.find(cv => cv.entity_type === 'RiskPolicy' && cv.entity_id === (acc && acc.id)) || null;
+            }
+            function riskPerTradeMoney(acc, pol) {
+                const core = window.TradeMindCore;
+                const accR = acc && (acc.riskPerTrade != null ? acc.riskPerTrade : null);
+                const polR = pol && pol.values && pol.values.riskPerTrade;
+                let risk = accR != null ? accR : polR;
+                let basis = (acc && acc.riskBasis) || (pol && pol.values && pol.values.riskBasis) || 'money';
+                if (basis === 'pct' || String(risk).indexOf('%') !== -1) {
+                    const pct = parseFloat(String(risk).replace('%', '')) / 100;
+                    risk = (acc && acc.starting_balance ? acc.starting_balance : 10000) * pct;
+                    basis = 'money';
+                }
+                return { risk: Number(risk) || 25, basis };
+            }
+            function renderRiskReadout() {
+                const acc = selectedAccount();
+                const pol = accountPolicy(acc);
+                const r = riskPerTradeMoney(acc, pol);
+                $('risk-readout').textContent = '$' + r.risk.toLocaleString();
+                $('risk-model-readout').textContent = r.basis === 'pct' ? 'Percent · account' : 'Money · ' + (acc ? acc.name : 'account');
+            }
+            function renderStrategyOptions() {
+                const core = window.TradeMindCore;
+                const sel = $('strategy-select');
+                let html = '<option value="__ema">EMA Cross (9/21) — default</option>';
+                if (core && core.StrategyMaster && core.StrategyMaster.length) {
+                    core.StrategyMaster.forEach(s => {
+                        html += '<option value="' + s.id + '">' + s.name + '</option>';
+                    });
+                }
+                sel.innerHTML = html;
+            }
+
+            function runBacktest() {
+                const core = window.TradeMindCore;
+                if (!candles.length) return showToast('Load a chart first');
+                const acc = selectedAccount();
+                const pol = accountPolicy(acc);
+                const r = riskPerTradeMoney(acc, pol);
+                const risk = r.risk;
+
+                // strategy params: EMA cross + ATR stop, RR from the strategy version
+                const stratSel = $('strategy-select').value;
+                let minRR = 2, stopMult = 1.5;
+                if (stratSel !== '__ema' && core && core.ConfigVersions) {
+                    const cv = core.ConfigVersions.find(x => x.entity_type === 'Strategy' && x.entity_id === stratSel);
+                    const rr = cv && cv.values && cv.values.risk && cv.values.risk.minRR;
+                    if (rr) minRR = Number(rr);
+                }
+
+                const closes = candles.map(c => c.close);
+                const emaF = emaArr(closes, 9), emaS = emaArr(closes, 21);
+                const atr = atrArr(candles, 14);
+                const trades = [];
+                let pos = null, equity = 0, peak = 0, maxDD = 0, net = 0;
+
+                for (let i = 21; i < candles.length; i++) {
+                    if (!pos) {
+                        const crossUp = emaF[i - 1] <= emaS[i - 1] && emaF[i] > emaS[i];
+                        const crossDn = emaF[i - 1] >= emaS[i - 1] && emaF[i] < emaS[i];
+                        if ((crossUp || crossDn) && atr[i] != null) {
+                            const long = crossUp;
+                            const entry = candles[i + 1] ? candles[i + 1].open : candles[i].close;
+                            const stopDist = Math.max(atr[i] * stopMult, entry * 0.0005);
+                            const sl = long ? entry - stopDist : entry + stopDist;
+                            const tp = long ? entry + stopDist * minRR : entry - stopDist * minRR;
+                            const size = stopDist > 0 ? risk / stopDist : 1;
+                            pos = { long, entry, sl, tp, size, risk, dir: long ? 'Long' : 'Short', entryTime: candles[i + 1] ? candles[i + 1].time : candles[i].time };
+                            continue;
+                        }
+                        continue;
+                    }
+                    const bar = candles[i];
+                    let exit = null, rMult = 0;
+                    if (pos.long) {
+                        if (bar.low <= pos.sl) { exit = pos.sl; rMult = -(pos.entry - pos.sl) / (pos.entry - pos.sl); }
+                        else if (bar.high >= pos.tp) { exit = pos.tp; rMult = (pos.tp - pos.entry) / (pos.entry - pos.sl); }
+                    } else {
+                        if (bar.high >= pos.sl) { exit = pos.sl; rMult = (pos.entry - pos.sl) / (pos.sl - pos.entry); }
+                        else if (bar.low <= pos.tp) { exit = pos.tp; rMult = (pos.entry - pos.tp) / (pos.sl - pos.entry); }
+                    }
+                    if (exit != null) {
+                        const pnl = pos.risk * rMult;
+                        trades.push({
+                            time: bar.time, entryTime: pos.entryTime, exitTime: bar.time,
+                            dir: pos.dir, entry: pos.entry, exit, sl: pos.sl, tp: pos.tp, risk: pos.risk, r: rMult, pnl
+                        });
+                        net += pnl; equity += pnl;
+                        if (equity > peak) peak = equity;
+                        maxDD = Math.max(maxDD, peak - equity);
+                        pos = null;
+                        continue;
+                    }
+                    if (i === candles.length - 1 && pos) {
+                        const exit = bar.close;
+                        const rMult = pos.long
+                            ? (exit - pos.entry) / (pos.entry - pos.sl)
+                            : (pos.entry - exit) / (pos.sl - pos.entry);
+                        const pnl = pos.risk * rMult;
+                        trades.push({ time: bar.time, entryTime: pos.entryTime, exitTime: bar.time, dir: pos.dir, entry: pos.entry, exit, sl: pos.sl, tp: pos.tp, risk: pos.risk, r: rMult, pnl });
+                        net += pnl; equity += pnl;
+                        if (equity > peak) peak = equity;
+                        maxDD = Math.max(maxDD, peak - equity);
+                        pos = null;
+                    }
+                }
+
+                btTrades = trades;
+                renderResults(trades, { net, maxDD, risk, minRR });
+                drawMarkers(trades);
+                drawEquity(trades);
+            }
+
+            function renderResults(trades, meta) {
+                const wrap = $('results-wrap');
+                wrap.classList.remove('hidden');
+                $('bt-status').textContent = trades.length + ' trades';
+                $('bt-status').style.color = '#34D399';
+                const wins = trades.filter(t => t.r > 0).length;
+                const losses = trades.filter(t => t.r <= 0).length;
+                const grossP = trades.filter(t => t.pnl > 0).reduce((a, t) => a + t.pnl, 0);
+                const grossL = Math.abs(trades.filter(t => t.pnl <= 0).reduce((a, t) => a + t.pnl, 0));
+                const winRate = trades.length ? wins / trades.length : 0;
+                const pf = grossL ? grossP / grossL : (grossP > 0 ? Infinity : 0);
+                const expect = trades.length ? trades.reduce((a, t) => a + t.r, 0) / trades.length : 0;
+                const stats = [
+                    { k: 'Net P&L', v: (meta.net >= 0 ? '+' : '') + '$' + Math.round(meta.net).toLocaleString(), c: meta.net >= 0 ? '#34D399' : '#F87171' },
+                    { k: 'Win rate', v: (winRate * 100).toFixed(0) + '%', c: '#FFFFFF' },
+                    { k: 'Profit factor', v: pf === Infinity ? '∞' : pf.toFixed(2), c: pf >= 1 ? '#34D399' : '#F87171' },
+                    { k: 'Expectancy', v: (expect >= 0 ? '+' : '') + expect.toFixed(2) + 'R', c: expect >= 0 ? '#34D399' : '#F87171' },
+                    { k: 'Max drawdown', v: '-$' + Math.round(meta.maxDD).toLocaleString(), c: '#FBBF24' },
+                    { k: 'Trades', v: String(trades.length), c: '#FFFFFF' },
+                    { k: 'Risk / trade', v: '$' + meta.risk.toLocaleString(), c: '#8A8A93' },
+                    { k: 'Min R:R', v: meta.minRR.toFixed(1) + 'R', c: '#8A8A93' }
+                ];
+                $('results-grid').innerHTML = stats.map(s =>
+                    '<div class="stat-tile"><div class="k">' + s.k + '</div><div class="v num" style="color:' + s.c + '">' + s.v + '</div></div>'
+                ).join('');
+                $('trade-count-label').textContent = trades.length;
+                const list = trades.slice().reverse().slice(0, 40).map(t => {
+                    const col = t.r >= 0 ? '#34D399' : '#F87171';
+                    return '<div class="trade-row">' +
+                        '<span class="num text-[11px] font-bold" style="color:' + (t.dir === 'Long' ? '#34D399' : '#F87171') + '">' + t.dir + '</span>' +
+                        '<span class="num text-[11px] text-[#8A8A93]">' + new Date(t.exitTime * 1000).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + '</span>' +
+                        '<span class="num flex-1 text-[11px] text-[#6E6E78] truncate">' + priceFmt(t.entry) + ' → ' + priceFmt(t.exit) + '</span>' +
+                        '<span class="num text-[11px] font-bold" style="color:' + col + '">' + (t.r >= 0 ? '+' : '') + t.r.toFixed(2) + 'R</span>' +
+                        '<span class="num text-[11px] font-bold" style="color:' + col + '">' + (t.pnl >= 0 ? '+' : '') + '$' + Math.round(t.pnl).toLocaleString() + '</span>' +
+                    '</div>';
+                }).join('');
+                $('trade-list').innerHTML = list || '<div class="text-[12px] text-[#6E6E78]">No trades generated — adjust strategy or timeframe.</div>';
+            }
+
+            function drawMarkers(trades) {
+                const markers = trades.map(t => {
+                    const long = t.dir === 'Long';
+                    return {
+                        time: t.entryTime,
+                        position: long ? 'belowBar' : 'aboveBar',
+                        color: long ? '#10B981' : '#EF4444',
+                        shape: long ? 'arrowUp' : 'arrowDown',
+                        text: (t.r >= 0 ? '+' : '') + t.r.toFixed(1) + 'R'
+                    };
+                });
+                window.__btMarkers = markers;
+                if (seriesMarkers) seriesMarkers.setMarkers(markers.filter(m => m.time <= (candles[playback.step - 1] ? candles[playback.step - 1].time : Infinity)));
+            }
+
+            function drawEquity(trades) {
+                const el = $('equity-chart');
+                el.innerHTML = '';
+                let eq = 0;
+                const pts = trades.map(t => { eq += t.pnl; return { time: t.exitTime, value: Math.round(eq) }; });
+                const c = LightweightCharts.createChart(el, {
+                    height: 140,
+                    layout: { background: { type: 'solid', color: theme.bg }, textColor: theme.text, fontFamily: "'JetBrains Mono', monospace" },
+                    grid: { vertLines: { color: theme.grid }, horzLines: { color: theme.grid } },
+                    rightPriceScale: { borderColor: theme.border },
+                    timeScale: { borderColor: theme.border, timeVisible: true, secondsVisible: false },
+                    localization: { priceFormatter: p => '$' + Math.round(p).toLocaleString() }
+                });
+                const s = c.addSeries(LightweightCharts.AreaSeries, { color: theme.up, topColor: 'rgba(16,185,129,0.25)', bottomColor: 'rgba(16,185,129,0.02)', lineWidth: 2, priceLineVisible: false, lastValueVisible: false });
+                s.setData(pts);
+                c.timeScale().fitContent();
+                el.__lc = c;
+            }
+
+            // ================= COLOR CUSTOMIZATION =================
+            function renderSwatches() {
+                const fields = [
+                    { key: 'bg', label: 'Background' }, { key: 'text', label: 'Text' }, { key: 'grid', label: 'Grid' },
+                    { key: 'up', label: 'Up candle' }, { key: 'down', label: 'Down candle' }, { key: 'crosshair', label: 'Crosshair' }
+                ];
+                $('color-swatches').innerHTML = fields.map(f =>
+                    '<div class="color-swatch"><label>' + f.label + '</label>' +
+                    '<input type="color" data-key="' + f.key + '" value="' + theme[f.key] + '"></div>'
+                ).join('');
+                $('color-swatches').querySelectorAll('input').forEach(inp => {
+                    inp.addEventListener('input', () => {
+                        theme[inp.dataset.key] = inp.value;
+                        applyTheme();
+                        applyStep();
+                        saveTheme();
+                    });
+                });
+            }
+            function saveTheme() {
+                try { localStorage.setItem(THEME_KEY, JSON.stringify(theme)); } catch (e) {}
+            }
+            function applyPreset(name) {
+                theme = Object.assign({}, THEMES[name] || THEMES.obsidian);
+                saveTheme();
+                applyTheme();
+                applyStep();
+                renderSwatches();
+                showToast('Chart theme: ' + name.charAt(0).toUpperCase() + name.slice(1));
+            }
+
+            // ================= SYMBOL PICKER =================
+            function buildSymbolPicker() {
+                const sel = $('symbol-select');
+                if (!window.TMAssets || !window.TMAssets.SYMBOLS) return;
+                let html = '';
+                window.TMAssets.CATEGORIES.forEach(cat => {
+                    const syms = window.TMAssets.SYMBOLS.filter(s => s.cat === cat);
+                    if (!syms.length) return;
+                    html += '<optgroup label="' + cat + '">' + syms.map(s => '<option value="' + s.sym + '">' + s.sym + ' — ' + s.name + '</option>').join('') + '</optgroup>';
+                });
+                sel.innerHTML = html;
+                sel.value = currentSymbol;
+                sel.addEventListener('change', () => {
+                    currentSymbol = sel.value;
+                    loadData();
+                });
+            }
+
+            // ================= INIT =================
+            function boot() {
+                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+                // toolbar
+                $('tf-bar').querySelectorAll('.tf-btn').forEach(b => b.addEventListener('click', () => {
+                    $('tf-bar').querySelectorAll('.tf-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    currentTF = b.dataset.tf;
+                    loadData();
+                }));
+                document.querySelectorAll('.ind-tag').forEach(t => t.addEventListener('click', () => {
+                    const k = t.dataset.ind;
+                    indState[k] = !indState[k];
+                    t.classList.toggle('on', indState[k]);
+                    applyStep();
+                }));
+                document.querySelectorAll('.ind-tag').forEach(t => t.classList.toggle('on', indState[t.dataset.ind]));
+
+                // playback
+                $('play-btn').addEventListener('click', () => playback.playing ? stopPlayback() : startPlayback());
+                $('step-back').addEventListener('click', () => { stopPlayback(); playback.step = Math.max(30, playback.step - 1); applyStep(); });
+                $('step-fwd').addEventListener('click', () => { stopPlayback(); playback.step = Math.min(playback.total, playback.step + 1); applyStep(); });
+                $('live-btn').addEventListener('click', toLatest);
+                document.querySelectorAll('#speed-bar .speed-btn').forEach(b => b.addEventListener('click', () => {
+                    document.querySelectorAll('#speed-bar .speed-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    playback.speed = Number(b.dataset.speed);
+                }));
+                $('scrub').addEventListener('input', () => {
+                    stopPlayback();
+                    playback.step = Math.max(30, Math.round($('scrub').value / 100 * playback.total));
+                    applyStep();
+                });
+
+                // colors
+                $('customize-btn').addEventListener('click', () => {
+                    const p = $('color-panel');
+                    p.classList.toggle('hidden');
+                    p.classList.toggle('flex');
+                    if (!p.classList.contains('hidden')) renderSwatches();
+                });
+                document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => applyPreset(b.dataset.theme)));
+
+                // backtest
+                $('run-bt').addEventListener('click', runBacktest);
+                $('strategy-select').addEventListener('change', renderRiskReadout);
+
+                // account chip
+                const core = window.TradeMindCore;
+                if (core && core.selectedAccountId) {
+                    const sel = core.selectedAccountId();
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    const chip = $('account-chip');
+                    if (acc && chip) {
+                        const numEl = chip.querySelector('.num');
+                        if (numEl) numEl.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
+                        const spans = chip.querySelectorAll('span');
+                        if (spans.length > 2) spans[2].textContent = acc.name;
+                    }
+                }
+
+                buildSymbolPicker();
+                renderRiskReadout();
+                renderStrategyOptions();
+                renderIndLegend();
+                if (window.lucide) lucide.createIcons();
+                loadData();
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+        })();
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>
