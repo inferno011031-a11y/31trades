@@ -151,6 +151,9 @@ console.log('\n== Notifications engine ==');
     const ids = out.filter(n => n.cat === 'Onboarding').map(n => n.id);
     ok(ids.indexOf('onb-review') !== -1, 'unreviewed trade → review checklist step');
     ok(ids.indexOf('onb-broker') !== -1, 'no broker connected → broker checklist step');
+    const b = out.find(n => n.id === 'onb-broker');
+    ok(b && b.action && b.action.kind === 'broker-picker' && b.action.label === 'Connect broker',
+        'broker step carries the broker-picker inline action');
     const r = out.find(n => n.id === 'onb-review');
     ok(r && r.href === 'journal.html?view=unreviewed', 'review step links to the unreviewed journal view');
 }

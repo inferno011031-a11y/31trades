@@ -92,7 +92,8 @@ function buildNotifications(Core, accountId, opts) {
             steps.push({
                 id: 'onb-broker', title: 'Connect a broker',
                 body: 'Auto-import live trades from MetaTrader, TradingView, cTrader and more — or keep logging manually.',
-                href: 'journal.html'
+                href: 'journal.html',
+                action: { kind: 'broker-picker', label: 'Connect broker' }
             });
         }
     }
@@ -101,7 +102,10 @@ function buildNotifications(Core, accountId, opts) {
             id: s.id, cat: 'Onboarding', sev: SEV.info, at: nowISO(),
             icon: i === 0 ? 'rocket' : i === 1 ? 'beaker' : i === 2 ? 'book-open' : i === 3 ? 'clipboard-check' : 'plug',
             tint: 'emerald',
-            title: s.title, body: s.body, href: s.href
+            title: s.title, body: s.body, href: s.href,
+            // the broker step carries an inline action: opens the broker picker
+            // and calls POST /api/brokers/connect — no page navigation needed.
+            action: s.action || null
         });
     });
 
