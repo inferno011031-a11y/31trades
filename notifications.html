@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Notifications</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="demo-trades.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0C; color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+        .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        /* App shell */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        .logo-badge {
+            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #052E1F; font-weight: 800; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .collapse-btn {
+            background: none; border: none; color: #6E6E78; cursor: pointer;
+            padding: 6px; border-radius: 6px; transition: all 0.15s;
+        }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: #FFFFFF;
+            box-shadow: inset 2px 0 0 #10B981;
+        }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .btn-danger {
+            background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s;
+        }
+        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+
+        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+
+        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
+        .tag-emerald { background: rgba(16,185,129,0.12); color: #34D399; }
+        .tag-red { background: rgba(239,68,68,0.12); color: #F87171; }
+        .tag-amber { background: rgba(245,158,11,0.12); color: #FBBF24; }
+        .tag-blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
+        .tag-purple { background: rgba(139,92,246,0.12); color: #A78BFA; }
+        .tag-gray { background: rgba(148,163,184,0.12); color: #94A3B8; }
+
+        .ins-tab {
+            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
+            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        }
+        .ins-tab:hover { color: #E8E8EC; }
+        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+
+        .notif-row { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #17171A; transition: background 0.12s; cursor: pointer; }
+        .notif-row:hover { background: rgba(255,255,255,0.03); }
+        .notif-row:last-child { border-bottom: none; }
+        .notif-ico {
+            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .notif-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; margin-top: 6px; }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item active"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search notifications…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed" id="account-chip">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1100px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Notifications</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">
+                                Alerts, breaches, review reminders and market events — derived from the same data as every screen.
+                            </p>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <button id="mark-all" class="btn-ghost">
+                                <svg data-lucide="check-check" class="w-4 h-4"></svg> Mark all read
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Unread summary -->
+                    <div id="summary" class="hidden"></div>
+
+                    <!-- Filter tabs -->
+                    <div class="flex gap-1.5 overflow-x-auto pb-1" id="notif-tabs"></div>
+
+                    <!-- Notification list -->
+                    <div class="panel overflow-hidden">
+                        <div id="notif-list" class="flex flex-col">
+                            <div class="py-16 text-center text-[13px] text-[#6E6E78]">Loading notifications…</div>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Notifications · single source of truth across all screens</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+
+            // ---- unread tracking: per-user read set, persisted locally ----
+            const READ_KEY = '31trades.notifications.read.v1';
+            let read = new Set();
+            try {
+                const raw = window.localStorage.getItem(READ_KEY);
+                if (raw) read = new Set(JSON.parse(raw));
+            } catch (e) { /* first run */ }
+            const saveRead = () => {
+                try { window.localStorage.setItem(READ_KEY, JSON.stringify([...read])); } catch (e) {}
+            };
+
+            let activeTab = 'All';
+            let notifs = [];
+
+            // ---- toast ----
+            let toastTimer;
+            window.showToast = function (msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+
+            // ---- build notifications from the CANONICAL core ----
+            function buildNotifs() {
+                const core = window.TradeMindCore;
+                const out = [];
+                const accId = core && core.selectedAccountId ? core.selectedAccountId() : null;
+                const account = core && core.Accounts.length ? core.Accounts.find(a => a.id === (accId || core.Accounts[0].id)) || core.Accounts[0] : null;
+                if (!core || !account) return out;
+
+                // 1 · RISK STATE — caution / high / limit (single live snapshot)
+                try {
+                    const rs = core.riskState(account.id);
+                    const at = new Date();
+                    if (rs.status === 'LIMIT') {
+                        out.push({
+                            id: 'risk-limit', cat: 'Risk', sev: 'critical', at,
+                            icon: 'shield-alert', tint: 'red',
+                            title: 'Daily risk limit breached',
+                            body: rs.riskUsed + ' risk used of ' + rs.dailyRiskBudget + ' budget · ' + rs.lossUsed + ' loss · ' + rs.currentDrawdown + ' drawdown. Next trade is blocked until tomorrow.',
+                            href: 'risk.html'
+                        });
+                    }
+                    if (rs.status === 'HIGH') {
+                        out.push({
+                            id: 'risk-high', cat: 'Risk', sev: 'high', at,
+                            icon: 'alert-triangle', tint: 'amber',
+                            title: 'High risk — protect capital',
+                            body: 'Risk used ' + rs.riskUsed + ' / ' + rs.dailyRiskBudget + ' (' + Math.round((rs.riskUsed / (rs.dailyRiskBudget || 1)) * 100) + '%) · ' + rs.currentDrawdown + ' drawdown of ' + rs.drawdownLimit + '. Max allowed next risk: $' + rs.maxAllowedRisk + '.',
+                            href: 'risk.html'
+                        });
+                    }
+                    if (rs.status === 'CAUTION') {
+                        out.push({
+                            id: 'risk-caution', cat: 'Risk', sev: 'warn', at,
+                            icon: 'activity', tint: 'blue',
+                            title: 'Risk caution — above the first warning band',
+                            body: 'Risk used ' + rs.riskUsed + ' / ' + rs.dailyRiskBudget + ' · ' + rs.currentDrawdown + ' drawdown. Watch the next entries.',
+                            href: 'risk.html'
+                        });
+                    }
+                } catch (e) { /* no account policy yet */ }
+
+                // 2 · POLICY BLOCKS — trades the rule engine rejected
+                core.Trades.filter(t => t.adherence_result === 'BLOCK').slice(0, 6).forEach(t => {
+                    out.push({
+                        id: 'block-' + t.id, cat: 'Risk', sev: 'high', at: new Date(t.ts),
+                        icon: 'ban', tint: 'red',
+                        title: 'Trade blocked — ' + t.symbol + ' ' + (t.dir || ''),
+                        body: (t.block_reason || 'Rule engine rejected this trade') + ' · risk $' + (t.risk || 0) + ' · ' + (t.strategy || '—'),
+                        href: 'journal.html?focus=' + t.id
+                    });
+                });
+
+                // 3 · DISCIPLINE VIOLATIONS — hard rule breaks (canonical Violations table)
+                const viols = (core.Violations || []).slice().sort((a, b) => new Date(b.ts) - new Date(a.ts)).slice(0, 8);
+                viols.forEach(v => {
+                    out.push({
+                        id: 'viol-' + v.id, cat: 'Discipline', sev: 'high', at: new Date(v.ts),
+                        icon: 'target', tint: 'red',
+                        title: 'Rule broken: ' + (v.ruleLabel || v.ruleKey || 'Rule'),
+                        body: (v.explanation || 'Hard-rule violation') + ' · P&L ' + (v.pnl != null ? (v.pnl > 0 ? '+' : '') + v.pnl : '—') + ' · ' + (v.r != null ? (v.r > 0 ? '+' : '') + v.r.toFixed(2) + 'R' : ''),
+                        href: 'discipline.html'
+                    });
+                });
+
+                // 4 · PENDING REVIEWS — unreviewed trades (Journal's pending queue)
+                const pending = core.Trades.filter(t => !t.reviewed);
+                if (pending.length) {
+                    out.push({
+                        id: 'reviews-pending', cat: 'Reviews', sev: 'info', at: new Date(),
+                        icon: 'message-square', tint: 'blue',
+                        title: pending.length + ' trade' + (pending.length === 1 ? '' : 's') + ' awaiting review',
+                        body: pending.slice(0, 3).map(t => t.symbol + ' ' + (t.dir || '')).join(' · ') + (pending.length > 3 ? ' +' + (pending.length - 3) + ' more' : '') + ' — reflect on execution while it is fresh.',
+                        href: 'journal.html?view=unreviewed'
+                    });
+                }
+
+                // 5 · AUDIT / SYSTEM — configuration changes from the canonical event log
+                (core.getEventLog ? core.getEventLog() : []).slice(0, 6).forEach((ev, i) => {
+                    out.push({
+                        id: 'sys-' + (ev.at || i), cat: 'System', sev: 'info', at: new Date(ev.at || Date.now()),
+                        icon: 'settings', tint: 'gray',
+                        title: (ev.what || 'Configuration change') + ' · ' + (ev.entity || ''),
+                        body: (ev.detail || '') + (ev.impact ? ' — ' + ev.impact : ''),
+                        href: 'strategy-lab.html?tab=history'
+                    });
+                });
+
+                // 6 · MARKET EVENTS — upcoming High/Medium releases (server calendar)
+                if (window.__ecoUpcoming && window.__ecoUpcoming.length) {
+                    const next = window.__ecoUpcoming[0];
+                    const mins = Math.max(0, Math.round((new Date(next.ts) - new Date()) / 60000));
+                    const h = Math.floor(mins / 60), m = mins % 60;
+                    out.push({
+                        id: 'market-' + next.ts, cat: 'Market', sev: 'high', at: new Date(next.ts),
+                        icon: 'newspaper', tint: 'amber',
+                        title: (next.impact || 'High') + ' impact: ' + next.title,
+                        body: 'In ~' + (h ? h + 'h ' : '') + m + 'm · ' + (next.country || next.currency || '') +
+                            (next.forecast ? ' · consensus ' + next.forecast : '') + (next.previous ? ' · prev ' + next.previous : ''),
+                        href: 'journal.html'
+                    });
+                }
+
+                // stable id: sort newest first, cap the feed
+                return out.sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 50);
+            }
+
+            // ---- render ----
+            const CAT_ICON = {
+                Risk: 'shield-alert', Discipline: 'target', Reviews: 'message-square',
+                System: 'settings', Market: 'newspaper'
+            };
+            const CAT_TINT = {
+                Risk: 'rgba(239,68,68,0.12)', Discipline: 'rgba(245,158,11,0.12)',
+                Reviews: 'rgba(59,130,246,0.12)', System: 'rgba(148,163,184,0.12)',
+                Market: 'rgba(139,92,246,0.12)'
+            };
+            const CAT_COLOR = {
+                Risk: '#F87171', Discipline: '#FBBF24', Reviews: '#60A5FA',
+                System: '#94A3B8', Market: '#A78BFA'
+            };
+            const SEV_TAG = {
+                critical: '<span class="tag tag-red">Critical</span>',
+                high: '<span class="tag tag-red">High</span>',
+                warn: '<span class="tag tag-amber">Warning</span>',
+                info: '<span class="tag tag-blue">Info</span>'
+            };
+
+            function renderTabs() {
+                const counts = {};
+                notifs.forEach(n => { counts[n.cat] = (counts[n.cat] || 0) + 1; });
+                const cats = ['All'].concat(Object.keys(counts));
+                $('notif-tabs').innerHTML = cats.map(c =>
+                    '<button class="ins-tab' + (activeTab === c ? ' active' : '') + '" data-tab="' + c + '">' + c +
+                    ' <span class="num text-[11px] opacity-60">' + (c === 'All' ? notifs.length : counts[c]) + '</span></button>'
+                ).join('');
+                $('notif-tabs').querySelectorAll('button').forEach(b =>
+                    b.addEventListener('click', () => { activeTab = b.dataset.tab; render(); })
+                );
+            }
+
+            function renderSummary() {
+                const unread = notifs.filter(n => !read.has(n.id));
+                const sum = $('summary');
+                if (!unread.length) { sum.classList.add('hidden'); sum.innerHTML = ''; return; }
+                const critical = unread.filter(n => n.sev === 'critical' || n.sev === 'high').length;
+                sum.classList.remove('hidden');
+                sum.innerHTML =
+                    '<div class="panel p-4 flex items-center gap-3 border-' + (critical ? '!border-[rgba(239,68,68,0.3)]' : '') + '">' +
+                        '<div class="' + (critical ? 'text-[#F87171]' : 'text-[#34D399]') + '"><svg data-lucide="' + (critical ? 'bell-ring' : 'bell') + '" class="w-5 h-5"></svg></div>' +
+                        '<div class="flex-1"><div class="text-[14px] font-bold text-white">' + unread.length + ' unread notification' + (unread.length === 1 ? '' : 's') + '</div>' +
+                        '<div class="text-[12px] text-[#6E6E78]">' + (critical ? critical + ' need' + (critical === 1 ? 's' : '') + ' your attention' : 'All caught up — no urgent items') + '</div></div>' +
+                        '<button class="btn-ghost !py-1.5 !px-3 !text-[12px]" onclick="window.markAllRead()">Mark all read</button>' +
+                    '</div>';
+                if (window.lucide) lucide.createIcons();
+            }
+
+            function render() {
+                renderSummary();
+                renderTabs();
+                const list = $('notif-list');
+                const items = activeTab === 'All' ? notifs : notifs.filter(n => n.cat === activeTab);
+                if (!items.length) {
+                    list.innerHTML = '<div class="py-16 text-center"><svg data-lucide="bell-off" class="w-10 h-10 mx-auto text-[#3A3A41] mb-3"></svg>' +
+                        '<p class="text-[14px] font-semibold text-[#B4B4BD]">No notifications here</p>' +
+                        '<p class="text-[12.5px] text-[#6E6E78] mt-1">' + (activeTab === 'All' ? 'Nothing yet — log a trade or edit your risk limits to see alerts appear here.' : 'No ' + activeTab.toLowerCase() + ' notifications right now.') + '</p></div>';
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+                list.innerHTML = items.map(n => {
+                    const isRead = read.has(n.id);
+                    return '<div class="notif-row" data-id="' + n.id + '" onclick="window.openNotif(this)">' +
+                        '<div class="notif-ico" style="background:' + (CAT_TINT[n.cat] || 'rgba(148,163,184,0.12)') + ';color:' + (CAT_COLOR[n.cat] || '#94A3B8') + '">' +
+                            '<svg data-lucide="' + (n.icon || CAT_ICON[n.cat] || 'bell') + '" class="w-4 h-4"></svg></div>' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="flex items-center gap-2 flex-wrap"><span class="text-[13.5px] font-semibold ' + (isRead ? 'text-[#B4B4BD]' : 'text-white') + '">' + n.title + '</span>' +
+                            (SEV_TAG[n.sev] || '') + '<span class="tag tag-gray">' + n.cat + '</span></div>' +
+                            '<div class="text-[12.5px] text-[#8A8A93] mt-1">' + n.body + '</div>' +
+                            '<div class="text-[11px] text-[#55555E] mt-1 num">' + fmtAgo(n.at) + '</div>' +
+                        '</div>' +
+                        (isRead ? '' : '<div class="notif-dot" style="background:' + (CAT_COLOR[n.cat] || '#10B981') + ';box-shadow:0 0 6px ' + (CAT_COLOR[n.cat] || '#10B981') + '"></div>') +
+                    '</div>';
+                }).join('');
+                if (window.lucide) lucide.createIcons();
+            }
+
+            function fmtAgo(d) {
+                const diff = Date.now() - new Date(d).getTime();
+                if (diff < 60000) return 'Just now';
+                if (diff < 3600000) return Math.floor(diff / 60000) + ' min ago';
+                if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+                return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            }
+
+            window.openNotif = function (el) {
+                const id = el.getAttribute('data-id');
+                if (!read.has(id)) {
+                    read.add(id);
+                    saveRead();
+                    render();
+                }
+                const n = notifs.find(x => x.id === id);
+                if (n && n.href) location.href = n.href;
+            };
+
+            window.markAllRead = function () {
+                notifs.forEach(n => read.add(n.id));
+                saveRead();
+                render();
+                showToast('All notifications marked as read');
+            };
+
+            // exposed for the summary button handler
+            window.renderNotifs = render;
+
+            // ---- live market events feed (same endpoint as Dashboard/Journal) ----
+            async function loadEco() {
+                try {
+                    const res = await fetch('/api/ecocal');
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const data = await res.json();
+                    window.__ecoUpcoming = (data && data.upcoming) || [];
+                } catch (e) {
+                    window.__ecoUpcoming = [];
+                }
+                render();
+            }
+
+            // ---- init ----
+            function boot() {
+                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+                const core = window.TradeMindCore;
+                if (core && core.selectedAccountId) {
+                    const sel = core.selectedAccountId();
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    const chip = $('account-chip');
+                    if (acc && chip) {
+                        const numEl = chip.querySelector('.num');
+                        if (numEl) numEl.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
+                        const spans = chip.querySelectorAll('span');
+                        if (spans.length > 2) spans[2].textContent = acc.name;
+                    }
+                }
+                notifs = buildNotifs();
+                render();
+                if (window.lucide) lucide.createIcons();
+                loadEco();
+                // stay fresh: rebuild whenever the canonical ledger changes
+                if (core && core.TradeMindBus) {
+                    ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'review.completed'].forEach(ev =>
+                        core.TradeMindBus.subscribe(ev, () => { notifs = buildNotifs(); render(); })
+                    );
+                }
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+        })();
+    </script>
+    <script src="reset.js"></script>
+</body>
+</html>
