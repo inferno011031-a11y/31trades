@@ -44,6 +44,7 @@ const LLM = require('./server/llm.js');
 const Notif = require('./server/notifications.js');
 const Brokers = require('./server/brokers.js');
 const Backtest = require('./server/backtest.js');
+const MarketData = require('./server/marketdata.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -488,9 +489,9 @@ async function handleApi(req, res, url) {
                 return json(res, 200, { ok: true, brokers: await Brokers.list(uc.userId), connected: await Brokers.isConnected(uc.userId) });
             }
 
-            // ---------- Backtesting data (deterministic OHLCV candles) ----------
+            // ---------- Backtesting data (real TradingView OHLCV, cached, synthetic fallback) ----------
             if (p === '/api/backtest/candles') {
-                const data = Backtest.generateCandles({
+                const data = await MarketData.getCandles({
                     symbol: q.get('symbol') || 'EURUSD',
                     timeframe: q.get('timeframe') || '1h',
                     count: Number(q.get('count')) || undefined

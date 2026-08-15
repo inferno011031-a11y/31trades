@@ -247,7 +247,7 @@
                         <div>
                             <h1 class="text-[22px] font-bold tracking-tight">Backtesting</h1>
                             <p class="text-[13px] text-[#6E6E78] mt-0.5">
-                                Replay historical candles, stack indicators and run a strategy against your account's risk model.
+                                Replay real TradingView candles, stack indicators and run a strategy against your account's risk model.
                             </p>
                         </div>
                     </div>
@@ -380,7 +380,7 @@
                         </div>
                     </div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Backtesting · deterministic history via /api/backtest/candles · TradingView Lightweight Charts</p>
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Backtesting · live TradingView data via /api/backtest/candles · TradingView Lightweight Charts</p>
                 </div>
             </main>
         </div>
@@ -769,7 +769,11 @@
                     applyStep();
                     chart.timeScale().fitContent();
                     $('chart-title').textContent = currentSymbol + ' · ' + currentTF;
-                    $('chart-sub').textContent = data.meta && data.meta.category ? data.meta.category + ' · ' + candles.length + ' bars · deterministic history' : candles.length + ' bars';
+                    const src = data.meta && data.meta.source;
+                    const srcLabel = src === 'tradingview' ? 'TradingView · live data'
+                        : src === 'cache' ? 'TradingView · cached'
+                        : 'estimated · offline fallback';
+                    $('chart-sub').textContent = (data.meta && data.meta.category ? data.meta.category + ' · ' : '') + candles.length + ' bars · ' + srcLabel;
                     $('bt-symbol-label').textContent = currentSymbol;
                     renderAssetBadge();
                     renderRiskReadout();
