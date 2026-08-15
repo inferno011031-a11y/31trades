@@ -187,6 +187,7 @@ async function loadUserState(uc) {
         console.log('[31trades] seeded ' + uc.core.Trades.length + ' demo trades (anonymous mode)');
     } else {
         uc.core.reseed();               // real first-time user — clean first-user state
+        logWelcomeEvent(uc, uc.user);   // one-time welcome in their canonical event log
     }
 }
 
@@ -199,6 +200,24 @@ async function getUserCore(user) {
     uc.core.backfillEvaluations();   // evaluation + violation audit for the whole ledger
     uc.pristine = uc.serialize();
     return uc;
+}
+
+// Record the one-time welcome message in the user's canonical event log (it
+// flows into System notifications + audit history). Idempotent: if a welcome
+// already exists for this user, nothing is logged a second time.
+function logWelcomeEvent(uc, user) {
+    const Core = uc.core;
+    const log = (Core.getEventLog ? Core.getEventLog() : []);
+    if (log.some(e => e.entity === '31Trades' && e.what === 'Welcome')) return;
+    const name = (user && (user.name || user.email || '')) || '';
+    const firstName = String(name).split(/[\s@]/)[0] || 'trader';
+    Core.ConfigAPI.logTagEvent(
+        '31Trades',
+        'Welcome',
+        'Welcome to 31Trades, ' + firstName + '! Your journal, risk engine and AI mentor are ready — log your first trade to get started.',
+        'Account created'
+    );
+    uc.scheduleSave();
 }
 
 function bearerToken(req) {
@@ -304,6 +323,18 @@ async function handleApi(req, res, url) {
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
         try {
             const r = await auth.signup({ email: b.email, password: b.password, name: b.name });
+            // Welcome message: record a personalized welcome in the user's
+            // canonical event log — it surfaces as a System notification in
+            // their feed and in audit history, exactly once per user.
+            try {
+                const u = r.user || (r.session && r.session.user);
+                if (u && u.id) {
+                    const wc = await getUserCore(u);
+                    logWelcomeEvent(wc, u);
+                }
+            } catch (we) {
+                console.warn('[31trades] welcome event not logged: ' + we.message);
+            }
             if (r.needsConfirmation) return json(res, 201, { ok: true, needsConfirmation: true, user: r.user });
             if (!r.session) throw Object.assign(new Error('Signup did not return a session'), { code: 500 });
             return json(res, 201, { ok: true, session: r.session });

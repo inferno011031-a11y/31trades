@@ -138,14 +138,18 @@ function buildNotifications(Core, accountId, opts) {
         });
     }
 
-    // 5 · AUDIT / SYSTEM — configuration changes from the canonical event log
+    // 5 · AUDIT / SYSTEM — configuration changes from the canonical event log.
+    // A welcome event (logged once at signup) is surfaced as a friendly
+    // first-run notification that links to the dashboard.
     (Core.getEventLog ? Core.getEventLog() : []).slice(0, 6).forEach(ev => {
+        const isWelcome = ev.what === 'Welcome' && ev.entity === '31Trades';
         out.push({
             id: 'sys-' + (ev.at || ev.what || Math.random()), cat: 'System', sev: SEV.info, at: new Date(ev.at || Date.now()).toISOString(),
-            icon: 'settings', tint: 'gray',
+            icon: isWelcome ? 'sparkles' : 'settings',
+            tint: isWelcome ? 'emerald' : 'gray',
             title: (ev.what || 'Configuration change') + ' · ' + (ev.entity || ''),
             body: (ev.detail || '') + (ev.impact ? ' — ' + ev.impact : ''),
-            href: 'strategy-lab.html?tab=history'
+            href: isWelcome ? 'dashboard.html' : 'strategy-lab.html?tab=history'
         });
     });
 

@@ -111,6 +111,17 @@ console.log('\n== Notifications engine ==');
     ok(s && s.cat === 'System' && s.sev === 'info', 'system category + severity');
 }
 
+// ---- 6b · welcome message (logged once at signup) -----------------------------
+{
+    const c = makeCore([], [], [{ entity: '31Trades', what: 'Welcome', detail: 'Welcome to 31Trades, Alex! Your journal, risk engine and AI mentor are ready — log your first trade to get started.', impact: 'Account created', at: new Date().toISOString() }]);
+    const out = Notif.buildNotifications(c, 'acc-prop');
+    const w = out.find(n => n.id.indexOf('sys-') === 0 && n.title.indexOf('Welcome') === 0);
+    ok(!!w, 'welcome event → System notification');
+    ok(w && w.href === 'dashboard.html', 'welcome links to the dashboard');
+    ok(w && w.icon === 'sparkles' && w.tint === 'emerald', 'welcome uses the sparkles emerald styling');
+    ok(w && w.body.indexOf('Welcome to 31Trades, Alex!') > -1, 'welcome carries the personalized message');
+}
+
 // ---- 7 · upcoming market events (injected by the server) ----------------------
 {
     const c = makeCore([]);

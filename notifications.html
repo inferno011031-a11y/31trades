@@ -384,12 +384,14 @@
                 }
 
                 (core.getEventLog ? core.getEventLog() : []).slice(0, 6).forEach((ev, i) => {
+                    const isWelcome = ev.what === 'Welcome' && ev.entity === '31Trades';
                     out.push({
                         id: 'sys-' + (ev.at || i), cat: 'System', sev: 'info', at: new Date(ev.at || Date.now()).toISOString(),
-                        icon: 'settings', tint: 'gray',
+                        icon: isWelcome ? 'sparkles' : 'settings',
+                        tint: isWelcome ? 'emerald' : 'gray',
                         title: (ev.what || 'Configuration change') + ' · ' + (ev.entity || ''),
                         body: (ev.detail || '') + (ev.impact ? ' — ' + ev.impact : ''),
-                        href: 'strategy-lab.html?tab=history'
+                        href: isWelcome ? 'dashboard.html' : 'strategy-lab.html?tab=history'
                     });
                 });
 
@@ -424,6 +426,8 @@
                 Risk: '#F87171', Discipline: '#FBBF24', Reviews: '#60A5FA',
                 System: '#94A3B8', Market: '#A78BFA'
             };
+            const TINT_BG = { red: 'rgba(239,68,68,0.12)', amber: 'rgba(245,158,11,0.12)', blue: 'rgba(59,130,246,0.12)', gray: 'rgba(148,163,184,0.12)', emerald: 'rgba(16,185,129,0.12)', purple: 'rgba(139,92,246,0.12)' };
+            const TINT_FG = { red: '#F87171', amber: '#FBBF24', blue: '#60A5FA', gray: '#94A3B8', emerald: '#34D399', purple: '#A78BFA' };
             const SEV_TAG = {
                 critical: '<span class="tag tag-red">Critical</span>',
                 high: '<span class="tag tag-red">High</span>',
@@ -475,7 +479,7 @@
                 list.innerHTML = items.map(n => {
                     const isRead = read.has(n.id);
                     return '<div class="notif-row" data-id="' + n.id + '" onclick="window.openNotif(this)">' +
-                        '<div class="notif-ico" style="background:' + (CAT_TINT[n.cat] || 'rgba(148,163,184,0.12)') + ';color:' + (CAT_COLOR[n.cat] || '#94A3B8') + '">' +
+                        '<div class="notif-ico" style="background:' + (TINT_BG[n.tint] || CAT_TINT[n.cat] || 'rgba(148,163,184,0.12)') + ';color:' + (TINT_FG[n.tint] || CAT_COLOR[n.cat] || '#94A3B8') + '">' +
                             '<svg data-lucide="' + (n.icon || CAT_ICON[n.cat] || 'bell') + '" class="w-4 h-4"></svg></div>' +
                         '<div class="flex-1 min-w-0">' +
                             '<div class="flex items-center gap-2 flex-wrap"><span class="text-[13.5px] font-semibold ' + (isRead ? 'text-[#B4B4BD]' : 'text-white') + '">' + n.title + '</span>' +
@@ -483,7 +487,7 @@
                             '<div class="text-[12.5px] text-[#8A8A93] mt-1">' + n.body + '</div>' +
                             '<div class="text-[11px] text-[#55555E] mt-1 num">' + fmtAgo(n.at) + '</div>' +
                         '</div>' +
-                        (isRead ? '' : '<div class="notif-dot" style="background:' + (CAT_COLOR[n.cat] || '#10B981') + ';box-shadow:0 0 6px ' + (CAT_COLOR[n.cat] || '#10B981') + '"></div>') +
+                        (isRead ? '' : '<div class="notif-dot" style="background:' + (TINT_FG[n.tint] || CAT_COLOR[n.cat] || '#10B981') + ';box-shadow:0 0 6px ' + (TINT_FG[n.tint] || CAT_COLOR[n.cat] || '#10B981') + '"></div>') +
                     '</div>';
                 }).join('');
                 if (window.lucide) lucide.createIcons();
