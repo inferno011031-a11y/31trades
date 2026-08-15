@@ -53,7 +53,10 @@
     }
 
     // Tests (Node) inject a bypass to exercise the shell without a real login.
-    const BYPASS = typeof window.__TRADEMIND_AUTH_BYPASS__ === 'boolean' && window.__TRADEMIND_AUTH_BYPASS__;
+    // A sessionStorage flag ('1') does the same and survives same-tab navigation
+    // — handy for local previews without a Supabase account.
+    const BYPASS = (typeof window.__TRADEMIND_AUTH_BYPASS__ === 'boolean' && window.__TRADEMIND_AUTH_BYPASS__) ||
+        (typeof window.sessionStorage !== 'undefined' && window.sessionStorage.getItem('31trades.auth.bypass') === '1');
 
     // ---- module-level state owned by the booted core ----
     let core = null;

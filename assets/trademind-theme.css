@@ -1,0 +1,313 @@
+/* ============================================================================
+   31TRADES — Institutional Theme
+   Layered obsidian surfaces, ultra-thin borders, monospaced financial numbers,
+   pill navigation, blurred modals, ambient glows.
+   Loaded LAST on every page so these rules win the cascade over inline styles.
+   ============================================================================ */
+
+:root {
+    --tm-bg:        #0a0c10;   /* main body        */
+    --tm-bg-elev:   #0d1016;   /* sidebar / topbar */
+    --tm-card:      #121620;   /* cards / panels   */
+    --tm-card-2:    #161b26;   /* nested surfaces  */
+    --tm-hover:     #181e2c;   /* hover surfaces   */
+    --tm-border:    rgba(255, 255, 255, 0.06);
+    --tm-border-2:  rgba(255, 255, 255, 0.10);
+    --tm-text:      #f1f5f9;   /* primary text     */
+    --tm-muted:     #94a3b8;   /* slate-400 labels */
+    --tm-dim:       #64748b;   /* slate-500        */
+    --tm-accent:    #818cf8;   /* indigo           */
+    --tm-accent-2:  #6366f1;
+    --tm-green:     #34d399;
+    --tm-red:       #f87171;
+    --tm-amber:     #fbbf24;
+    --tm-blue:      #60a5fa;
+    --tm-mono:      'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    --tm-sans:      'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* ---- Base surface hierarchy --------------------------------------------- */
+/* Landing/auth pages opt out with class "tm-landing" (they carry their own
+   marketing gradient); every app page inherits the obsidian base. */
+html:not(.tm-landing) { background: var(--tm-bg); }
+body:not(.tm-landing) {
+    background: var(--tm-bg) !important;
+    color: var(--tm-text);
+    font-family: var(--tm-sans);
+}
+
+/* ---- App shell ----------------------------------------------------------- */
+body:not(.tm-landing) .sidebar {
+    background: var(--tm-bg-elev) !important;
+    border-right: 1px solid var(--tm-border);
+}
+body:not(.tm-landing) .topbar {
+    background: rgba(10, 12, 16, 0.85) !important;
+    border-bottom: 1px solid var(--tm-border);
+    backdrop-filter: blur(8px);
+}
+.sidebar .logo-text,
+.topbar .logo-text { color: var(--tm-text); }
+.logo-badge {
+    background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)) !important;
+    box-shadow: 0 0 18px rgba(99, 102, 241, 0.35);
+}
+
+/* ---- Navigation: pill-style active, soft hover --------------------------- */
+.nav-item {
+    color: var(--tm-muted);
+    border-radius: 10px;
+    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+}
+.nav-item:hover {
+    background: var(--tm-hover);
+    color: var(--tm-text);
+}
+.nav-item.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(52, 211, 153, 0.10)) !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.28), 0 0 20px rgba(99, 102, 241, 0.12);
+}
+body.collapsed .nav-item.active { box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.28); }
+
+/* ---- Cards / panels ------------------------------------------------------- */
+.panel,
+.metric-mini,
+.fcard,
+.glass-card,
+.opt-card,
+.tool-item,
+.rank-row,
+.report,
+.summary-chip,
+.auth-card,
+.cal-cell,
+.cal-day,
+.check-row,
+.rule-row,
+.setup-row,
+.secondary-item,
+.tl-item {
+    background: var(--tm-card) !important;
+    border: 1px solid var(--tm-border);
+}
+.panel:hover,
+.metric-mini:hover,
+.fcard:hover,
+.glass-card:hover,
+.opt-card:hover,
+.tool-item:hover,
+.rank-row:hover,
+.cal-day:hover {
+    background: var(--tm-hover) !important;
+    border-color: var(--tm-border-2);
+}
+.panel-title { color: var(--tm-text); font-weight: 700; }
+.panel-sub  { color: var(--tm-dim); }
+
+/* ---- Metric / KPI values: monospaced -------------------------------------- */
+.metric,
+.metric-mini { background: var(--tm-card); border: 1px solid var(--tm-border); }
+.metric-value,
+.metric-mini .val,
+.kpi-value,
+.val,
+.num,
+.status-value,
+.secondary-value,
+.rank-num,
+.dd-marker,
+.cal-pnl,
+.dayval,
+.bar-fill,
+.risk-consumed,
+.eq-chart text {
+    font-family: var(--tm-mono);
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.01em;
+}
+.metric-value { color: var(--tm-text); }
+.metric-label, .metric-sub, .label-xs, .secondary-label {
+    color: var(--tm-muted);
+}
+.metric-sub { font-size: 11.5px; }
+
+/* ---- Buttons: ambient glow on primary ------------------------------------- */
+.btn-primary {
+    background: linear-gradient(135deg, var(--tm-accent-2), #4f46e5) !important;
+    color: #ffffff !important;
+    border: 1px solid rgba(129, 140, 248, 0.35);
+    box-shadow: 0 0 22px rgba(99, 102, 241, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transition: box-shadow 0.2s ease, transform 0.15s ease, filter 0.15s ease;
+}
+.btn-primary:hover {
+    filter: brightness(1.08);
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+    transform: translateY(-1px);
+}
+.btn-primary:active { transform: translateY(0); }
+.btn-secondary {
+    background: var(--tm-card-2) !important;
+    color: var(--tm-text) !important;
+    border: 1px solid var(--tm-border-2);
+}
+.btn-secondary:hover { background: var(--tm-hover) !important; }
+.btn-ghost {
+    background: rgba(255, 255, 255, 0.03) !important;
+    color: var(--tm-muted) !important;
+    border: 1px solid var(--tm-border);
+}
+.btn-ghost:hover { background: var(--tm-hover) !important; color: var(--tm-text) !important; }
+.btn-danger {
+    background: rgba(248, 113, 113, 0.10) !important;
+    color: var(--tm-red) !important;
+    border: 1px solid rgba(248, 113, 113, 0.25);
+}
+.btn-danger:hover { background: rgba(248, 113, 113, 0.18) !important; }
+
+/* ---- Tabs: pill-style ------------------------------------------------------ */
+.ins-tab,
+.entry-tab,
+.auth-tab,
+.seg,
+.preset-pill,
+.view-chip,
+.ev-chip,
+.session-chip,
+.period-chip,
+.pill {
+    border-radius: 999px !important;
+    color: var(--tm-muted);
+    border: 1px solid transparent;
+    transition: all 0.18s ease;
+}
+.ins-tab:hover, .entry-tab:hover, .auth-tab:hover, .seg:hover {
+    color: var(--tm-text);
+    background: var(--tm-hover);
+}
+.ins-tab.active, .entry-tab.active, .auth-tab.active, .seg.active {
+    background: linear-gradient(135deg, rgba(99, 102, 241, 0.20), rgba(52, 211, 153, 0.12)) !important;
+    color: #ffffff !important;
+    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.30);
+}
+
+/* ---- Badges / status: soft translucent tints -------------------------------- */
+.tag-emerald, .st-healthy { background: rgba(52, 211, 153, 0.12) !important; color: var(--tm-green) !important; }
+.tag-red, .st-breached, .risk-level-critical { background: rgba(248, 113, 113, 0.12) !important; color: var(--tm-red) !important; }
+.tag-amber, .st-approaching, .risk-level-high { background: rgba(251, 191, 36, 0.12) !important; color: var(--tm-amber) !important; }
+.tag-blue, .risk-level-caution { background: rgba(96, 165, 250, 0.12) !important; color: var(--tm-blue) !important; }
+.tag-purple { background: rgba(129, 140, 248, 0.14) !important; color: #a5b4fc !important; }
+.tag-gray, .st-noteval, .risk-level-normal { background: rgba(148, 163, 184, 0.10) !important; color: var(--tm-muted) !important; }
+.tag { border-radius: 999px; }
+.state-pill { border-radius: 999px; }
+.badge-dot { box-shadow: 0 0 8px currentColor; }
+
+/* ---- Modals / drawers: blurred backdrop, rounded ----------------------------- */
+.modal-overlay {
+    background: rgba(0, 0, 0, 0.70) !important;
+    backdrop-filter: blur(6px);
+}
+.modal,
+.modal-box {
+    background: var(--tm-card) !important;
+    border: 1px solid var(--tm-border-2);
+    border-radius: 16px !important;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.drawer {
+    background: var(--tm-bg-elev) !important;
+    border-left: 1px solid var(--tm-border-2);
+    box-shadow: -24px 0 60px rgba(0, 0, 0, 0.5);
+}
+.modal-header { border-bottom: 1px solid var(--tm-border); }
+
+/* ---- Tables ---------------------------------------------------------------- */
+.tbl th {
+    color: var(--tm-dim);
+    border-bottom: 1px solid var(--tm-border-2);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 10.5px;
+}
+.tbl td {
+    border-bottom: 1px solid var(--tm-border);
+    color: var(--tm-text);
+}
+.tbl tbody tr { transition: background 0.12s ease; }
+.tbl tbody tr:hover { background: rgba(255, 255, 255, 0.03); }
+.tbl-wrap { border: 1px solid var(--tm-border); border-radius: 12px; }
+
+/* ---- Inputs ----------------------------------------------------------------- */
+.search-input,
+.field-input,
+.finput,
+.fselect,
+.ftext,
+.limit-input,
+select, input[type="text"], input[type="number"], input[type="date"], input[type="time"], input[type="password"], input[type="email"], textarea {
+    background: var(--tm-bg) !important;
+    border: 1px solid var(--tm-border-2) !important;
+    color: var(--tm-text) !important;
+    border-radius: 10px;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.search-input:focus,
+.field-input:focus,
+.finput:focus,
+.fselect:focus,
+.ftext:focus,
+.limit-input:focus,
+input:focus, select:focus, textarea:focus {
+    border-color: rgba(129, 140, 248, 0.55) !important;
+    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    outline: none;
+}
+::placeholder { color: var(--tm-dim); }
+
+/* ---- Calendar ---------------------------------------------------------------- */
+.cal-grid { gap: 6px; }
+.cal-cell, .cal-day {
+    background: var(--tm-card) !important;
+    border: 1px solid var(--tm-border);
+    border-radius: 12px;
+    transition: transform 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.cal-cell:hover, .cal-day:hover {
+    background: var(--tm-hover) !important;
+    border-color: var(--tm-border-2);
+    transform: translateY(-1px);
+}
+.cal-day.empty, .cal-day.other { background: transparent !important; border-color: transparent; }
+.cal-day.empty:hover { background: transparent !important; transform: none; }
+.cal-daynum { color: var(--tm-dim); }
+
+/* ---- Toast / misc ------------------------------------------------------------- */
+.toast {
+    background: var(--tm-card-2) !important;
+    border: 1px solid var(--tm-border-2);
+    color: var(--tm-text);
+    box-shadow: 0 16px 40px rgba(0, 0, 0, 0.5);
+    border-radius: 12px;
+    backdrop-filter: blur(8px);
+}
+.divider, .divider-line { background: var(--tm-border); }
+.avatar { background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)) !important; color: #ffffff; }
+.conn-dot { background: var(--tm-green); box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18), 0 0 10px rgba(52, 211, 153, 0.5); }
+
+/* ---- Landing pages keep their own card/panel surfaces ---------------------------- */
+body.tm-landing .panel,
+body.tm-landing .metric-mini,
+body.tm-landing .fcard,
+body.tm-landing .glass-card,
+body.tm-landing .auth-card,
+body.tm-landing .hero-card { background: inherit !important; border: inherit; }
+
+/* ---- Scrollbars ---------------------------------------------------------------- */
+::-webkit-scrollbar { width: 9px; height: 9px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: rgba(148, 163, 184, 0.18);
+    border-radius: 999px;
+    border: 2px solid var(--tm-bg);
+}
+::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.30); }
