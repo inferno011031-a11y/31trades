@@ -36,42 +36,43 @@
         CORN: '🌽', SOYBEAN: '🌱', OATS: '🌾', RICE: '🍚', KC: '☕', SB: '🍬', CC: '🍫'
     };
 
-    // ---- brand colors for stocks + crypto logos ----
+    // ---- real internet logos (favicon CDN for stocks, CoinGecko for crypto),
+    // with a letter-glyph badge fallback when offline / image fails. ----
     const LOGO = {
-        // stocks — letter badge with brand color
-        AAPL:  { glyph: 'A', color: '#A2AAAD', bg: '#2c2f33' },
-        TSLA:  { glyph: 'T', color: '#E82127', bg: '#2a1517' },
-        MSFT:  { glyph: 'M', color: '#00A4EF', bg: '#0f2430' },
-        NVDA:  { glyph: 'N', color: '#76B900', bg: '#1c2a10' },
-        AMZN:  { glyph: 'A', color: '#FF9900', bg: '#2a1f0f' },
-        META:  { glyph: 'M', color: '#1877F2', bg: '#0f1f33' },
-        GOOGL: { glyph: 'G', color: '#4285F4', bg: '#122036' },
-        NFLX:  { glyph: 'N', color: '#E50914', bg: '#2a1215' },
-        // crypto — coin glyph on brand tint
-        BTC:  { glyph: '₿', color: '#F7931A', bg: '#2a200f' },
-        ETH:  { glyph: 'Ξ', color: '#627EEA', bg: '#141b33' },
-        SOL:  { glyph: '◎', color: '#14F195', bg: '#0f2a20' },
-        XRP:  { glyph: '✕', color: '#00AAE4', bg: '#0f2430' },
-        DOGE: { glyph: 'Ð', color: '#C2A633', bg: '#2a2512' },
-        ADA:  { glyph: '₳', color: '#0033AD', bg: '#101a33' },
-        DOT:  { glyph: '●', color: '#E6007A', bg: '#2a1020' },
-        LTC:  { glyph: 'Ł', color: '#345D9D', bg: '#101a2a' },
-        BNB:  { glyph: '◆', color: '#F3BA2F', bg: '#2a240f' },
-        AVAX: { glyph: '▲', color: '#E84142', bg: '#2a1215' },
-        MATIC:{ glyph: '◆', color: '#8247E5', bg: '#1e1233' },
-        LINK: { glyph: '⬡', color: '#2A5ADA', bg: '#101a33' },
-        UNI:  { glyph: '🦄', color: '#FF007A', bg: '#2a1020' },
-        SHIB: { glyph: '🐕', color: '#F5A623', bg: '#2a2210' },
-        PEPE: { glyph: '🐸', color: '#4CAF50', bg: '#102a14' },
-        XLM:  { glyph: '✳', color: '#3AA6B9', bg: '#10252a' },
-        NEAR: { glyph: '▲', color: '#00EC97', bg: '#0f2a20' },
-        APT:  { glyph: '◈', color: '#05E4C3', bg: '#0f2a26' },
-        ARB:  { glyph: '◆', color: '#12AAFF', bg: '#0f2430' },
-        OP:   { glyph: '✦', color: '#FF0420', bg: '#2a1012' },
-        SUI:  { glyph: '◉', color: '#6D28D9', bg: '#1a1233' },
-        INJ:  { glyph: '❄', color: '#00A3FF', bg: '#0f2430' },
-        SEI:  { glyph: '◍', color: '#8A2BE2', bg: '#1a1230' },
-        TIA:  { glyph: '✳', color: '#FF7A00', bg: '#2a1c0f' }
+        // stocks — Google favicon service (real brand mark), glyph fallback
+        AAPL:  { img: 'https://www.google.com/s2/favicons?domain=apple.com&sz=128', glyph: 'A', color: '#A2AAAD', bg: '#2c2f33' },
+        TSLA:  { img: 'https://www.google.com/s2/favicons?domain=tesla.com&sz=128', glyph: 'T', color: '#E82127', bg: '#2a1517' },
+        MSFT:  { img: 'https://www.google.com/s2/favicons?domain=microsoft.com&sz=128', glyph: 'M', color: '#00A4EF', bg: '#0f2430' },
+        NVDA:  { img: 'https://www.google.com/s2/favicons?domain=nvidia.com&sz=128', glyph: 'N', color: '#76B900', bg: '#1c2a10' },
+        AMZN:  { img: 'https://www.google.com/s2/favicons?domain=amazon.com&sz=128', glyph: 'A', color: '#FF9900', bg: '#2a1f0f' },
+        META:  { img: 'https://www.google.com/s2/favicons?domain=meta.com&sz=128', glyph: 'M', color: '#1877F2', bg: '#0f1f33' },
+        GOOGL: { img: 'https://www.google.com/s2/favicons?domain=google.com&sz=128', glyph: 'G', color: '#4285F4', bg: '#122036' },
+        NFLX:  { img: 'https://www.google.com/s2/favicons?domain=netflix.com&sz=128', glyph: 'N', color: '#E50914', bg: '#2a1215' },
+        // crypto — CoinGecko asset images (real coin logos), glyph fallback
+        BTC:  { img: 'https://coin-images.coingecko.com/coins/images/1/large/bitcoin.png?1696501400', glyph: '₿', color: '#F7931A', bg: '#2a200f' },
+        ETH:  { img: 'https://coin-images.coingecko.com/coins/images/279/large/ethereum.png?1696501628', glyph: 'Ξ', color: '#627EEA', bg: '#141b33' },
+        SOL:  { img: 'https://coin-images.coingecko.com/coins/images/4128/large/solana.png?1718769756', glyph: '◎', color: '#14F195', bg: '#0f2a20' },
+        XRP:  { img: 'https://coin-images.coingecko.com/coins/images/44/large/xrp-symbol-white-128.png?1696501442', glyph: '✕', color: '#00AAE4', bg: '#0f2430' },
+        DOGE: { img: 'https://coin-images.coingecko.com/coins/images/5/large/dogecoin.png?1696501409', glyph: 'Ð', color: '#C2A633', bg: '#2a2512' },
+        ADA:  { img: 'https://coin-images.coingecko.com/coins/images/975/large/cardano.png?1696502090', glyph: '₳', color: '#0033AD', bg: '#101a33' },
+        DOT:  { img: 'https://coin-images.coingecko.com/coins/images/12171/large/polkadot.jpg?1766533446', glyph: '●', color: '#E6007A', bg: '#2a1020' },
+        LTC:  { img: 'https://coin-images.coingecko.com/coins/images/2/large/litecoin.png?1696501400', glyph: 'Ł', color: '#345D9D', bg: '#101a2a' },
+        BNB:  { img: 'https://coin-images.coingecko.com/coins/images/825/large/bnb-icon2_2x.png?1696501970', glyph: '◆', color: '#F3BA2F', bg: '#2a240f' },
+        AVAX: { img: 'https://coin-images.coingecko.com/coins/images/12559/large/Avalanche_Circle_RedWhite_Trans.png?1696512369', glyph: '▲', color: '#E84142', bg: '#2a1215' },
+        MATIC:{ img: 'https://coin-images.coingecko.com/coins/images/4713/large/polygon.png?1698233745', glyph: '◆', color: '#8247E5', bg: '#1e1233' },
+        LINK: { img: 'https://coin-images.coingecko.com/coins/images/877/large/Chainlink_Logo_500.png?1760023405', glyph: '⬡', color: '#2A5ADA', bg: '#101a33' },
+        UNI:  { img: 'https://coin-images.coingecko.com/coins/images/12504/large/uniswap-logo.png?1720676669', glyph: '🦄', color: '#FF007A', bg: '#2a1020' },
+        SHIB: { img: 'https://coin-images.coingecko.com/coins/images/11939/large/shiba.png?1696511800', glyph: '🐕', color: '#F5A623', bg: '#2a2210' },
+        PEPE: { img: 'https://coin-images.coingecko.com/coins/images/29850/large/pepe-token.jpeg?1696528776', glyph: '🐸', color: '#4CAF50', bg: '#102a14' },
+        XLM:  { img: 'https://coin-images.coingecko.com/coins/images/100/large/fmpFRHHQ_400x400.jpg?1735231350', glyph: '✳', color: '#3AA6B9', bg: '#10252a' },
+        NEAR: { img: 'https://coin-images.coingecko.com/coins/images/10365/large/near.jpg?1696510367', glyph: '▲', color: '#00EC97', bg: '#0f2a20' },
+        APT:  { img: 'https://coin-images.coingecko.com/coins/images/26455/large/Aptos-Network-Symbol-Black-RGB-1x.png?1761789140', glyph: '◈', color: '#05E4C3', bg: '#0f2a26' },
+        ARB:  { img: 'https://coin-images.coingecko.com/coins/images/16547/large/arb.jpg?1721358242', glyph: '◆', color: '#12AAFF', bg: '#0f2430' },
+        OP:   { img: 'https://coin-images.coingecko.com/coins/images/25244/large/Token.png?1774456081', glyph: '✦', color: '#FF0420', bg: '#2a1012' },
+        SUI:  { img: 'https://coin-images.coingecko.com/coins/images/26375/large/sui-ocean-square.png?1727791290', glyph: '◉', color: '#6D28D9', bg: '#1a1233' },
+        INJ:  { img: 'https://coin-images.coingecko.com/coins/images/12882/large/injective_logo.jpg?1696513503', glyph: '❄', color: '#00A3FF', bg: '#0f2430' },
+        SEI:  { img: 'https://coin-images.coingecko.com/coins/images/28205/large/Sei_Logo_-_Transparent.png?1696527207', glyph: '◍', color: '#8A2BE2', bg: '#1a1230' },
+        TIA:  { img: 'https://coin-images.coingecko.com/coins/images/31967/large/tia.jpg?1696530772', glyph: '✳', color: '#FF7A00', bg: '#2a1c0f' }
     };
 
     // ---- the canonical symbol list (same set as the core asset engine) ----
@@ -223,8 +224,21 @@
         }
         if (icon) return '<span class="tm-asset-icon">' + icon + '</span>';
         if (logo) {
-            return '<span class="tm-asset-logo" style="background:' + logo.bg + ';color:' + logo.color + '">' +
+            // Real internet logo (favicon / CoinGecko) with a graceful glyph
+            // fallback when the image can't load (offline, blocked, removed).
+            const fallback = '<span class="tm-asset-logo" style="background:' + logo.bg + ';color:' + logo.color + '">' +
                 esc(logo.glyph) + '</span>';
+            if (logo.img) {
+                // The fallback markup must be HTML-escaped inside the onerror
+                // attribute (its own double quotes would otherwise break it).
+                // The handler swaps the wrapper class and content so the glyph
+                // badge replaces the image cleanly (no leftover white box).
+                return '<span class="tm-asset-logo tm-asset-logo-img" title="' + esc(id.sym) + '">' +
+                    '<img src="' + esc(logo.img) + '" alt="" loading="lazy" ' +
+                    'onerror="var w=this.closest(\'.tm-asset-logo-img\');w.className=\'tm-asset-logo\';w.innerHTML=' + esc(JSON.stringify(fallback)) + '">' +
+                '</span>';
+            }
+            return fallback;
         }
         return '<span class="tm-asset-logo" style="background:#1a2030;color:#94a3b8">' + esc(id.sym.slice(0, 1)) + '</span>';
     }
