@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>31TRADES — Market Replay</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <!-- TradingView Lightweight Charts (open source — github.com/tradingview/lightweight-charts) -->
+    <script src="https://unpkg.com/lightweight-charts@5.2.0/dist/lightweight-charts.standalone.production.js"></script>
+    <script src="demo-trades.js"></script>
+    <script src="assets/asset-meta.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            background: #0A0A0C; color: #E8E8EC;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow: hidden;
+        }
+        .num {
+            font-family: 'JetBrains Mono', monospace;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+
+        /* App shell */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #0D0D0F;
+            border-right: 1px solid #1C1C20;
+            display: flex;
+            flex-direction: column;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        .logo-badge {
+            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: #052E1F; font-weight: 800; font-size: 14px;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .collapse-btn {
+            background: none; border: none; color: #6E6E78; cursor: pointer;
+            padding: 6px; border-radius: 6px; transition: all 0.15s;
+        }
+        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+        }
+        .nav-item:hover { background: #16161A; color: #E8E8EC; }
+        .nav-item.active {
+            background: rgba(16, 185, 129, 0.08);
+            color: #FFFFFF;
+            box-shadow: inset 2px 0 0 #10B981;
+        }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
+
+        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
+        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
+        .search-input:focus { border-color: #2E2E35; }
+        .search-input::placeholder { color: #55555E; }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .btn-primary {
+            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: background 0.15s; border: none; cursor: pointer;
+        }
+        .btn-primary:hover { background: #E8E8EC; }
+        .btn-ghost {
+            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+        }
+        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .btn-ghost.on { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+
+        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
+        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+
+        .legend-row { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 11.5px; }
+        .legend-item { display: inline-flex; align-items: center; gap: 5px; }
+        .legend-item .sw { width: 8px; height: 8px; border-radius: 2px; display: inline-block; }
+
+        .tf-btn {
+            padding: 6px 12px; border-radius: 7px; font-size: 12px; font-weight: 700;
+            color: #8A8A93; border: 1px solid #26262B; background: transparent; cursor: pointer; transition: all 0.15s;
+        }
+        .tf-btn:hover { color: #E8E8EC; border-color: #3A3A41; }
+        .tf-btn.active { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+
+        .source-badge {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 4px 11px; border-radius: 999px; font-size: 11px; font-weight: 700;
+            background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.3); color: #34D399;
+        }
+        .source-badge.amber { background: rgba(245,158,11,0.12); border-color: rgba(245,158,11,0.3); color: #FBBF24; }
+        .source-badge .dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; box-shadow: 0 0 6px currentColor; }
+
+        /* Playback bar */
+        .play-btn {
+            width: 34px; height: 34px; border-radius: 999px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s;
+            background: #FFFFFF; color: #0A0A0C; border: none;
+        }
+        .play-btn:hover { background: #E8E8EC; box-shadow: 0 0 16px rgba(255,255,255,0.2); }
+        .step-btn {
+            width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.15s;
+            background: rgba(255,255,255,0.05); color: #B4B4BD; border: 1px solid #26262B;
+        }
+        .step-btn:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .speed-btn {
+            padding: 5px 10px; border-radius: 7px; font-size: 11.5px; font-weight: 700;
+            color: #8A8A93; background: transparent; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+        }
+        .speed-btn.active { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.4); color: #34D399; }
+
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+</head>
+<body>
+
+    <div class="flex h-screen">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
+                <div class="logo-badge">31</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="replay.html" class="nav-item active"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="#" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
+                    <div class="avatar">AJ</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
+                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search instruments…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </button>
+                    <button class="account-select hide-when-collapsed" id="account-chip">
+                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
+                        <span>Prop Firm A</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto">
+                <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[22px] font-bold tracking-tight">Market Replay</h1>
+                            <p class="text-[13px] text-[#6E6E78] mt-0.5">
+                                Relive the market like a movie — real TradingView candles, bar by bar.
+                            </p>
+                        </div>
+                    </div>
+
+                    <!-- Toolbar -->
+                    <div class="panel p-4 flex flex-wrap items-center gap-x-5 gap-y-3">
+                        <div class="flex items-center gap-2.5">
+                            <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide">Symbol</span>
+                            <select id="symbol-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[180px]"></select>
+                        </div>
+                        <div class="flex items-center gap-1.5" id="tf-bar">
+                            <button class="tf-btn" data-tf="1m">1m</button>
+                            <button class="tf-btn" data-tf="5m">5m</button>
+                            <button class="tf-btn" data-tf="15m">15m</button>
+                            <button class="tf-btn active" data-tf="1h">1H</button>
+                            <button class="tf-btn" data-tf="4h">4H</button>
+                            <button class="tf-btn" data-tf="1d">1D</button>
+                        </div>
+                        <div class="flex items-center gap-1.5">
+                            <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Window</span>
+                            <button class="tf-btn" data-win="100">100</button>
+                            <button class="tf-btn active" data-win="400">400</button>
+                            <button class="tf-btn" data-win="800">800</button>
+                        </div>
+                        <button class="btn-primary !py-2 !px-4 text-[12.5px] ml-auto" id="new-session-btn">
+                            <svg data-lucide="refresh-cw" class="w-4 h-4"></svg> New replay
+                        </button>
+                    </div>
+
+                    <!-- Chart card -->
+                    <div class="panel p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                            <div class="flex items-center gap-3">
+                                <div id="asset-badge"></div>
+                                <div>
+                                    <div class="text-[15px] font-bold" id="chart-title">EURUSD · 1H</div>
+                                    <div class="text-[12px] text-[#6E6E78]" id="chart-sub">Starting replay…</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <span class="source-badge" id="source-badge"><span class="dot"></span><span id="source-label">TradingView</span></span>
+                                <div class="legend-row num" id="ohlc-legend"></div>
+                            </div>
+                        </div>
+                        <div id="chart" class="w-full" style="height:470px"></div>
+
+                        <!-- Playback bar -->
+                        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
+                            <div class="flex items-center gap-2">
+                                <button class="step-btn" id="reset-btn" title="Reset to start"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg></button>
+                                <button class="step-btn" id="step-back-btn" title="Step back"><svg data-lucide="chevrons-left" class="w-4 h-4"></svg></button>
+                                <button class="play-btn" id="play-btn" title="Play / pause"><svg data-lucide="play" class="w-4 h-4 ml-0.5" id="play-ico"></svg></button>
+                                <button class="step-btn" id="step-fwd-btn" title="Step forward"><svg data-lucide="chevrons-right" class="w-4 h-4"></svg></button>
+                            </div>
+                            <div class="flex items-center gap-1.5" id="speed-bar">
+                                <span class="text-[10.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Speed</span>
+                                <button class="speed-btn" data-speed="1000">Slow</button>
+                                <button class="speed-btn active" data-speed="400">Normal</button>
+                                <button class="speed-btn" data-speed="150">Fast</button>
+                                <button class="speed-btn" data-speed="60">Turbo</button>
+                            </div>
+                            <div class="ml-auto flex items-center gap-2 text-[11.5px] text-[#6E6E78]">
+                                <span class="num font-bold text-white" id="play-pos">—</span>
+                                <span id="pos-time">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="panel p-4">
+                        <div class="panel-title mb-2">How it works</div>
+                        <p class="text-[12.5px] text-[#6E6E78] leading-relaxed">
+                            Press <b>Play</b> to step through real historical candles bar by bar. The engine streams from the server,
+                            which pulls live TradingView data (cached for speed). With your TradingView account cookies set on the
+                            server (<span class="num">TRADEMIND_TV_SESSION</span> + <span class="num">TRADEMIND_TV_SIGNATURE</span>),
+                            playback uses TradingView's native replay mode — the same engine as the platform itself. Without them it
+                            replays the identical real history locally, one bar per tick. Use <b>Reset</b> to rewind, <b>Step</b> to
+                            move one bar, and the speed pills to control the pace.
+                        </p>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Market Replay · bar-by-bar playback via /api/replay · TradingView Lightweight Charts</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+
+            // ---- toast ----
+            let toastTimer;
+            window.showToast = function (msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+
+            // ================= CHART =================
+            const COLORS = { up: '#10B981', down: '#EF4444', vol: '#2A2A31' };
+            let chart = null, candleSeries = null, volumeSeries = null;
+            let pricePrecision = 5;
+
+            function buildChart() {
+                const el = $('chart');
+                el.innerHTML = '';
+                chart = LightweightCharts.createChart(el, {
+                    height: 470,
+                    layout: { background: { type: 'solid', color: '#0F0F11' }, textColor: '#B4B4BD', fontFamily: "'JetBrains Mono', monospace" },
+                    grid: { vertLines: { color: '#1A1A1E' }, horzLines: { color: '#1A1A1E' } },
+                    rightPriceScale: { borderColor: '#1F1F23', scaleMargins: { top: 0.08, bottom: 0.22 } },
+                    timeScale: { borderColor: '#1F1F23', timeVisible: true, secondsVisible: false, rightOffset: 4 },
+                    crosshair: { mode: LightweightCharts.CrosshairMode.Normal },
+                    localization: { priceFormatter: p => p == null ? '—' : p.toLocaleString('en-US', { minimumFractionDigits: pricePrecision, maximumFractionDigits: pricePrecision }) }
+                });
+                candleSeries = chart.addSeries(LightweightCharts.CandlestickSeries, {
+                    upColor: COLORS.up, downColor: COLORS.down,
+                    borderUpColor: COLORS.up, borderDownColor: COLORS.down,
+                    wickUpColor: COLORS.up, wickDownColor: COLORS.down
+                });
+                volumeSeries = chart.addSeries(LightweightCharts.HistogramSeries, {
+                    priceFormat: { type: 'volume' }, priceScaleId: '',
+                    lastValueVisible: false, priceLineVisible: false
+                });
+                volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.86, bottom: 0 } });
+                chart.subscribeCrosshairMove(param => {
+                    const d = param && param.seriesData && param.seriesData.get(candleSeries);
+                    renderLegend(d);
+                });
+                new ResizeObserver(() => { if (chart) chart.applyOptions({ width: el.clientWidth }); }).observe(el);
+            }
+
+            function renderChart() {
+                const data = bars.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close }));
+                candleSeries.setData(data);
+                volumeSeries.setData(data.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? COLORS.up : COLORS.down })));
+                renderLegend(null);
+                if (data.length && data[data.length - 1].time > lastRenderedTime) {
+                    chart.timeScale().scrollToRealTime();
+                    lastRenderedTime = data[data.length - 1].time;
+                }
+            }
+
+            let lastRenderedTime = 0;
+            function renderLegend(bar) {
+                const el = $('ohlc-legend');
+                const b = bar || (bars.length ? bars[bars.length - 1] : null);
+                if (!b) { el.innerHTML = ''; return; }
+                const col = b.close >= b.open ? COLORS.up : COLORS.down;
+                const f = p => p.toLocaleString('en-US', { minimumFractionDigits: pricePrecision, maximumFractionDigits: pricePrecision });
+                el.innerHTML =
+                    '<span class="legend-item"><span class="sw" style="background:' + col + '"></span>O <b>' + f(b.open) + '</b></span>' +
+                    '<span class="legend-item"><span class="sw" style="background:' + col + '"></span>H <b>' + f(b.high) + '</b></span>' +
+                    '<span class="legend-item"><span class="sw" style="background:' + col + '"></span>L <b>' + f(b.low) + '</b></span>' +
+                    '<span class="legend-item"><span class="sw" style="background:' + col + '"></span>C <b>' + f(b.close) + '</b></span>';
+            }
+
+            // ================= REPLAY STATE =================
+            let sessionId = null;
+            let bars = [];
+            let playing = false;
+            let speedMs = 400;
+            let pollTimer = null;
+            let currentSymbol = 'EURUSD', currentTF = '1h', currentWin = 400;
+
+            function setSource(src) {
+                const badge = $('source-badge'), label = $('source-label');
+                if (src === 'tradingview-replay') { label.textContent = 'TradingView · live replay'; badge.classList.remove('amber'); }
+                else if (src === 'history-local') { label.textContent = 'TradingView · local replay'; badge.classList.remove('amber'); }
+                else { label.textContent = 'estimated · offline'; badge.classList.add('amber'); }
+            }
+
+            function updatePlayIco() {
+                $('play-ico').setAttribute('data-lucide', playing ? 'pause' : 'play');
+                if (window.lucide) lucide.createIcons();
+            }
+
+            async function startSession() {
+                stopPolling(); playing = false; updatePlayIco();
+                bars = []; lastRenderedTime = 0;
+                $('chart-sub').textContent = 'Starting replay for ' + currentSymbol + ' · ' + currentTF + '…';
+                try {
+                    const res = await fetch('/api/replay/start?symbol=' + encodeURIComponent(currentSymbol) + '&timeframe=' + currentTF + '&window=' + currentWin);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const d = await res.json();
+                    if (!d.ok) throw new Error(d.error || 'start failed');
+                    sessionId = d.state.id;
+                    bars = (d.state.bars || []).map(b => ({ ...b }));
+                    setSource(d.state.source);
+                    pricePrecision = bars.length && bars[0].close < 1 ? 6 : bars.length && bars[0].close < 100 ? 3 : bars.length && bars[0].close < 1000 ? 2 : 1;
+                    buildChart();
+                    renderChart();
+                    $('chart-title').textContent = currentSymbol + ' · ' + currentTF;
+                    $('chart-sub').textContent = d.state.source === 'history-local' || d.state.source === 'tradingview-replay'
+                        ? 'Real TradingView history · ' + d.state.total + ' bars in window'
+                        : 'Offline estimate · ' + d.state.total + ' bars in window';
+                    updatePos(d.state.position, d.state.total);
+                    renderAssetBadge();
+                    chart.timeScale().fitContent();
+                    showToast('Replay ready — press play');
+                } catch (e) {
+                    $('chart-sub').textContent = 'Failed to start replay: ' + e.message;
+                    showToast('Could not start replay — is the server running?');
+                }
+            }
+
+            function updatePos(pos, total) {
+                $('play-pos').textContent = pos + ' / ' + (total || '?');
+                const last = bars[bars.length - 1];
+                $('pos-time').textContent = last ? '· ' + new Date(last.time * 1000).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }) : '';
+            }
+
+            async function poll() {
+                if (!sessionId) return;
+                try {
+                    const res = await fetch('/api/replay/status?id=' + encodeURIComponent(sessionId) + '&from=' + bars.length);
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const d = await res.json();
+                    if (!d.ok) { showToast(d.error || 'replay session lost'); stopPolling(); playing = false; updatePlayIco(); return; }
+                    if (d.bars && d.bars.length) {
+                        bars.push(...d.bars.map(b => ({ ...b })));
+                        renderChart();
+                    }
+                    setSource(d.source);
+                    updatePos(d.position, d.total);
+                    if (d.ended) {
+                        playing = false; updatePlayIco();
+                        if (d.bars && d.bars.length) showToast('Replay complete — reached the latest bar');
+                    }
+                    if (d.playing && !d.ended) pollTimer = setTimeout(poll, 200);
+                    else if (!d.playing && playing) { playing = false; updatePlayIco(); }
+                } catch (e) {
+                    stopPolling(); playing = false; updatePlayIco();
+                    showToast('Replay connection lost: ' + e.message);
+                }
+            }
+
+            function stopPolling() { if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; } }
+
+            async function control(action) {
+                if (!sessionId) return;
+                try {
+                    const res = await fetch('/api/replay/control', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: sessionId, action, speedMs })
+                    });
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const d = await res.json();
+                    if (!d.ok) throw new Error(d.error);
+                    if (d.state) {
+                        setSource(d.state.source);
+                        updatePos(d.state.position, d.state.total);
+                        if (d.state.bars && d.state.bars.length) {
+                            // the response may already carry the new bars
+                            bars = d.state.bars;
+                            renderChart();
+                        }
+                    }
+                    return true;
+                } catch (e) { showToast('Control failed: ' + e.message); return false; }
+            }
+
+            async function togglePlay() {
+                if (!sessionId) return;
+                if (playing) {
+                    playing = false; updatePlayIco(); stopPolling();
+                    await control('pause');
+                } else {
+                    playing = true; updatePlayIco();
+                    await control('play');
+                    poll();
+                }
+            }
+            async function stepFwd() { playing = false; updatePlayIco(); stopPolling(); const ok = await control('step'); if (ok) pollOnce(); }
+            async function stepBack() { playing = false; updatePlayIco(); stopPolling(); await control('reset'); }
+            async function pollOnce() { poll(); }
+
+            // ================= SYMBOL PICKER =================
+            function buildSymbolPicker() {
+                const sel = $('symbol-select');
+                if (!window.TMAssets || !window.TMAssets.SYMBOLS) return;
+                let html = '';
+                window.TMAssets.CATEGORIES.forEach(cat => {
+                    const syms = window.TMAssets.SYMBOLS.filter(s => s.cat === cat);
+                    if (!syms.length) return;
+                    html += '<optgroup label="' + cat + '">' + syms.map(s => '<option value="' + s.sym + '">' + s.sym + ' — ' + s.name + '</option>').join('') + '</optgroup>';
+                });
+                sel.innerHTML = html;
+                sel.value = currentSymbol;
+                sel.addEventListener('change', () => { currentSymbol = sel.value; startSession(); });
+            }
+            function renderAssetBadge() {
+                const el = $('asset-badge');
+                el.innerHTML = '';
+                try {
+                    const id = window.TMAssets && window.TMAssets.identityFor(currentSymbol);
+                    if (id && id.badge) { el.innerHTML = id.badge; return; }
+                } catch (e) {}
+                el.innerHTML = '<span class="num text-[13px] font-bold text-white">' + currentSymbol + '</span>';
+            }
+
+            // ================= INIT =================
+            function boot() {
+                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+                $('tf-bar').querySelectorAll('.tf-btn').forEach(b => b.addEventListener('click', () => {
+                    $('tf-bar').querySelectorAll('.tf-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    currentTF = b.dataset.tf;
+                    startSession();
+                }));
+                document.querySelectorAll('[data-win]').forEach(b => b.addEventListener('click', () => {
+                    document.querySelectorAll('[data-win]').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    currentWin = Number(b.dataset.win);
+                    startSession();
+                }));
+                document.querySelectorAll('#speed-bar .speed-btn').forEach(b => b.addEventListener('click', () => {
+                    document.querySelectorAll('#speed-bar .speed-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    speedMs = Number(b.dataset.speed);
+                }));
+                $('play-btn').addEventListener('click', togglePlay);
+                $('step-fwd-btn').addEventListener('click', stepFwd);
+                $('reset-btn').addEventListener('click', stepBack);
+                $('step-back-btn').addEventListener('click', stepBack);
+                $('new-session-btn').addEventListener('click', startSession);
+
+                const core = window.TradeMindCore;
+                if (core && core.selectedAccountId) {
+                    const sel = core.selectedAccountId();
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    const chip = $('account-chip');
+                    if (acc && chip) {
+                        const numEl = chip.querySelector('.num');
+                        if (numEl) numEl.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
+                        const spans = chip.querySelectorAll('span');
+                        if (spans.length > 2) spans[2].textContent = acc.name;
+                    }
+                }
+
+                buildSymbolPicker();
+                renderAssetBadge();
+                if (window.lucide) lucide.createIcons();
+                startSession();
+                window.addEventListener('beforeunload', () => {
+                    if (sessionId) {
+                        try { navigator.sendBeacon('/api/replay/control', JSON.stringify({ id: sessionId, action: 'close' })); } catch (e) {}
+                    }
+                });
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+        })();
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>

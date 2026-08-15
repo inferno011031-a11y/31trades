@@ -45,6 +45,7 @@ const Notif = require('./server/notifications.js');
 const Brokers = require('./server/brokers.js');
 const Backtest = require('./server/backtest.js');
 const MarketData = require('./server/marketdata.js');
+const Replay = require('./server/replay.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -499,6 +500,19 @@ async function handleApi(req, res, url) {
                 return json(res, 200, data);
             }
 
+            // ---------- Market Replay (bar-by-bar playback sessions) ----------
+            if (p === '/api/replay/start') {
+                return json(res, 200, await Replay.start({
+                    symbol: q.get('symbol') || 'EURUSD',
+                    timeframe: q.get('timeframe') || '1h',
+                    window: Number(q.get('window')) || undefined,
+                    preRoll: Number(q.get('preRoll')) || undefined
+                }));
+            }
+            if (p === '/api/replay/status') {
+                return json(res, 200, await Replay.status(q.get('id'), Number(q.get('from')) || 0));
+            }
+
 
             // ---------- AI Mentor (Phase 2 service layer — server module) ----------
             if (p === '/api/ai/mentor') {
@@ -545,6 +559,11 @@ async function handleApi(req, res, url) {
     try { body = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
 
     try {
+        // ---- market replay controls ----
+        if (p === '/api/replay/control') {
+            return json(res, 200, await Replay.control(body.id, body.action, body.speedMs));
+        }
+
         // ---- notifications read state (engine module) ----
         if (p === '/api/notifications/read') {
             await Notif.markRead(uc.userId, Array.isArray(body.ids) ? body.ids : []);
