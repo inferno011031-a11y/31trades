@@ -142,6 +142,52 @@ function newBattle(overrides) {
     ok(Battle.listBattles('u-host').length === 0, 'battle deleted');
 }
 
+// 7 · event bus — mutations notify subscribers (the WS hub listens here)
+{
+    const seen = [];
+    const unsub = Battle.subscribe((type, b) => seen.push(type + ':' + b.id));
+    const b = newBattle({ status: 'lobby' });
+    Battle.saveBattle('u-host', b);
+    Battle.play('u-host', b.id, 60);
+    await new Promise(r => setTimeout(r, 250));
+    Battle.pause('u-host', b.id);
+    Battle.complete('u-host', b.id);
+    unsub();
+    ok(seen.length >= 3, 'event bus delivered cursor/status events (' + seen.length + ')')
+    ok(seen.some(s => s.indexOf('cursor:') === 0), 'cursor events emitted');
+    ok(seen.some(s => s.indexOf('status:') === 0), 'status events emitted');
+    Battle.deleteBattle('u-host', b.id);
+}
+
+// 8 · dashboard feed — active / invites / last-7-days results, all derived
+{
+    const b1 = newBattle({ status: 'lobby', title: 'Lobby Battle' });
+    const b2 = newBattle({ status: 'running', title: 'Running Battle' });
+    const b3 = newBattle({ status: 'completed', title: 'Done Battle', completedAt: new Date().toISOString() });
+    Battle.saveBattle('u-host', b1);
+    Battle.saveBattle('u-host', b2);
+    Battle.saveBattle('u-host', b3);
+    const feed = Battle.battlesFeed('u-host');
+    ok(Array.isArray(feed.active) && Array.isArray(feed.invites) && Array.isArray(feed.results), 'feed shape (active/invites/results)');
+    ok(feed.active.some(x => x.id === b1.id) || feed.invites.some(x => x.id === b1.id), 'lobby battle appears in feed');
+    ok(feed.active.some(x => x.id === b2.id) || feed.invites.some(x => x.id === b2.id), 'running battle appears in feed');
+    const done = feed.results.find(x => x.id === b3.id);
+    ok(!!done && !!done.winner, 'completed battle has a winner in results');
+    ok(done.winner.name === 'Alex', 'winner is the top-scoring seat');
+    // a battle the user hosts but is NOT seated in (free seats) shows as an invite
+    const b4 = newBattle({ status: 'running', title: 'Open Seats', seats: [
+        { id: 's0', name: 'Alex', team: 'ICT' },
+        { id: 's1', name: 'Sam', team: 'SMC' }
+    ] });
+    Battle.saveBattle('u-host', b4);
+    const feed3 = Battle.battlesFeed('u-host');
+    ok(feed3.invites.some(x => x.id === b4.id), 'free-seat battle without my seat surfaces as an invite');
+    Battle.deleteBattle('u-host', b4.id);
+    Battle.deleteBattle('u-host', b1.id);
+    Battle.deleteBattle('u-host', b2.id);
+    Battle.deleteBattle('u-host', b3.id);
+}
+
 console.log('\n' + (failCount ? 'FAILED: ' + failCount + ' / ' + (okCount + failCount) : 'ALL PASS: ' + okCount + ' checks'));
 process.exit(failCount ? 1 : 0);
 

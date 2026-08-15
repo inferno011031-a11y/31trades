@@ -124,6 +124,7 @@ class Battle {
             this.cursor++;
             for (const s of this.seats) if (s.session) s.session.setCursor(this.cursor);
         }
+        emit('cursor', this);
     }
 
     start() {
@@ -191,6 +192,7 @@ class Battle {
     }
 
     leaderboard() {
+        this._ensureSeats();   // hydrated battles may not have sessions yet
         const rows = this.seats.map(s => {
             const sc = scoreSeat(s);
             return {
@@ -287,6 +289,16 @@ function deleteBattle(hostId, id) {
 }
 
 // ---------------------------------------------------------------------------
+// Event bus — the WS hub subscribes here so battle changes are pushed to
+// connected clients in real time instead of them polling.
+// ---------------------------------------------------------------------------
+const listeners = new Set();
+function subscribe(fn) { listeners.add(fn); return () => listeners.delete(fn); }
+function emit(type, b) {
+    listeners.forEach(fn => { try { fn(type, b); } catch (e) { /* never break the battle */ } });
+}
+
+// ---------------------------------------------------------------------------
 // Active registry (play timers live here)
 // ---------------------------------------------------------------------------
 const active = new Map();
@@ -312,6 +324,7 @@ function play(hostId, id, speedMs) {
             clearInterval(b.timer); b.timer = null;
             if (b.status === 'running') { b.status = 'completed'; b.completedAt = new Date().toISOString(); }
             saveBattle(hostId, b);
+            emit('status', b);
             return;
         }
         b.setCursor(b.cursor + 1);
@@ -322,7 +335,7 @@ function play(hostId, id, speedMs) {
 function pause(hostId, id) {
     const b = active.get(id);
     if (b && b.timer) { clearInterval(b.timer); b.timer = null; }
-    if (b) saveBattle(hostId, b);
+    if (b) { saveBattle(hostId, b); emit('status', b); }
     return { ok: true };
 }
 function step(hostId, id) {
@@ -334,6 +347,7 @@ function step(hostId, id) {
         if (b.status === 'running') { b.status = 'completed'; b.completedAt = new Date().toISOString(); }
     }
     saveBattle(hostId, b);
+    emit('status', b);
     return { ok: true };
 }
 function seek(hostId, id, idx) {
@@ -363,6 +377,7 @@ function reset(hostId, id) {
         }
     });
     saveBattle(hostId, b);
+    emit('status', b);
     return { ok: true };
 }
 function complete(hostId, id) {
@@ -373,10 +388,50 @@ function complete(hostId, id) {
     b.status = 'completed';
     b.completedAt = b.completedAt || new Date().toISOString();
     saveBattle(hostId, b);
+    emit('status', b);
     return { ok: true, leaderboard: b.leaderboard() };
+}
+
+// ---------------------------------------------------------------------------
+// Dashboard feed — active battles, joinable invites, and the last 7 days of
+// completed results (all derived from the same canonical battle records).
+// ---------------------------------------------------------------------------
+function battlesFeed(hostId) {
+    const all = readAll(hostId).map(x => Battle.hydrate(x));
+    const now = Date.now();
+    const week = 7 * 24 * 60 * 60 * 1000;
+    const active = [], invites = [], results = [];
+    all.forEach(x => {
+        const taken = x.seats.filter(s => s.userId).length;
+        const mySeat = x.seats.find(s => s.userId === hostId);
+        const free = x.seats.some(s => !s.userId);
+        const base = {
+            id: x.id, title: x.title, symbol: x.symbol, timeframe: x.timeframe,
+            status: x.status, createdAt: x.createdAt, completedAt: x.completedAt,
+            cursor: x.cursor, total: x.candles.length,
+            seats: x.seats.length, taken, teams: [...new Set(x.seats.map(s => s.team).filter(Boolean))]
+        };
+        if (x.status === 'lobby' || x.status === 'running') {
+            if (mySeat) { base.mySeat = mySeat.id; active.push(base); }
+            else if (free) { base.canJoin = true; invites.push(base); }
+            else active.push(base);
+        } else if (x.status === 'completed') {
+            if (x.completedAt && now - new Date(x.completedAt).getTime() <= week) {
+                const lb = x.leaderboard();
+                const winner = lb.seats[0] || null;
+                results.push(Object.assign(base, {
+                    winner: winner ? { name: winner.name, team: winner.team, score: winner.score, detail: winner.detail } : null,
+                    leaderboard: lb
+                }));
+            }
+        }
+    });
+    results.sort((a, b) => new Date(b.completedAt) - new Date(a.completedAt));
+    return { active, invites, results };
 }
 
 module.exports = {
     Battle, listBattles, getBattle, saveBattle, deleteBattle,
-    play, pause, step, seek, reset, complete, loadActive, scoreSeat
+    play, pause, step, seek, reset, complete, loadActive, scoreSeat,
+    subscribe, emit, battlesFeed
 };

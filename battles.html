@@ -336,6 +336,7 @@ Mia:ICT</textarea>
             let seatState = null;     // my private state
             let chart = null, candleSeries = null, volumeSeries = null, posLines = [];
             let pollTimer = null;
+            let ws = null, wsTimer = null, wsReady = false;
             let playing = false;
             let speedMs = 300;
             let currentDir = 'long';
@@ -366,6 +367,7 @@ Mia:ICT</textarea>
 
             async function loadBattle(id) {
                 stopPoll();
+                stopWs();
                 playing = false;
                 try {
                     const r = await api('/api/battles/' + id);
@@ -373,6 +375,7 @@ Mia:ICT</textarea>
                     const saved = mySeatFor(id);
                     if (saved) await loadSeat(saved); else seat = null, seatState = null;
                     renderAll();
+                    connectWs();
                 } catch (e) { showToast('Could not load battle: ' + e.message); }
             }
 
@@ -641,12 +644,47 @@ Mia:ICT</textarea>
                 renderLeaderboard();
             }
 
-            // ---- replay controls (host only) ----
+            // ---- replay updates: WebSocket pushes (fallback: slow poll) ----
             function stopPoll() { if (pollTimer) { clearInterval(pollTimer); pollTimer = null; } }
+            function connectWs() {
+                if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+                if (wsTimer) { clearTimeout(wsTimer); wsTimer = null; }
+                try {
+                    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+                    let uid = '';
+                    try { const s = window.TradeMindAuth && window.TradeMindAuth.getSession(); if (s && s.user) uid = s.user.id || s.user.email || ''; } catch (e) {}
+                    ws = new WebSocket(proto + '://' + location.host + '/ws?battle=' + encodeURIComponent(battle.id) + '&user=' + encodeURIComponent(uid));
+                } catch (e) { ws = null; return; }
+                ws.onopen = () => { wsReady = true; };
+                ws.onmessage = async (ev) => {
+                    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+                    if (m.type === 'battle.cursor') {
+                        if (battle && m.battle === battle.id && m.cursor != null) {
+                            battle.cursor = m.cursor; battle.status = m.status;
+                            if (seat) await loadSeat(seat);
+                            renderChart(); renderMeta(); renderSeats(); renderPositionBanner(); renderTicket(); renderLeaderboard();
+                            if (battle.status === 'completed') { stopPoll(); playing = false; updatePlayIco(); }
+                        }
+                    } else if (m.type === 'battle.status') {
+                        if (battle && m.battle === battle.id && m.state) {
+                            battle = m.state;
+                            if (seat) await loadSeat(seat);
+                            renderAll();
+                            if (battle.status === 'completed') { stopPoll(); playing = false; updatePlayIco(); }
+                        }
+                    }
+                };
+                ws.onclose = () => { ws = null; wsReady = false; };
+                ws.onerror = () => { try { ws.close(); } catch (e) {} };
+                // keep the socket healthy — light ping every 20s
+                wsTimer = setInterval(() => { if (ws && ws.readyState === 1) ws.send('ping'); }, 20000);
+            }
             function startPoll() {
                 stopPoll();
                 playing = true;
                 updatePlayIco();
+                connectWs();
+                // fallback refresh for stale connections — far slower than the old 500ms poll
                 pollTimer = setInterval(async () => {
                     try {
                         const r = await api('/api/battles/' + battle.id);
@@ -655,7 +693,12 @@ Mia:ICT</textarea>
                         renderChart(); renderMeta(); renderSeats(); renderPositionBanner(); renderTicket(); renderLeaderboard();
                         if (battle.status === 'completed') { stopPoll(); playing = false; updatePlayIco(); }
                     } catch (e) {}
-                }, 500);
+                }, 3000);
+            }
+            function stopWs() {
+                if (wsTimer) { clearInterval(wsTimer); wsTimer = null; }
+                if (ws) { try { ws.close(); } catch (e) {} ws = null; }
+                wsReady = false;
             }
             function updatePlayIco() {
                 $('play-ico').setAttribute('data-lucide', playing ? 'pause' : 'play');

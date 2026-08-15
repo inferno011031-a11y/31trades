@@ -50,6 +50,7 @@ const Sim = require('./server/backtest-sim.js');
 const Practice = require('./server/practice.js');
 const Battle = require('./server/battle.js');
 const AICoach = require('./server/ai-coach.js');
+const BattleWs = require('./server/battle-ws.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -547,6 +548,9 @@ async function handleApi(req, res, url) {
             if (p === '/api/battles' && req.method === 'GET') {
                 return json(res, 200, { ok: true, battles: Battle.listBattles(uc.userId) });
             }
+            if (p === '/api/battles/feed' && req.method === 'GET') {
+                return json(res, 200, { ok: true, feed: Battle.battlesFeed(uc.userId) });
+            }
             if ((m = p.match(/^\/api\/battles\/([^/]+)$/))) {
                 const b = Battle.getBattle(uc.userId, m[1]);
                 if (!b) return json(res, 404, { error: 'unknown battle' });
@@ -711,6 +715,7 @@ async function handleApi(req, res, url) {
             });
             b._ensureSeats();
             Battle.saveBattle(uc.userId, b);
+            Battle.emit('created', b);
             return json(res, 200, { ok: true, battle: b.id, hostSeat: b.seats[0].id, state: b.publicState() });
         }
         if ((m = p.match(/^\/api\/battles\/([^/]+)\/join$/))) {
@@ -722,6 +727,7 @@ async function handleApi(req, res, url) {
             free.userId = uc.userId;
             free.name = String(body.name || free.name);
             Battle.saveBattle(uc.userId, b);
+            Battle.emit('status', b);
             return json(res, 200, { ok: true, seat: free.id, state: b.publicState() });
         }
         if ((m = p.match(/^\/api\/battles\/([^/]+)\/control$/))) {
@@ -750,6 +756,7 @@ async function handleApi(req, res, url) {
             });
             if (!r.ok) return json(res, 400, { error: r.error });
             Battle.saveBattle(uc.userId, b);
+            Battle.emit('seat', b);
             return json(res, 200, { ok: true, position: r.position, state: b.seatState(seat.id) });
         }
         if ((m = p.match(/^\/api\/battles\/([^/]+)\/close$/))) {
@@ -761,6 +768,7 @@ async function handleApi(req, res, url) {
             const r = b.close(seat.id, { price: body.price, reason: body.reason });
             if (!r.ok) return json(res, 400, { error: r.error });
             Battle.saveBattle(uc.userId, b);
+            Battle.emit('seat', b);
             return json(res, 200, { ok: true, trade: r.trade, state: b.seatState(seat.id) });
         }
         if (req.method === 'DELETE' && (m = p.match(/^\/api\/battles\/([^/]+)$/))) {
@@ -1065,7 +1073,7 @@ process.on('unhandledRejection', err => {
 });
 
 boot().then(() => {
-    http.createServer((req, res) => {
+    const server = http.createServer((req, res) => {
         let url;
         try { url = new URL(req.url, 'http://127.0.0.1:' + PORT); } catch (e) { return json(res, 400, { error: 'bad url' }); }
 
@@ -1076,8 +1084,11 @@ boot().then(() => {
         serveStatic(res, url.pathname);
     // 0.0.0.0 — Railway (and other hosts) route external traffic to the
     // container this way; loopback clients (127.0.0.1) are still served.
-    }).listen(PORT, '0.0.0.0', () => {
-        console.log('31Trades backend listening on http://0.0.0.0:' + PORT + '  (db: ' + (db.status().configured ? 'Supabase Postgres' : 'data/db.json (SUPABASE_DB_URL not configured)') + ')');
+    });
+    // Real-time battle pushes (cursor/status/feed) — same HTTP server, /ws path
+    try { BattleWs.attach(server); } catch (e) { console.error('[31trades] ws attach failed: ' + e.message); }
+    server.listen(PORT, '0.0.0.0', () => {
+        console.log('31Trades backend listening on http://0.0.0.0:' + PORT + '  (db: ' + (db.status().configured ? 'Supabase Postgres' : 'data/db.json (SUPABASE_DB_URL not configured)') + ')' + '  (ws: ' + (BattleWs ? 'on /ws' : 'off') + ')');
     });
 }).catch(err => {
     console.error('[31trades] boot failed: ' + err.message);

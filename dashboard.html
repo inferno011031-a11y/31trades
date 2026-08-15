@@ -1049,6 +1049,23 @@
                         </div>
                     </div>
 
+                    <!-- Live Battles feed (real-time via /ws, same canonical data) -->
+                    <div class="panel p-5">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <div class="panel-title">Live Battles</div>
+                                <div class="panel-sub mt-0.5" id="battles-sub">Real-time — everyone trades the same replay</div>
+                            </div>
+                            <a href="battles.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] hover:text-[#34D399] transition-colors">
+                                Open battles <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                            </a>
+                        </div>
+                        <div id="battles-active" class="flex flex-col divide-y divide-[#17171A]"></div>
+                        <div id="battles-invites" class="flex flex-col divide-y divide-[#17171A]"></div>
+                        <div id="battles-results" class="flex flex-col divide-y divide-[#17171A]"></div>
+                        <div id="battles-empty" class="py-5 text-center text-[12.5px] text-[#6E6E78]">Loading battles…</div>
+                    </div>
+
                     <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Dashboard demo build · data is illustrative</p>
                 </div>
             </main>
@@ -1730,9 +1747,95 @@
                 renderEco();
             }
 
+            // ---- Live Battles feed (server-derived; refreshed over /ws) ----
+            var battleFeed = null;
+            var battleWs = null;
+            var battleWsTimer = null;
+            function renderBattlesFeed() {
+                var active = document.getElementById('battles-active');
+                var invites = document.getElementById('battles-invites');
+                var results = document.getElementById('battles-results');
+                var empty = document.getElementById('battles-empty');
+                if (!active || !battleFeed) return;
+                var f = battleFeed;
+                var any = (f.active || []).length + (f.invites || []).length + (f.results || []).length;
+                if (empty) empty.style.display = any ? 'none' : 'block';
+                if (empty && !any) empty.textContent = 'No battles yet — host one from the Battles page and it will appear here in real time.';
+                // active (my seats)
+                if (active) {
+                    active.innerHTML = (f.active || []).length
+                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[#6E6E78] font-semibold mb-1 mt-1">Active · ' + f.active.length + '</div>' + (f.active || []).map(function (b) {
+                            var pct = Math.round((b.cursor / Math.max(1, b.total)) * 100);
+                            return '<div class="flex items-center gap-4 py-2.5">' +
+                                '<span class="status-badge" style="background:rgba(16,185,129,0.14);color:#34D399">' + (b.status === 'lobby' ? 'LOBBY' : 'LIVE') + '</span>' +
+                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white truncate">' + b.title + '</div>' +
+                                '<div class="text-[12px] text-[#6E6E78]">' + b.symbol + ' ' + b.timeframe + ' · ' + b.taken + '/' + b.seats + ' seats · replay ' + pct + '%</div></div>' +
+                                '<a href="battles.html" class="flex items-center gap-1 text-[12px] font-semibold text-[#10B981] hover:text-[#34D399] transition-colors">Watch <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
+                            '</div>';
+                        }).join('')
+                        : '';
+                }
+                // invites (free seats)
+                if (invites) {
+                    invites.innerHTML = (f.invites || []).length
+                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[#8A8A93] font-semibold mb-1 mt-2">Invites · open seats</div>' + (f.invites || []).map(function (b) {
+                            return '<div class="flex items-center gap-4 py-2.5">' +
+                                '<span class="status-badge" style="background:rgba(59,130,246,0.14);color:#60A5FA">' + (b.status === 'lobby' ? 'OPEN' : 'LIVE') + '</span>' +
+                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white truncate">' + b.title + '</div>' +
+                                '<div class="text-[12px] text-[#6E6E78]">' + b.symbol + ' ' + b.timeframe + ' · ' + b.taken + '/' + b.seats + ' seats taken</div></div>' +
+                                '<a href="battles.html" class="flex items-center gap-1 text-[12px] font-semibold text-[#60A5FA] hover:text-[#93C5FD] transition-colors">Join <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
+                            '</div>';
+                        }).join('')
+                        : '';
+                }
+                // results (last 7 days)
+                if (results) {
+                    results.innerHTML = (f.results || []).length
+                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[#6E6E78] font-semibold mb-1 mt-2">Results · last 7 days</div>' + (f.results || []).slice(0, 5).map(function (b) {
+                            var w = b.winner;
+                            var day = b.completedAt ? new Date(b.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
+                            var net = w && w.detail && typeof w.detail.net === 'number' ? (w.detail.net >= 0 ? '+' : '') + '$' + Math.round(Math.abs(w.detail.net)).toLocaleString() : '—';
+                            return '<div class="flex items-center gap-4 py-2.5">' +
+                                '<span class="status-badge" style="background:rgba(139,92,246,0.14);color:#A78BFA">DONE</span>' +
+                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white truncate">' + b.title + '</div>' +
+                                '<div class="text-[12px] text-[#6E6E78]">' + day + ' · winner ' + (w ? w.name : '—') + (w && w.team ? ' (' + w.team + ')' : '') + ' · ' + net + '</div></div>' +
+                                '<a href="battles.html" class="flex items-center gap-1 text-[12px] font-semibold text-[#A78BFA] hover:text-[#C4B5FD] transition-colors">View <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
+                            '</div>';
+                        }).join('')
+                        : '';
+                }
+                if (window.lucide) lucide.createIcons();
+            }
+            async function loadBattlesFeed() {
+                try {
+                    var res = await apiFetch('/api/battles/feed');
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    var j = await res.json();
+                    battleFeed = j && j.feed ? j.feed : null;
+                } catch (e) { battleFeed = null; }
+                renderBattlesFeed();
+            }
+            function connectBattlesWs() {
+                try { if (battleWs) { battleWs.close(); battleWs = null; } if (battleWsTimer) { clearInterval(battleWsTimer); battleWsTimer = null; } } catch (e) {}
+                try {
+                    var proto = location.protocol === 'https:' ? 'wss' : 'ws';
+                    battleWs = new WebSocket(proto + '://' + location.host + '/ws');
+                } catch (e) { battleWs = null; return; }
+                battleWs.onmessage = function (ev) {
+                    var m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+                    if (m && m.type === 'feed.changed') loadBattlesFeed();
+                };
+                battleWs.onclose = function () { battleWs = null; };
+                battleWs.onerror = function () { try { battleWs.close(); } catch (e) {} };
+                battleWsTimer = setInterval(function () { if (battleWs && battleWs.readyState === 1) battleWs.send('ping'); }, 30000);
+            }
+
             function boot() {
                 loadEco();
                 setInterval(loadEco, 5 * 60 * 1000);   // refresh the cached calendar every 5 min
+                loadBattlesFeed();
+                connectBattlesWs();
+                setInterval(loadBattlesFeed, 60 * 1000); // slow safety net if /ws is blocked
                 if (window.TradeMindCore) {
                     var bus = window.TradeMindCore.TradeMindBus;
                     ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.changed'].forEach(function (ev) { bus.subscribe(ev, sync); });
