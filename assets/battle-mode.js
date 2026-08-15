@@ -118,6 +118,7 @@
         if (sb) sb.textContent = seat ? 'Your seat: ' + seat : 'Observer';
     }
 
+    function squadLabel(s) { return s && s.team ? s.team : 'Squad'; }
     function renderSeats() {
         const list = $('bl-seats');
         if (!list) return;
@@ -147,7 +148,7 @@
         const hint = $('bl-hint');
         if (hint) {
             hint.textContent = battle.status === 'lobby'
-                ? 'Battle is in the lobby — the host starts the replay when everyone is seated. Join a free seat to trade.'
+                ? 'Battle is in the lobby — the host starts the replay when everyone is seated. Create or join a Squad, then claim a seat to trade.'
                 : battle.status === 'running'
                     ? 'Replay is live. Your ticket trades the current bar only; everyone sees the same candles. Decisions stay private.'
                     : "Battle over — the leaderboard reveals every seat's trades.";
@@ -189,6 +190,7 @@
     function renderChart() {
         buildChart();
         if (!chart) return;
+        restoreBattleWorkspace();
         const st = seatState;
         const candles = (st && st.candles) || (battle && battle.candle ? [battle.candle] : []);
         if (!candles.length) return;
@@ -339,11 +341,10 @@
             return;
         }
         note.textContent = "Revealed after the battle — every seat's trades shown";
-        lbEl.innerHTML = lb.seats.map((r, i) =>
-            '<div class="seat-row">' +
-            '<span class="num text-[12px] font-bold ' + (i === 0 ? 'text-[#FBBF24]' : 'text-[#6E6E78]') + '">#' + (i + 1) + '</span>' +
-            '<span class="num text-[12px] font-bold text-white">' + r.name + '</span>' +
-            (r.team ? '<span class="status-badge" style="background:rgba(99,102,241,0.12);color:#818CF8;">' + r.team + '</span>' : '') +
+        lbEl.innerHTML = lb.seats.map((r, i) =>                    '<div class="seat-row">' +
+                    '<span class="num text-[12px] font-bold ' + (i === 0 ? 'text-[#FBBF24]' : 'text-[#6E6E78]') + '">#' + (i + 1) + '</span>' +
+                    '<span class="num text-[12px] font-bold text-white">' + r.name + '</span>' +
+                    (r.team ? '<span class="status-badge" style="background:rgba(99,102,241,0.12);color:#818CF8;">' + r.team + '</span>' : '') +
             '<span class="flex-1"></span>' +
             '<span class="num text-[11px] text-[#6E6E78]">' + r.detail.trades + 'T</span>' +
             '<span class="num text-[11px] text-[#6E6E78]">' + (r.detail.winRate || 0) + '%</span>' +
@@ -370,6 +371,33 @@
         renderPositionBanner();
         renderTicket();
         renderLeaderboard();
+    }
+
+    // ---- workspace persistence (same module as practice — per battle+timeframe) ----
+    function battleWorkspaceKey() {
+        return battle ? battle.id + ':' + (battle.timeframe || '?') : null;
+    }
+    function saveBattleWorkspace() {
+        if (!battle || !seat) return;
+        try {
+            const ws = TMWorkspace.forSession(battle.id + ':' + seat, battle.timeframe || '?');
+            if (chart) {
+                const r = chart.timeScale().getVisibleLogicalRange();
+                if (r) ws.chartState.rightOffset = Math.max(0, Math.round(r.right));
+            }
+            TMWorkspace.saveSession(battle.id + ':' + seat, battle.timeframe || '?', ws);
+        } catch (e) { /* ignore */ }
+    }
+    function restoreBattleWorkspace() {
+        if (!battle || !seat) return;
+        try {
+            const ws = TMWorkspace.forSession(battle.id + ':' + seat, battle.timeframe || '?');
+            if (ws.chartState && ws.chartState.theme && ws.chartState.theme.bg) {
+                // theme applied lazily by buildChart consumers (charts already re-theme
+                // via tm:theme) — here we only persist the scale so switching back
+                // to a battle restores your view.
+            }
+        } catch (e) { /* ignore */ }
     }
 
     // ---- replay updates: WebSocket pushes (fallback: slow poll) ----

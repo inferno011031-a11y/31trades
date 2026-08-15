@@ -498,9 +498,6 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <select id="session-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[240px]"></select>
-                            <button class="btn-ghost !py-2 !px-3.5" id="fullpage-btn" title="Open the active session in the full-page terminal">
-                                <svg data-lucide="maximize-2" class="w-4 h-4"></svg> Full page
-                            </button>
                             <button class="btn-primary !py-2 !px-3.5" id="new-session-btn">
                                 <svg data-lucide="plus" class="w-4 h-4"></svg> New session
                             </button>
@@ -524,186 +521,229 @@
                         <button class="btn-primary mt-1" id="empty-cta"><svg data-lucide="play" class="w-4 h-4"></svg> Start a session</button>
                     </div>
 
-                    <!-- Chart card -->
-                    <div class="panel p-4" id="chart-card">
-                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-                            <div class="flex items-center gap-3">
-                                <div id="asset-badge"></div>
-                                <div>
-                                    <div class="text-[15px] font-bold" id="chart-title">—</div>
-                                    <div class="text-[12px] text-[#6E6E78]" id="chart-sub">—</div>
+                    <!-- ============ TRADINGVIEW-STYLE WORKSTATION ============ -->
+                    <!-- Chart card: top toolbar + left drawing tools + focused chart + compact replay strip -->
+                    <div class="panel overflow-hidden" id="chart-card">
+
+                        <!-- Top toolbar (symbol / timeframe / indicators / settings) -->
+                        <div class="flex flex-wrap items-center gap-2 px-3 py-2 border-b border-[#17171A] bg-[#0D0D0F]">
+                            <div id="asset-badge"></div>
+                            <select id="header-symbol" class="bg-[#121214] border border-[#26262B] rounded-md text-[12.5px] font-semibold px-2 py-1.5 outline-none focus:border-[#3A3A41] max-w-[160px]" title="Symbol"></select>
+                            <div class="flex items-center gap-1" id="tf-bar">
+                                <button class="tf-btn" data-tf="1m">1m</button>
+                                <button class="tf-btn" data-tf="5m">5m</button>
+                                <button class="tf-btn" data-tf="15m">15m</button>
+                                <button class="tf-btn active" data-tf="1h">1H</button>
+                                <button class="tf-btn" data-tf="4h">4H</button>
+                                <button class="tf-btn" data-tf="1d">1D</button>
+                            </div>
+                            <div class="flex-1"></div>
+                            <!-- Indicators menu (dropdown, not pills) -->
+                            <div class="relative" id="ind-menu-wrap">
+                                <button class="btn-ghost !py-1.5 !px-2.5 !text-[12px]" id="ind-menu-btn">
+                                    <svg data-lucide="line-chart" class="w-3.5 h-3.5"></svg> Indicators <svg data-lucide="chevron-down" class="w-3 h-3"></svg>
+                                </button>
+                                <div class="hidden absolute right-0 top-full mt-1 z-30 w-[190px] panel p-2 flex-col gap-1" id="ind-menu">
+                                    <label class="ind-menu-item flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#16161A] cursor-pointer text-[12.5px]"><input type="checkbox" data-ind="ema" checked> EMA 20/50</label>
+                                    <label class="ind-menu-item flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#16161A] cursor-pointer text-[12.5px]"><input type="checkbox" data-ind="sma"> SMA 20</label>
+                                    <label class="ind-menu-item flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#16161A] cursor-pointer text-[12.5px]"><input type="checkbox" data-ind="bb" checked> Bollinger 20,2</label>
+                                    <label class="ind-menu-item flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#16161A] cursor-pointer text-[12.5px]"><input type="checkbox" data-ind="vwap"> VWAP</label>
+                                    <label class="ind-menu-item flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#16161A] cursor-pointer text-[12.5px]"><input type="checkbox" data-ind="rsi" checked> RSI 14</label>
+                                    <label class="ind-menu-item flex items-center gap-2 px-2 py-1.5 rounded-md hover:bg-[#16161A] cursor-pointer text-[12.5px]"><input type="checkbox" data-ind="macd" checked> MACD 12/26/9</label>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-2">
-                                <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" id="customize-btn">
-                                    <svg data-lucide="palette" class="w-3.5 h-3.5"></svg> Customize colors
-                                </button>
-                                <div class="legend-row num" id="ohlc-legend"></div>
+                            <button class="btn-ghost !py-1.5 !px-2.5 !text-[12px]" id="customize-btn" title="Chart settings">
+                                <svg data-lucide="settings-2" class="w-3.5 h-3.5"></svg> Settings
+                            </button>
+                            <span class="status-badge" id="ws-chip" style="background:rgba(99,102,241,0.12);color:#818CF8;" title="Internal workspace">1H workspace</span>
+                        </div>
+
+                        <!-- Chart body: left drawing tools + chart -->
+                        <div class="flex">
+                            <div class="flex flex-col items-center gap-1 py-2 px-1 border-r border-[#17171A] bg-[#0D0D0F]" id="draw-toolbar">
+                                <button class="tool-btn active" data-tool="cursor" title="Pointer"><svg data-lucide="mouse-pointer-2" class="w-4 h-4"></svg></button>
+                                <button class="tool-btn" data-tool="trend" title="Trend line"><svg data-lucide="trending-up" class="w-4 h-4"></svg></button>
+                                <button class="tool-btn" data-tool="hline" title="Horizontal line"><svg data-lucide="minus" class="w-4 h-4"></svg></button>
+                                <button class="tool-btn" data-tool="measure" title="Measure"><svg data-lucide="ruler" class="w-4 h-4"></svg></button>
+                                <button class="tool-btn" data-tool="fib" title="Fib retracement"><svg data-lucide="git-branch" class="w-4 h-4"></svg></button>
+                            </div>
+                            <div class="flex-1 min-w-0 relative">
+                                <div class="absolute top-2 left-1/2 -translate-x-1/2 z-10 hidden text-[11.5px] px-3 py-1 rounded-md bg-black/80 border border-[#2A2F3B] text-[#B8C0CC]" id="draw-hint"></div>
+                                <div id="position-banner" class="pos-banner mx-3 mt-3 hidden"></div>
+                                <div class="chart-box" id="chart-box"><div id="chart" style="height:480px"></div></div>
                             </div>
                         </div>
 
-                        <!-- Position banner -->
-                        <div id="position-banner" class="pos-banner hidden"></div>
-
-                        <div class="chart-box" id="chart-box"><div id="chart"></div></div>
-
-                        <!-- Replay bar -->
-                        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
-                            <div class="flex items-center gap-2">
-                                <button class="play-btn" id="play-btn" title="Play / pause"><svg data-lucide="play" class="w-4 h-4 ml-0.5" id="play-ico"></svg></button>
+                        <!-- Compact replay strip: play / pause / step / speed / candle context / progress -->
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 px-3 py-2 border-t border-[#17171A] bg-[#0D0D0F]">
+                            <div class="flex items-center gap-1.5">
+                                <button class="play-btn !w-8 !h-8" id="play-btn" title="Play / pause"><svg data-lucide="play" class="w-4 h-4 ml-0.5" id="play-ico"></svg></button>
                                 <button class="step-btn" id="step-fwd" title="Step forward"><svg data-lucide="chevrons-right" class="w-4 h-4"></svg></button>
                                 <button class="step-btn" id="reset-btn" title="Reset to start"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg></button>
                             </div>
-                            <div class="flex items-center gap-1.5" id="speed-bar">
+                            <div class="flex items-center gap-1" id="speed-bar">
+                                <span class="text-[10px] text-[#6E6E78] font-bold uppercase tracking-wide mr-0.5">Speed</span>
                                 <button class="speed-btn" data-ms="600">0.5×</button>
                                 <button class="speed-btn active" data-ms="300">1×</button>
                                 <button class="speed-btn" data-ms="150">2×</button>
                                 <button class="speed-btn" data-ms="80">5×</button>
                             </div>
-                            <div class="flex-1 flex items-center gap-3 min-w-[220px]">
-                                <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="play-pos">0 / 0</span>
-                                <input type="range" class="scrub" id="scrub" min="0" max="100" value="0">
-                                <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="window-label">—</span>
+                            <div class="flex items-center gap-1">
+                                <span class="text-[10px] text-[#6E6E78] font-bold uppercase tracking-wide mr-0.5">Context</span>
+                                <button class="speed-btn" data-ctx="200">200</button>
+                                <button class="speed-btn" data-ctx="500">500</button>
+                                <button class="speed-btn active" data-ctx="800">800</button>
+                                <button class="speed-btn" data-ctx="custom">Custom</button>
                             </div>
-                            <div class="flex items-center gap-1.5 flex-wrap">
-                                <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Indicators</span>
-                                <button class="ind-tag" data-ind="ema">EMA</button>
-                                <button class="ind-tag" data-ind="sma">SMA</button>
-                                <button class="ind-tag" data-ind="bb">Bollinger</button>
-                                <button class="ind-tag" data-ind="vwap">VWAP</button>
-                                <button class="ind-tag" data-ind="rsi">RSI</button>
-                                <button class="ind-tag" data-ind="macd">MACD</button>
+                            <div class="flex-1 flex items-center gap-2 min-w-[160px]">
+                                <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="play-pos">0 / 0</span>
+                                <input type="range" class="scrub flex-1" id="scrub" min="0" max="100" value="0">
+                                <span class="text-[10.5px] text-[#6E6E78] font-semibold num" id="window-label">—</span>
                             </div>
                         </div>
 
-                        <!-- Indicator legend -->
-                        <div class="legend-row num mt-3" id="ind-legend"></div>
+                        <!-- Chart sub + indicator legend (compact, single line) -->
+                        <div class="flex flex-wrap items-center gap-3 px-3 py-1.5 border-t border-[#17171A]">
+                            <div class="text-[11.5px] text-[#6E6E78]" id="chart-sub">—</div>
+                            <div class="legend-row num ml-auto" id="ohlc-legend"></div>
+                            <div class="legend-row num" id="ind-legend"></div>
+                        </div>
                     </div>
 
-                    <!-- Color customization -->
-                    <div class="panel p-4 hidden flex-col gap-4" id="color-panel">
-                        <div class="flex flex-wrap items-center justify-between gap-3">
-                            <div class="panel-title">Chart Appearance</div>
-                            <div class="flex items-center gap-1.5">
+                    <!-- Chart settings popover -->
+                    <div class="hidden fixed inset-0 z-40 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4" id="color-overlay">
+                        <div class="panel p-5 w-full max-w-[520px]" id="color-panel">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                <div class="panel-title">Chart Settings</div>
+                                <button class="collapse-btn" id="color-close"><svg data-lucide="x" class="w-5 h-5"></svg></button>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-1.5 mb-4">
+                                <span class="text-[11.5px] text-[#6E6E78] font-semibold uppercase tracking-wide mr-1">Preset</span>
                                 <button class="theme-btn tf-btn" data-theme="obsidian">Obsidian</button>
                                 <button class="theme-btn tf-btn" data-theme="onyx">Onyx</button>
                                 <button class="theme-btn tf-btn" data-theme="classic">Classic</button>
                                 <button class="theme-btn tf-btn" data-theme="light">Light</button>
                             </div>
+                            <div class="flex flex-wrap gap-5" id="color-swatches"></div>
                         </div>
-                        <div class="flex flex-wrap gap-5" id="color-swatches"></div>
                     </div>
 
-                    <!-- Grid: order ticket + results -->
+                    <!-- Grid: compact trade panel + results tabs -->
                     <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
 
-                        <!-- Order ticket -->
-                        <div class="xl:col-span-1 flex flex-col gap-4">
-                            <div class="panel p-4">
-                                <div class="flex items-center justify-between gap-3 mb-3">
-                                    <div class="panel-title">Order Ticket</div>
+                        <!-- Compact trade / position panel -->
+                        <div class="xl:col-span-1">
+                            <div class="panel overflow-hidden" id="ticket-panel">
+                                <button class="w-full flex items-center gap-2 px-3 py-2.5 text-left hover:bg-[#16161A] transition-colors" id="ticket-toggle" title="Expand / collapse trade panel">
+                                    <svg data-lucide="shopping-cart" class="w-4 h-4 text-[#818CF8]"></svg>
+                                    <span class="panel-title !text-[13px]">Trade</span>
                                     <span class="status-badge" style="background:rgba(99,102,241,0.12);color:#818CF8;">Practice · not live</span>
-                                </div>
+                                    <span class="flex-1"></span>
+                                    <span class="text-[11px] text-[#6E6E78] num" id="ticket-status">Flat</span>
+                                    <svg data-lucide="chevron-down" class="w-4 h-4 text-[#6E6E78] transition-transform" id="ticket-chev"></svg>
+                                </button>
 
-                                <div class="flex gap-2 mb-4">
-                                    <button class="dir-btn long active" id="dir-long"><svg data-lucide="trending-up" class="w-4 h-4"></svg> Long</button>
-                                    <button class="dir-btn short" id="dir-short"><svg data-lucide="trending-down" class="w-4 h-4"></svg> Short</button>
-                                </div>
-
-                                <div class="flex flex-col gap-3">
-                                    <div>
-                                        <div class="ticket-label">Entry price</div>
-                                        <input type="number" step="any" id="t-entry" class="ticket-input" placeholder="0.0000">
+                                <div class="px-3 pb-3 flex flex-col gap-2.5" id="ticket-body">
+                                    <div class="flex gap-2">
+                                        <button class="dir-btn long active !py-2" id="dir-long"><svg data-lucide="trending-up" class="w-3.5 h-3.5"></svg> Long</button>
+                                        <button class="dir-btn short !py-2" id="dir-short"><svg data-lucide="trending-down" class="w-3.5 h-3.5"></svg> Short</button>
                                     </div>
-                                    <div class="grid grid-cols-2 gap-3">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div>
+                                            <div class="ticket-label">Entry</div>
+                                            <input type="number" step="any" id="t-entry" class="ticket-input !py-1.5" placeholder="0.0000">
+                                        </div>
                                         <div>
                                             <div class="ticket-label">Stop loss</div>
-                                            <input type="number" step="any" id="t-sl" class="ticket-input" placeholder="0.0000">
+                                            <input type="number" step="any" id="t-sl" class="ticket-input !py-1.5" placeholder="required">
                                         </div>
                                         <div>
                                             <div class="ticket-label">Take profit</div>
-                                            <input type="number" step="any" id="t-tp" class="ticket-input" placeholder="optional">
-                                        </div>
-                                    </div>
-
-                                    <div>
-                                        <div class="ticket-label">Risk</div>
-                                        <div class="flex items-center gap-1.5 mb-2">
-                                            <button class="mode-chip active" data-mode="money">$ Money</button>
-                                            <button class="mode-chip" data-mode="pct">% Balance</button>
-                                        </div>
-                                        <input type="number" step="any" id="t-risk" class="ticket-input" placeholder="25">
-                                    </div>
-
-                                    <div class="grid grid-cols-2 gap-3">
-                                        <div>
-                                            <div class="ticket-label">Position size</div>
-                                            <div class="ticket-input !bg-[#0D0D0F] !text-[#6E6E78] select-none" id="size-readout">—</div>
+                                            <input type="number" step="any" id="t-tp" class="ticket-input !py-1.5" placeholder="optional">
                                         </div>
                                         <div>
-                                            <div class="ticket-label">Planned R:R</div>
-                                            <div class="ticket-input !bg-[#0D0D0F] !text-[#6E6E78] select-none" id="rr-readout">—</div>
+                                            <div class="ticket-label">Risk</div>
+                                            <div class="flex items-center gap-1 mb-1">
+                                                <button class="mode-chip !py-0.5 !px-1.5 active" data-mode="money">$</button>
+                                                <button class="mode-chip !py-0.5 !px-1.5" data-mode="pct">%</button>
+                                            </div>
+                                            <input type="number" step="any" id="t-risk" class="ticket-input !py-1.5" placeholder="25">
                                         </div>
                                     </div>
-
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <div class="ticket-input !bg-[#0D0D0F] !text-[#6E6E78] !py-1.5 select-none"><span class="ticket-label !mb-0">Size</span> <b class="num" id="size-readout">—</b></div>
+                                        <div class="ticket-input !bg-[#0D0D0F] !text-[#6E6E78] !py-1.5 select-none"><span class="ticket-label !mb-0">R:R</span> <b class="num" id="rr-readout">—</b></div>
+                                    </div>
                                     <div>
                                         <div class="ticket-label">Setup tag</div>
-                                        <input type="text" id="t-setup" class="ticket-input !font-[inherit]" placeholder="e.g. Breakout retest, 1H supply…">
+                                        <input type="text" id="t-setup" class="ticket-input !py-1.5 !font-[inherit]" placeholder="e.g. Breakout retest">
                                     </div>
-                                    <div>
-                                        <div class="ticket-label">Notes</div>
-                                        <textarea id="t-notes" rows="2" class="ticket-input !font-[inherit] resize-none" placeholder="Why this trade? What's the thesis?"></textarea>
-                                    </div>
-
-                                    <button class="btn-primary w-full justify-center !py-3" id="enter-btn">
+                                    <button class="btn-primary w-full justify-center !py-2" id="enter-btn">
                                         <svg data-lucide="log-in" class="w-4 h-4"></svg> Enter position
                                     </button>
-                                    <p class="text-[11px] text-[#55555E] leading-relaxed" id="ticket-hint">
-                                        Entry defaults to the current bar's close. Size is derived from your risk and stop distance. Stop loss is required.
+                                    <p class="text-[10.5px] text-[#55555E] leading-relaxed" id="ticket-hint">
+                                        Entry defaults to the current bar's close. Size derives from risk ÷ stop distance.
                                     </p>
+                                </div>
+                            </div>
+
+                            <!-- Position summary when collapsed -->
+                            <div class="panel p-3 mt-4 hidden" id="pos-strip">
+                                <div class="text-[11px] text-[#6E6E78] font-bold uppercase tracking-wide mb-1">Open position</div>
+                                <div class="flex items-center gap-2 text-[12px]">
+                                    <span class="status-badge" id="pos-strip-dir" style="background:rgba(16,185,129,0.14);color:#34D399;">LONG</span>
+                                    <span class="num" id="pos-strip-entry">—</span>
+                                    <span class="flex-1"></span>
+                                    <span class="num" id="pos-strip-pnl">—</span>
+                                    <button class="btn-ghost !py-1 !px-2 !text-[11px]" id="pos-strip-close"><svg data-lucide="log-out" class="w-3 h-3"></svg> Close</button>
                                 </div>
                             </div>
                         </div>
 
-                        <!-- Results dashboard -->
+                        <!-- Results / AI tabs -->
                         <div class="xl:col-span-2 panel p-4">
-                            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-                                <div class="panel-title">Results</div>
-                                <div class="text-[11.5px] text-[#6E6E78] num" id="results-note">No trades recorded yet</div>
+                            <div class="flex items-center gap-1.5 mb-3 border-b border-[#17171A] pb-2">
+                                <button class="bd-tab active" data-panel="results">Results</button>
+                                <button class="bd-tab" data-panel="coach">AI Coach</button>
+                                <span class="ml-auto text-[11.5px] text-[#6E6E78] num" id="results-note">No trades recorded yet</span>
                             </div>
 
-                            <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4" id="results-grid"></div>
+                            <div id="panel-results">
+                                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-4" id="results-grid"></div>
 
-                            <div class="text-[12px] font-bold text-white mb-1.5">Equity curve</div>
-                            <div id="equity-chart" class="w-full mb-4" style="height:150px"></div>
+                                <div class="text-[12px] font-bold text-white mb-1.5">Equity curve</div>
+                                <div id="equity-chart" class="w-full mb-4" style="height:150px"></div>
 
-                            <div class="text-[12px] font-bold text-white mb-2">Breakdowns</div>
-                            <div class="flex items-center gap-1.5 mb-3 flex-wrap" id="bd-tabs">
-                                <button class="bd-tab active" data-bd="bySetup">Setup</button>
-                                <button class="bd-tab" data-bd="byDirection">Direction</button>
-                                <button class="bd-tab" data-bd="bySession">Session</button>
-                                <button class="bd-tab" data-bd="byTimeOfDay">Time of day</button>
-                                <button class="bd-tab" data-bd="byExitReason">Exit</button>
-                            </div>
-                            <div class="flex flex-col gap-2 mb-4" id="bd-body"></div>
-
-                            <div class="text-[12px] font-bold text-white mb-1.5">Recorded trades (<span id="trade-count-label">0</span>)</div>
-                            <div class="flex flex-col gap-1.5 max-h-[260px] overflow-y-auto" id="trade-list"></div>
-
-                            <div class="flex items-center justify-between gap-3 mt-5 pt-4 border-t border-[#17171A]">
-                                <div class="flex items-center gap-2">
-                                    <div class="panel-title">AI Coach</div>
-                                    <span class="status-badge" style="background:rgba(139,92,246,0.12);color:#C084FC;">practice review</span>
+                                <div class="text-[12px] font-bold text-white mb-2">Breakdowns</div>
+                                <div class="flex items-center gap-1.5 mb-3 flex-wrap" id="bd-tabs">
+                                    <button class="bd-tab active" data-bd="bySetup">Setup</button>
+                                    <button class="bd-tab" data-bd="byDirection">Direction</button>
+                                    <button class="bd-tab" data-bd="bySession">Session</button>
+                                    <button class="bd-tab" data-bd="byTimeOfDay">Time of day</button>
+                                    <button class="bd-tab" data-bd="byExitReason">Exit</button>
                                 </div>
-                                <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" id="coach-btn">
-                                    <svg data-lucide="brain-circuit" class="w-3.5 h-3.5"></svg> Run AI review
-                                </button>
+                                <div class="flex flex-col gap-2 mb-4" id="bd-body"></div>
+
+                                <div class="text-[12px] font-bold text-white mb-1.5">Recorded trades (<span id="trade-count-label">0</span>)</div>
+                                <div class="flex flex-col gap-1.5 max-h-[260px] overflow-y-auto" id="trade-list"></div>
                             </div>
-                            <p class="text-[11.5px] text-[#6E6E78] mt-2 leading-relaxed">
-                                Grounded in this session's recorded trades — flags premature entries, weak setups, inconsistent risk and exit quality.
-                            </p>
-                            <div class="flex flex-col gap-2 mt-3" id="coach-findings">
-                                <div class="text-[12px] text-[#6E6E78]">No review yet — finish a session (or replay it) and run the review.</div>
+
+                            <div id="panel-coach" class="hidden">
+                                <div class="flex items-center justify-between gap-3 mb-3">
+                                    <div class="flex items-center gap-2">
+                                        <div class="panel-title">AI Coach</div>
+                                        <span class="status-badge" style="background:rgba(139,92,246,0.12);color:#C084FC;">post-session review</span>
+                                    </div>
+                                    <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" id="coach-btn">
+                                        <svg data-lucide="brain-circuit" class="w-3.5 h-3.5"></svg> Run AI review
+                                    </button>
+                                </div>
+                                <p class="text-[11.5px] text-[#6E6E78] leading-relaxed">
+                                    Grounded in this session's recorded trades — flags premature entries, weak setups, inconsistent risk and exit quality.
+                                </p>
+                                <div class="flex flex-col gap-2 mt-3" id="coach-findings">
+                                    <div class="text-[12px] text-[#6E6E78]">No review yet — finish a session (or replay it) and run the review.</div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -736,7 +776,7 @@
                             <div class="xl:col-span-1 flex flex-col gap-4">
                                 <div class="panel p-4">
                                     <div class="flex items-center justify-between gap-3 mb-3">
-                                        <div class="panel-title">Seats</div>
+                                        <div class="panel-title">Squad / Seats</div>
                                         <span class="status-badge" style="background:rgba(99,102,241,0.12);color:#818CF8;" id="bl-seat-badge">—</span>
                                     </div>
                                     <div class="flex flex-col gap-1.5" id="bl-seats"></div>
@@ -836,12 +876,12 @@
                                         </div>
                                     </div>
                                     <div>
-                                        <div class="ticket-label">Seats (one per line — team after a colon)</div>
-                                        <textarea id="bl-m-seats" rows="3" class="ticket-input !font-[inherit] resize-none" placeholder="Alex:ICT&#10;Sam:SMC&#10;Jordan:SMC">Alex:ICT
-Sam:SMC
-Jordan:SMC
-Mia:ICT</textarea>
-                                        <p class="text-[11px] text-[#55555E] mt-1.5">You (the host) take the first seat. Unbound seats can be claimed by others via Join.</p>
+                                        <div class="ticket-label">Squad seats (one per line — squad after a colon)</div>
+                                        <textarea id="bl-m-seats" rows="3" class="ticket-input !font-[inherit] resize-none" placeholder="Alex:Alpha&#10;Sam:Bravo&#10;Jordan:Bravo">Alex:Alpha
+Sam:Bravo
+Jordan:Bravo
+Mia:Alpha</textarea>
+                                        <p class="text-[11px] text-[#55555E] mt-1.5">You (the host) take the first seat. Everyone else joins your Squad or creates their own — no fixed categories, just the squads you build.</p>
                                     </div>
                                     <div class="grid grid-cols-2 gap-3">
                                         <div>
@@ -1165,6 +1205,14 @@ Mia:ICT</textarea>
                     const d = param && param.seriesData && param.seriesData.get(candleSeries);
                     renderLegend(d, param.time);
                 });
+                // drawing tools: click places points on the main chart (same engine as the terminal)
+                chart.subscribeClick(param => {
+                    if (mainTool === 'cursor' || !param || param.time == null) return;
+                    if (!param.seriesData || !param.seriesData.get(candleSeries)) return;
+                    const d = param.seriesData.get(candleSeries);
+                    const pt = { time: param.time, price: (d && d.close != null) ? d.close : (param.point ? param.price : null) };
+                    if (pt.price != null) mainDrawClick(pt);
+                });
                 new ResizeObserver(() => {
                     if (chart) chart.applyOptions({ width: el.clientWidth });
                 }).observe(el);
@@ -1430,6 +1478,134 @@ Mia:ICT</textarea>
                 if (p.tp) add(p.tp, '#34D399', true, 'TP');
             }
 
+            // ================= INTERNAL WORKSPACES (drawings + indicators + chart state) =================
+            // Each timeframe is its own workspace. Switching timeframes saves the
+            // current one and restores the target's — no browser tabs, no cross
+            // contamination. Persistence: user → session → timeframe via TMWorkspace.
+            let mainTool = 'cursor';
+            let mainDrawPts = [];
+            let mainDrawings = [];          // [{kind,a,b,color}] data only — series rebuilt per render
+            let workspaceFor = null;         // { sessionId, timeframe } currently mapped
+
+            function syncWorkspaceChip() {
+                const chip = $('ws-chip');
+                if (!chip) return;
+                if (currentSession) {
+                    chip.textContent = (currentSession.timeframe || '').toUpperCase() + ' workspace';
+                    chip.style.background = 'rgba(99,102,241,0.12)';
+                    chip.style.color = '#818CF8';
+                } else {
+                    chip.textContent = 'No workspace';
+                }
+            }
+
+            function saveWorkspace() {
+                if (!currentSession) return;
+                const ws = TMWorkspace.forSession(currentSession.id, currentSession.timeframe);
+                ws.drawings = mainDrawings.map(d => ({ ...d }));
+                ws.indicators = Object.assign({}, indState);
+                ws.chartState.theme = Object.assign({}, theme);
+                if (chart) {
+                    const r = chart.timeScale().getVisibleLogicalRange();
+                    if (r) ws.chartState.rightOffset = Math.max(0, Math.round(r.right));
+                }
+                TMWorkspace.saveSession(currentSession.id, currentSession.timeframe, ws);
+            }
+
+            function restoreWorkspace() {
+                if (!currentSession) return;
+                const ws = TMWorkspace.forSession(currentSession.id, currentSession.timeframe);
+                // indicators
+                Object.keys(indState).forEach(k => { indState[k] = ws.indicators[k] === true; });
+                // theme (only if a saved theme exists)
+                if (ws.chartState && ws.chartState.theme && ws.chartState.theme.bg) {
+                    theme = Object.assign({}, THEMES.obsidian, ws.chartState.theme);
+                }
+                // drawings
+                mainDrawings = (ws.drawings || []).map(d => ({ ...d }));
+                mainTool = 'cursor';
+                mainDrawPts = [];
+                if (window.lucide) lucide.createIcons();
+                syncWorkspaceChip();
+            }
+
+            // ---- main-chart drawing tools (same engine as the terminal) ----
+            function renderMainDrawings() {
+                if (!chart) return;
+                mainDrawings.forEach(d => {
+                    try { chart.removeSeries(d._series); } catch (e) {}
+                });
+                mainDrawings = mainDrawings.map(d => {
+                    const s = chart.addSeries(LightweightCharts.LineSeries, {
+                        color: d.color || '#60A5FA', lineWidth: 1,
+                        priceLineVisible: false, lastValueVisible: false, crosshairMarkerVisible: false
+                    });
+                    if (d.kind === 'hline') {
+                        const last = candles.length ? candles[candles.length - 1] : null;
+                        const t0 = candles.length ? candles[0] : null;
+                        s.setData([{ time: (t0 && t0.time) || (last && last.time) || d.a.time, value: d.a.price }]);
+                    } else if (d.kind === 'fib') {
+                        const lo = Math.min(d.a.price, d.b.price), hi = Math.max(d.a.price, d.b.price);
+                        const levels = [0, 0.236, 0.382, 0.5, 0.618, 0.786, 1].map(f => ({ time: d.a.time, value: lo + (hi - lo) * f }));
+                        levels.push({ time: d.b.time, value: levels[levels.length - 1].value });
+                        s.setData(levels);
+                    } else {
+                        s.setData([{ time: d.a.time, value: d.a.price }, { time: d.b.time, value: d.b.price }]);
+                    }
+                    d._series = s;
+                    return d;
+                });
+            }
+
+            function mainDrawClick(pt) {
+                mainDrawPts.push(pt);
+                const hint = $('draw-hint');
+                if (mainDrawPts.length === 1) {
+                    if (hint) hint.textContent = mainTool === 'hline' ? 'Horizontal line placed.' : 'Click a second point…';
+                    if (mainTool === 'hline') {
+                        mainDrawPts = [];
+                        addMainDrawing('hline', pt);
+                        return;
+                    }
+                    return;
+                }
+                const [a, b] = mainDrawPts;
+                if (mainTool === 'measure') {
+                    const priceDiff = Math.abs(b.price - a.price);
+                    const barDiff = Math.abs(b.time - a.time);
+                    if (hint) hint.textContent = 'Δ ' + priceDiff.toFixed(5) + ' price · ' + barDiff + ' bars';
+                    addMainDrawing('measure', a, b);
+                } else {
+                    addMainDrawing(mainTool === 'fib' ? 'fib' : 'trend', a, b);
+                    if (hint) hint.textContent = 'Drawing placed — pick another tool or click pointer.';
+                }
+                mainDrawPts = [];
+            }
+
+            function addMainDrawing(kind, a, b) {
+                const colors = { trend: '#60A5FA', hline: '#FBBF24', measure: '#A78BFA', fib: '#34D399' };
+                mainDrawings.push({ kind, a: { ...a }, b: b ? { ...b } : null, color: colors[kind] || '#60A5FA' });
+                renderMainDrawings();
+                saveWorkspace();
+            }
+
+            // ---- internal timeframe switching (no browser tabs) ----
+            async function switchTimeframe(tf) {
+                if (!currentSession) { showToast('Create a session first'); return; }
+                if (tf === currentSession.timeframe) return;
+                saveWorkspace();
+                modalTF = tf;
+                $('modal-symbol').value = currentSession.symbol;
+                $('modal-window').value = Math.min(800, Math.max(200, currentSession.total));
+                $('modal-balance').value = currentSession.startingBalance;
+                $('modal-basis').value = currentSession.riskModel.basis;
+                $('modal-pertrade').value = currentSession.riskModel.perTrade;
+                // clear drawings before the new session lands so old tf never leaks
+                mainDrawings = [];
+                mainDrawPts = [];
+                await createSession();
+            }
+
             // ================= SESSION / API LAYER =================
             let sessions = [];
             let currentSession = null;   // server state (stateOf)
@@ -1473,11 +1649,12 @@ Mia:ICT</textarea>
                 stopPoll();
                 playing = false;
                 try {
-                    const r = await api('/api/backtest/sessions/' + id);
-                    currentSession = r.state;
-                    lastTradeCount = currentSession.trades.length;
-                    resultsCache = null;   // never show the previous session's numbers
-                    renderAll(!opts || opts.results !== false);
+                const r = await api('/api/backtest/sessions/' + id);
+                currentSession = r.state;
+                lastTradeCount = currentSession.trades.length;
+                resultsCache = null;   // never show the previous session's numbers
+                restoreWorkspace();
+                renderAll(!opts || opts.results !== false);
                 } catch (e) {
                     showToast('Could not load session: ' + e.message);
                 }
@@ -1562,9 +1739,20 @@ Mia:ICT</textarea>
                 renderSessionMeta();
                 renderChart();
                 renderPositionBanner();
+                renderPosStrip();
                 renderReplayBar();
                 renderTicket();
+                syncTfBar();
+                if (window.lucide) lucide.createIcons();
                 if (fetchRes !== false) fetchResults();
+            }
+            function syncTfBar() {
+                if (!currentSession) return;
+                const bar = $('tf-bar');
+                if (!bar) return;
+                bar.querySelectorAll('.tf-btn').forEach(x => x.classList.toggle('active', x.dataset.tf === currentSession.timeframe));
+                const hs = $('header-symbol');
+                if (hs && hs.value !== currentSession.symbol) hs.value = currentSession.symbol;
             }
 
             function renderChart() {
@@ -1584,6 +1772,7 @@ Mia:ICT</textarea>
                 candleSeries.setData(candles.map(c => ({ time: c.time, open: c.open, high: c.high, low: c.low, close: c.close })));
                 volumeSeries.setData(candles.map(c => ({ time: c.time, value: c.volume, color: c.close >= c.open ? theme.up : theme.down })));
                 rebuildIndicators(true);
+                renderMainDrawings();
                 // recorded trade markers
                 const markers = (st.trades || []).map(t => ({
                     time: t.entryTime,
@@ -1658,11 +1847,44 @@ Mia:ICT</textarea>
                 if (window.lucide) lucide.createIcons();
             }
 
-            // ================= ORDER TICKET =================
+            // ================= ORDER TICKET (compact trade / position panel) =================
+            function updateTicketStatus() {
+                const el = $('ticket-status');
+                if (!el) return;
+                const p = currentSession && currentSession.position;
+                if (!p) { el.textContent = 'Flat'; el.style.color = '#6E6E78'; return; }
+                el.textContent = p.direction === 'Long' ? '▲ LONG' : '▼ SHORT';
+                el.style.color = p.direction === 'Long' ? '#34D399' : '#F87171';
+            }
+
+            function renderPosStrip() {
+                const strip = $('pos-strip');
+                if (!strip) return;
+                const p = currentSession && currentSession.position;
+                if (!p) { strip.classList.add('hidden'); return; }
+                strip.classList.remove('hidden');
+                const dir = $('pos-strip-dir');
+                if (dir) {
+                    dir.textContent = p.direction === 'Long' ? 'LONG' : 'SHORT';
+                    dir.style.background = p.direction === 'Long' ? 'rgba(16,185,129,0.14)' : 'rgba(239,68,68,0.14)';
+                    dir.style.color = p.direction === 'Long' ? '#34D399' : '#F87171';
+                }
+                const e = $('pos-strip-entry');
+                if (e) e.textContent = priceFmt(p.entry);
+                const pnl = $('pos-strip-pnl');
+                if (pnl) {
+                    pnl.textContent = (p.unrealized >= 0 ? '+' : '') + '$' + Math.round(p.unrealized).toLocaleString() + ' · ' + (p.unrealizedR >= 0 ? '+' : '') + p.unrealizedR.toFixed(2) + 'R';
+                    pnl.style.color = p.unrealized >= 0 ? '#34D399' : '#F87171';
+                }
+                const cb = $('pos-strip-close');
+                if (cb) cb.onclick = closePosition;
+            }
+
             function renderTicket() {
                 const st = currentSession;
                 const disabled = !st;
-                ['t-entry', 't-sl', 't-tp', 't-risk', 't-setup', 't-notes'].forEach(id => { $(id).disabled = disabled; });
+                ['t-entry', 't-sl', 't-tp', 't-risk', 't-setup'].forEach(id => { if ($(id)) $(id).disabled = disabled; });
+                updateTicketStatus();
                 $('enter-btn').disabled = disabled || !!st.position;
                 $('enter-btn').style.opacity = ($('enter-btn').disabled) ? 0.4 : 1;
                 if (!st) {
@@ -1736,7 +1958,7 @@ Mia:ICT</textarea>
                     sl,
                     tp: tpRaw ? parseFloat(tpRaw) : undefined,
                     setup: $('t-setup').value.trim(),
-                    notes: $('t-notes').value.trim()
+                    notes: ($('t-notes') && $('t-notes').value.trim()) || ''
                 };
                 const riskV = parseFloat($('t-risk').value);
                 if (riskMode === 'pct' && riskV > 0) body.riskPct = riskV;
@@ -1896,6 +2118,18 @@ Mia:ICT</textarea>
             function closeModal() {
                 $('session-modal').classList.add('hidden');
             }
+            function buildHeaderSymbols() {
+                const sel = $('header-symbol');
+                if (!sel || !window.TMAssets || !window.TMAssets.SYMBOLS || sel.options.length) return;
+                let html = '';
+                window.TMAssets.CATEGORIES.forEach(cat => {
+                    const syms = window.TMAssets.SYMBOLS.filter(s => s.cat === cat);
+                    if (!syms.length) return;
+                    html += '<optgroup label="' + cat + '">' + syms.map(s => '<option value="' + s.sym + '">' + s.sym + ' — ' + s.name + '</option>').join('') + '</optgroup>';
+                });
+                sel.innerHTML = html;
+            }
+
             function buildModalSymbols() {
                 const sel = $('modal-symbol');
                 if (!window.TMAssets || !window.TMAssets.SYMBOLS || sel.options.length) return;
@@ -1941,8 +2175,7 @@ Mia:ICT</textarea>
                     showToast('Session created — ' + body.symbol + ' · ' + modalTF);
                     await loadSessions();
                     await loadSession(r.session, true);
-                    // open the fresh session straight into the full-page terminal
-                    setTimeout(() => openTerminal(r.session), 350);
+                    syncWorkspaceChip();
                 } catch (e) {
                     showToast('Create failed: ' + e.message);
                 } finally {
@@ -2274,10 +2507,6 @@ Mia:ICT</textarea>
                 // session management
                 $('new-session-btn').addEventListener('click', openModal);
                 $('empty-cta').addEventListener('click', openModal);
-                $('fullpage-btn').addEventListener('click', () => {
-                    if (!currentSession) return showToast('Create a session first');
-                    openTerminal(currentSession.id);
-                });
                 $('modal-close').addEventListener('click', closeModal);
                 $('session-modal').addEventListener('click', e => { if (e.target === $('session-modal')) closeModal(); });
                 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
@@ -2317,23 +2546,119 @@ Mia:ICT</textarea>
                     try { await control('seek', { cursor: Number($('scrub').value) }); await loadSession(currentSession.id, true); } catch (e) {}
                 });
 
-                // indicators
-                document.querySelectorAll('.ind-tag').forEach(t => t.addEventListener('click', () => {
-                    const k = t.dataset.ind;
-                    indState[k] = !indState[k];
-                    t.classList.toggle('on', indState[k]);
-                    if (currentSession) renderChart();
-                }));
-                document.querySelectorAll('.ind-tag').forEach(t => t.classList.toggle('on', indState[t.dataset.ind]));
-
-                // colors
-                $('customize-btn').addEventListener('click', () => {
-                    const p = $('color-panel');
-                    p.classList.toggle('hidden');
-                    p.classList.toggle('flex');
-                    if (!p.classList.contains('hidden')) renderSwatches();
+                // ---- top toolbar: symbol / timeframe (internal workspace switching) ----
+                buildHeaderSymbols();
+                $('header-symbol').addEventListener('change', () => {
+                    if (!currentSession) return;
+                    saveWorkspace();
+                    const sym = $('header-symbol').value;
+                    modalTF = currentSession.timeframe;
+                    $('modal-symbol').value = sym;
+                    $('modal-window').value = Math.min(800, Math.max(200, currentSession.total));
+                    $('modal-balance').value = currentSession.startingBalance;
+                    $('modal-basis').value = currentSession.riskModel.basis;
+                    $('modal-pertrade').value = currentSession.riskModel.perTrade;
+                    mainDrawings = [];
+                    mainDrawPts = [];
+                    createSession();
                 });
-                document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => applyPreset(b.dataset.theme)));
+                document.querySelectorAll('#tf-bar .tf-btn').forEach(b => b.addEventListener('click', () => {
+                    document.querySelectorAll('#tf-bar .tf-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    switchTimeframe(b.dataset.tf);
+                }));
+
+                // ---- indicators dropdown (replaces the old pills) ----
+                $('ind-menu-btn').addEventListener('click', e => {
+                    e.stopPropagation();
+                    const m = $('ind-menu');
+                    const open = !m.classList.contains('hidden');
+                    m.classList.toggle('hidden', open);
+                    m.classList.toggle('flex', !open);
+                });
+                document.addEventListener('click', e => {
+                    if ($('ind-menu') && !$('ind-menu-wrap').contains(e.target)) {
+                        $('ind-menu').classList.add('hidden');
+                        $('ind-menu').classList.remove('flex');
+                    }
+                });
+                document.querySelectorAll('#ind-menu input[data-ind]').forEach(inp => {
+                    inp.checked = indState[inp.dataset.ind] === true;
+                    inp.addEventListener('change', () => {
+                        indState[inp.dataset.ind] = inp.checked;
+                        if (currentSession) renderChart();
+                        saveWorkspace();
+                    });
+                });
+
+                // ---- chart settings popover ----
+                $('customize-btn').addEventListener('click', () => {
+                    $('color-overlay').classList.remove('hidden');
+                    $('color-overlay').classList.add('flex');
+                    renderSwatches();
+                });
+                $('color-close').addEventListener('click', closeColors);
+                $('color-overlay').addEventListener('click', e => { if (e.target === $('color-overlay')) closeColors(); });
+                function closeColors() {
+                    $('color-overlay').classList.add('hidden');
+                    $('color-overlay').classList.remove('flex');
+                    saveWorkspace();
+                }
+                document.querySelectorAll('.theme-btn').forEach(b => b.addEventListener('click', () => { applyPreset(b.dataset.theme); saveWorkspace(); }));
+
+                // ---- left drawing toolbar (main chart) ----
+                document.querySelectorAll('#draw-toolbar .tool-btn').forEach(b => b.addEventListener('click', () => {
+                    document.querySelectorAll('#draw-toolbar .tool-btn').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    mainTool = b.dataset.tool;
+                    mainDrawPts = [];
+                    const hint = $('draw-hint');
+                    if (hint) {
+                        if (mainTool === 'cursor') hint.classList.add('hidden');
+                        else { hint.classList.remove('hidden'); hint.textContent = 'Click to place the first point…'; }
+                    }
+                }));
+
+                // ---- compact trade panel toggle ----
+                $('ticket-toggle').addEventListener('click', () => {
+                    const body = $('ticket-body');
+                    const open = body.classList.contains('hidden');
+                    body.classList.toggle('hidden', !open);
+                    $('ticket-chev').style.transform = open ? 'rotate(180deg)' : '';
+                });
+
+                // ---- candle context (200 / 500 / 800 / custom) ----
+                document.querySelectorAll('[data-ctx]').forEach(b => b.addEventListener('click', () => {
+                    if (!currentSession) { showToast('Create a session first'); return; }
+                    let n = Number(b.dataset.ctx);
+                    if (b.dataset.ctx === 'custom') {
+                        const v = prompt('Candle context (bars):', String(currentSession.total));
+                        n = parseInt(v, 10);
+                        if (!(n > 0)) return;
+                    }
+                    document.querySelectorAll('[data-ctx]').forEach(x => x.classList.remove('active'));
+                    b.classList.add('active');
+                    saveWorkspace();
+                    modalTF = currentSession.timeframe;
+                    $('modal-symbol').value = currentSession.symbol;
+                    $('modal-window').value = n;
+                    $('modal-balance').value = currentSession.startingBalance;
+                    $('modal-basis').value = currentSession.riskModel.basis;
+                    $('modal-pertrade').value = currentSession.riskModel.perTrade;
+                    mainDrawings = [];
+                    mainDrawPts = [];
+                    createSession();
+                }));
+
+                // ---- results / AI coach tabs ----
+                document.querySelectorAll('[data-panel]').forEach(t => t.addEventListener('click', () => {
+                    document.querySelectorAll('[data-panel]').forEach(x => x.classList.remove('active'));
+                    t.classList.add('active');
+                    const show = t.dataset.panel === 'coach' ? 'panel-coach' : 'panel-results';
+                    const hide = t.dataset.panel === 'coach' ? 'panel-results' : 'panel-coach';
+                    $(show).classList.remove('hidden');
+                    $(hide).classList.add('hidden');
+                }));
 
                 // order ticket
                 $('dir-long').addEventListener('click', () => { currentDir = 'long'; $('dir-long').classList.add('active'); $('dir-short').classList.remove('active'); computePreview(); });

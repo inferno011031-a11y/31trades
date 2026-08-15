@@ -98,6 +98,10 @@
 
         .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
         .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+        .theme-opt { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 12px; border: 1px solid #1F1F23; background: #0B0B0D; color: #8A8A93; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
+        .theme-opt:hover { border-color: #2E2E36; color: #E8E8EC; }
+        .theme-opt.active { border-color: #6366F1; background: rgba(99,102,241,.08); color: #E8E8EC; box-shadow: 0 0 0 1px rgba(99,102,241,.35), 0 4px 18px -6px rgba(99,102,241,.4); }
+        .theme-swatch { width: 100%; height: 44px; border-radius: 8px; border: 1px solid #26262C; display: flex; align-items: center; justify-content: center; color: #6E6E78; }
         .strength-bar { height: 4px; flex: 1; border-radius: 999px; background: #26272B; transition: background 0.2s ease; }
         .strength-bar.on-weak { background: #F87171; }
         .strength-bar.on-fair { background: #FBBF24; }
@@ -361,6 +365,32 @@
                                 <span id="cp-last-changed-text"></span>
                             </div>
                         </form>
+                    </div>
+
+                    <!-- Appearance: theme (Light / Dark / System) -->
+                    <div class="panel p-5">
+                        <div class="flex items-center justify-between mb-1">
+                            <div class="panel-title">Appearance</div>
+                            <span class="text-[11px] text-[#6E6E78] num">SYNCED TO ACCOUNT</span>
+                        </div>
+                        <p class="text-[12px] text-[#6E6E78] mb-4">Choose how 31TRADES looks. Your choice is saved to your account and follows you on every device.</p>
+                        <div class="grid grid-cols-3 gap-3" id="theme-picker">
+                            <button type="button" class="theme-opt" data-theme-pref="light" title="Light">
+                                <span class="theme-swatch" style="background:linear-gradient(135deg,#F6F8FB 0%,#E9EDF3 100%)"></span>
+                                <span>Light</span>
+                            </button>
+                            <button type="button" class="theme-opt" data-theme-pref="dark" title="Dark">
+                                <span class="theme-swatch" style="background:linear-gradient(135deg,#121620 0%,#0A0C10 100%)"></span>
+                                <span>Dark</span>
+                            </button>
+                            <button type="button" class="theme-opt" data-theme-pref="system" title="Match your device">
+                                <span class="theme-swatch">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                </span>
+                                <span>System</span>
+                            </button>
+                        </div>
+                        <p class="text-[11.5px] text-[#4A4A52] mt-3" id="theme-sync-msg">Your theme is stored in your account so it syncs across devices.</p>
                     </div>
 
                     <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Settings · connected brokers sync through /api/brokers</p>
@@ -676,9 +706,59 @@
             });
 
             // ---- init ----
+            // ---- Appearance / theme picker (Light / Dark / System, synced to account) ----
+            function setThemeActive(pref) {
+                document.querySelectorAll('#theme-picker .theme-opt').forEach(b => {
+                    b.classList.toggle('active', b.getAttribute('data-theme-pref') === pref);
+                });
+            }
+            function initThemePicker() {
+                const opts = document.querySelectorAll('#theme-picker .theme-opt');
+                if (!opts.length) return;
+                const local = (window.TMTheme && TMTheme.getPref()) || null;
+                const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((u, o) => fetch(u, o));
+                let synced = false;
+                // server value wins when signed in (cross-device sync)
+                apiFetch('/api/prefs').then(r => r.json()).then(data => {
+                    if (data && data.prefs && data.prefs.theme) {
+                        const serverTheme = data.prefs.theme;
+                        if (window.TMTheme && serverTheme !== local) {
+                            TMTheme.setPref(serverTheme);
+                            $('theme-sync-msg').textContent = 'Theme loaded from your account · ' + serverTheme;
+                        }
+                        setThemeActive(serverTheme);
+                        synced = true;
+                    }
+                }).catch(() => { /* offline — stay local */ }).then(() => {
+                    if (!synced) setThemeActive(local || 'dark');
+                });
+                opts.forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const pref = btn.getAttribute('data-theme-pref');
+                        if (window.TMTheme) TMTheme.setPref(pref);
+                        setThemeActive(pref);
+                        $('theme-sync-msg').textContent = 'Saving to your account…';
+                        apiFetch('/api/prefs', {
+                            method: 'PUT',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ theme: pref })
+                        }).then(r => r.json()).then(d => {
+                            if (d && d.ok) {
+                                $('theme-sync-msg').textContent = 'Saved — theme is synced across your devices.';
+                            } else {
+                                $('theme-sync-msg').textContent = 'Saved on this device (' + pref + ') — will sync when you\'re signed in.';
+                            }
+                        }).catch(() => {
+                            $('theme-sync-msg').textContent = 'Saved on this device (' + pref + ') — will sync when you\'re signed in.';
+                        });
+                    });
+                });
+            }
+
             function boot() {
                 $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
                 $('add-broker-btn').addEventListener('click', () => window.openBrokerPicker());
+                initThemePicker();
                 const core = window.TradeMindCore;
                 if (core && core.selectedAccountId) {
                     const sel = core.selectedAccountId();

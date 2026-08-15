@@ -51,6 +51,7 @@ const Practice = require('./server/practice.js');
 const Battle = require('./server/battle.js');
 const AICoach = require('./server/ai-coach.js');
 const BattleWs = require('./server/battle-ws.js');
+const Prefs = require('./server/prefs.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -575,6 +576,9 @@ async function handleApi(req, res, url) {
             if (p === '/api/brokers') {
                 return json(res, 200, { ok: true, brokers: await Brokers.list(uc.userId), connected: await Brokers.isConnected(uc.userId) });
             }
+            if (p === '/api/prefs') {
+                return json(res, 200, { ok: true, prefs: await Prefs.get(uc.userId) });
+            }
 
             // ---------- Backtesting data (real TradingView OHLCV, cached, synthetic fallback) ----------
             if (p === '/api/backtest/candles') {
@@ -729,6 +733,15 @@ async function handleApi(req, res, url) {
         // ---- market replay controls ----
         if (p === '/api/replay/control') {
             return json(res, 200, await Replay.control(body.id, body.action, body.speedMs));
+        }
+
+        // ---- per-user preferences (theme sync across devices) ----
+        if (p === '/api/prefs' && (req.method === 'POST' || req.method === 'PUT')) {
+            const theme = String(body.theme || '').toLowerCase();
+            if (!Prefs.THEMES.includes(theme)) {
+                return json(res, 400, { error: 'theme must be one of ' + Prefs.THEMES.join(', ') });
+            }
+            return json(res, 200, { ok: true, prefs: await Prefs.set(uc.userId, theme) });
         }
 
         // ---- backtest practice session lifecycle ----
