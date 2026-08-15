@@ -183,9 +183,27 @@ function newBattle(overrides) {
     const feed3 = Battle.battlesFeed('u-host');
     ok(feed3.invites.some(x => x.id === b4.id), 'free-seat battle without my seat surfaces as an invite');
     Battle.deleteBattle('u-host', b4.id);
-    Battle.deleteBattle('u-host', b1.id);
-    Battle.deleteBattle('u-host', b2.id);
-    Battle.deleteBattle('u-host', b3.id);
+}
+
+// 9 · invites — codes resolve cross-user and surface as pending invitations
+{
+    const b = newBattle({ status: 'lobby', title: 'Invite Battle' });
+    Battle.saveBattle('u-host', b);
+    ok(b.inviteCode && b.inviteCode.length >= 6, 'battle has a shareable invite code');
+    const found = Battle.battleByCode(b.inviteCode);
+    ok(found && found.hostId === 'u-host' && found.battle.id === b.id, 'invite code resolves to the battle via registry');
+    ok(Battle.battleByCode('NOPE123') === null, 'unknown code resolves to null');
+    // invitation record for a guest
+    Battle.addInvite('u-guest', b.id, b.inviteCode);
+    const invs = Battle.pendingInvites('u-guest');
+    ok(invs.length === 1 && invs[0].battleId === b.id, 'pending invitation recorded for the guest');
+    ok(invs[0].free === 2, 'invitation reports open seats');
+    // persistence round-trip
+    const invs2 = Battle.pendingInvites('u-guest');
+    ok(invs2.length === 1, 'invitations persist across reads');
+    Battle.clearInvite('u-guest', b.id);
+    ok(Battle.pendingInvites('u-guest').length === 0, 'invitation dismissed');
+    Battle.deleteBattle('u-host', b.id);
 }
 
 console.log('\n' + (failCount ? 'FAILED: ' + failCount + ' / ' + (okCount + failCount) : 'ALL PASS: ' + okCount + ' checks'));

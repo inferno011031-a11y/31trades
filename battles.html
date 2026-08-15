@@ -155,6 +155,7 @@
                         </div>
                         <div class="flex items-center gap-2">
                             <select id="battle-select" class="bg-[#121214] border border-[#26262B] rounded-lg text-[13px] font-semibold px-3 py-2 outline-none focus:border-[#3A3A41] max-w-[260px]"></select>
+                            <button class="btn-ghost !py-2 !px-3.5" id="invite-btn"><svg data-lucide="send" class="w-4 h-4"></svg> Invite</button>
                             <button class="btn-primary !py-2 !px-3.5" id="new-battle-btn"><svg data-lucide="swords" class="w-4 h-4"></svg> New battle</button>
                         </div>
                     </div>
@@ -296,6 +297,37 @@ Mia:ICT</textarea>
                     </div>
                 </div>
                 <button class="btn-primary w-full justify-center !py-3" id="m-create"><svg data-lucide="swords" class="w-4 h-4"></svg> Host battle</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Invite modal -->
+    <div class="modal-backdrop hidden" id="invite-modal">
+        <div class="modal-card">
+            <div class="flex items-center justify-between gap-3 mb-5">
+                <div>
+                    <div class="text-[16px] font-bold">Invite traders</div>
+                    <div class="text-[12px] text-[#6E6E78] mt-0.5" id="invite-battle-title">—</div>
+                </div>
+                <button class="text-[#6E6E78] hover:text-white transition-colors" id="invite-close"><svg data-lucide="x" class="w-5 h-5"></svg></button>
+            </div>
+            <div class="flex flex-col gap-4">
+                <div>
+                    <div class="ticket-label">Shareable invite link</div>
+                    <div class="flex items-center gap-2 mt-1.5">
+                        <input type="text" id="invite-link" readonly class="bg-[#0F0F11] border border-[#26262B] rounded-lg text-[12.5px] text-[#B4B4BD] px-3 py-2 flex-1 min-w-0 font-mono outline-none focus:border-[#3A3A41]">
+                        <button class="btn-ghost !py-2 !px-3" id="invite-copy"><svg data-lucide="copy" class="w-3.5 h-3.5"></svg> Copy</button>
+                    </div>
+                    <p class="text-[11.5px] text-[#55555E] mt-1.5 leading-relaxed">Anyone with this link can claim a free seat — no coordination needed.</p>
+                </div>
+                <div>
+                    <div class="ticket-label">Email invites <span class="text-[#55555E] font-normal">(optional, comma-separated)</span></div>
+                    <input type="text" id="invite-emails" placeholder="friend@example.com, partner@propfirm.com" class="bg-[#0F0F11] border border-[#26262B] rounded-lg text-[12.5px] text-white px-3 py-2 w-full outline-none focus:border-[#3A3A41] mt-1.5">
+                    <div class="flex items-center gap-2 mt-3">
+                        <button class="btn-primary flex-1 justify-center !py-2.5" id="invite-send"><svg data-lucide="send" class="w-4 h-4"></svg> Send invites</button>
+                        <a class="btn-ghost !py-2.5 !px-4 flex items-center gap-1.5" id="invite-mailto" target="_blank" rel="noopener"><svg data-lucide="mail" class="w-3.5 h-3.5"></svg> Open email</a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -761,10 +793,66 @@ Mia:ICT</textarea>
                 finally { btn.disabled = false; btn.style.opacity = 1; }
             }
 
+            // ---- invites ----
+            let inviteCache = null;
+            async function openInviteModal() {
+                if (!battle) { showToast('Select a battle first'); return; }
+                $('invite-battle-title').textContent = battle.title + ' · ' + battle.symbol + ' ' + battle.timeframe;
+                $('invite-emails').value = '';
+                $('invite-modal').classList.remove('hidden');
+                if (window.lucide) lucide.createIcons();
+                try {
+                    const r = await api('/api/battles/' + battle.id + '/invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+                    inviteCache = r;
+                    $('invite-link').value = r.link;
+                    $('invite-mailto').href = r.mailto;
+                } catch (e) { showToast('Invite failed: ' + e.message); }
+            }
+            async function sendInvites() {
+                const emails = $('invite-emails').value.split(/[,\s]+/).map(e => e.trim()).filter(Boolean);
+                try {
+                    const r = await api('/api/battles/' + battle.id + '/invite', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ emails }) });
+                    inviteCache = r;
+                    $('invite-link').value = r.link;
+                    $('invite-mailto').href = r.mailto;
+                    showToast(emails.length ? 'Invites sent — link ready to share' : 'Link ready — share it with your squad');
+                    if (emails.length) $('invite-emails').value = '';
+                } catch (e) { showToast('Invite failed: ' + e.message); }
+            }
+            function copyInviteLink() {
+                const v = $('invite-link').value;
+                if (!v) return;
+                (navigator.clipboard ? navigator.clipboard.writeText(v) : Promise.reject()).then(
+                    () => showToast('Invite link copied'),
+                    () => { const t = document.createElement('textarea'); t.value = v; document.body.appendChild(t); t.select(); try { document.execCommand('copy'); showToast('Invite link copied'); } catch (e) {} document.body.removeChild(t); }
+                );
+            }
+
+            // join-by-link landing: ?invite=CODE resolves the battle and offers a seat
+            async function resolveInviteParam() {
+                const code = new URLSearchParams(location.search).get('invite');
+                if (!code) return;
+                // wait for the battle list to settle so battle is populated
+                let waited = 0;
+                while (!battle && waited < 5000) { await new Promise(r => setTimeout(r, 150)); waited += 150; }
+                if (!battle) return;
+                try {
+                    const r = await api('/api/battles/invite/' + encodeURIComponent(code));
+                    if (r.state && r.state.id !== battle.id) await loadBattle(r.state.id);
+                    showToast('Invite found — ' + (r.state.title || 'join the battle'));
+                    history.replaceState(null, '', location.pathname + location.hash);
+                } catch (e) { showToast('Invite unavailable: ' + e.message); }
+            }
+
             // ---- init ----
             function boot() {
                 $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
                 $('new-battle-btn').addEventListener('click', openModal);
+                $('invite-btn').addEventListener('click', openInviteModal);
+                $('invite-close').addEventListener('click', () => $('invite-modal').classList.add('hidden'));
+                $('invite-modal').addEventListener('click', e => { if (e.target === $('invite-modal')) $('invite-modal').classList.add('hidden'); });
+                $('invite-copy').addEventListener('click', copyInviteLink);
+                $('invite-send').addEventListener('click', sendInvites);
                 $('modal-close').addEventListener('click', () => $('battle-modal').classList.add('hidden'));
                 $('battle-modal').addEventListener('click', e => { if (e.target === $('battle-modal')) $('battle-modal').classList.add('hidden'); });
                 document.addEventListener('keydown', e => { if (e.key === 'Escape') $('battle-modal').classList.add('hidden'); });
@@ -804,6 +892,7 @@ Mia:ICT</textarea>
 
                 if (window.lucide) lucide.createIcons();
                 loadBattles();
+                resolveInviteParam();
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();

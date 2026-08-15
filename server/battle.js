@@ -23,6 +23,15 @@ const { BacktestSession, stateOf } = require('./backtest-sim.js');
 
 const clamp = (v, lo, hi) => Math.max(lo, Math.min(hi, v));
 
+// short, copy-friendly invite code (no ambiguous chars)
+const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+function genInviteCode(len) {
+    const n = len || 8;
+    let out = '';
+    for (let i = 0; i < n; i++) out += CODE_ALPHABET[Math.floor(Math.random() * CODE_ALPHABET.length)];
+    return out;
+}
+
 // ---------------------------------------------------------------------------
 // Scoring — blended 0–1000, favoring process over profit
 // ---------------------------------------------------------------------------
@@ -82,6 +91,7 @@ class Battle {
         this.cursor = o.cursor != null ? Math.max(this.startIndex, Math.min(this.candles.length - 1, o.cursor)) : this.startIndex;
         this.startingBalance = Number(o.startingBalance) > 0 ? Number(o.startingBalance) : 10000;
         this.riskModel = o.riskModel || { basis: 'money', perTrade: 25 };
+        this.inviteCode = o.inviteCode || genInviteCode();
         this.status = o.status || 'lobby';                       // lobby → running → completed
         this.seats = (o.seats || []).map(s => ({
             id: s.id, name: s.name || 'Seat', team: s.team || null,
@@ -232,6 +242,7 @@ class Battle {
             timeframe: this.timeframe, category: this.category,
             candles: this.candles, startIndex: this.startIndex, cursor: this.cursor,
             startingBalance: this.startingBalance, riskModel: this.riskModel,
+            inviteCode: this.inviteCode,
             status: this.status, seats: this.seats.map(s => ({
                 id: s.id, name: s.name, team: s.team, userId: s.userId,
                 session: s.session ? s.session.serialize() : null
@@ -264,6 +275,21 @@ function writeAll(hostId, list) {
         fs.writeFileSync(f, JSON.stringify(list));
     } catch (e) { /* ignore */ }
 }
+// ---------------------------------------------------------------------------
+// Cross-user invite registry — battles live in the HOST's file, but invitees
+// need to resolve them. A tiny registry maps battleId → hostId so any
+// authenticated user can load a battle they were invited to.
+// ---------------------------------------------------------------------------
+function registryFile() {
+    return path.join(process.env.TRADEMIND_BATTLE_DATA_DIR || path.join(__dirname, '..', 'data'), 'battle-registry.json');
+}
+function readRegistry() {
+    try { if (fs.existsSync(registryFile())) return JSON.parse(fs.readFileSync(registryFile(), 'utf8')); } catch (e) { /* ignore */ }
+    return {};
+}
+function writeRegistry(map) {
+    try { fs.mkdirSync(path.dirname(registryFile()), { recursive: true }); fs.writeFileSync(registryFile(), JSON.stringify(map)); } catch (e) { /* ignore */ }
+}
 function listBattles(hostId) {
     return readAll(hostId).map(b => {
         const x = Battle.hydrate(b);
@@ -271,21 +297,36 @@ function listBattles(hostId) {
             id: x.id, title: x.title, symbol: x.symbol, timeframe: x.timeframe,
             status: x.status, createdAt: x.createdAt, cursor: x.cursor, total: x.candles.length,
             seats: x.seats.length, taken: x.seats.filter(s => s.userId).length,
-            teams: [...new Set(x.seats.map(s => s.team).filter(Boolean))]
+            teams: [...new Set(x.seats.map(s => s.team).filter(Boolean))],
+            invite: x.inviteCode || null
         };
     });
 }
 function getBattle(hostId, id) {
-    const b = readAll(hostId).find(x => x.id === id);
-    return b ? Battle.hydrate(b) : null;
+    // own file first, then the invite registry (a battle I was invited to)
+    let b = readAll(hostId).find(x => x.id === id);
+    if (b) return Battle.hydrate(b);
+    const reg = readRegistry();
+    const realHost = reg[id];
+    if (realHost && realHost !== hostId) {
+        b = readAll(realHost).find(x => x.id === id);
+        if (b) return Battle.hydrate(b);
+    }
+    return null;
 }
 function saveBattle(hostId, b) {
     const list = readAll(hostId).filter(x => x.id !== b.id);
     list.push(b.serialize());
     writeAll(hostId, list);
+    // keep the registry in sync so invitees can find it
+    const reg = readRegistry();
+    reg[b.id] = hostId;
+    writeRegistry(reg);
 }
 function deleteBattle(hostId, id) {
     writeAll(hostId, readAll(hostId).filter(x => x.id !== id));
+    const reg = readRegistry();
+    if (reg[id]) { delete reg[id]; writeRegistry(reg); }
 }
 
 // ---------------------------------------------------------------------------
@@ -393,6 +434,72 @@ function complete(hostId, id) {
 }
 
 // ---------------------------------------------------------------------------
+// Invite resolution — a code points to a battle owned by whoever hosts it.
+// The registry is scanned because invites may point at any user's file.
+// ---------------------------------------------------------------------------
+function battleByCode(code) {
+    if (!code) return null;
+    const c = String(code).trim().toUpperCase();
+    const reg = readRegistry();
+    for (const battleId of Object.keys(reg)) {
+        const hostId = reg[battleId];
+        const b = readAll(hostId).find(x => x.id === battleId && x.inviteCode === c);
+        if (b) return { hostId, battle: Battle.hydrate(b) };
+    }
+    return null;
+}
+
+// ---------------------------------------------------------------------------
+// Per-user pending battle invitations (in-app notification feed). Stored as a
+// small file per invitee so the notifications engine can surface them without
+// touching the host's battle file.
+// ---------------------------------------------------------------------------
+function invitesFileFor(userId) {
+    return path.join(process.env.TRADEMIND_BATTLE_DATA_DIR || path.join(__dirname, '..', 'data'), 'battle-invites-' + userId + '.json');
+}
+function readInvites(userId) {
+    try {
+        const f = invitesFileFor(userId);
+        if (fs.existsSync(f)) return JSON.parse(fs.readFileSync(f, 'utf8'));
+    } catch (e) { /* ignore */ }
+    return [];
+}
+function writeInvites(userId, list) {
+    try {
+        const f = invitesFileFor(userId);
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        fs.writeFileSync(f, JSON.stringify(list));
+    } catch (e) { /* ignore */ }
+}
+// createInvitation(hostId, code) → returns the full invitation rows for a user
+function invitationFor(userId, battleId, code) {
+    const found = battleByCode(code);
+    if (!found || found.battle.id !== battleId) return null;
+    const b = found.battle;
+    const free = b.seats.filter(s => !s.userId).length;
+    const taken = b.seats.length - free;
+    return {
+        id: 'inv_' + b.id, battleId: b.id, code,
+        title: b.title, symbol: b.symbol, timeframe: b.timeframe, status: b.status,
+        hostId: found.hostId, seats: b.seats.length, taken, free,
+        createdAt: b.createdAt, href: 'battles.html?invite=' + code
+    };
+}
+function pendingInvites(userId) {
+    return readInvites(userId).map(i => invitationFor(userId, i.battleId, i.code)).filter(Boolean);
+}
+function addInvite(userId, battleId, code) {
+    const list = readInvites(userId).filter(x => !(x.battleId === battleId));
+    list.push({ battleId, code, at: new Date().toISOString() });
+    writeInvites(userId, list);
+    const found = battleByCode(code);
+    if (found) emit('status', found.battle);
+}
+function clearInvite(userId, battleId) {
+    writeInvites(userId, readInvites(userId).filter(x => x.battleId !== battleId));
+}
+
+// ---------------------------------------------------------------------------
 // Dashboard feed — active battles, joinable invites, and the last 7 days of
 // completed results (all derived from the same canonical battle records).
 // ---------------------------------------------------------------------------
@@ -433,5 +540,6 @@ function battlesFeed(hostId) {
 module.exports = {
     Battle, listBattles, getBattle, saveBattle, deleteBattle,
     play, pause, step, seek, reset, complete, loadActive, scoreSeat,
-    subscribe, emit, battlesFeed
+    subscribe, emit, battlesFeed, genInviteCode, battleByCode,
+    invitationFor, pendingInvites, addInvite, clearInvite
 };

@@ -234,6 +234,40 @@ function bearerToken(req) {
     return h.startsWith('Bearer ') ? h.slice(7).trim() : '';
 }
 
+// ---- lightweight email→userId directory (for battle invites) ----------------
+// Populated at signup/login when we know the user's email. Lets the host invite
+// an email and have the in-app invitation land in that user's feed. Falls back
+// gracefully when the directory is empty (auth off / local mode).
+const USER_DIR_FILE = () => path.join(DATA_DIR, 'user-directory.json');
+function readUserDirectory() {
+    try { if (fs.existsSync(USER_DIR_FILE())) return JSON.parse(fs.readFileSync(USER_DIR_FILE(), 'utf8')); } catch (e) { /* ignore */ }
+    return {};
+}
+function writeUserDirectory(map) {
+    try { fs.mkdirSync(DATA_DIR, { recursive: true }); fs.writeFileSync(USER_DIR_FILE(), JSON.stringify(map)); } catch (e) { /* ignore */ }
+}
+function recordUserEmail(user) {
+    if (!user || !user.email || !user.id) return;
+    const map = readUserDirectory();
+    map[String(user.email).toLowerCase()] = user.id;
+    writeUserDirectory(map);
+}
+function userIdByEmail(email) {
+    if (!email) return null;
+    return readUserDirectory()[String(email).toLowerCase()] || null;
+}
+function mailtoInvite(emails, link, title, fromName) {
+    const to = (emails || []).slice(0, 20).join(',');
+    const subject = encodeURIComponent('You are invited to a trading battle: ' + title);
+    const body = encodeURIComponent(
+        'Hey! You have been invited to join a 31TRADES Online Battle.\n\n' +
+        'Battle: ' + title + '\n\n' +
+        'Join here: ' + link + '\n\n' +
+        'Everyone trades the same market replay — decisions stay private until the end.\n\n— ' + (fromName || '31TRADES')
+    );
+    return 'mailto:' + to + '?subject=' + subject + '&body=' + body;
+}
+
 // Resolve the caller's user core. Throws {code:401} when unauthenticated.
 async function coreFor(req) {
     if (!AUTH_REQUIRED) return getUserCore(null);   // anonymous dev mode
@@ -332,11 +366,13 @@ async function handleApi(req, res, url) {
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
         try {
             const r = await auth.signup({ email: b.email, password: b.password, name: b.name });
+            const signupUser = r.user || (r.session && r.session.user);
+            if (signupUser) recordUserEmail(signupUser);   // email→id for battle invites
             // Welcome message: record a personalized welcome in the user's
             // canonical event log — it surfaces as a System notification in
             // their feed and in audit history, exactly once per user.
             try {
-                const u = r.user || (r.session && r.session.user);
+                const u = signupUser;
                 if (u && u.id) {
                     const wc = await getUserCore(u);
                     logWelcomeEvent(wc, u);
@@ -354,6 +390,7 @@ async function handleApi(req, res, url) {
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
         try {
             const r = await auth.login({ email: b.email, password: b.password });
+            if (r.session && r.session.user) recordUserEmail(r.session.user);
             return json(res, 200, { ok: true, session: r.session });
         } catch (err) { return json(res, err.code || 400, { error: err.message }); }
     }
@@ -487,6 +524,15 @@ async function handleApi(req, res, url) {
                 const upcoming = await EcoCal.getCalendar().then(c => EcoCal.upcomingHighImpact(c, 12)).catch(() => []);
                 const brokerConnected = await Brokers.isConnected(uc.userId);
                 const notifications = Notif.buildNotifications(Core, accountId, { upcomingEvents: upcoming, brokerConnected });
+                // battle invitations (persisted per-invitee) surface in the feed
+                Battle.pendingInvites(uc.userId).forEach(inv => {
+                    notifications.unshift({
+                        id: inv.id, cat: 'Battles', icon: 'swords', tint: 'indigo',
+                        title: 'Battle invitation · ' + inv.title,
+                        body: inv.symbol + ' ' + inv.timeframe + ' · ' + inv.taken + '/' + inv.seats + ' seats taken · ' + (inv.free ? inv.free + ' open' : 'full'),
+                        href: inv.href, at: inv.createdAt
+                    });
+                });
                 const read = await Notif.readSetOf(uc.userId);
                 const unread = notifications.filter(n => !read.has(n.id)).length;
                 return json(res, 200, { ok: true, notifications, unread, readIds: [...read], brokerConnected });
@@ -550,6 +596,21 @@ async function handleApi(req, res, url) {
             }
             if (p === '/api/battles/feed' && req.method === 'GET') {
                 return json(res, 200, { ok: true, feed: Battle.battlesFeed(uc.userId) });
+            }
+            if (p === '/api/battles/invites' && req.method === 'GET') {
+                return json(res, 200, { ok: true, invites: Battle.pendingInvites(uc.userId) });
+            }
+            if ((m = p.match(/^\/api\/battles\/invite\/([^/]+)$/))) {
+                // resolve a shareable invite code → battle (cross-user via registry)
+                const found = Battle.battleByCode(m[1]);
+                if (!found) return json(res, 404, { error: 'invite not found or already used' });
+                const b = found.battle;
+                if (b.status === 'completed') return json(res, 410, { error: 'battle already ended' });
+                return json(res, 200, {
+                    ok: true,
+                    invite: Battle.invitationFor(uc.userId, b.id, b.inviteCode),
+                    state: b.publicState()
+                });
             }
             if ((m = p.match(/^\/api\/battles\/([^/]+)$/))) {
                 const b = Battle.getBattle(uc.userId, m[1]);
@@ -718,6 +779,48 @@ async function handleApi(req, res, url) {
             Battle.emit('created', b);
             return json(res, 200, { ok: true, battle: b.id, hostSeat: b.seats[0].id, state: b.publicState() });
         }
+        if ((m = p.match(/^\/api\/battles\/([^/]+)\/invite$/))) {
+            // host invites people: returns the shareable link + records an
+            // in-app invitation for each invited user
+            const b = Battle.getBattle(uc.userId, m[1]);
+            if (!b) return json(res, 404, { error: 'unknown battle' });
+            if (b.hostId !== uc.userId) return json(res, 403, { error: 'only the host can invite' });
+            const emails = Array.isArray(body.emails) ? body.emails.map(e => String(e).trim().toLowerCase()).filter(Boolean) : [];
+            // senders may pass a display name for the invitee — used for the mailto body
+            const name = String(body.name || 'a fellow trader').trim();
+            const code = b.inviteCode || Battle.genInviteCode();
+            b.inviteCode = code;
+            Battle.saveBattle(uc.userId, b);
+            const link = (req.headers.origin ? req.headers.origin : 'http://' + (req.headers.host || 'localhost')) + '/battles.html?invite=' + code;
+            if (emails.length) {
+                // record an in-app invitation for each email's user (when the
+                // account exists) and always return the mailto for real email
+                emails.forEach(email => {
+                    const invUserId = userIdByEmail(email);
+                    if (invUserId) Battle.addInvite(invUserId, b.id, code);
+                });
+            }
+            return json(res, 200, { ok: true, code, link, mailto: mailtoInvite(emails, link, b.title, name) });
+        }
+        if ((m = p.match(/^\/api\/battles\/invite\/([^/]+)\/accept$/))) {
+            // accept an invite: resolve the battle, claim a free seat
+            const found = Battle.battleByCode(m[1]);
+            if (!found) return json(res, 404, { error: 'invite not found' });
+            const b = found.battle;
+            if (b.status === 'completed') return json(res, 410, { error: 'battle already ended' });
+            const free = b.seats.find(s => !s.userId);
+            if (!free) return json(res, 400, { error: 'battle is full' });
+            free.userId = uc.userId;
+            free.name = String(body.name || free.name || 'Seat');
+            Battle.saveBattle(b.hostId, b);
+            Battle.emit('status', b);
+            return json(res, 200, { ok: true, seat: free.id, state: b.publicState() });
+        }
+        if (req.method === 'DELETE' && (m = p.match(/^\/api\/battles\/([^/]+)\/invite$/))) {
+            // invitee dismisses a pending invite
+            Battle.clearInvite(uc.userId, m[1]);
+            return json(res, 200, { ok: true });
+        }
         if ((m = p.match(/^\/api\/battles\/([^/]+)\/join$/))) {
             const b = Battle.loadActive(uc.userId, m[1]);
             if (!b) return json(res, 404, { error: 'unknown battle' });
@@ -726,7 +829,7 @@ async function handleApi(req, res, url) {
             if (b.status !== 'lobby' && b.status !== 'running') return json(res, 400, { error: 'battle already over' });
             free.userId = uc.userId;
             free.name = String(body.name || free.name);
-            Battle.saveBattle(uc.userId, b);
+            Battle.saveBattle(b.hostId, b);
             Battle.emit('status', b);
             return json(res, 200, { ok: true, seat: free.id, state: b.publicState() });
         }
@@ -755,7 +858,7 @@ async function handleApi(req, res, url) {
                 notes: body.notes, setup: body.setup
             });
             if (!r.ok) return json(res, 400, { error: r.error });
-            Battle.saveBattle(uc.userId, b);
+            Battle.saveBattle(b.hostId, b);
             Battle.emit('seat', b);
             return json(res, 200, { ok: true, position: r.position, state: b.seatState(seat.id) });
         }
@@ -767,7 +870,7 @@ async function handleApi(req, res, url) {
             if (seat.userId && seat.userId !== uc.userId) return json(res, 403, { error: 'not your seat' });
             const r = b.close(seat.id, { price: body.price, reason: body.reason });
             if (!r.ok) return json(res, 400, { error: r.error });
-            Battle.saveBattle(uc.userId, b);
+            Battle.saveBattle(b.hostId, b);
             Battle.emit('seat', b);
             return json(res, 200, { ok: true, trade: r.trade, state: b.seatState(seat.id) });
         }
