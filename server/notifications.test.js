@@ -133,26 +133,28 @@ console.log('\n== Notifications engine ==');
     ok(sorted, 'feed is sorted newest-first');
 }
 
-// ---- 9 · read-state persistence (file, per user) -------------------------------
-{
+// ---- 9 · read-state persistence (async; DB-first with file fallback) -----------
+;(async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'notif-test-'));
     process.env.TRADEMIND_NOTIF_DATA_DIR = dir;
     try {
-        const c = makeCore([{ risk: 90 }]);   // → caution + reviews? (reviewed:true default) → caution only
+        const c = makeCore([{ risk: 90 }]);   // → caution
         const out = Notif.buildNotifications(c, 'acc-prop');
         const first = out[0];
-        ok(Notif.unreadCount('u1', out) === out.length, 'all unread before marking');
-        Notif.markRead('u1', [first.id]);
-        ok(Notif.unreadCount('u1', out) === out.length - 1, 'one read after markRead');
-        // persists: a fresh set reads the same file
-        const fresh = Notif.readSetOf('u1');
-        ok(fresh.has(first.id), 'read state persists to disk');
+        ok(await Notif.unreadCount('u1', out) === out.length, 'all unread before marking');
+        await Notif.markRead('u1', [first.id]);
+        ok(await Notif.unreadCount('u1', out) === out.length - 1, 'one read after markRead');
+        // persists: a fresh set reads the same store
+        const fresh = await Notif.readSetOf('u1');
+        ok(fresh.has(first.id), 'read state persists (DB or file fallback)');
         // other users are isolated
-        ok(Notif.unreadCount('u2', out) === out.length, 'read state is per-user');
+        ok(await Notif.unreadCount('u2', out) === out.length, 'read state is per-user');
     } finally {
         delete process.env.TRADEMIND_NOTIF_DATA_DIR;
     }
-}
+    console.log('\n' + (fail === 0 ? 'ALL NOTIFICATION CHECKS PASS' : fail + ' NOTIFICATION CHECKS FAILED') + ' (' + pass + ' ok)\n');
+    process.exit(fail === 0 ? 0 : 1);
+})();
 
 // ---- 10 · market events only fire when injected (no fake data) -----------------
 {
@@ -161,5 +163,3 @@ console.log('\n== Notifications engine ==');
     ok(!out.some(n => n.id.indexOf('market-') === 0), 'no market notification when no upcoming events');
 }
 
-console.log('\n' + (fail === 0 ? 'ALL NOTIFICATION CHECKS PASS' : fail + ' NOTIFICATION CHECKS FAILED') + ' (' + pass + ' ok)\n');
-process.exit(fail === 0 ? 0 : 1);

@@ -444,7 +444,7 @@ async function handleApi(req, res, url) {
                 if (!accountId) return json(res, 200, { ok: true, notifications: [], unread: 0 });
                 const upcoming = await EcoCal.getCalendar().then(c => EcoCal.upcomingHighImpact(c, 12)).catch(() => []);
                 const notifications = Notif.buildNotifications(Core, accountId, { upcomingEvents: upcoming });
-                const read = Notif.readSetOf(uc.userId);
+                const read = await Notif.readSetOf(uc.userId);
                 const unread = notifications.filter(n => !read.has(n.id)).length;
                 return json(res, 200, { ok: true, notifications, unread, readIds: [...read] });
             }
@@ -497,7 +497,7 @@ async function handleApi(req, res, url) {
     try {
         // ---- notifications read state (engine module) ----
         if (p === '/api/notifications/read') {
-            Notif.markRead(uc.userId, Array.isArray(body.ids) ? body.ids : []);
+            await Notif.markRead(uc.userId, Array.isArray(body.ids) ? body.ids : []);
             return json(res, 200, { ok: true });
         }
 

@@ -169,16 +169,28 @@ function buildNotifications(Core, accountId, opts) {
     return out.sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 50);
 }
 
-// ---- per-user unread state (server-side, file-persisted) ---------------------
-// Read-tracking lives server-side per user so unread state survives devices —
-// not just one browser's localStorage. Persisted to a per-user JSON file,
-// mirroring the ai-findings fallback pattern (Supabase table optional later).
+// ---- per-user read state ------------------------------------------------------
+// Read-tracking lives server-side so unread state survives devices — not just
+// one browser's localStorage. Primary storage is the Supabase
+// notifications_read table (migration 009); a per-user JSON file mirrors every
+// write as fallback when Postgres is unavailable, exactly like ai_findings.
+// All functions are async and always resolve.
+
+const db = require('./db.js');
 
 function fileFor(userId) {
     return path.join(process.env.TRADEMIND_NOTIF_DATA_DIR || path.join(__dirname, '..', 'data'), 'notif-' + userId + '.json');
 }
 
-function readSetOf(userId) {
+async function readSetOf(userId) {
+    const pool = db.getPool();
+    if (pool) {
+        try {
+            const r = await pool.query(
+                'SELECT notification_id FROM notifications_read WHERE user_id = $1', [userId]);
+            return new Set(r.rows.map(row => row.notification_id));
+        } catch (e) { /* DB unavailable → file fallback */ }
+    }
     try {
         const f = fileFor(userId);
         if (fs.existsSync(f)) return new Set(JSON.parse(fs.readFileSync(f, 'utf8')));
@@ -186,17 +198,38 @@ function readSetOf(userId) {
     return new Set();
 }
 
-function unreadCount(userId, notifs) {
-    const read = readSetOf(userId);
+async function unreadCount(userId, notifs) {
+    const read = await readSetOf(userId);
     return notifs.filter(n => !read.has(n.id)).length;
 }
 
-function markRead(userId, ids) {
-    const read = readSetOf(userId);
-    (ids || []).forEach(id => read.add(id));
+async function markRead(userId, ids) {
+    const pool = db.getPool();
+    const list = (ids || []).filter(Boolean);
+    if (!list.length) return;
+    if (pool) {
+        try {
+            await pool.query('BEGIN');
+            for (const id of list) {
+                await pool.query(
+                    `INSERT INTO notifications_read (user_id, notification_id) VALUES ($1, $2)
+                     ON CONFLICT (user_id, notification_id) DO NOTHING`,
+                    [userId, id]);
+            }
+            await pool.query('COMMIT');
+        } catch (e) {
+            try { await pool.query('ROLLBACK'); } catch (e2) { /* connection may be gone */ }
+            /* fall through to file mirror */
+        }
+    }
+    // file mirror (also the standalone fallback when DB is off)
     try {
-        fs.mkdirSync(path.dirname(fileFor(userId)), { recursive: true });
-        fs.writeFileSync(fileFor(userId), JSON.stringify([...read]));
+        const f = fileFor(userId);
+        let read = new Set();
+        if (fs.existsSync(f)) { try { read = new Set(JSON.parse(fs.readFileSync(f, 'utf8'))); } catch (e) {} }
+        list.forEach(id => read.add(id));
+        fs.mkdirSync(path.dirname(f), { recursive: true });
+        fs.writeFileSync(f, JSON.stringify([...read]));
     } catch (e) { /* ignore */ }
 }
 

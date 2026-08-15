@@ -9,8 +9,8 @@
 2. **Dependencies** — `npm install` (installs `pg`, the only runtime dep).
 3. **Database schema** — with a reachable Supabase DB configured:
    `npm run db:migrate` (applies `db/migrations/*.sql` in order, tracked in
-   `schema_migrations`). All six migrations (001–007) must be applied for
-   per-user scoping.
+   `schema_migrations`). All migrations (001–009) must be applied — 001–007
+   for per-user scoping, 008 for AI findings, 009 for notification read state.
 
 ## How to run the server
 
