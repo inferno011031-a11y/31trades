@@ -841,7 +841,9 @@
                             '<input type="checkbox" data-id="' + t.id + '"' + (selected.has(t.id) ? ' checked' : '') + '>' +
                         '</td>' +
                         '<td class="num text-[#6E6E78]">' + fmtTs(t.ts) + '</td>' +
-                        '<td class="font-semibold text-white">' + t.symbol + '</td>' +
+                        '<td class="tm-sym-cell">' + (window.TMAssets && TMAssets.badgeHtml
+                            ? '<span class="tm-sym-badge">' + TMAssets.badgeHtml(t.symbol) + '</span>'
+                            : '') + '<span class="tm-sym-name">' + t.symbol + '</span></td>' +
                         '<td>' + (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</td>' +
                         '<td class="text-[#C4C4CC]">' + t.setup + '</td>' +
                         '<td class="text-[#8A8A93]">' + t.strategy + '</td>' +

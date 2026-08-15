@@ -358,10 +358,16 @@
         return { syncFromSelect, setValue, identityFor };
     }
 
+    // ---- public badge HTML for lists/tables (flags, icons, logos) ----
+    function badgeHtml(symbol) {
+        return visualHtml(identityFor(symbol));
+    }
+
     window.TMAssets = {
         CATEGORIES: CATEGORIES,
         SYMBOLS: SYMBOLS,
         identityFor: identityFor,
+        badgeHtml: badgeHtml,
         createPicker: createPicker
     };
 })();
