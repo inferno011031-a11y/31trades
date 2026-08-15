@@ -12,6 +12,7 @@
 
     <!-- Tailwind CSS CDN & Lucide -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
 
     <style>
@@ -811,7 +812,7 @@
                                     <input type="checkbox" id="si-remember" checked>
                                     <span>Remember me</span>
                                 </label>
-                                <a href="#" class="text-[13.5px] text-emerald-400 hover:text-emerald-300 font-semibold no-underline">Forgot password?</a>
+                                <a href="#forgot" id="link-forgot" class="text-[13.5px] text-emerald-400 hover:text-emerald-300 font-semibold no-underline">Forgot password?</a>
                             </div>
 
                             <button type="submit" class="btn-primary w-full !py-4 text-[15px]">
@@ -836,6 +837,95 @@
                         New to 31TRADES?
                         <button type="button" id="switch-to-signup" class="text-emerald-400 hover:text-emerald-300 font-semibold bg-transparent border-none p-0">Create an account</button>
                     </p>
+                </div>
+
+                <!-- ============ FORGOT PASSWORD PANEL ============ -->
+                <div id="panel-forgot" class="auth-panel">
+                    <button type="button" class="auth-back-link flex items-center gap-1.5 text-[13px] text-[#888888] hover:text-white transition-colors bg-transparent border-none p-0 mb-6" data-back-to="signin">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M15 19l-7-7 7-7"></path></svg>
+                        Back to sign in
+                    </button>
+                    <h2 class="text-2xl font-bold tracking-tight mb-1.5">Reset your password</h2>
+                    <p class="text-[14px] text-[#888888] mb-7">Enter your account email and we'll send you a secure reset link.</p>
+
+                    <form id="form-forgot" novalidate>
+                        <div class="flex flex-col gap-5">
+                            <div>
+                                <label class="field-label" for="fp-email">Email address</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                                    <input id="fp-email" class="field-input" type="email" placeholder="you@example.com" autocomplete="email">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary w-full !py-4 text-[15px]">
+                                Send reset link
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ============ FORGOT SENT PANEL ============ -->
+                <div id="panel-forgot-sent" class="auth-panel text-center py-6">
+                    <div class="success-icon w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold tracking-tight mb-2">Check your inbox</h2>
+                    <p class="text-[14.5px] text-[#888888] leading-relaxed mb-8 max-w-[380px] mx-auto">
+                        If an account exists for <span id="fp-sent-email" class="text-white font-semibold"></span>, a password reset link is on its way. The link expires in 1 hour.
+                    </p>
+                    <button type="button" class="btn-secondary w-full !py-4 text-[15px]" data-back-to="signin">Back to sign in</button>
+                    <p class="text-[12px] text-[#555555] mt-6">Didn't get it? Check spam, or try again in a minute.</p>
+                </div>
+
+                <!-- ============ RESET PASSWORD (from email link) ============ -->
+                <div id="panel-reset" class="auth-panel">
+                    <h2 class="text-2xl font-bold tracking-tight mb-1.5">Set a new password</h2>
+                    <p class="text-[14px] text-[#888888] mb-7">Choose a new password for your account.</p>
+
+                    <form id="form-reset" novalidate>
+                        <div class="flex flex-col gap-5">
+                            <div>
+                                <label class="field-label" for="rp-password">New password</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                    <input id="rp-password" class="field-input" type="password" placeholder="Minimum 8 characters" autocomplete="new-password">
+                                    <button type="button" class="toggle-pw" data-target="rp-password">
+                                        <svg class="w-[18px] h-[18px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="field-label" for="rp-confirm">Confirm new password</label>
+                                <div class="input-wrap">
+                                    <svg class="field-icon w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                    <input id="rp-confirm" class="field-input" type="password" placeholder="Re-enter password" autocomplete="new-password">
+                                    <button type="button" class="toggle-pw" data-target="rp-confirm">
+                                        <svg class="w-[18px] h-[18px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                    </button>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn-primary w-full !py-4 text-[15px]">
+                                Set new password
+                                <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- ============ RESET SUCCESS PANEL ============ -->
+                <div id="panel-reset-done" class="auth-panel text-center py-6">
+                    <div class="success-icon w-16 h-16 mx-auto mb-6 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
+                        <svg class="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M5 13l4 4L19 7"></path></svg>
+                    </div>
+                    <h2 class="text-2xl font-bold tracking-tight mb-2">Password updated</h2>
+                    <p class="text-[14.5px] text-[#888888] leading-relaxed mb-8 max-w-[380px] mx-auto">
+                        Your password has been changed. Sign in with your new password to continue.
+                    </p>
+                    <button type="button" class="btn-primary w-full !py-4 text-[15px]" data-back-to="signin">
+                        Back to sign in
+                        <svg class="w-[18px] h-[18px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                    </button>
                 </div>
 
                 <!-- ============ SIGN-IN SUCCESS PANEL ============ -->
@@ -912,6 +1002,23 @@
     </footer>
 
     <!-- Shared core (booted lazily via TradeMindBoot once a session exists) -->
+    <script>
+        // Password-recovery deep-link: the email points here as
+        // auth.html#access_token=..&type=recovery. Must run BEFORE core.js so the
+        // boot gate (which sends logged-out users to the signin panel) is bypassed
+        // and the "set new password" form is shown instead.
+        (function () {
+            try {
+                var h = location.hash.replace(/^#/, '');
+                if (h && h.indexOf('type=recovery') !== -1) {
+                    var p = new URLSearchParams(h);
+                    if (p.get('access_token') || p.get('token')) {
+                        window.__TRADEMIND_AUTH_BYPASS__ = true;
+                    }
+                }
+            } catch (e) {}
+        })();
+    </script>
     <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
@@ -936,6 +1043,10 @@
             const panels = {
                 signup: document.getElementById('panel-signup'),
                 signin: document.getElementById('panel-signin'),
+                forgot: document.getElementById('panel-forgot'),
+                forgotSent: document.getElementById('panel-forgot-sent'),
+                reset: document.getElementById('panel-reset'),
+                resetDone: document.getElementById('panel-reset-done'),
                 signinSuccess: document.getElementById('panel-signin-success'),
                 onboarding: document.getElementById('panel-onboarding'),
                 onboardDone: document.getElementById('panel-onboard-done')
@@ -950,6 +1061,9 @@
                     tabs.signin.classList.toggle('active', name === 'signin');
                     tabs.signup.classList.toggle('active', name === 'signup');
                     history.replaceState(null, '', name === 'signin' ? '#signin' : '#signup');
+                } else {
+                    const hashFor = { forgot: '#forgot', reset: '#reset' }[name];
+                    if (hashFor) history.replaceState(null, '', hashFor);
                 }
             }
 
@@ -1041,6 +1155,74 @@
                     showPanel('signinSuccess');
                 } catch (err) {
                     showAuthError(err.message);
+                    busy(btn, false);
+                }
+            });
+
+            // ----- Forgot password flow -----
+            document.getElementById('link-forgot').addEventListener('click', (e) => {
+                e.preventDefault();
+                showPanel('forgot');
+            });
+
+            // "Back" links inside the forgot/sent panels
+            document.querySelectorAll('[data-back-to]').forEach(btn => {
+                btn.addEventListener('click', () => showPanel(btn.dataset.backTo));
+            });
+
+            document.getElementById('form-forgot').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const btn = this.querySelector('button[type="submit"]');
+                const email = document.getElementById('fp-email').value.trim();
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return showAuthError('Enter a valid email address.');
+                busy(btn, true);
+                hideAuthError();
+                try {
+                    await api('/api/auth/forgot', { email });
+                    document.getElementById('fp-sent-email').textContent = email;
+                    showPanel('forgotSent');
+                } catch (err) {
+                    showAuthError(err.message);
+                } finally {
+                    busy(btn, false);
+                }
+            });
+
+            // ----- Password reset (from the email link: #access_token=..&type=recovery) -----
+            function parseRecoveryToken() {
+                const h = location.hash.replace(/^#/, '');
+                if (!h || h.indexOf('type=recovery') === -1) return null;
+                const params = new URLSearchParams(h);
+                const token = params.get('access_token') || params.get('token') || '';
+                return token || null;
+            }
+
+            const recoveryToken = parseRecoveryToken();
+            if (recoveryToken) {
+                // core.js already bypassed the signin gate via the pre-boot flag.
+                showPanel('reset');
+                history.replaceState(null, '', location.pathname + '?reset=1');
+            }
+
+            // Deep-link: auth.html#forgot opens the forgot-password form
+            if (location.hash === '#forgot' && !recoveryToken) showPanel('forgot');
+
+            document.getElementById('form-reset').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const btn = this.querySelector('button[type="submit"]');
+                const password = document.getElementById('rp-password').value;
+                const confirm = document.getElementById('rp-confirm').value;
+                if (password.length < 6) return showAuthError('New password must be at least 6 characters.');
+                if (password !== confirm) return showAuthError('Passwords do not match.');
+                busy(btn, true);
+                hideAuthError();
+                try {
+                    await api('/api/auth/reset-password', { token: recoveryToken, password });
+                    // Recovery token is single-use — sign in fresh with the new password.
+                    showPanel('resetDone');
+                } catch (err) {
+                    showAuthError(err.message);
+                } finally {
                     busy(btn, false);
                 }
             });

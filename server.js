@@ -398,6 +398,21 @@ async function handleApi(req, res, url) {
         await auth.logout(bearerToken(req));
         return json(res, 200, { ok: true });
     }
+    if (p === '/api/auth/forgot' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        try { return json(res, 200, await auth.requestPasswordReset({ email: b.email })); }
+        catch (err) { return json(res, err.code || 400, { error: err.message }); }
+    }
+    if (p === '/api/auth/reset-password' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        try {
+            const r = await auth.resetPassword({ token: b.token, password: b.password });
+            if (r.session && r.session.user) recordUserEmail(r.session.user);
+            return json(res, 200, { ok: true, session: r.session });
+        } catch (err) { return json(res, err.code || 400, { error: err.message }); }
+    }
     if (p === '/api/auth/me' && req.method === 'GET') {
         const token = bearerToken(req);
         if (!token) return json(res, 401, { error: 'Authentication required' });

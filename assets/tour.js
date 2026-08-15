@@ -113,7 +113,7 @@
         var bp = $('#tm-tour-spot', overlay) || document.createElement('div');
         bp.id = 'tm-tour-spot';
         bp.style.cssText = 'position:fixed;left:' + r.left + 'px;top:' + r.top + 'px;width:' + r.width + 'px;height:' + r.height + 'px;' +
-            'border-radius:10px;box-shadow:0 0 0 4px rgba(16,185,129,0.55),0 0 24px rgba(16,185,129,0.35);z-index:1001;pointer-events:none;transition:all .25s ease;';
+            'border-radius:var(--primitive-radius-md);box-shadow:0 0 0 4px rgba(16,185,129,0.55),0 0 24px rgba(16,185,129,0.35);z-index:1001;pointer-events:none;transition:all .25s ease;';
         if (!bp.parentNode) overlay.insertBefore(bp, card);
 
         // tooltip to the right of the sidebar (or below on narrow screens)

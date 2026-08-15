@@ -12,6 +12,7 @@
 
     <!-- Tailwind CSS CDN & Lucide -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
     <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
@@ -547,8 +548,8 @@
                             </div>
                             <div class="kpi-value pos num">+$312.50</div>
                             <div class="flex items-center gap-1.5 mt-2 text-[12px] text-[#6E6E78]">
-                                <svg data-lucide="trending-up" class="w-3.5 h-3.5 text-[#34D399]"></svg>
-                                <span class="text-[#34D399] num font-semibold">+$128.30</span>
+                                <svg data-lucide="trending-up" class="w-3.5 h-3.5 text-tm-green"></svg>
+                                <span class="text-tm-green num font-semibold">+$128.30</span>
                                 vs yesterday (+$184.20)
                             </div>
                         </div>
@@ -712,8 +713,8 @@
 
                             <div class="flex items-center gap-6 mt-3 text-[11.5px] text-[#6E6E78]">
                                 <span class="flex items-center gap-1.5"><span class="dot bg-[#10B981]"></span> Equity</span>
-                                <span class="num">Best day: <span class="text-[#34D399]">+$128.30 (May 19)</span></span>
-                                <span class="num">Worst day: <span class="text-[#F87171]">-$42.00 (May 17)</span></span>
+                                <span class="num">Best day: <span class="text-tm-green">+$128.30 (May 19)</span></span>
+                                <span class="num">Worst day: <span class="text-tm-red">-$42.00 (May 17)</span></span>
                             </div>
                         </div>
 
@@ -722,7 +723,7 @@
                             <div class="panel p-5 risk-level-normal">
                                 <div class="flex items-center justify-between mb-1">
                                     <div class="panel-title">Risk Meter</div>
-                                    <span class="tag tag-emerald"><span class="dot bg-[#34D399]"></span> Normal</span>
+                                    <span class="tag tag-emerald"><span class="dot bg-tm-green"></span> Normal</span>
                                 </div>
                                 <p class="text-[12px] text-[#6E6E78] mb-4">Daily loss limit $250</p>
 
@@ -741,7 +742,7 @@
                                     </div>
                                     <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
                                         <div class="label-xs mb-1">Remaining</div>
-                                        <div class="num text-[16px] font-bold text-[#34D399]">$180</div>
+                                        <div class="num text-[16px] font-bold text-tm-green">$180</div>
                                     </div>
                                 </div>
                             </div>
@@ -763,10 +764,10 @@
                                 <div class="flex justify-between mt-3 text-[11px] text-[#6E6E78]">
                                     <span class="num">70% · Caution</span>
                                     <span class="num text-[#F59E0B]">85% · High</span>
-                                    <span class="num text-[#F87171]">95% · Critical</span>
+                                    <span class="num text-tm-red">95% · Critical</span>
                                 </div>
                                 <p class="text-[12px] text-[#6E6E78] mt-4 leading-relaxed">
-                                    <span class="text-[#34D399] font-semibold">$820</span> of buffer left before the 70% caution threshold.
+                                    <span class="text-tm-green font-semibold">$820</span> of buffer left before the 70% caution threshold.
                                 </p>
                             </div>
                         </div>
@@ -789,22 +790,22 @@
                                 </div>
                                 <div class="flex items-center justify-between py-2.5">
                                     <span class="text-[13px] text-[#8A8A93]">Expectancy</span>
-                                    <span class="num text-[15px] font-bold text-[#34D399]">+1.82R</span>
+                                    <span class="num text-[15px] font-bold text-tm-green">+1.82R</span>
                                 </div>
                                 <div class="flex items-center justify-between py-2.5">
                                     <span class="text-[13px] text-[#8A8A93]">Average R</span>
-                                    <span class="num text-[15px] font-bold text-[#34D399]">+1.42R</span>
+                                    <span class="num text-[15px] font-bold text-tm-green">+1.42R</span>
                                 </div>
                                 <div class="flex items-center justify-between py-2.5">
                                     <span class="text-[13px] text-[#8A8A93]">Max drawdown</span>
-                                    <span class="num text-[15px] font-bold text-[#F87171]">-1.06R</span>
+                                    <span class="num text-[15px] font-bold text-tm-red">-1.06R</span>
                                 </div>
                                 <div class="flex items-center justify-between py-2.5">
                                     <span class="text-[13px] text-[#8A8A93]">Trades (60d)</span>
                                     <span class="num text-[15px] font-bold text-white">60</span>
                                 </div>
                             </div>
-                            <a href="analytics.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-3 hover:text-[#34D399] transition-colors">
+                            <a href="analytics.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-3 hover:text-tm-green transition-colors">
                                 View full analytics <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
                             </a>
                         </div>
@@ -817,24 +818,24 @@
                             </div>
                             <div class="flex flex-col gap-2.5">
                                 <div class="pos-row flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-[#34D399]">EU</div>
+                                    <div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-tm-green">EU</div>
                                     <div class="flex-1 min-w-0">
                                         <div class="text-[13.5px] font-semibold text-white">EURUSD <span class="tag tag-emerald ml-1 !px-1.5 !py-0.5 text-[10px]">LONG</span></div>
                                         <div class="text-[11.5px] text-[#6E6E78] num">1.08912 · 0.50 lots · risk $25</div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="num text-[13.5px] font-bold text-[#34D399]">+$85.20</div>
+                                        <div class="num text-[13.5px] font-bold text-tm-green">+$85.20</div>
                                         <div class="num text-[11px] text-[#6E6E78]">+0.34R</div>
                                     </div>
                                 </div>
                                 <div class="pos-row flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-[#F87171]">NQ</div>
+                                    <div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-tm-red">NQ</div>
                                     <div class="flex-1 min-w-0">
                                         <div class="text-[13.5px] font-semibold text-white">NAS100 <span class="tag tag-red ml-1 !px-1.5 !py-0.5 text-[10px]">SHORT</span></div>
                                         <div class="text-[11.5px] text-[#6E6E78] num">21,845 · 1 contract · risk $30</div>
                                     </div>
                                     <div class="text-right">
-                                        <div class="num text-[13.5px] font-bold text-[#34D399]">+$124.00</div>
+                                        <div class="num text-[13.5px] font-bold text-tm-green">+$124.00</div>
                                         <div class="num text-[11px] text-[#6E6E78]">+0.50R</div>
                                     </div>
                                 </div>
@@ -870,7 +871,7 @@
                                 </div>
                             </div>
 
-                            <a href="#" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-4 hover:text-[#34D399] transition-colors">
+                            <a href="#" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-4 hover:text-tm-green transition-colors">
                                 View insights <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
                             </a>
                         </div>
@@ -886,7 +887,7 @@
                                     <div class="panel-title">Recent Trades</div>
                                     <div class="panel-sub mt-0.5">Today · London session</div>
                                 </div>
-                                <a href="journal.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] hover:text-[#34D399] transition-colors">
+                                <a href="journal.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] hover:text-tm-green transition-colors">
                                     Open journal <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
                                 </a>
                             </div>
@@ -904,9 +905,9 @@
                                             <td><span class="tag tag-emerald">Long</span></td>
                                             <td>MSS + FVG</td>
                                             <td class="num text-[#6E6E78]">London</td>
-                                            <td class="num font-bold text-[#34D399]">+240.00</td>
-                                            <td class="num font-bold text-[#34D399]">+2.4R</td>
-                                            <td><span class="flex items-center gap-1.5 text-[#34D399]"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
+                                            <td class="num font-bold text-tm-green">+240.00</td>
+                                            <td class="num font-bold text-tm-green">+2.4R</td>
+                                            <td><span class="flex items-center gap-1.5 text-tm-green"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
                                         </tr>
                                         <tr>
                                             <td class="num text-[#6E6E78]">08:14</td>
@@ -916,7 +917,7 @@
                                             <td class="num text-[#6E6E78]">London</td>
                                             <td class="num font-bold text-[#6E6E78]">0.00</td>
                                             <td class="num font-bold text-[#6E6E78]">0.0R</td>
-                                            <td><span class="flex items-center gap-1.5 text-[#34D399]"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
+                                            <td><span class="flex items-center gap-1.5 text-tm-green"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
                                         </tr>
                                         <tr>
                                             <td class="num text-[#6E6E78]">May 20</td>
@@ -924,9 +925,9 @@
                                             <td><span class="tag tag-red">Short</span></td>
                                             <td>MSS + FVG</td>
                                             <td class="num text-[#6E6E78]">New York</td>
-                                            <td class="num font-bold text-[#34D399]">+110.00</td>
-                                            <td class="num font-bold text-[#34D399]">+1.1R</td>
-                                            <td><span class="flex items-center gap-1.5 text-[#34D399]"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
+                                            <td class="num font-bold text-tm-green">+110.00</td>
+                                            <td class="num font-bold text-tm-green">+1.1R</td>
+                                            <td><span class="flex items-center gap-1.5 text-tm-green"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
                                         </tr>
                                         <tr>
                                             <td class="num text-[#6E6E78]">May 19</td>
@@ -934,8 +935,8 @@
                                             <td><span class="tag tag-red">Short</span></td>
                                             <td>FVG</td>
                                             <td class="num text-[#6E6E78]">London</td>
-                                            <td class="num font-bold text-[#F87171]">-100.00</td>
-                                            <td class="num font-bold text-[#F87171]">-1.0R</td>
+                                            <td class="num font-bold text-tm-red">-100.00</td>
+                                            <td class="num font-bold text-tm-red">-1.0R</td>
                                             <td><span class="flex items-center gap-1.5 text-[#F59E0B]"><svg data-lucide="alert-triangle" class="w-3.5 h-3.5"></svg> Early exit</span></td>
                                         </tr>
                                         <tr>
@@ -944,9 +945,9 @@
                                             <td><span class="tag tag-emerald">Long</span></td>
                                             <td>Breakout</td>
                                             <td class="num text-[#6E6E78]">New York</td>
-                                            <td class="num font-bold text-[#34D399]">+384.00</td>
-                                            <td class="num font-bold text-[#34D399]">+3.84R</td>
-                                            <td><span class="flex items-center gap-1.5 text-[#34D399]"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
+                                            <td class="num font-bold text-tm-green">+384.00</td>
+                                            <td class="num font-bold text-tm-green">+3.84R</td>
+                                            <td><span class="flex items-center gap-1.5 text-tm-green"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
                                         </tr>
                                     </tbody>
                                 </table>
@@ -965,7 +966,7 @@
                                 </div>
                                 <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
                                     <div class="label-xs mb-1">Overtrading</div>
-                                    <div class="num text-[18px] font-bold text-[#34D399]">Low</div>
+                                    <div class="num text-[18px] font-bold text-tm-green">Low</div>
                                     <div class="text-[11px] text-[#6E6E78]">2 of 5 trade budget</div>
                                 </div>
                             </div>
@@ -973,7 +974,7 @@
                             <div class="flex flex-col gap-2.5 text-[13px]">
                                 <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
                                     <span class="text-[#8A8A93]">Best setup today</span>
-                                    <span class="font-semibold text-white">MSS + FVG <span class="num text-[#34D399]">+2.4R</span></span>
+                                    <span class="font-semibold text-white">MSS + FVG <span class="num text-tm-green">+2.4R</span></span>
                                 </div>
                                 <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
                                     <span class="text-[#8A8A93]">Worst setup today</span>
@@ -997,7 +998,7 @@
                                 <div class="mini-track">
                                     <div class="mini-fill bg-[#F59E0B]" style="width:50%"></div>
                                 </div>
-                                <a href="#" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-3 hover:text-[#34D399] transition-colors">
+                                <a href="#" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-3 hover:text-tm-green transition-colors">
                                     Review pending trade <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
                                 </a>
                             </div>
@@ -1056,7 +1057,7 @@
                                 <div class="panel-title">Live Battles</div>
                                 <div class="panel-sub mt-0.5" id="battles-sub">Real-time — everyone trades the same replay</div>
                             </div>
-                            <a href="battles.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] hover:text-[#34D399] transition-colors">
+                            <a href="battles.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] hover:text-tm-green transition-colors">
                                 Open battles <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
                             </a>
                         </div>
@@ -1172,13 +1173,13 @@
                 var step3 = 'todo';
                 hero.innerHTML =
                     '<div class="absolute top-3 right-3 flex items-center gap-1.5">' +
-                        '<button onclick="window.startTour && window.startTour()" title="Take a guided tour" class="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-[#34D399] hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="compass" class="w-4 h-4"></svg></button>' +
+                        '<button onclick="window.startTour && window.startTour()" title="Take a guided tour" class="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-tm-green hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="compass" class="w-4 h-4"></svg></button>' +
                         '<button onclick="window.dismissWelcome()" title="Dismiss" class="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-white hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
                     '</div>' +
                     '<div class="flex items-start gap-4">' +
-                        '<div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(59,130,246,0.12));border:1px solid rgba(16,185,129,0.3)"><svg data-lucide="sparkles" class="w-5 h-5 text-[#34D399]"></svg></div>' +
+                        '<div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(59,130,246,0.12));border:1px solid rgba(16,185,129,0.3)"><svg data-lucide="sparkles" class="w-5 h-5 text-tm-green"></svg></div>' +
                         '<div class="min-w-0">' +
-                            '<div class="text-[17px] font-bold tracking-tight">Welcome to 31Trades, <span class="text-[#34D399]">' + name + '</span> 👋</div>' +
+                            '<div class="text-[17px] font-bold tracking-tight">Welcome to 31Trades, <span class="text-tm-green">' + name + '</span> 👋</div>' +
                             '<p class="text-[13px] text-[#8A8A93] mt-1 max-w-2xl leading-relaxed">Your journal, risk engine and AI mentor are ready. Set up your workspace and log your first trade — every screen reads the same ledger.</p>' +
                             '<div class="flex flex-wrap items-center gap-2 mt-4">' +
                                 '<a href="strategy-lab.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ' + (step1 === 'ok' ? 'opacity-50' : '') + '"><svg data-lucide="' + (step1 === 'ok' ? 'check-circle-2' : 'wallet') + '" class="w-4 h-4"></svg> Account</a>' +
@@ -1332,7 +1333,7 @@
                     var rfill = riskPanel.querySelector('.risk-consumed');
                     var rvals = riskPanel.querySelectorAll('.num');
                     var rpct = rs.dailyRiskBudget ? Math.round(rs.riskUsed / rs.dailyRiskBudget * 100) : 0;
-                    if (rtag) { rtag.innerHTML = '<span class="dot bg-[#34D399]"></span> ' + rs.statusLabel; rtag.className = 'tag ' + (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'tag-red' : rs.status === 'CAUTION' ? 'tag-amber' : 'tag-emerald'); }
+                    if (rtag) { rtag.innerHTML = '<span class="dot bg-tm-green"></span> ' + rs.statusLabel; rtag.className = 'tag ' + (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'tag-red' : rs.status === 'CAUTION' ? 'tag-amber' : 'tag-emerald'); }
                     if (rsub) rsub.textContent = 'Daily loss limit $' + rs.dailyLossLimit + ' · risk budget $' + rs.dailyRiskBudget;
                     if (rfill) rfill.style.width = Math.min(100, rpct) + '%';
                     if (rvals[0]) rvals[0].textContent = '$' + rs.dailyRiskBudget;
@@ -1353,7 +1354,7 @@
                     var bufferSpan = null;
                     var ddSpans = ddPanel.querySelectorAll('span');
                     for (var s2 = 0; s2 < ddSpans.length; s2++) {
-                        if (ddSpans[s2].className.indexOf('text-[#34D399]') !== -1) { bufferSpan = ddSpans[s2]; break; }
+                        if (ddSpans[s2].className.indexOf('text-tm-green') !== -1) { bufferSpan = ddSpans[s2]; break; }
                     }
                     if (bufferSpan) bufferSpan.textContent = '$' + rs.drawdownRemaining;
                 }
@@ -1376,8 +1377,8 @@
                     }
                     if (pMap['Win rate']) pMap['Win rate'].textContent = Math.round(a.winRate * 100) + '%';
                     if (pMap['Profit factor']) pMap['Profit factor'].textContent = (a.pf || 0).toFixed(2);
-                    if (pMap['Expectancy']) { pMap['Expectancy'].textContent = (a.expectancy >= 0 ? '+' : '') + a.expectancy.toFixed(2) + 'R'; pMap['Expectancy'].className = 'num text-[15px] font-bold ' + (a.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'); }
-                    if (pMap['Average R']) { pMap['Average R'].textContent = (a.avgR >= 0 ? '+' : '') + a.avgR.toFixed(2) + 'R'; pMap['Average R'].className = 'num text-[15px] font-bold ' + (a.avgR >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'); }
+                    if (pMap['Expectancy']) { pMap['Expectancy'].textContent = (a.expectancy >= 0 ? '+' : '') + a.expectancy.toFixed(2) + 'R'; pMap['Expectancy'].className = 'num text-[15px] font-bold ' + (a.expectancy >= 0 ? 'text-tm-green' : 'text-tm-red'); }
+                    if (pMap['Average R']) { pMap['Average R'].textContent = (a.avgR >= 0 ? '+' : '') + a.avgR.toFixed(2) + 'R'; pMap['Average R'].className = 'num text-[15px] font-bold ' + (a.avgR >= 0 ? 'text-tm-green' : 'text-tm-red'); }
                     if (pMap['Max drawdown']) pMap['Max drawdown'].textContent = '-$' + a.maxDD;
                     if (pMap['Trades (60d)']) pMap['Trades (60d)'].textContent = a.n;
                 }
@@ -1395,10 +1396,10 @@
                                 ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
                                 : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                             var dirCls = t.dir === 'Long' ? 'tag-emerald' : 'tag-red';
-                            var pnlCls = t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]';
-                            var rCls = t.r > 0 ? 'text-[#34D399]' : t.r < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]';
+                            var pnlCls = t.pnl > 0 ? 'text-tm-green' : t.pnl < 0 ? 'text-tm-red' : 'text-[#6E6E78]';
+                            var rCls = t.r > 0 ? 'text-tm-green' : t.r < 0 ? 'text-tm-red' : 'text-[#6E6E78]';
                             var adhere = t.adherence === 'followed' ? 'Followed' : (t.adherence || '—');
-                            var adhereCls = t.adherence === 'followed' ? 'text-[#34D399]' : 'text-[#F59E0B]';
+                            var adhereCls = t.adherence === 'followed' ? 'text-tm-green' : 'text-[#F59E0B]';
                             var adhereIcon = t.adherence === 'followed' ? 'check' : 'alert-triangle';
                             return '<tr>' +
                                 '<td class="num text-[#6E6E78]">' + time + '</td>' +
@@ -1438,7 +1439,7 @@
                     var otBox = behPanel.querySelectorAll('.bg-\\[\\#0F0F11\\]');
                     if (otBox[1]) {
                         var otVal = otBox[1].querySelector('.num');
-                        if (otVal) { otVal.textContent = otLevel; otVal.className = 'num text-[18px] font-bold ' + (otLevel === 'High' ? 'text-[#F87171]' : otLevel === 'Medium' ? 'text-[#F59E0B]' : 'text-[#34D399]'); }
+                        if (otVal) { otVal.textContent = otLevel; otVal.className = 'num text-[18px] font-bold ' + (otLevel === 'High' ? 'text-tm-red' : otLevel === 'Medium' ? 'text-[#F59E0B]' : 'text-tm-green'); }
                         var otSub = otBox[1].querySelector('.text-\\[11px\\]');
                         if (otSub) otSub.textContent = dayTrades.length + ' of ' + maxPerDay + ' trade budget';
                     }
@@ -1452,12 +1453,12 @@
                     var rowsB = behPanel.querySelectorAll('.border-b');
                     if (rowsB[0] && setupKeys.length) {
                         var bestR = bySetup[setupKeys[0]];
-                        rowsB[0].querySelector('.font-semibold').innerHTML = setupKeys[0] + ' <span class="num text-[#34D399]">' + (bestR >= 0 ? '+' : '') + bestR.toFixed(1) + 'R</span>';
+                        rowsB[0].querySelector('.font-semibold').innerHTML = setupKeys[0] + ' <span class="num text-tm-green">' + (bestR >= 0 ? '+' : '') + bestR.toFixed(1) + 'R</span>';
                     }
                     if (rowsB[1]) {
                         if (setupKeys.length > 1) {
                             var worstR = bySetup[setupKeys[setupKeys.length - 1]];
-                            rowsB[1].innerHTML = '<span class="text-[#8A8A93]">Worst setup today</span><span class="font-semibold text-white">' + setupKeys[setupKeys.length - 1] + ' <span class="num text-[#F87171]">' + (worstR >= 0 ? '+' : '') + worstR.toFixed(1) + 'R</span></span>';
+                            rowsB[1].innerHTML = '<span class="text-[#8A8A93]">Worst setup today</span><span class="font-semibold text-white">' + setupKeys[setupKeys.length - 1] + ' <span class="num text-tm-red">' + (worstR >= 0 ? '+' : '') + worstR.toFixed(1) + 'R</span></span>';
                         } else {
                             rowsB[1].innerHTML = '<span class="text-[#8A8A93]">Worst setup today</span><span class="text-[#6E6E78]">—</span>';
                         }
@@ -1576,15 +1577,15 @@
                 if (eqPanel) {
                     var eqSpans = eqPanel.querySelectorAll('span');
                     for (var es = 0; es < eqSpans.length; es++) {
-                        if (eqSpans[es].className.indexOf('text-[#34D399]') !== -1 && eqSpans[es].textContent.indexOf('Best day') === -1 && eqSpans[es].parentElement && eqSpans[es].parentElement.textContent.indexOf('Best day') !== -1) bestWorst = eqSpans[es];
+                        if (eqSpans[es].className.indexOf('text-tm-green') !== -1 && eqSpans[es].textContent.indexOf('Best day') === -1 && eqSpans[es].parentElement && eqSpans[es].parentElement.textContent.indexOf('Best day') !== -1) bestWorst = eqSpans[es];
                     }
                 }
                 // simpler: rewrite the two labeled spans directly
                 var eqFoot = eqPanel ? eqPanel.querySelector('.flex.items-center.gap-6') : null;
                 if (eqFoot) {
                     var bSpans = eqFoot.querySelectorAll('span.num');
-                    if (bSpans[0] && bestDay) bSpans[0].innerHTML = 'Best day: <span class="text-[#34D399]">' + money(dayPnl[bestDay]) + ' (' + bestDay + ')</span>';
-                    if (bSpans[1] && worstDay) bSpans[1].innerHTML = 'Worst day: <span class="text-[#F87171]">' + money(dayPnl[worstDay]) + ' (' + worstDay + ')</span>';
+                    if (bSpans[0] && bestDay) bSpans[0].innerHTML = 'Best day: <span class="text-tm-green">' + money(dayPnl[bestDay]) + ' (' + bestDay + ')</span>';
+                    if (bSpans[1] && worstDay) bSpans[1].innerHTML = 'Worst day: <span class="text-tm-red">' + money(dayPnl[worstDay]) + ' (' + worstDay + ')</span>';
                 }
 
                 // ---- OPEN POSITIONS → today's real trades (model logs closed trades) ----
@@ -1599,7 +1600,7 @@
                         } else {
                             opBody.innerHTML = today.slice().sort(function (a, b) { return new Date(b.ts) - new Date(a.ts); }).slice(0, 3).map(function (t) {
                                 var sym = t.symbol || '—', dirCls = t.dir === 'Short' ? 'tag-red' : 'tag-emerald';
-                                var pnlCls = t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]';
+                                var pnlCls = t.pnl > 0 ? 'text-tm-green' : t.pnl < 0 ? 'text-tm-red' : 'text-[#6E6E78]';
                                 return '<div class="flex items-center gap-3">' +
                                     '<div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-[#10B981]">' + sym.slice(0, 2).toUpperCase() + '</div>' +
                                     '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white">' + sym + ' <span class="tag ' + dirCls + ' ml-1 !px-1.5 !py-0.5 text-[10px]">' + (t.dir || '—').toUpperCase() + '</span></div>' +
@@ -1782,7 +1783,7 @@
                                 '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white truncate">' + b.title + '</div>' +
                                 '<div class="text-[12px] text-[#6E6E78]">' + b.symbol + ' ' + b.timeframe + ' · ' + b.taken + '/' + b.seats + ' seats · replay ' + pct + '%</div></div>' +
                                 pnlCell +
-                                '<a href="battles.html" class="flex items-center gap-1 text-[12px] font-semibold text-[#10B981] hover:text-[#34D399] transition-colors">Watch <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
+                                '<a href="battles.html" class="flex items-center gap-1 text-[12px] font-semibold text-[#10B981] hover:text-tm-green transition-colors">Watch <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
                             '</div>';
                         }).join('')
                         : '';
