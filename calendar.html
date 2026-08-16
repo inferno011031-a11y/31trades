@@ -191,6 +191,31 @@
         .cal-cell.is-selected { border-color: var(--tm-accent); box-shadow: 0 0 0 1px var(--tm-accent), 0 8px 24px rgba(99,102,241,0.18); background: var(--cell-hover); }
         .cal-cell.is-empty-day { cursor: pointer; min-height: 92px; }
 
+        /* ---- GlowingEffect: green/red border glow that follows the pointer ---- */
+        /* Multicolor gradient removed — win days glow green, loss days glow red. */
+        .cal-shell {
+            --glow-green: radial-gradient(circle, rgba(16,185,129,0.9) 10%, rgba(16,185,129,0) 22%), repeating-conic-gradient(from 236.84deg at 50% 50%, #22c55e 0deg, #86efac 5deg, #22c55e 10deg, #16a34a 15deg, #22c55e 20deg);
+            --glow-red: radial-gradient(circle, rgba(239,68,68,0.9) 10%, rgba(239,68,68,0) 22%), repeating-conic-gradient(from 236.84deg at 50% 50%, #ef4444 0deg, #fca5a5 5deg, #ef4444 10deg, #b91c1c 15deg, #ef4444 20deg);
+        }
+        .cal-cell { --gwbw: 1px; --spread: 20; --start: 0; --active: 0; }
+        .cal-cell::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            border: var(--gwbw) solid transparent;
+            border-radius: inherit;
+            background: var(--gradient, transparent);
+            opacity: var(--active, 0);
+            transition: opacity 300ms;
+            pointer-events: none;
+            -webkit-mask-clip: padding-box, border-box;
+            mask-clip: padding-box, border-box;
+            -webkit-mask-composite: intersect;
+            mask-composite: intersect;
+            -webkit-mask-image: linear-gradient(#0000,#0000), conic-gradient(from calc((var(--start) - var(--spread)) * 1deg), #00000000 0deg, #fff, #00000000 calc(var(--spread) * 2deg));
+            mask-image: linear-gradient(#0000,#0000), conic-gradient(from calc((var(--start) - var(--spread)) * 1deg), #00000000 0deg, #fff, #00000000 calc(var(--spread) * 2deg));
+        }
+
         .cal-daynum { font-size: 14px; font-weight: 700; }
         .cal-pnl { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
         .cal-meta { font-size: 10.5px; color: var(--tm-dim); }
@@ -623,7 +648,8 @@
                 const highRisk = riskPct != null && riskPct >= 80;
                 const discCol = disc == null ? '' : disc >= 80 ? 'var(--tm-green)' : disc >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
                 const label = day + ' ' + MONTHS[viewM] + ' — ' + (pnl > 0 ? '+' : '') + '$' + Math.abs(pnl) + ', ' + dd.trades + ' trades' + (disc != null ? ', discipline ' + disc : '') + (viol ? ', ' + viol + ' violations' : '');
-                return '<button class="cal-cell' + stateCls + sel + '" data-day="' + day + '" aria-label="' + esc(label) + '" aria-pressed="' + (isSelected ? 'true' : 'false') + '">' +
+                const glow = pnl > 0 ? 'var(--glow-green)' : pnl < 0 ? 'var(--glow-red)' : '';
+                return '<button class="cal-cell' + stateCls + sel + '"' + (glow ? ' style="--gradient:' + glow + '"' : '') + ' data-day="' + day + '" aria-label="' + esc(label) + '" aria-pressed="' + (isSelected ? 'true' : 'false') + '">' +
                     '<span class="cal-daynum">' + day + '</span>' +
                     '<span class="cal-pnl num" style="color:' + (pnl > 0 ? 'var(--tm-green)' : pnl < 0 ? 'var(--tm-red)' : 'var(--tm-dim)') + '">' + (pnl > 0 ? '+' : '') + '$' + Math.abs(pnl) + '</span>' +
                     '<span class="cal-meta num">' + dd.trades + ' tr' + (dd.trades === 1 ? '' : 's') + ' · ' + fmtR(dd.avgR) + '</span>' +
@@ -649,6 +675,7 @@
                 for (let i = 0; i < lead; i++) cells += '<div class="cal-empty" aria-hidden="true"></div>';
                 for (let d = 1; d <= daysInMonth; d++) cells += dayCell(d, byDay[d] || null, false);
                 $('cal-grid').innerHTML = cells;
+                if (window.__calGlowReset) window.__calGlowReset();
             }
 
             // ---- Selected-day drawer ----
@@ -841,6 +868,89 @@
                 const btn = e.target.closest && e.target.closest('[data-day]');
                 if (btn) openDay(Number(btn.dataset.day));
             });
+
+            // ---- GlowingEffect: green/red border glow following the pointer ----
+            // Ported from the GlowingEffect component (multicolor gradient removed).
+            // Only one cell animates at a time; the backend cursor is untouched —
+            // this is pure decoration driven by pointer position over the grid.
+            (function () {
+                if (!window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+                const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+                const grid = $('cal-grid');
+                if (!grid) return;
+                const SPREAD = 20, DURATION = 2, INACTIVE = 0.7, PROX = 0;
+                // cubic-bezier(0.16, 1, 0.3, 1) from the component
+                const ease = (function () {
+                    const p1x = 0.16, p1y = 1, p2x = 0.3, p2y = 1;
+                    const cx = 3 * p1x, bx = 3 * (p2x - p1x) - cx, ax = 1 - cx - bx;
+                    const cy = 3 * p1y, by = 3 * (p2y - p1y) - cy, ay = 1 - cy - by;
+                    const sample = t => ((ax * t + bx) * t + cx) * t;
+                    return function (x) {
+                        let t = x;
+                        for (let i = 0; i < 8; i++) {
+                            const err = sample(t) - x;
+                            if (Math.abs(err) < 1e-5) break;
+                            t -= err / ((3 * ax * t + 2 * bx) * t + cx);
+                        }
+                        return ((ay * t + by) * t + cy) * t;
+                    };
+                })();
+
+                let current = null;
+                let raf = 0;
+
+                function setActive(cell, on) {
+                    if (!cell || !cell.style.getPropertyValue('--gradient')) return;
+                    cell.style.setProperty('--active', on ? '1' : '0');
+                }
+                function animateStart(cell, target) {
+                    if (raf) cancelAnimationFrame(raf);
+                    const from = parseFloat(cell.style.getPropertyValue('--start')) || 0;
+                    let diff = ((target - from + 180) % 360 + 360) % 360 - 180;
+                    const to = from + diff;
+                    if (reduced || Math.abs(diff) < 0.05) {
+                        cell.style.setProperty('--start', String(to));
+                        return;
+                    }
+                    const t0 = performance.now();
+                    const step = now => {
+                        const p = Math.min(1, (now - t0) / (DURATION * 1000));
+                        cell.style.setProperty('--start', String(from + (to - from) * ease(p)));
+                        if (p < 1) raf = requestAnimationFrame(step);
+                        else raf = 0;
+                    };
+                    raf = requestAnimationFrame(step);
+                }
+                window.__calGlowReset = function () {
+                    if (current) { setActive(current, false); current = null; }
+                    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+                };
+
+                grid.addEventListener('pointermove', e => {
+                    const cell = e.target.closest && e.target.closest('.cal-cell');
+                    if (cell) {
+                        if (current && current !== cell) setActive(current, false);
+                        current = cell;
+                        const r = cell.getBoundingClientRect();
+                        const cx = r.left + r.width * 0.5, cy = r.top + r.height * 0.5;
+                        const dist = Math.hypot(e.clientX - cx, e.clientY - cy);
+                        const inactiveR = 0.5 * Math.min(r.width, r.height) * INACTIVE;
+                        if (dist < inactiveR) { setActive(cell, false); return; }
+                        const inside = e.clientX > r.left - PROX && e.clientX < r.right + PROX && e.clientY > r.top - PROX && e.clientY < r.bottom + PROX;
+                        setActive(cell, inside);
+                        if (!inside) return;
+                        const target = (180 * Math.atan2(e.clientY - cy, e.clientX - cx)) / Math.PI + 90;
+                        animateStart(cell, target);
+                    } else if (current) {
+                        setActive(current, false);
+                        current = null;
+                    }
+                });
+                grid.addEventListener('pointerleave', () => {
+                    if (current) { setActive(current, false); current = null; }
+                    if (raf) { cancelAnimationFrame(raf); raf = 0; }
+                });
+            })();
 
             renderAll();
             if (window.lucide) lucide.createIcons();
