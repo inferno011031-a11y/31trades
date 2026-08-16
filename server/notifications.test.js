@@ -47,11 +47,12 @@ function ok(cond, label) {
 
 console.log('\n== Notifications engine ==');
 
-// ---- 1 · bare core → only the onboarding checklist step -----------------------
+// ---- 1 · bare core → global announcement leads, onboarding step follows -------
 {
     const c = makeCore([], [], [], []);   // no accounts, no trades
     const out = Notif.buildNotifications(c, 'acc-prop');
-    ok(Array.isArray(out) && out.length === 1 && out[0].id === 'onb-account', 'bare core → onboarding account step only');
+    ok(Array.isArray(out) && out.length >= 2 && out[0].id === 'ann-lifetime', 'global announcement leads the feed');
+    ok(out.some(n => n.id === 'onb-account'), 'bare core → onboarding account step present');
 }
 
 // ---- 2 · risk limit breached → critical Risk notification -------------------
@@ -197,13 +198,14 @@ console.log('\n== Notifications engine ==');
     ok(m && m.body.indexOf('1h') > -1 || m.body.indexOf('60') > -1, 'market body carries the countdown');
 }
 
-// ---- 8 · newest first ordering ------------------------------------------------
+// ---- 8 · newest first ordering (announcement pinned first) --------------------
 {
     const c = makeCore([{ reviewed: false, risk: 90 }]);
     const out = Notif.buildNotifications(c, 'acc-prop');
-    const times = out.map(n => new Date(n.at).getTime());
+    ok(out[0] && out[0].id === 'ann-lifetime', 'announcement pinned first regardless of timestamp');
+    const times = out.slice(1).map(n => new Date(n.at).getTime());
     const sorted = times.every((t, i) => i === 0 || times[i - 1] >= t);
-    ok(sorted, 'feed is sorted newest-first');
+    ok(sorted, 'rest of the feed is sorted newest-first');
 }
 
 // ---- 9 · read-state persistence (async; DB-first with file fallback) -----------

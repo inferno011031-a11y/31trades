@@ -44,12 +44,38 @@ function nowISO() {
     return new Date().toISOString();
 }
 
+// ---- global announcement -----------------------------------------------------
+// A single product announcement shown to EVERY user's feed (checked into
+// assets/announcement.json — the one channel the product has for reaching
+// users in-app). Its id is stable so per-user read state works exactly like
+// any other notification. Non-fatal when the file is absent.
+let _announcement = null;
+function loadAnnouncement() {
+    if (_announcement) return _announcement;
+    try {
+        const f = path.join(__dirname, '..', 'assets', 'announcement.json');
+        if (fs.existsSync(f)) {
+            const a = JSON.parse(fs.readFileSync(f, 'utf8'));
+            if (a && a.title) _announcement = {
+                id: a.id || 'announcement', cat: a.cat || 'System', sev: a.sev || 'high',
+                at: a.at || nowISO(), icon: a.icon || 'gift', tint: a.tint || 'emerald',
+                title: a.title, body: a.body || '', href: a.href || 'dashboard.html'
+            };
+        }
+    } catch (e) { /* absent or malformed — no announcement */ }
+    return _announcement;
+}
+
 // ---- derivation ------------------------------------------------------------
 
 function buildNotifications(Core, accountId, opts) {
     const o = opts || {};
     const out = [];
     if (!Core) return out;
+
+    // 0 · GLOBAL ANNOUNCEMENT — shown to every user, always first in the feed
+    const ann = loadAnnouncement();
+    if (ann) out.push({ ...ann });
 
     // 0 · ONBOARDING CHECKLIST — derived from the workspace state, so it
     // appears for brand-new users and each step disappears the moment it is
@@ -248,8 +274,13 @@ function buildNotifications(Core, accountId, opts) {
         });
     }
 
-    // newest first, capped
-    return out.sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 50);
+    // newest first, capped — the global announcement always leads
+    const sorted = out.sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 50);
+    if (ann) {
+        const i = sorted.findIndex(n => n.id === ann.id);
+        if (i > 0) { sorted.splice(i, 1); sorted.unshift(ann); }
+    }
+    return sorted;
 }
 
 // ---- per-user read state ------------------------------------------------------
