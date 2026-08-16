@@ -3,44 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — AI Mentor</title>
+    <title>BATTLEXJOURNAL — AI Mentor</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS CDN, Lucide & shared demo data -->
+    <!-- Tailwind CSS CDN & Lucide -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
+    <script src="assets/asset-meta.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             height: 100%;
-            background: #0A0A0C;
-            color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
 
-        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
         /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
-            display: flex;
-            flex-direction: column;
-            overflow: hidden;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
         }
         body.collapsed .sidebar { width: 64px; }
         body.collapsed .hide-when-collapsed { display: none !important; }
@@ -52,131 +51,168 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
-        .panel-title { font-size: 13px; font-weight: 700; color: #E8E8EC; }
-        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+        /* ---- Glass system (Calendar parity) ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
+
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .panel-sub { font-size: 12px; color: var(--tm-dim); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
 
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
         .btn-ghost {
-            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
-
-        .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
-        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
-        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
-        .tag-blue { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.25); }
-        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
-
-        .period-chip {
-            padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            background: #121214; border: 1px solid #1F1F23; transition: all 0.15s; cursor: pointer;
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-mini {
+            background: transparent; border: 1px solid var(--tm-border-2); border-radius: 7px; color: var(--tm-muted);
+            padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.13s;
         }
-        .period-chip:hover { color: #E8E8EC; border-color: #2E2E35; }
-        .period-chip.active { background: #1F1F23; color: #FFFFFF; border-color: #2E2E35; }
+        .btn-mini:hover { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
+        .btn-mini.active { color: var(--tm-accent); border-color: var(--tm-accent); }
 
-        .ins-tab {
-            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
         }
-        .ins-tab:hover { color: #E8E8EC; }
-        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
 
-        .ins-panel { display: none; animation: fadeIn 0.3s ease; }
-        .ins-panel.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        /* ---- Mentor sections ---- */
+        .sec-title { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.08em; color: var(--tm-muted); }
 
-        .bar-track { height: 5px; background: #1F1F23; border-radius: 999px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 999px; }
+        .finding-card { background: var(--glass-inner); border: 1px solid var(--hairline); border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 9px; transition: border-color 0.15s, transform 0.15s; }
+        .finding-card:hover { border-color: var(--glass-border-strong); transform: translateY(-1px); }
+        .finding-card.fc-critical { border-left: 3px solid var(--tm-red); }
+        .finding-card.fc-warning { border-left: 3px solid var(--tm-amber); }
+        .finding-card.fc-positive { border-left: 3px solid var(--tm-green); }
 
-        .metric-mini { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 12px 14px; }
-        .metric-mini .label-xs { margin-bottom: 6px; }
-        .metric-mini .val { font-size: 18px; font-weight: 700; }
+        .stat-tile { background: var(--glass-inner); border: 1px solid var(--hairline); border-radius: 10px; padding: 11px 13px; }
+        .stat-tile .st-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); }
+        .stat-tile .st-value { font-size: 17px; font-weight: 800; margin-top: 3px; }
 
-        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-        .tbl th {
-            text-align: left; padding: 8px 10px; color: #6E6E78; font-size: 10.5px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #1F1F23;
-            white-space: nowrap;
+        .emo-table th, .emo-table td { padding: 8px 12px; font-size: 12.5px; text-align: left; border-bottom: 1px solid var(--hairline); white-space: nowrap; }
+        .emo-table th { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); }
+        .emo-table tr:last-child td { border-bottom: none; }
+
+        .hist-bar { height: 8px; border-radius: 4px; background: linear-gradient(90deg, var(--tm-accent), var(--tm-green)); opacity: 0.85; }
+        .hist-track { height: 8px; border-radius: 4px; background: var(--hairline); overflow: hidden; flex: 1; }
+
+        /* ---- Chat ---- */
+        .chat-shell { display: flex; flex-direction: column; height: 100%; max-height: calc(100vh - 150px); }
+        .chat-scroll { flex: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; padding: 4px 2px; }
+        .msg { max-width: 92%; border-radius: 12px; padding: 11px 14px; font-size: 13px; line-height: 1.5; animation: fadeUp 0.22s ease; }
+        .msg-user { align-self: flex-end; background: var(--tm-accent); color: #fff; border-bottom-right-radius: 4px; }
+        .msg-mentor { align-self: flex-start; background: var(--glass-inner); border: 1px solid var(--hairline); color: var(--tm-text); border-bottom-left-radius: 4px; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
+        .chat-kpi { display: inline-flex; align-items: baseline; gap: 5px; padding: 4px 9px; border-radius: 7px; background: var(--glass-inner); border: 1px solid var(--hairline); font-size: 11.5px; }
+        .follow-chip { padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 600; color: var(--tm-muted); border: 1px solid var(--tm-border-2); background: transparent; cursor: pointer; transition: all 0.13s; }
+        .follow-chip:hover { color: var(--tm-text); border-color: var(--tm-accent); }
+
+        .composer { display: flex; gap: 8px; padding-top: 10px; border-top: 1px solid var(--hairline); }
+        .composer textarea {
+            flex: 1; resize: none; background: var(--glass-inner); border: 1px solid var(--glass-border-strong); border-radius: 10px;
+            color: var(--tm-text); font-family: inherit; font-size: 13px; padding: 10px 12px; outline: none; min-height: 44px; max-height: 120px;
         }
-        .tbl td { padding: 8px 10px; border-bottom: 1px solid #17171A; white-space: nowrap; }
-        .tbl tbody tr:hover { background: #16161A; }
-        .tbl tbody tr:last-child td { border-bottom: none; }
-        .tbl-wrap { overflow-x: auto; }
+        .composer textarea:focus { border-color: var(--tm-accent); }
+        .composer textarea::placeholder { color: var(--tm-dim); }
 
-        .divider { border-top: 1px solid #1F1F23; margin: 14px 0; }
+        /* ---- Drawer ---- */
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(8, 10, 14, 0.45); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+        .drawer-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 460px; max-width: 94vw; z-index: 61; transform: translateX(102%); transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; border-left: 1px solid var(--glass-border-strong); }
+        .drawer-panel.open { transform: none; }
+        .ev-trade-row { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--hairline); border-radius: 10px; text-decoration: none; transition: background 0.12s, border-color 0.12s; }
+        .ev-trade-row:hover { background: var(--glass-inner); border-color: var(--glass-border-strong); }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
-
-        .kpi { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 14px 16px; }
-        .kpi .k-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6E6E78; margin-bottom: 6px; }
-        .kpi .k-val { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
-        .kpi .k-sub { font-size: 11px; color: #6E6E78; margin-top: 3px; }
-
-        .fcard { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; padding: 14px 16px; transition: border-color 0.15s; }
-        .fcard:hover { border-color: #2E2E35; }
-        .fcard .sev-bar { width: 3px; border-radius: 999px; margin-right: 12px; align-self: stretch; }
-        .ev-chip { display: inline-flex; align-items: center; gap: 5px; padding: 2px 8px; border-radius: 6px; background: #16161A; border: 1px solid #1F1F23; font-size: 10.5px; font-weight: 600; color: #8A8A93; font-family: 'JetBrains Mono', monospace; }
-        .ai-action { padding: 3px 7px; border-radius: 6px; background: transparent; border: 1px solid transparent; color: #6E6E78; cursor: pointer; transition: all 0.12s; font-size: 11px; }
-        .ai-action:hover { background: #1F1F23; color: #E8E8EC; }
-        .ai-action.on { background: rgba(16,185,129,0.12); color: #34D399; border-color: rgba(16,185,129,0.3); }
-        .ai-action.off { background: rgba(239,68,68,0.12); color: #F87171; border-color: rgba(239,68,68,0.3); }
-
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.62); z-index: 50;
-            display: none; align-items: center; justify-content: center; padding: 16px;
+        .period-btn {
+            padding: 7px 14px; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer;
+            background: transparent; color: var(--tm-muted); border: 1px solid var(--tm-border-2); transition: all 0.15s; text-transform: uppercase;
         }
-        .modal-overlay.open { display: flex; }
-        .modal {
-            width: 100%; max-width: 660px; max-height: 78vh;
-            background: #121214; border: 1px solid #1F1F23; border-radius: 14px;
-            padding: 20px; display: flex; flex-direction: column;
-            animation: fadeIn 0.2s ease;
-        }
-        .dismissed-count-badge {
-            min-width: 20px; height: 20px; border-radius: 999px; padding: 0 6px;
-            background: rgba(239,68,68,0.12); border: 1px solid rgba(239,68,68,0.3);
-            color: #F87171; font-size: 11px; font-weight: 700;
-            display: inline-flex; align-items: center; justify-content: center;
-            font-family: 'JetBrains Mono', monospace;
-        }
+        .period-btn:hover { color: var(--tm-text); }
+        .period-btn.active { background: var(--tm-text); color: var(--tm-bg); border-color: var(--tm-text); }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
-        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
 
-        @media (max-width: 640px) {
-            .search-input { display: none; }
-            .topbar { padding-left: 12px; padding-right: 12px; }
-        }
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
         @media (max-width: 1024px) {
             .search-input { width: 180px; }
             .sidebar { width: 64px; }
@@ -184,19 +220,25 @@
             .nav-item { justify-content: center; padding: 9px 0; }
             .hide-when-collapsed { display: none !important; }
         }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
 </head>
 <body>
 
-    <div class="flex h-screen">
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -214,22 +256,22 @@
                 <a href="backtesting.html?mode=battle" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
                 <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
                 <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
-                <a href="analytics.html#calendar" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
                 <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -240,878 +282,813 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                    <input type="text" id="ask-search" class="search-input" placeholder="Ask the mentor… findings are grounded in your journal">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. why do I keep revenge trading?">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <a href="journal.html" class="btn-primary !py-2 !px-3.5">
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </a>
-                    <button class="account-select hide-when-collapsed">
-                        <span class="num text-[12px]" id="top-equity">$0</span><span class="text-[#6E6E78]">·</span>
-                        <span id="top-account">—</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Content -->
-            <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1500px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-[22px] font-bold tracking-tight">AI Mentor</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Evidence-backed coaching from your own journal — every finding cites the trades behind it. Dismiss what is noise; the coach remembers.</p>
+                            <h1 class="text-[24px] font-bold tracking-tight">AI Mentor</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Your trading data, turned into better questions.</p>
                         </div>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <div class="flex items-center gap-1.5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1">
-                                <button class="period-chip active" data-period="30d">30D</button>
-                                <button class="period-chip" data-period="90d">90D</button>
-                                <button class="period-chip" data-period="all">All</button>
+                        <div class="flex items-center gap-3">
+                            <div class="flex items-center gap-1.5" id="period-toggle" role="group" aria-label="Analysis period">
+                                <button class="period-btn active" data-period="30d">30D</button>
+                                <button class="period-btn" data-period="90d">90D</button>
+                                <button class="period-btn" data-period="all">ALL</button>
                             </div>
-                            <button id="dismissed-btn" class="btn-ghost !py-1.5 !px-3" title="See what you dismissed and restore it" style="display:none">
-                                <svg data-lucide="eye-off" class="w-4 h-4"></svg> Dismissed
-                                <span id="dismissed-count" class="dismissed-count-badge">0</span>
-                            </button>
-                            <span id="ai-source" class="tag tag-gray !py-1 !px-2.5">computing…</span>
+                            <a href="journal.html?log=1" class="btn-primary !py-2.5 !px-4">
+                                <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                            </a>
                         </div>
                     </div>
 
-                    <!-- Tabs -->
-                    <div class="panel p-1.5 flex gap-1 overflow-x-auto">
-                        <button class="ins-tab active" data-tab="coach">Coach</button>
-                        <button class="ins-tab" data-tab="autopsy">Trade Autopsy</button>
-                        <button class="ins-tab" data-tab="patterns">Patterns</button>
-                        <button class="ins-tab" data-tab="psychology">Psychology</button>
-                        <button class="ins-tab" data-tab="risk">Risk</button>
-                        <button class="ins-tab" data-tab="discipline">Discipline Coach</button>
-                        <button class="ins-tab" data-tab="sessions">Session Intel</button>
-                        <button class="ins-tab" data-tab="tilt">Tilt Detection</button>
-                        <button class="ins-tab" data-tab="ask">Ask the Mentor</button>
+                    <!-- Empty state (no account) -->
+                    <div id="empty-state" class="hidden glass p-12 text-center">
+                        <svg data-lucide="brain-circuit" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[18px] font-bold">No account yet</h3>
+                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">The Mentor analyzes your actual trading data — patterns, psychology, risk, discipline. Create an account and log trades to start.</p>
+                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5">
+                            <svg data-lucide="settings" class="w-4 h-4"></svg> Set up account
+                        </a>
                     </div>
 
-                    <div id="panel-coach" class="ins-panel active"></div>
-                    <div id="panel-autopsy" class="ins-panel"></div>
-                    <div id="panel-patterns" class="ins-panel"></div>
-                    <div id="panel-psychology" class="ins-panel"></div>
-                    <div id="panel-risk" class="ins-panel"></div>
-                    <div id="panel-discipline" class="ins-panel"></div>
-                    <div id="panel-sessions" class="ins-panel"></div>
-                    <div id="panel-tilt" class="ins-panel"></div>
-                    <div id="panel-ask" class="ins-panel">
-                        <div class="panel p-5 flex flex-col" style="min-height: 480px">
-                            <div class="flex items-center gap-2 mb-3">
-                                <div class="w-8 h-8 rounded-lg bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center">
-                                    <svg data-lucide="bot" class="w-4.5 h-4.5 text-[#34D399]"></svg>
-                                </div>
-                                <div>
-                                    <div class="text-[13.5px] font-bold text-white">Your personal mentor</div>
-                                    <div class="text-[11.5px] text-[#6E6E78]">Every answer is computed from your journal — evidence, not guesses</div>
-                                </div>
-                                <span id="ask-source" class="tag tag-gray !py-0.5 !px-2 ml-auto">…</span>
+                    <!-- Backend-unavailable state -->
+                    <div id="offline-state" class="hidden glass p-12 text-center">
+                        <svg data-lucide="wifi-off" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[16px] font-bold">Mentor unavailable</h3>
+                        <p class="text-[13px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">The mentor API did not respond. Connect to the backend and retry — the mentor never guesses, it only reads your real data.</p>
+                        <button id="retry-btn" class="btn-primary mt-5 inline-flex !py-2.5 !px-5">
+                            <svg data-lucide="refresh-cw" class="w-4 h-4"></svg> Retry
+                        </button>
+                    </div>
+
+                    <div id="ai-body" class="hidden flex flex-col gap-4">
+
+                        <!-- Coach hero -->
+                        <div id="coach-sec" class="hidden glass-strong p-6 relative overflow-hidden">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="logo-badge !w-7 !h-7 !text-[11px]">B</span>
+                                <span class="label-xs">Your mentor</span>
+                                <span class="tag tag-gray num" id="coach-period">—</span>
                             </div>
-                            <div id="chat-log" class="flex-1 overflow-y-auto flex flex-col gap-3 pr-1" style="min-height: 320px"></div>
-                            <div id="ask-quick" class="flex flex-wrap gap-1.5 mt-3"></div>
-                            <form id="ask-form" class="flex gap-2 mt-3">
-                                <input id="ask-input" type="text" autocomplete="off" class="search-input !w-auto flex-1 !py-2.5" placeholder="Ask anything about your trading… e.g. 'Am I tilting?'" />
-                                <button type="submit" class="btn-primary !py-2.5 !px-5">Ask</button>
-                            </form>
+                            <div class="text-[20px] font-extrabold tracking-tight leading-snug" id="coach-msg">—</div>
+                            <div id="coach-evidence" class="flex flex-wrap items-center gap-2 mt-4"></div>
+                            <div class="flex flex-wrap items-center gap-3 mt-5">
+                                <button id="coach-view-evidence" class="btn-primary !py-2.5 !px-5 hidden">
+                                    <svg data-lucide="eye" class="w-4 h-4"></svg> View evidence
+                                </button>
+                                <button id="coach-ask" class="btn-ghost !py-2.5 !px-5">
+                                    <svg data-lucide="message-circle" class="w-4 h-4"></svg> Ask about this
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Context strip -->
+                        <div class="glass rounded-2xl p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="panel-title">Context</div>
+                                <span class="tag tag-gray" id="ctx-note">—</span>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-5 gap-2.5" id="ctx-grid"></div>
+                        </div>
+
+                        <!-- Two-column: intelligence + chat -->
+                        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+
+                            <!-- LEFT: mentor intelligence -->
+                            <div class="xl:col-span-2 flex flex-col gap-4 min-w-0">
+
+                                <!-- Patterns -->
+                                <div id="patterns-sec" class="hidden glass rounded-2xl p-5">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="panel-title">Patterns</div>
+                                        <span class="tag tag-gray" id="patterns-count">0 findings</span>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="patterns-grid"></div>
+                                </div>
+
+                                <!-- Tilt -->
+                                <div id="tilt-sec" class="hidden"></div>
+
+                                <!-- Psychology -->
+                                <div id="psych-sec" class="hidden glass rounded-2xl p-5">
+                                    <div class="panel-title mb-1">Your psychology</div>
+                                    <p class="panel-sub mb-4">Recorded emotions and what the data says they cost — reported as data, not diagnosis.</p>
+                                    <div class="overflow-x-auto mb-4">
+                                        <table class="emo-table w-full">
+                                            <thead><tr><th>Emotion</th><th>Trades</th><th>P&amp;L</th><th>Win rate</th><th>Avg R</th></tr></thead>
+                                            <tbody id="psych-table"></tbody>
+                                        </table>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="psych-findings"></div>
+                                </div>
+
+                                <!-- Risk -->
+                                <div id="risk-sec" class="hidden glass rounded-2xl p-5">
+                                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                        <div class="panel-title">Risk</div>
+                                        <div class="flex items-center gap-2">
+                                            <span class="tag tag-gray num" id="risk-avg">—</span>
+                                            <a href="risk.html" class="btn-ghost !py-1.5 !px-3 !text-[12px]">Open Risk</a>
+                                        </div>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4" id="risk-findings"></div>
+                                    <div id="risk-hist"></div>
+                                </div>
+
+                                <!-- Discipline -->
+                                <div id="disc-sec" class="hidden glass rounded-2xl p-5">
+                                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                        <div class="panel-title">Discipline</div>
+                                        <a href="discipline.html" class="btn-ghost !py-1.5 !px-3 !text-[12px]">View discipline</a>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4" id="disc-findings"></div>
+                                    <div id="disc-rules"></div>
+                                </div>
+
+                                <!-- Sessions -->
+                                <div id="sess-sec" class="hidden glass rounded-2xl p-5">
+                                    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                        <div class="panel-title">Where you trade best</div>
+                                        <a href="analytics.html" class="btn-ghost !py-1.5 !px-3 !text-[12px]">View analytics</a>
+                                    </div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4" id="sess-findings"></div>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3" id="sess-tables"></div>
+                                </div>
+
+                                <!-- Autopsies -->
+                                <div id="autopsy-sec" class="hidden glass rounded-2xl p-5">
+                                    <div class="panel-title mb-1">Recent trade autopsies</div>
+                                    <p class="panel-sub mb-4">The rule engine's verdict on your last trades. Click one to open the Journal record.</p>
+                                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="autopsy-grid"></div>
+                                </div>
+
+                                <!-- Dismissed -->
+                                <div id="dismissed-sec" class="hidden glass rounded-2xl p-5">
+                                    <div class="flex items-center justify-between mb-4">
+                                        <div class="panel-title">Dismissed findings</div>
+                                        <button id="dismissed-toggle" class="btn-ghost !py-1.5 !px-3 !text-[12px]">Show</button>
+                                    </div>
+                                    <div id="dismissed-body" class="hidden"></div>
+                                </div>
+
+                                <!-- Cross-page -->
+                                <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                                    <a href="journal.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="book-open" class="w-4 h-4"></svg> Journal</a>
+                                    <a href="discipline.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="target" class="w-4 h-4"></svg> Discipline</a>
+                                    <a href="risk.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="shield-alert" class="w-4 h-4"></svg> Risk</a>
+                                    <a href="analytics.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="bar-chart-3" class="w-4 h-4"></svg> Analytics</a>
+                                    <a href="insights.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="sparkles" class="w-4 h-4"></svg> Insights</a>
+                                </div>
+                            </div>
+
+                            <!-- RIGHT: chat -->
+                            <div class="glass-strong rounded-2xl chat-shell xl:sticky xl:top-4">
+                                <div class="px-5 pt-5 pb-3 border-b border-[var(--hairline)]">
+                                    <div class="panel-title text-[15px]">Ask your mentor</div>
+                                    <div class="panel-sub mt-0.5">Ask about your own trading data — follow-ups keep context.</div>
+                                </div>
+                                <div class="px-4 py-3 flex-1 flex flex-col min-h-[320px]">
+                                    <div class="chat-scroll" id="chat-scroll">
+                                        <div class="msg msg-mentor" id="chat-greeting">Ask me about your trading — how am I doing overall, which session is hurting me, am I tilting, what should I focus on.</div>
+                                    </div>
+                                    <div class="composer">
+                                        <textarea id="chat-input" rows="1" placeholder="Ask your mentor… (e.g. Why do I keep revenge trading?)"></textarea>
+                                        <button id="chat-send" class="btn-primary !px-3.5 !py-2" title="Send"><svg data-lucide="send" class="w-4 h-4"></svg></button>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · AI Mentor · findings computed server-side from your actual journal (canonical ledger) · cached in ai_findings · offline falls back to local heuristics</p>
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · AI Mentor · every finding and answer comes from the mentor engine over your canonical ledger</p>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Dismissed-findings management view -->
-    <div id="dismissed-modal" class="modal-overlay">
-        <div class="modal">
-            <div class="flex items-start justify-between gap-4 mb-4">
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h3 class="text-[15px] font-bold text-white">Dismissed findings</h3>
-                        <span id="dismissed-modal-count" class="dismissed-count-badge">0</span>
-                    </div>
-                    <p class="text-[12px] text-[#6E6E78] mt-1">Hidden from your coach because you dismissed them. Restore any you want back — they reappear in the mentor immediately.</p>
-                </div>
-                <button id="dismissed-close" class="ai-action text-[14px] !p-2" title="Close">✕</button>
+    <!-- Evidence drawer -->
+    <div id="ev-overlay" class="drawer-overlay"></div>
+    <aside id="ev-drawer" class="drawer-panel glass-strong" aria-hidden="true">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-[var(--hairline)] flex-shrink-0">
+            <div>
+                <div class="panel-title text-[15px]" id="ev-title">Evidence</div>
+                <div class="panel-sub mt-0.5" id="ev-sub">Why this was flagged</div>
             </div>
-            <div id="dismissed-list" class="flex flex-col gap-2.5 overflow-y-auto pr-1"></div>
+            <button id="ev-close" class="collapse-btn" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
         </div>
-    </div>
+        <div class="flex-1 overflow-y-auto p-5" id="ev-body"></div>
+    </aside>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
 
     <script>
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
-            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
-            const D = window.DemoTrades;
-            const { fmtMoney, fmtR, pct, groupBy } = D;
             const core = window.TradeMindCore;
+            const apiFetch = (core && core.apiFetch) || ((url, options) => fetch(url, options));
             const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const $money = n => (n >= 0 ? '' : '-') + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
-            const panel = (title, body, extra) => '<div class="panel p-5"><div class="flex items-center justify-between mb-4"><div class="panel-title">' + title + '</div>' + (extra || '') + '</div>' + body + '</div>';
-            const kpi = (label, val, sub, cls) => '<div class="kpi"><div class="k-label">' + label + '</div><div class="k-val num ' + (cls || 'text-white') + '">' + val + '</div>' + (sub ? '<div class="k-sub">' + sub + '</div>' : '') + '</div>';
-            const confTag = n => n >= 10 ? '<span class="tag tag-emerald !py-0.5">confident</span>' : n >= 5 ? '<span class="tag tag-amber !py-0.5">developing</span>' : '<span class="tag tag-gray !py-0.5">insufficient</span>';
-            const sevTag = sev => sev === 'critical' ? '<span class="tag tag-red !py-0.5">critical</span>' : sev === 'warning' ? '<span class="tag tag-amber !py-0.5">warning</span>' : sev === 'positive' ? '<span class="tag tag-emerald !py-0.5">strength</span>' : '<span class="tag tag-blue !py-0.5">observation</span>';
+            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            const fmtR = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + Number(n).toFixed(2) + 'R');
+            const fmtPct = n => n == null || isNaN(n) ? '—' : (Math.round(n * 100) + '%');
+            let toastTimer = null;
+            function showToast(msg, ok) {
+                $('toast-msg').textContent = msg;
+                $('toast').style.borderColor = ok === false ? 'var(--tm-red)' : 'var(--tm-border-2)';
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            }
+            window.showToast = showToast;
 
-            // ====================================================================
-            // STATE — the mentor bundle comes from the SERVER (/api/ai/mentor)
-            // when the backend is reachable; offline it falls back to the same
-            // heuristics bundled below. Renderers only ever consume DATA.
-            // ====================================================================
             let PERIOD = '30d';
-            let DATA = null;
-            let SOURCE = 'offline';
-            const localPrefs = {};        // { findingId: { suppressed, feedback } } offline-only
+            let bundle = null;
+            let chatMemory = null;
+            let chatBusy = false;
 
-            // ---- finding prefs: dismiss (×) / thumbs — POST to the server when
-            // online so they persist in ai_findings; offline they apply in-page.
-            window.aiPref = function (kind, id, val) {
-                const find = f => f && (f.id === id);
-                if (core && typeof core.isBackendOnline === 'function' && core.isBackendOnline()) {
-                    const path = kind === 'suppress' ? '/api/ai/findings/suppress' : '/api/ai/findings/feedback';
-                    const body = kind === 'suppress' ? { finding_id: id, suppressed: val } : { finding_id: id, value: val };
-                    fetch(path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) }).catch(() => {});
-                    if (DATA) {
-                        const all = allFindings(DATA);
-                        const f = all.find(find);
-                        if (f) { if (kind === 'suppress') f.suppressed = !!val; else f.feedback = val; }
-                    }
-                } else {
-                    const p = localPrefs[id] = localPrefs[id] || { suppressed: false, feedback: null };
-                    if (kind === 'suppress') p.suppressed = !!val; else p.feedback = val;
-                    if (DATA) {
-                        const f = allFindings(DATA).find(find);
-                        if (f) { if (kind === 'suppress') f.suppressed = !!val; else f.feedback = val; }
-                    }
-                }
-                renderAll();
-            };
-            function allFindings(b) {
-                return b ? [].concat(b.patterns, b.psychology.findings, b.risk.findings, b.discipline.findings, b.sessions.findings, b.tilt) : [];
-            }
-
-            // ====================================================================
-            // LOCAL ENGINE — offline fallback, mirrors server/ai-mentor.js
-            // ====================================================================
-            function inPeriod(ts) {
-                if (PERIOD === 'all') return true;
-                const days = PERIOD === '90d' ? 90 : 30;
-                return (Date.now() - new Date(ts).getTime()) <= days * 86400000;
-            }
-            function buildCtx() {
+            // ============ ACCOUNT RESOLUTION ============
+            function currentAccountId() {
                 if (!core || !core.Accounts || !core.Accounts.length) return null;
-                const accountId = core.selectedAccountId() || core.Accounts[0].id;
-                const account = core.Accounts.find(a => a.id === accountId);
-                const all = core.Trades.filter(t => t.account_id === accountId)
-                    .map(t => ({ ...t, ts: new Date(t.ts) })).sort((a, b) => b.ts - a.ts);
-                return {
-                    accountId, account, trades: all, period: all.filter(t => inPeriod(t.ts)),
-                    a: core.analytics(accountId, {}),
-                    disc: core.disciplineState(accountId, {}),
-                    policy: (core.activePolicy && core.activePolicy(accountId)) || null,
-                    viols: core.Violations.filter(v => v.account_id === accountId)
-                };
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
             }
-            const sumPnl = list => Math.round(list.reduce((s, t) => s + (t.pnl || 0), 0));
-            const avg = (list, f) => list.length ? list.reduce((s, t) => s + (f(t) || 0), 0) / list.length : 0;
-            function finding(type, sev, title, msg, ev, cost) {
-                const count = ev.length;
-                return { id: 'ai-' + type + '-' + count + '-' + (ev[0] || 'none'), type, sev, title, msg,
-                    ev: ev.slice(0, 8).map(t => (typeof t === 'string' ? t : t.id)), count,
-                    cost: cost != null ? Math.round(cost) : null, confidence: count >= 8 ? 'high' : count >= 4 ? 'medium' : 'low' };
-            }
+            function account() { const id = currentAccountId(); return id ? core.Accounts.find(a => a.id === id) : null; }
 
-            function detectPatterns(ctx) {
-                const out = [];
-                const T = ctx.period, n = T.length;
-                if (n < 5) return out;
-                const baseRisk = avg(ctx.trades, t => t.risk) || 0;
-                const sel = cond => T.filter(t => cond(t));
-                const push = (type, sev, title, msg, ev, cost) => { if (ev.length >= 3) out.push(finding(type, sev, title, msg, ev, cost)); };
-                const early = sel(t => t.adherence === 'early exit');
-                push('early-exit', 'warning', 'Cutting trades early', 'You exited early ' + early.length + ' of your last ' + n + ' trades — the same early-exit pattern, ' + early.length + ' times.', early, sumPnl(early));
-                const revenge = sel(t => t.emotion === 'Revenge');
-                push('revenge', 'critical', 'Revenge entries after losses', revenge.length + ' trades were marked Revenge — entries taken emotionally right after a loss.', revenge, sumPnl(revenge));
-                const fomo = sel(t => t.emotion === 'FOMO');
-                push('fomo', 'warning', 'FOMO entries', fomo.length + ' trades were marked FOMO — chasing the move instead of waiting for your setup.', fomo, sumPnl(fomo));
-                const movStop = sel(t => t.adherence === 'moving stop');
-                push('moving-stop', 'warning', 'Moving the stop', 'You moved your stop mid-trade ' + movStop.length + ' times — the "moving stop" violation appears again and again.', movStop, sumPnl(movStop));
-                const noPlan = sel(t => t.adherence === 'no-plan');
-                push('no-plan', 'warning', 'Trading without a plan', noPlan.length + ' trades were taken with no plan at all.', noPlan, sumPnl(noPlan));
-                const chrono = T.slice().reverse();
-                const escalated = [];
-                for (let i = 1; i < chrono.length; i++) { const prev = chrono[i - 1], t = chrono[i]; if (prev.pnl < 0 && (t.risk || 0) > (prev.risk || 0)) escalated.push(t); }
-                push('risk-escalation', 'critical', 'Risk escalates right after a loss', 'After ' + escalated.length + ' losses you immediately took MORE risk on the next trade — the escalation signature.', escalated, sumPnl(escalated));
-                const cutWins = sel(t => t.adherence === 'early exit' && t.pnl > 0);
-                push('cut-winners', 'warning', 'Cutting winners short', 'You closed ' + cutWins.length + ' winning trades early — leaving money on the table.', cutWins, null);
-                const oversize = sel(t => baseRisk > 0 && (t.risk || 0) > baseRisk * 1.5);
-                push('oversize', 'warning', 'Oversized positions', oversize.length + ' trades risked more than 1.5× your average $' + Math.round(baseRisk) + ' risk per trade.', oversize, sumPnl(oversize));
-                const quick = sel(t => t.postLoss && t.delayMin != null && t.delayMin < 30);
-                push('quick-reentry', 'warning', 'Re-entering too fast after a loss', quick.length + ' times you were back in the market within 30 minutes of a loss.', quick, sumPnl(quick));
-                return out;
-            }
-            function psychologyAnalysis(ctx) {
-                const out = [], T = ctx.period;
-                const group = key => { const m = {}; T.forEach(t => { const k = t[key] || 'Unmarked'; (m[k] = m[k] || []).push(t); }); return Object.keys(m).map(k => { const g = m[k]; return { key: k, n: g.length, pnl: sumPnl(g), winRate: g.filter(t => t.pnl > 0).length / g.length, avgR: avg(g, t => t.r) }; }).sort((a, b) => b.pnl - a.pnl); };
-                const emotions = group('emotion');
-                if (T.length >= 5) {
-                    const emo = k => emotions.find(e => e.key === k);
-                    const revenge = emo('Revenge');
-                    if (revenge && revenge.n >= 2) out.push(finding('psych-revenge', 'critical', 'Revenge costs money, not just discipline', 'Revenge trades netted ' + $money(revenge.pnl) + ' with a ' + Math.round(revenge.winRate * 100) + '% win rate across ' + revenge.n + ' trades — your worst emotional state by far.', T.filter(t => t.emotion === 'Revenge'), revenge.pnl));
-                    const fomoE = emo('FOMO');
-                    if (fomoE && fomoE.n >= 2 && fomoE.pnl < 0) out.push(finding('psych-fomo', 'warning', 'FOMO correlates with losses', 'FOMO trades netted ' + $money(fomoE.pnl) + ' across ' + fomoE.n + ' trades.', T.filter(t => t.emotion === 'FOMO'), fomoE.pnl));
-                    const calm = emo('Calm');
-                    if (calm && calm.n >= 4) out.push(finding('psych-calm', 'positive', 'Your calm state is your edge', 'When you traded Calm you netted ' + $money(calm.pnl) + ' with a ' + Math.round(calm.winRate * 100) + '% win rate across ' + calm.n + ' trades.', T.filter(t => t.emotion === 'Calm'), calm.pnl));
-                    const noted = T.filter(t => (t.note || t.notes || '').trim().length > 0);
-                    const unNoted = T.filter(t => !(t.note || t.notes || '').trim().length);
-                    if (noted.length >= 5 && unNoted.length >= 5) {
-                        const a = noted.filter(t => t.pnl > 0).length / noted.length;
-                        const b = unNoted.filter(t => t.pnl > 0).length / unNoted.length;
-                        if (Math.abs(a - b) > 0.1) out.push(finding('psych-notes', a > b ? 'positive' : 'warning', a > b ? 'Writing the thesis helps you win' : 'Trades without a written thesis win more', 'Trades with a journal note won ' + Math.round(a * 100) + '% (' + noted.length + '), without a note ' + Math.round(b * 100) + '% (' + unNoted.length + ').', a > b ? noted : unNoted, null));
+            // ============ CHROME ============
+            function renderChrome() {
+                const acc = account();
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + money(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
                     }
+                    if (window.lucide) lucide.createIcons();
                 }
-                return { findings: out, emotionTable: emotions };
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc && pName) pName.textContent = acc.name;
+                if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
             }
-            function riskAnalysis(ctx) {
-                const out = [], T = ctx.period, a = ctx.a;
-                if (T.length >= 5 && a) {
-                    const risks = T.map(t => t.risk || 0).filter(r => r > 0);
-                    const mean = risks.length ? risks.reduce((s, r) => s + r, 0) / risks.length : 0;
-                    const sd = risks.length ? Math.sqrt(risks.reduce((s, r) => s + (r - mean) * (r - mean), 0) / risks.length) : 0;
-                    const cv = mean ? sd / mean : 0;
-                    if (risks.length >= 5 && cv > 0.45) out.push(finding('risk-inconsistent', 'warning', 'Risk sizing is inconsistent', 'Your risk per trade swings with a coefficient of variation of ' + Math.round(cv * 100) + '% (avg $' + Math.round(mean) + ', σ $' + Math.round(sd) + ') — same-size risk is what makes your stats readable.', T.filter(t => t.risk && Math.abs(t.risk - mean) > sd), null));
-                    const policy = ctx.policy && ctx.policy.values;
-                    if (policy && policy.riskPerTrade) { const over = T.filter(t => t.risk > policy.riskPerTrade); if (over.length >= 2) out.push(finding('risk-over-policy', 'critical', 'Risking more than your own policy', over.length + ' trades risked more than your configured $' + policy.riskPerTrade + ' per trade.', over, sumPnl(over))); }
-                    const winners = T.filter(t => t.pnl > 0);
-                    if (winners.length >= 5) { const avgWinR = avg(winners, t => t.r); if (avgWinR < 1.2) out.push(finding('risk-small-wins', 'warning', 'Winners are too small', 'Your average winner is ' + avgWinR.toFixed(2) + 'R across ' + winners.length + ' wins — below 1.2R your edge barely survives the losers.', winners.slice().sort((x, y) => x.r - y.r).slice(0, 8), null)); }
-                    if (a.maxDD > 0) { const rec = a.n ? (a.net / a.maxDD) : 0; if (rec < 1) out.push(finding('risk-recovery', 'warning', 'Drawdown recovery is slow', 'Your max drawdown was ' + $money(-a.maxDD) + ' and your recovery factor is ' + rec.toFixed(2) + ' — you make back less than the drawdown cost.', [], null)); }
+
+            // ============ FETCH BUNDLE ============
+            async function loadBundle(showLoader) {
+                const accId = currentAccountId();
+                const empty = $('empty-state'), offline = $('offline-state'), body = $('ai-body');
+                if (!accId) {
+                    empty.classList.remove('hidden');
+                    offline.classList.add('hidden');
+                    body.classList.add('hidden');
+                    return;
                 }
-                return { findings: out, histogram: [], avgRisk: 0, riskSd: 0 };
-            }
-            function disciplineCoach(ctx) {
-                const out = [], d = ctx.disc, T = ctx.period;
-                const dims = (d && d.dims || []).map(dim => ({ key: dim.key, label: dim.label, score: dim.score, passed: dim.passed, total: dim.total }));
-                const rules = (d && d.rules || []).slice(0, 8).map(r => ({ label: r.label, rate: r.rate, passed: r.passed, total: r.total }));
-                if (d && T.length >= 5) {
-                    const byRule = {};
-                    ctx.viols.forEach(v => { (byRule[v.ruleKey] = byRule[v.ruleKey] || { key: v.ruleKey, label: v.ruleLabel, n: 0, cost: 0 }); byRule[v.ruleKey].n++; byRule[v.ruleKey].cost += (v.pnl || 0); });
-                    const top = Object.values(byRule).sort((x, y) => y.n - x.n)[0];
-                    if (top && top.n >= 3) out.push(finding('disc-violation', 'critical', 'Your most broken rule: ' + top.label, 'You broke "' + top.label + '" ' + top.n + ' times — costing ' + $money(top.cost) + ' in net P&L. This is the single biggest leak in your process.', ctx.viols.filter(v => v.ruleKey === top.key).map(v => v.tradeId), top.cost));
-                    const weakest = rules[rules.length - 1];
-                    if (weakest && weakest.total >= 5) out.push(finding('disc-weakest', 'warning', 'Weakest rule adherence: ' + weakest.label, 'Your adherence on "' + weakest.label + '" is ' + weakest.rate + '% over ' + weakest.total + ' checks.', [], null));
-                    if (d.cleanDayStreak > 0) out.push(finding('disc-streak', 'positive', 'Clean streak: ' + d.cleanDayStreak + ' days', 'You have ' + d.cleanDayStreak + ' clean trading day' + (d.cleanDayStreak === 1 ? '' : 's') + ' in a row — no hard-rule violations. Best ever: ' + d.bestCleanDayStreak + '.', [], null));
+                empty.classList.add('hidden');
+                offline.classList.add('hidden');
+                body.classList.remove('hidden');
+                if (showLoader) {
+                    $('coach-msg').textContent = 'Reading your trading data…';
                 }
-                return { findings: out, dims, rules };
-            }
-            function sessionIntel(ctx) {
-                const out = [], T = ctx.period;
-                const empty = { findings: out, tables: {} };
-                if (T.length < 10) return empty;
-                const rank = key => { const m = {}; T.forEach(t => { const k = t[key] || '—'; (m[k] = m[k] || []).push(t); }); return Object.keys(m).map(k => { const g = m[k]; return { key: k, n: g.length, pnl: sumPnl(g), winRate: g.filter(t => t.pnl > 0).length / g.length, avgR: avg(g, t => t.r) }; }).filter(r => r.n >= 5).sort((x, y) => y.avgR - x.avgR); };
-                const bySession = rank('session'), bySetup = rank('setup'), bySymbol = rank('symbol'), byDirection = rank('dir');
-                if (bySession.length) {
-                    const best = bySession[0], worst = bySession[bySession.length - 1];
-                    if (best.avgR > 0 && best.n >= 5) out.push(finding('ses-best', 'positive', 'Your edge is the ' + best.key + ' session', best.key + ' is your best session — ' + Math.round(best.winRate * 100) + '% win rate, ' + best.avgR.toFixed(2) + 'R average across ' + best.n + ' trades (' + $money(best.pnl) + ').', T.filter(t => t.session === best.key), best.pnl));
-                    if (worst.avgR < 0 && worst.key !== best.key && worst.n >= 5) out.push(finding('ses-worst', 'warning', 'The ' + worst.key + ' session drains you', worst.key + ' averages ' + worst.avgR.toFixed(2) + 'R across ' + worst.n + ' trades (' + $money(worst.pnl) + ') — your worst session by expectancy.', T.filter(t => t.session === worst.key), worst.pnl));
-                }
-                if (bySetup.length) { const best = bySetup[0]; if (best.avgR > 0 && best.n >= 5) out.push(finding('setup-best', 'positive', best.key + ' is your highest-conviction setup', best.key + ': ' + Math.round(best.winRate * 100) + '% win rate, ' + best.avgR.toFixed(2) + 'R across ' + best.n + ' trades.', T.filter(t => t.setup === best.key), best.pnl)); }
-                if (bySymbol.length) { const best = bySymbol[0], worst = bySymbol[bySymbol.length - 1]; if (best.avgR > 0 && worst.avgR < 0 && best.key !== worst.key) out.push(finding('sym-spread', 'observation', best.key + ' vs ' + worst.key + ': a ' + (best.avgR - worst.avgR).toFixed(2) + 'R expectancy spread', best.key + ' averages ' + best.avgR.toFixed(2) + 'R (' + best.n + ' trades) while ' + worst.key + ' averages ' + worst.avgR.toFixed(2) + 'R (' + worst.n + ' trades). The data is telling you where to concentrate.', [...T.filter(t => t.symbol === best.key), ...T.filter(t => t.symbol === worst.key)], null)); }
-                return { findings: out, tables: { session: bySession, setup: bySetup, symbol: bySymbol, dir: byDirection } };
-            }
-            function tiltAnalysis(ctx) {
-                const T = ctx.trades;
-                if (T.length < 8) return [];
-                const chrono = T.slice().reverse();
-                const baseRisk = avg(T, t => t.risk) || 1;
-                const episodes = [];
-                for (let i = 0; i + 3 <= chrono.length; i++) {
-                    const win = chrono.slice(i, i + 3);
-                    const losses = win.filter(t => t.pnl < 0).length;
-                    let escal = 0;
-                    for (let j = 1; j < win.length; j++) if (win[j - 1].pnl < 0 && win[j].risk > win[j - 1].risk) escal++;
-                    const emo = win.some(t => t.emotion === 'Revenge' || t.emotion === 'FOMO');
-                    if (losses >= 2 && (escal > 0 || emo)) episodes.push({ trades: win, losses, riskMult: avg(win, t => t.risk) / baseRisk, pnl: sumPnl(win), escal, emo });
-                }
-                const recent = T.slice(0, Math.min(5, T.length));
-                const recentLosses = recent.filter(t => t.pnl < 0).length;
-                let recentEscal = 0;
-                for (let i = 0; i + 1 < recent.length; i++) if (recent[i + 1].pnl < 0 && recent[i].risk > recent[i + 1].risk) recentEscal++;
-                const recentEmo = recent.some(t => t.emotion === 'Revenge' || t.emotion === 'FOMO');
-                const recentRiskMult = avg(recent, t => t.risk) / baseRisk;
-                const inTilt = recentLosses >= 2 && (recentEscal > 0 || recentEmo || recentRiskMult > 1.15);
-                const avgEpPnl = episodes.length ? avg(episodes, e => e.pnl) : 0;
-                const avgEpRisk = episodes.length ? avg(episodes, e => e.riskMult) : 0;
-                const msg = inTilt
-                    ? 'Your last ' + recent.length + ' trades match your tilt signature: ' + recentLosses + ' losses, ' + (recentEscal ? 'risk escalation' : 'emotional entries') + (recentRiskMult > 1.15 ? ', ' + Math.round(recentRiskMult * 100) + '% of your normal risk' : '') + '. You have ' + episodes.length + ' similar episode' + (episodes.length === 1 ? '' : 's') + ' in your history' + (episodes.length ? ' averaging ' + $money(avgEpPnl) + ' and ' + Math.round(avgEpRisk * 100) + '% risk — this is how your bad periods look before they happen.' : '.') + ' Step away or cut size to your minimum.'
-                    : (episodes.length ? 'No active tilt signal in your last ' + recent.length + ' trades. You have ' + episodes.length + ' historical tilt episode' + (episodes.length === 1 ? '' : 's') + ' (avg ' + $money(avgEpPnl) + ', ' + Math.round(avgEpRisk * 100) + '% risk) — the current calm is the right state to protect.' : 'No tilt episodes detected in your history yet — keep logging; the mentor learns your signature as your sample grows.');
-                const ev = episodes.length ? episodes.slice(-3).flatMap(e => e.trades) : recent;
-                return [{ id: 'ai-tilt-' + T.length + '-' + (ev[0] ? ev[0].id : 'none'), type: 'tilt', sev: inTilt ? 'critical' : 'positive', title: inTilt ? 'Tilt pattern active — this is how your bad periods start' : 'Tilt watch: ' + episodes.length + ' historical episode' + (episodes.length === 1 ? '' : 's') + ' on record', msg, ev: ev.map(t => t.id), count: recent.length, cost: episodes.length ? Math.round(avgEpPnl) : null, confidence: episodes.length >= 3 ? 'high' : 'medium' }];
-            }
-            function autopsyData(t) {
-                const spec = core.assetSpecFor ? core.assetSpecFor(t.symbol) : null;
-                const strat = core.StrategyMaster.find(m => m.id === t.strategy_id);
-                const evals = (core.TradeService && core.TradeService.evaluationsFor) ? core.TradeService.evaluationsFor(t.id) : [];
-                const fails = evals.filter(e => e.state === 'FAIL');
-                return {
-                    tradeId: t.id, symbol: t.symbol, dir: t.dir, ts: new Date(t.ts).toISOString(),
-                    pnl: t.pnl, r: t.r, risk: t.risk, entry: t.entry, exit: t.exit, size: t.size,
-                    unit: spec ? spec.unit : 'units', sizeLabel: spec ? spec.sizeLabel : 'units',
-                    assetClass: spec ? spec.assetClass : 'Other',
-                    adherence: t.adherence, emotion: t.emotion, session: t.session, setup: t.setup,
-                    strategy: strat ? strat.name : (t.strategy || '—'), note: t.note || '',
-                    verdict: t.adherence_result === 'BLOCK' ? 'Blocked' : fails.length ? 'Violation' : 'Followed plan',
-                    fails: fails.map(f => f.explanation),
-                    rules: evals.map(e => ({ label: e.ruleLabel || e.ruleKey, expected: e.expected, actual: e.actual, state: e.state }))
-                };
-            }
-            function buildLocalBundle() {
-                const ctx = buildCtx();
-                if (!ctx) return null;
-                const patterns = detectPatterns(ctx);
-                const psychology = psychologyAnalysis(ctx);
-                const risk = riskAnalysis(ctx);
-                const discipline = disciplineCoach(ctx);
-                const sessions = sessionIntel(ctx);
-                const tilt = tiltAnalysis(ctx);
-                const T = ctx.period, a = ctx.a, d = ctx.disc;
-                const criticals = patterns.filter(f => f.sev === 'critical');
-                const warnings = patterns.filter(f => f.sev === 'warning');
-                const strengths = patterns.filter(f => f.sev === 'positive').concat(discipline.findings.filter(f => f.sev === 'positive'));
-                const top = criticals.concat(warnings).slice(0, 3);
-                const coachMsg = T.length < 10
-                    ? 'Your sample is still small (' + T.length + ' trades in range). Keep journaling — evidence-backed findings unlock at 10+.'
-                    : (top.length ? 'Your biggest leak right now: "' + top[0].title + '" — ' + top[0].count + ' occurrences in the current range. ' + (tilt[0] && tilt[0].sev === 'critical' ? 'And the tilt detector is flashing. Today is a day to protect capital.' : 'Fix this one thing and your process improves more than any other change.') : 'No critical patterns in range. ' + (strengths.length ? 'Double down on what works: ' + strengths[0].title + '.' : 'Keep logging.'));
-                const bundle = {
-                    accountId: ctx.accountId, period: PERIOD,
-                    account: { name: ctx.account.name, equity: ctx.account.current_equity },
-                    context: {
-                        tradeCount: T.length, totalTrades: ctx.trades.length,
-                        netPnl: Math.round(a.net), winRate: a.n ? Math.round(a.winRate * 100) : 0,
-                        expectancy: Math.round(a.expectancy * 100) / 100, maxDD: Math.round(a.maxDD),
-                        recovery: a.maxDD ? Math.round(a.recovery * 100) / 100 : 0,
-                        disciplineScore: d && d.score != null ? d.score : null,
-                        violations: ctx.viols.length,
-                        cleanStreak: d ? d.cleanDayStreak : 0, bestCleanStreak: d ? d.bestCleanDayStreak : 0,
-                        avgRisk: risk.avgRisk, riskSd: risk.riskSd,
-                        policyRiskPerTrade: (ctx.policy && ctx.policy.values && ctx.policy.values.riskPerTrade) || null
-                    },
-                    coach: { message: coachMsg, patterns: top, strengths: strengths.slice(0, 2) },
-                    patterns,
-                    psychology: { findings: psychology.findings, emotionTable: psychology.emotionTable },
-                    risk: { findings: risk.findings, histogram: risk.histogram },
-                    discipline: { findings: discipline.findings, dims: discipline.dims, rules: discipline.rules },
-                    sessions: { findings: sessions.findings, tables: sessions.tables },
-                    tilt,
-                    autopsies: ctx.trades.slice(0, Math.min(3, ctx.trades.length)).map(t => autopsyData(t))
-                };
-                // apply offline prefs
-                const apply = f => { const p = localPrefs[f.id]; if (p) { f.suppressed = p.suppressed; f.feedback = p.feedback; } return f; };
-                bundle.patterns = bundle.patterns.map(apply); bundle.psychology.findings = bundle.psychology.findings.map(apply);
-                bundle.risk.findings = bundle.risk.findings.map(apply); bundle.discipline.findings = bundle.discipline.findings.map(apply);
-                bundle.sessions.findings = bundle.sessions.findings.map(apply); bundle.tilt = bundle.tilt.map(apply);
-                return bundle;
-            }
-
-            // ====================================================================
-            // DATA LOADING — server bundle when online, local engine otherwise
-            // ====================================================================
-            async function loadMentorData() {
-                const online = core && typeof core.isBackendOnline === 'function' && core.isBackendOnline();
-                if (online) {
-                    try {
-                        const accId = core.selectedAccountId ? core.selectedAccountId() : (core.Accounts[0] ? core.Accounts[0].id : null);
-                        if (!accId) return null;
-                        // includeSuppressed=1 returns ALL findings with their
-                        // suppressed flags so the Dismissed view can restore them
-                        // (renderers filter f.suppressed themselves).
-                        const r = await apiFetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD + '&includeSuppressed=1');
-                        if (r.ok) {
-                            const j = await r.json();
-                            if (j && j.bundle) { SOURCE = 'api'; return j.bundle; }
-                        }
-                    } catch (e) { /* fall through */ }
-                }
-                SOURCE = 'offline';
-                return buildLocalBundle();
-            }
-
-            // ====================================================================
-            // RENDERERS — pure consumers of DATA
-            // ====================================================================
-            function fmtTs(iso) {
-                const ts = new Date(iso);
-                const m = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][ts.getMonth()];
-                return m + ' ' + ts.getDate() + ', ' + ts.getFullYear() + ' · ' + ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2);
-            }
-            function findingCard(f) {
-                if (!f) return '';
-                const sevColor = f.sev === 'critical' ? '#F87171' : f.sev === 'warning' ? '#FBBF24' : f.sev === 'positive' ? '#34D399' : '#93C5FD';
-                return '<div class="fcard flex gap-3">' +
-                    '<div class="sev-bar" style="background:' + sevColor + '"></div>' +
-                    '<div class="flex-1 min-w-0">' +
-                        '<div class="flex flex-wrap items-center gap-2 mb-1">' + sevTag(f.sev) +
-                            '<b class="text-[13.5px] text-white">' + esc(f.title) + '</b>' +
-                            '<span class="ml-auto flex items-center gap-2">' +
-                                '<span class="ev-chip">' + f.count + ' evidence</span>' +
-                                (f.confidence ? '<span class="ev-chip">' + f.confidence + '</span>' : '') +
-                                '<button class="ai-action ' + (f.feedback === 1 ? 'on' : '') + '" title="This finding helped" onclick="aiPref(\'feedback\',\'' + f.id + '\',1)">👍</button>' +
-                                '<button class="ai-action ' + (f.feedback === -1 ? 'off' : '') + '" title="Not relevant to me" onclick="aiPref(\'feedback\',\'' + f.id + '\',-1)">👎</button>' +
-                                '<button class="ai-action" title="Dismiss this finding" onclick="aiPref(\'suppress\',\'' + f.id + '\',true)">✕</button>' +
-                            '</span></div>' +
-                        '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed">' + esc(f.msg) + '</p>' +
-                        (f.ev && f.ev.length ? '<div class="flex flex-wrap gap-1.5 mt-2">' + f.ev.slice(0, 6).map(id => '<span class="ev-chip">' + esc(String(id).slice(0, 12)) + '</span>').join('') + (f.ev.length > 6 ? '<span class="ev-chip">+' + (f.ev.length - 6) + ' more</span>' : '') + '</div>' : '') +
-                    '</div></div>';
-            }
-            function findingGrid(list) {
-                const vis = list.filter(f => !f.suppressed);
-                return vis.length
-                    ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + vis.map(findingCard).join('') + '</div>'
-                    : (list.length ? '<p class="text-[12.5px] text-[#6E6E78]">All findings in this section are dismissed — use the ✕ on a card to hide it, and it stays hidden.</p>' : '<p class="text-[12.5px] text-[#6E6E78]">No findings in this range yet.</p>');
-            }
-            function emptyState(title, sub) {
-                return '<div class="panel p-10 text-center"><div class="text-[15px] font-bold text-white">' + title + '</div>' +
-                    '<p class="text-[12.5px] text-[#6E6E78] mt-1.5 max-w-md mx-auto">' + sub + '</p></div>';
-            }
-
-            // ---- dismissed-findings management view ----
-            function dismissedCard(f) {
-                const sevColor = f.sev === 'critical' ? '#F87171' : f.sev === 'warning' ? '#FBBF24' : f.sev === 'positive' ? '#34D399' : '#93C5FD';
-                return '<div class="fcard flex gap-3">' +
-                    '<div class="sev-bar" style="background:' + sevColor + '"></div>' +
-                    '<div class="flex-1 min-w-0">' +
-                        '<div class="flex flex-wrap items-center gap-2 mb-1">' + sevTag(f.sev) +
-                            '<b class="text-[13px] text-white">' + esc(f.title) + '</b>' +
-                            '<span class="ml-auto flex items-center gap-2">' +
-                                '<span class="ev-chip">' + f.count + ' evidence</span>' +
-                                '<button class="btn-ghost !py-1 !px-2.5" title="Bring this finding back" onclick="aiPref(\'suppress\',\'' + f.id + '\',false)">↩ Restore</button>' +
-                            '</span></div>' +
-                        '<p class="text-[12px] text-[#8A8A93] leading-relaxed">' + esc(f.msg) + '</p>' +
-                    '</div></div>';
-            }
-            function dismissedList() {
-                const hidden = DATA ? allFindings(DATA).filter(f => f.suppressed) : [];
-                const n = $('dismissed-count');
-                if (n) n.textContent = hidden.length;
-                const btn = $('dismissed-btn');
-                if (btn) btn.style.display = hidden.length ? '' : 'none';
-                const mc = $('dismissed-modal-count');
-                if (mc) mc.textContent = hidden.length;
-                return hidden;
-            }
-            function renderDismissedList() {
-                const hidden = dismissedList();
-                $('dismissed-list').innerHTML = hidden.length
-                    ? hidden.map(dismissedCard).join('') +
-                      '<button class="btn-ghost mx-auto mt-1 !px-4" title="Bring every dismissed finding back" onclick="restoreAllDismissed()">↩ Restore all</button>'
-                    : '<p class="text-[12.5px] text-[#6E6E78] py-6 text-center">Nothing dismissed yet — press ✕ on any finding card and it shows up here for safe keeping.</p>';
-            }
-            window.openDismissed = function () {
-                renderDismissedList();
-                $('dismissed-modal').classList.add('open');
-            };
-            window.closeDismissed = function () { $('dismissed-modal').classList.remove('open'); };
-            window.restoreAllDismissed = function () {
-                const ids = dismissedList().map(f => f.id);
-                ids.forEach(id => window.aiPref('suppress', id, false));
-                // aiPref re-renders each time; keep the modal open so the user
-                // sees the list empty out.
-            };
-            window.restoreDismissed = function (id) { window.aiPref('suppress', id, false); };
-
-            function renderCoach(b) {
-                const p = $('panel-coach');
-                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account in Strategy Lab and log your first trade — the mentor only speaks from real data.'); return; }
-                const c = b.context;
-                if (!c || !c.totalTrades) { p.innerHTML = emptyState('No trades yet', 'Log your first trade and the mentor will start dissecting your execution, patterns and risk from real data.'); return; }
-                const top = b.coach.patterns.filter(f => !f.suppressed);
-                const tilt = b.tilt[0];
-                const strengths = b.coach.strengths.filter(f => !f.suppressed);
-                p.innerHTML =
-                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
-                        kpi('Discipline score', c.disciplineScore != null ? c.disciplineScore + '/100' : '—', 'process adherence, not profit', c.disciplineScore >= 70 ? 'text-[#34D399]' : c.disciplineScore >= 45 ? 'text-[#FBBF24]' : 'text-[#F87171]') +
-                        kpi('Net P&L', $money(c.netPnl), c.tradeCount + ' trades in range', c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
-                        kpi('Win rate', c.winRate ? c.winRate + '%' : '—', 'expectancy ' + (c.expectancy >= 0 ? '+' : '') + c.expectancy.toFixed(2) + 'R', 'text-white') +
-                        kpi('Max drawdown', $money(-c.maxDD), 'recovery ' + (c.recovery ? c.recovery.toFixed(2) : '—'), 'text-[#F87171]') +
-                    '</div>' +
-                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
-                        '<div class="xl:col-span-2 flex flex-col gap-4">' +
-                            panel('Coach — grounded in your ' + c.tradeCount + ' trades' + (b.ai ? ' <span class="tag tag-blue !py-0 !px-1.5 ml-1.5 align-middle">AI narrated</span>' : ''), '<div class="px-4 py-3.5 rounded-xl bg-[rgba(16,185,129,0.05)] border border-[rgba(16,185,129,0.2)] text-[13.5px] text-[#E8E8EC] leading-relaxed">' + esc(b.coach.message) + '</div>') +
-                            panel('Patterns found', '<div class="flex flex-col gap-2.5">' + (b.patterns.filter(f => !f.suppressed).length ? b.patterns.filter(f => !f.suppressed).slice(0, 4).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No recurring patterns in this range yet.</p>') + '</div>') +
-                        '</div>' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Tilt watch', tilt && !tilt.suppressed ? findingCard(tilt) : '<p class="text-[12.5px] text-[#6E6E78]">' + (tilt && tilt.suppressed ? 'Dismissed.' : 'Insufficient history for tilt detection.') + '</p>') +
-                            panel('What is working', '<div class="flex flex-col gap-2.5">' + (strengths.length ? strengths.map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No strengths to report yet — keep logging.</p>') + '</div>') +
-                        '</div>' +
-                    '</div>';
-            }
-
-            function renderAutopsy(b) {
-                const p = $('panel-autopsy');
-                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                if (!b.autopsies.length) { p.innerHTML = emptyState('No trades yet', 'Log a trade to get its full autopsy.'); return; }
-                p.innerHTML = '<div class="flex flex-col gap-4">' + b.autopsies.map(a => {
-                    const verdictCls = a.verdict === 'Blocked' ? 'tag-red' : a.verdict === 'Violation' ? 'tag-amber' : 'tag-emerald';
-                    const ruleRows = a.rules.map(e => '<tr><td>' + esc(e.label) + '</td><td class="num">' + esc(e.expected) + '</td><td class="num">' + esc(e.actual) + '</td><td>' + (e.state === 'PASS' ? '<span class="tag tag-emerald !py-0.5">PASS</span>' : '<span class="tag tag-red !py-0.5">FAIL</span>') + '</td></tr>').join('');
-                    return panel('Autopsy — ' + esc(a.symbol) + ' ' + esc(a.dir) + ' · ' + fmtTs(a.ts),
-                        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
-                            kpi('P&L', $money(a.pnl), a.r != null ? (a.r >= 0 ? '+' : '') + a.r.toFixed(2) + 'R' : '', a.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
-                            kpi('Risk', '$' + Math.round(a.risk || 0), 'per trade · ' + String(a.unit || '').toLowerCase(), 'text-white') +
-                            kpi('Prices', (a.entry != null ? esc((core.fmtPrice ? core.fmtPrice(a.symbol, a.entry) : a.entry)) : '—') + ' → ' + (a.exit != null ? esc((core.fmtPrice ? core.fmtPrice(a.symbol, a.exit) : a.exit)) : '—'), 'size ' + (a.size != null ? a.size : '—') + ' ' + String(a.sizeLabel || 'units').toLowerCase(), 'text-white') +
-                            kpi('Execution', esc(a.adherence || '—'), esc(a.emotion || '—') + ' · ' + esc(a.session || '—'), 'text-white') +
-                        '</div>' +
-                        '<div class="flex flex-wrap gap-2 mb-4">' +
-                            '<span class="tag ' + verdictCls + '">' + esc(a.verdict) + '</span>' +
-                            '<span class="tag tag-blue">' + esc(a.setup || '—') + '</span>' +
-                            '<span class="tag tag-gray">' + esc(a.strategy) + '</span>' +
-                            '<span class="tag tag-gray">' + esc(a.assetClass) + '</span>' +
-                        '</div>' +
-                        (a.fails.length ? '<div class="mb-3 text-[12.5px] text-[#F87171]"><b>What went against the plan:</b> ' + esc(a.fails.join(' · ')) + '</div>' : '') +
-                        (a.note ? '<div class="mb-4 px-3 py-2.5 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12.5px] text-[#C4C4CC]"><b class="text-white">Your note:</b> ' + esc(a.note) + '</div>' : '') +
-                        (ruleRows ? '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rule</th><th>Expected</th><th>Actual</th><th>Result</th></tr></thead><tbody>' + ruleRows + '</tbody></table></div>' : ''),
-                        '<span class="ev-chip">' + confTag(a.rules.length) + '</span>');
-                }).join('') + '</div>';
-            }
-
-            function renderPatterns(b) {
-                $('panel-patterns').innerHTML = b ? findingGrid(b.patterns) : emptyState('No account yet', 'Create an account first.');
-            }
-
-            function renderPsychology(b) {
-                const p = $('panel-psychology');
-                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const emoRows = (b.psychology.emotionTable || []).map(r => '<tr><td class="font-semibold text-white">' + esc(r.key) + '</td><td class="num">' + r.n + '</td><td class="num">' + Math.round(r.winRate * 100) + '%</td><td class="num">' + r.avgR.toFixed(2) + 'R</td><td class="num ' + (r.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + $money(r.pnl) + '</td></tr>').join('');
-                p.innerHTML =
-                    (b.context.totalTrades ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4"><div class="flex flex-col gap-2.5">' + (b.psychology.findings.filter(f => !f.suppressed).length ? b.psychology.findings.filter(f => !f.suppressed).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No psychology findings in range yet.</p>') + '</div></div>' : '') +
-                    (b.context.totalTrades ? panel('Emotion × outcome', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Emotion</th><th>Trades</th><th>Win rate</th><th>Avg R</th><th>Net P&L</th></tr></thead><tbody>' + (emoRows || '<tr><td colspan="5" class="text-[#6E6E78]">No emotion-tagged trades.</td></tr>') + '</tbody></table></div>') : emptyState('No trades yet', 'Psychology analysis needs journaled emotion tags.'));
-            }
-
-            function renderRisk(b) {
-                const p = $('panel-risk');
-                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const c = b.context;
-                const hist = b.risk.histogram || [];
-                const maxCount = hist.length ? Math.max(...hist.map(h => h.count)) : 0;
-                p.innerHTML =
-                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
-                        kpi('Avg risk / trade', c.avgRisk ? '$' + c.avgRisk : '—', 'σ $' + (c.riskSd || 0), 'text-white') +
-                        kpi('Policy risk / trade', c.policyRiskPerTrade ? '$' + c.policyRiskPerTrade : '—', 'your configured limit', 'text-white') +
-                        kpi('Max drawdown', $money(-c.maxDD), 'peak to trough', 'text-[#F87171]') +
-                        kpi('Recovery factor', c.recovery ? c.recovery.toFixed(2) : '—', 'net ÷ max DD', c.recovery >= 1 ? 'text-[#34D399]' : 'text-[#F87171]') +
-                    '</div>' +
-                    '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' +
-                        '<div class="flex flex-col gap-2.5">' + (b.risk.findings.filter(f => !f.suppressed).length ? b.risk.findings.filter(f => !f.suppressed).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">No risk findings in range.</p>') + '</div>' +
-                        (hist.length ? panel('Risk per trade distribution', '<div class="hbar">' + hist.map(h => '<div class="col"><div class="bar" style="height:' + Math.round((h.count / maxCount) * 100) + '%;background:#3B82F6"></div><div class="lbl num">' + h.key + '</div></div>').join('') + '</div><p class="text-[11.5px] text-[#6E6E78] mt-3">Each bar = trades sized in that $ band. Tight clusters = consistent risk; wide bars = the inconsistency the mentor flags.</p>') : '') +
-                    '</div>';
-            }
-
-            function renderDiscipline(b) {
-                const p = $('panel-discipline');
-                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const c = b.context;
-                const dims = (b.discipline.dims || []).map(dim => '<div class="metric-mini"><div class="label-xs">' + esc(dim.label) + '</div><div class="val num ' + (dim.score >= 70 ? 'text-[#34D399]' : dim.score >= 45 ? 'text-[#FBBF24]' : 'text-[#F87171]') + '">' + (dim.score != null ? dim.score + '/100' : '—') + '</div>' +
-                    '<div class="bar-track mt-2"><div class="bar-fill" style="width:' + (dim.score != null ? dim.score : 0) + '%;background:' + (dim.score >= 70 ? '#10B981' : dim.score >= 45 ? '#F59E0B' : '#EF4444') + '"></div></div>' + (dim.total ? '<div class="text-[10.5px] text-[#6E6E78] mt-1 num">' + dim.passed + '/' + dim.total + ' checks passed</div>' : '') + '</div>').join('');
-                const rules = (b.discipline.rules || []).map(r => '<tr><td class="font-semibold text-white">' + esc(r.label) + '</td><td class="num">' + r.rate + '%</td><td class="num">' + r.passed + '/' + r.total + '</td>' + '<td><div class="bar-track" style="width:90px"><div class="bar-fill" style="width:' + r.rate + '%;background:' + (r.rate >= 70 ? '#10B981' : r.rate >= 45 ? '#F59E0B' : '#EF4444') + '"></div></div></td></tr>').join('');
-                p.innerHTML =
-                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">' +
-                        kpi('Discipline score', c.disciplineScore != null ? c.disciplineScore + '/100' : '—', 'weighted across dimensions', c.disciplineScore >= 70 ? 'text-[#34D399]' : 'text-[#FBBF24]') +
-                        kpi('Violations', c.violations, 'hard-rule breaks', c.violations ? 'text-[#F87171]' : 'text-[#34D399]') +
-                        kpi('Clean-day streak', c.cleanStreak, 'best ' + c.bestCleanStreak, c.cleanStreak >= 3 ? 'text-[#34D399]' : 'text-white') +
-                        kpi('Strongest rule', b.discipline.rules && b.discipline.rules[0] ? b.discipline.rules[0].rate + '%' : '—', b.discipline.rules && b.discipline.rules[0] ? b.discipline.rules[0].label : 'no data', 'text-[#34D399]') +
-                    '</div>' +
-                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
-                        '<div class="flex flex-col gap-2.5">' + (b.discipline.findings.filter(f => !f.suppressed).length ? b.discipline.findings.filter(f => !f.suppressed).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">Discipline findings unlock at 5+ trades in range.</p>') + '</div>' +
-                        '<div class="flex flex-col gap-2.5">' + (dims || '<p class="text-[12.5px] text-[#6E6E78]">No dimension data yet.</p>') + '</div>' +
-                        (rules ? panel('Rule adherence (your actual rule set)', '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rule</th><th>Rate</th><th>Checks</th><th></th></tr></thead><tbody>' + rules + '</tbody></table></div>') : '') +
-                    '</div>';
-            }
-
-            function renderSessions(b) {
-                const p = $('panel-sessions');
-                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const rankTable = (label, rows) => panel('By ' + label, '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>' + label[0].toUpperCase() + label.slice(1) + '</th><th>Trades</th><th>Win rate</th><th>Avg R</th><th>Net P&L</th></tr></thead><tbody>' +
-                    (rows && rows.length ? rows.map(r => '<tr><td class="font-semibold text-white">' + esc(r.key) + '</td><td class="num">' + r.n + '</td><td class="num">' + Math.round(r.winRate * 100) + '%</td><td class="num">' + r.avgR.toFixed(2) + 'R</td><td class="num ' + (r.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + $money(r.pnl) + '</td></tr>').join('') : '<tr><td colspan="5" class="text-[#6E6E78]">Needs ≥5 trades per group.</td></tr>') + '</tbody></table></div>');
-                const t = b.sessions.tables || {};
-                p.innerHTML =
-                    (b.context.totalTrades ? '<div class="flex flex-col gap-2.5 mb-4">' + (b.sessions.findings.filter(f => !f.suppressed).length ? b.sessions.findings.filter(f => !f.suppressed).map(findingCard).join('') : '<p class="text-[12.5px] text-[#6E6E78]">Session findings need ≥5 trades per condition and 10+ trades in range.</p>') + '</div>' : '') +
-                    (b.context.totalTrades ? '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + rankTable('session', t.session) + rankTable('setup', t.setup) + rankTable('symbol', t.symbol) + rankTable('direction', t.dir) + '</div>' : emptyState('No trades yet', 'Session intelligence needs journaled trades.'));
-            }
-
-            function renderTilt(b) {
-                const p = $('panel-tilt');
-                if (!b) { p.innerHTML = emptyState('No account yet', 'Create an account first.'); return; }
-                const t = b.tilt[0];
-                if (!t) { p.innerHTML = emptyState('Insufficient history', 'Tilt detection needs at least 8 trades — it learns YOUR signature (risk multiple, re-entry speed, emotional tags) from your own episodes.'); return; }
-                p.innerHTML = '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4"><div class="flex flex-col gap-2.5">' + (t.suppressed ? '<p class="text-[12.5px] text-[#6E6E78]">Dismissed.</p>' : findingCard(t)) + '</div></div>';
-            }
-
-            // ====================================================================
-            // ASK THE MENTOR — the personal bot. Server /api/ai/ask when online,
-            // otherwise the same intent detection over the LOCAL bundle.
-            // ====================================================================
-            const CHAT_KEY = '31trades.ai.chat.v1';
-            const chat = loadChat();
-            function loadChat() {
-                const d = { messages: [], memory: null };
                 try {
-                    const raw = localStorage.getItem(CHAT_KEY);
-                    if (raw) {
-                        const j = JSON.parse(raw);
-                        if (Array.isArray(j.messages)) d.messages = j.messages;
-                        if (j.memory) d.memory = j.memory;
-                    }
-                } catch (e) { /* corrupt transcript → start fresh */ }
-                return d;
-            }
-            function saveChat() {
-                try { localStorage.setItem(CHAT_KEY, JSON.stringify({ messages: chat.messages.slice(-60), memory: chat.memory })); } catch (e) { /* ignore */ }
-            }
-            const QUICK_PROMPTS = ['How am I doing overall?', 'Am I tilting?', 'What should I focus on?', 'How is my risk sizing?', 'Which session is my best?', 'How was my week?'];
-            function botKpi(k) {
-                return '<div class="kpi !py-2.5 !px-3"><div class="k-label">' + esc(k.label) + '</div><div class="k-val num text-[16px] ' + (k.cls || 'text-white') + '">' + esc(k.value) + '</div></div>';
-            }
-            function botMsg(r) {
-                const aiBadge = r.ai ? '<span class="tag tag-blue !py-0 !px-1.5 ml-1.5">AI</span>' : '';
-                const kpis = (r.kpis || []).length ? '<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-2.5">' + r.kpis.map(botKpi).join('') + '</div>' : '';
-                const ev = (r.evidence || []).length ? '<div class="flex flex-wrap gap-1.5 mt-2">' + r.evidence.slice(0, 6).map(id => '<span class="ev-chip">' + esc(String(id).slice(0, 12)) + '</span>').join('') + (r.evidence.length > 6 ? '<span class="ev-chip">+' + (r.evidence.length - 6) + ' more</span>' : '') + '</div>' : '';
-                const follow = (r.followUps || []).length ? '<div class="flex flex-wrap gap-1.5 mt-2.5">' + r.followUps.map(f => '<button class="period-chip !py-1 !px-2.5 text-[11.5px]" onclick="askSend(\'' + esc(f).replace(/'/g, "\\'") + '\')">' + esc(f) + '</button>').join('') + '</div>' : '';
-                return '<div class="flex items-start gap-2.5">' +
-                    '<div class="w-7 h-7 rounded-lg bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center flex-shrink-0"><svg data-lucide="bot" class="w-3.5 h-3.5 text-[#34D399]"></svg></div>' +
-                    '<div class="bg-[#0F0F11] border border-[#1F1F23] rounded-xl rounded-tl-sm px-3.5 py-3 max-w-[85%]">' +
-                        '<div class="flex items-start gap-1">' + aiBadge + '<div class="text-[13px] text-[#E8E8EC] leading-relaxed whitespace-pre-line">' + esc(r.answer) + '</div></div>' + kpis + ev + follow +
-                    '</div></div>';
-            }
-            function userMsg(text) {
-                return '<div class="flex justify-end"><div class="bg-[#1F2B26] border border-[rgba(16,185,129,0.25)] rounded-xl rounded-tr-sm px-3.5 py-2.5 max-w-[80%] text-[13px] text-[#E8E8EC]">' + esc(text) + '</div></div>';
-            }
-            const typingHtml = '<div class="flex items-start gap-2.5"><div class="w-7 h-7 rounded-lg bg-[rgba(16,185,129,0.12)] border border-[rgba(16,185,129,0.3)] flex items-center justify-center flex-shrink-0"><svg data-lucide="bot" class="w-3.5 h-3.5 text-[#34D399]"></svg></div><div class="bg-[#0F0F11] border border-[#1F1F23] rounded-xl rounded-tl-sm px-4 py-3 text-[12.5px] text-[#6E6E78]">analyzing your journal…</div></div>';
-            function renderChat() {
-                const log = $('chat-log');
-                log.innerHTML = chat.messages.map(m => m.role === 'user' ? userMsg(m.text) : botMsg(m)).join('');
-                log.scrollTop = log.scrollHeight;
-            }
-            function renderQuick() {
-                $('ask-quick').innerHTML = QUICK_PROMPTS.map(q => '<button class="period-chip !py-1 !px-2.5 text-[11.5px]" onclick="askSend(\'' + q.replace(/'/g, "\\'") + '\')">' + esc(q) + '</button>').join('');
-            }
-            // Mirror of the server's context resolution (server/ai-bot.js):
-            // carry the previous intent/subject/window on follow-ups like
-            // "and this week?" / "what about EURUSD?" / "tell me more".
-            function localResolve(q, mem) {
-                const low = q.toLowerCase();
-                const knownSyms = core ? [...new Set(core.Trades.filter(t => t.account_id === (core.selectedAccountId() || (core.Accounts[0] && core.Accounts[0].id))).map(t => t.symbol).filter(Boolean))] : [];
-                const knownSes = core ? [...new Set(core.Trades.filter(t => t.account_id === (core.selectedAccountId() || (core.Accounts[0] && core.Accounts[0].id))).map(t => t.session).filter(Boolean))] : [];
-                const explicitSym = knownSyms.find(s => low.indexOf(String(s).toLowerCase()) !== -1) || null;
-                const explicitSes = !explicitSym ? knownSes.find(s => low.indexOf(String(s).toLowerCase()) !== -1) || null : null;
-                const windowMatch = (low.match(/\b(today|yesterday|this week|last week|this month)\b/) || [null])[0];
-                const followUp = /^(and|also|then|so|what about|how about|tell me more|more|same|again)\b/.test(low);
-                let intent = null;
-                const probe = [
-                    ['period', /\b(today|yesterday|this week|last week|this month|(my )?week|(my )?month)\b/],
-                    ['tilt', /\b(tilt\w*|revenge|fomo|emotion\w*|psycholog\w*|angr\w*|frustrat\w*|panic\w*)\b/],
-                    ['discipline', /\b(disciplin\w*|violat\w*|rules?|adher\w*|clean|follow\w* (my|the) plan)\b/],
-                    ['streak', /\b(streak|consecutive|in a row)\b/],
-                    ['risk', /\b(risk|oversiz|size|sizing|stop.?loss|drawdown|dd)\b/],
-                    ['session', /\b(session|when do i|best time|time of day|which session)\b/],
-                    ['symbol', /\b(symbol|pair|instrument|market|currency|forex|crypto|stocks?|indices)\b/],
-                    ['setup', /\b(setup|strategy|entry model|which strategy|pattern)\b/],
-                    ['winloss', /\b(win|loss|lose|losing|winner|profit factor|made money|bleed)\b/],
-                    ['focus', /\b(focus|improve|work on|do better|fix|next step|what should i|advice|suggest)\b/],
-                    ['overall', /\b(overall|how am i doing|status|summary|health|score|good|review)\b/]
-                ];
-                for (const [id, re] of probe) { if (re.test(low)) { intent = id; break; } }
-                let subject = explicitSym || explicitSes || null;
-                let subjKind = explicitSym ? 'symbol' : explicitSes ? 'session' : null;
-                if (subject) intent = subjKind;
-                if (followUp && mem) {
-                    if (!intent) intent = mem.intent;
-                    if (!subject && mem.subject) { subject = mem.subject; subjKind = mem.subjKind; }
-                }
-                return { intent: intent || 'overall', subject, subjKind, window: windowMatch || (followUp && mem && mem.window ? mem.window : null), followUp };
-            }
-            function localAsk(q, mem) {
-                const b = DATA || buildLocalBundle();
-                if (!b) return { answer: 'No account yet — create one in Strategy Lab and log trades first.', kpis: [], evidence: [], followUps: [], memory: null };
-                const rq = localResolve(q, mem);
-                const c = b.context, s = c;
-                const low = q.toLowerCase();
-                const top = b.coach.patterns.find(f => !f.suppressed);
-                const strength = b.coach.strengths.find(f => !f.suppressed);
-                const scope = rq.window ? ' in the ' + rq.window + ' range' : '';
-                const memory = { intent: rq.intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q };
-                const withMem = r => Object.assign({ memory }, r);
-                const subjectRow = kind => {
-                    const rows = (b.sessions.tables[kind] || []);
-                    const row = rows.find(x => String(x.key).toLowerCase() === String(rq.subject).toLowerCase());
-                    if (!row) return { answer: 'No ' + kind + ' matches "' + rq.subject + '"' + scope + ' — I only speak from trades you have actually logged.', kpis: [], evidence: [] };
-                    return { answer: rq.subject + scope + ': ' + row.n + ' trades, ' + Math.round(row.winRate * 100) + '% win rate, ' + row.avgR.toFixed(2) + 'R average (' + $money(row.pnl) + ').', kpis: [{ label: 'Trades', value: String(row.n), cls: 'text-white' }, { label: 'Win rate', value: Math.round(row.winRate * 100) + '%', cls: 'text-white' }, { label: 'Avg R', value: (row.avgR >= 0 ? '+' : '') + row.avgR.toFixed(2) + 'R', cls: row.avgR >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }], evidence: [] };
-                };
-                switch (rq.intent) {
-                    case 'tilt': {
-                        const t = b.tilt[0];
-                        return withMem(t ? { answer: t.msg, kpis: [{ label: 'Status', value: t.sev === 'critical' ? 'ACTIVE' : 'WATCH', cls: t.sev === 'critical' ? 'text-[#F87171]' : 'text-[#34D399]' }, { label: 'Episodes', value: String(t.count), cls: 'text-white' }], evidence: t.ev, followUps: ['What should I focus on?'] } : { answer: 'No tilt signal yet — needs at least 8 trades to learn your signature.', kpis: [], evidence: [], followUps: [] });
-                    }
-                    case 'focus': {
-                        const parts = [];
-                        if (top) parts.push('Your #1 fix: stop "' + top.title + '" — ' + top.count + ' occurrence' + (top.count === 1 ? '' : 's') + ' costing ' + $money(top.cost) + '.');
-                        if (strength) parts.push('Double down on what works: ' + strength.title + '.');
-                        if (!top && !strength) parts.push('No strong signal yet — log more trades with emotion + adherence tags.');
-                        return withMem({ answer: parts.join(' '), kpis: [], evidence: top ? top.ev : [], followUps: ['Am I tilting?', 'How is my risk sizing?'] });
-                    }
-                    case 'risk': {
-                        const over = b.risk.findings.find(f => f.type === 'risk-over-policy');
-                        const parts = [];
-                        if (c.avgRisk) parts.push('Your average risk per trade is $' + c.avgRisk + (c.policyRiskPerTrade ? ' against a $' + c.policyRiskPerTrade + ' policy limit.' : '.'));
-                        if (over) parts.push('You exceeded the policy on ' + over.count + ' trades.');
-                        parts.push('Max drawdown ' + $money(-c.maxDD) + ', recovery factor ' + (c.recovery ? c.recovery.toFixed(2) : '—') + '.');
-                        return withMem({ answer: parts.join(' '), kpis: [{ label: 'Avg risk', value: c.avgRisk ? '$' + c.avgRisk : '—', cls: 'text-white' }, { label: 'Policy', value: c.policyRiskPerTrade ? '$' + c.policyRiskPerTrade : '—', cls: 'text-white' }, { label: 'Max DD', value: $money(-c.maxDD), cls: 'text-[#F87171]' }], evidence: over ? over.ev : [], followUps: ['Am I tilting?'] });
-                    }
-                    case 'session': {
-                        if (rq.subject && rq.subjKind === 'session') return withMem(subjectRow('session'));
-                        const byS = b.sessions.tables.session || [];
-                        if (byS.length) return withMem({ answer: 'Your best session is ' + byS[0].key + ' (' + Math.round(byS[0].winRate * 100) + '% win rate, ' + byS[0].avgR.toFixed(2) + 'R, ' + byS[0].n + ' trades).', kpis: [{ label: 'Best session', value: byS[0].key, cls: 'text-[#34D399]' }], evidence: [], followUps: ['What should I focus on?'] });
-                        return withMem({ answer: 'Not enough data per session yet (needs ≥5 trades per group).', kpis: [], evidence: [], followUps: [] });
-                    }
-                    case 'symbol': {
-                        if (rq.subject && rq.subjKind === 'symbol') return withMem(subjectRow('symbol'));
-                        const bySym = b.sessions.tables.symbol || [];
-                        if (bySym.length) return withMem({ answer: 'By instrument: ' + bySym[0].key + ' leads at ' + bySym[0].avgR.toFixed(2) + 'R (' + bySym[0].n + ' trades, ' + $money(bySym[0].pnl) + ') while ' + bySym[bySym.length - 1].key + ' trails at ' + bySym[bySym.length - 1].avgR.toFixed(2) + 'R (' + bySym[bySym.length - 1].n + ' trades).', kpis: [{ label: 'Best symbol', value: bySym[0].key, cls: 'text-[#34D399]' }], evidence: [], followUps: ['What should I focus on?'] });
-                        return withMem({ answer: 'Not enough trades per instrument yet (needs ≥5 per symbol).', kpis: [], evidence: [], followUps: [] });
-                    }
-                    case 'period': {
-                        return withMem({ answer: (rq.window || 'this month') + ' you have ' + c.tradeCount + ' trades — ' + $money(c.netPnl) + ' net, ' + (c.winRate ? c.winRate + '%' : '—') + ' win rate.', kpis: [{ label: (rq.window || 'Month') + ' P&L', value: $money(c.netPnl), cls: c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }, { label: 'Trades', value: String(c.tradeCount), cls: 'text-white' }], evidence: [], followUps: ['How am I doing overall?'] });
-                    }
-                    default: {
-                        const parts = [];
-                        parts.push('Overall you have ' + c.tradeCount + ' trades in range: ' + $money(c.netPnl) + ' net, ' + (c.winRate ? c.winRate + '%' : '—') + ' win rate, ' + (c.expectancy >= 0 ? '+' : '') + c.expectancy.toFixed(2) + 'R expectancy.');
-                        if (top) parts.push('Biggest leak: "' + top.title + '" — ' + top.count + ' occurrences.');
-                        if (strength) parts.push('What works: ' + strength.title + '.');
-                        return withMem({ answer: parts.join(' '), kpis: [{ label: 'Net P&L', value: $money(c.netPnl), cls: c.netPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]' }, { label: 'Win rate', value: (c.winRate ? c.winRate + '%' : '—'), cls: 'text-white' }, { label: 'Discipline', value: c.disciplineScore != null ? c.disciplineScore + '/100' : '—', cls: 'text-white' }], evidence: top ? top.ev : [], followUps: ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?'] });
-                    }
+                    const r = await apiFetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD);
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const j = await r.json();
+                    if (!j || !j.bundle) throw new Error('empty bundle');
+                    bundle = j.bundle;
+                    renderAll();
+                } catch (err) {
+                    console.warn('[ai] mentor fetch failed: ' + err.message);
+                    body.classList.add('hidden');
+                    offline.classList.remove('hidden');
                 }
             }
-            window.askSend = async function (text) {
-                const q = (text || '').trim() || ($('ask-input') ? $('ask-input').value.trim() : '');
-                if (!q) return;
-                if ($('ask-input')) $('ask-input').value = '';
-                chat.messages.push({ role: 'user', text: q });
-                renderChat();
-                const log = $('chat-log');
-                const typing = document.createElement('div');
-                typing.innerHTML = typingHtml;
-                log.appendChild(typing);
-                log.scrollTop = log.scrollHeight;
-                if (window.lucide) lucide.createIcons();
-                let r = null;
-                const online = core && typeof core.isBackendOnline === 'function' && core.isBackendOnline();
-                if (online) {
-                    try {
-                        const accId = core.selectedAccountId ? core.selectedAccountId() : (core.Accounts[0] ? core.Accounts[0].id : null);
-                        if (accId) {
-                            // Send the remembered context so a server restart can't
-                            // lose the thread; the server returns its updated memory.
-                            const res = await apiFetch('/api/ai/ask', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ question: q, accountId: accId, period: PERIOD, memory: chat.memory }) });
-                            if (res.ok) { r = await res.json(); if (r.ok) r = r; }
-                        }
-                    } catch (e) { /* fall through to local */ }
-                }
-                if (!r) { r = localAsk(q, chat.memory); r.offline = true; }
-                if (r && r.memory) chat.memory = r.memory;   // remember for the next turn
-                chat.messages.push({ role: 'bot', ...r });
-                renderChat();
-                saveChat();   // longer memory — transcript survives reloads
-                if (window.lucide) lucide.createIcons();
-                const src = $('ask-source');
-                if (src) src.textContent = r.offline ? 'offline · local' : (r.ai ? 'server · AI narrated · your data' : 'server · your data');
-            };
-            window.askPrompt = q => window.askSend(q);
-            function initChat() {
-                renderQuick();
-                if (!chat.messages.length) {
-                    chat.messages.push({ role: 'bot', answer: 'Hi — I am your mentor bot. Ask me anything about your trading; every answer is computed from your journal, and I always cite the trades behind it. Try one of the quick questions below, or ask in your own words.', kpis: [], evidence: [], followUps: [] });
-                }
-                renderChat();
-                const form = $('ask-form');
-                if (form) form.addEventListener('submit', e => { e.preventDefault(); window.askSend(); });
-            }
-            function renderAsk(b) { /* chat is imperative — nothing to rebuild per bundle */ }
 
-            // ====================================================================
-            // WIRING
-            // ====================================================================
-            const VALID_TABS = ['coach', 'autopsy', 'patterns', 'psychology', 'risk', 'discipline', 'sessions', 'tilt', 'ask'];
-            const RENDERERS = { coach: renderCoach, autopsy: renderAutopsy, patterns: renderPatterns, psychology: renderPsychology, risk: renderRisk, discipline: renderDiscipline, sessions: renderSessions, tilt: renderTilt, ask: renderAsk };
-            initChat();
-            function activateTab(tab) {
-                document.querySelectorAll('.ins-tab').forEach(bn => bn.classList.toggle('active', bn.dataset.tab === tab));
-                document.querySelectorAll('.ins-panel').forEach(pn => pn.classList.toggle('active', pn.id === 'panel-' + tab));
-            }
-            document.querySelectorAll('.ins-tab').forEach(bn => bn.addEventListener('click', () => activateTab(bn.dataset.tab)));
-            document.querySelectorAll('.period-chip').forEach(ch => ch.addEventListener('click', async () => {
-                PERIOD = ch.dataset.period;
-                document.querySelectorAll('.period-chip').forEach(x => x.classList.toggle('active', x === ch));
-                await refresh();
-            }));
-
-            let lastRefresh = 0;
-            async function refresh() {
-                const src = $('ai-source');
-                if (src) src.textContent = 'computing…';
-                const b = await loadMentorData();
-                if (b) {
-                    DATA = b;
-                    const all = allFindings(b);
-                    // hidden by suppressed are still in DATA (renderers filter);
-                    if (src) src.textContent = SOURCE === 'api' ? 'server · cached' : 'offline · local';
-                    if (b.account) { $('top-account').textContent = b.account.name; $('top-equity').textContent = '$' + Math.round(b.account.equity || 0).toLocaleString(); }
-                } else {
-                    DATA = null;
-                    if (src) src.textContent = SOURCE === 'api' ? 'server' : 'local';
-                }
-                VALID_TABS.forEach(t => { try { RENDERERS[t](b); } catch (e) { console.error('[ai] render ' + t + ' failed: ' + e.message); } });
-                if (window.lucide) lucide.createIcons();
-            }
+            // ============ RENDER ============
             function renderAll() {
-                VALID_TABS.forEach(t => { try { RENDERERS[t](DATA); } catch (e) { console.error('[ai] render ' + t + ' failed: ' + e.message); } });
-                dismissedList();   // keep the Dismissed badge/modal count in sync
-                if ($('dismissed-modal') && $('dismissed-modal').classList.contains('open')) renderDismissedList();  // live-refresh the open modal
+                renderChrome();
+                renderCoach();
+                renderContext();
+                renderPatterns();
+                renderTilt();
+                renderPsychology();
+                renderRisk();
+                renderDiscipline();
+                renderSessions();
+                renderAutopsies();
                 if (window.lucide) lucide.createIcons();
             }
 
-            if (core) {
-                ['trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'account.changed'].forEach(ev => core.TradeMindBus.subscribe(ev, () => { refresh(); }));
-                core.TradeMindBus.subscribe('backend.online', () => { refresh(); });
+            function sevMeta(f) {
+                if (f.sev === 'critical') return { label: 'CRITICAL', cls: 'tag-red', card: 'fc-critical' };
+                if (f.sev === 'warning') return { label: 'WARNING', cls: 'tag-amber', card: 'fc-warning' };
+                if (f.sev === 'positive') return { label: 'STRENGTH', cls: 'tag-emerald', card: 'fc-positive' };
+                if (f.sev === 'observation') return { label: 'OBSERVATION', cls: 'tag-blue', card: '' };
+                return { label: 'FINDING', cls: 'tag-gray', card: '' };
             }
-            const collapseBtn = $('collapse-btn');
-            if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
-            const dismissedBtn = $('dismissed-btn');
-            if (dismissedBtn) dismissedBtn.addEventListener('click', window.openDismissed);
-            const dismissedClose = $('dismissed-close');
-            if (dismissedClose) dismissedClose.addEventListener('click', window.closeDismissed);
-            const dismissedOverlay = $('dismissed-modal');
-            if (dismissedOverlay) dismissedOverlay.addEventListener('click', e => { if (e.target === dismissedOverlay) window.closeDismissed(); });
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') window.closeDismissed(); });
-            // Topbar search → jump to the Ask tab and send the question.
-            const askSearch = $('ask-search');
-            if (askSearch) askSearch.addEventListener('keydown', e => {
-                if (e.key === 'Enter' && askSearch.value.trim()) {
-                    const q = askSearch.value.trim();
-                    askSearch.value = '';
-                    activateTab('ask');
-                    window.askSend(q);
-                }
-            });
+            function confTag(f) {
+                if (f.confidence === 'high') return '<span class="tag tag-emerald !py-0.5 !px-2">High confidence</span>';
+                if (f.confidence === 'medium') return '<span class="tag tag-amber !py-0.5 !px-2">Medium confidence</span>';
+                if (f.confidence === 'low') return '<span class="tag tag-gray !py-0.5 !px-2">Low confidence</span>';
+                return '';
+            }
 
-            refresh();
+            // ---- Coach hero ----
+            function renderCoach() {
+                const sec = $('coach-sec');
+                if (!bundle.coach || !bundle.coach.message) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                $('coach-period').textContent = 'period: ' + PERIOD.toUpperCase();
+                $('coach-msg').textContent = bundle.coach.message;
+                const top = (bundle.coach.patterns || [])[0];
+                $('coach-evidence').innerHTML = top
+                    ? '<span class="tag tag-red">' + top.count + ' occurrences</span>' +
+                      (top.cost != null ? '<span class="tag tag-gray num">' + money(top.cost) + '</span>' : '') +
+                      confTag(top)
+                    : '';
+                const evBtn = $('coach-view-evidence');
+                if (top && (top.ev || []).length) {
+                    evBtn.classList.remove('hidden');
+                    evBtn.onclick = () => openEvidence(top);
+                } else {
+                    evBtn.classList.add('hidden');
+                }
+                $('coach-ask').onclick = () => {
+                    if (top) askAbout(top.title);
+                    else sendChat(bundle.coach.message.split('"')[1] || 'What should I focus on?');
+                };
+            }
+
+            // ---- Context strip ----
+            function renderContext() {
+                const c = bundle.context || {};
+                const tiles = [
+                    ['Trades in range', c.tradeCount != null ? c.tradeCount : '—', '', ''],
+                    ['Net P&L', money(c.netPnl), c.netPnl >= 0 ? 'var(--tm-green)' : 'var(--tm-red)', ''],
+                    ['Win rate', c.winRate != null ? c.winRate + '%' : '—', '', ''],
+                    ['Expectancy', c.expectancy != null ? fmtR(c.expectancy) : '—', (c.expectancy || 0) >= 0 ? 'var(--tm-green)' : 'var(--tm-red)', ''],
+                    ['Max drawdown', c.maxDD ? money(-c.maxDD) : '—', 'var(--tm-red)', ''],
+                    ['Recovery', c.recovery != null ? c.recovery + '×' : '—', (c.recovery || 0) >= 1 ? 'var(--tm-green)' : 'var(--tm-red)', ''],
+                    ['Discipline', c.disciplineScore != null ? c.disciplineScore + '/100' : '—', '', ''],
+                    ['Violations', c.violations != null ? c.violations : '—', c.violations ? 'var(--tm-red)' : 'var(--tm-green)', ''],
+                    ['Clean streak', c.cleanStreak != null ? c.cleanStreak + 'd' : '—', '', 'best ' + (c.bestCleanStreak != null ? c.bestCleanStreak + 'd' : '—')],
+                    ['Avg risk', c.avgRisk ? '$' + c.avgRisk : '—', '', c.riskSd ? 'σ $' + c.riskSd : '']
+                ].filter(t => t[1] !== '—' || t[0] === 'Trades in range');
+                $('ctx-grid').innerHTML = tiles.map(t =>
+                    '<div class="stat-tile"><div class="st-label">' + t[0] + '</div>' +
+                    '<div class="st-value num" style="' + (t[2] ? 'color:' + t[2] : '') + '">' + t[1] + '</div>' +
+                    (t[3] ? '<div class="text-[10.5px] text-[var(--tm-dim)] mt-1">' + t[3] + '</div>' : '') + '</div>').join('');
+                $('ctx-note').textContent = (c.totalTrades != null ? c.totalTrades + ' total on account · ' : '') + 'from the mentor bundle';
+            }
+
+            // ---- Finding card + actions ----
+            function findingCard(f) {
+                const m = sevMeta(f);
+                const evCount = (f.ev || []).length;
+                return '<div class="finding-card ' + m.card + '">' +
+                    '<div class="flex items-center justify-between gap-2 flex-wrap">' +
+                        '<span class="tag ' + m.cls + ' !py-0.5 !px-2">' + m.label + '</span>' +
+                        '<div class="flex items-center gap-1.5">' + confTag(f) +
+                            (f.count != null ? '<span class="tag tag-gray num">' + f.count + '×</span>' : '') +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="text-[14px] font-bold text-[var(--tm-text)] leading-snug">' + esc(f.title) + '</div>' +
+                    '<div class="text-[12.5px] text-[var(--tm-muted)] leading-relaxed">' + esc(f.msg) + '</div>' +
+                    (f.cost != null ? '<div class="num text-[12px] ' + (f.cost < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + money(f.cost) + '</div>' : '') +
+                    '<div class="flex flex-wrap items-center gap-1.5 mt-auto pt-1">' +
+                        (evCount ? '<button class="btn-mini" onclick="window.__openEvidence(\'' + esc(f.id) + '\')"><svg data-lucide="eye" class="w-3.5 h-3.5"></svg> Evidence</button>' : '') +
+                        '<button class="btn-mini ' + (f.feedback === 1 ? 'active' : '') + '" data-act="up" data-id="' + esc(f.id) + '" title="Useful finding"><svg data-lucide="thumbs-up" class="w-3.5 h-3.5"></svg></button>' +
+                        '<button class="btn-mini ' + (f.feedback === -1 ? 'active' : '') + '" data-act="down" data-id="' + esc(f.id) + '" title="Not useful"><svg data-lucide="thumbs-down" class="w-3.5 h-3.5"></svg></button>' +
+                        '<button class="btn-mini" data-act="dismiss" data-id="' + esc(f.id) + '" title="Dismiss this finding"><svg data-lucide="eye-off" class="w-3.5 h-3.5"></svg> Dismiss</button>' +
+                    '</div>' +
+                '</div>';
+            }
+
+            // ---- Patterns ----
+            function renderPatterns() {
+                const sec = $('patterns-sec');
+                const list = (bundle.patterns || []).filter(f => f.sev !== 'positive');
+                if (!list.length) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                $('patterns-count').textContent = list.length + ' finding' + (list.length === 1 ? '' : 's');
+                $('patterns-grid').innerHTML = list.map(findingCard).join('');
+            }
+
+            // ---- Tilt ----
+            function renderTilt() {
+                const sec = $('tilt-sec');
+                const t = (bundle.tilt || [])[0];
+                if (!t) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                const critical = t.sev === 'critical';
+                const accent = critical ? 'var(--tm-red)' : 'var(--tm-green)';
+                const tagCls = critical ? 'tag-red' : 'tag-emerald';
+                sec.innerHTML =
+                    '<div class="glass-strong p-5 rounded-2xl" style="border-color:' + accent + '55;border-left:3px solid ' + accent + '">' +
+                        '<div class="flex flex-wrap items-center gap-3 mb-3">' +
+                            '<span class="label-xs" style="color:' + accent + '">Tilt</span>' +
+                            '<span class="tag ' + tagCls + '">' + (critical ? 'TILT PATTERN ACTIVE' : 'TILT WATCH') + '</span>' +
+                            confTag(t) +
+                        '</div>' +
+                        '<div class="text-[17px] font-extrabold tracking-tight text-[var(--tm-text)]">' + esc(t.title) + '</div>' +
+                        '<p class="text-[13px] text-[var(--tm-muted)] mt-2 leading-relaxed">' + esc(t.msg) + '</p>' +
+                        '<div class="flex flex-wrap items-center gap-3 mt-4">' +
+                            ((t.ev || []).length ? '<button class="btn-primary !py-2 !px-4 text-[13px]" onclick="window.__openEvidence(\'' + esc(t.id) + '\')"><svg data-lucide="eye" class="w-4 h-4"></svg> Investigate</button>' : '') +
+                            '<button class="btn-ghost !py-2 !px-4 text-[13px]" onclick="window.__askTilt()"><svg data-lucide="message-circle" class="w-4 h-4"></svg> Ask about tilt</button>' +
+                        '</div>' +
+                    '</div>';
+            }
+
+            // ---- Psychology ----
+            function renderPsychology() {
+                const sec = $('psych-sec');
+                const p = bundle.psychology || {};
+                const rows = p.emotionTable || [];
+                const findings = p.findings || [];
+                if (!rows.length && !findings.length) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                $('psych-table').innerHTML = rows.length
+                    ? rows.map(r =>
+                        '<tr><td class="font-semibold text-[var(--tm-text)]">' + esc(r.key) + '</td>' +
+                        '<td class="num">' + r.n + '</td>' +
+                        '<td class="num ' + (r.pnl < 0 ? 'text-[var(--tm-red)]' : r.pnl > 0 ? 'text-[var(--tm-green)]' : '') + '">' + money(r.pnl) + '</td>' +
+                        '<td class="num">' + fmtPct(r.winRate) + '</td>' +
+                        '<td class="num ' + (r.avgR < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + fmtR(r.avgR) + '</td></tr>').join('')
+                    : '<tr><td colspan="5" class="text-center py-5 text-[12.5px] text-[var(--tm-dim)]">No emotion data in this range.</td></tr>';
+                $('psych-findings').innerHTML = findings.length ? findings.map(findingCard).join('') : '';
+            }
+
+            // ---- Risk ----
+            function renderRisk() {
+                const sec = $('risk-sec');
+                const r = bundle.risk || {};
+                const findings = r.findings || [];
+                const hist = r.histogram || [];
+                if (!findings.length && !hist.length) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                const avgRisk = r.avgRisk != null ? r.avgRisk : (bundle.context && bundle.context.avgRisk);
+                const riskSd = r.riskSd != null ? r.riskSd : (bundle.context && bundle.context.riskSd);
+                $('risk-avg').textContent = avgRisk != null ? 'avg risk $' + avgRisk + (riskSd != null ? ' · σ $' + riskSd : '') : 'no risk data';
+                $('risk-findings').innerHTML = findings.length ? findings.map(findingCard).join('') : '<p class="text-[12.5px] text-[var(--tm-dim)] col-span-full">No risk findings in this range.</p>';
+                if (hist.length) {
+                    const max = Math.max.apply(null, hist.map(h => h.count));
+                    $('risk-hist').innerHTML =
+                        '<div class="label-xs mb-2">Risk histogram (per $10 bucket)</div>' +
+                        '<div class="flex flex-col gap-1.5">' + hist.map(h =>
+                            '<div class="flex items-center gap-2.5">' +
+                                '<span class="num text-[10.5px] text-[var(--tm-dim)] w-10">' + esc(h.key) + '</span>' +
+                                '<span class="hist-track"><span class="hist-bar" style="display:block;width:' + Math.max(4, (h.count / max) * 100) + '%"></span></span>' +
+                                '<span class="num text-[11px] text-[var(--tm-muted)] w-6">' + h.count + '</span>' +
+                            '</div>').join('') + '</div>';
+                } else {
+                    $('risk-hist').innerHTML = '';
+                }
+            }
+
+            // ---- Discipline ----
+            function renderDiscipline() {
+                const sec = $('disc-sec');
+                const d = bundle.discipline || {};
+                const findings = d.findings || [];
+                const rules = d.rules || [];
+                if (!findings.length && !rules.length) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                $('disc-findings').innerHTML = findings.length ? findings.map(findingCard).join('') : '<p class="text-[12.5px] text-[var(--tm-dim)] col-span-full">No discipline findings in this range.</p>';
+                $('disc-rules').innerHTML = rules.length
+                    ? '<div class="label-xs mb-2">Rule adherence (top 8)</div><div class="flex flex-col gap-1.5">' + rules.map(r => {
+                        const rate = r.rate || 0;
+                        const col = rate >= 80 ? 'var(--tm-green)' : rate >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
+                        return '<div class="flex items-center gap-2.5">' +
+                            '<span class="text-[12px] text-[var(--tm-text)] w-40 truncate">' + esc(r.label) + '</span>' +
+                            '<span class="hist-track"><span class="hist-bar" style="display:block;width:' + Math.min(100, rate) + '%;background:' + col + '"></span></span>' +
+                            '<span class="num text-[11px]" style="color:' + col + '">' + rate + '%</span>' +
+                            '<span class="num text-[10.5px] text-[var(--tm-dim)]">' + (r.passed || 0) + '/' + (r.total || 0) + '</span>' +
+                        '</div>';
+                    }).join('') + '</div>'
+                    : '';
+            }
+
+            // ---- Sessions ----
+            function renderSessions() {
+                const sec = $('sess-sec');
+                const s = bundle.sessions || {};
+                const findings = s.findings || [];
+                const tables = s.tables || {};
+                if (!findings.length && !Object.keys(tables).length) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                $('sess-findings').innerHTML = findings.length ? findings.map(findingCard).join('') : '<p class="text-[12.5px] text-[var(--tm-dim)] col-span-full">Not enough evidence per category yet (needs ≥5 trades per row).</p>';
+                const titles = { session: 'Session', setup: 'Setup', symbol: 'Symbol', dir: 'Direction' };
+                $('sess-tables').innerHTML = Object.keys(titles).map(k => {
+                    const rows = tables[k] || [];
+                    return '<div class="stat-tile !p-3.5">' +
+                        '<div class="st-label mb-2">' + titles[k] + '</div>' +
+                        (rows.length
+                            ? '<div class="flex flex-col gap-1">' + rows.slice(0, 4).map(r =>
+                                '<div class="flex items-center justify-between text-[12px]"><span class="text-[var(--tm-text)] truncate">' + esc(r.key) + '</span>' +
+                                '<span class="num ' + (r.avgR < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + fmtR(r.avgR) + ' · ' + r.n + '</span></div>').join('') + '</div>'
+                            : '<p class="text-[11.5px] text-[var(--tm-dim)]">No rows with ≥5 trades.</p>') +
+                    '</div>';
+                }).join('');
+            }
+
+            // ---- Autopsies ----
+            function renderAutopsies() {
+                const sec = $('autopsy-sec');
+                const list = bundle.autopsies || [];
+                if (!list.length) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                $('autopsy-grid').innerHTML = list.map(a => {
+                    const vCls = a.verdict === 'Blocked' ? 'tag-red' : a.verdict === 'Violation' ? 'tag-amber' : 'tag-emerald';
+                    const resCls = a.pnl > 0 ? 'var(--tm-green)' : a.pnl < 0 ? 'var(--tm-red)' : 'var(--tm-dim)';
+                    return '<a class="finding-card text-decoration-none" href="journal.html?trade=' + encodeURIComponent(a.tradeId) + '">' +
+                        '<div class="flex items-center justify-between gap-2">' +
+                            '<span class="tm-sym-badge">' + (window.TMAssets && window.TMAssets.badgeHtml ? window.TMAssets.badgeHtml(a.symbol) : (a.symbol || '—').slice(0, 2).toUpperCase()) + '</span>' +
+                            '<span class="tag ' + vCls + ' !py-0.5 !px-2">' + esc(a.verdict).toUpperCase() + '</span>' +
+                        '</div>' +
+                        '<div class="text-[14px] font-bold text-[var(--tm-text)]">' + esc(a.symbol) + ' · ' + (a.dir === 'long' ? 'Long' : 'Short') + ' · ' + esc(a.setup || '—') + '</div>' +
+                        '<div class="num text-[12px]" style="color:' + resCls + '">' + money(a.pnl) + ' · ' + fmtR(a.r) + ' · risk $' + (a.risk || 0) + '</div>' +
+                        '<div class="text-[12px] text-[var(--tm-muted)] leading-relaxed">' +
+                            (a.fails && a.fails.length ? '<span class="text-[var(--tm-red)]">' + esc(a.fails.join('; ')).slice(0, 110) + '</span>' : (a.adherence && a.adherence !== 'followed' ? esc(a.adherence) + ' — ' : '') + (a.note ? '“' + esc(a.note).slice(0, 90) + '”' : 'Rules followed.')) +
+                        '</div>' +
+                        '<div class="text-[10.5px] text-[var(--tm-dim)] num">' + (a.unit || 'units') + ' · ' + esc(a.assetClass || '') + ' · open trade →</div>' +
+                    '</a>';
+                }).join('');
+            }
+
+            // ---- Dismissed findings ----
+            async function loadDismissed() {
+                const accId = currentAccountId();
+                const body = $('dismissed-body');
+                try {
+                    const r = await apiFetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD + '&includeSuppressed=1');
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const j = await r.json();
+                    const b = j.bundle;
+                    const all = [].concat(b.patterns, b.psychology.findings, b.risk.findings, b.discipline.findings, b.sessions.findings, b.tilt);
+                    const dismissed = all.filter(f => f.suppressed);
+                    body.classList.remove('hidden');
+                    body.innerHTML = dismissed.length
+                        ? '<div class="grid grid-cols-1 md:grid-cols-2 gap-3">' + dismissed.map(f =>
+                            '<div class="finding-card">' +
+                                '<div class="text-[13px] font-bold text-[var(--tm-text)]">' + esc(f.title) + '</div>' +
+                                '<div class="text-[12px] text-[var(--tm-muted)]">' + esc(f.msg).slice(0, 140) + '</div>' +
+                                '<button class="btn-mini self-start" data-restore="' + esc(f.id) + '"><svg data-lucide="rotate-ccw" class="w-3.5 h-3.5"></svg> Restore</button>' +
+                            '</div>').join('') + '</div>'
+                        : '<p class="text-[12.5px] text-[var(--tm-dim)]">No dismissed findings.</p>';
+                    if (window.lucide) lucide.createIcons();
+                } catch (err) {
+                    console.warn('[ai] dismissed fetch failed: ' + err.message);
+                    body.classList.remove('hidden');
+                    body.innerHTML = '<p class="text-[12.5px] text-[var(--tm-red)]">Could not load dismissed findings.</p>';
+                }
+            }
+
+            // ---- Finding actions ----
+            async function findingAction(fid, action) {
+                const url = action === 'dismiss' ? '/api/ai/findings/suppress' : '/api/ai/findings/feedback';
+                const body = action === 'dismiss'
+                    ? { finding_id: fid, suppressed: true }
+                    : { finding_id: fid, value: action === 'up' ? 1 : -1 };
+                try {
+                    const r = await apiFetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    showToast(action === 'dismiss' ? 'Finding dismissed — the mentor will stop showing it.' : (action === 'up' ? 'Marked as useful.' : 'Marked as noisy.'));
+                    loadBundle(false);
+                } catch (err) {
+                    console.warn('[ai] finding action failed: ' + err.message);
+                    showToast('Finding action failed — is the backend connected?', false);
+                }
+            }
+            async function restoreFinding(fid) {
+                try {
+                    const r = await apiFetch('/api/ai/findings/suppress', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ finding_id: fid, suppressed: false }) });
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    showToast('Finding restored.');
+                    loadDismissed();
+                    loadBundle(false);
+                } catch (err) {
+                    showToast('Restore failed — is the backend connected?', false);
+                }
+            }
+
+            // ---- Evidence drawer ----
+            function openEvidence(f) {
+                $('ev-title').textContent = f.title;
+                $('ev-sub').textContent = 'Why this was flagged — ' + (f.ev || []).length + ' evidence reference(s)';
+                const ids = f.ev || [];
+                let inner = '<div class="glass rounded-xl p-4 mb-4"><div class="label-xs mb-2">Why this was flagged</div><p class="text-[13px] text-[var(--tm-text)] leading-relaxed">' + esc(f.msg) + '</p></div>';
+                if (!ids.length) {
+                    inner += '<p class="text-[12.5px] text-[var(--tm-dim)]">No individual trade references on this finding.</p>';
+                } else {
+                    const rows = ids.map(id => {
+                        const t = core && core.Trades ? core.Trades.find(x => x.id === id) : null;
+                        if (t) {
+                            const d = new Date(t.ts);
+                            const ts = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                            const res = t.pnl > 0 ? '<span class="tag tag-emerald !py-0.5 !px-2">Win</span>' : t.pnl < 0 ? '<span class="tag tag-red !py-0.5 !px-2">Loss</span>' : '<span class="tag tag-gray !py-0.5 !px-2">Scratch</span>';
+                            return '<a class="ev-trade-row" href="journal.html?trade=' + encodeURIComponent(id) + '">' +
+                                '<span class="tm-sym-badge">' + (window.TMAssets && window.TMAssets.badgeHtml ? window.TMAssets.badgeHtml(t.symbol) : (t.symbol || '—').slice(0, 2).toUpperCase()) + '</span>' +
+                                '<span class="flex-1 min-w-0"><span class="block text-[13px] font-bold text-[var(--tm-text)] truncate">' + esc(t.symbol) + ' · ' + esc(t.setup || '—') + '</span>' +
+                                '<span class="block text-[11px] text-[var(--tm-dim)]">' + ts + ' · ' + esc(t.session || '—') + ' · ' + (t.dir === 'long' ? 'Long' : 'Short') + '</span></span>' +
+                                res +
+                                '<span class="num text-[12px] ' + (t.r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + fmtR(t.r) + '</span></a>';
+                        }
+                        return '<div class="ev-trade-row"><span class="ev-chip num text-[11px]">' + esc(id) + '</span><span class="text-[12px] text-[var(--tm-dim)]">reference</span></div>';
+                    }).join('');
+                    inner += '<div class="label-xs mb-2">Evidence</div><div class="flex flex-col gap-2">' + rows + '</div>';
+                }
+                $('ev-body').innerHTML = inner;
+                $('ev-overlay').classList.add('open');
+                $('ev-drawer').classList.add('open');
+                $('ev-drawer').setAttribute('aria-hidden', 'false');
+                if (window.lucide) lucide.createIcons();
+            }
+            function closeEvidence() {
+                $('ev-overlay').classList.remove('open');
+                $('ev-drawer').classList.remove('open');
+                $('ev-drawer').setAttribute('aria-hidden', 'true');
+            }
+            window.__openEvidence = function (id) {
+                const all = [].concat(bundle ? bundle.patterns : [], bundle ? bundle.psychology.findings : [], bundle ? bundle.risk.findings : [], bundle ? bundle.discipline.findings : [], bundle ? bundle.sessions.findings : [], bundle ? bundle.tilt : []);
+                const f = all.find(x => x.id === id);
+                if (f) openEvidence(f);
+            };
+
+            // ---- Chat ----
+            function scrollChat() {
+                const sc = $('chat-scroll');
+                if (sc) sc.scrollTop = sc.scrollHeight;
+            }
+            function askAbout(subject) {
+                $('chat-input').value = 'Tell me about "' + subject + '" — what is it costing me and what should I do?';
+                sendChat($('chat-input').value);
+                const chat = document.querySelector('.chat-shell');
+                if (chat) chat.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+            window.__askTilt = function () { askAbout('tilt'); };
+            async function sendChat(text) {
+                const q = String(text || '').trim();
+                if (!q || chatBusy) return;
+                const accId = currentAccountId();
+                if (!accId) { showToast('Select an account first.', false); return; }
+                chatBusy = true;
+                appendMsg('user', q);
+                $('chat-input').value = '';
+                const typing = appendMsg('mentor', '<span class="text-[var(--tm-dim)]">Reading your data…</span>');
+                try {
+                    const r = await apiFetch('/api/ai/ask', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ question: q, accountId: accId, period: PERIOD, memory: chatMemory })
+                    });
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    const j = await r.json();
+                    chatMemory = j.memory || chatMemory;
+                    typing.remove();
+                    renderAnswer(j);
+                } catch (err) {
+                    console.warn('[ai] ask failed: ' + err.message);
+                    typing.remove();
+                    appendMsg('mentor', 'The mentor is unreachable right now — it answers only from your real data, and the backend is offline. Retry when connected.');
+                }
+                chatBusy = false;
+                scrollChat();
+            }
+            function appendMsg(kind, html) {
+                const div = document.createElement('div');
+                div.className = 'msg ' + (kind === 'user' ? 'msg-user' : 'msg-mentor');
+                div.innerHTML = html;
+                $('chat-scroll').appendChild(div);
+                scrollChat();
+                return div;
+            }
+            function renderAnswer(j) {
+                let html = '<div>' + esc(j.answer || '') + '</div>';
+                if (j.kpis && j.kpis.length) {
+                    html += '<div class="flex flex-wrap gap-1.5 mt-2.5">' + j.kpis.map(k =>
+                        '<span class="chat-kpi"><span class="text-[var(--tm-muted)]">' + esc(k.label) + '</span><span class="num font-bold text-[var(--tm-text)]">' + esc(k.value) + '</span></span>').join('') + '</div>';
+                }
+                if (j.evidence && j.evidence.length) {
+                    const rows = j.evidence.map(id => {
+                        const t = core && core.Trades ? core.Trades.find(x => x.id === id) : null;
+                        if (t) return '<a class="btn-mini" href="journal.html?trade=' + encodeURIComponent(id) + '">' + esc(t.symbol) + ' · ' + money(t.pnl) + ' · ' + fmtR(t.r) + '</a>';
+                        return '<span class="btn-mini">' + esc(id) + '</span>';
+                    }).join('');
+                    html += '<div class="flex flex-wrap gap-1.5 mt-2.5 items-center"><span class="label-xs !text-[9px]">Evidence</span>' + rows + '</div>';
+                }
+                if (j.followUps && j.followUps.length) {
+                    html += '<div class="flex flex-wrap gap-1.5 mt-3">' + j.followUps.map(f =>
+                        '<button class="follow-chip" data-follow="' + esc(f) + '">' + esc(f) + '</button>').join('') + '</div>';
+                }
+                appendMsg('mentor', html);
+            }
+
+            // Restore the transcript from the server's persisted conversation
+            // memory (data/chat-<userId>-<accountId>.json) so follow-up context
+            // and prior messages survive a page reload / account switch. The
+            // server memory remains the single authoritative store — this only
+            // re-renders what it already holds.
+            async function restoreTranscript() {
+                const accId = currentAccountId();
+                if (!accId) return;
+                try {
+                    const r = await apiFetch('/api/ai/memory?accountId=' + encodeURIComponent(accId));
+                    if (!r.ok) return;
+                    const j = await r.json();
+                    if (!j || !j.memory) return;
+                    chatMemory = j.memory;
+                    const hist = (j.memory.history || []).filter(h => h && (h.text || h.answer));
+                    if (!hist.length) return;
+                    const sc = $('chat-scroll');
+                    if (sc) sc.innerHTML = '';
+                    hist.forEach(h => {
+                        if (h.role === 'user') appendMsg('user', esc(h.text || ''));
+                        else if (h.role === 'bot' && h.answer) appendMsg('mentor', h.answer);
+                    });
+                } catch (err) {
+                    console.warn('[ai] transcript restore failed: ' + err.message);
+                }
+            }
+
+            // ============ EVENTS ============
+            document.querySelectorAll('#period-toggle .period-btn').forEach(b => b.addEventListener('click', () => {
+                document.querySelectorAll('#period-toggle .period-btn').forEach(x => x.classList.toggle('active', x === b));
+                PERIOD = b.dataset.period;
+                chatMemory = null;
+                $('chat-scroll').innerHTML = '<div class="msg msg-mentor">Ask me about your trading — how am I doing overall, which session is hurting me, am I tilting, what should I focus on.</div>';
+                loadBundle(true);
+            }));
+            $('chat-send').addEventListener('click', () => sendChat($('chat-input').value));
+            $('chat-input').addEventListener('keydown', e => {
+                if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat($('chat-input').value); }
+            });
+            document.addEventListener('click', e => {
+                const up = e.target.closest && e.target.closest('[data-act="up"]');
+                const down = e.target.closest && e.target.closest('[data-act="down"]');
+                const dis = e.target.closest && e.target.closest('[data-act="dismiss"]');
+                const rest = e.target.closest && e.target.closest('[data-restore]');
+                const fol = e.target.closest && e.target.closest('[data-follow]');
+                if (up) findingAction(up.dataset.id, 'up');
+                else if (down) findingAction(down.dataset.id, 'down');
+                else if (dis) findingAction(dis.dataset.id, 'dismiss');
+                else if (rest) restoreFinding(rest.dataset.restore);
+                else if (fol) sendChat(fol.dataset.follow);
+            });
+            $('ev-close').addEventListener('click', closeEvidence);
+            $('ev-overlay').addEventListener('click', closeEvidence);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEvidence(); });
+            $('retry-btn').addEventListener('click', () => loadBundle(true));
+            $('dismissed-toggle').addEventListener('click', () => {
+                const body = $('dismissed-body');
+                const open = body.classList.toggle('hidden');
+                $('dismissed-toggle').textContent = open ? 'Show' : 'Hide';
+                if (!open) loadDismissed();
+            });
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            $('acc-chip').addEventListener('click', () => {
+                if (!core || !core.Accounts || !core.Accounts.length) return;
+                const ids = core.Accounts.map(a => a.id);
+                const cur = currentAccountId() || ids[0];
+                const idx = ids.indexOf(cur);
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+                chatMemory = null;
+                $('chat-scroll').innerHTML = '<div class="msg msg-mentor">Ask me about your trading — how am I doing overall, which session is hurting me, am I tilting, what should I focus on.</div>';
+                loadBundle(true);
+                restoreTranscript();
+            });
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+            }
+            if (core && core.TradeMindBus) {
+                ['trade.created', 'trade.updated', 'trade.deleted', 'config.version.created', 'config.changed', 'account.changed'].forEach(ev =>
+                    core.TradeMindBus.subscribe(ev, () => loadBundle(false)));
+            }
+
+            loadBundle(true);
+            restoreTranscript();
+            if (window.lucide) lucide.createIcons();
         })();
     </script>
     <script src="assets/tour.js"></script>

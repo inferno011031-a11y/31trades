@@ -716,6 +716,16 @@ async function handleApi(req, res, url) {
                 const ctx = accountId ? AI.buildContext(Core, accountId, 'all') : null;
                 return json(res, 200, { ok: true, tilt: ctx ? AI.tiltAnalysis(ctx) : [] });
             }
+            if (p === '/api/ai/memory') {
+                // Read-only view of the server's persisted conversation memory
+                // (data/chat-<userId>-<accountId>.json) so the client can restore
+                // the transcript + follow-up context across reloads. The server's
+                // persisted memory remains the single authoritative store.
+                const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
+                if (!accountId) return json(res, 200, { ok: true, memory: null });
+                const memory = await Bot.loadMemory(uc.userId, accountId);
+                return json(res, 200, { ok: true, memory });
+            }
             if ((m = p.match(/^\/api\/ai\/autopsy\/([^/]+)$/))) {
                 const t = Core.Trades.find(x => x.id === m[1]);
                 if (!t) return json(res, 404, { error: 'unknown trade: ' + m[1] });
