@@ -939,7 +939,7 @@
 
             // ---- first-run welcome hero (dismissible, persists per browser) ----
             var WELCOME_KEY = '31trades.welcome.dismissed.v1';
-            window.dismissWelcome = function () {
+            window.dismissWelcome = window.dismissOnboarding = function () {
                 try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
                 var hero = document.getElementById('dash-hero');
                 if (hero) hero.remove();
@@ -947,48 +947,29 @@
                     window.setTimeout(window.startTour, 250);
                 }
             };
-            function welcomeFirstName() {
-                try {
-                    var s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
-                    var u = s && s.user;
-                    if (u && u.name) return String(u.name).split(/[\s@]/)[0];
-                    if (u && u.email) return String(u.email).split('@')[0].split(/[._-]/)[0];
-                } catch (e) {}
-                return 'trader';
-            }
-            function renderWelcomeHero(wrapper, hasAccount) {
-                var core = window.TradeMindCore;
-                var hasTrades = !!(core && core.Trades && core.Trades.length);
+            // Premium first-time onboarding: welcome + 5-step checklist derived
+            // from the same canonical state the notifications engine uses. Shows
+            // only while onboarding is incomplete (and not dismissed), and stops
+            // showing entirely once the workspace is fully built.
+            function renderWelcomeHero(wrapper) {
                 var dismissed = false;
                 try { dismissed = localStorage.getItem(WELCOME_KEY) === '1'; } catch (e) {}
                 var existing = document.getElementById('dash-hero');
-                if (dismissed || hasTrades) { if (existing) existing.remove(); return; }
-                if (existing) return;
-                var hero = document.createElement('div');
-                hero.id = 'dash-hero';
-                hero.className = 'panel p-5 relative overflow-hidden';
-                var name = welcomeFirstName();
-                var step1 = hasAccount ? 'ok' : 'next';
-                var step2 = hasAccount ? 'next' : 'todo';
-                hero.innerHTML =
-                    '<div class="absolute top-3 right-3 flex items-center gap-1.5">' +
-                        '<button onclick="window.startTour && window.startTour()" title="Take a guided tour" class="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--tm-dim)] hover:text-[var(--tm-green)] hover:bg-[var(--tm-hover)] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="compass" class="w-4 h-4"></svg></button>' +
-                        '<button onclick="window.dismissWelcome()" title="Dismiss" class="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--tm-dim)] hover:text-[var(--tm-text)] hover:bg-[var(--tm-hover)] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
-                    '</div>' +
-                    '<div class="flex items-start gap-4">' +
-                        '<div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(52,211,153,0.12));border:1px solid rgba(99,102,241,0.3)"><svg data-lucide="sparkles" class="w-5 h-5 text-[var(--tm-accent)]"></svg></div>' +
-                        '<div class="min-w-0">' +
-                            '<div class="text-[17px] font-bold tracking-tight">Welcome to BattlexJournal, <span class="text-[var(--tm-green)]">' + name + '</span> 👋</div>' +
-                            '<p class="text-[13px] text-[var(--tm-muted)] mt-1 max-w-2xl leading-relaxed">Your journal, risk engine and AI mentor are ready. Set up your workspace and log your first trade — every screen reads the same ledger.</p>' +
-                            '<div class="flex flex-wrap items-center gap-2 mt-4">' +
-                                '<a href="strategy-lab.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ' + (step1 === 'ok' ? 'opacity-50' : '') + '"><svg data-lucide="' + (step1 === 'ok' ? 'check-circle-2' : 'wallet') + '" class="w-4 h-4"></svg> Account</a>' +
-                                '<a href="strategy-lab.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ' + (step2 === 'ok' ? 'opacity-50' : '') + '"><svg data-lucide="' + (step2 === 'ok' ? 'check-circle-2' : 'beaker') + '" class="w-4 h-4"></svg> Strategy</a>' +
-                                '<a href="journal.html" class="btn-primary !py-2 !px-3.5 text-[12.5px]"><svg data-lucide="plus" class="w-4 h-4"></svg> Log first trade</a>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>';
-                wrapper.prepend(hero);
-                if (window.lucide) lucide.createIcons();
+                if (dismissed) { if (existing) existing.remove(); return; }
+                if (!window.TMOnboarding) {
+                    // asset may still be loading on a slow first paint — retry
+                    window.setTimeout(function () { renderWelcomeHero(wrapper); }, 120);
+                    return;
+                }
+                var allDone = window.TMOnboarding.steps().every(function (s) { return s.complete; });
+                if (allDone) { if (existing) existing.remove(); return; }
+                if (!existing) {
+                    var hero = document.createElement('div');
+                    hero.id = 'dash-hero';
+                    wrapper.prepend(hero);
+                    existing = hero;
+                }
+                window.TMOnboarding.render(existing, {});
             }
 
             // First-user empty state: with zero trades (or no account yet) the
@@ -998,7 +979,7 @@
                 var core = window.TradeMindCore;
                 var wrapper = document.getElementById('dash-content');
                 if (!wrapper) return true;
-                renderWelcomeHero(wrapper, !!(core && core.Accounts && core.Accounts.length));
+                renderWelcomeHero(wrapper);
                 var empty = document.getElementById('dash-empty');
                 var hasAccount = !!(core && core.Accounts && core.Accounts.length);
                 var hasTrades = !!(core && core.Trades && core.Trades.length);
@@ -1667,6 +1648,7 @@
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();
     </script>
+    <script src="assets/onboarding.js"></script>
     <script src="assets/tour.js"></script>
     <script src="reset.js"></script>
 </body>

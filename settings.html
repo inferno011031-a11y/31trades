@@ -636,6 +636,12 @@
             document.querySelectorAll('.set-nav-item').forEach(btn => {
                 btn.addEventListener('click', () => switchSection(btn.getAttribute('data-set-tab')));
             });
+            // deep link: settings.html#brokers opens the Brokers section (used
+            // by the onboarding checklist's connect-broker step)
+            const _secHash = (window.location.hash || '').replace('#', '');
+            if (_secHash && ['profile', 'brokers', 'security', 'appearance'].indexOf(_secHash) !== -1) {
+                switchSection(_secHash);
+            }
 
             // ---- profile render ----
             function renderProfile() {
