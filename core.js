@@ -251,6 +251,7 @@
             { name: 'Community', href: 'community.html', icon: 'users' },
             { name: 'Reports', href: 'reports.html', icon: 'file-text' },
             { name: 'Review', href: 'review.html', icon: 'clipboard-check' },
+            { name: 'Improve', href: 'improve.html', icon: 'refresh-cw' },
             { name: 'Notifications', href: 'notifications.html', icon: 'bell' },
             { name: 'Settings', href: 'settings.html', icon: 'settings' },
             { name: 'Help', href: 'help.html', icon: 'help-circle' }

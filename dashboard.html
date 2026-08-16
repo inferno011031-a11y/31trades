@@ -18,6 +18,7 @@
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
+    <script src="assets/focus.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -464,6 +465,9 @@
                 <a href="review.html" class="nav-item">
                     <svg data-lucide="clipboard-check"></svg><span class="nav-label">Review</span>
                 </a>
+                <a href="improve.html" class="nav-item">
+                    <svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span>
+                </a>
             </nav>
 
             <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
@@ -842,6 +846,25 @@
                                 </div>
                                 <p class="text-[12px] text-[var(--tm-dim)] leading-relaxed mt-1" id="wf-note">—</p>
                             </div>
+                        </div>
+
+                        <!-- Your Current Focus (Improvement Loop) -->
+                        <div class="panel p-5">
+                            <div class="panel-title mb-1">Your Current Focus</div>
+                            <p class="panel-sub mb-3" id="dash-focus-note">Based on your recent discipline evidence.</p>
+                            <div class="flex items-end justify-between gap-3">
+                                <div>
+                                    <div class="text-[24px] font-extrabold tracking-tight" id="dash-focus">—</div>
+                                    <div class="text-[11.5px] text-[var(--tm-dim)] mt-1" id="dash-focus-sub">—</div>
+                                </div>
+                                <div class="text-right flex-shrink-0">
+                                    <div class="label-xs mb-1">Discipline</div>
+                                    <div class="text-[20px] font-extrabold num" id="dash-focus-score">—</div>
+                                </div>
+                            </div>
+                            <a href="improve.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[var(--tm-green)] mt-4 hover:opacity-80 transition-opacity">
+                                View focus <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                            </a>
                         </div>
                     </div>
 
@@ -1448,6 +1471,24 @@
                             ? (weekTrades.length - weekReviewed) + ' review' + (weekTrades.length - weekReviewed > 1 ? 's' : '') + ' pending — focus on ' + focusDim + ' this week.'
                             : 'All reviews done — keep your ' + focusDim + ' discipline sharp.')
                         : 'No trades this week yet — your budget resets fresh.';
+                }
+
+                // ---- YOUR CURRENT FOCUS (Improvement Loop) ----
+                if (window.TMFocus && byId('dash-focus')) {
+                    var fcx = window.TMFocus.current(accountId);
+                    if (fcx.state === 'focus') {
+                        byId('dash-focus').textContent = fcx.focus;
+                        byId('dash-focus-sub').textContent = 'Based on your recent ' + fcx.source + '.';
+                        byId('dash-focus-note').textContent = 'Based on your recent ' + fcx.source + '.';
+                        var fScore = fcx.evidence.score;
+                        byId('dash-focus-score').textContent = fScore == null ? '—' : fScore;
+                        byId('dash-focus-score').style.color = fScore == null ? '' : (fScore >= 80 ? 'var(--tm-green)' : fScore >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)');
+                    } else {
+                        byId('dash-focus').textContent = 'Building your profile';
+                        byId('dash-focus-sub').textContent = fcx.state === 'empty' ? 'Log your first trade to start the loop.' : 'More evidence needed before a focus forms.';
+                        byId('dash-focus-score').textContent = '—';
+                        byId('dash-focus-note').textContent = 'Keep recording and reviewing trades.';
+                    }
                 }
             }
 

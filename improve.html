@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BATTLEXJOURNAL — Improve</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+    <script src="assets/asset-meta.js"></script>
+    <script src="assets/focus.js"></script>
+    <style>
+        :root {
+            --im-bg-1: rgba(99, 102, 241, 0.09);
+            --im-bg-2: rgba(52, 211, 153, 0.06);
+            --im-bg-3: rgba(16, 185, 129, 0.05);
+        }
+        .im-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, var(--im-bg-1), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, var(--im-bg-2), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, var(--im-bg-3), transparent 60%),
+                var(--tm-bg);
+        }
+
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); position: relative; z-index: 30; }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        /* ---- Trading loop flow ---- */
+        .loop-flow { display: flex; align-items: stretch; gap: 6px; overflow-x: auto; padding-bottom: 4px; }
+        .loop-step {
+            flex: 1; min-width: 108px; display: flex; flex-direction: column; gap: 6px;
+            padding: 12px 10px; border-radius: 12px; text-decoration: none;
+            background: var(--tm-card); border: 1px solid var(--tm-border);
+            transition: all 0.15s ease; position: relative;
+        }
+        .loop-step:hover { background: var(--tm-hover); border-color: var(--tm-border-2); transform: translateY(-1px); }
+        .loop-step .ls-ico { width: 30px; height: 30px; border-radius: 9px; display: flex; align-items: center; justify-content: center; background: var(--tm-card-2); border: 1px solid var(--tm-border-2); color: var(--tm-accent); }
+        .loop-step .ls-name { font-size: 13px; font-weight: 800; letter-spacing: 0.03em; color: var(--tm-text); }
+        .loop-step .ls-sub { font-size: 10.5px; color: var(--tm-dim); }
+        .loop-step .ls-arr { position: absolute; right: -14px; top: 50%; transform: translateY(-50%); color: var(--tm-muted); z-index: 2; }
+        .loop-step:last-child .ls-arr { display: none; }
+
+        /* ---- Focus centerpiece ---- */
+        .focus-hero { position: relative; overflow: hidden; }
+        .focus-big {
+            font-size: 42px; font-weight: 900; letter-spacing: -0.03em; line-height: 1;
+            background: linear-gradient(135deg, var(--tm-accent), var(--tm-green));
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+        .ev-line { display: flex; align-items: baseline; gap: 8px; padding: 8px 2px; border-bottom: 1px solid var(--hairline); }
+        .ev-line:last-child { border-bottom: none; }
+        .ev-k { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); width: 138px; flex-shrink: 0; }
+        .ev-v { font-size: 13px; font-weight: 600; color: var(--tm-text); }
+
+        .act-chip {
+            display: inline-flex; align-items: center; gap: 8px; padding: 10px 14px;
+            border: 1px solid var(--tm-border-2); border-radius: 10px; background: var(--tm-card-2);
+            color: var(--tm-text); text-decoration: none; font-size: 12.5px; font-weight: 700;
+            transition: all 0.14s ease;
+        }
+        .act-chip:hover { background: var(--tm-hover); border-color: var(--tm-accent); transform: translateY(-1px); }
+        .act-chip svg { width: 15px; height: 15px; color: var(--tm-accent); }
+
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
+            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+            .ev-k { width: 104px; font-size: 10px; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
+</head>
+<body>
+
+    <!-- Premium ambient background -->
+    <div class="im-bg"></div>
+
+    <div class="flex h-screen relative" style="z-index:1">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+                <a href="review.html" class="nav-item"><svg data-lucide="clipboard-check"></svg><span class="nav-label">Review</span></a>
+                <a href="improve.html" class="nav-item active"><svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span></a>
+            </nav>
+
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. what should I focus on?">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div>
+                        <h1 class="text-[24px] font-bold tracking-tight">Improve</h1>
+                        <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Trade. Review. See the pattern. Fix the leak. Practice. Repeat.</p>
+                    </div>
+
+                    <!-- Empty state (no account / no trades) -->
+                    <div id="empty-state" class="hidden glass p-12 text-center">
+                        <svg data-lucide="refresh-cw" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[18px] font-bold">Building your trader profile</h3>
+                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">Keep recording and reviewing trades. Battlex needs evidence before it can identify meaningful patterns.</p>
+                        <a href="journal.html" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5">
+                            <svg data-lucide="book-open" class="w-4 h-4"></svg> Log your first trade
+                        </a>
+                    </div>
+
+                    <div id="im-body" class="hidden flex flex-col gap-4">
+
+                        <!-- The loop -->
+                        <div class="glass rounded-2xl p-5">
+                            <div class="flex items-baseline justify-between gap-3 flex-wrap mb-4">
+                                <div class="panel-title">Your trading loop</div>
+                                <span class="text-[11.5px] text-[var(--tm-dim)]">One loop, one focus, every week.</span>
+                            </div>
+                            <div class="loop-flow" id="loop-flow"></div>
+                        </div>
+
+                        <!-- Focus centerpiece -->
+                        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                            <div class="glass-strong rounded-2xl p-6 focus-hero xl:col-span-2">
+                                <div class="flex flex-wrap items-start justify-between gap-4">
+                                    <div>
+                                        <div class="label-xs mb-1">Your current focus</div>
+                                        <div class="focus-big" id="foc-value">—</div>
+                                        <p class="text-[12.5px] text-[var(--tm-dim)] mt-2" id="foc-source">—</p>
+                                    </div>
+                                    <div class="flex flex-col gap-1 items-end">
+                                        <div class="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--tm-muted)]">Discipline</div>
+                                        <div class="text-[26px] font-extrabold num" id="foc-score">—</div>
+                                        <div class="text-[12px] text-[var(--tm-dim)]" id="foc-score-sub">—</div>
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-1 lg:grid-cols-2 gap-5 mt-6">
+                                    <div>
+                                        <div class="label-xs mb-2">Why this is your focus</div>
+                                        <div id="foc-why"></div>
+                                    </div>
+                                    <div class="flex flex-col gap-4">
+                                        <div>
+                                            <div class="label-xs mb-2">Next action</div>
+                                            <a class="btn-primary w-full justify-center !py-2.5" id="foc-action" href="discipline.html">
+                                                <svg data-lucide="target" class="w-4 h-4"></svg> <span id="foc-action-label">View violations</span>
+                                            </a>
+                                        </div>
+                                        <div>
+                                            <div class="label-xs mb-2">Evidence</div>
+                                            <div class="flex flex-wrap gap-2" id="foc-evidence"></div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col gap-4">
+                                <div class="glass rounded-2xl p-5">
+                                    <div class="panel-title mb-1">Work on it</div>
+                                    <p class="panel-sub mb-4">Battlex surfaces the evidence. You decide what changes.</p>
+                                    <div class="flex flex-wrap gap-2">
+                                        <a href="ai.html" class="act-chip" id="ai-link"><svg data-lucide="brain-circuit"></svg> Investigate with AI</a>
+                                        <a href="backtesting.html" class="act-chip"><svg data-lucide="flask-conical"></svg> Practice this</a>
+                                        <a href="strategy-lab.html" class="act-chip"><svg data-lucide="beaker"></svg> Review your system</a>
+                                    </div>
+                                </div>
+                                <div class="glass rounded-2xl p-5">
+                                    <div class="panel-title mb-1">Train first. Then compete.</div>
+                                    <p class="panel-sub mb-4">Practice is training. Battle is the test under pressure.</p>
+                                    <div class="flex flex-col gap-2">
+                                        <a href="backtesting.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="flask-conical" class="w-4 h-4"></svg> Train first — practice</a>
+                                        <a href="battles.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="swords" class="w-4 h-4"></svg> Test under pressure — battles</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Improve · your focus comes from the same review + discipline engine every other surface reads</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
+
+    <script>
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+            const core = window.TradeMindCore;
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            let toastTimer = null;
+            function showToast(msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            }
+            window.showToast = showToast;
+
+            // ============ ACCOUNT RESOLUTION ============
+            function currentAccountId() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+            }
+            function account() { const id = currentAccountId(); return id ? core.Accounts.find(a => a.id === id) : null; }
+
+            // ============ CHROME ============
+            function renderChrome() {
+                const acc = account();
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + money(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                    if (window.lucide) lucide.createIcons();
+                }
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc && pName) pName.textContent = acc.name;
+                if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+            }
+
+            // ============ LOOP FLOW ============
+            const LOOP = [
+                { name: 'Journal', sub: 'What you did', href: 'journal.html', icon: 'book-open' },
+                { name: 'Review', sub: 'Reflect', href: 'review.html', icon: 'clipboard-check' },
+                { name: 'Discover', sub: 'See the pattern', href: 'insights.html', icon: 'sparkles' },
+                { name: 'Focus', sub: 'Pick the leak', href: 'improve.html', icon: 'crosshair' },
+                { name: 'Practice', sub: 'Train it', href: 'backtesting.html', icon: 'flask-conical' },
+                { name: 'Repeat', sub: 'Trade again', href: 'journal.html', icon: 'refresh-cw' }
+            ];
+            function renderLoop() {
+                $('loop-flow').innerHTML = LOOP.map(s =>
+                    '<a href="' + s.href + '" class="loop-step">' +
+                        '<span class="ls-arr"><svg data-lucide="chevron-right" class="w-4 h-4"></svg></span>' +
+                        '<span class="ls-ico"><svg data-lucide="' + s.icon + '" class="w-4 h-4"></svg></span>' +
+                        '<span><span class="ls-name block">' + s.name + '</span><span class="ls-sub">' + s.sub + '</span></span>' +
+                    '</a>'
+                ).join('');
+            }
+
+            // ============ FOCUS RENDER ============
+            function renderAll() {
+                renderChrome();
+                renderLoop();
+                const accId = currentAccountId();
+                const empty = $('empty-state'), body = $('im-body');
+                if (!accId || !core.Trades || !core.Trades.length) {
+                    empty.classList.remove('hidden');
+                    body.classList.add('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+                body.classList.remove('hidden');
+
+                const fc = window.TMFocus ? window.TMFocus.current(accId) : { state: 'low' };
+
+                if (fc.state !== 'focus') {
+                    // low-data: honest state, no fabricated focus
+                    $('foc-value').textContent = 'Not enough evidence yet';
+                    $('foc-source').textContent = 'Keep building your trading history — Battlex identifies a focus once patterns become meaningful.';
+                    $('foc-score').textContent = '—';
+                    $('foc-score-sub').textContent = 'discipline';
+                    $('foc-why').innerHTML = '<div class="glass rounded-xl p-4 text-[12.5px] text-[var(--tm-dim)]">More trading history is needed before a reliable focus can be identified. Keep logging and reviewing trades.</div>';
+                    $('foc-action').href = 'journal.html';
+                    $('foc-action-label').textContent = 'Log your next trade';
+                    $('foc-action').querySelector('svg').setAttribute('data-lucide', 'book-open');
+                    $('foc-evidence').innerHTML = '';
+                    $('ai-link').href = 'ai.html';
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+
+                const ev = fc.evidence;
+                $('foc-value').textContent = fc.focus;
+                $('foc-source').textContent = 'Based on your recent ' + fc.source + '.';
+                const scoreCol = ev.score == null ? 'var(--tm-dim)' : ev.score >= 80 ? 'var(--tm-green)' : ev.score >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
+                $('foc-score').textContent = ev.score == null ? '—' : ev.score;
+                $('foc-score').style.color = scoreCol;
+                $('foc-score-sub').textContent = (ev.violations != null ? ev.violations + ' violations' : 'no violations') + (ev.cleanDayStreak ? ' · ' + ev.cleanDayStreak + 'd clean streak' : '');
+
+                const why = [];
+                if (ev.weakestDim) why.push(['Weakest dimension', ev.weakestDim, 'var(--tm-amber)']);
+                if (ev.mostFrequent) why.push(['Most frequent rule', ev.mostFrequent, '']);
+                if (ev.mostCostly) why.push(['Most costly rule', ev.mostCostly.rule + ' · ' + ev.mostCostly.count + ' break' + (ev.mostCostly.count === 1 ? '' : 's') + ' · ' + money(ev.mostCostly.cost), 'var(--tm-red)']);
+                if (ev.violations != null && ev.violations > 0) why.push(['Violations', ev.violations + ' rule break' + (ev.violations === 1 ? '' : 's'), 'var(--tm-red)']);
+                if (!why.length) why.push(['Discipline score', ev.score == null ? 'no evaluated rules yet' : ev.score + '/100', '']);
+                $('foc-why').innerHTML = why.map(w =>
+                    '<div class="ev-line"><span class="ev-k">' + w[0] + '</span><span class="ev-v" style="color:' + w[2] + '">' + esc(w[1]) + '</span></div>'
+                ).join('');
+
+                // next action: prefer the most actionable existing destination
+                let action = { href: 'discipline.html', label: 'View violations', icon: 'target' };
+                if (ev.mostCostly || (ev.violations != null && ev.violations > 0)) {
+                    action = { href: 'discipline.html', label: 'View violations', icon: 'target' };
+                } else if (ev.mostFrequent) {
+                    action = { href: 'strategy-lab.html', label: 'Review the rule', icon: 'beaker' };
+                } else {
+                    action = { href: 'strategy-lab.html', label: 'Review your system', icon: 'beaker' };
+                }
+                $('foc-action').href = action.href;
+                $('foc-action-label').textContent = action.label;
+                $('foc-action').querySelector('svg').setAttribute('data-lucide', action.icon);
+
+                $('foc-evidence').innerHTML = [
+                    ['VIEW VIOLATIONS', 'discipline.html', 'target'],
+                    ['VIEW TRADES', 'journal.html', 'book-open'],
+                    ['VIEW INSIGHT', 'insights.html', 'sparkles'],
+                    ['VIEW ANALYTICS', 'analytics.html', 'bar-chart-3']
+                ].map(e =>
+                    '<a href="' + e[1] + '" class="btn-ghost !py-1.5 !px-2.5 text-[11px]"><svg data-lucide="' + e[2] + '" class="w-3.5 h-3.5"></svg> ' + e[0] + '</a>'
+                ).join('');
+
+                // AI handoff with subject
+                $('ai-link').href = 'ai.html?subject=' + encodeURIComponent(fc.subject);
+
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ============ WIRING ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            $('acc-chip').addEventListener('click', () => {
+                const ids = core.Accounts.map(a => a.id);
+                const idx = ids.indexOf(currentAccountId());
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+            });
+
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+            }
+
+            if (core && core.TradeMindBus) {
+                ['trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'account.changed', 'review.completed'].forEach(ev =>
+                    core.TradeMindBus.subscribe(ev, () => renderAll()));
+            }
+
+            renderAll();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>

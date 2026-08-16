@@ -260,6 +260,7 @@
                 <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
                 <a href="review.html" class="nav-item"><svg data-lucide="clipboard-check"></svg><span class="nav-label">Review</span></a>
+                <a href="improve.html" class="nav-item"><svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span></a>
             </nav>
 
             <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
@@ -1089,6 +1090,16 @@
 
             loadBundle(true);
             restoreTranscript();
+
+            // Context handoff from the Improvement Loop: ai.html?subject=<focus>
+            // seeds the existing askAbout() flow with the passed subject.
+            try {
+                const subj = new URLSearchParams(location.search).get('subject');
+                if (subj && subj.trim()) {
+                    setTimeout(() => { try { askAbout(subj.trim()); } catch (e) { /* mentor unavailable — page stays functional */ } }, 1200);
+                }
+            } catch (e) { /* ignore malformed params */ }
+
             if (window.lucide) lucide.createIcons();
         })();
     </script>
