@@ -3,18 +3,646 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Market Replay</title>
-    <!-- Unified one-page hub: replay now lives inside backtesting.html?mode=replay -->
-    <meta http-equiv="refresh" content="0;url=backtesting.html?mode=replay">
+    <title>BATTLEXJOURNAL — Market Replay</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
+            overflow: hidden;
+        }
+
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* ---- Glass system (Calendar/AI parity) ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
+
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
+        .btn-primary {
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
+        }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; transform: none; cursor: default; }
+        .btn-ghost {
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
+        }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-ghost:disabled { opacity: 0.45; cursor: default; }
+        .btn-mini {
+            background: transparent; border: 1px solid var(--tm-border-2); border-radius: 7px; color: var(--tm-muted);
+            padding: 7px 12px; font-size: 12px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.13s;
+        }
+        .btn-mini:hover { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
+        .btn-mini:disabled { opacity: 0.4; cursor: default; }
+
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
+        .tag-indigo { background: rgba(99,102,241,0.10); color: var(--tm-accent-2); border-color: rgba(99,102,241,0.25); }
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        /* ---- Chart area ---- */
+        .chart-unavailable {
+            position: relative; min-height: 420px; display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; overflow: hidden;
+            background:
+                linear-gradient(135deg, var(--glass-inner) 25%, transparent 25%) 0 0 / 28px 28px,
+                linear-gradient(315deg, var(--glass-inner) 25%, transparent 25%) 0 0 / 28px 28px,
+                linear-gradient(135deg, transparent 75%, var(--glass-inner) 75%) 0 0 / 28px 28px,
+                linear-gradient(315deg, transparent 75%, var(--glass-inner) 75%) 0 0 / 28px 28px,
+                var(--tm-bg);
+        }
+
+        .field-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tm-muted); margin-bottom: 5px; }
+        .field-input, .field-select {
+            width: 100%; background: var(--tm-card); border: 1px solid var(--tm-border-2);
+            border-radius: 8px; padding: 9px 11px; font-size: 13px; color: var(--tm-text);
+            outline: none; transition: border-color 0.15s, box-shadow 0.15s; font-family: var(--tm-sans);
+        }
+        .field-input:focus, .field-select:focus { border-color: var(--tm-accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+        .field-input::placeholder { color: var(--tm-dim); }
+        .field-select option { background: var(--tm-bg-elev); color: var(--tm-text); }
+
+        .stat-tile { text-align: center; padding: 12px 8px; border-radius: 9px; background: var(--glass-inner); border: 1px solid var(--hairline); }
+        .stat-val { font-size: 16px; font-weight: 800; line-height: 1.15; }
+        .stat-lbl { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tm-muted); margin-top: 3px; }
+
+        .progress-track { height: 5px; border-radius: 999px; background: var(--tm-border-2); overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--tm-accent-2), var(--tm-green)); transition: width 0.2s ease; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .fade-up { animation: fadeUp 0.22s ease; }
+
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+            .chart-unavailable { min-height: 320px; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
+</head>
+<body>
+
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="replay.html" class="nav-item active"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="backtesting.html?mode=battle" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="nav-avatar">TR</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="nav-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[24px] font-bold tracking-tight">Market Replay</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Read the market one decision at a time.</p>
+                        </div>
+                        <span class="tag tag-indigo"><svg data-lucide="history" class="w-3 h-3"></svg> Replay</span>
+                    </div>
+
+                    <!-- Setup -->
+                    <div class="glass p-5 fade-up">
+                        <div class="flex flex-wrap items-end gap-3">
+                            <div class="flex-1 min-w-[140px]">
+                                <label class="field-label" for="rp-symbol">Symbol</label>
+                                <select id="rp-symbol" class="field-select">
+                                    <option value="EURUSD">EURUSD</option>
+                                    <option value="GBPUSD">GBPUSD</option>
+                                    <option value="USDJPY">USDJPY</option>
+                                    <option value="XAUUSD">XAUUSD</option>
+                                    <option value="AUDNZD">AUDNZD</option>
+                                    <option value="US30">US30</option>
+                                    <option value="NAS100">NAS100</option>
+                                </select>
+                            </div>
+                            <div class="flex-1 min-w-[140px]">
+                                <label class="field-label" for="rp-timeframe">Timeframe</label>
+                                <select id="rp-timeframe" class="field-select">
+                                    <option value="1m">1m</option>
+                                    <option value="5m">5m</option>
+                                    <option value="15m">15m</option>
+                                    <option value="1h" selected>1h</option>
+                                    <option value="4h">4h</option>
+                                    <option value="1d">1d</option>
+                                </select>
+                            </div>
+                            <div class="flex-1 min-w-[140px]">
+                                <label class="field-label" for="rp-window">Historical window</label>
+                                <select id="rp-window" class="field-select">
+                                    <option value="200">200 bars</option>
+                                    <option value="400" selected>400 bars</option>
+                                    <option value="800">800 bars</option>
+                                    <option value="1200">1200 bars</option>
+                                </select>
+                            </div>
+                            <button class="btn-primary" id="start-replay">
+                                <svg data-lucide="play" class="w-4 h-4"></svg> <span id="start-label">Start replay</span>
+                            </button>
+                        </div>
+                        <p class="text-[11px] text-[var(--tm-dim)] mt-3" id="setup-msg">Replay replays real historical bars one at a time — the server holds the session and reveals bars as playback advances.</p>
+                    </div>
+
+                    <!-- CHART AREA (hero) -->
+                    <div class="glass p-4 fade-up">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                            <div>
+                                <div class="label-xs">Chart area</div>
+                                <div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5" id="chart-sub">No replay session — start one to begin.</div>
+                            </div>
+                            <span class="tag tag-gray" id="status-tag">Ready</span>
+                        </div>
+
+                        <div class="chart-unavailable">
+                            <div class="text-center max-w-md px-6 py-10">
+                                <div class="w-14 h-14 mx-auto rounded-2xl mb-4 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(99,102,241,0.16),rgba(16,185,129,0.08));border:1px solid rgba(129,140,248,0.25)">
+                                    <svg data-lucide="candlestick-chart" class="w-7 h-7 text-[var(--tm-accent-2)]"></svg>
+                                </div>
+                                <div class="text-[16px] font-bold">Market Replay — chart engine unavailable</div>
+                                <p class="text-[12.5px] text-[var(--tm-dim)] mt-2 leading-relaxed">The replay engine is ready, but the charting dependency is currently unavailable.</p>
+                                <p class="text-[11.5px] text-[var(--tm-dim)] mt-2 leading-relaxed">Replay sessions still run bar-by-bar on the server — revealed bars, cursor, and playback state stay intact. Restore the chart dependency to begin rendering candles.</p>
+                                <div class="flex flex-wrap items-center justify-center gap-1.5 mt-4">
+                                    <span class="tag tag-gray">OHLC candles</span>
+                                    <span class="tag tag-gray">revealed bars</span>
+                                    <span class="tag tag-gray">cursor</span>
+                                    <span class="tag tag-gray">price scale</span>
+                                    <span class="tag tag-gray">crosshair</span>
+                                    <span class="tag tag-gray">drawings</span>
+                                    <span class="tag tag-gray">indicators</span>
+                                </div>
+                                <p class="text-[10.5px] text-[var(--tm-dim)] mt-3">Layers reserved for the real chart — not simulated.</p>
+                            </div>
+                        </div>
+
+                        <!-- progress -->
+                        <div class="mt-3">
+                            <div class="flex items-center justify-between text-[11px] text-[var(--tm-dim)] num mb-1.5">
+                                <span id="prog-label">No session</span>
+                                <span id="prog-cursor">—</span>
+                            </div>
+                            <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+                        </div>
+                    </div>
+
+                    <!-- Replay controls -->
+                    <div class="glass p-4 fade-up">
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <button class="btn-mini !px-5 !py-2.5 !text-[13px]" data-ctrl="play" disabled><svg data-lucide="play" class="w-4 h-4"></svg> Play</button>
+                            <button class="btn-mini !px-5 !py-2.5 !text-[13px]" data-ctrl="pause" disabled><svg data-lucide="pause" class="w-4 h-4"></svg> Pause</button>
+                            <button class="btn-mini !px-5 !py-2.5 !text-[13px]" data-ctrl="step" disabled><svg data-lucide="skip-forward" class="w-4 h-4"></svg> Step</button>
+                            <button class="btn-mini !px-5 !py-2.5 !text-[13px]" data-ctrl="reset" disabled><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg> Reset</button>
+                        </div>
+                        <p class="text-center text-[10.5px] text-[var(--tm-dim)] mt-2.5">Playback runs on the server — these controls drive the canonical replay cursor. Step-back is not supported by the replay engine.</p>
+                    </div>
+
+                    <!-- Market state -->
+                    <div class="glass p-4 fade-up">
+                        <div class="flex items-center justify-between mb-3">
+                            <div class="label-xs">Current market state</div>
+                            <span class="text-[11px] text-[var(--tm-dim)] num" id="source-label">source —</span>
+                        </div>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 xl:grid-cols-7 gap-2" id="state-strip">
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Symbol</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Timeframe</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Current price</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Bar</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Total</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Revealed</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">State</div></div>
+                        </div>
+                    </div>
+
+                    <!-- Session + philosophy -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-up">
+                        <div class="glass p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="label-xs">Replay session</div>
+                                <span class="tag tag-gray" id="sess-tag">None</span>
+                            </div>
+                            <div class="text-[12.5px] text-[var(--tm-dim)] leading-relaxed" id="sess-note">
+                                Start a replay to begin. Replay sessions are held in memory by the engine and are not persisted to a history list.
+                            </div>
+                            <p class="text-[11.5px] text-[var(--tm-muted)] mt-3 leading-relaxed">
+                                <svg data-lucide="eye" class="w-3.5 h-3.5 inline-block mr-1 text-[var(--tm-dim)]"></svg>
+                                Replay is observation: it walks real historical bars one at a time so you read the market as it unfolds. Trade execution is not part of the replay engine.
+                            </p>
+                        </div>
+                        <div class="glass p-5 flex flex-col justify-center">
+                            <svg data-lucide="quote" class="w-5 h-5 text-[var(--tm-accent-2)] mb-2.5"></svg>
+                            <div class="text-[15px] font-bold leading-snug">Do not predict the next candle. Read the information available now.</div>
+                            <div class="text-[11.5px] text-[var(--tm-dim)] mt-2">Replay is about reading what is in front of you — one bar, one decision.</div>
+                            <a href="backtesting.html" class="btn-ghost !py-2 !px-3.5 !text-[12px] mt-4 self-start"><svg data-lucide="flask-conical" class="w-3.5 h-3.5"></svg> Practice in Backtesting</a>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Market Replay · read the market one decision at a time</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
     <script>
         (function () {
-            var q = location.search.length > 1 ? location.search.slice(1) : '';
-            var target = 'backtesting.html?mode=replay' + (q ? '&' + q : '');
-            location.replace(target);
+            'use strict';
+            const $ = id => document.getElementById(id);
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
+            let toastTimer;
+            window.showToast = function (msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+            const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const fmtNum = n => n == null || isNaN(n) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 5 });
+
+            // ============ STATE ============
+            let sessionId = null;
+            let st = null;              // latest status payload
+            let lastBarClose = null;    // close of the newest revealed bar (real engine data)
+            let pollTimer = null;
+
+            // ============ CHROME ============
+            function renderChrome() {
+                const core = window.TradeMindCore;
+                const chip = $('acc-chip');
+                if (core && core.Accounts && core.Accounts.length) {
+                    const sel = core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    if (chip) chip.innerHTML = '<span class="num text-[12px]">' + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                } else if (chip) chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                if (window.lucide) lucide.createIcons();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+            }
+            function renderProfile() {
+                let name = 'trader';
+                try {
+                    const s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
+                    const u = (s && s.user) || null;
+                    if (u && u.name) name = String(u.name).split(/[\s@]/)[0];
+                    else if (u && u.email) name = String(u.email).split('@')[0].split(/[._-]/)[0];
+                } catch (e) {}
+                $('nav-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                $('nav-avatar').textContent = name.slice(0, 2).toUpperCase();
+            }
+
+            // ============ REPLAY OPS ============
+            async function startReplay() {
+                const symbol = $('rp-symbol').value;
+                const timeframe = $('rp-timeframe').value;
+                const window = $('rp-window').value;
+                const btn = $('start-replay');
+                btn.disabled = true;
+                $('start-label').textContent = 'Starting…';
+                $('setup-msg').textContent = 'Opening replay session…';
+                $('setup-msg').style.color = 'var(--tm-dim)';
+                try {
+                    const r = await apiFetch('/api/replay/start?symbol=' + encodeURIComponent(symbol) + '&timeframe=' + encodeURIComponent(timeframe) + '&window=' + encodeURIComponent(window));
+                    const data = await r.json().catch(() => ({}));
+                    if (!r.ok || !data.ok) throw new Error((data && data.error) || 'Replay start failed (' + r.status + ')');
+                    sessionId = data.state.id;
+                    st = data.state;
+                    lastBarClose = st.bars && st.bars.length ? st.bars[st.bars.length - 1].close : null;
+                    $('setup-msg').textContent = 'Replay session open — ' + st.symbol + ' ' + st.timeframe + ' (' + (st.source || 'local') + '). Use Play / Step to advance bars.';
+                    $('setup-msg').style.color = 'var(--tm-green)';
+                    $('start-label').textContent = 'New session';
+                    showToast('Replay session started');
+                    render();
+                    stopPoll();
+                    startPoll();
+                } catch (e) {
+                    $('setup-msg').textContent = e.message;
+                    $('setup-msg').style.color = 'var(--tm-red)';
+                } finally {
+                    btn.disabled = false;
+                }
+            }
+
+            async function refreshStatus() {
+                if (!sessionId) return;
+                try {
+                    const r = await apiFetch('/api/replay/status?id=' + encodeURIComponent(sessionId));
+                    const data = await r.json().catch(() => ({}));
+                    if (!r.ok || !data.ok) {
+                        if (data && data.error === 'unknown session') { sessionId = null; st = null; lastBarClose = null; stopPoll(); }
+                        return;
+                    }
+                    st = data;
+                    if (st.bars && st.bars.length) lastBarClose = st.bars[st.bars.length - 1].close;
+                    render();
+                } catch (e) { /* keep last state */ }
+            }
+
+            async function control(action) {
+                if (!sessionId) return;
+                try {
+                    const r = await apiFetch('/api/replay/control', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ id: sessionId, action, speedMs: 400 })
+                    });
+                    const data = await r.json().catch(() => ({}));
+                    if (!r.ok || !data.ok) throw new Error((data && data.error) || 'Control ' + action + ' failed');
+                    st = data.state || st;
+                    if (st && st.bars && st.bars.length) lastBarClose = st.bars[st.bars.length - 1].close;
+                    render();
+                    if (action === 'play') { stopPoll(); startPoll(); }
+                    if (action === 'pause' || action === 'step' || action === 'reset') stopPoll();
+                    if (action === 'step' || action === 'reset') startPoll();  // re-arm for completion detection
+                } catch (e) {
+                    showToast(e.message);
+                }
+            }
+
+            // ============ RENDER ============
+            function stateLabel() {
+                if (!st) return { tag: 'Ready', cls: 'tag-gray' };
+                if (st.ended) return { tag: 'Completed', cls: 'tag-emerald' };
+                if (st.playing) return { tag: 'Playing', cls: 'tag-blue' };
+                return { tag: 'Paused', cls: 'tag-amber' };
+            }
+            function render() {
+                const has = !!st;
+                const s = stateLabel();
+                $('status-tag').textContent = s.tag;
+                $('status-tag').className = 'tag ' + s.cls;
+                $('sess-tag').textContent = has ? (st.symbol + ' ' + st.timeframe) : 'None';
+                $('sess-note').innerHTML = has
+                    ? ('Session <span class="num font-semibold text-[var(--tm-text)]">' + esc(st.id) + '</span> · source <span class="num font-semibold text-[var(--tm-text)]">' + esc(st.source || 'history-local') + '</span>. Replay sessions are held in memory by the engine and are not persisted to a history list.')
+                    : 'Start a replay to begin. Replay sessions are held in memory by the engine and are not persisted to a history list.';
+                $('chart-sub').textContent = has ? (st.symbol + ' · ' + st.timeframe + ' · ' + (st.playing ? 'playing' : st.ended ? 'completed' : 'paused')) : 'No replay session — start one to begin.';
+                $('source-label').textContent = has ? ('source ' + (st.source || 'history-local')) : 'source —';
+                const prog = has && st.total ? Math.min(100, Math.round(st.position / st.total * 100)) : 0;
+                $('prog-label').textContent = has ? (st.symbol + ' ' + st.timeframe) : 'No session';
+                $('prog-cursor').textContent = has ? (st.position + ' / ' + st.total + ' bars revealed') : '—';
+                $('prog-fill').style.width = prog + '%';
+
+                document.querySelectorAll('[data-ctrl]').forEach(b => {
+                    const act = b.dataset.ctrl;
+                    let on = has && !st.ended;
+                    if (act === 'play') on = has && !st.ended && !st.playing;
+                    if (act === 'pause') on = has && st.playing;
+                    if (act === 'step') on = has && !st.ended;
+                    if (act === 'reset') on = has;
+                    b.disabled = !on;
+                });
+
+                $('state-strip').innerHTML =
+                    tile('Symbol', has ? st.symbol : '—') +
+                    tile('Timeframe', has ? st.timeframe : '—') +
+                    tile('Current price', lastBarClose != null ? fmtNum(lastBarClose) : '—') +
+                    tile('Bar', has ? st.position : '—') +
+                    tile('Total', has ? st.total : '—') +
+                    tile('Revealed', has ? (st.bars ? st.bars.length : 0) : '—') +
+                    tile('State', s.tag);
+                if (window.lucide) lucide.createIcons();
+            }
+            function tile(lbl, val) {
+                return '<div class="stat-tile"><div class="stat-val num">' + val + '</div><div class="stat-lbl">' + lbl + '</div></div>';
+            }
+
+            // ============ POLLING (server-side playback) ============
+            function stopPoll() {
+                if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
+            }
+            function startPoll() {
+                stopPoll();
+                pollTimer = setInterval(async () => {
+                    if (!sessionId) { stopPoll(); return; }
+                    const prevEnded = st ? st.ended : false;
+                    await refreshStatus();
+                    if (st && !prevEnded && st.ended) {
+                        stopPoll();
+                        showToast('Replay completed — all bars revealed');
+                    }
+                    if (st && !st.playing && !st.ended) {
+                        // paused/stepped — stop polling after a short settle
+                        stopPoll();
+                    }
+                }, 1500);
+            }
+
+            // ============ BOOT ============
+            function boot() {
+                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+                const core = window.TradeMindCore;
+                if (core && core.selectedAccountId) core.setSelectedAccount(core.selectedAccountId());
+                renderChrome();
+                renderProfile();
+
+                $('start-replay').addEventListener('click', startReplay);
+                document.querySelectorAll('[data-ctrl]').forEach(b => {
+                    b.addEventListener('click', () => control(b.dataset.ctrl));
+                });
+                const gs = $('global-search');
+                if (gs && window.TM_GLOBAL_SEARCH) {
+                    gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+                }
+                if (window.lucide) lucide.createIcons();
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();
     </script>
-</head>
-<body style="background:#0a0c10;color:#94a3b8;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
-    <p>Redirecting to the unified trading page… <a href="backtesting.html?mode=replay">Click here</a> if nothing happens.</p>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
 </body>
 </html>
