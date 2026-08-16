@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Settings</title>
+    <title>BATTLEXJOURNAL — Settings</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,159 +14,256 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0A0A0C; color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
-        .num {
-            font-family: 'JetBrains Mono', monospace;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.01em;
-        }
 
-        /* App shell */
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
-            display: flex;
-            flex-direction: column;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
         }
         body.collapsed .sidebar { width: 64px; }
-        .logo-badge {
-            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
-            background: linear-gradient(135deg, #10B981, #059669);
-            color: #052E1F; font-weight: 800; font-size: 14px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .collapse-btn {
-            background: none; border: none; color: #6E6E78; cursor: pointer;
-            padding: 6px; border-radius: 6px; transition: all 0.15s;
-        }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
 
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
-            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08);
-            color: #FFFFFF;
-            box-shadow: inset 2px 0 0 #10B981;
-        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
-        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        /* ---- Glass system (Calendar/AI parity) ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
+
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none; cursor: pointer;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.55; transform: none; cursor: default; }
         .btn-ghost {
-            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
-            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
         .btn-danger {
-            background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 13px;
-            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s;
+            background: rgba(239,68,68,0.10); color: var(--tm-red); font-weight: 600; font-size: 12px;
+            padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.28);
+            display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; cursor: pointer;
         }
         .btn-danger:hover { background: rgba(239,68,68,0.18); }
 
-        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
-        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
-        .theme-opt { display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 14px 8px; border-radius: 12px; border: 1px solid #1F1F23; background: #0B0B0D; color: #8A8A93; font-size: 12.5px; font-weight: 600; cursor: pointer; transition: border-color .15s, background .15s, color .15s; }
-        .theme-opt:hover { border-color: #2E2E36; color: #E8E8EC; }
-        .theme-opt.active { border-color: #6366F1; background: rgba(99,102,241,.08); color: #E8E8EC; box-shadow: 0 0 0 1px rgba(99,102,241,.35), 0 4px 18px -6px rgba(99,102,241,.4); }
-        .theme-swatch { width: 100%; height: 44px; border-radius: 8px; border: 1px solid #26262C; display: flex; align-items: center; justify-content: center; color: #6E6E78; }
-        .strength-bar { height: 4px; flex: 1; border-radius: 999px; background: #26272B; transition: background 0.2s ease; }
-        .strength-bar.on-weak { background: #F87171; }
-        .strength-bar.on-fair { background: #FBBF24; }
-        .strength-bar.on-good { background: #60A5FA; }
-        .strength-bar.on-strong { background: #34D399; }
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
 
-        /* Profile + broker rows */
-        .copy-chip {
-            display: inline-flex; align-items: center; gap: 8px;
-            background: #121214; border: 1px solid #26262B; border-radius: 8px;
-            padding: 7px 10px; font-size: 12px; color: #B4B4BD; cursor: pointer; transition: all 0.15s;
+        /* ---- Settings navigation ---- */
+        .set-nav-item {
+            display: flex; align-items: center; gap: 11px;
+            padding: 10px 12px; border-radius: 9px;
+            font-size: 13.5px; font-weight: 600; color: var(--tm-muted);
+            border: 1px solid transparent; cursor: pointer;
+            transition: all 0.15s; text-align: left; width: 100%;
+            background: transparent; white-space: nowrap;
         }
-        .copy-chip:hover { border-color: #3A3A41; color: #FFFFFF; }
+        .set-nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .set-nav-item.active {
+            background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(52,211,153,0.08));
+            color: var(--tm-text); border-color: rgba(129,140,248,0.30);
+            box-shadow: inset 2px 0 0 var(--tm-accent-2);
+        }
+        .set-nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
+
+        /* ---- Forms ---- */
+        .field-label { display: block; font-size: 11.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tm-muted); margin-bottom: 6px; }
+        .input-wrap { position: relative; display: flex; align-items: center; }
+        .field-input {
+            width: 100%; background: var(--tm-card); border: 1px solid var(--tm-border-2);
+            border-radius: 9px; padding: 10px 38px 10px 12px; font-size: 13.5px; color: var(--tm-text);
+            outline: none; transition: border-color 0.15s, box-shadow 0.15s; font-family: var(--tm-sans);
+        }
+        .field-input:focus { border-color: var(--tm-accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.14); }
+        .field-input::placeholder { color: var(--tm-dim); }
+        .field-icon { position: absolute; left: 11px; color: var(--tm-dim); pointer-events: none; }
+        .field-input.has-icon { padding-left: 36px; padding-right: 38px; }
+        .toggle-pw {
+            position: absolute; right: 8px; width: 28px; height: 28px; border-radius: 7px;
+            border: none; background: transparent; color: var(--tm-dim); cursor: pointer;
+            display: flex; align-items: center; justify-content: center; transition: all 0.13s;
+        }
+        .toggle-pw:hover { color: var(--tm-text); background: var(--tm-hover); }
+
+        .strength-bar { height: 4px; flex: 1; border-radius: 999px; background: var(--tm-border-2); transition: background 0.2s ease; }
+        .strength-bar.on-weak { background: var(--tm-red); }
+        .strength-bar.on-fair { background: var(--tm-amber); }
+        .strength-bar.on-good { background: var(--tm-blue); }
+        .strength-bar.on-strong { background: var(--tm-green); }
+
+        /* ---- Theme selector ---- */
+        .theme-opt {
+            display: flex; flex-direction: column; align-items: center; gap: 9px; padding: 14px 8px;
+            border-radius: 12px; border: 1px solid var(--tm-border-2); background: var(--tm-card);
+            color: var(--tm-muted); font-size: 12.5px; font-weight: 600; cursor: pointer;
+            transition: border-color .15s, background .15s, color .15s, box-shadow .15s;
+        }
+        .theme-opt:hover { border-color: var(--tm-muted); color: var(--tm-text); }
+        .theme-opt.active { border-color: var(--tm-accent-2); background: linear-gradient(135deg, rgba(99,102,241,0.14), rgba(52,211,153,0.06)); color: var(--tm-text); box-shadow: 0 0 0 1px rgba(129,140,248,0.35), 0 6px 20px -6px rgba(99,102,241,0.30); }
+        .theme-swatch { width: 100%; height: 46px; border-radius: 8px; border: 1px solid var(--tm-border-2); display: flex; align-items: center; justify-content: center; color: var(--tm-dim); overflow: hidden; }
+        .theme-check { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 999px; background: var(--tm-accent-2); color: #fff; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(0.6); transition: all 0.18s; }
+        .theme-opt.active .theme-check { opacity: 1; transform: scale(1); }
+
+        /* ---- Broker rows ---- */
         .broker-row {
             display: flex; align-items: center; gap: 14px;
-            padding: 14px 16px; border-bottom: 1px solid #17171A; transition: background 0.12s;
+            padding: 14px 16px; border-bottom: 1px solid var(--hairline); transition: background 0.12s;
         }
         .broker-row:last-child { border-bottom: none; }
-        .broker-row:hover { background: rgba(255,255,255,0.03); }
+        .broker-row:hover { background: var(--glass-inner); }
         .broker-ico {
             width: 40px; height: 40px; border-radius: 10px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(16,185,129,0.12); color: #34D399;
+            background: rgba(16,185,129,0.12); color: var(--tm-green);
         }
         .status-badge {
             display: inline-flex; align-items: center; gap: 6px;
             padding: 3px 10px; border-radius: 999px; font-size: 11px; font-weight: 700;
-            background: rgba(16,185,129,0.12); color: #34D399;
+            background: rgba(16,185,129,0.12); color: var(--tm-green);
         }
-        .status-badge .dot { width: 6px; height: 6px; border-radius: 999px; background: #34D399; box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+        .status-badge .dot { width: 6px; height: 6px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 6px rgba(16,185,129,0.6); }
+        .status-badge.off { background: var(--tm-card); color: var(--tm-dim); border: 1px solid var(--tm-border-2); }
+        .status-badge.off .dot { background: var(--tm-dim); box-shadow: none; }
 
-        /* Broker picker modal */
+        /* ---- Broker picker modal ---- */
         .broker-overlay {
             position: fixed; inset: 0; z-index: 90;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
+            background: rgba(8, 10, 14, 0.55); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
             display: flex; align-items: center; justify-content: center; padding: 20px;
         }
         .broker-card {
             width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto;
-            background: #121620; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
-            padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15); -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong); border-radius: 16px;
+            padding: 20px; box-shadow: var(--glass-shadow);
         }
         .broker-close {
             width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.04); color: #8A8A93; transition: all 0.15s;
+            background: var(--tm-hover); color: var(--tm-muted); transition: all 0.15s;
         }
-        .broker-close:hover { background: rgba(255,255,255,0.1); color: #E8E8EC; }
+        .broker-close:hover { background: var(--tm-border-2); color: var(--tm-text); }
         .broker-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
         .broker-pick {
             display: flex; align-items: center; gap: 12px; padding: 10px 12px;
-            border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
+            border-radius: 10px; background: var(--tm-card); border: 1px solid var(--tm-border-2);
             transition: background 0.15s;
         }
-        .broker-pick:hover { background: rgba(255,255,255,0.06); }
+        .broker-pick:hover { background: var(--tm-hover); }
         .broker-connect {
             flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            color: #0A0C10; background: #34D399; border: none; cursor: pointer; transition: all 0.15s;
+            color: var(--tm-bg); background: var(--tm-green); border: none; cursor: pointer; transition: all 0.15s;
         }
-        .broker-connect:hover { background: #10B981; box-shadow: 0 0 18px rgba(16,185,129,0.35); }
+        .broker-connect:hover { filter: brightness(1.1); box-shadow: 0 0 18px rgba(16,185,129,0.35); }
 
-        @media (max-width: 640px) {
-            .search-input { display: none; }
-            .topbar { padding-left: 12px; padding-right: 12px; }
-        }
+        /* ---- Skeleton ---- */
+        .skel { border-radius: 8px; background: linear-gradient(90deg, var(--tm-border-2) 25%, var(--tm-hover) 50%, var(--tm-border-2) 75%); background-size: 200% 100%; animation: skel 1.4s ease-in-out infinite; }
+        @keyframes skel { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        .set-section { display: none !important; }
+        .set-section.active { display: flex !important; animation: fadeUp 0.22s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
         @media (max-width: 1024px) {
             .search-input { width: 180px; }
             .sidebar { width: 64px; }
@@ -174,19 +271,30 @@
             .nav-item { justify-content: center; padding: 9px 0; }
             .hide-when-collapsed { display: none !important; }
         }
+        @media (max-width: 768px) {
+            .set-layout { flex-direction: column !important; }
+            .set-layout .set-nav { flex-direction: row !important; overflow-x: auto; padding-bottom: 4px; }
+            .set-layout .set-nav-item { width: auto; }
+        }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
 </head>
 <body>
 
-    <div class="flex h-screen">
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -209,17 +317,17 @@
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item active"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar" id="nav-avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="nav-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate" id="nav-name">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="nav-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]" id="nav-plan">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -230,170 +338,226 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
                     <input id="global-search" type="text" class="search-input" placeholder="Search settings…">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
+                    </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </button>
-                    <button class="account-select hide-when-collapsed" id="account-chip">
-                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Content -->
-            <main class="flex-1 overflow-y-auto">
+            <main class="flex-1 overflow-y-auto relative">
                 <div class="max-w-[1100px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-[22px] font-bold tracking-tight">Settings</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">
-                                Profile, connected brokers and workspace details.
-                            </p>
+                            <h1 class="text-[24px] font-bold tracking-tight">Settings</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Your identity, security, connections, and workspace.</p>
                         </div>
                     </div>
 
-                    <!-- Profile -->
-                    <div class="panel p-5">
-                        <div class="flex items-center justify-between gap-3 mb-4">
-                            <div class="panel-title">User Profile</div>
-                            <span class="status-badge"><span class="dot"></span> Active</span>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-4">
-                            <div class="avatar !w-14 !h-14 !rounded-2xl !text-[18px]" id="profile-avatar">AJ</div>
-                            <div class="flex-1 min-w-0">
-                                <div class="text-[16px] font-bold text-white" id="profile-name">—</div>
-                                <div class="text-[12.5px] text-[#8A8A93]" id="profile-email">—</div>
-                            </div>
-                        </div>
-                        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[#17171A]">
-                            <div class="text-[12px] text-[#6E6E78]">Unique user ID (for Discord verification &amp; giveaways)</div>
-                            <button class="copy-chip num" id="user-id-chip" title="Click to copy">
-                                <span id="user-id-text">—</span>
-                                <svg data-lucide="copy" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
-                            </button>
-                            <button class="btn-ghost !py-1.5 !px-3 !text-[12px]" onclick="window.signOut()">
-                                <svg data-lucide="log-out" class="w-3.5 h-3.5"></svg> Sign out
-                            </button>
-                        </div>
-                    </div>
+                    <!-- Layout: settings nav + content -->
+                    <div class="flex gap-5 set-layout">
 
-                    <!-- Connected Brokers -->
-                    <div class="panel">
-                        <div class="flex flex-wrap items-center justify-between gap-3 px-5 py-4 border-b border-[#17171A]">
-                            <div>
-                                <div class="panel-title">Connected Brokers</div>
-                                <div class="text-[12px] text-[#6E6E78] mt-0.5">Live trade auto-import arrives soon — this syncs your platform choice across devices.</div>
-                            </div>
-                            <button class="btn-primary !py-2 !px-4 text-[12.5px]" id="add-broker-btn">
-                                <svg data-lucide="plus" class="w-4 h-4"></svg> Connect a broker
+                        <!-- Settings navigation -->
+                        <nav class="set-nav flex flex-col gap-1 w-full md:w-[200px] flex-shrink-0">
+                            <button class="set-nav-item active" data-set-tab="profile">
+                                <svg data-lucide="user"></svg><span>Profile</span>
                             </button>
-                        </div>
-                        <div id="broker-list">
-                            <div class="py-14 text-center text-[13px] text-[#6E6E78]">Loading brokers…</div>
-                        </div>
-                    </div>
+                            <button class="set-nav-item" data-set-tab="brokers">
+                                <svg data-lucide="plug"></svg><span>Brokers</span>
+                            </button>
+                            <button class="set-nav-item" data-set-tab="security">
+                                <svg data-lucide="shield"></svg><span>Security</span>
+                            </button>
+                            <button class="set-nav-item" data-set-tab="appearance">
+                                <svg data-lucide="palette"></svg><span>Appearance</span>
+                            </button>
+                        </nav>
 
-                    <!-- Security: change password -->
-                    <div class="panel p-5">
-                        <div class="flex items-center justify-between gap-3 mb-1">
-                            <div class="panel-title">Security</div>
-                            <svg data-lucide="shield" class="w-4 h-4 text-[#34D399]"></svg>
-                        </div>
-                        <p class="text-[12px] text-[#6E6E78] mb-4">Update your sign-in password. You'll stay signed in on this device.</p>
+                        <!-- ================= PROFILE ================= -->
+                        <section class="set-section active flex-1 min-w-0 flex flex-col gap-4" id="sec-profile">
 
-                        <form id="form-change-password" novalidate>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div>
-                                    <label class="field-label" for="cp-current">Current password</label>
-                                    <div class="input-wrap">
-                                        <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                                        <input id="cp-current" class="field-input" type="password" placeholder="Your current password" autocomplete="current-password">
-                                        <button type="button" class="toggle-pw" data-target="cp-current">
-                                            <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                        </button>
+                            <!-- Identity card (glass) -->
+                            <div class="glass-strong p-6 relative overflow-hidden">
+                                <div class="flex flex-wrap items-center gap-5">
+                                    <div class="avatar !w-16 !h-16 !rounded-2xl !text-[22px]" id="profile-avatar">TR</div>
+                                    <div class="flex-1 min-w-0">
+                                        <div class="label-xs mb-1">Trader</div>
+                                        <div class="text-[20px] font-bold leading-tight" id="profile-name">—</div>
+                                        <div class="text-[13px] text-[var(--tm-dim)] mt-0.5" id="profile-email">—</div>
+                                    </div>
+                                    <span class="status-badge hide-when-collapsed"><span class="dot"></span> Active</span>
+                                </div>
+
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-5 border-t border-[var(--hairline)]">
+                                    <div>
+                                        <div class="label-xs mb-1.5">Unique trader ID</div>
+                                        <div class="flex items-center gap-2 flex-wrap">
+                                            <code class="num text-[12.5px] text-[var(--tm-text)] bg-[var(--tm-card)] border border-[var(--tm-border-2)] rounded-lg px-3 py-2 truncate max-w-full" id="user-id-text">—</code>
+                                            <button class="btn-ghost !py-2 !px-3 !text-[12px]" id="copy-id-btn">
+                                                <svg data-lucide="copy" class="w-3.5 h-3.5" id="copy-id-ico"></svg> <span id="copy-id-label">Copy ID</span>
+                                            </button>
+                                        </div>
+                                        <p class="text-[11.5px] text-[var(--tm-dim)] mt-2">Your unique Battlex identity — used for Discord verification and role sync / giveaways.</p>
+                                    </div>
+                                    <div>
+                                        <div class="label-xs mb-1.5">Member since</div>
+                                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)]" id="profile-created">—</div>
+                                        <div class="text-[11.5px] text-[var(--tm-dim)] mt-2">Signed in with your Supabase account.</div>
                                     </div>
                                 </div>
-                                <div>
-                                    <label class="field-label" for="cp-new">New password</label>
-                                    <div class="input-wrap">
-                                        <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                                        <input id="cp-new" class="field-input" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
-                                        <button type="button" class="toggle-pw" data-target="cp-new">
-                                            <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="mt-4 md:max-w-[50%]">
-                                <label class="field-label" for="cp-confirm">Confirm new password</label>
-                                <div class="input-wrap">
-                                    <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                                    <input id="cp-confirm" class="field-input" type="password" placeholder="Re-enter new password" autocomplete="new-password">
-                                    <button type="button" class="toggle-pw" data-target="cp-confirm">
-                                        <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+
+                                <div class="flex items-center gap-3 mt-5 pt-4 border-t border-[var(--hairline)]">
+                                    <button class="btn-ghost !py-2 !px-3.5 !text-[12.5px]" onclick="window.signOut()">
+                                        <svg data-lucide="log-out" class="w-3.5 h-3.5"></svg> Sign out
                                     </button>
                                 </div>
                             </div>
-                            <!-- Password strength meter -->
-                            <div class="mt-4 md:max-w-[50%]">
-                                <div class="flex items-center justify-between mb-1.5">
-                                    <span class="text-[11.5px] font-semibold uppercase tracking-wider text-[#6E6E78]">Strength</span>
-                                    <span id="cp-strength-label" class="text-[11.5px] font-semibold text-[#6E6E78]">—</span>
+                        </section>
+
+                        <!-- ================= BROKERS ================= -->
+                        <section class="set-section flex-1 min-w-0 flex flex-col gap-4" id="sec-brokers">
+
+                            <div class="glass p-5">
+                                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                    <div>
+                                        <div class="panel-title">Connected Brokers</div>
+                                        <div class="text-[12px] text-[var(--tm-dim)] mt-0.5">Your platform choice syncs across devices — auto-import for live trades arrives later.</div>
+                                    </div>
+                                    <button class="btn-primary !py-2 !px-4 text-[12.5px]" id="add-broker-btn">
+                                        <svg data-lucide="plus" class="w-4 h-4"></svg> Connect a broker
+                                    </button>
                                 </div>
-                                <div class="flex gap-1.5" id="cp-strength-bars">
-                                    <div class="strength-bar" data-i="0"></div>
-                                    <div class="strength-bar" data-i="1"></div>
-                                    <div class="strength-bar" data-i="2"></div>
-                                    <div class="strength-bar" data-i="3"></div>
+                                <div id="broker-list">
+                                    <div class="py-14 text-center text-[13px] text-[var(--tm-dim)]">Loading brokers…</div>
                                 </div>
                             </div>
-                            <div class="flex items-center gap-3 mt-5">
-                                <button type="submit" class="btn-primary !py-2 !px-5 text-[13px]">Update password</button>
-                                <span id="cp-msg" class="text-[12.5px] text-[#6E6E78]"></span>
+                        </section>
+
+                        <!-- ================= SECURITY ================= -->
+                        <section class="set-section flex-1 min-w-0 flex flex-col gap-4" id="sec-security">
+
+                            <div class="glass p-6">
+                                <div class="flex items-center justify-between gap-3 mb-1">
+                                    <div class="panel-title !text-[15px]">Security</div>
+                                    <svg data-lucide="shield" class="w-4 h-4 text-[var(--tm-green)]"></svg>
+                                </div>
+                                <p class="text-[12px] text-[var(--tm-dim)] mb-5">Update your sign-in password. You'll stay signed in on this device.</p>
+
+                                <form id="form-change-password" novalidate>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <label class="field-label" for="cp-current">Current password</label>
+                                            <div class="input-wrap">
+                                                <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                                <input id="cp-current" class="field-input has-icon" type="password" placeholder="Your current password" autocomplete="current-password">
+                                                <button type="button" class="toggle-pw" data-target="cp-current" title="Show / hide">
+                                                    <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <label class="field-label" for="cp-new">New password</label>
+                                            <div class="input-wrap">
+                                                <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                                <input id="cp-new" class="field-input has-icon" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
+                                                <button type="button" class="toggle-pw" data-target="cp-new" title="Show / hide">
+                                                    <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="mt-4 md:max-w-[50%]">
+                                        <label class="field-label" for="cp-confirm">Confirm new password</label>
+                                        <div class="input-wrap">
+                                            <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                            <input id="cp-confirm" class="field-input has-icon" type="password" placeholder="Re-enter new password" autocomplete="new-password">
+                                            <button type="button" class="toggle-pw" data-target="cp-confirm" title="Show / hide">
+                                                <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Password strength meter -->
+                                    <div class="mt-5 md:max-w-[50%]">
+                                        <div class="flex items-center justify-between mb-1.5">
+                                            <span class="text-[11.5px] font-semibold uppercase tracking-wider text-[var(--tm-muted)]">Strength</span>
+                                            <span id="cp-strength-label" class="text-[11.5px] font-semibold text-[var(--tm-muted)]">—</span>
+                                        </div>
+                                        <div class="flex gap-1.5" id="cp-strength-bars">
+                                            <div class="strength-bar" data-i="0"></div>
+                                            <div class="strength-bar" data-i="1"></div>
+                                            <div class="strength-bar" data-i="2"></div>
+                                            <div class="strength-bar" data-i="3"></div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex flex-wrap items-center gap-3 mt-5">
+                                        <button type="submit" class="btn-primary !py-2 !px-5 text-[13px]">Update password</button>
+                                        <span id="cp-msg" class="text-[12.5px] text-[var(--tm-dim)]"></span>
+                                    </div>
+                                    <div id="cp-last-changed" class="hidden text-[12px] text-[var(--tm-dim)] flex items-center gap-2 mt-2">
+                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                        <span id="cp-last-changed-text"></span>
+                                    </div>
+                                </form>
                             </div>
-                            <div id="cp-last-changed" class="hidden text-[12px] text-[#6E6E78] flex items-center gap-2 mt-1">
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                <span id="cp-last-changed-text"></span>
+                        </section>
+
+                        <!-- ================= APPEARANCE ================= -->
+                        <section class="set-section flex-1 min-w-0 flex flex-col gap-4" id="sec-appearance">
+
+                            <div class="glass p-6">
+                                <div class="flex items-center justify-between mb-1">
+                                    <div class="panel-title !text-[15px]">Appearance</div>
+                                    <span class="text-[11px] text-[var(--tm-dim)] num">SYNCED TO ACCOUNT</span>
+                                </div>
+                                <p class="text-[12px] text-[var(--tm-dim)] mb-5">Choose how BattlexJournal looks. Your choice is saved to your account and follows you on every device.</p>
+                                <div class="grid grid-cols-3 gap-3" id="theme-picker">
+                                    <button type="button" class="theme-opt relative" data-theme-pref="light" title="Light">
+                                        <span class="theme-swatch" style="background:linear-gradient(135deg,#F6F8FB 0%,#E9EDF3 100%)">
+                                            <svg class="w-4 h-4" fill="none" stroke="#64748B" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"></path></svg>
+                                        </span>
+                                        <span class="theme-check"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></span>
+                                        <span>Light</span>
+                                    </button>
+                                    <button type="button" class="theme-opt relative" data-theme-pref="dark" title="Dark">
+                                        <span class="theme-swatch" style="background:linear-gradient(135deg,#151923 0%,#0A0C10 100%)">
+                                            <svg class="w-4 h-4" fill="none" stroke="#94A3B8" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
+                                        </span>
+                                        <span class="theme-check"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></span>
+                                        <span>Dark</span>
+                                    </button>
+                                    <button type="button" class="theme-opt relative" data-theme-pref="system" title="Match your device">
+                                        <span class="theme-swatch" style="background:linear-gradient(135deg,#F6F8FB 0%,#151923 100%)">
+                                            <svg class="w-4 h-4" fill="none" stroke="#94A3B8" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path stroke-linecap="round" d="M8 21h8m-4-4v4"></path></svg>
+                                        </span>
+                                        <span class="theme-check"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></span>
+                                        <span>System</span>
+                                    </button>
+                                </div>
+                                <p class="text-[11.5px] text-[var(--tm-muted)] mt-4" id="theme-sync-msg">Your theme is stored in your account so it syncs across devices.</p>
                             </div>
-                        </form>
+                        </section>
                     </div>
 
-                    <!-- Appearance: theme (Light / Dark / System) -->
-                    <div class="panel p-5">
-                        <div class="flex items-center justify-between mb-1">
-                            <div class="panel-title">Appearance</div>
-                            <span class="text-[11px] text-[#6E6E78] num">SYNCED TO ACCOUNT</span>
-                        </div>
-                        <p class="text-[12px] text-[#6E6E78] mb-4">Choose how 31TRADES looks. Your choice is saved to your account and follows you on every device.</p>
-                        <div class="grid grid-cols-3 gap-3" id="theme-picker">
-                            <button type="button" class="theme-opt" data-theme-pref="light" title="Light">
-                                <span class="theme-swatch" style="background:linear-gradient(135deg,#F6F8FB 0%,#E9EDF3 100%)"></span>
-                                <span>Light</span>
-                            </button>
-                            <button type="button" class="theme-opt" data-theme-pref="dark" title="Dark">
-                                <span class="theme-swatch" style="background:linear-gradient(135deg,#121620 0%,#0A0C10 100%)"></span>
-                                <span>Dark</span>
-                            </button>
-                            <button type="button" class="theme-opt" data-theme-pref="system" title="Match your device">
-                                <span class="theme-swatch">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path></svg>
-                                </span>
-                                <span>System</span>
-                            </button>
-                        </div>
-                        <p class="text-[11.5px] text-[#4A4A52] mt-3" id="theme-sync-msg">Your theme is stored in your account so it syncs across devices.</p>
-                    </div>
-
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Settings · connected brokers sync through /api/brokers</p>
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Settings · brokers sync through /api/brokers · theme syncs through /api/prefs</p>
                 </div>
             </main>
         </div>
@@ -401,7 +565,7 @@
 
     <!-- Toast -->
     <div class="toast" id="toast">
-        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg>
         <span id="toast-msg"></span>
     </div>
 
@@ -448,6 +612,21 @@
                 } catch (e) { return 'anon'; }
             }
 
+            function fmtMemberSince(iso) {
+                if (!iso) return '—';
+                try { return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); }
+                catch (e) { return '—'; }
+            }
+
+            // ---- settings section navigation ----
+            function switchSection(tab) {
+                document.querySelectorAll('.set-nav-item').forEach(b => b.classList.toggle('active', b.getAttribute('data-set-tab') === tab));
+                document.querySelectorAll('.set-section').forEach(s => s.classList.toggle('active', s.id === 'sec-' + tab));
+            }
+            document.querySelectorAll('.set-nav-item').forEach(btn => {
+                btn.addEventListener('click', () => switchSection(btn.getAttribute('data-set-tab')));
+            });
+
             // ---- profile render ----
             function renderProfile() {
                 const u = sessionUser();
@@ -460,19 +639,21 @@
                 $('profile-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
                 $('profile-email').textContent = email;
                 $('user-id-text').textContent = id;
-                const chip = $('user-id-chip');
-                chip.onclick = async () => {
+                $('profile-created').textContent = fmtMemberSince(u && u.created_at);
+                $('copy-id-btn').onclick = async () => {
                     try { await navigator.clipboard.writeText(id); } catch (e) {
                         const t = document.createElement('textarea');
                         t.value = id; document.body.appendChild(t); t.select();
                         try { document.execCommand('copy'); } catch (e2) {}
                         t.remove();
                     }
-                    chip.querySelector('svg').setAttribute('data-lucide', 'check');
+                    $('copy-id-ico').setAttribute('data-lucide', 'check');
+                    $('copy-id-label').textContent = 'Copied';
                     if (window.lucide) lucide.createIcons();
-                    showToast('User ID copied to clipboard');
+                    showToast('Trader ID copied to clipboard');
                     setTimeout(() => {
-                        chip.querySelector('svg').setAttribute('data-lucide', 'copy');
+                        $('copy-id-ico').setAttribute('data-lucide', 'copy');
+                        $('copy-id-label').textContent = 'Copy ID';
                         if (window.lucide) lucide.createIcons();
                     }, 1600);
                 };
@@ -484,6 +665,24 @@
                     location.href = 'auth.html';
                 } catch (e) { location.href = 'auth.html'; }
             };
+
+            // ---- account chip (same canonical data flow as the rest of the app) ----
+            function renderChrome() {
+                const core = window.TradeMindCore;
+                const chip = $('acc-chip');
+                if (core && core.Accounts && core.Accounts.length) {
+                    const sel = core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    if (chip) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + String(acc.name).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                } else if (chip) {
+                    chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                }
+                if (window.lucide) lucide.createIcons();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+            }
 
             // ---- brokers: fetch from the backend, fall back to the local flag ----
             const BROKERS = [
@@ -513,20 +712,20 @@
                 if (!connectedBrokers.length) {
                     list.innerHTML =
                         '<div class="py-14 text-center">' +
-                            '<svg data-lucide="plug" class="w-10 h-10 mx-auto text-[#3A3A41] mb-3"></svg>' +
-                            '<p class="text-[14px] font-semibold text-[#B4B4BD]">No brokers connected</p>' +
-                            '<p class="text-[12.5px] text-[#6E6E78] mt-1">Connect MetaTrader, TradingView, cTrader and more — auto-import for live trades lands soon.</p>' +
+                            '<svg data-lucide="plug" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-3"></svg>' +
+                            '<p class="text-[14px] font-semibold text-[var(--tm-text)]">No brokers connected</p>' +
+                            '<p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Connect MetaTrader, TradingView, cTrader and more — auto-import for live trades lands soon.</p>' +
                         '</div>';
                 } else {
                     list.innerHTML = connectedBrokers.map(b =>
                         '<div class="broker-row">' +
                             '<div class="broker-ico"><svg data-lucide="' + (BROKER_ICON[b.broker] || 'plug') + '" class="w-[18px] h-[18px]"></svg></div>' +
                             '<div class="flex-1 min-w-0">' +
-                                '<div class="text-[14px] font-semibold text-white">' + b.broker + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78] mt-0.5">Connected ' + fmtTime(b.connected_at) + '</div>' +
+                                '<div class="text-[14px] font-semibold text-[var(--tm-text)]">' + String(b.broker).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</div>' +
+                                '<div class="text-[12px] text-[var(--tm-dim)] mt-0.5">Connected ' + fmtTime(b.connected_at) + '</div>' +
                             '</div>' +
-                            '<span class="status-badge hide-when-collapsed"><span class="dot"></span> Active</span>' +
-                            '<button class="btn-danger !py-1.5 !px-3 !text-[12px]" onclick="window.disconnectBroker(\'' + b.broker.replace(/'/g, "\\'") + '\')">' +
+                            '<span class="status-badge hide-when-collapsed"><span class="dot"></span> Connected</span>' +
+                            '<button class="btn-danger !py-1.5 !px-3" onclick="window.disconnectBroker(\'' + String(b.broker).replace(/'/g, "\\'") + '\')">' +
                                 '<svg data-lucide="unplug" class="w-3.5 h-3.5"></svg> Disconnect</button>' +
                         '</div>'
                     ).join('');
@@ -534,8 +733,17 @@
                 if (window.lucide) lucide.createIcons();
             }
 
+            function brokerSkeleton() {
+                $('broker-list').innerHTML =
+                    '<div class="p-4 flex items-center gap-4">' +
+                        '<div class="skel w-10 h-10 rounded-[10px]"></div>' +
+                        '<div class="flex-1"><div class="skel h-3.5 w-40 mb-2"></div><div class="skel h-3 w-24"></div></div>' +
+                        '<div class="skel w-20 h-6 rounded-full"></div>' +
+                    '</div>'.repeat(2);
+            }
+
             async function loadBrokers() {
-                $('broker-list').innerHTML = '<div class="py-14 text-center text-[13px] text-[#6E6E78]">Loading brokers…</div>';
+                brokerSkeleton();
                 try {
                     const res = await apiFetch('/api/brokers');
                     if (res.ok) {
@@ -562,23 +770,23 @@
                 ov.innerHTML =
                     '<div class="broker-card">' +
                         '<div class="flex items-start justify-between gap-4">' +
-                            '<div><div class="text-[16px] font-bold text-white">Connect a broker</div>' +
-                            '<p class="text-[12.5px] text-[#8A8A93] mt-1">Pick your platform — auto-import for live trades arrives later; this syncs your choice across devices.</p></div>' +
+                            '<div><div class="text-[16px] font-bold text-[var(--tm-text)]">Connect a broker</div>' +
+                            '<p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Pick your platform — auto-import for live trades arrives later; this syncs your choice across devices.</p></div>' +
                             '<button class="broker-close" onclick="window.closeBrokerPicker()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
                         '</div>' +
                         '<div class="broker-list">' +
                             BROKERS.map(b =>
                                 '<div class="broker-pick">' +
                                     '<div class="broker-ico"><svg data-lucide="' + b.icon + '" class="w-[18px] h-[18px]"></svg></div>' +
-                                    '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white">' + b.name + '</div>' +
-                                    '<div class="text-[12px] text-[#6E6E78]">' + b.desc + '</div></div>' +
+                                    '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-[var(--tm-text)]">' + b.name + '</div>' +
+                                    '<div class="text-[12px] text-[var(--tm-dim)]">' + b.desc + '</div></div>' +
                                     (connected.has(b.name)
                                         ? '<span class="status-badge"><span class="dot"></span> Connected</span>'
                                         : '<button class="broker-connect" onclick="window.connectBroker(\'' + b.name.replace(/'/g, "\\'") + '\')">Connect</button>')
                                 + '</div>'
                             ).join('') +
                         '</div>' +
-                        '<div class="text-[11px] text-[#55555E]">Or keep logging manually — connecting just marks your preference.</div>' +
+                        '<div class="text-[11px] text-[var(--tm-dim)]">Or keep logging manually — connecting just marks your preference.</div>' +
                     '</div>';
                 ov.addEventListener('click', e => { if (e.target === ov) closeBrokerPicker(); });
                 document.body.appendChild(ov);
@@ -605,6 +813,7 @@
             };
 
             window.disconnectBroker = async function (name) {
+                if (!window.confirm('Disconnect ' + name + '? Your trading history stays untouched.')) return;
                 try {
                     const res = await apiFetch('/api/brokers/disconnect', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -659,7 +868,7 @@
             function cpMsg(text, ok) {
                 const el = $('cp-msg');
                 el.textContent = text;
-                el.style.color = ok ? '#34D399' : '#F87171';
+                el.style.color = ok ? 'var(--tm-green)' : 'var(--tm-red)';
             }
 
             $('form-change-password').addEventListener('submit', async function (e) {
@@ -705,7 +914,6 @@
                 });
             });
 
-            // ---- init ----
             // ---- Appearance / theme picker (Light / Dark / System, synced to account) ----
             function setThemeActive(pref) {
                 document.querySelectorAll('#theme-picker .theme-opt').forEach(b => {
@@ -761,20 +969,17 @@
                 initThemePicker();
                 const core = window.TradeMindCore;
                 if (core && core.selectedAccountId) {
-                    const sel = core.selectedAccountId();
-                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
-                    const chip = $('account-chip');
-                    if (acc && chip) {
-                        const numEl = chip.querySelector('.num');
-                        if (numEl) numEl.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
-                        const spans = chip.querySelectorAll('span');
-                        if (spans.length > 2) spans[2].textContent = acc.name;
-                    }
+                    core.setSelectedAccount(core.selectedAccountId());
                 }
+                renderChrome();
                 renderProfile();
                 loadBrokers();
                 renderLastChanged();
                 renderStrength();
+                const gs = $('global-search');
+                if (gs && window.TM_GLOBAL_SEARCH) {
+                    gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+                }
                 if (window.lucide) lucide.createIcons();
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
