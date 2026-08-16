@@ -3,20 +3,1270 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Battles</title>
-    <!-- Unified one-page hub: battles now live inside backtesting.html?mode=battle -->
-    <meta http-equiv="refresh" content="0;url=backtesting.html?mode=battle">
+    <title>BATTLEXJOURNAL — Battles</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
+            overflow: hidden;
+        }
+
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 55% 45% at 12% -8%, rgba(99,102,241,0.07), transparent 60%),
+                radial-gradient(ellipse 40% 30% at 96% 22%, rgba(16,185,129,0.05), transparent 60%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
+
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
+        .btn-primary {
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
+        }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; transform: none; cursor: default; }
+        .btn-ghost {
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
+        }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-ghost:disabled { opacity: 0.45; cursor: default; }
+        .btn-danger {
+            background: rgba(239,68,68,0.10); color: var(--tm-red); font-weight: 600; font-size: 12px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.28);
+            display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; cursor: pointer;
+        }
+        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+        .btn-danger:disabled { opacity: 0.45; cursor: default; }
+        .btn-mini {
+            background: transparent; border: 1px solid var(--tm-border-2); border-radius: 7px; color: var(--tm-muted);
+            padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.13s;
+        }
+        .btn-mini:hover { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
+        .btn-amber {
+            background: linear-gradient(135deg, rgba(245,158,11,0.16), rgba(217,119,6,0.08));
+            color: var(--tm-amber); border: 1px solid rgba(245,158,11,0.32); font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer;
+        }
+        .btn-amber:hover { filter: brightness(1.08); transform: translateY(-1px); }
+
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
+        .tag-indigo { background: rgba(99,102,241,0.10); color: var(--tm-accent-2); border-color: rgba(99,102,241,0.25); }
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        /* ---- Battle specific ---- */
+        .battle-card {
+            background: var(--glass-inner); border: 1px solid var(--hairline); border-radius: 12px;
+            padding: 16px; transition: border-color 0.15s, transform 0.15s, box-shadow 0.15s; cursor: pointer; text-align: left;
+            color: var(--tm-text); font-family: var(--tm-sans); display: flex; flex-direction: column; gap: 10px;
+        }
+        .battle-card:hover { border-color: rgba(129,140,248,0.40); transform: translateY(-2px); box-shadow: 0 10px 24px -12px rgba(0,0,0,0.25); }
+
+        .seat-cell {
+            padding: 12px 14px; border-radius: 10px; border: 1px solid var(--hairline);
+            background: var(--glass-inner); display: flex; align-items: center; gap: 12px; transition: all 0.13s;
+        }
+        .seat-cell.free { border-style: dashed; }
+        .seat-cell.host { border-color: rgba(129,140,248,0.45); background: linear-gradient(135deg, rgba(99,102,241,0.10), rgba(16,185,129,0.05)); }
+        .seat-cell.mine { border-color: rgba(16,185,129,0.45); background: linear-gradient(135deg, rgba(16,185,129,0.10), rgba(99,102,241,0.05)); }
+
+        .lb-row {
+            display: flex; align-items: center; gap: 12px; padding: 10px 14px;
+            border-bottom: 1px solid var(--hairline); transition: background 0.12s;
+        }
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row:hover { background: var(--tm-hover); }
+        .lb-row.mine { background: linear-gradient(90deg, rgba(16,185,129,0.10), transparent); }
+        .lb-rank {
+            width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
+            font-size: 12.5px; font-weight: 800; font-family: var(--tm-mono); flex-shrink: 0;
+            background: var(--glass-inner); border: 1px solid var(--hairline); color: var(--tm-muted);
+        }
+        .lb-row.rank-1 .lb-rank { background: linear-gradient(135deg, rgba(245,158,11,0.22), rgba(217,119,6,0.10)); color: var(--tm-amber); border-color: rgba(245,158,11,0.40); }
+        .lb-row.rank-2 .lb-rank, .lb-row.rank-3 .lb-rank { background: linear-gradient(135deg, rgba(148,163,184,0.16), rgba(100,116,139,0.08)); color: var(--tm-muted); border-color: var(--tm-border-2); }
+
+        .chart-unavailable {
+            position: relative; min-height: 340px; display: flex; align-items: center; justify-content: center;
+            border-radius: 10px; overflow: hidden;
+            background:
+                linear-gradient(135deg, var(--glass-inner) 25%, transparent 25%) 0 0 / 28px 28px,
+                linear-gradient(315deg, var(--glass-inner) 25%, transparent 25%) 0 0 / 28px 28px,
+                linear-gradient(135deg, transparent 75%, var(--glass-inner) 75%) 0 0 / 28px 28px,
+                linear-gradient(315deg, transparent 75%, var(--glass-inner) 75%) 0 0 / 28px 28px,
+                var(--tm-bg);
+        }
+        .chart-zone { position: relative; }
+        .chart-overlay {
+            position: absolute; top: 12px; left: 12px; right: 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; pointer-events: none;
+        }
+        .chart-tag {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+            padding: 4px 9px; border-radius: 6px; color: var(--tm-dim);
+            background: var(--glass-bg); border: 1px solid var(--hairline); backdrop-filter: blur(8px);
+        }
+
+        .field-label { display: block; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tm-muted); margin-bottom: 5px; }
+        .field-input, .field-select {
+            width: 100%; background: var(--tm-card); border: 1px solid var(--tm-border-2);
+            border-radius: 8px; padding: 9px 11px; font-size: 13px; color: var(--tm-text);
+            outline: none; transition: border-color 0.15s, box-shadow 0.15s; font-family: var(--tm-sans);
+        }
+        .field-input:focus, .field-select:focus { border-color: var(--tm-accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+        .field-input::placeholder { color: var(--tm-dim); }
+        .field-select option { background: var(--tm-bg-elev); color: var(--tm-text); }
+
+        .stat-tile { text-align: center; padding: 11px 8px; border-radius: 9px; background: var(--glass-inner); border: 1px solid var(--hairline); }
+        .stat-val { font-size: 15.5px; font-weight: 800; line-height: 1.15; }
+        .stat-lbl { font-size: 9.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tm-muted); margin-top: 3px; }
+
+        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .tbl thead th { text-align: right; font-size: 10px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--tm-muted); padding: 8px 10px; border-bottom: 1px solid var(--tm-border); white-space: nowrap; }
+        .tbl thead th:first-child { text-align: left; }
+        .tbl td { padding: 8px 10px; border-bottom: 1px solid var(--hairline); text-align: right; vertical-align: middle; white-space: nowrap; }
+        .tbl td:first-child { text-align: left; }
+        .tbl tbody tr:last-child td { border-bottom: none; }
+        .tbl-wrap { overflow-x: auto; }
+        .pos { color: var(--tm-green); } .neg { color: var(--tm-red); }
+
+        .view { display: none; }
+        .view.active { display: block; animation: fadeUp 0.22s ease; }
+
+        .modal-backdrop {
+            position: fixed; inset: 0; z-index: 80; background: rgba(2,6,23,0.55); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center; padding: 20px; opacity: 0; pointer-events: none; transition: opacity 0.18s;
+        }
+        .modal-backdrop.show { opacity: 1; pointer-events: auto; }
+        .modal-panel { width: 100%; max-width: 520px; max-height: 90vh; overflow-y: auto; padding: 22px; animation: fadeUp 0.2s ease; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .progress-track { height: 4px; border-radius: 999px; background: var(--tm-border-2); overflow: hidden; }
+        .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--tm-accent-2), var(--tm-green)); transition: width 0.2s ease; }
+
+        .ctrl-btn {
+            display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+            padding: 8px 14px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            background: var(--glass-inner); color: var(--tm-muted); font-size: 12.5px; font-weight: 700;
+            cursor: pointer; transition: all 0.13s; font-family: var(--tm-sans);
+        }
+        .ctrl-btn:hover:not(:disabled) { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
+        .ctrl-btn:disabled { opacity: 0.4; cursor: default; }
+        .ctrl-btn.playing { color: var(--tm-green); border-color: rgba(16,185,129,0.4); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .fade-up { animation: fadeUp 0.22s ease; }
+
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
+</head>
+<body>
+
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="battles.html" class="nav-item active"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="nav-avatar">TR</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="nav-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                    <div class="account-select hide-when-collapsed" id="acc-chip" title="Selected account">
+                        <svg data-lucide="wallet" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span class="text-[var(--tm-dim)]">—</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ============ LANDING VIEW ============ -->
+            <div id="view-landing" class="view active flex-1 overflow-y-auto">
+                <div class="max-w-[1200px] mx-auto px-5 py-7">
+
+                    <div class="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                            <h1 class="text-[26px] font-extrabold tracking-tight">BATTLES</h1>
+                            <p class="text-[13.5px] text-[var(--tm-muted)] mt-1">Test your decisions against other traders.</p>
+                        </div>
+                        <div class="flex items-center gap-2.5">
+                            <button id="join-battle-btn" class="btn-ghost"><svg data-lucide="log-in" class="w-4 h-4"></svg> Join Battle</button>
+                            <button id="create-battle-btn" class="btn-primary"><svg data-lucide="swords" class="w-4 h-4"></svg> Create Battle</button>
+                        </div>
+                    </div>
+
+                    <div class="mt-5 flex flex-wrap gap-2.5">
+                        <div class="tag tag-indigo"><span id="lb-live">0</span> live</div>
+                        <div class="tag tag-blue"><span id="lb-joinable">0</span> joinable</div>
+                        <div class="tag tag-emerald"><span id="lb-results">0</span> completed this week</div>
+                        <div class="tag tag-amber hidden" id="invite-tag"><span id="invite-count">0</span> pending invite</div>
+                    </div>
+
+                    <!-- Pending invites -->
+                    <div id="pending-invites" class="mt-6 hidden"></div>
+
+                    <!-- Live battles -->
+                    <h2 class="label-xs mt-7 mb-3">LIVE BATTLES</h2>
+                    <div id="live-battles" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+
+                    <!-- Joinable -->
+                    <h2 class="label-xs mt-7 mb-3">OPEN TO JOIN</h2>
+                    <div id="joinable-battles" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+
+                    <!-- Battle activity -->
+                    <h2 class="label-xs mt-7 mb-3">BATTLE ACTIVITY</h2>
+                    <div id="battle-results" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+
+                </div>
+            </div>
+
+            <!-- ============ BATTLE VIEW ============ -->
+            <div id="view-battle" class="view flex-1 overflow-y-auto">
+                <div class="max-w-[1200px] mx-auto px-5 py-7" id="battle-root"></div>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============ CREATE BATTLE MODAL ============ -->
+    <div class="modal-backdrop" id="create-modal">
+        <div class="modal-panel glass-strong">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[16px] font-extrabold tracking-tight">CREATE BATTLE</h3>
+                <button class="collapse-btn" data-close="create-modal"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+            <div class="grid grid-cols-2 gap-3">
+                <div>
+                    <label class="field-label" for="cb-title">Title</label>
+                    <input id="cb-title" class="field-input" placeholder="ICT vs SMC — EURUSD">
+                </div>
+                <div>
+                    <label class="field-label" for="cb-symbol">Symbol</label>
+                    <select id="cb-symbol" class="field-select">
+                        <option value="EURUSD">EURUSD</option>
+                        <option value="GBPUSD">GBPUSD</option>
+                        <option value="USOIL">USOIL</option>
+                        <option value="XAUUSD">XAUUSD</option>
+                        <option value="AAPL">AAPL</option>
+                        <option value="TSLA">TSLA</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label" for="cb-timeframe">Timeframe</label>
+                    <select id="cb-timeframe" class="field-select">
+                        <option value="1m">1m</option>
+                        <option value="5m">5m</option>
+                        <option value="15m">15m</option>
+                        <option value="1h" selected>1h</option>
+                        <option value="4h">4h</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label" for="cb-window">Bar window</label>
+                    <select id="cb-window" class="field-select">
+                        <option value="100">100</option>
+                        <option value="300" selected>300</option>
+                        <option value="600">600</option>
+                        <option value="900">900</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label" for="cb-balance">Starting balance</label>
+                    <input id="cb-balance" type="number" class="field-input" value="10000">
+                </div>
+                <div>
+                    <label class="field-label" for="cb-risk">Risk per trade ($)</label>
+                    <input id="cb-risk" type="number" class="field-input" value="25">
+                </div>
+            </div>
+            <div class="mt-4">
+                <label class="field-label">Seats &amp; teams</label>
+                <div id="seat-builder" class="flex flex-col gap-2"></div>
+                <button id="add-seat" class="btn-mini mt-2"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> Add seat</button>
+            </div>
+            <div class="flex items-center justify-between mt-5 gap-3">
+                <div id="create-msg" class="text-[12px] text-[var(--tm-dim)]"></div>
+                <button id="create-battle-submit" class="btn-primary"><svg data-lucide="swords" class="w-4 h-4"></svg> Create Battle</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ JOIN MODAL ============ -->
+    <div class="modal-backdrop" id="join-modal">
+        <div class="modal-panel glass-strong">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[16px] font-extrabold tracking-tight">JOIN BATTLE</h3>
+                <button class="collapse-btn" data-close="join-modal"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+            <label class="field-label" for="jm-code">Invite code</label>
+            <div class="flex gap-2">
+                <input id="jm-code" class="field-input uppercase" placeholder="ABCD2345" maxlength="12">
+                <button id="jm-resolve" class="btn-ghost !py-2">Open</button>
+            </div>
+            <div id="jm-msg" class="text-[12px] text-[var(--tm-dim)] mt-2"></div>
+            <div class="mt-5">
+                <div class="label-xs mb-2">Or join an open battle</div>
+                <div id="jm-open-list" class="flex flex-col gap-2 max-h-[240px] overflow-y-auto"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ INVITE MODAL (host) ============ -->
+    <div class="modal-backdrop" id="invite-modal">
+        <div class="modal-panel glass-strong">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[16px] font-extrabold tracking-tight">INVITE TRADER</h3>
+                <button class="collapse-btn" data-close="invite-modal"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+            <label class="field-label" for="iv-emails">Emails (optional, comma separated)</label>
+            <input id="iv-emails" class="field-input" placeholder="trader@example.com">
+            <label class="field-label mt-3" for="iv-name">Invitee name</label>
+            <input id="iv-name" class="field-input" placeholder="a fellow trader">
+            <div id="iv-result" class="mt-4 hidden">
+                <div class="label-xs mb-2">SHAREABLE INVITE</div>
+                <div class="flex items-center gap-2">
+                    <input id="iv-link" class="field-input num" readonly>
+                    <button id="iv-copy" class="btn-mini flex-shrink-0">Copy</button>
+                </div>
+                <div id="iv-mailto" class="text-[12px] text-[var(--tm-dim)] mt-2"></div>
+            </div>
+            <div class="flex items-center justify-end mt-5 gap-3">
+                <div id="invite-msg" class="text-[12px] text-[var(--tm-dim)]"></div>
+                <button id="invite-submit" class="btn-primary"><svg data-lucide="send" class="w-4 h-4"></svg> Create Invite</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast" id="toast"><svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg><span id="toast-msg"></span></div>
+
     <script>
-        // preserve any query params (?invite=CODE, ?full=1&battle=ID) so invite
-        // links and full-page deep links keep working after the merge
         (function () {
-            var q = location.search.length > 1 ? location.search.slice(1) : '';
-            var target = 'backtesting.html?mode=battle' + (q ? '&' + q : '');
-            location.replace(target);
+            'use strict';
+            const $ = id => document.getElementById(id);
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
+            let toastTimer;
+            window.showToast = function (msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+            const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const fmtMoney = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const fmtNum = n => n == null || isNaN(n) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+            const fmtPct = n => n == null || isNaN(n) ? '—' : Math.round(n * 10) / 10 + '%';
+            const fmtTime = iso => { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return '—'; } };
+            const signed = n => (n > 0 ? '+' : '') + fmtMoney(n);
+            const signedR = n => n == null || isNaN(n) ? '—' : (n > 0 ? '+' : '') + fmtNum(n) + 'R';
+
+            // ============ STATE ============
+            const uid = (function () {
+                try {
+                    const s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
+                    const u = (s && s.user) || null;
+                    if (u && u.id) return u.id;
+                } catch (e) {}
+                return '00000000-0000-0000-0000-000000000000';   // sandbox anon id (server LOCAL_USER_ID)
+            })();
+            let feed = null;                 // GET /api/battles/feed
+            let myBattles = [];              // GET /api/battles (hosted)
+            let pendingInvites = [];
+            let battleWs = null;             // /ws?battle=<id>
+            let cur = null;                  // { id, pub, seat (private state), mySeatId, host, playing }
+            let lastSeatFetch = 0;
+            const statusTag = s => s === 'running' ? 'tag-emerald' : s === 'completed' ? 'tag-gray' : s === 'paused' ? 'tag-amber' : 'tag-blue';
+
+            // ============ CHROME ============
+            function renderChrome() {
+                const core = window.TradeMindCore;
+                const chip = $('acc-chip');
+                if (core && core.Accounts && core.Accounts.length) {
+                    const sel = core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    if (chip) chip.innerHTML = '<span class="num text-[12px]">' + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                } else if (chip) chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                if (window.lucide) lucide.createIcons();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+                let name = 'trader';
+                try {
+                    const s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
+                    const u = (s && s.user) || null;
+                    if (u && u.name) name = String(u.name).split(/[\s@]/)[0];
+                    else if (u && u.email) name = String(u.email).split('@')[0].split(/[._-]/)[0];
+                } catch (e) {}
+                $('nav-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                $('nav-avatar').textContent = name.slice(0, 2).toUpperCase();
+            }
+
+            // ============ VIEWS ============
+            function showView(v) {
+                document.querySelectorAll('.view').forEach(x => x.classList.toggle('active', x.id === 'view-' + v));
+            }
+
+            // ============ LANDING ============
+            async function loadAll() {
+                await Promise.all([loadFeed(), loadPending()]);
+            }
+            async function loadFeed() {
+                try {
+                    const r = await apiFetch('/api/battles/feed');
+                    if (!r.ok) throw new Error('feed ' + r.status);
+                    const j = await r.json();
+                    feed = (j && j.feed) || null;
+                } catch (e) { feed = null; }
+                try {
+                    const r2 = await apiFetch('/api/battles');
+                    if (r2.ok) { const j2 = await r2.json(); myBattles = (j2 && Array.isArray(j2.battles)) ? j2.battles : []; }
+                } catch (e) { myBattles = []; }
+                renderLanding();
+            }
+            async function loadPending() {
+                try {
+                    const r = await apiFetch('/api/battles/invites');
+                    if (!r.ok) throw new Error('invites ' + r.status);
+                    const j = await r.json();
+                    pendingInvites = (j && Array.isArray(j.invites)) ? j.invites : [];
+                } catch (e) { pendingInvites = []; }
+                renderPending();
+            }
+            function renderLanding() {
+                const active = (feed && feed.active) || [];
+                const joinable = (feed && feed.invites) || [];
+                const results = (feed && feed.results) || [];
+                $('lb-live').textContent = active.length;
+                $('lb-joinable').textContent = joinable.length;
+                $('lb-results').textContent = results.length;
+
+                $('live-battles').innerHTML = active.length
+                    ? active.map(battleCard).join('')
+                    : '<div class="col-span-full text-center py-10 text-[13px] text-[var(--tm-dim)] border border-dashed border-[var(--tm-border-2)] rounded-xl">You are not seated in any live battle. Create one or join an open seat.</div>';
+                $('joinable-battles').innerHTML = joinable.length
+                    ? joinable.map(battleCard).join('')
+                    : '<div class="col-span-full text-center py-10 text-[13px] text-[var(--tm-dim)] border border-dashed border-[var(--tm-border-2)] rounded-xl">No open battles right now.</div>';
+                $('battle-results').innerHTML = results.length
+                    ? results.map(resultCard).join('')
+                    : '<div class="col-span-full text-center py-10 text-[13px] text-[var(--tm-dim)] border border-dashed border-[var(--tm-border-2)] rounded-xl">Your battle history starts here — completed battles appear with the winner and final leaderboard.</div>';
+                bindCards();
+                if (window.lucide) lucide.createIcons();
+            }
+            function battleCard(b) {
+                const st = statusTag(b.status);
+                const mine = b.mySeat ? '<div class="tag tag-emerald">You are seated</div>' : '';
+                const stats = b.myStats
+                    ? '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px]"><span class="num">Equity <b class="' + (b.myStats.equity >= 0 ? 'pos' : 'neg') + '">' + signed(b.myStats.equity) + '</b></span><span class="num text-[var(--tm-dim)]">' + b.myStats.trades + ' trades</span><span class="num text-[var(--tm-dim)]">Rank <b>#' + b.myStats.rank + '</b> of ' + b.myStats.seated + '</span></div>' : '';
+                return '<button class="battle-card" data-open="' + esc(b.id) + '">' +
+                    '<div class="flex items-start justify-between gap-2">' +
+                        '<div class="min-w-0"><div class="text-[15px] font-extrabold truncate">' + esc(b.title) + '</div>' +
+                        '<div class="text-[12px] text-[var(--tm-dim)] mt-0.5">' + esc(b.symbol) + ' · ' + esc(b.timeframe) + ' · ' + b.cursor + '/' + b.total + ' bars</div></div>' +
+                        '<span class="tag ' + st + ' flex-shrink-0">' + esc(b.status) + '</span>' +
+                    '</div>' +
+                    '<div class="flex items-center gap-2 flex-wrap">' +
+                        '<span class="tag tag-gray">' + b.taken + '/' + b.seats + ' seats</span>' +
+                        (b.teams && b.teams.length ? b.teams.map(t => '<span class="tag tag-indigo">Team ' + esc(t) + '</span>').join('') : '') +
+                        mine +
+                    '</div>' + stats +
+                    (b.canJoin ? '<div class="text-[12px] font-bold text-[var(--tm-blue)] mt-1">Join available →</div>' : '') +
+                '</button>';
+            }
+            function resultCard(b) {
+                const w = b.winner;
+                return '<button class="battle-card" data-open="' + esc(b.id) + '">' +
+                    '<div class="flex items-start justify-between gap-2">' +
+                        '<div class="min-w-0"><div class="text-[15px] font-extrabold truncate">' + esc(b.title) + '</div>' +
+                        '<div class="text-[12px] text-[var(--tm-dim)] mt-0.5">' + esc(b.symbol) + ' · ' + esc(b.timeframe) + ' · completed ' + fmtTime(b.completedAt) + '</div></div>' +
+                        '<span class="tag tag-gray flex-shrink-0">COMPLETE</span>' +
+                    '</div>' +
+                    (w
+                        ? '<div class="flex items-center gap-2 flex-wrap"><span class="tag tag-amber">Winner: ' + esc(w.name) + (w.team ? ' · ' + esc(w.team) : '') + '</span><span class="tag tag-gray num">Score ' + w.score + '</span></div>'
+                        : '') +
+                    '<div class="text-[12px] font-bold text-[var(--tm-muted)] mt-1">View final leaderboard →</div>' +
+                '</button>';
+            }
+            function renderPending() {
+                const wrap = $('pending-invites');
+                $('invite-count').textContent = pendingInvites.length;
+                $('invite-tag').classList.toggle('hidden', !pendingInvites.length);
+                if (!pendingInvites.length) { wrap.classList.add('hidden'); wrap.innerHTML = ''; return; }
+                wrap.classList.remove('hidden');
+                wrap.innerHTML = '<h2 class="label-xs mb-3">BATTLE INVITATIONS</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">' + pendingInvites.map(inv =>
+                    '<div class="battle-card !cursor-default">' +
+                        '<div class="flex items-start justify-between gap-2">' +
+                            '<div class="min-w-0"><div class="text-[14.5px] font-extrabold truncate">' + esc(inv.title) + '</div>' +
+                            '<div class="text-[12px] text-[var(--tm-dim)] mt-0.5">' + esc(inv.symbol) + ' · ' + esc(inv.timeframe) + ' · ' + inv.taken + '/' + inv.seats + ' seats · ' + inv.free + ' open</div></div>' +
+                            '<span class="tag tag-blue flex-shrink-0">INVITED</span>' +
+                        '</div>' +
+                        '<div class="flex items-center gap-2">' +
+                            '<button class="btn-primary !py-2 !px-3.5 !text-[12.5px]" data-accept="' + esc(inv.code) + '"><svg data-lucide="log-in" class="w-3.5 h-3.5"></svg> Accept</button>' +
+                            '<button class="btn-ghost !py-2 !px-3.5 !text-[12.5px]" data-dismiss="' + esc(inv.battleId) + '">Dismiss</button>' +
+                        '</div>' +
+                    '</div>').join('') + '</div>';
+                if (window.lucide) lucide.createIcons();
+            }
+            function bindCards() {
+                document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openBattle(b.dataset.open)));
+                document.querySelectorAll('[data-accept]').forEach(b => b.addEventListener('click', async ev => {
+                    ev.stopPropagation();
+                    try {
+                        const r = await apiFetch('/api/battles/invite/' + encodeURIComponent(b.dataset.accept) + '/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+                        const j = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(j.error || 'Unable to accept invite');
+                        showToast('Joined ' + (j.state && j.state.title ? j.state.title : 'battle'));
+                        await Promise.all([loadAll()]);
+                        if (j.state) openBattle(j.state.id, j.state);
+                    } catch (e) { showToast(e.message); }
+                }));
+                document.querySelectorAll('[data-dismiss]').forEach(b => b.addEventListener('click', async ev => {
+                    ev.stopPropagation();
+                    try {
+                        await apiFetch('/api/battles/' + encodeURIComponent(b.dataset.dismiss) + '/invite', { method: 'DELETE' });
+                        await loadPending();
+                    } catch (e) {}
+                }));
+            }
+
+            // ============ OPEN BATTLE ============
+            async function openBattle(id, presetState) {
+                let pub = presetState || null;
+                if (!pub) {
+                    try {
+                        const r = await apiFetch('/api/battles/' + encodeURIComponent(id));
+                        if (!r.ok) throw new Error('battle ' + r.status);
+                        const j = await r.json();
+                        pub = (j && j.state) || null;
+                    } catch (e) { showToast('Unable to load battle'); return; }
+                }
+                const host = myBattles.some(b => b.id === id);
+                const seatRow = (pub.seats || []).find(s => s.userId === uid);
+                const mySeatId = seatRow ? seatRow.id : (host ? (pub.seats[0] ? pub.seats[0].id : null) : null);
+                cur = { id, pub, host, mySeatId, seat: null, playing: false };
+                connectBattleWs(id);
+                showView('battle');
+                await refreshSeat();
+                renderBattle();
+            }
+            async function refreshSeat() {
+                if (!cur || !cur.mySeatId) return;
+                try {
+                    const r = await apiFetch('/api/battles/' + encodeURIComponent(cur.id) + '/seat?seat=' + encodeURIComponent(cur.mySeatId));
+                    if (!r.ok) return;
+                    const j = await r.json();
+                    if (j && j.state) { cur.seat = j.state; lastSeatFetch = Date.now(); }
+                } catch (e) {}
+            }
+            function connectBattleWs(id) {
+                try { if (battleWs) { battleWs.close(); battleWs = null; } } catch (e) {}
+                try {
+                    const proto = location.protocol === 'https:' ? 'wss' : 'ws';
+                    battleWs = new WebSocket(proto + '://' + location.host + '/ws?battle=' + encodeURIComponent(id) + '&user=' + encodeURIComponent(uid));
+                } catch (e) { battleWs = null; return; }
+                battleWs.onmessage = ev => {
+                    let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
+                    if (!m || !cur || m.battle !== cur.id) return;
+                    if (m.type === 'battle.cursor') {
+                        if (cur.pub) { cur.pub.cursor = m.cursor; cur.pub.status = m.status || cur.pub.status; }
+                        if (cur.seat && cur.seat.candles && m.cursor != null) {
+                            cur.seat.cursor = m.cursor;
+                            cur.seat.candle = cur.seat.candles[m.cursor] || cur.seat.candle;
+                        }
+                        renderBattle();
+                        if (Date.now() - lastSeatFetch > 1200) refreshSeat().then(renderBattle);
+                    } else if (m.type === 'battle.status') {
+                        cur.pub = m.state;
+                        if (m.state && m.state.status === 'completed') { refreshSeat().then(() => { renderBattle(); loadAll(); }); }
+                        else { refreshSeat().then(renderBattle); }
+                    }
+                };
+                battleWs.onclose = () => { battleWs = null; };
+                battleWs.onerror = () => { try { battleWs.close(); } catch (e) {} };
+            }
+
+            // ============ BATTLE RENDER ============
+            function renderBattle() {
+                if (!cur) return;
+                const root = $('battle-root');
+                const pub = cur.pub;
+                if (pub.status === 'completed') { root.innerHTML = renderCompleted(); bindBattle(); if (window.lucide) lucide.createIcons(); return; }
+                const seated = cur.mySeatId != null;
+                root.innerHTML =
+                    '<div class="flex flex-wrap items-start justify-between gap-3">' +
+                        '<div>' +
+                            '<button class="btn-mini mb-2" data-back><svg data-lucide="arrow-left" class="w-3.5 h-3.5"></svg> All battles</button>' +
+                            '<h1 class="text-[24px] font-extrabold tracking-tight">' + esc(pub.title) + '</h1>' +
+                            '<div class="flex items-center gap-2 mt-1.5 flex-wrap">' +
+                                '<span class="tag ' + statusTag(pub.status) + '">' + esc(pub.status.toUpperCase()) + '</span>' +
+                                '<span class="tag tag-gray">' + esc(pub.symbol) + ' · ' + esc(pub.timeframe) + '</span>' +
+                                (cur.host ? '<span class="tag tag-indigo">HOST</span>' : '') +
+                                (cur.mySeatId ? '<span class="tag tag-emerald">SEATED</span>' : '') +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="text-right">' +
+                            '<div class="label-xs">BATTLE ID</div>' +
+                            '<div class="num text-[12px] text-[var(--tm-muted)] mt-1">' + esc(pub.id) + '</div>' +
+                            '<div class="num text-[12px] text-[var(--tm-dim)] mt-1">' + pub.cursor + ' / ' + pub.total + ' bars</div>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mt-5">' +
+                        '<div class="lg:col-span-2 flex flex-col gap-4">' +
+                            chartBlock() +
+                            (cur.host ? hostControls() : '') +
+                            (seated ? executionBlock() : '<div class="glass p-5 text-center text-[13px] text-[var(--tm-muted)]">Join a seat to place trades in this battle.</div>') +
+                            '<div class="glass p-4"><div class="label-xs mb-3">YOUR TRADES</div>' + (seated ? tradeLog() : '<div class="text-[12.5px] text-[var(--tm-dim)]">No seat joined yet.</div>') + '</div>' +
+                        '</div>' +
+                        '<div class="flex flex-col gap-4">' +
+                            seatsBlock() +
+                            statusBlock() +
+                            infoBlock() +
+                        '</div>' +
+                    '</div>';
+                bindBattle();
+                if (window.lucide) lucide.createIcons();
+            }
+
+            function chartBlock() {
+                const pub = cur.pub;
+                const c = (cur.seat && cur.seat.candle) || pub.candle || null;
+                const pct = pub.total ? Math.round((pub.cursor / (pub.total - 1)) * 100) : 0;
+                return '<div class="glass p-4 chart-zone">' +
+                    '<div class="flex items-center justify-between mb-3">' +
+                        '<span class="label-xs">BATTLE CHART · <span class="text-[var(--tm-green)]">' + esc(pub.symbol) + ' ' + esc(pub.timeframe) + '</span></span>' +
+                        '<span class="tag tag-amber">Chart engine unavailable</span>' +
+                    '</div>' +
+                    '<div class="chart-unavailable">' +
+                        '<div class="text-center px-6 max-w-[420px]">' +
+                            '<div class="text-[15px] font-extrabold">CHART ENGINE UNAVAILABLE</div>' +
+                            '<p class="text-[12.5px] text-[var(--tm-muted)] mt-2 leading-relaxed">The battle engine is ready, but the charting dependency is currently unavailable. Your seat data and the canonical battle cursor remain intact — restore the chart dependency to begin replaying candles.</p>' +
+                        '</div>' +
+                    '</div>' +
+                    '<div class="chart-overlay">' +
+                        '<span class="chart-tag">cursor</span><span class="chart-tag">entry</span><span class="chart-tag">SL/TP</span><span class="chart-tag">drawings</span>' +
+                    '</div>' +
+                    '<div class="flex items-center justify-between gap-3 mt-3">' +
+                        '<div class="flex gap-4 flex-wrap text-[12px]">' +
+                            '<span class="text-[var(--tm-dim)]">Bar <b class="num text-[var(--tm-text)]">' + pub.cursor + '</b> / ' + pub.total + '</span>' +
+                            (c ? '<span class="text-[var(--tm-dim)]">O <b class="num">' + fmtNum(c.open) + '</b></span><span class="text-[var(--tm-dim)]">H <b class="num">' + fmtNum(c.high) + '</b></span><span class="text-[var(--tm-dim)]">L <b class="num">' + fmtNum(c.low) + '</b></span><span class="text-[var(--tm-dim)]">C <b class="num">' + fmtNum(c.close) + '</b></span>' : '') +
+                        '</div>' +
+                        '<span class="num text-[12px] text-[var(--tm-dim)]">' + pct + '%</span>' +
+                    '</div>' +
+                    '<div class="progress-track mt-2"><div class="progress-fill" style="width:' + pct + '%"></div></div>' +
+                '</div>';
+            }
+
+            function hostControls() {
+                const pub = cur.pub;
+                const running = pub.status === 'running';
+                return '<div class="glass p-4">' +
+                    '<div class="label-xs mb-3">HOST CONTROLS</div>' +
+                    '<div class="flex items-center gap-2 flex-wrap">' +
+                        '<button class="ctrl-btn' + (cur.playing ? ' playing' : '') + '" data-ctrl="play"><svg data-lucide="play" class="w-3.5 h-3.5"></svg>' + (cur.playing ? 'Playing…' : 'Play') + '</button>' +
+                        '<button class="ctrl-btn" data-ctrl="pause"><svg data-lucide="pause" class="w-3.5 h-3.5"></svg> Pause</button>' +
+                        '<button class="ctrl-btn" data-ctrl="step"><svg data-lucide="step-forward" class="w-3.5 h-3.5"></svg> Step</button>' +
+                        '<button class="ctrl-btn" data-ctrl="reset"><svg data-lucide="rotate-ccw" class="w-3.5 h-3.5"></svg> Reset</button>' +
+                        '<button class="ctrl-btn" data-ctrl="complete"><svg data-lucide="flag" class="w-3.5 h-3.5"></svg> Complete</button>' +
+                        '<span class="ml-auto text-[11.5px] text-[var(--tm-dim)]">' + (running ? 'Canonical cursor is running — every seat sees the same bars.' : 'Press Play or Step to start the battle.') + '</span>' +
+                    '</div>' +
+                '</div>';
+            }
+
+            function executionBlock() {
+                const st = cur.seat;
+                const pos = (st && st.position) || null;
+                const c = (st && st.candle) || cur.pub.candle || null;
+                const entryDefault = c ? fmtNum(c.close) : '';
+                return '<div class="glass p-4">' +
+                    '<div class="label-xs mb-3">TRADE EXECUTION</div>' +
+                    (pos
+                        ? '<div class="flex items-center justify-between flex-wrap gap-3">' +
+                            '<div><div class="tag ' + (pos.direction === 'long' ? 'tag-emerald' : 'tag-red') + ' mb-1.5">' + esc(pos.direction.toUpperCase()) + ' ' + esc(cur.pub.symbol) + '</div>' +
+                            '<div class="num text-[13px]"><span class="text-[var(--tm-dim)]">entry</span> ' + fmtNum(pos.entry) + ' · <span class="text-[var(--tm-dim)]">SL</span> ' + fmtNum(pos.sl) + ' · <span class="text-[var(--tm-dim)]">TP</span> ' + fmtNum(pos.tp) + '</div></div>' +
+                            '<div class="text-right"><div class="num text-[17px] font-extrabold ' + (pos.unrealized >= 0 ? 'pos' : 'neg') + '">' + signed(pos.unrealized) + '</div>' +
+                            '<div class="num text-[11.5px] text-[var(--tm-dim)]">' + signedR(pos.unrealizedR) + ' · ' + fmtNum(pos.size) + ' units</div></div>' +
+                            '<button class="btn-danger" data-close-trade><svg data-lucide="x" class="w-3.5 h-3.5"></svg> Close Trade</button>' +
+                          '</div>'
+                        : '<div class="grid grid-cols-2 md:grid-cols-6 gap-2.5">' +
+                            '<div><label class="field-label">Direction</label><select id="ex-direction" class="field-select"><option value="long">Long</option><option value="short">Short</option></select></div>' +
+                            '<div><label class="field-label">Entry</label><input id="ex-entry" class="field-input num" value="' + esc(entryDefault) + '"></div>' +
+                            '<div><label class="field-label">Stop loss</label><input id="ex-sl" class="field-input num" placeholder="Required"></div>' +
+                            '<div><label class="field-label">Take profit</label><input id="ex-tp" class="field-input num"></div>' +
+                            '<div><label class="field-label">Risk ($)</label><input id="ex-risk" class="field-input num" value="25"></div>' +
+                            '<div class="flex items-end"><button id="enter-trade" class="btn-primary w-full"><svg data-lucide="log-in" class="w-4 h-4"></svg> Enter</button></div>' +
+                          '</div>') +
+                    '<div id="exec-msg" class="text-[12px] text-[var(--tm-dim)] mt-2.5"></div>' +
+                '</div>';
+            }
+
+            function tradeLog() {
+                const st = cur.seat;
+                const trades = (st && st.trades) || [];
+                if (!trades.length) return '<div class="text-[12.5px] text-[var(--tm-dim)]">No trades entered in this battle yet.</div>';
+                return '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Direction</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>R</th><th>Reason</th></tr></thead><tbody>' +
+                    trades.map(t => '<tr>' +
+                        '<td><span class="tag ' + (t.direction === 'long' ? 'tag-emerald' : 'tag-red') + ' !py-0.5 !px-1.5 !text-[10.5px]">' + esc((t.direction || '').toUpperCase()) + '</span></td>' +
+                        '<td class="num">' + fmtNum(t.entry) + '</td>' +
+                        '<td class="num">' + fmtNum(t.exit) + '</td>' +
+                        '<td class="num ' + ((t.pnl || 0) >= 0 ? 'pos' : 'neg') + '">' + signed(t.pnl) + '</td>' +
+                        '<td class="num ' + ((t.realizedR || 0) >= 0 ? 'pos' : 'neg') + '">' + signedR(t.realizedR) + '</td>' +
+                        '<td class="text-[var(--tm-dim)]">' + esc(t.exitReason || '—') + '</td>' +
+                    '</tr>').join('') +
+                '</tbody></table></div>';
+            }
+
+            function seatsBlock() {
+                const pub = cur.pub;
+                const rows = (pub.seats || []).map((s, i) => {
+                    const mine = s.userId === uid;
+                    const cls = mine ? 'mine' : (i === 0 && cur.host ? 'host' : (s.taken ? '' : 'free'));
+                    return '<div class="seat-cell ' + cls + '">' +
+                        '<div class="avatar !w-8 !h-8 !text-[11px]">' + esc((s.name || 'Seat').slice(0, 2).toUpperCase()) + '</div>' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="text-[13px] font-bold truncate">' + esc(s.name || 'Available seat') + (mine ? ' <span class="text-[var(--tm-green)]">(You)</span>' : '') + '</div>' +
+                            '<div class="flex items-center gap-1.5 mt-0.5 flex-wrap">' +
+                                '<span class="text-[10.5px] text-[var(--tm-dim)] uppercase tracking-wide">Seat ' + (i + 1) + '</span>' +
+                                (s.team ? '<span class="tag tag-indigo !py-0 !px-1.5 !text-[10px]">' + esc(s.team) + '</span>' : '') +
+                            '</div>' +
+                        '</div>' +
+                        '<span class="tag ' + (s.taken ? (mine ? 'tag-emerald' : 'tag-gray') : 'tag-blue') + ' flex-shrink-0">' + (s.taken ? 'TAKEN' : 'OPEN') + '</span>' +
+                    '</div>';
+                }).join('');
+                return '<div class="glass p-4"><div class="label-xs mb-3">SEATS · ' + pub.seats.filter(s => s.taken).length + '/' + pub.seats.length + '</div><div class="flex flex-col gap-2">' + rows + '</div>' +
+                    (cur.host ? '<button class="btn-mini mt-3" data-invite><svg data-lucide="user-plus" class="w-3.5 h-3.5"></svg> Invite trader</button>' : '') +
+                '</div>';
+            }
+
+            function statusBlock() {
+                const st = cur.seat;
+                const my = (st ? {
+                    balance: st.balance,
+                    equity: st.balance + ((st.position && st.position.unrealized) || 0),
+                    realized: (st.trades || []).reduce((s, t) => s + (t.pnl || 0), 0),
+                    unrealized: (st.position && st.position.unrealized) || 0,
+                    trades: (st.trades || []).length,
+                    wins: (st.trades || []).filter(t => (t.pnl || 0) > 0).length
+                } : null);
+                const rank = (function () {
+                    const f = (feed && feed.active) || [];
+                    const entry = f.find(b => b.id === cur.id);
+                    return entry && entry.myStats ? entry.myStats.rank : null;
+                })();
+                const tile = (lbl, val, cls) => '<div class="stat-tile"><div class="stat-val num ' + (cls || '') + '">' + val + '</div><div class="stat-lbl">' + lbl + '</div></div>';
+                return '<div class="glass p-4"><div class="label-xs mb-3">YOUR STATUS</div>' +
+                    (my
+                        ? '<div class="grid grid-cols-2 gap-2">' +
+                            tile('Balance', fmtMoney(my.balance)) +
+                            tile('Equity', fmtMoney(my.equity), my.equity >= 0 ? '' : 'neg') +
+                            tile('Realized', signed(my.realized), my.realized >= 0 ? 'pos' : 'neg') +
+                            tile('Unrealized', signed(my.unrealized), my.unrealized >= 0 ? 'pos' : 'neg') +
+                            tile('Trades', my.trades) +
+                            tile('Wins', my.wins) +
+                          '</div>' +
+                          '<div class="mt-3 flex items-center justify-between text-[12px]"><span class="text-[var(--tm-dim)]">Live rank</span><b class="num ' + (rank != null && rank === 1 ? 'text-[var(--tm-green)]' : '') + '">' + (rank != null ? '#' + rank + ' of ' + (cur.pub.seats.filter(s => s.taken).length) : '—') + '</b></div>' +
+                          '<div class="mt-1.5 text-[10.5px] text-[var(--tm-dim)] leading-relaxed">Rank is computed server-side from every seated session. The full leaderboard reveals when the battle completes.</div>'
+                        : '<div class="text-[12.5px] text-[var(--tm-dim)]">Join a seat to see your live status.</div>') +
+                '</div>';
+            }
+
+            function infoBlock() {
+                const pub = cur.pub;
+                const pct = pub.total ? Math.round((pub.cursor / (pub.total - 1)) * 100) : 0;
+                return '<div class="glass p-4">' +
+                    '<div class="label-xs mb-3">BATTLE INFORMATION</div>' +
+                    '<div class="flex flex-col gap-2 text-[12.5px]">' +
+                        '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Starting balance</span><b class="num">' + fmtMoney(pub.startingBalance) + '</b></div>' +
+                        '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Risk model</span><b class="num">$' + fmtNum((pub.riskModel && pub.riskModel.perTrade) || 25) + ' / trade</b></div>' +
+                        '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Category</span><b>' + esc(pub.category || 'Other') + '</b></div>' +
+                        '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Progress</span><b class="num">' + pct + '%</b></div>' +
+                        '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Created</span><b class="num">' + fmtTime(pub.createdAt) + '</b></div>' +
+                    '</div>' +
+                    '<div class="mt-3 pt-3 border-t border-[var(--hairline)] text-[11.5px] text-[var(--tm-dim)] leading-relaxed">The battle score is a blended 0–1000 measure of execution, risk and consistency — not raw profit alone.</div>' +
+                '</div>';
+            }
+
+            function renderCompleted() {
+                const pub = cur.pub;
+                const lb = (pub.leaderboard && pub.leaderboard.seats) || [];
+                const byTeam = (pub.leaderboard && pub.leaderboard.byTeam) || [];
+                const winner = lb[0] || null;
+                const myRow = lb.find(r => r.userId === uid) || (cur.mySeatId ? lb.find(r => r.seat === cur.mySeatId) : null);
+                const lbRows = lb.map((r, i) => {
+                    const mine = r.userId === uid || r.seat === cur.mySeatId;
+                    return '<div class="lb-row rank-' + (i + 1) + (mine ? ' mine' : '') + '">' +
+                        '<div class="lb-rank">' + (i + 1) + '</div>' +
+                        '<div class="flex-1 min-w-0"><div class="text-[13px] font-bold truncate">' + esc(r.name) + (mine ? ' <span class="text-[var(--tm-green)]">(You)</span>' : '') + '</div>' +
+                        '<div class="text-[11px] text-[var(--tm-dim)]">' + (r.team ? 'Team ' + esc(r.team) + ' · ' : '') + r.detail.trades + ' trades · ' + fmtPct(r.detail.winRate) + ' win rate</div></div>' +
+                        '<div class="text-right flex-shrink-0"><div class="num text-[15px] font-extrabold">' + r.score + '</div><div class="num text-[10.5px] text-[var(--tm-dim)]">avg R ' + signedR(r.detail.avgR) + '</div></div>' +
+                    '</div>';
+                }).join('');
+                const teamRows = byTeam.map(t =>
+                    '<div class="lb-row">' +
+                        '<div class="lb-rank">' + esc(t.team.slice(0, 1).toUpperCase()) + '</div>' +
+                        '<div class="flex-1 min-w-0"><div class="text-[13px] font-bold truncate">' + esc(t.team) + '</div><div class="text-[11px] text-[var(--tm-dim)]">' + t.members + ' member' + (t.members === 1 ? '' : 's') + ' · ' + t.trades + ' trades · ' + fmtPct(t.winRate) + '</div></div>' +
+                        '<div class="text-right flex-shrink-0"><div class="num text-[14px] font-extrabold">' + t.score + '</div><div class="num text-[10.5px] text-[var(--tm-dim)]">avg R ' + signedR(t.avgR) + '</div></div>' +
+                    '</div>').join('');
+                return '<div class="flex flex-wrap items-start justify-between gap-3">' +
+                    '<div>' +
+                        '<button class="btn-mini mb-2" data-back><svg data-lucide="arrow-left" class="w-3.5 h-3.5"></svg> All battles</button>' +
+                        '<h1 class="text-[24px] font-extrabold tracking-tight">' + esc(pub.title) + '</h1>' +
+                        '<div class="flex items-center gap-2 mt-1.5 flex-wrap"><span class="tag tag-gray">COMPLETED</span><span class="tag tag-gray">' + esc(pub.symbol) + ' · ' + esc(pub.timeframe) + '</span></div>' +
+                    '</div>' +
+                    '<div class="text-right text-[11.5px] text-[var(--tm-dim)]">Completed ' + fmtTime(pub.completedAt || pub.createdAt) + '</div>' +
+                '</div>' +
+                (winner
+                    ? '<div class="glass-strong mt-5 p-5 flex flex-wrap items-center gap-4">' +
+                        '<div class="avatar !w-11 !h-11 !text-[14px]">' + esc(winner.name.slice(0, 2).toUpperCase()) + '</div>' +
+                        '<div class="flex-1 min-w-0"><div class="label-xs text-[var(--tm-amber)]">WINNER</div>' +
+                        '<div class="text-[17px] font-extrabold mt-0.5">' + esc(winner.name) + (winner.team ? ' <span class="tag tag-indigo align-middle !py-0.5">Team ' + esc(winner.team) + '</span>' : '') + '</div></div>' +
+                        '<div class="text-right"><div class="num text-[24px] font-extrabold text-[var(--tm-amber)]">' + winner.score + '</div><div class="label-xs">BATTLE SCORE</div></div>' +
+                      '</div>'
+                    : '') +
+                (myRow
+                    ? '<div class="glass mt-4 p-4"><div class="label-xs mb-3">YOUR RESULT</div>' +
+                        '<div class="flex flex-wrap gap-x-8 gap-y-2 text-[13px]">' +
+                            '<span class="num">Rank <b class="text-[var(--tm-green)]">#' + (lb.indexOf(myRow) + 1) + '</b></span>' +
+                            '<span class="num">Score <b>' + myRow.score + '</b></span>' +
+                            '<span class="num">Trades <b>' + myRow.detail.trades + '</b></span>' +
+                            '<span class="num">Win rate <b>' + fmtPct(myRow.detail.winRate) + '</b></span>' +
+                            '<span class="num">Avg R <b>' + signedR(myRow.detail.avgR) + '</b></span>' +
+                            '<span class="num">Net <b class="' + ((myRow.detail.net || 0) >= 0 ? 'pos' : 'neg') + '">' + signed(myRow.detail.net) + '</b></span>' +
+                            '<span class="num">Max DD <b>' + fmtMoney(myRow.detail.maxDD) + '</b></span>' +
+                        '</div></div>'
+                    : '') +
+                '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mt-4">' +
+                    '<div class="glass p-4"><div class="label-xs mb-3">FINAL LEADERBOARD</div>' + (lbRows || '<div class="text-[12.5px] text-[var(--tm-dim)]">No seated participants.</div>') + '</div>' +
+                    (byTeam.length ? '<div class="glass p-4"><div class="label-xs mb-3">TEAM LEADERBOARD</div>' + teamRows + '</div>' : '') +
+                '</div>' +
+                '<div class="glass p-4 mt-4"><div class="label-xs mb-3">SEAT TRADES</div><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Trader</th><th>Team</th><th>Direction</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>R</th><th>Reason</th></tr></thead><tbody>' +
+                lb.flatMap(r => (r.trades || []).map(t =>
+                    '<tr><td class="font-bold">' + esc(r.name) + '</td><td class="text-[var(--tm-dim)]">' + esc(r.team || '—') + '</td>' +
+                    '<td><span class="tag ' + (t.direction === 'long' ? 'tag-emerald' : 'tag-red') + ' !py-0 !px-1.5 !text-[10px]">' + esc((t.direction || '').toUpperCase()) + '</span></td>' +
+                    '<td class="num">' + fmtNum(t.entry) + '</td><td class="num">' + fmtNum(t.exit) + '</td>' +
+                    '<td class="num ' + ((t.pnl || 0) >= 0 ? 'pos' : 'neg') + '">' + signed(t.pnl) + '</td>' +
+                    '<td class="num ' + ((t.realizedR || 0) >= 0 ? 'pos' : 'neg') + '">' + signedR(t.realizedR) + '</td>' +
+                    '<td class="text-[var(--tm-dim)]">' + esc(t.exitReason || '—') + '</td></tr>').join('')).join('') ||
+                '<tr><td colspan="8" class="text-center !text-left-none text-[12px] text-[var(--tm-dim)]">No trades recorded.</td></tr>' +
+                '</tbody></table></div></div>';
+            }
+
+            // ============ BATTLE ACTIONS ============
+            async function control(action, extra) {
+                const btn = event && event.currentTarget;
+                try {
+                    const r = await apiFetch('/api/battles/' + encodeURIComponent(cur.id) + '/control', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(Object.assign({ action }, extra || {}))
+                    });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.error || 'Control failed');
+                    if (action === 'play') cur.playing = true;
+                    else if (action === 'pause' || action === 'reset' || action === 'complete') cur.playing = false;
+                    if (action === 'complete') {
+                        await refreshSeat();
+                        await loadAll();
+                        cur.pub = (cur.pub && cur.pub.status === 'completed') ? cur.pub : await fetchPub();
+                        renderBattle();
+                        showToast('Battle completed');
+                        return;
+                    }
+                    if (action === 'play' || action === 'pause') {
+                        await refreshSeat();
+                    }
+                    await fetchPub();
+                    renderBattle();
+                } catch (e) { showToast(e.message); }
+            }
+            async function fetchPub() {
+                try {
+                    const r = await apiFetch('/api/battles/' + encodeURIComponent(cur.id));
+                    if (r.ok) { const j = await r.json(); if (j.state) cur.pub = j.state; }
+                } catch (e) {}
+            }
+            async function enterTrade() {
+                const direction = $('ex-direction').value;
+                const entry = $('ex-entry').value ? Number($('ex-entry').value) : undefined;
+                const sl = Number($('ex-sl').value);
+                const tp = $('ex-tp').value ? Number($('ex-tp').value) : 0;
+                const riskAmount = $('ex-risk').value ? Number($('ex-risk').value) : 25;
+                const msg = $('exec-msg');
+                if (!(sl > 0)) { msg.textContent = 'Enter a stop loss first.'; msg.style.color = 'var(--tm-red)'; return; }
+                msg.textContent = 'Placing trade…'; msg.style.color = 'var(--tm-dim)';
+                const btn = $('enter-trade'); if (btn) btn.disabled = true;
+                try {
+                    const r = await apiFetch('/api/battles/' + encodeURIComponent(cur.id) + '/enter', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ seat: cur.mySeatId, direction, entry, sl, tp, riskAmount })
+                    });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.error || 'Unable to enter trade');
+                    msg.textContent = direction + ' trade entered · risk $' + fmtNum(j.position && j.position.riskAmount);
+                    msg.style.color = 'var(--tm-green)';
+                    cur.seat = j.state || cur.seat;
+                    renderBattle();
+                    showToast('Trade entered');
+                } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--tm-red)'; }
+                finally { if (btn) btn.disabled = false; }
+            }
+            async function closeTrade() {
+                const msg = $('exec-msg');
+                const price = cur.seat && cur.seat.candle ? cur.seat.candle.close : undefined;
+                msg.textContent = 'Closing trade…'; msg.style.color = 'var(--tm-dim)';
+                try {
+                    const r = await apiFetch('/api/battles/' + encodeURIComponent(cur.id) + '/close', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ seat: cur.mySeatId, price, reason: 'manual' })
+                    });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.error || 'Unable to close trade');
+                    msg.textContent = 'Trade closed · ' + signed(j.trade && j.trade.pnl) + ' · ' + signedR(j.trade && j.trade.realizedR);
+                    msg.style.color = 'var(--tm-green)';
+                    cur.seat = j.state || cur.seat;
+                    renderBattle();
+                    showToast('Trade closed');
+                } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--tm-red)'; }
+            }
+            function bindBattle() {
+                const root = $('battle-root');
+                root.querySelectorAll('[data-back]').forEach(b => b.addEventListener('click', () => { showView('landing'); loadAll(); }));
+                root.querySelectorAll('[data-ctrl]').forEach(b => b.addEventListener('click', () => control(b.dataset.ctrl)));
+                root.querySelectorAll('[data-invite]').forEach(b => b.addEventListener('click', () => openInvite()));
+                const et = root.querySelector('#enter-trade');
+                if (et) et.addEventListener('click', enterTrade);
+                const ct = root.querySelector('[data-close-trade]');
+                if (ct) ct.addEventListener('click', closeTrade);
+            }
+
+            // ============ CREATE ============
+            function seatBuilder() {
+                const wrap = $('seat-builder');
+                function row(i) {
+                    return '<div class="flex gap-2 items-center seat-row" data-i="' + i + '">' +
+                        '<input class="field-input flex-1" placeholder="Trader ' + (i + 1) + '" value="' + (i === 0 ? 'You' : 'Trader ' + (i + 1)) + '" data-name>' +
+                        '<input class="field-input w-[110px]" placeholder="Team" data-team>' +
+                        '<button class="collapse-btn rm-seat" data-i="' + i + '" title="Remove seat"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                    '</div>';
+                }
+                wrap.innerHTML = row(0) + row(1);
+                wrap.querySelectorAll('.rm-seat').forEach(b => b.addEventListener('click', () => {
+                    if (wrap.querySelectorAll('.seat-row').length <= 2) return;
+                    b.closest('.seat-row').remove();
+                }));
+            }
+            async function createBattle() {
+                const title = $('cb-title').value.trim() || '';
+                const symbol = $('cb-symbol').value;
+                const timeframe = $('cb-timeframe').value;
+                const window = Number($('cb-window').value) || 300;
+                const startingBalance = Number($('cb-balance').value) || 10000;
+                const perTrade = Number($('cb-risk').value) || 25;
+                const seats = Array.from($('seat-builder').querySelectorAll('[data-name]')).map(i => i.value.trim() || 'Trader');
+                const teams = Array.from($('seat-builder').querySelectorAll('[data-team]')).map(i => i.value.trim());
+                const msg = $('create-msg');
+                msg.textContent = 'Creating battle…'; msg.style.color = 'var(--tm-dim)';
+                const btn = $('create-battle-submit'); btn.disabled = true;
+                try {
+                    const r = await apiFetch('/api/battles', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title, symbol, timeframe, window, startingBalance, riskModel: { basis: 'money', perTrade }, seats, teams })
+                    });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.error || 'Unable to create battle');
+                    closeModal('create-modal');
+                    showToast('Battle created — ' + (j.state && j.state.title ? j.state.title : ''));
+                    await loadAll();
+                    openBattle(j.battle, j.state);
+                } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--tm-red)'; }
+                finally { btn.disabled = false; }
+            }
+
+            // ============ JOIN ============
+            async function resolveInvite(code) {
+                const msg = $('jm-msg');
+                if (!code) { msg.textContent = 'Enter an invite code.'; msg.style.color = 'var(--tm-red)'; return; }
+                msg.textContent = 'Resolving invite…'; msg.style.color = 'var(--tm-dim)';
+                try {
+                    const r = await apiFetch('/api/battles/invite/' + encodeURIComponent(code.trim().toUpperCase()));
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.error || 'Invite not found');
+                    closeModal('join-modal');
+                    await loadAll();
+                    openBattle(j.state.id, j.state);
+                } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--tm-red)'; }
+            }
+
+            // ============ INVITE (host) ============
+            async function createInvite() {
+                const emails = $('iv-emails').value.split(',').map(e => e.trim()).filter(Boolean);
+                const name = $('iv-name').value.trim() || 'a fellow trader';
+                const msg = $('invite-msg');
+                msg.textContent = 'Creating invite…'; msg.style.color = 'var(--tm-dim)';
+                try {
+                    const r = await apiFetch('/api/battles/' + encodeURIComponent(cur.id) + '/invite', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ emails, name })
+                    });
+                    const j = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(j.error || 'Unable to create invite');
+                    $('iv-result').classList.remove('hidden');
+                    $('iv-link').value = j.link || '';
+                    $('iv-mailto').innerHTML = j.mailto
+                        ? '<a href="' + esc(j.mailto) + '" class="text-[var(--tm-blue)] underline">Send via email</a>'
+                        : '';
+                    msg.textContent = 'Invite ready.'; msg.style.color = 'var(--tm-green)';
+                    showToast('Invite created');
+                    if (window.lucide) lucide.createIcons();
+                } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--tm-red)'; }
+            }
+            function openInvite() {
+                $('iv-result').classList.add('hidden');
+                $('iv-emails').value = ''; $('iv-name').value = ''; $('iv-link').value = '';
+                $('invite-msg').textContent = '';
+                openModal('invite-modal');
+            }
+
+            // ============ MODALS ============
+            function openModal(id) { $(id).classList.add('show'); }
+            function closeModal(id) { $(id).classList.remove('show'); }
+
+            // ============ BOOT ============
+            function boot() {
+                renderChrome();
+                if (window.lucide) lucide.createIcons();
+                const qs = new URLSearchParams(window.location.search);
+                const inviteCode = qs.get('invite');
+                if (inviteCode) {
+                    loadAll().then(() => resolveInvite(inviteCode));
+                } else {
+                    loadAll();
+                }
+
+                // collapse
+                const cb = $('collapse-btn');
+                if (cb) cb.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+                // create
+                $('create-battle-btn').addEventListener('click', () => { seatBuilder(); openModal('create-modal'); });
+                $('create-battle-submit').addEventListener('click', createBattle);
+                $('add-seat').addEventListener('click', () => {
+                    const wrap = $('seat-builder');
+                    if (wrap.querySelectorAll('.seat-row').length >= 6) return;
+                    const i = wrap.querySelectorAll('.seat-row').length;
+                    const div = document.createElement('div');
+                    div.className = 'flex gap-2 items-center seat-row';
+                    div.innerHTML = '<input class="field-input flex-1" placeholder="Trader ' + (i + 1) + '" value="Trader ' + (i + 1) + '" data-name>' +
+                        '<input class="field-input w-[110px]" placeholder="Team" data-team>' +
+                        '<button class="collapse-btn rm-seat" title="Remove seat"><svg data-lucide="x" class="w-4 h-4"></svg></button>';
+                    div.querySelector('.rm-seat').addEventListener('click', () => {
+                        if (wrap.querySelectorAll('.seat-row').length <= 2) return;
+                        div.remove();
+                    });
+                    wrap.appendChild(div);
+                    if (window.lucide) lucide.createIcons();
+                });
+
+                // join
+                $('join-battle-btn').addEventListener('click', () => {
+                    $('jm-code').value = ''; $('jm-msg').textContent = '';
+                    const list = $('jm-open-list');
+                    const joinable = (feed && feed.invites) || [];
+                    list.innerHTML = joinable.length
+                        ? joinable.map(b => '<button class="battle-card !p-3" data-jb="' + esc(b.id) + '"><div class="flex items-center justify-between gap-2"><div class="min-w-0"><div class="text-[13.5px] font-extrabold truncate">' + esc(b.title) + '</div><div class="text-[11.5px] text-[var(--tm-dim)]">' + esc(b.symbol) + ' · ' + esc(b.timeframe) + ' · ' + b.taken + '/' + b.seats + ' seats</div></div><span class="text-[11px] font-bold text-[var(--tm-blue)]">Join →</span></div></button>').join('')
+                        : '<div class="text-[12px] text-[var(--tm-dim)] text-center py-3">No open battles to join right now.</div>';
+                    list.querySelectorAll('[data-jb]').forEach(b => b.addEventListener('click', async () => {
+                        const id = b.dataset.jb;
+                        try {
+                            const r = await apiFetch('/api/battles/' + encodeURIComponent(id) + '/join', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+                            const j = await r.json().catch(() => ({}));
+                            if (!r.ok) throw new Error(j.error || 'Unable to join');
+                            closeModal('join-modal');
+                            showToast('Joined ' + (j.state && j.state.title ? j.state.title : 'battle'));
+                            await loadAll();
+                            openBattle(id, j.state);
+                        } catch (e) { $('jm-msg').textContent = e.message; $('jm-msg').style.color = 'var(--tm-red)'; }
+                    }));
+                    openModal('join-modal');
+                });
+                $('jm-resolve').addEventListener('click', () => resolveInvite($('jm-code').value));
+                $('jm-code').addEventListener('keydown', e => { if (e.key === 'Enter') resolveInvite($('jm-code').value); });
+
+                // invite modal
+                $('invite-submit').addEventListener('click', createInvite);
+                $('iv-copy').addEventListener('click', async () => {
+                    try { await navigator.clipboard.writeText($('iv-link').value); }
+                    catch (e) { $('iv-link').select(); document.execCommand('copy'); }
+                    showToast('Invite link copied');
+                });
+
+                // close buttons
+                document.querySelectorAll('[data-close]').forEach(b => b.addEventListener('click', () => closeModal(b.dataset.close)));
+                document.querySelectorAll('.modal-backdrop').forEach(m => m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); }));
+
+                const gs = $('global-search');
+                if (gs && window.TM_GLOBAL_SEARCH) {
+                    gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+                }
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();
     </script>
-</head>
-<body style="background:#0a0c10;color:#94a3b8;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0">
-    <p>Redirecting to the unified trading page… <a href="backtesting.html?mode=battle">Click here</a> if nothing happens.</p>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
 </body>
 </html>
