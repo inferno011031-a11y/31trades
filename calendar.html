@@ -408,6 +408,7 @@
                         <div class="glass rounded-2xl p-4">
                             <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="sum-strip"></div>
                             <p class="text-[11.5px] text-[var(--tm-dim)] mt-3 px-1" id="sum-note"></p>
+                            <div id="mom-strip" class="mt-4 pt-4 border-t border-[var(--hairline)]"></div>
                         </div>
 
                         <!-- Calendar -->
@@ -533,6 +534,7 @@
                 if (!cm) return;
                 renderHead();
                 renderSummary();
+                renderMoM();
                 renderGrid();
                 renderMonthStrip();
                 renderTrend();
@@ -562,6 +564,49 @@
                 $('sum-note').textContent = cm.days.length
                     ? 'Daily values come from calendarMonth() — P&L, risk consumed, discipline score and violations per trading day.'
                     : 'No trading data yet. The calendar stays available — log trades and return to see your month build up.';
+            }
+
+            // ---- Month-over-month (previous month's totals beside the current) ----
+            function renderMoM() {
+                const el = $('mom-strip');
+                const accId = currentAccountId();
+                let py = viewY, pm = viewM - 1;
+                if (pm < 0) { pm = 11; py--; }
+                const label = MONTHS[pm] + ' ' + py;
+                let pc = null;
+                try { pc = core.calendarMonth(accId, py, pm); } catch (e) {}
+                if (!pc || !pc.days.length) {
+                    el.innerHTML = '<div class="flex items-center justify-between gap-3">' +
+                        '<span class="label-xs">vs ' + label + '</span>' +
+                        '<span class="text-[12px] text-[var(--tm-dim)]">No trading data in ' + label + ' — nothing to compare.</span>' +
+                    '</div>';
+                    return;
+                }
+                const rows = [
+                    { label: 'Net P&L', cur: cm.totalPnl, prev: pc.totalPnl, isMoney: true },
+                    { label: 'Trades', cur: cm.totalTrades, prev: pc.totalTrades },
+                    { label: 'Win days', cur: cm.winDays, prev: pc.winDays },
+                    { label: 'Loss days', cur: cm.lossDays, prev: pc.lossDays }
+                ];
+                el.innerHTML =
+                    '<div class="flex items-center justify-between gap-3 mb-2.5">' +
+                        '<span class="label-xs">vs ' + label + '</span>' +
+                        '<span class="text-[11px] text-[var(--tm-dim)] num">' + MONTHS[viewM].slice(0, 3) + ' → ' + label.slice(0, 3) + ' · change</span>' +
+                    '</div>' +
+                    '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' + rows.map(r => {
+                        const d = r.cur - r.prev;
+                        const arrow = d > 0 ? '▲' : d < 0 ? '▼' : '—';
+                        const col = d > 0 ? 'var(--tm-green)' : d < 0 ? 'var(--tm-red)' : 'var(--tm-dim)';
+                        const curCol = r.isMoney ? (r.cur > 0 ? 'var(--tm-green)' : r.cur < 0 ? 'var(--tm-red)' : '') : '';
+                        return '<div class="stat-tile">' +
+                            '<div class="st-label">' + r.label + '</div>' +
+                            '<div class="flex items-baseline gap-2 mt-1">' +
+                                '<span class="num text-[15px] font-bold" style="' + (curCol ? 'color:' + curCol : '') + '">' + (r.isMoney ? money(r.cur) : r.cur) + '</span>' +
+                                '<span class="num text-[11px] text-[var(--tm-dim)]">' + label.slice(0, 3) + ' ' + (r.isMoney ? money(r.prev) : r.prev) + '</span>' +
+                            '</div>' +
+                            '<div class="num text-[11px] mt-1" style="color:' + col + '">' + arrow + ' ' + (d === 0 ? '0' : (r.isMoney ? money(Math.abs(d)) : Math.abs(d))) + '</div>' +
+                        '</div>';
+                    }).join('') + '</div>';
             }
 
             // ---- Calendar grid ----

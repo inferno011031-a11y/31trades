@@ -82,6 +82,52 @@
             border: 1px solid var(--tm-border);
             border-radius: 12px;
         }
+
+        /* ==========================================================================
+           Premium glass system (Calendar parity) — theme-adaptive tokens
+           ========================================================================== */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .cal-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .dash-layer { position: relative; z-index: 1; }
+        .dash-layer > .sidebar, .dash-layer .topbar { position: relative; z-index: 40; }
         .panel-title { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: var(--tm-text); }
         .panel-sub { font-size: 12px; color: var(--tm-dim); }
         .label-xs {
@@ -360,7 +406,10 @@
 </head>
 <body>
 
-    <div class="flex h-screen">
+    <!-- Premium ambient background (glass surfaces blur this layer) -->
+    <div class="cal-bg"></div>
+
+    <div class="flex h-screen dash-layer">
 
         <!-- ============ LEFT SIDEBAR ============ -->
         <aside class="sidebar">
@@ -486,7 +535,7 @@
                     <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
                         <!-- DISCIPLINE -->
-                        <a href="discipline.html" class="panel kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
+                        <a href="discipline.html" class="glass kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="label-xs">Discipline</span>
                                 <span class="tag tag-emerald" id="st-disc-state">—</span>
@@ -503,7 +552,7 @@
                         </a>
 
                         <!-- DAILY RISK -->
-                        <a href="risk.html" class="panel kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
+                        <a href="risk.html" class="glass kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="label-xs">Daily Risk</span>
                                 <span class="tag tag-emerald" id="st-risk-state">—</span>
@@ -518,7 +567,7 @@
                         </a>
 
                         <!-- DRAWDOWN -->
-                        <a href="risk.html" class="panel kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
+                        <a href="risk.html" class="glass kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="label-xs">Drawdown</span>
                                 <span class="tag tag-gray" id="st-dd-state">—</span>
@@ -533,7 +582,7 @@
                         </a>
 
                         <!-- TODAY'S PERFORMANCE -->
-                        <div class="panel kpi p-4">
+                        <div class="glass kpi p-4">
                             <div class="flex items-center justify-between mb-2">
                                 <span class="label-xs">Today's Performance</span>
                                 <span class="tag tag-gray" id="st-perf-trades">0 trades</span>
@@ -670,7 +719,7 @@
                     </div>
 
                     <!-- ============ SECTION 4 — BATTLEX READ ============ -->
-                    <div class="panel p-5 relative overflow-hidden border-l-[3px] border-l-[var(--tm-accent)]">
+                    <div class="glass p-5 relative overflow-hidden" style="border-left:3px solid var(--tm-accent)">
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
                             <div class="flex items-center gap-2.5">
                                 <span class="logo-badge !w-7 !h-7 !text-[11px]">B</span>
