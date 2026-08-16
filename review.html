@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BATTLEXJOURNAL — Review Center</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+    <script src="assets/asset-meta.js"></script>
+    <style>
+        :root {
+            --rv-bg-1: rgba(99, 102, 241, 0.09);
+            --rv-bg-2: rgba(52, 211, 153, 0.06);
+            --rv-bg-3: rgba(245, 158, 11, 0.04);
+        }
+        .rv-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, var(--rv-bg-1), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, var(--rv-bg-2), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, var(--rv-bg-3), transparent 60%),
+                var(--tm-bg);
+        }
+
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); position: relative; z-index: 30; }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        /* ---- Period timeline ---- */
+        .period-tabs { display: inline-flex; gap: 2px; padding: 3px; border-radius: 12px; background: var(--tm-card); border: 1px solid var(--tm-border); }
+        .period-tab {
+            display: flex; flex-direction: column; align-items: flex-start; gap: 1px;
+            padding: 8px 16px; border-radius: 9px; border: 1px solid transparent;
+            background: transparent; color: var(--tm-muted); cursor: pointer;
+            font-family: inherit; transition: all 0.16s ease; text-align: left;
+        }
+        .period-tab .pt-label { font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em; }
+        .period-tab .pt-sub { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--tm-dim); }
+        .period-tab:hover { background: var(--tm-hover); }
+        .period-tab.active { background: var(--tm-card-2); border-color: var(--tm-border-2); color: var(--tm-text); box-shadow: 0 1px 6px rgba(0,0,0,0.08); }
+        .period-tab.active .pt-sub { color: var(--tm-accent); }
+
+        /* ---- Summary tiles ---- */
+        .sum-tile { border-radius: 14px; padding: 14px 16px; position: relative; overflow: hidden; }
+        .sum-tile .st-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--tm-muted); }
+        .sum-tile .st-value { font-size: 22px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; }
+        .sum-tile .st-sub { font-size: 11.5px; color: var(--tm-dim); margin-top: 2px; }
+        .sum-tile::after { content: ''; position: absolute; inset: 0 0 auto 0; height: 2px; border-radius: 2px 2px 0 0; opacity: 0.85; background: var(--bar, transparent); }
+
+        /* ---- Review hero card ---- */
+        .rv-hero { position: relative; overflow: hidden; }
+        .rv-score {
+            width: 88px; height: 88px; border-radius: 50%; flex-shrink: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            border: 2px solid var(--tm-border-2); background: var(--tm-card-2);
+        }
+        .rv-score .num { font-size: 30px; font-weight: 800; letter-spacing: -0.02em; line-height: 1; }
+        .rv-score .cap { font-size: 8.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.12em; color: var(--tm-dim); margin-top: 3px; }
+
+        .focus-block { border: 1px solid var(--tm-border-2); border-radius: 12px; padding: 14px 16px; background: var(--tm-card-2); }
+        .focus-block .fb-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--tm-muted); }
+        .focus-block .fb-value { font-size: 17px; font-weight: 800; margin-top: 3px; }
+
+        /* ---- Dimension rows ---- */
+        .dim-row { display: flex; align-items: center; gap: 12px; padding: 9px 2px; border-bottom: 1px solid var(--hairline); }
+        .dim-row:last-child { border-bottom: none; }
+        .dim-label { width: 92px; font-size: 11.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); flex-shrink: 0; }
+        .dim-track { flex: 1; height: 6px; border-radius: 999px; background: var(--hairline); overflow: hidden; }
+        .dim-fill { height: 100%; border-radius: 999px; transition: width 0.4s cubic-bezier(0.22, 1, 0.36, 1); }
+        .dim-val { width: 40px; text-align: right; font-size: 12.5px; font-weight: 700; flex-shrink: 0; }
+        .dim-meta { width: 74px; text-align: right; font-size: 10.5px; color: var(--tm-dim); flex-shrink: 0; }
+
+        /* ---- Violation rows ---- */
+        .vr-row { display: flex; align-items: center; gap: 12px; padding: 10px 2px; border-bottom: 1px solid var(--hairline); }
+        .vr-row:last-child { border-bottom: none; }
+        .vr-rule { flex: 1; min-width: 0; }
+        .vr-rule .vr-name { font-size: 13px; font-weight: 700; }
+        .vr-rule .vr-meta { font-size: 11px; color: var(--tm-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .vr-num { text-align: right; flex-shrink: 0; font-size: 12px; font-weight: 700; }
+        .vr-link { flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--tm-accent); text-decoration: none; display: inline-flex; align-items: center; gap: 4px; }
+        .vr-link:hover { text-decoration: underline; }
+
+        .rule-card { border: 1px solid var(--tm-border-2); border-radius: 12px; padding: 14px 16px; background: var(--tm-card-2); }
+        .rule-card .rc-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--tm-muted); }
+        .rule-card .rc-value { font-size: 14.5px; font-weight: 700; margin-top: 4px; }
+        .rule-card .rc-meta { font-size: 11px; color: var(--tm-dim); margin-top: 3px; }
+
+        /* ---- Actions ---- */
+        .act-link {
+            display: flex; align-items: center; gap: 10px; padding: 11px 14px;
+            border: 1px solid var(--tm-border); border-radius: 10px; background: var(--tm-card);
+            color: var(--tm-text); text-decoration: none; font-size: 13px; font-weight: 600;
+            transition: all 0.14s ease;
+        }
+        .act-link:hover { background: var(--tm-hover); border-color: var(--tm-border-2); transform: translateY(-1px); }
+        .act-link svg { width: 16px; height: 16px; color: var(--tm-accent); flex-shrink: 0; }
+
+        /* ---- History ---- */
+        .hist-row { display: flex; align-items: baseline; gap: 10px; padding: 8px 2px; border-bottom: 1px solid var(--hairline); }
+        .hist-row:last-child { border-bottom: none; }
+        .hist-what { font-size: 12.5px; font-weight: 700; }
+        .hist-detail { font-size: 11.5px; color: var(--tm-dim); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .hist-at { font-size: 10.5px; color: var(--tm-muted); flex-shrink: 0; }
+
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
+            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        @media (max-width: 1024px) {
+            .search-input { width: 180px; }
+            .sidebar { width: 64px; }
+            .nav-label, .logo-text, .profile-text { display: none; }
+            .nav-item { justify-content: center; padding: 9px 0; }
+            .hide-when-collapsed { display: none !important; }
+        }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+            .period-tabs { width: 100%; }
+            .period-tab { flex: 1; }
+            .dim-label { width: 78px; font-size: 10.5px; }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
+</head>
+<body>
+
+    <!-- Premium ambient background -->
+    <div class="rv-bg"></div>
+
+    <div class="flex h-screen relative" style="z-index:1">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+                <a href="review.html" class="nav-item active"><svg data-lucide="clipboard-check"></svg><span class="nav-label">Review</span></a>
+            </nav>
+
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. where did I break rules?">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[24px] font-bold tracking-tight">Review Center</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Stop looking at numbers. Decide what changes.</p>
+                        </div>
+                        <div class="period-tabs" role="tablist" aria-label="Review period">
+                            <button class="period-tab" data-period="daily" role="tab">
+                                <span class="pt-label">Today</span>
+                                <span class="pt-sub">Daily</span>
+                            </button>
+                            <button class="period-tab" data-period="weekly" role="tab">
+                                <span class="pt-label">This Week</span>
+                                <span class="pt-sub">Weekly</span>
+                            </button>
+                            <button class="period-tab" data-period="monthly" role="tab">
+                                <span class="pt-label">This Month</span>
+                                <span class="pt-sub">Monthly</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Empty state (no account / no trades) -->
+                    <div id="empty-state" class="hidden glass p-12 text-center">
+                        <svg data-lucide="clipboard-check" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[18px] font-bold">No review yet</h3>
+                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">Your review begins after you start building trading evidence. Review is where you stop looking at numbers and decide what changes.</p>
+                        <a href="journal.html" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5">
+                            <svg data-lucide="book-open" class="w-4 h-4"></svg> Go to journal
+                        </a>
+                    </div>
+
+                    <div id="rv-body" class="hidden flex flex-col gap-4">
+
+                        <!-- Summary strip -->
+                        <div class="glass rounded-2xl p-4">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="sum-strip"></div>
+                        </div>
+
+                        <!-- Trader review hero -->
+                        <div class="glass-strong rounded-2xl p-5 rv-hero">
+                            <div class="flex flex-wrap items-start justify-between gap-4">
+                                <div>
+                                    <div class="panel-title" id="rv-period">Daily review</div>
+                                    <p class="panel-sub mt-0.5" id="rv-period-sub">—</p>
+                                </div>
+                                <button id="complete-review" class="btn-primary !py-2 !px-4">
+                                    <svg data-lucide="check" class="w-4 h-4"></svg> Complete Review
+                                </button>
+                            </div>
+                            <div class="flex flex-col lg:flex-row gap-5 mt-5">
+                                <div class="flex items-center gap-5">
+                                    <div class="rv-score" id="rv-score">
+                                        <span class="num" id="rv-score-val">—</span>
+                                        <span class="cap">Discipline</span>
+                                    </div>
+                                    <div class="flex flex-col gap-1">
+                                        <div class="text-[11px] font-bold uppercase tracking-[0.08em] text-[var(--tm-muted)]">Performance</div>
+                                        <div class="text-[20px] font-extrabold" id="rv-perf">—</div>
+                                        <div class="text-[12px] text-[var(--tm-dim)]" id="rv-perf-sub">—</div>
+                                    </div>
+                                </div>
+                                <div class="flex-1 flex flex-col gap-3">
+                                    <div class="focus-block">
+                                        <div class="fb-label">Focus</div>
+                                        <div class="fb-value" id="rv-focus">—</div>
+                                    </div>
+                                    <div class="focus-block" id="rv-summary-wrap">
+                                        <div class="fb-label">Summary</div>
+                                        <div class="text-[13.5px] font-semibold mt-1 text-[var(--tm-text)]" id="rv-summary">—</div>
+                                    </div>
+                                    <p class="text-[11.5px] text-[var(--tm-dim)] hidden" id="low-note">Building evidence — more trading history is needed before stronger patterns can be identified.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Discipline + violations -->
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <div class="glass rounded-2xl p-5">
+                                <div class="panel-title mb-1">Discipline breakdown</div>
+                                <p class="panel-sub mb-3">The six dimensions, scored from evaluated rules in this period.</p>
+                                <div id="dims"></div>
+                            </div>
+                            <div class="glass rounded-2xl p-5">
+                                <div class="panel-title mb-1">Violation analysis</div>
+                                <p class="panel-sub mb-3" id="viol-sub">—</p>
+                                <div id="viols"></div>
+                            </div>
+                        </div>
+
+                        <!-- Performance vs discipline + actions + history -->
+                        <div class="grid grid-cols-1 xl:grid-cols-3 gap-4">
+                            <div class="glass rounded-2xl p-5">
+                                <div class="panel-title mb-1">Performance vs discipline</div>
+                                <p class="panel-sub mb-4">A good trading day is not automatically a profitable day.</p>
+                                <div class="grid grid-cols-2 gap-3" id="perf-disc"></div>
+                            </div>
+                            <div class="glass rounded-2xl p-5">
+                                <div class="panel-title mb-3">Actions</div>
+                                <div class="flex flex-col gap-2">
+                                    <a href="journal.html" class="act-link"><svg data-lucide="book-open"></svg> View journal</a>
+                                    <a href="discipline.html" class="act-link"><svg data-lucide="target"></svg> View discipline</a>
+                                    <a href="analytics.html" class="act-link"><svg data-lucide="bar-chart-3"></svg> View analytics</a>
+                                    <a href="ai.html" class="act-link"><svg data-lucide="brain-circuit"></svg> Investigate with AI Mentor</a>
+                                    <a href="calendar.html" class="act-link"><svg data-lucide="calendar-days"></svg> View calendar</a>
+                                </div>
+                            </div>
+                            <div class="glass rounded-2xl p-5">
+                                <div class="panel-title mb-1">Review history</div>
+                                <p class="panel-sub mb-3">Completed reviews from the event log.</p>
+                                <div id="history"></div>
+                            </div>
+                        </div>
+
+                        <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Review Center · daily / weekly / monthly from the same review engine the rest of the app uses</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
+
+    <script>
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+            const core = window.TradeMindCore;
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            let toastTimer = null;
+            function showToast(msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            }
+            window.showToast = showToast;
+
+            let activePeriod = 'daily';
+
+            // ============ ACCOUNT RESOLUTION ============
+            function currentAccountId() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+            }
+            function account() { const id = currentAccountId(); return id ? core.Accounts.find(a => a.id === id) : null; }
+
+            // ============ CHROME ============
+            function renderChrome() {
+                const acc = account();
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + money(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                    if (window.lucide) lucide.createIcons();
+                }
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc && pName) pName.textContent = acc.name;
+                if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+            }
+
+            // ============ REVIEW DATA ============
+            function currentReview() {
+                const accId = currentAccountId();
+                if (!accId) return null;
+                try { return core.reviews(accId, { period: activePeriod })[activePeriod]; }
+                catch (e) { return null; }
+            }
+
+            // ============ RENDER ============
+            function dimsHtml(dims) {
+                if (!dims || !dims.length) return '<p class="text-[13px] text-[var(--tm-dim)]">No evaluated rules in this period yet.</p>';
+                return dims.map(d => {
+                    const s = d.score;
+                    const col = s == null ? 'var(--tm-dim)' : s >= 80 ? 'var(--tm-green)' : s >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
+                    const fill = s == null ? 0 : s;
+                    return '<div class="dim-row">' +
+                        '<span class="dim-label">' + esc(d.label) + '</span>' +
+                        '<span class="dim-track"><span class="dim-fill" style="width:' + fill + '%;background:' + col + '"></span></span>' +
+                        '<span class="dim-val num" style="color:' + col + '">' + (s == null ? '—' : s) + '</span>' +
+                        '<span class="dim-meta num">' + (s == null ? 'no rules' : d.passed + '/' + d.total + ' pass') + '</span>' +
+                    '</div>';
+                }).join('');
+            }
+
+            function renderAll() {
+                renderChrome();
+                const accId = currentAccountId();
+                const empty = $('empty-state'), body = $('rv-body');
+                if (!accId || !core.Trades || !core.Trades.length) {
+                    empty.classList.remove('hidden');
+                    body.classList.add('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+                body.classList.remove('hidden');
+
+                // low-data note
+                $('low-note').classList.toggle('hidden', core.Trades.length >= 3);
+
+                const rv = currentReview();
+                if (!rv) return;
+
+                // period tabs
+                document.querySelectorAll('.period-tab').forEach(b => {
+                    b.classList.toggle('active', b.dataset.period === activePeriod);
+                });
+
+                // summary strip
+                const tiles = [];
+                if (activePeriod === 'daily') {
+                    tiles.push({ label: 'Trades', value: rv.trades, sub: 'this day', bar: 'linear-gradient(90deg,rgba(99,102,241,0.5),rgba(99,102,241,0.85))' });
+                    tiles.push({ label: 'Net P&L', value: money(rv.pnl), color: rv.pnl >= 0 ? 'var(--tm-green)' : 'var(--tm-red)', sub: rv.pnl === 0 ? 'flat day' : (rv.pnl > 0 ? 'green day' : 'red day'), bar: rv.pnl >= 0 ? 'linear-gradient(90deg,rgba(16,185,129,0.6),rgba(16,185,129,0.9))' : 'linear-gradient(90deg,rgba(239,68,68,0.6),rgba(239,68,68,0.9))' });
+                    tiles.push({ label: 'Discipline', value: rv.score == null ? '—' : rv.score, color: rv.score == null ? '' : rv.score >= 80 ? 'var(--tm-green)' : rv.score >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)', sub: rv.score == null ? 'no evaluated rules' : '/100', bar: 'linear-gradient(90deg,rgba(16,185,129,0.5),rgba(16,185,129,0.85))' });
+                    tiles.push({ label: 'Violations', value: rv.violations, color: rv.violations ? 'var(--tm-red)' : 'var(--tm-green)', sub: rv.violations ? 'rule breaks' : 'clean', bar: rv.violations ? 'linear-gradient(90deg,rgba(239,68,68,0.5),rgba(239,68,68,0.85))' : 'linear-gradient(90deg,rgba(16,185,129,0.5),rgba(16,185,129,0.85))' });
+                } else if (activePeriod === 'weekly') {
+                    tiles.push({ label: 'Score', value: rv.score == null ? '—' : rv.score, color: rv.score == null ? '' : rv.score >= 80 ? 'var(--tm-green)' : rv.score >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)', sub: 'last 7 days', bar: 'linear-gradient(90deg,rgba(99,102,241,0.5),rgba(99,102,241,0.85))' });
+                    tiles.push({ label: 'Clean days', value: rv.cleanDays, color: 'var(--tm-green)', sub: 'days following every rule', bar: 'linear-gradient(90deg,rgba(16,185,129,0.5),rgba(16,185,129,0.85))' });
+                    tiles.push({ label: 'Violations', value: rv.violations, color: rv.violations ? 'var(--tm-red)' : 'var(--tm-green)', sub: 'this week', bar: rv.violations ? 'linear-gradient(90deg,rgba(239,68,68,0.5),rgba(239,68,68,0.85))' : 'linear-gradient(90deg,rgba(16,185,129,0.5),rgba(16,185,129,0.85))' });
+                    tiles.push({ label: 'Most frequent', value: rv.most_frequent ? esc(rv.most_frequent).slice(0, 26) : 'None', sub: rv.most_frequent ? 'most broken rule' : 'no violations', bar: 'linear-gradient(90deg,rgba(245,158,11,0.5),rgba(245,158,11,0.85))' });
+                } else {
+                    tiles.push({ label: 'Trades', value: rv.trades, sub: 'this month', bar: 'linear-gradient(90deg,rgba(99,102,241,0.5),rgba(99,102,241,0.85))' });
+                    tiles.push({ label: 'Net P&L', value: money(rv.netPnl), color: rv.netPnl >= 0 ? 'var(--tm-green)' : 'var(--tm-red)', sub: 'month to date', bar: rv.netPnl >= 0 ? 'linear-gradient(90deg,rgba(16,185,129,0.6),rgba(16,185,129,0.9))' : 'linear-gradient(90deg,rgba(239,68,68,0.6),rgba(239,68,68,0.9))' });
+                    tiles.push({ label: 'Win rate', value: rv.winRate == null ? '—' : rv.winRate + '%', sub: rv.trades ? rv.winRate + '% of trades' : 'no trades', bar: 'linear-gradient(90deg,rgba(16,185,129,0.5),rgba(16,185,129,0.85))' });
+                    tiles.push({ label: 'Clean-day streak', value: rv.cleanDayStreak, color: rv.cleanDayStreak ? 'var(--tm-green)' : '', sub: rv.cleanDayStreak === 1 ? 'day in a row' : rv.cleanDayStreak ? 'days in a row' : 'no streak yet', bar: 'linear-gradient(90deg,rgba(16,185,129,0.5),rgba(16,185,129,0.85))' });
+                }
+                $('sum-strip').innerHTML = tiles.map(t =>
+                    '<div class="sum-tile glass" style="--bar:' + t.bar + '">' +
+                        '<div class="st-label">' + t.label + '</div>' +
+                        '<div class="st-value num" ' + (t.color ? 'style="color:' + t.color + '"' : '') + '>' + t.value + '</div>' +
+                        '<div class="st-sub">' + t.sub + '</div>' +
+                    '</div>'
+                ).join('');
+
+                // hero card
+                const periodLabel = activePeriod === 'daily' ? 'Daily review' : activePeriod === 'weekly' ? 'Weekly review' : 'Monthly review';
+                $('rv-period').textContent = periodLabel;
+                let sub = '';
+                if (activePeriod === 'daily') {
+                    const d = new Date(rv.date + 'T00:00:00');
+                    sub = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                } else if (activePeriod === 'weekly') {
+                    sub = 'Last 7 days · ' + rv.from + ' → ' + rv.to;
+                } else {
+                    const [y, m] = rv.month.split('-');
+                    sub = MONTHS[Number(m) - 1] + ' ' + y;
+                }
+                $('rv-period-sub').textContent = sub;
+
+                const scoreCol = rv.score == null ? 'var(--tm-dim)' : rv.score >= 80 ? 'var(--tm-green)' : rv.score >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
+                $('rv-score-val').textContent = rv.score == null ? '—' : rv.score;
+                $('rv-score-val').style.color = scoreCol;
+
+                if (activePeriod === 'daily') {
+                    $('rv-perf').textContent = money(rv.pnl);
+                    $('rv-perf').style.color = rv.pnl > 0 ? 'var(--tm-green)' : rv.pnl < 0 ? 'var(--tm-red)' : '';
+                    $('rv-perf-sub').textContent = rv.trades + ' trade' + (rv.trades === 1 ? '' : 's') + (rv.violations ? ' · ' + rv.violations + ' violation' + (rv.violations === 1 ? '' : 's') : '');
+                    $('rv-focus').textContent = rv.focus;
+                    $('rv-focus').style.color = '';
+                    $('rv-summary-wrap').classList.remove('hidden');
+                    $('rv-summary').textContent = rv.summary;
+                } else if (activePeriod === 'weekly') {
+                    $('rv-perf').textContent = rv.cleanDays + ' clean day' + (rv.cleanDays === 1 ? '' : 's');
+                    $('rv-perf').style.color = 'var(--tm-green)';
+                    $('rv-perf-sub').textContent = 'this week · ' + rv.violations + ' violation' + (rv.violations === 1 ? '' : 's');
+                    $('rv-focus').textContent = rv.focus;
+                    $('rv-focus').style.color = '';
+                    $('rv-summary-wrap').classList.add('hidden');
+                } else {
+                    $('rv-perf').textContent = money(rv.netPnl);
+                    $('rv-perf').style.color = rv.netPnl > 0 ? 'var(--tm-green)' : rv.netPnl < 0 ? 'var(--tm-red)' : '';
+                    $('rv-perf-sub').textContent = rv.trades + ' trades · ' + (rv.winRate == null ? '—' : rv.winRate + '% win rate');
+                    $('rv-focus').textContent = rv.weakest_dim ? 'Tighten: ' + rv.weakest_dim : 'Keep the routine';
+                    $('rv-focus').style.color = rv.weakest_dim ? 'var(--tm-amber)' : '';
+                    $('rv-summary-wrap').classList.add('hidden');
+                }
+
+                // discipline breakdown
+                $('dims').innerHTML = dimsHtml(rv.dims);
+
+                // violation analysis
+                if (activePeriod === 'daily') {
+                    $('viol-sub').textContent = 'Every rule break today, with its cost.';
+                    const rows = rv.violation_breakdown || [];
+                    $('viols').innerHTML = rows.length
+                        ? rows.map(v =>
+                            '<div class="vr-row">' +
+                                '<div class="vr-rule">' +
+                                    '<div class="vr-name">' + esc(v.rule) + '</div>' +
+                                    '<div class="vr-meta">Expected: ' + esc(v.expected || '—') + ' · Actual: ' + esc(v.actual || '—') + '</div>' +
+                                '</div>' +
+                                '<div class="vr-num num" style="color:' + ((v.pnl || 0) < 0 ? 'var(--tm-red)' : 'var(--tm-dim)') + '">' + money(v.pnl) + (v.r != null ? ' · ' + (v.r > 0 ? '+' : '') + Number(v.r).toFixed(2) + 'R' : '') + '</div>' +
+                                (v.tradeId ? '<a class="vr-link" href="journal.html?trade=' + encodeURIComponent(v.tradeId) + '">View trade<svg data-lucide="arrow-right" class="w-3 h-3"></svg></a>' : '') +
+                            '</div>'
+                        ).join('')
+                        : '<div class="glass rounded-xl p-6 text-center"><svg data-lucide="shield-check" class="w-8 h-8 mx-auto text-[var(--tm-green)] mb-2"></svg><p class="text-[13.5px] font-semibold">Clean day — no rule breaks recorded.</p><p class="text-[12px] text-[var(--tm-dim)] mt-1">Following your rules is the point, even when the day is red.</p></div>';
+                } else if (activePeriod === 'weekly') {
+                    $('viol-sub').textContent = 'The rules that cost you this week.';
+                    const freq = rv.most_frequent ? '<div class="rule-card"><div class="rc-label">Most frequent</div><div class="rc-value">' + esc(rv.most_frequent) + '</div><div class="rc-meta">The rule broken most often this week.</div></div>' : '<div class="rule-card"><div class="rc-label">Most frequent</div><div class="rc-value">None</div><div class="rc-meta">No violations recorded this week.</div></div>';
+                    const costly = rv.most_costly
+                        ? '<div class="rule-card"><div class="rc-label">Most costly</div><div class="rc-value" style="color:var(--tm-red)">' + esc(rv.most_costly.rule) + '</div><div class="rc-meta">' + rv.most_costly.count + ' break' + (rv.most_costly.count === 1 ? '' : 's') + ' · ' + money(rv.most_costly.cost) + '</div></div>'
+                        : '<div class="rule-card"><div class="rc-label">Most costly</div><div class="rc-value">None</div><div class="rc-meta">Nothing to flag this week.</div></div>';
+                    $('viols').innerHTML = '<div class="grid grid-cols-1 sm:grid-cols-2 gap-3">' + freq + costly + '</div>';
+                } else {
+                    $('viol-sub').textContent = 'Monthly rule-break totals.';
+                    $('viols').innerHTML = '<div class="glass rounded-xl p-6 text-center">' +
+                        '<div class="text-[26px] font-extrabold num" style="color:' + (rv.violations ? 'var(--tm-red)' : 'var(--tm-green)') + '">' + rv.violations + '</div>' +
+                        '<p class="text-[13px] font-semibold mt-1">violation' + (rv.violations === 1 ? '' : 's') + ' this month</p>' +
+                        '<p class="text-[12px] text-[var(--tm-dim)] mt-2">' + (rv.weakest_dim ? 'Weakest dimension: ' + rv.weakest_dim + '. Most of your work this month lives here.' : 'No dimension stands out as the weak spot this month.') + '</p>' +
+                    '</div>';
+                }
+
+                // performance vs discipline
+                const pnl = activePeriod === 'daily' ? rv.pnl : rv.netPnl;
+                $('perf-disc').innerHTML =
+                    '<div class="focus-block">' +
+                        '<div class="fb-label">Performance · Net P&L</div>' +
+                        '<div class="text-[22px] font-extrabold num" style="color:' + (pnl > 0 ? 'var(--tm-green)' : pnl < 0 ? 'var(--tm-red)' : 'var(--tm-text)') + '">' + money(pnl) + '</div>' +
+                    '</div>' +
+                    '<div class="focus-block">' +
+                        '<div class="fb-label">Discipline score</div>' +
+                        '<div class="text-[22px] font-extrabold num" style="color:' + scoreCol + '">' + (rv.score == null ? '—' : rv.score) + '</div>' +
+                    '</div>';
+
+                // review history (event log)
+                let events = [];
+                try { events = (core.getEventLog() || []).filter(e => e && e.what === 'Review completed').slice(0, 4); } catch (e) { events = []; }
+                $('history').innerHTML = events.length
+                    ? events.map(e => '<div class="hist-row"><span class="hist-what">' + esc(e.what) + '</span><span class="hist-detail">' + esc(e.detail || '') + '</span><span class="hist-at num">' + esc(e.at || '') + '</span></div>').join('')
+                    : '<p class="text-[12.5px] text-[var(--tm-dim)]">No completed reviews yet. Finish a period review to record it here.</p>';
+
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ============ COMPLETE REVIEW ============
+            window.completeReview = function () {
+                const accId = currentAccountId();
+                if (!accId) { showToast('No account selected'); return; }
+                try {
+                    const res = core.completeReview(accId, activePeriod, '');
+                    if (res && res.ok) {
+                        showToast('Review marked complete — ' + activePeriod.toUpperCase());
+                    } else {
+                        showToast('Unable to complete review');
+                    }
+                } catch (e) {
+                    showToast('Unable to complete review');
+                }
+            };
+
+            // ============ WIRING ============
+            $('complete-review').addEventListener('click', () => window.completeReview());
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            document.querySelectorAll('.period-tab').forEach(b => {
+                b.addEventListener('click', () => {
+                    activePeriod = b.dataset.period;
+                    renderAll();
+                });
+            });
+
+            $('acc-chip').addEventListener('click', () => {
+                const ids = core.Accounts.map(a => a.id);
+                const idx = ids.indexOf(currentAccountId());
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+            });
+
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+            }
+
+            if (core && core.TradeMindBus) {
+                ['trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'account.changed', 'review.completed'].forEach(ev =>
+                    core.TradeMindBus.subscribe(ev, () => renderAll()));
+            }
+
+            renderAll();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>

@@ -250,6 +250,7 @@
             { name: 'Calendar', href: 'calendar.html', icon: 'calendar-days' },
             { name: 'Community', href: 'community.html', icon: 'users' },
             { name: 'Reports', href: 'reports.html', icon: 'file-text' },
+            { name: 'Review', href: 'review.html', icon: 'clipboard-check' },
             { name: 'Notifications', href: 'notifications.html', icon: 'bell' },
             { name: 'Settings', href: 'settings.html', icon: 'settings' },
             { name: 'Help', href: 'help.html', icon: 'help-circle' }
