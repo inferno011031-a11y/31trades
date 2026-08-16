@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Help</title>
+    <title>BATTLEXJOURNAL — Help</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,159 +14,196 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0A0A0C; color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
-        .num {
-            font-family: 'JetBrains Mono', monospace;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.01em;
-        }
 
-        /* App shell */
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
-            display: flex;
-            flex-direction: column;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
         }
         body.collapsed .sidebar { width: 64px; }
-        .logo-badge {
-            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
-            background: linear-gradient(135deg, #10B981, #059669);
-            color: #052E1F; font-weight: 800; font-size: 14px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .collapse-btn {
-            background: none; border: none; color: #6E6E78; cursor: pointer;
-            padding: 6px; border-radius: 6px; transition: all 0.15s;
-        }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
 
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
-            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08);
-            color: #FFFFFF;
-            box-shadow: inset 2px 0 0 #10B981;
-        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
-        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        /* ---- Glass system (Calendar/AI parity) ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
+
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none; cursor: pointer;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
         .btn-ghost {
-            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
-            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
-        .btn-danger {
-            background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 13px;
-            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s;
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
         }
-        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+        .tag-indigo { background: rgba(99,102,241,0.10); color: var(--tm-accent-2); border-color: rgba(99,102,241,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
 
-        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
-        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
 
-        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-        .tag-emerald { background: rgba(16,185,129,0.12); color: #34D399; }
-        .tag-red { background: rgba(239,68,68,0.12); color: #F87171; }
-        .tag-amber { background: rgba(245,158,11,0.12); color: #FBBF24; }
-        .tag-blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
-        .tag-purple { background: rgba(139,92,246,0.12); color: #A78BFA; }
-        .tag-gray { background: rgba(148,163,184,0.12); color: #94A3B8; }
-
-        .ins-tab {
-            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        /* ---- Quick start ---- */
+        .step {
+            display: flex; align-items: flex-start; gap: 13px; padding: 13px 14px;
+            border-radius: 10px; border: 1px solid var(--hairline); background: var(--glass-inner);
+            transition: all 0.15s; text-decoration: none; color: var(--tm-text);
         }
-        .ins-tab:hover { color: #E8E8EC; }
-        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+        .step:hover { border-color: var(--tm-accent); transform: translateY(-1px); box-shadow: 0 6px 20px -8px rgba(99,102,241,0.3); }
+        .step-num {
+            width: 28px; height: 28px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--tm-mono); font-size: 13px; font-weight: 800;
+            background: linear-gradient(135deg, rgba(99,102,241,0.20), rgba(52,211,153,0.10));
+            color: var(--tm-accent-2); border: 1px solid rgba(129,140,248,0.30);
+        }
 
-        .notif-row { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #17171A; transition: background 0.12s; cursor: pointer; }
-        .notif-row:hover { background: rgba(255,255,255,0.03); }
-        .notif-row:last-child { border-bottom: none; }
-        .notif-ico {
+        /* ---- Product areas ---- */
+        .prod-card {
+            display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+            border-radius: 10px; border: 1px solid var(--hairline); background: var(--glass-inner);
+            transition: all 0.15s; text-decoration: none; color: var(--tm-text); min-width: 0;
+        }
+        .prod-card:hover { border-color: var(--tm-accent); transform: translateY(-1px); box-shadow: 0 6px 20px -8px rgba(99,102,241,0.3); }
+        .prod-ico {
             width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
             display: flex; align-items: center; justify-content: center;
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-accent-2);
         }
-        .notif-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; margin-top: 6px; }
-        .notif-action {
-            display: inline-flex; align-items: center; gap: 6px; margin-top: 9px;
-            padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            color: #34D399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
-            cursor: pointer; transition: all 0.15s;
-        }
-        .notif-action:hover { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.45); }
-        .broker-overlay {
-            position: fixed; inset: 0; z-index: 90;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            display: flex; align-items: center; justify-content: center; padding: 20px;
-        }
-        .broker-card {
-            width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto;
-            background: #121620; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
-            padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-        }
-        .broker-close {
-            width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.04); color: #8A8A93; transition: all 0.15s;
-        }
-        .broker-close:hover { background: rgba(255,255,255,0.1); color: #E8E8EC; }
-        .broker-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
-        .broker-row {
-            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
-            border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
-            transition: background 0.15s;
-        }
-        .broker-row:hover { background: rgba(255,255,255,0.06); }
-        .broker-ico {
-            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(16,185,129,0.12); color: #34D399;
-        }
-        .broker-connect {
-            flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            color: #0A0C10; background: #34D399; border: none; cursor: pointer; transition: all 0.15s;
-        }
-        .broker-connect:hover { background: #10B981; box-shadow: 0 0 18px rgba(16,185,129,0.35); }
 
-        @media (max-width: 640px) {
-            .search-input { display: none; }
-            .topbar { padding-left: 12px; padding-right: 12px; }
+        /* ---- FAQ ---- */
+        .faq-item { border-bottom: 1px solid var(--hairline); }
+        .faq-item:last-child { border-bottom: none; }
+        .faq-btn {
+            width: 100%; display: flex; align-items: center; gap: 12px;
+            padding: 15px 16px; text-align: left; background: transparent; border: none;
+            color: var(--tm-text); cursor: pointer; font-family: var(--tm-sans); transition: background 0.12s;
         }
+        .faq-btn:hover { background: var(--glass-inner); }
+        .faq-btn:focus-visible { outline: 2px solid var(--tm-accent); outline-offset: -2px; border-radius: 8px; }
+        .faq-chevron { width: 18px; height: 18px; flex-shrink: 0; color: var(--tm-muted); transition: transform 0.2s ease; }
+        .faq-item.open .faq-chevron { transform: rotate(180deg); }
+        .faq-body { max-height: 0; overflow: hidden; transition: max-height 0.25s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease; opacity: 0; }
+        .faq-item.open .faq-body { max-height: 300px; opacity: 1; }
+        .faq-body-inner { padding: 0 16px 15px; font-size: 12.5px; color: var(--tm-muted); line-height: 1.65; }
+
+        /* ---- FAQ search ---- */
+        .help-search {
+            width: 100%; background: var(--tm-card); border: 1px solid var(--tm-border-2);
+            border-radius: 10px; padding: 11px 14px 11px 40px; font-size: 13.5px; color: var(--tm-text);
+            outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .help-search:focus { border-color: var(--tm-accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.14); }
+        .help-search::placeholder { color: var(--tm-dim); }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .fade-up { animation: fadeUp 0.22s ease; }
+
         @media (max-width: 1024px) {
             .search-input { width: 180px; }
             .sidebar { width: 64px; }
@@ -174,19 +211,25 @@
             .nav-item { justify-content: center; padding: 9px 0; }
             .hide-when-collapsed { display: none !important; }
         }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
 </head>
 <body>
 
-    <div class="flex h-screen">
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -209,17 +252,17 @@
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item active"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="nav-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="nav-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -230,158 +273,283 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                    <input id="global-search" type="text" class="search-input" placeholder="Search…">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search help…">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </button>
-                    <button class="account-select hide-when-collapsed" id="account-chip">
-                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
-            
-            <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[900px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1000px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
-                    <div>
-                        <h1 class="text-[22px] font-bold tracking-tight">Help & Support</h1>
-                        <p class="text-[13px] text-[#6E6E78] mt-0.5">Getting started, quick answers and where to go when something feels off.</p>
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[24px] font-bold tracking-tight">Help</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Understand Battlex. Use it better. Trade with more awareness.</p>
+                        </div>
                     </div>
 
-                    <!-- Quick actions -->
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <button class="panel p-4 text-left hover:border-[#2E2E36] transition-colors" id="help-tour">
-                            <svg data-lucide="compass" class="w-4 h-4 text-[#818CF8] mb-2"></svg>
-                            <div class="text-[13px] font-bold">Start the tour</div>
-                            <div class="text-[11.5px] text-[#6E6E78] mt-0.5">Walk through the sidebar screens</div>
-                        </button>
-                        <a class="panel p-4 text-left hover:border-[#2E2E36] transition-colors block" href="ai.html">
-                            <svg data-lucide="brain-circuit" class="w-4 h-4 text-[#818CF8] mb-2"></svg>
-                            <div class="text-[13px] font-bold">Ask the AI Mentor</div>
-                            <div class="text-[11.5px] text-[#6E6E78] mt-0.5">Personal analysis of your journal</div>
-                        </a>
-                        <a class="panel p-4 text-left hover:border-[#2E2E36] transition-colors block" href="settings.html">
-                            <svg data-lucide="settings" class="w-4 h-4 text-[#818CF8] mb-2"></svg>
-                            <div class="text-[13px] font-bold">Account settings</div>
-                            <div class="text-[11.5px] text-[#6E6E78] mt-0.5">Profile, brokers, security, theme</div>
-                        </a>
+                    <!-- Getting started -->
+                    <div class="glass p-5 fade-up">
+                        <div class="flex items-center justify-between mb-4">
+                            <div class="label-xs">Getting started</div>
+                            <span class="tag tag-indigo"><svg data-lucide="map" class="w-3 h-3"></svg> The loop</span>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-5 gap-2.5">
+                            <a href="strategy-lab.html" class="step">
+                                <div class="step-num">1</div>
+                                <div><div class="text-[13px] font-bold">Build your system</div><div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">Define strategies &amp; rules in Strategy Lab</div></div>
+                            </a>
+                            <a href="journal.html" class="step">
+                                <div class="step-num">2</div>
+                                <div><div class="text-[13px] font-bold">Log your trades</div><div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">Record every decision in the Journal</div></div>
+                            </a>
+                            <a href="discipline.html" class="step">
+                                <div class="step-num">3</div>
+                                <div><div class="text-[13px] font-bold">Review behavior</div><div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">See rule adherence in Discipline</div></div>
+                            </a>
+                            <a href="insights.html" class="step">
+                                <div class="step-num">4</div>
+                                <div><div class="text-[13px] font-bold">Study patterns</div><div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">Evidence-backed findings in Insights</div></div>
+                            </a>
+                            <a href="ai.html" class="step">
+                                <div class="step-num">5</div>
+                                <div><div class="text-[13px] font-bold">Improve</div><div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">Investigate with the AI Mentor</div></div>
+                            </a>
+                        </div>
                     </div>
 
                     <!-- FAQ -->
-                    <div class="panel overflow-hidden">
-                        <div class="px-4 py-3 border-b border-[#1C1C20]"><div class="panel-title">Frequently asked</div></div>
-                        <div id="faq-list" class="flex flex-col"></div>
-                    </div>
-
-                    <div class="panel p-5 flex flex-wrap items-center gap-4">
-                        <div class="min-w-0 flex-1">
-                            <div class="text-[14px] font-bold">Still stuck?</div>
-                            <div class="text-[12.5px] text-[#6E6E78] mt-0.5">Join the Discord, or write to support@31trades.app — include your user ID from Settings for faster help.</div>
+                    <div class="glass p-5 fade-up">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                            <div>
+                                <div class="label-xs">Frequently asked</div>
+                                <div class="text-[12px] text-[var(--tm-dim)] mt-0.5">Answers about the Battlex workspace</div>
+                            </div>
+                            <span class="text-[11px] text-[var(--tm-dim)] num" id="faq-count"></span>
                         </div>
-                        <button class="btn-primary !py-2 !px-4 text-[12.5px]" id="help-mail"><svg data-lucide="mail" class="w-4 h-4"></svg> Copy support email</button>
+                        <div class="relative mb-3">
+                            <svg data-lucide="search" class="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                            <input id="faq-search" type="text" class="help-search" placeholder="Search help…" aria-label="Search frequently asked questions">
+                        </div>
+                        <div id="faq-list" class="flex flex-col"></div>
+                        <div id="faq-empty" class="hidden py-12 text-center">
+                            <svg data-lucide="search-x" class="w-9 h-9 mx-auto text-[var(--tm-dim)] mb-3"></svg>
+                            <p class="text-[14px] font-semibold text-[var(--tm-text)]">No matches</p>
+                            <p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Try another search.</p>
+                        </div>
                     </div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Help · practice, review, improve</p>
+                    <!-- Explore Battlex -->
+                    <div class="glass p-5 fade-up">
+                        <div class="label-xs mb-4">Explore Battlex</div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2.5" id="prod-grid"></div>
+                    </div>
+
+                    <!-- AI Mentor shortcut -->
+                    <div class="glass-strong p-6 fade-up flex flex-wrap items-center gap-5">
+                        <div class="broker-ico" style="width:48px;height:48px;border-radius:12px;flex-shrink:0;display:flex;align-items:center;justify-content:center;background:linear-gradient(135deg,rgba(99,102,241,0.22),rgba(52,211,153,0.10));color:var(--tm-accent-2);border:1px solid rgba(129,140,248,0.30)">
+                            <svg data-lucide="brain-circuit" class="w-6 h-6"></svg>
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="text-[15px] font-bold">Need to understand your trading?</div>
+                            <p class="text-[12.5px] text-[var(--tm-dim)] mt-0.5">Ask AI Mentor about patterns, risk, discipline, tilt, sessions, or your recent trades.</p>
+                        </div>
+                        <a href="ai.html" class="btn-primary"><svg data-lucide="brain-circuit" class="w-4 h-4"></svg> Open AI Mentor</a>
+                    </div>
+
+                    <!-- Tour + support -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 fade-up">
+                        <div class="glass p-5">
+                            <svg data-lucide="compass" class="w-5 h-5 text-[var(--tm-accent-2)] mb-2.5"></svg>
+                            <div class="text-[14px] font-bold">Take the tour</div>
+                            <p class="text-[12.5px] text-[var(--tm-dim)] mt-1 mb-4">Get a quick walkthrough of the Battlex workspace.</p>
+                            <button class="btn-ghost" id="help-tour"><svg data-lucide="play" class="w-3.5 h-3.5"></svg> Start tour</button>
+                        </div>
+                        <div class="glass p-5">
+                            <svg data-lucide="life-buoy" class="w-5 h-5 text-[var(--tm-accent-2)] mb-2.5"></svg>
+                            <div class="text-[14px] font-bold">Need more help?</div>
+                            <p class="text-[12.5px] text-[var(--tm-dim)] mt-1 mb-4">Write to support@31trades.app — include your user ID from Settings for faster help.</p>
+                            <button class="btn-ghost" id="help-mail"><svg data-lucide="mail" class="w-3.5 h-3.5"></svg> <span id="mail-label">Copy support email</span></button>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Help · record decisions, understand behavior, improve consistency</p>
                 </div>
             </main>
-</main>
         </div>
     </div>
 
     <!-- Toast -->
     <div class="toast" id="toast">
-        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg>
         <span id="toast-msg"></span>
     </div>
 
-    
     <script>
-
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
-            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
             let toastTimer;
             window.showToast = function (msg) {
-                const t = $('toast');
-                if (!t) return;
                 $('toast-msg').textContent = msg;
-                t.classList.add('show');
+                $('toast').classList.add('show');
                 clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
             };
-            function bootShell() {
-                const cb = $('collapse-btn');
-                if (cb) cb.addEventListener('click', () => document.body.classList.toggle('collapsed'));
-                const chip = $('account-chip');
-                if (chip) {
-                    const core = window.TradeMindCore;
-                    if (core && core.selectedAccountId) {
-                        const acc = core.Accounts.find(a => a.id === core.selectedAccountId()) || core.Accounts[0];
-                        if (acc) {
-                            const num = chip.querySelector('.num');
-                            if (num) num.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
-                            const spans = chip.querySelectorAll('span');
-                            if (spans.length > 2) spans[2].textContent = acc.name;
-                        }
+
+            // ---- account chip / chrome ----
+            function renderChrome() {
+                const core = window.TradeMindCore;
+                const chip = $('acc-chip');
+                if (core && core.Accounts && core.Accounts.length) {
+                    const sel = core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    if (chip) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + String(acc.name).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
                     }
+                } else if (chip) {
+                    chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
                 }
+                if (window.lucide) lucide.createIcons();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+            }
+
+            // ---- profile name in the sidebar ----
+            function renderProfile() {
+                let name = 'trader';
+                try {
+                    const s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
+                    const u = (s && s.user) || null;
+                    if (u && u.name) name = String(u.name).split(/[\s@]/)[0];
+                    else if (u && u.email) name = String(u.email).split('@')[0].split(/[._-]/)[0];
+                } catch (e) {}
+                $('nav-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                $('nav-avatar').textContent = name.slice(0, 2).toUpperCase();
+            }
+
+            // ---- FAQ content (existing static content, preserved verbatim) ----
+            const FAQ = [
+                { cat: 'Getting started', q: 'How do I log my first trade?', a: 'Click "Log Trade" in the top bar (or Journal → New trade). Fill the ticket — symbol, direction, entry, stop loss, take profit and setup — and save. It flows into Dashboard, Analytics, Risk and Discipline instantly from the same data source.' },
+                { cat: 'Backtesting', q: 'What is the difference between Practice and my live journal?', a: 'Backtesting → Practice replays real history bar by bar and records simulated trades under a separate session — they never touch your live journal P&L. Your live trades live in Journal.' },
+                { cat: 'Battles', q: 'How do Online Battles work?', a: 'Everyone trades the exact same historical timeline from the same starting candle. Your decisions are private until the battle ends; scoring blends P&L with risk management, win rate and consistency.' },
+                { cat: 'Workspace', q: 'Why does my workspace not carry drawings between timeframes?', a: 'Each timeframe (1H, 5M, 1M…) is its own internal workspace. Drawings and indicators are saved per symbol + timeframe and restored when you return — they intentionally never leak across.' },
+                { cat: 'Account & settings', q: 'Where is my unique user ID?', a: 'Settings → User Profile → the copy chip, or Community → identity card. It is also your handle for Discord verification and giveaways.' },
+                { cat: 'Account & settings', q: 'How do I change my password or theme?', a: 'Settings → Security for your password (with a strength meter), and Settings → Appearance for Light / Dark / System — the theme is saved to your account and follows you across devices.' },
+                { cat: 'Market events', q: 'The market events calendar looks quiet.', a: 'It shows real scheduled high/medium-impact events only. Quiet sessions stay quiet — that is the calendar being accurate, not broken. It also feeds the AI so it can warn you about news drops.' }
+            ];
+
+            // ---- product areas (accurate descriptions of the existing pages) ----
+            const PRODUCTS = [
+                { icon: 'book-open', name: 'Journal', desc: 'Record trades, rules, and evidence behind every decision.', href: 'journal.html' },
+                { icon: 'shield-alert', name: 'Risk', desc: 'Daily risk, loss limits, drawdown, and pre-trade checks.', href: 'risk.html' },
+                { icon: 'target', name: 'Discipline', desc: 'How consistently you follow the rules you set.', href: 'discipline.html' },
+                { icon: 'bar-chart-3', name: 'Analytics', desc: 'Where and under what conditions you actually perform.', href: 'analytics.html' },
+                { icon: 'calendar-days', name: 'Calendar', desc: 'Your month as a behavioral trading record.', href: 'calendar.html' },
+                { icon: 'sparkles', name: 'Insights', desc: 'Patterns in your trading, backed by your own evidence.', href: 'insights.html' },
+                { icon: 'brain-circuit', name: 'AI Mentor', desc: 'Your trading data, turned into better questions.', href: 'ai.html' },
+                { icon: 'beaker', name: 'Strategy Lab', desc: 'The system you expect yourself to follow.', href: 'strategy-lab.html' },
+                { icon: 'file-text', name: 'Reports', desc: 'Your performance, organized into a record you can keep.', href: 'reports.html' },
+                { icon: 'bell', name: 'Notifications', desc: 'Everything that needs your attention.', href: 'notifications.html' },
+                { icon: 'users', name: 'Community', desc: 'Identity, battle results, and weekly competition.', href: 'community.html' },
+                { icon: 'settings', name: 'Settings', desc: 'Identity, security, connections, and workspace.', href: 'settings.html' }
+            ];
+
+            // ---- FAQ rendering + search ----
+            let openFaq = -1;
+            function renderFaq(filter) {
+                const q = (filter || '').trim().toLowerCase();
+                const list = $('faq-list');
+                const hits = FAQ.map((f, i) => ({ f, i })).filter(x =>
+                    !q || x.f.q.toLowerCase().includes(q) || x.f.a.toLowerCase().includes(q) || x.f.cat.toLowerCase().includes(q)
+                );
+                $('faq-count').textContent = q ? hits.length + ' of ' + FAQ.length + ' questions' : FAQ.length + ' questions';
+                $('faq-empty').classList.toggle('hidden', hits.length > 0);
+                list.innerHTML = hits.map(({ f, i }) =>
+                    '<div class="faq-item' + (i === openFaq ? ' open' : '') + '" data-faq="' + i + '">' +
+                        '<button class="faq-btn" type="button" aria-expanded="' + (i === openFaq ? 'true' : 'false') + '">' +
+                            '<svg data-lucide="chevron-down" class="faq-chevron"></svg>' +
+                            '<span class="flex-1 min-w-0">' +
+                                '<span class="text-[10.5px] uppercase tracking-wider font-semibold text-[var(--tm-dim)] block mb-0.5">' + f.cat + '</span>' +
+                                '<span class="text-[13.5px] font-semibold block">' + f.q + '</span>' +
+                            '</span>' +
+                        '</button>' +
+                        '<div class="faq-body"><div class="faq-body-inner">' + f.a + '</div></div>' +
+                    '</div>'
+                ).join('');
+                list.querySelectorAll('.faq-item').forEach(el => {
+                    const i = Number(el.dataset.faq);
+                    el.querySelector('.faq-btn').addEventListener('click', () => {
+                        openFaq = openFaq === i ? -1 : i;
+                        renderFaq($('faq-search').value);
+                    });
+                });
                 if (window.lucide) lucide.createIcons();
             }
 
-            const FAQ = [
-                { q: 'How do I log my first trade?', a: 'Click "Log Trade" in the top bar (or Journal → New trade). Fill the ticket — symbol, direction, entry, stop loss, take profit and setup — and save. It flows into Dashboard, Analytics, Risk and Discipline instantly from the same data source.' },
-                { q: 'What is the difference between Practice and my live journal?', a: 'Backtesting → Practice replays real history bar by bar and records simulated trades under a separate session — they never touch your live journal P&L. Your live trades live in Journal.' },
-                { q: 'How do Online Battles work?', a: 'Everyone trades the exact same historical timeline from the same starting candle. Your decisions are private until the battle ends; scoring blends P&L with risk management, win rate and consistency.' },
-                { q: 'Why does my workspace not carry drawings between timeframes?', a: 'Each timeframe (1H, 5M, 1M…) is its own internal workspace. Drawings and indicators are saved per symbol + timeframe and restored when you return — they intentionally never leak across.' },
-                { q: 'Where is my unique user ID?', a: 'Settings → User Profile → the copy chip, or Community → identity card. It is also your handle for Discord verification and giveaways.' },
-                { q: 'How do I change my password or theme?', a: 'Settings → Security for your password (with a strength meter), and Settings → Appearance for Light / Dark / System — the theme is saved to your account and follows you across devices.' },
-                { q: 'The market events calendar looks quiet.', a: 'It shows real scheduled high/medium-impact events only. Quiet sessions stay quiet — that is the calendar being accurate, not broken. It also feeds the AI so it can warn you about news drops.' }
-            ];
-            function boot() {
-                bootShell();
-                const list = $('faq-list');
-                list.innerHTML = FAQ.map((f, i) =>
-                    '<div class="border-b border-[#141419] last:border-0">' +
-                    '<button class="w-full flex items-center gap-3 px-4 py-3.5 text-left hover:bg-[#131316] transition-colors" data-faq="' + i + '">' +
-                    '<span class="flex-1 text-[13px] font-semibold">' + f.q + '</span>' +
-                    '<svg data-lucide="chevron-down" class="w-4 h-4 text-[#6E6E78] transition-transform" data-faq-ico="' + i + '"></svg></button>' +
-                    '<div class="hidden px-4 pb-4 text-[12.5px] text-[#6E6E78] leading-relaxed" data-faq-body="' + i + '">' + f.a + '</div></div>'
+            function renderProducts() {
+                $('prod-grid').innerHTML = PRODUCTS.map(p =>
+                    '<a href="' + p.href + '" class="prod-card">' +
+                        '<div class="prod-ico"><svg data-lucide="' + p.icon + '" class="w-[17px] h-[17px]"></svg></div>' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="text-[13px] font-bold">' + p.name + '</div>' +
+                            '<div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5 leading-snug">' + p.desc + '</div>' +
+                        '</div>' +
+                        '<svg data-lucide="chevron-right" class="w-4 h-4 text-[var(--tm-dim)] flex-shrink-0"></svg>' +
+                    '</a>'
                 ).join('');
-                list.querySelectorAll('[data-faq]').forEach(btn => btn.addEventListener('click', () => {
-                    const i = btn.dataset.faq;
-                    const body = list.querySelector('[data-faq-body="' + i + '"]');
-                    const ico = list.querySelector('[data-faq-ico="' + i + '"]');
-                    const open = !body.classList.contains('hidden');
-                    list.querySelectorAll('[data-faq-body]').forEach(b => b.classList.add('hidden'));
-                    list.querySelectorAll('[data-faq-ico]').forEach(s => s.style.transform = '');
-                    if (!open) { body.classList.remove('hidden'); if (ico) ico.style.transform = 'rotate(180deg)'; }
-                }));
+            }
+
+            function boot() {
+                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+                const core = window.TradeMindCore;
+                if (core && core.selectedAccountId) core.setSelectedAccount(core.selectedAccountId());
+                renderChrome();
+                renderProfile();
+                renderFaq('');
+                renderProducts();
+                $('faq-search').addEventListener('input', e => renderFaq(e.target.value));
                 const tour = $('help-tour');
                 if (tour) tour.addEventListener('click', () => {
                     if (window.startTour) window.startTour();
                     else window.location.href = 'dashboard.html';
                 });
                 $('help-mail').addEventListener('click', () => {
-                    try { navigator.clipboard.writeText('support@31trades.app'); } catch (e) {}
+                    try { navigator.clipboard.writeText('support@31trades.app'); } catch (e) {
+                        const t = document.createElement('textarea');
+                        t.value = 'support@31trades.app'; document.body.appendChild(t); t.select();
+                        try { document.execCommand('copy'); } catch (e2) {}
+                        t.remove();
+                    }
+                    $('mail-label').textContent = 'Copied';
                     showToast('support@31trades.app copied');
+                    setTimeout(() => { $('mail-label').textContent = 'Copy support email'; }, 1600);
                 });
+                const gs = $('global-search');
+                if (gs && window.TM_GLOBAL_SEARCH) {
+                    gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+                }
                 if (window.lucide) lucide.createIcons();
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();
-
     </script>
     <script src="assets/tour.js"></script>
     <script src="reset.js"></script>
