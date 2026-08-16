@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Calendar</title>
+    <title>BATTLEXJOURNAL — Calendar</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,36 +14,35 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
-
+    <script src="assets/asset-meta.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             height: 100%;
-            background: #0A0A0C;
-            color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
 
-        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
         /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            position: relative; z-index: 40;
         }
-
         body.collapsed .sidebar { width: 64px; }
         body.collapsed .hide-when-collapsed { display: none !important; }
         body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
@@ -54,120 +53,218 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
-        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+        /* ==========================================================================
+           PREMIUM CALENDAR — theme-adaptive glass system
+           ========================================================================== */
+        :root {
+            --cal-bg-1: rgba(99, 102, 241, 0.10);
+            --cal-bg-2: rgba(52, 211, 153, 0.07);
+            --cal-bg-3: rgba(245, 158, 11, 0.05);
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --cell-bg: rgba(255, 255, 255, 0.028);
+            --cell-hover: rgba(255, 255, 255, 0.06);
+            --cell-win-tint: rgba(16, 185, 129, 0.07);
+            --cell-loss-tint: rgba(239, 68, 68, 0.06);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --cal-bg-1: rgba(99, 102, 241, 0.10);
+            --cal-bg-2: rgba(16, 185, 129, 0.07);
+            --cal-bg-3: rgba(245, 158, 11, 0.05);
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --cell-bg: rgba(255, 255, 255, 0.5);
+            --cell-hover: rgba(255, 255, 255, 0.85);
+            --cell-win-tint: rgba(16, 185, 129, 0.05);
+            --cell-loss-tint: rgba(239, 68, 68, 0.045);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+
+        .cal-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, var(--cal-bg-1), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, var(--cal-bg-2), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, var(--cal-bg-3), transparent 60%),
+                var(--tm-bg);
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            box-shadow: var(--glass-shadow);
+        }
+
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .panel-sub { font-size: 12px; color: var(--tm-dim); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
 
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
 
         .btn-ghost {
-            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
 
-        .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
-        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
-        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
-        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
+
+        /* ---- Month nav ---- */
+        .month-nav { display: flex; align-items: center; gap: 2px; border: 1px solid var(--glass-border); border-radius: 10px; padding: 3px; background: var(--glass-bg); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); box-shadow: 0 4px 18px rgba(0,0,0,0.12); }
+        .month-nav button {
+            padding: 7px 13px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: var(--tm-muted);
+            background: transparent; border: none; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
+        }
+        .month-nav button:hover { background: var(--cell-hover); color: var(--tm-text); }
+        .month-nav button.today { background: var(--glass-inner); color: var(--tm-text); }
+
+        /* ---- Summary strip ---- */
+        .sum-tile { border-radius: 14px; padding: 16px 18px; position: relative; overflow: hidden; }
+        .sum-tile .st-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--tm-muted); }
+        .sum-tile .st-value { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; margin-top: 5px; }
+        .sum-tile .st-sub { font-size: 11.5px; color: var(--tm-dim); margin-top: 3px; }
+        .sum-tile::after { content: ''; position: absolute; inset: 0 0 auto 0; height: 2px; border-radius: 2px 2px 0 0; opacity: 0.85; background: var(--bar, transparent); }
 
         /* ---- Calendar grid ---- */
-        .cal-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 6px; }
+        .cal-shell { border-radius: 18px; padding: 6px; }
+        .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 8px 6px; }
+        .cal-week > div { text-align: center; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--tm-dim); padding: 4px 0; }
+        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; padding: 0 6px 6px; }
 
         .cal-cell {
-            min-height: 92px;
-            background: #121214;
-            border: 1px solid #1F1F23;
-            border-radius: 10px;
-            padding: 8px 10px;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            transition: all 0.15s;
-            text-align: left;
+            position: relative; border-radius: 12px; border: 1px solid var(--hairline);
+            background: var(--cell-bg); color: var(--tm-text); min-height: 92px;
+            padding: 10px 10px 8px; text-align: left; cursor: pointer;
+            display: flex; flex-direction: column; gap: 2px; overflow: hidden;
+            transition: transform 0.16s ease, border-color 0.16s ease, background 0.16s ease, box-shadow 0.16s ease;
+            font-family: inherit;
         }
-
-        .cal-cell:hover { border-color: #3A3A41; background: #16161A; }
-        .cal-cell.other { opacity: 0.35; pointer-events: none; }
-        .cal-cell.today { border-color: rgba(16,185,129,0.55); box-shadow: 0 0 0 1px rgba(16,185,129,0.3); }
-        .cal-cell.no-trades { border-style: dashed; }
-
-        .cal-cell.win { background: rgba(16,185,129, 0.055); border-color: rgba(16,185,129,0.16); }
-        .cal-cell.win-2 { background: rgba(16,185,129, 0.10); border-color: rgba(16,185,129,0.28); }
-        .cal-cell.win-3 { background: rgba(16,185,129, 0.16); border-color: rgba(16,185,129,0.40); }
-
-        .cal-cell.loss { background: rgba(239,68,68, 0.055); border-color: rgba(239,68,68,0.16); }
-        .cal-cell.loss-2 { background: rgba(239,68,68, 0.10); border-color: rgba(239,68,68,0.28); }
-        .cal-cell.loss-3 { background: rgba(239,68,68, 0.16); border-color: rgba(239,68,68,0.40); }
-
-        .cal-daynum { font-size: 11.5px; font-weight: 700; color: #8A8A93; }
-        .cal-cell.today .cal-daynum { color: #34D399; }
-        .cal-pnl { font-size: 13px; font-weight: 700; }
-        .cal-count { font-size: 10.5px; color: #6E6E78; font-weight: 600; }
-
-        /* Legend */
-        .legend-swatch { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
-
-        /* Drawer */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
-        .overlay.open { opacity: 1; pointer-events: auto; }
-
-        .drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 94vw); z-index: 50;
-            background: #0D0D0F; border-left: 1px solid #1C1C20;
-            transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
-            display: flex; flex-direction: column;
+        .cal-cell:hover { background: var(--cell-hover); border-color: var(--glass-border-strong); transform: translateY(-2px); box-shadow: 0 6px 18px rgba(0,0,0,0.10); }
+        .cal-cell:focus-visible { outline: 2px solid var(--tm-accent); outline-offset: 1px; }
+        .cal-cell.is-win { background: linear-gradient(180deg, var(--cell-win-tint), var(--cell-bg)); }
+        .cal-cell.is-loss { background: linear-gradient(180deg, var(--cell-loss-tint), var(--cell-bg)); }
+        .cal-cell.is-win::before, .cal-cell.is-loss::before {
+            content: ''; position: absolute; inset: 0 0 auto 0; height: 2px; opacity: 0.75;
         }
-        .drawer.open { transform: none; }
+        .cal-cell.is-win::before { background: linear-gradient(90deg, rgba(16,185,129,0.0), rgba(16,185,129,0.9), rgba(16,185,129,0.0)); }
+        .cal-cell.is-loss::before { background: linear-gradient(90deg, rgba(239,68,68,0.0), rgba(239,68,68,0.85), rgba(239,68,68,0.0)); }
+        .cal-cell.is-selected { border-color: var(--tm-accent); box-shadow: 0 0 0 1px var(--tm-accent), 0 8px 24px rgba(99,102,241,0.18); background: var(--cell-hover); }
+        .cal-cell.is-empty-day { cursor: pointer; min-height: 92px; }
 
-        .tl-item { display: flex; gap: 12px; position: relative; }
-        .tl-item::before { content: ""; position: absolute; left: 6px; top: 18px; bottom: -6px; width: 1px; background: #232327; }
-        .tl-item:last-child::before { display: none; }
-        .tl-dot { width: 13px; height: 13px; border-radius: 999px; border: 2px solid #10B981; background: #0D0D0F; flex-shrink: 0; margin-top: 2px; }
-        .tl-dot.muted { border-color: #4A4A52; }
+        .cal-daynum { font-size: 14px; font-weight: 700; }
+        .cal-pnl { font-size: 13px; font-weight: 800; letter-spacing: -0.01em; }
+        .cal-meta { font-size: 10.5px; color: var(--tm-dim); }
+        .cal-disc { display: flex; align-items: center; gap: 6px; margin-top: auto; }
+        .cal-disc-track { flex: 1; height: 3px; border-radius: 999px; background: var(--hairline); overflow: hidden; }
+        .cal-disc-fill { height: 100%; border-radius: 999px; }
+        .cal-disc-val { font-size: 10px; font-weight: 700; }
+        .cal-risk { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
+        .cal-risk-track { flex: 1; height: 2.5px; border-radius: 999px; background: var(--hairline); overflow: hidden; }
+        .cal-risk-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, rgba(245,158,11,0.55), rgba(245,158,11,0.95)); }
+        .cal-viol { font-size: 10px; font-weight: 700; color: var(--tm-amber); margin-top: 1px; display: inline-flex; align-items: center; gap: 4px; }
+        .cal-viol::before { content: '●'; font-size: 7px; }
+
+        .cal-empty { min-height: 92px; border-radius: 12px; border: 1px dashed transparent; }
+
+        /* ---- Drawer ---- */
+        .drawer-overlay {
+            position: fixed; inset: 0; background: rgba(8, 10, 14, 0.45); z-index: 60;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
+        }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+        .drawer-panel {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 460px; max-width: 94vw;
+            z-index: 61; transform: translateX(102%); transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; border-radius: 0; border-left: 1px solid var(--glass-border-strong);
+        }
+        .drawer-panel.open { transform: none; }
+
+        .ev-trade-row {
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--hairline);
+            border-radius: 10px; text-decoration: none; transition: background 0.12s, border-color 0.12s;
+        }
+        .ev-trade-row:hover { background: var(--cell-hover); border-color: var(--glass-border-strong); }
+
+        .stat-tile { background: var(--glass-inner); border: 1px solid var(--hairline); border-radius: 10px; padding: 11px 13px; }
+        .stat-tile .st-label { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); }
+        .stat-tile .st-value { font-size: 18px; font-weight: 800; margin-top: 3px; }
+
+        /* ---- Motion ---- */
+        .cal-anim { animation: calIn 0.3s cubic-bezier(0.22, 1, 0.36, 1); }
+        @keyframes calIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+        .fade-in { animation: fadeIn 0.25s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* ---- Trend ---- */
+        .trend-svg text { font-family: var(--tm-mono); }
+
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
+            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
-        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); position: relative; z-index: 30; }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
         body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
 
-        .month-btn {
-            width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center;
-            background: #121214; border: 1px solid #1F1F23; color: #8A8A93; transition: all 0.15s;
-        }
-        .month-btn:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
-
-        @media (max-width: 640px) {
-            .search-input { display: none; }
-            .topbar { padding-left: 12px; padding-right: 12px; }
-        }
+        /* ---- Responsive ---- */
         @media (max-width: 1024px) {
             .search-input { width: 180px; }
             .sidebar { width: 64px; }
@@ -175,9 +272,18 @@
             .nav-item { justify-content: center; padding: 9px 0; }
             .hide-when-collapsed { display: none !important; }
         }
-        @media (max-width: 768px) {
-            .cal-cell { min-height: 64px; padding: 6px 8px; }
-            .cal-pnl { font-size: 11px; }
+        @media (max-width: 767px) {
+            .cal-cell { min-height: 64px; padding: 7px 8px; gap: 1px; }
+            .cal-empty { min-height: 64px; }
+            .cal-meta { display: none; }
+            .cal-disc { display: none; }
+            .cal-risk { display: none; }
+            .cal-daynum { font-size: 13px; }
+            .cal-pnl { font-size: 12px; }
+        }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
         }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
@@ -185,13 +291,16 @@
 </head>
 <body>
 
-    <div class="flex h-screen">
+    <!-- Premium ambient background -->
+    <div class="cal-bg"></div>
+
+    <div class="flex h-screen relative" style="z-index:1">
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -214,17 +323,17 @@
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -235,421 +344,459 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                    <input type="text" class="search-input" placeholder="Search trades, symbols, strategies…">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. which days are disciplined?">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <button class="btn-primary !py-2 !px-3.5" onclick="showToast('Open the Journal to log a trade')">
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </button>
-                    <button class="account-select hide-when-collapsed">
-                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Content -->
-            <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1400px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
-                    <!-- Header + month navigation -->
+                    <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-[22px] font-bold tracking-tight">Calendar</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Daily P&amp;L · trade count · risk · discipline (PRD §14)</p>
+                            <h1 class="text-[24px] font-bold tracking-tight">Calendar</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">See how your trading behavior unfolds over time.</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button class="month-btn" onclick="shiftMonth(-1)"><svg data-lucide="chevron-left" class="w-4 h-4"></svg></button>
-                            <button id="month-label" class="btn-ghost !px-4 num"></button>
-                            <button class="month-btn" onclick="shiftMonth(1)"><svg data-lucide="chevron-right" class="w-4 h-4"></svg></button>
-                            <button class="btn-ghost !py-2 !px-3 !text-[12.5px] ml-1" onclick="goToday()">Today</button>
-                        </div>
-                    </div>
-
-                    <!-- Month summary strip -->
-                    <div id="month-summary" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3"></div>
-
-                    <!-- Calendar grid -->
-                    <div class="panel p-4 sm:p-5">
-                        <div class="cal-grid mb-2">
-                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Mon</div>
-                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Tue</div>
-                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Wed</div>
-                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Thu</div>
-                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Fri</div>
-                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Sat</div>
-                            <div class="text-center text-[11px] font-bold uppercase tracking-[0.08em] text-[#6E6E78] py-1">Sun</div>
-                        </div>
-                        <div id="cal-grid" class="cal-grid"></div>
-
-                        <!-- Legend -->
-                        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 mt-4 pt-4 border-t border-[#17171A]">
-                            <span class="text-[12px] font-semibold text-[#8A8A93]">Daily P&amp;L:</span>
-                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:rgba(16,185,129,0.16);border:1px solid rgba(16,185,129,0.4);"></span> Big win</span>
-                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:rgba(16,185,129,0.055);border:1px solid rgba(16,185,129,0.16);"></span> Small win</span>
-                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:rgba(239,68,68,0.055);border:1px solid rgba(239,68,68,0.16);"></span> Small loss</span>
-                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:rgba(239,68,68,0.16);border:1px solid rgba(239,68,68,0.4);"></span> Big loss</span>
-                            <span class="flex items-center gap-2 text-[12px] text-[#6E6E78]"><span class="legend-swatch" style="background:#121214;border:1px dashed #232327;"></span> No trades</span>
-                            <span class="ml-auto text-[12px] text-[#6E6E78]"><span class="text-[#34D399] font-semibold">●</span> Today</span>
+                        <div class="flex items-center gap-3">
+                            <div class="month-nav" role="group" aria-label="Month navigation">
+                                <button id="nav-prev" title="Previous month"><svg data-lucide="chevron-left" class="w-4 h-4"></svg> Previous</button>
+                                <button id="nav-today" class="today" title="Return to the current month">Today</button>
+                                <button id="nav-next" title="Next month">Next <svg data-lucide="chevron-right" class="w-4 h-4"></svg></button>
+                            </div>
+                            <a href="journal.html?log=1" class="btn-primary !py-2.5 !px-4">
+                                <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                            </a>
                         </div>
                     </div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Calendar demo build · data is illustrative</p>
+                    <!-- Empty state (no account) -->
+                    <div id="empty-state" class="hidden glass p-12 text-center">
+                        <svg data-lucide="calendar-days" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[18px] font-bold">No account yet</h3>
+                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">The calendar reads your trading behavior day by day. Create an account and log trades to see your month as a behavioral record.</p>
+                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5">
+                            <svg data-lucide="settings" class="w-4 h-4"></svg> Set up account
+                        </a>
+                    </div>
+
+                    <div id="cal-body" class="hidden flex flex-col gap-4">
+
+                        <!-- Month / year label -->
+                        <div class="flex items-baseline gap-3 cal-anim" id="month-head">
+                            <h2 class="text-[22px] font-extrabold tracking-tight" id="month-label">—</h2>
+                            <span class="text-[12.5px] text-[var(--tm-dim)]" id="month-sub">—</span>
+                        </div>
+
+                        <!-- Summary strip -->
+                        <div class="glass rounded-2xl p-4">
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="sum-strip"></div>
+                            <p class="text-[11.5px] text-[var(--tm-dim)] mt-3 px-1" id="sum-note"></p>
+                        </div>
+
+                        <!-- Calendar -->
+                        <div class="glass cal-shell cal-anim" id="cal-shell">
+                            <div class="cal-week">
+                                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
+                            </div>
+                            <div class="cal-grid" id="cal-grid" role="grid" aria-label="Trading calendar"></div>
+                        </div>
+
+                        <!-- This month + discipline trend -->
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <div class="glass rounded-2xl p-5">
+                                <div class="panel-title mb-1">This month</div>
+                                <p class="panel-sub mb-4">The best and worst of the month, from the same day records.</p>
+                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="month-strip"></div>
+                            </div>
+                            <div class="glass rounded-2xl p-5">
+                                <div class="panel-title mb-1">Discipline through the month</div>
+                                <p class="panel-sub mb-4">Daily discipline score (evaluated rules) — scan which days held the line.</p>
+                                <div id="trend"></div>
+                            </div>
+                        </div>
+
+                        <!-- Cross-page -->
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <a href="journal.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="book-open" class="w-4 h-4"></svg> Journal</a>
+                            <a href="discipline.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="target" class="w-4 h-4"></svg> Discipline</a>
+                            <a href="risk.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="shield-alert" class="w-4 h-4"></svg> Risk</a>
+                            <a href="analytics.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="bar-chart-3" class="w-4 h-4"></svg> Analytics</a>
+                            <a href="ai.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="brain-circuit" class="w-4 h-4"></svg> AI Mentor</a>
+                        </div>
+
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Calendar · every day from the same calendarMonth() engine the rest of the app reads</p>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- ============ DAY SESSION REVIEW DRAWER ============ -->
-    <div class="overlay" id="day-overlay" onclick="closeDay()"></div>
-    <div class="drawer" id="day-drawer">
-        <div id="day-body"></div>
-    </div>
+    <!-- Selected-day glass drawer -->
+    <div id="day-overlay" class="drawer-overlay"></div>
+    <aside id="day-drawer" class="drawer-panel glass-strong" aria-hidden="true">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-[var(--hairline)] flex-shrink-0">
+            <div>
+                <div class="panel-title text-[15px]" id="day-title">—</div>
+                <div class="panel-sub mt-0.5" id="day-sub">—</div>
+            </div>
+            <button id="day-close" class="collapse-btn" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4" id="day-body"></div>
+    </aside>
 
     <!-- Toast -->
-    <div class="toast" id="toast">
-        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
-        <span id="toast-msg"></span>
-    </div>
-
-    <style>
-        .toast {
-            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: #1C1C20; border: 1px solid #2E2E35; color: #E8E8EC; border-radius: 10px;
-            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
-            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-    </style>
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
 
     <script>
-        (function() {
+        (function () {
+            'use strict';
             const $ = id => document.getElementById(id);
-            const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-            const DOW = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-            const SYMBOLS = ['EURUSD','GBPUSD','XAUUSD','NAS100'];
-            const SETUPS = ['MSS + FVG','FVG','Breakout','Order Block'];
-            const fmt = n => (n >= 0 ? '+' : '') + '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 0 });
-
-            // Deterministic PRNG so demo data is stable per month
-            function mulberry32(a) {
-                return function() {
-                    a |= 0; a = a + 0x6D2B79F5 | 0;
-                    let t = Math.imul(a ^ a >>> 15, 1 | a);
-                    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
-                    return ((t ^ t >>> 14) >>> 0) / 4294967296;
-                };
-            }
-
-            // Generate trades for a month (weekdays only, 0-3 per day)
-            function genTrades(year, month) {
-                const trades = [];
-                const rnd = mulberry32(year * 100 + month + 7);
-                const days = new Date(year, month + 1, 0).getDate();
-                for (let d = 1; d <= days; d++) {
-                    const date = new Date(year, month, d);
-                    const dow = date.getDay();
-                    if (dow === 0 || dow === 6) continue;
-                    const n = Math.floor(rnd() * 4); // 0-3
-                    for (let i = 0; i < n; i++) {
-                        const symbol = SYMBOLS[Math.floor(rnd() * SYMBOLS.length)];
-                        const win = rnd() > 0.3;
-                        const raw = win ? 0.5 + rnd() * 3 : -(0.5 + rnd() * 1.5);
-                        const r = Math.round(raw * 100) / 100;
-                        const risk = 100;
-                        trades.push({
-                            date: new Date(year, month, d, 8 + Math.floor(rnd() * 8), Math.floor(rnd() * 60)),
-                            symbol,
-                            dir: rnd() > 0.5 ? 'Long' : 'Short',
-                            setup: SETUPS[Math.floor(rnd() * SETUPS.length)],
-                            session: rnd() > 0.5 ? 'London' : 'New York',
-                            pnl: Math.round(r * risk),
-                            r,
-                            risk,
-                            adherence: rnd() > 0.86 ? (rnd() > 0.5 ? 'early exit' : 'no-plan') : 'followed',
-                            reviewed: rnd() > 0.2
-                        });
-                    }
-                }
-                return trades;
-            }
-
-            let year = new Date().getFullYear();
-            let month = new Date().getMonth();
-            const today = new Date();
-            let tradesCache = {};
-
-            // Canonical source of truth: the calendar is a daily read model of
-            // the shared trade ledger (core.js). The offline generator is ONLY
-            // used when core.js itself is missing — a first user sees an empty
-            // calendar, never fabricated history.
-            function tradesFor(year, month) {
-                const key = year + '-' + month;
-                if (!tradesCache[key]) {
-                    const core = window.TradeMindCore;
-                    if (core && core.Trades) {
-                        const accId = core.selectedAccountId() || (core.Accounts.length ? core.Accounts[0].id : null);
-                        if (!accId) { tradesCache[key] = []; return tradesCache[key]; }
-                        const t0 = new Date(year, month, 1);
-                        const t1 = new Date(year, month + 1, 1);
-                        tradesCache[key] = core.Trades
-                            .filter(t => t.account_id === accId && new Date(t.ts) >= t0 && new Date(t.ts) < t1)
-                            .map(t => ({ ...t, date: new Date(t.ts) }));
-                    } else {
-                        tradesCache[key] = genTrades(year, month);
-                    }
-                }
-                return tradesCache[key];
-            }
-
-            function dayAgg(trades, date) {
-                const list = trades.filter(t =>
-                    t.date.getFullYear() === date.getFullYear() &&
-                    t.date.getMonth() === date.getMonth() &&
-                    t.date.getDate() === date.getDate());
-                const pnl = list.reduce((s, t) => s + t.pnl, 0);
-                const wins = list.filter(t => t.pnl > 0).length;
-                const losses = list.filter(t => t.pnl < 0).length;
-                const consumed = Math.abs(list.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
-                const violations = list.filter(t => t.adherence !== 'followed').length;
-                const discipline = Math.max(0, 100 - violations * 10);
-                return { list, pnl, wins, losses, consumed, discipline, violations, count: list.length };
-            }
-
-            function level(pnl, absMax) {
-                if (pnl > 0) {
-                    const m = Math.abs(pnl) / (absMax || 1);
-                    return m > 0.6 ? 'win-3' : m > 0.3 ? 'win-2' : 'win';
-                }
-                if (pnl < 0) {
-                    const m = Math.abs(pnl) / (absMax || 1);
-                    return m > 0.6 ? 'loss-3' : m > 0.3 ? 'loss-2' : 'loss';
-                }
-                return '';
-            }
-
-            function renderSummary() {
-                const trades = tradesFor(year, month);
-                const total = trades.reduce((s, t) => s + t.pnl, 0);
-                const wins = trades.filter(t => t.pnl > 0).length;
-                const losses = trades.filter(t => t.pnl < 0).length;
-                const avgR = trades.length ? trades.reduce((s, t) => s + t.r, 0) / trades.length : 0;
-                const consumed = Math.abs(trades.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
-                const days = new Set(trades.map(t => t.date.getDate())).size;
-                const violations = trades.filter(t => t.adherence !== 'followed').length;
-                const discipline = trades.length ? Math.max(0, Math.round(100 - (violations / trades.length) * 50)) : 100;
-
-                const cards = [
-                    ['Net P&L', fmt(total), total >= 0 ? 'text-[#34D399]' : 'text-[#F87171]', 'Month to date'],
-                    ['Trades', String(trades.length), 'text-white', wins + 'W / ' + losses + 'L · ' + days + ' days'],
-                    ['Win rate', trades.length ? Math.round(wins / (wins + losses || 1) * 100) + '%' : '—', 'text-white', 'Rolling month'],
-                    ['Avg R', avgR >= 0 ? '+' + avgR.toFixed(2) + 'R' : avgR.toFixed(2) + 'R', avgR >= 0 ? 'text-[#34D399]' : 'text-[#F87171]', 'Per trade'],
-                    ['Risk consumed', '$' + consumed, consumed > 0 ? 'text-white' : 'text-[#6E6E78]', 'realized losses this month'],
-                    ['Discipline', discipline + '/100', discipline > 80 ? 'text-[#34D399]' : discipline > 60 ? 'text-[#F59E0B]' : 'text-[#F87171]', violations + ' violations']
-                ];
-
-                $('month-summary').innerHTML = cards.map(c =>
-                    '<div class="panel p-3.5">' +
-                        '<div class="label-xs mb-1.5">' + c[0] + '</div>' +
-                        '<div class="num text-[18px] font-bold ' + c[2] + '">' + c[1] + '</div>' +
-                        '<div class="text-[11px] text-[#6E6E78] mt-1">' + c[3] + '</div>' +
-                    '</div>').join('');
-            }
-
-            function renderGrid() {
-                const trades = tradesFor(year, month);
-                const daysInMonth = new Date(year, month + 1, 0).getDate();
-                const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
-                const offset = (firstDow + 6) % 7; // Monday-first
-                const prevMonth = new Date(year, month - 1, 1);
-                const daysInPrev = new Date(prevMonth.getFullYear(), prevMonth.getMonth() + 1, 0).getDate();
-
-                // absolute max day P&L for intensity scaling
-                let absMax = 1;
-                for (let d = 1; d <= daysInMonth; d++) {
-                    const agg = dayAgg(trades, new Date(year, month, d));
-                    absMax = Math.max(absMax, Math.abs(agg.pnl));
-                }
-
-                const cells = [];
-                for (let i = 0; i < offset; i++) {
-                    const d = daysInPrev - offset + 1 + i;
-                    cells.push('<button class="cal-cell other" disabled><span class="cal-daynum">' + d + '</span></button>');
-                }
-                for (let d = 1; d <= daysInMonth; d++) {
-                    const date = new Date(year, month, d);
-                    const agg = dayAgg(trades, date);
-                    const isToday = date.toDateString() === today.toDateString();
-                    const cls = ['cal-cell'];
-                    if (isToday) cls.push('today');
-                    if (agg.count === 0) cls.push('no-trades');
-                    else cls.push(level(agg.pnl, absMax));
-                    const pnlText = agg.count ? (agg.pnl > 0 ? '+' : agg.pnl < 0 ? '-' : '') + '$' + Math.abs(agg.pnl) : '';
-                    const pnlColor = agg.pnl > 0 ? 'text-[#34D399]' : agg.pnl < 0 ? 'text-[#F87171]' : '';
-                    const countText = agg.count ? agg.count + ' trade' + (agg.count === 1 ? '' : 's') : '—';
-                    cells.push(
-                        '<button class="' + cls.join(' ') + '" onclick="openDay(' + d + ')">' +
-                            '<span class="cal-daynum">' + d + '</span>' +
-                            '<span class="flex items-end justify-between gap-1">' +
-                                '<span class="cal-pnl num ' + pnlColor + '">' + pnlText + '</span>' +
-                                '<span class="cal-count">' + countText + '</span>' +
-                            '</span>' +
-                        '</button>');
-                }
-                // trailing cells
-                const total = offset + daysInMonth;
-                const trailing = (7 - (total % 7)) % 7;
-                for (let i = 1; i <= trailing; i++) {
-                    cells.push('<button class="cal-cell other" disabled><span class="cal-daynum">' + i + '</span></button>');
-                }
-
-                $('cal-grid').innerHTML = cells.join('');
-                $('month-label').textContent = MONTHS[month] + ' ' + year;
-                if (window.lucide) lucide.createIcons();
-            }
-
-            function renderAll() { renderSummary(); renderGrid(); }
-
-            window.shiftMonth = function(delta) {
-                month += delta;
-                if (month < 0) { month = 11; year--; }
-                if (month > 11) { month = 0; year++; }
-                renderAll();
-            };
-
-            window.goToday = function() {
-                year = today.getFullYear();
-                month = today.getMonth();
-                renderAll();
-            };
-
-            // ============ DAY SESSION REVIEW (PRD §14) ============
-            window.openDay = function(d) {
-                const date = new Date(year, month, d);
-                const agg = dayAgg(tradesFor(year, month), date);
-                const weekday = DOW[date.getDay()];
-                const monday = date.toDateString() === today.toDateString();
-
-                const tradesHtml = agg.list.length
-                    ? agg.list.slice().sort((a, b) => a.date - b.date).map(t =>
-                        '<div class="flex items-center gap-3 rounded-lg border border-[#1F1F23] bg-[#0F0F11] px-3.5 py-2.5 mb-2">' +
-                            '<div class="w-7 h-7 rounded-md bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold ' + (t.dir === 'Long' ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + t.symbol.slice(0, 2).toUpperCase() + '</div>' +
-                            '<div class="flex-1 min-w-0">' +
-                                '<div class="text-[13px] font-semibold text-white">' + t.symbol + ' <span class="tag tag-gray !text-[10px] !px-1.5 !py-0.5">' + t.dir + '</span></div>' +
-                                '<div class="text-[11px] text-[#6E6E78] mt-0.5">' + t.setup + ' · ' + t.session + ' · ' + ('0' + t.date.getHours()).slice(-2) + ':' + ('0' + t.date.getMinutes()).slice(-2) + '</div>' +
-                            '</div>' +
-                            '<div class="text-right">' +
-                                '<div class="num text-[13px] font-bold ' + (t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]') + '">' + (t.pnl > 0 ? '+' : t.pnl < 0 ? '-' : '') + '$' + Math.abs(t.pnl) + '</div>' +
-                                '<div class="num text-[11px] text-[#6E6E78]">' + (t.r >= 0 ? '+' : '') + t.r.toFixed(1) + 'R' + (t.adherence !== 'followed' ? ' · <span class="text-[#F59E0B]">' + t.adherence + '</span>' : '') + '</div>' +
-                            '</div>' +
-                        '</div>').join('')
-                    : '<p class="text-[13px] text-[#6E6E78] py-4 text-center">No trades this day.</p>';
-
-                const dayVerdict = agg.pnl > 0
-                    ? '<span class="text-[#34D399] font-semibold">Profitable day</span> — discipline held, no violations.'
-                    : agg.pnl < 0
-                    ? (agg.violations > 0
-                        ? '<span class="text-[#F59E0B] font-semibold">Red day with violations</span> — review what broke before the next session.'
-                        : '<span class="text-[#F87171] font-semibold">Red day, clean execution</span> — the process held; losses were within plan.')
-                    : 'Flat day — no net movement.';
-
-                $('day-body').innerHTML =
-                    '<div class="flex items-center justify-between px-6 py-5 border-b border-[#1C1C20]">' +
-                        '<div class="flex items-center gap-3">' +
-                            '<div class="w-9 h-9 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[13px] font-bold text-[#34D399] num">' + d + '</div>' +
-                            '<div>' +
-                                '<div class="text-[15px] font-bold text-white">' + weekday + ', ' + MONTHS[date.getMonth()] + ' ' + d + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78]">' + (monday ? 'Today · ' : '') + agg.count + ' trade' + (agg.count === 1 ? '' : 's') + ' · session review</div>' +
-                            '</div>' +
-                        '</div>' +
-                        '<button class="collapse-btn" onclick="closeDay()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
-                    '</div>' +
-
-                    '<div class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">' +
-
-                        '<div class="grid grid-cols-2 gap-3">' +
-                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                                '<div class="label-xs mb-1">Net P&amp;L</div>' +
-                                '<div class="num text-[20px] font-bold ' + (agg.pnl > 0 ? 'text-[#34D399]' : agg.pnl < 0 ? 'text-[#F87171]' : 'text-white') + '">' + (agg.pnl > 0 ? '+' : agg.pnl < 0 ? '-' : '') + '$' + Math.abs(agg.pnl) + '</div>' +
-                            '</div>' +
-                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                                '<div class="label-xs mb-1">Result</div>' +
-                                '<div class="num text-[20px] font-bold text-white">' + agg.wins + 'W / ' + agg.losses + 'L</div>' +
-                            '</div>' +
-                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                                '<div class="label-xs mb-1">Risk consumed</div>' +
-                                '<div class="num text-[20px] font-bold ' + (agg.consumed > 200 ? 'text-[#F59E0B]' : 'text-white') + '">$' + agg.consumed + '</div>' +
-                                '<div class="text-[11px] text-[#6E6E78] mt-1">of $250 daily budget</div>' +
-                            '</div>' +
-                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                                '<div class="label-xs mb-1">Discipline score</div>' +
-                                '<div class="num text-[20px] font-bold ' + (agg.discipline > 80 ? 'text-[#34D399]' : agg.discipline > 60 ? 'text-[#F59E0B]' : 'text-[#F87171]') + '">' + agg.discipline + '<span class="text-[12px] text-[#6E6E78] font-semibold">/100</span></div>' +
-                                '<div class="text-[11px] text-[#6E6E78] mt-1">' + agg.violations + ' violation' + (agg.violations === 1 ? '' : 's') + '</div>' +
-                            '</div>' +
-                        '</div>' +
-
-                        '<div class="rounded-lg border border-[#1F1F23] p-3.5 text-[12.5px] text-[#C4C4CC] leading-relaxed">' + dayVerdict + '</div>' +
-
-                        '<div>' +
-                            '<div class="panel-title mb-3">Trades</div>' +
-                            tradesHtml +
-                            '<button class="btn-ghost w-full !py-2.5 !text-[13px] mt-2" onclick="showToast(\'Full session review lives in the Journal — open it to review each trade\')">' +
-                                '<svg data-lucide="book-open" class="w-4 h-4"></svg> Open full review in Journal' +
-                            '</button>' +
-                        '</div>' +
-
-                        // Timeline (PRD §14: day-level review)
-                        '<div>' +
-                            '<div class="panel-title mb-3">Session</div>' +
-                            '<div class="flex flex-col gap-4">' +
-                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Plan</div><div class="text-[12px] text-[#8A8A93] mt-0.5">' + (agg.count ? agg.list[0].setup + ' identified on ' + agg.list[0].symbol + ' during ' + agg.list[0].session : 'No plan — no trades') + '</div></div></div>' +
-                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Execution</div><div class="text-[12px] text-[#8A8A93] mt-0.5">' + agg.count + ' trade' + (agg.count === 1 ? '' : 's') + ' · ' + agg.wins + ' winners · ' + agg.losses + ' losers</div></div></div>' +
-                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Review</div><div class="text-[12px] text-[#8A8A93] mt-0.5">' + (agg.count ? agg.list.filter(t => t.reviewed).length + ' of ' + agg.count + ' reviewed' : 'Nothing to review') + '</div></div></div>' +
-                            '</div>' +
-                        '</div>' +
-                    '</div>' +
-
-                    '<div class="px-6 py-4 border-t border-[#1C1C20] flex items-center gap-2.5">' +
-                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px]" onclick="showToast(\'Generate daily report — coming soon\')"><svg data-lucide="file-text" class="w-4 h-4"></svg> Daily report</button>' +
-                        '<button class="btn-primary !py-2 !px-3.5 !text-[13px] ml-auto" onclick="showToast(\'Logged the day as reviewed\')">Mark day reviewed</button>' +
-                    '</div>';
-
-                $('day-overlay').classList.add('open');
-                $('day-drawer').classList.add('open');
-                if (window.lucide) lucide.createIcons();
-            };
-
-            window.closeDay = function() {
-                $('day-overlay').classList.remove('open');
-                $('day-drawer').classList.remove('open');
-            };
-
-            let toastTimer;
-            window.showToast = function(msg) {
+            const core = window.TradeMindCore;
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            const fmtR = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + Number(n).toFixed(2) + 'R');
+            const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            let toastTimer = null;
+            function showToast(msg) {
                 $('toast-msg').textContent = msg;
                 $('toast').classList.add('show');
                 clearTimeout(toastTimer);
                 toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
-            };
+            }
+            window.showToast = showToast;
 
-            // ============ EVENT BUS ============
-            // The calendar re-aggregates from the canonical ledger whenever a
-            // trade or configuration changes — it never holds its own totals.
-            if (window.TradeMindCore) {
-                const bus = window.TradeMindCore.TradeMindBus;
-                const refresh = () => { tradesCache = {}; renderAll(); };
-                ['trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'account.changed'].forEach(ev => bus.subscribe(ev, refresh));
+            let viewY = new Date().getFullYear();
+            let viewM = new Date().getMonth(); // 0-indexed
+            let cm = null;            // current calendarMonth result
+            let dailyBudget = 0;      // canonical risk budget for the risk bars
+
+            // ============ ACCOUNT RESOLUTION ============
+            function currentAccountId() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+            }
+            function account() { const id = currentAccountId(); return id ? core.Accounts.find(a => a.id === id) : null; }
+
+            // ============ CHROME ============
+            function renderChrome() {
+                const acc = account();
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + money(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                    if (window.lucide) lucide.createIcons();
+                }
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc && pName) pName.textContent = acc.name;
+                if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
             }
 
-            // ============ INIT ============
+            // ============ RENDER ============
+            function renderAll() {
+                renderChrome();
+                const accId = currentAccountId();
+                const empty = $('empty-state'), body = $('cal-body');
+                if (!accId) {
+                    empty.classList.remove('hidden');
+                    body.classList.add('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+                body.classList.remove('hidden');
+                try {
+                    cm = core.calendarMonth(accId, viewY, viewM);
+                    dailyBudget = core.riskState(accId).dailyRiskBudget || 0;
+                } catch (e) { cm = null; dailyBudget = 0; }
+                if (!cm) return;
+                renderHead();
+                renderSummary();
+                renderGrid();
+                renderMonthStrip();
+                renderTrend();
+            }
+
+            function renderHead() {
+                $('month-label').textContent = MONTHS[viewM] + ' ' + viewY;
+                const hasData = cm.days.length > 0;
+                $('month-sub').textContent = hasData
+                    ? cm.days.length + ' trading day' + (cm.days.length === 1 ? '' : 's') + ' · ' + cm.totalTrades + ' trades'
+                    : 'No trading data yet.';
+            }
+
+            function renderSummary() {
+                const tiles = [
+                    { label: 'Net P&L', value: money(cm.totalPnl), color: cm.totalPnl >= 0 ? 'var(--tm-green)' : 'var(--tm-red)', sub: cm.winDays + ' win day' + (cm.winDays === 1 ? '' : 's') + ' · ' + cm.lossDays + ' loss day' + (cm.lossDays === 1 ? '' : 's'), bar: cm.totalPnl >= 0 ? 'linear-gradient(90deg,rgba(16,185,129,0.6),rgba(16,185,129,0.9))' : 'linear-gradient(90deg,rgba(239,68,68,0.6),rgba(239,68,68,0.9))' },
+                    { label: 'Total trades', value: cm.totalTrades, color: '', sub: 'across the month', bar: 'linear-gradient(90deg,rgba(99,102,241,0.5),rgba(99,102,241,0.85))' },
+                    { label: 'Win days', value: cm.winDays, color: 'var(--tm-green)', sub: 'days with positive P&L', bar: 'linear-gradient(90deg,rgba(16,185,129,0.4),rgba(16,185,129,0.8))' },
+                    { label: 'Loss days', value: cm.lossDays, color: cm.lossDays ? 'var(--tm-red)' : '', sub: 'days with negative P&L', bar: 'linear-gradient(90deg,rgba(239,68,68,0.4),rgba(239,68,68,0.8))' }
+                ];
+                $('sum-strip').innerHTML = tiles.map(t =>
+                    '<div class="sum-tile glass" style="--bar:' + t.bar + '">' +
+                        '<div class="st-label">' + t.label + '</div>' +
+                        '<div class="st-value num" style="' + (t.color ? 'color:' + t.color : '') + '">' + t.value + '</div>' +
+                        '<div class="st-sub">' + t.sub + '</div>' +
+                    '</div>').join('');
+                $('sum-note').textContent = cm.days.length
+                    ? 'Daily values come from calendarMonth() — P&L, risk consumed, discipline score and violations per trading day.'
+                    : 'No trading data yet. The calendar stays available — log trades and return to see your month build up.';
+            }
+
+            // ---- Calendar grid ----
+            function dayCell(day, dd, isSelected) {
+                const sel = isSelected ? ' is-selected' : '';
+                if (!dd) {
+                    return '<button class="cal-cell cal-empty-day' + sel + '" data-day="' + day + '" aria-label="' + day + ' ' + MONTHS[viewM] + ' — no trades recorded" aria-pressed="' + (isSelected ? 'true' : 'false') + '"><span class="cal-daynum">' + day + '</span></button>';
+                }
+                const pnl = dd.pnl;
+                const stateCls = pnl > 0 ? ' is-win' : pnl < 0 ? ' is-loss' : '';
+                const viol = dd.violations || 0;
+                const disc = dd.disciplineScore;
+                const riskPct = dailyBudget > 0 ? Math.min(100, Math.round((dd.riskConsumed / dailyBudget) * 100)) : null;
+                const highRisk = riskPct != null && riskPct >= 80;
+                const discCol = disc == null ? '' : disc >= 80 ? 'var(--tm-green)' : disc >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
+                const label = day + ' ' + MONTHS[viewM] + ' — ' + (pnl > 0 ? '+' : '') + '$' + Math.abs(pnl) + ', ' + dd.trades + ' trades' + (disc != null ? ', discipline ' + disc : '') + (viol ? ', ' + viol + ' violations' : '');
+                return '<button class="cal-cell' + stateCls + sel + '" data-day="' + day + '" aria-label="' + esc(label) + '" aria-pressed="' + (isSelected ? 'true' : 'false') + '">' +
+                    '<span class="cal-daynum">' + day + '</span>' +
+                    '<span class="cal-pnl num" style="color:' + (pnl > 0 ? 'var(--tm-green)' : pnl < 0 ? 'var(--tm-red)' : 'var(--tm-dim)') + '">' + (pnl > 0 ? '+' : '') + '$' + Math.abs(pnl) + '</span>' +
+                    '<span class="cal-meta num">' + dd.trades + ' tr' + (dd.trades === 1 ? '' : 's') + ' · ' + fmtR(dd.avgR) + '</span>' +
+                    (disc != null
+                        ? '<span class="cal-disc"><span class="cal-disc-track"><span class="cal-disc-fill" style="width:' + disc + '%;background:' + discCol + '"></span></span><span class="cal-disc-val num" style="color:' + discCol + '">' + disc + '</span></span>'
+                        : '') +
+                    (riskPct != null
+                        ? '<span class="cal-risk" title="risk consumed ' + riskPct + '% of the daily budget">' +
+                            '<span class="cal-risk-track"><span class="cal-risk-fill" style="width:' + riskPct + '%"></span></span>' +
+                            (highRisk ? '<span class="cal-viol" style="color:var(--tm-amber)">high risk</span>' : '') +
+                          '</span>'
+                        : '') +
+                    (viol ? '<span class="cal-viol">' + viol + ' violation' + (viol === 1 ? '' : 's') + '</span>' : '') +
+                '</button>';
+            }
+            function renderGrid() {
+                const first = new Date(viewY, viewM, 1);
+                const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
+                const lead = first.getDay();
+                const byDay = {};
+                cm.days.forEach(d => { byDay[d.day] = d; });
+                let cells = '';
+                for (let i = 0; i < lead; i++) cells += '<div class="cal-empty" aria-hidden="true"></div>';
+                for (let d = 1; d <= daysInMonth; d++) cells += dayCell(d, byDay[d] || null, false);
+                $('cal-grid').innerHTML = cells;
+            }
+
+            // ---- Selected-day drawer ----
+            function openDay(day) {
+                const dd = cm.days.find(d => d.day === day) || null;
+                const date = new Date(viewY, viewM, day);
+                $('day-title').textContent = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+                $('day-sub').textContent = dd
+                    ? dd.trades + ' trade' + (dd.trades === 1 ? '' : 's') + ' · ' + money(dd.pnl)
+                    : 'No trades recorded.';
+                let body = '';
+                if (!dd) {
+                    body = '<div class="glass rounded-xl p-8 text-center">' +
+                        '<svg data-lucide="calendar-x" class="w-9 h-9 mx-auto text-[var(--tm-dim)] mb-3"></svg>' +
+                        '<p class="text-[14px] font-semibold text-[var(--tm-text)]">No trades recorded.</p>' +
+                        '<p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Nothing was logged on this day.</p>' +
+                    '</div>';
+                } else {
+                    const discCol = dd.disciplineScore == null ? '' : dd.disciplineScore >= 80 ? 'var(--tm-green)' : dd.disciplineScore >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
+                    const stats = [
+                        ['Daily P&L', money(dd.pnl), dd.pnl >= 0 ? 'var(--tm-green)' : 'var(--tm-red)'],
+                        ['Trades', dd.trades, ''],
+                        ['Wins', dd.wins, 'var(--tm-green)'],
+                        ['Losses', dd.losses, dd.losses ? 'var(--tm-red)' : ''],
+                        ['Average R', fmtR(dd.avgR), dd.avgR >= 0 ? 'var(--tm-green)' : 'var(--tm-red)'],
+                        ['Risk consumed', dd.riskConsumed != null ? '$' + dd.riskConsumed : '—', dailyBudget > 0 && dd.riskConsumed >= dailyBudget * 0.8 ? 'var(--tm-amber)' : ''],
+                        ['Discipline score', dd.disciplineScore != null ? dd.disciplineScore + '/100' : '—', discCol],
+                        ['Violations', dd.violations, dd.violations ? 'var(--tm-red)' : '']
+                    ];
+                    body =
+                        '<div class="grid grid-cols-2 md:grid-cols-4 gap-2.5">' + stats.map(s =>
+                            '<div class="stat-tile"><div class="st-label">' + s[0] + '</div><div class="st-value num" style="' + (s[2] ? 'color:' + s[2] : '') + '">' + s[1] + '</div></div>').join('') + '</div>' +
+                        '<div class="glass rounded-xl p-4">' +
+                            '<div class="label-xs mb-2">The day</div>' +
+                            '<p class="text-[13px] text-[var(--tm-text)] leading-relaxed">' +
+                                dd.trades + ' trade' + (dd.trades === 1 ? '' : 's') + ' · ' +
+                                dd.wins + ' win' + (dd.wins === 1 ? '' : 's') + ' · ' + dd.losses + ' loss' + (dd.losses === 1 ? '' : 's') +
+                                (dd.avgR != null ? ' · ' + fmtR(dd.avgR) + ' average' : '') +
+                                (dd.disciplineScore != null ? ' · Discipline ' + dd.disciplineScore : '') +
+                                (dd.violations ? ' · ' + dd.violations + ' rule violation' + (dd.violations === 1 ? '' : 's') : ' · No rule violations.') +
+                            '</p>' +
+                        '</div>' +
+                        '<div>' +
+                            '<div class="label-xs mb-2">Trades</div>' +
+                            '<div class="flex flex-col gap-2">' + dd.list.map(tradeRow).join('') + '</div>' +
+                        '</div>';
+                }
+                $('day-body').innerHTML = body;
+                $('day-overlay').classList.add('open');
+                $('day-drawer').classList.add('open');
+                $('day-drawer').setAttribute('aria-hidden', 'false');
+                if (window.lucide) lucide.createIcons();
+            }
+            function tradeRow(t) {
+                const d = new Date(t.ts);
+                const ts = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                const adh = t.adherence_result === 'BLOCK' ? { label: 'Blocked', cls: 'tag-red' }
+                    : t.adherence_result === 'VIOLATION' ? { label: 'Violation', cls: 'tag-red' }
+                    : t.adherence && t.adherence !== 'followed' ? { label: t.adherence.charAt(0).toUpperCase() + t.adherence.slice(1), cls: 'tag-amber' }
+                    : { label: 'Followed', cls: 'tag-emerald' };
+                const result = t.pnl > 0 ? 'var(--tm-green)' : t.pnl < 0 ? 'var(--tm-red)' : 'var(--tm-dim)';
+                return '<a class="ev-trade-row" href="journal.html?trade=' + encodeURIComponent(t.id) + '">' +
+                    '<span class="tm-sym-badge">' + (window.TMAssets && window.TMAssets.badgeHtml ? window.TMAssets.badgeHtml(t.symbol) : (t.symbol || '—').slice(0, 2).toUpperCase()) + '</span>' +
+                    '<span class="flex-1 min-w-0">' +
+                        '<span class="block text-[13px] font-bold text-[var(--tm-text)] truncate">' + esc(t.symbol) + ' · ' + esc(t.setup || '—') + '</span>' +
+                        '<span class="block text-[11px] text-[var(--tm-dim)]">' + ts + ' · ' + (t.dir === 'long' ? 'Long' : 'Short') + ' · ' + esc(t.session || '—') + '</span>' +
+                    '</span>' +
+                    '<span class="num text-[12px] font-bold" style="color:' + result + '">' + money(t.pnl) + '</span>' +
+                    '<span class="num text-[12px]" style="color:' + result + '">' + fmtR(t.r) + '</span>' +
+                    '<span class="tag ' + adh.cls + ' !py-0.5 !px-2">' + adh.label + '</span>' +
+                '</a>';
+            }
+            function closeDay() {
+                $('day-overlay').classList.remove('open');
+                $('day-drawer').classList.remove('open');
+                $('day-drawer').setAttribute('aria-hidden', 'true');
+            }
+
+            // ---- This month strip ----
+            function renderMonthStrip() {
+                const el = $('month-strip');
+                if (!cm.days.length) {
+                    el.innerHTML = '<p class="text-[13px] text-[var(--tm-dim)] col-span-full">No trading data yet — nothing to summarize.</p>';
+                    return;
+                }
+                const best = cm.days.slice().sort((a, b) => b.pnl - a.pnl)[0];
+                const worst = cm.days.slice().sort((a, b) => a.pnl - b.pnl)[0];
+                const scored = cm.days.filter(d => d.disciplineScore != null);
+                const topDisc = scored.length ? scored.slice().sort((a, b) => b.disciplineScore - a.disciplineScore)[0] : null;
+                const topRisk = cm.days.slice().sort((a, b) => b.riskConsumed - a.riskConsumed)[0];
+                const totalViol = cm.days.reduce((s, d) => s + d.violations, 0);
+                const tiles = [];
+                if (best) tiles.push({ label: 'Best day', value: best.day + ' ' + MONTHS[viewM].slice(0, 3), sub: money(best.pnl) + ' · ' + best.trades + ' trades', color: 'var(--tm-green)' });
+                if (worst) tiles.push({ label: 'Worst day', value: worst.day + ' ' + MONTHS[viewM].slice(0, 3), sub: money(worst.pnl) + ' · ' + worst.trades + ' trades', color: 'var(--tm-red)' });
+                if (topDisc) tiles.push({ label: 'Highest discipline', value: topDisc.day + ' ' + MONTHS[viewM].slice(0, 3), sub: topDisc.disciplineScore + '/100', color: topDisc.disciplineScore >= 80 ? 'var(--tm-green)' : 'var(--tm-amber)' });
+                if (topRisk) tiles.push({ label: 'Highest risk day', value: topRisk.day + ' ' + MONTHS[viewM].slice(0, 3), sub: '$' + topRisk.riskConsumed + ' risk consumed', color: topRisk.riskConsumed > 0 ? 'var(--tm-amber)' : '' });
+                tiles.push({ label: 'Total violations', value: totalViol, sub: 'across the month', color: totalViol ? 'var(--tm-red)' : 'var(--tm-green)' });
+                el.innerHTML = tiles.map(t =>
+                    '<div class="stat-tile"><div class="st-label">' + t.label + '</div>' +
+                    '<div class="st-value num text-[16px] !mt-2" style="' + (t.color ? 'color:' + t.color : '') + '">' + t.value + '</div>' +
+                    '<div class="text-[11px] text-[var(--tm-dim)] mt-1">' + t.sub + '</div></div>').join('');
+            }
+
+            // ---- Discipline trend ----
+            function renderTrend() {
+                const el = $('trend');
+                const pts = cm.days.filter(d => d.disciplineScore != null).sort((a, b) => a.day - b.day);
+                if (pts.length < 2) {
+                    el.innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)] py-6 text-center">' +
+                        (cm.days.length ? 'Not enough discipline data across the month yet (need at least 2 scored days).' : 'No trading data yet — the trend appears once days have discipline scores.') + '</p>';
+                    return;
+                }
+                const W = 620, H = 150, P = 14;
+                const minDay = Math.min.apply(null, pts.map(p => p.day));
+                const maxDay = Math.max.apply(null, pts.map(p => p.day));
+                const x = d => P + ((d - minDay) / (maxDay - minDay || 1)) * (W - 2 * P);
+                const y = v => H - P - (v / 100) * (H - 2 * P);
+                let grid = '';
+                for (const gv of [20, 40, 60, 80, 100]) {
+                    const gy = y(gv);
+                    grid += '<line x1="' + P + '" y1="' + gy + '" x2="' + (W - P) + '" y2="' + gy + '" stroke="var(--hairline)" stroke-width="1"/>';
+                    grid += '<text x="' + P + '" y="' + (gy - 4) + '" fill="var(--tm-dim)" font-size="9">' + gv + '</text>';
+                }
+                const line = pts.map((p, i) => (i ? 'L' : 'M') + x(p.day).toFixed(1) + ' ' + y(p.disciplineScore).toFixed(1)).join(' ');
+                const dots = pts.map(p => '<circle cx="' + x(p.day).toFixed(1) + '" cy="' + y(p.disciplineScore).toFixed(1) + '" r="3" fill="var(--tm-accent)" stroke="var(--glass-bg-strong)" stroke-width="1.5"><title>Day ' + p.day + ' — ' + p.disciplineScore + '/100</title></circle>').join('');
+                const last = pts[pts.length - 1];
+                el.innerHTML =
+                    '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full" style="height:auto">' + grid +
+                        '<path d="' + line + '" fill="none" stroke="var(--tm-accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>' +
+                        dots +
+                    '</svg>' +
+                    '<div class="flex items-center justify-between mt-2">' +
+                        '<span class="text-[11px] text-[var(--tm-dim)] num">' + pts.length + ' scored days</span>' +
+                        '<span class="text-[11px] text-[var(--tm-dim)] num">latest: day ' + last.day + ' — ' + last.disciplineScore + '/100</span>' +
+                    '</div>';
+            }
+
+            // ============ NAVIGATION ============
+            function shiftMonth(delta) {
+                viewM += delta;
+                if (viewM < 0) { viewM = 11; viewY--; }
+                if (viewM > 11) { viewM = 0; viewY++; }
+                animateAndRender();
+            }
+            function goToday() {
+                const now = new Date();
+                viewY = now.getFullYear();
+                viewM = now.getMonth();
+                animateAndRender();
+            }
+            function animateAndRender() {
+                const shell = $('cal-shell');
+                shell.classList.remove('cal-anim');
+                void shell.offsetWidth; // restart animation
+                shell.classList.add('cal-anim');
+                $('month-head').classList.remove('cal-anim');
+                void $('month-head').offsetWidth;
+                $('month-head').classList.add('cal-anim');
+                closeDay();
+                renderAll();
+            }
+
+            // ============ EVENTS ============
+            $('nav-prev').addEventListener('click', () => shiftMonth(-1));
+            $('nav-next').addEventListener('click', () => shiftMonth(1));
+            $('nav-today').addEventListener('click', goToday);
+            $('day-close').addEventListener('click', closeDay);
+            $('day-overlay').addEventListener('click', closeDay);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDay(); });
             $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            $('acc-chip').addEventListener('click', () => {
+                if (!core || !core.Accounts || !core.Accounts.length) return;
+                const ids = core.Accounts.map(a => a.id);
+                const cur = currentAccountId() || ids[0];
+                const idx = ids.indexOf(cur);
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+                closeDay();
+                renderAll();
+            });
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+            }
+            if (core && core.TradeMindBus) {
+                ['trade.created', 'trade.updated', 'trade.deleted', 'config.version.created', 'config.changed', 'account.changed'].forEach(ev =>
+                    core.TradeMindBus.subscribe(ev, () => renderAll()));
+            }
+            // single delegated listener for day cells (grid is re-rendered on nav)
+            $('cal-grid').addEventListener('click', e => {
+                const btn = e.target.closest && e.target.closest('[data-day]');
+                if (btn) openDay(Number(btn.dataset.day));
+            });
+
             renderAll();
             if (window.lucide) lucide.createIcons();
         })();
