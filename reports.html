@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Reports</title>
+    <title>BATTLEXJOURNAL — Reports</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,159 +14,175 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
+    <script src="assets/asset-meta.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0A0A0C; color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
-        .num {
-            font-family: 'JetBrains Mono', monospace;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.01em;
-        }
 
-        /* App shell */
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
-            display: flex;
-            flex-direction: column;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
         }
         body.collapsed .sidebar { width: 64px; }
-        .logo-badge {
-            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
-            background: linear-gradient(135deg, #10B981, #059669);
-            color: #052E1F; font-weight: 800; font-size: 14px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .collapse-btn {
-            background: none; border: none; color: #6E6E78; cursor: pointer;
-            padding: 6px; border-radius: 6px; transition: all 0.15s;
-        }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
 
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
-            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08);
-            color: #FFFFFF;
-            box-shadow: inset 2px 0 0 #10B981;
-        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
-        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        /* ---- Glass system (Calendar/AI parity) ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
+
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none; cursor: pointer;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
         .btn-ghost {
-            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
-            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
-        .btn-danger {
-            background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 13px;
-            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s;
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-mini {
+            background: transparent; border: 1px solid var(--tm-border-2); border-radius: 7px; color: var(--tm-muted);
+            padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.13s;
         }
-        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+        .btn-mini:hover { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
 
-        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
-        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
 
-        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-        .tag-emerald { background: rgba(16,185,129,0.12); color: #34D399; }
-        .tag-red { background: rgba(239,68,68,0.12); color: #F87171; }
-        .tag-amber { background: rgba(245,158,11,0.12); color: #FBBF24; }
-        .tag-blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
-        .tag-purple { background: rgba(139,92,246,0.12); color: #A78BFA; }
-        .tag-gray { background: rgba(148,163,184,0.12); color: #94A3B8; }
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
 
-        .ins-tab {
-            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
-        }
-        .ins-tab:hover { color: #E8E8EC; }
-        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+        /* ---- Premium tables ---- */
+        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .tbl thead th { position: sticky; top: 0; text-align: right; font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--tm-muted); padding: 9px 12px; border-bottom: 1px solid var(--tm-border); background: var(--glass-bg); white-space: nowrap; }
+        .tbl thead th:first-child { text-align: left; }
+        .tbl td { padding: 9px 12px; border-bottom: 1px solid var(--hairline); text-align: right; vertical-align: middle; }
+        .tbl td:first-child { text-align: left; }
+        .tbl tbody tr { cursor: pointer; transition: background 0.12s; }
+        .tbl tbody tr:hover td { background: var(--glass-inner); }
+        .tbl tbody tr:last-child td { border-bottom: none; }
+        .tbl-wrap { overflow-x: auto; max-height: 480px; }
+        .pos { color: var(--tm-green); } .neg { color: var(--tm-red); }
 
-        .notif-row { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #17171A; transition: background 0.12s; cursor: pointer; }
-        .notif-row:hover { background: rgba(255,255,255,0.03); }
-        .notif-row:last-child { border-bottom: none; }
-        .notif-ico {
-            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .notif-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; margin-top: 6px; }
-        .notif-action {
-            display: inline-flex; align-items: center; gap: 6px; margin-top: 9px;
-            padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            color: #34D399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
-            cursor: pointer; transition: all 0.15s;
-        }
-        .notif-action:hover { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.45); }
-        .broker-overlay {
-            position: fixed; inset: 0; z-index: 90;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            display: flex; align-items: center; justify-content: center; padding: 20px;
-        }
-        .broker-card {
-            width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto;
-            background: #121620; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
-            padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-        }
-        .broker-close {
-            width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.04); color: #8A8A93; transition: all 0.15s;
-        }
-        .broker-close:hover { background: rgba(255,255,255,0.1); color: #E8E8EC; }
-        .broker-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
-        .broker-row {
-            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
-            border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
-            transition: background 0.15s;
-        }
-        .broker-row:hover { background: rgba(255,255,255,0.06); }
-        .broker-ico {
-            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(16,185,129,0.12); color: #34D399;
-        }
-        .broker-connect {
-            flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            color: #0A0C10; background: #34D399; border: none; cursor: pointer; transition: all 0.15s;
-        }
-        .broker-connect:hover { background: #10B981; box-shadow: 0 0 18px rgba(16,185,129,0.35); }
+        /* ---- Month bars ---- */
+        .bar-track { display: flex; align-items: flex-end; gap: 10px; height: 130px; padding: 0 4px; }
+        .bar-col { display: flex; flex-direction: column; align-items: center; gap: 6px; flex: 1; min-width: 0; cursor: pointer; }
+        .bar-val { font-size: 11px; font-weight: 700; }
+        .bar { width: 100%; max-width: 56px; border-radius: 6px 6px 2px 2px; min-height: 3px; transition: filter 0.15s; }
+        .bar:hover { filter: brightness(1.2); }
+        .bar-label { font-size: 10.5px; color: var(--tm-dim); white-space: nowrap; }
 
-        @media (max-width: 640px) {
-            .search-input { display: none; }
-            .topbar { padding-left: 12px; padding-right: 12px; }
-        }
+        /* ---- Drawer ---- */
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(8, 10, 14, 0.45); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+        .drawer-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 480px; max-width: 94vw; z-index: 61; transform: translateX(102%); transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; border-left: 1px solid var(--glass-border-strong); }
+        .drawer-panel.open { transform: none; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
         @media (max-width: 1024px) {
             .search-input { width: 180px; }
             .sidebar { width: 64px; }
@@ -174,19 +190,25 @@
             .nav-item { justify-content: center; padding: 9px 0; }
             .hide-when-collapsed { display: none !important; }
         }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
 </head>
 <body>
 
-    <div class="flex h-screen">
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -209,17 +231,17 @@
                 <a href="reports.html" class="nav-item active"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -230,211 +252,307 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                    <input id="global-search" type="text" class="search-input" placeholder="Search…">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. how was last month?">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </button>
-                    <button class="account-select hide-when-collapsed" id="account-chip">
-                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
-            
-            <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[1100px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1500px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
+                    <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-[22px] font-bold tracking-tight">Reports</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Export and review your journal — CSV, JSON backup, and month-by-month performance.</p>
+                            <h1 class="text-[24px] font-bold tracking-tight">Reports</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Your trading performance, organized into a record you can keep.</p>
                         </div>
-                        <div class="flex items-center gap-2.5">
-                            <button id="export-csv" class="btn-primary !py-2 !px-4 text-[12.5px]"><svg data-lucide="download" class="w-4 h-4"></svg> Export CSV</button>
-                            <button id="export-json" class="btn-ghost !py-2 !px-4 text-[12.5px]"><svg data-lucide="archive" class="w-4 h-4"></svg> JSON backup</button>
-                        </div>
-                    </div>
-
-                    <!-- Summary tiles -->
-                    <div class="grid grid-cols-2 lg:grid-cols-4 gap-3" id="report-summary"></div>
-
-                    <!-- Export note -->
-                    <div class="panel p-4 flex items-start gap-3">
-                        <svg data-lucide="info" class="w-4 h-4 text-[#818CF8] mt-0.5 flex-shrink-0"></svg>
-                        <p class="text-[12.5px] text-[#6E6E78]">Reports are generated from the same single source of truth as every screen — your journal, accounts and strategies. The CSV includes every trade with entry/exit, R-multiple, setup, session and discipline flags; the JSON backup is a full machine-readable snapshot.</p>
-                    </div>
-
-                    <!-- Month-by-month -->
-                    <div class="panel overflow-hidden">
-                        <div class="px-4 py-3 border-b border-[#1C1C20] flex items-center justify-between">
-                            <div class="panel-title">Month by month</div>
-                            <span class="text-[11px] text-[#6E6E78]">from your journal</span>
-                        </div>
-                        <div class="overflow-x-auto"><table class="w-full text-[12.5px]"><thead><tr class="text-left text-[#6E6E78] text-[11px] uppercase tracking-wide border-b border-[#1C1C20]">
-                            <th class="px-4 py-2.5">Month</th><th class="px-4 py-2.5 text-right">Trades</th><th class="px-4 py-2.5 text-right">Wins</th>
-                            <th class="px-4 py-2.5 text-right">Net P&L</th><th class="px-4 py-2.5 text-right">Avg R</th><th class="px-4 py-2.5 text-right">Win rate</th>
-                        </tr></thead><tbody id="report-months"></tbody></table></div>
-                    </div>
-
-                    <!-- By symbol / by setup -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div class="panel overflow-hidden">
-                            <div class="px-4 py-3 border-b border-[#1C1C20]"><div class="panel-title">By symbol</div></div>
-                            <div class="overflow-x-auto"><table class="w-full text-[12.5px]"><tbody id="report-symbols"></tbody></table></div>
-                        </div>
-                        <div class="panel overflow-hidden">
-                            <div class="px-4 py-3 border-b border-[#1C1C20]"><div class="panel-title">By setup</div></div>
-                            <div class="overflow-x-auto"><table class="w-full text-[12.5px]"><tbody id="report-setups"></tbody></table></div>
+                        <div class="flex items-center gap-3">
+                            <button id="export-csv" class="btn-ghost !py-2.5 !px-4"><svg data-lucide="download" class="w-4 h-4"></svg> Export CSV</button>
+                            <button id="export-json" class="btn-primary !py-2.5 !px-4"><svg data-lucide="archive" class="w-4 h-4"></svg> Export JSON</button>
                         </div>
                     </div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Reports · exports from the single source of truth</p>
+                    <!-- Account context -->
+                    <div class="glass px-4 py-3 flex flex-wrap items-center gap-3" id="account-context">
+                        <span class="label-xs">Account</span>
+                        <span id="acc-name-txt" class="text-[14px] font-bold">—</span>
+                        <span class="text-[11.5px] text-[var(--tm-dim)]" id="acc-meta"></span>
+                    </div>
+
+                    <!-- Empty state (no trades) -->
+                    <div id="empty-state" class="hidden glass p-12 text-center">
+                        <svg data-lucide="file-text" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[18px] font-bold">No report data yet</h3>
+                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">Your report will take shape as you build your trading record.</p>
+                        <a href="journal.html?log=1" class="btn-primary mt-6 inline-flex items-center gap-2"><svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade</a>
+                    </div>
+
+                    <div id="report-body" class="hidden flex flex-col gap-4">
+
+                        <!-- Summary -->
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="summary-strip"></div>
+
+                        <!-- Performance over time -->
+                        <div class="glass p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="label-xs">Performance over time</div>
+                                    <div class="text-[12px] text-[var(--tm-dim)] mt-1">Net P&L by month · click a month for detail</div>
+                                </div>
+                                <a href="analytics.html" class="btn-mini"><svg data-lucide="bar-chart-3" class="w-3.5 h-3.5"></svg> Open Analytics</a>
+                            </div>
+                            <div id="month-bars"></div>
+                        </div>
+
+                        <!-- Monthly table -->
+                        <div class="glass p-5">
+                            <div class="label-xs mb-4">Monthly performance</div>
+                            <div class="tbl-wrap">
+                                <table class="tbl" id="month-table">
+                                    <thead><tr><th>Month</th><th>Trades</th><th>Net P&L</th><th>Win rate</th><th>Profit factor</th><th>Avg R</th></tr></thead>
+                                    <tbody id="month-body"></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Breakdowns -->
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <div class="glass p-5">
+                                <div class="label-xs mb-4">Performance by symbol</div>
+                                <div class="tbl-wrap">
+                                    <table class="tbl">
+                                        <thead><tr><th>Symbol</th><th>Trades</th><th>Net P&L</th><th>Win rate</th><th>Avg R</th></tr></thead>
+                                        <tbody id="symbol-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                            <div class="glass p-5">
+                                <div class="label-xs mb-4">Performance by setup</div>
+                                <div class="tbl-wrap">
+                                    <table class="tbl">
+                                        <thead><tr><th>Setup</th><th>Trades</th><th>Net P&L</th><th>Win rate</th><th>Avg R</th></tr></thead>
+                                        <tbody id="setup-body"></tbody>
+                                    </table>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2 pt-1">
+                            <a href="journal.html" class="btn-mini"><svg data-lucide="book-open" class="w-3.5 h-3.5"></svg> Journal evidence</a>
+                            <a href="calendar.html" class="btn-mini"><svg data-lucide="calendar-days" class="w-3.5 h-3.5"></svg> Calendar</a>
+                            <a href="insights.html" class="btn-mini"><svg data-lucide="sparkles" class="w-3.5 h-3.5"></svg> Insights</a>
+                            <a href="strategy-lab.html" class="btn-mini"><svg data-lucide="beaker" class="w-3.5 h-3.5"></svg> Strategy Lab</a>
+                        </div>
+
+                    </div>
+
+                    <p class="text-center text-[11px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Reports · every number comes from the canonical engine over your ledger</p>
                 </div>
             </main>
-</main>
         </div>
     </div>
 
+    <!-- ============ MONTH DETAIL DRAWER ============ -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <aside class="drawer-panel glass-strong" id="month-drawer">
+        <div class="flex items-center justify-between p-5 border-b border-[var(--hairline)]">
+            <div>
+                <div class="text-[17px] font-bold" id="md-month">—</div>
+                <div class="text-[12px] text-[var(--tm-dim)]">Monthly detail</div>
+            </div>
+            <button class="collapse-btn" id="md-close" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-5" id="md-body"></div>
+    </aside>
+
     <!-- Toast -->
-    <div class="toast" id="toast">
-        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
-        <span id="toast-msg"></span>
-    </div>
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
 
-    
     <script>
-
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
-            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
-            let toastTimer;
-            window.showToast = function (msg) {
-                const t = $('toast');
-                if (!t) return;
+            const core = window.TradeMindCore;
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            const fmtR = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + Number(n).toFixed(2) + 'R');
+            const fmtPct = n => n == null || isNaN(n) ? '—' : (Math.round(n * 100) + '%');
+            const fmtPF = n => n == null || isNaN(n) ? '—' : (n === Infinity ? '∞' : Number(n).toFixed(2));
+            const fmtMonth = m => { const [y, mo] = m.split('-'); return new Date(y, mo - 1, 1).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); };
+            let toastTimer = null;
+            function showToast(msg) {
                 $('toast-msg').textContent = msg;
-                t.classList.add('show');
+                $('toast').classList.add('show');
                 clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => t.classList.remove('show'), 2600);
-            };
-            function bootShell() {
-                const cb = $('collapse-btn');
-                if (cb) cb.addEventListener('click', () => document.body.classList.toggle('collapsed'));
-                const chip = $('account-chip');
-                if (chip) {
-                    const core = window.TradeMindCore;
-                    if (core && core.selectedAccountId) {
-                        const acc = core.Accounts.find(a => a.id === core.selectedAccountId()) || core.Accounts[0];
-                        if (acc) {
-                            const num = chip.querySelector('.num');
-                            if (num) num.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
-                            const spans = chip.querySelectorAll('span');
-                            if (spans.length > 2) spans[2].textContent = acc.name;
-                        }
-                    }
-                }
-                if (window.lucide) lucide.createIcons();
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
             }
 
-            const num = n => Number(n).toLocaleString(undefined, { maximumFractionDigits: 2 });
-            const money = n => (n >= 0 ? '+' : '') + '$' + Math.round(n).toLocaleString();
-            function trades() {
-                const core = window.TradeMindCore;
-                if (!core || !core.Trades) return [];
-                return (core.Trades || []).map(t => ({ ...t }));
+            // ============ CANONICAL DATA ============
+            function selectedAccId() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
             }
-            function rows(t) {
-                // Trades carry their own pnl / r (single source of truth). Fall back
-                // to a price-based calc only when those are missing (e.g. API trades).
-                return t.map(tr => {
-                    let pnl = tr.pnl;
-                    if (pnl == null && tr.entry != null && tr.exit != null) {
-                        pnl = (Number(tr.exit) - Number(tr.entry)) * (tr.dir === 'Short' ? -1 : 1) * Number(tr.size || 0);
-                    }
-                    pnl = Number(pnl == null ? 0 : pnl);
-                    let rr = tr.r;
-                    if (rr == null && tr.risk != null && Number(tr.risk) > 0) rr = pnl / Number(tr.risk);
-                    rr = Number(rr == null ? 0 : rr);
-                    return { ...tr, pnl, rr };
-                });
+            function account() { const id = selectedAccId(); return id ? core.Accounts.find(a => a.id === id) : null; }
+            function accTrades(accId) { return core.Trades.filter(t => t.account_id === accId); }
+            function monthKey(t) {
+                const d = new Date(t.ts || t.opened_at || t.entry_time || t.created_at);
+                if (isNaN(d.getTime())) return 'unknown';
+                return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
             }
-            function summarize(list) {
-                const n = list.length;
-                const net = list.reduce((s, t) => s + t.pnl, 0);
-                const wins = list.filter(t => t.pnl > 0).length;
-                const grossWin = list.filter(t => t.pnl > 0).reduce((s, t) => s + t.pnl, 0);
-                const grossLoss = Math.abs(list.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
-                const avgR = n ? list.reduce((s, t) => s + t.rr, 0) / n : 0;
-                return {
-                    n, net, wins, avgR,
-                    winRate: n ? wins / n : 0,
-                    pf: grossLoss > 0 ? grossWin / grossLoss : (grossWin > 0 ? Infinity : 0)
-                };
-            }
-            function renderSummary() {
-                const s = summarize(rows(trades()));
-                const el = $('report-summary');
-                if (!el) return;
-                el.innerHTML = [
-                    { k: 'NET P&L', v: money(s.net), c: s.net >= 0 ? '#34D399' : '#F87171' },
-                    { k: 'WIN RATE', v: (s.winRate * 100).toFixed(0) + '%', c: '#E8E8EC' },
-                    { k: 'PROFIT FACTOR', v: s.pf === Infinity ? '∞' : s.pf.toFixed(2), c: s.pf >= 1 ? '#34D399' : '#F87171' },
-                    { k: 'TRADES', v: String(s.n), c: '#E8E8EC' }
-                ].map(x => '<div class="panel p-4"><div class="k text-[11px] text-[#6E6E78] font-semibold uppercase tracking-wide">' + x.k + '</div><div class="num text-[20px] font-bold mt-1" style="color:' + x.c + '">' + x.v + '</div></div>').join('');
-            }
-            function renderMonths() {
+            // Monthly rows via the canonical analytics engine (date-filtered), never local formulas.
+            function monthlyRows(accId) {
                 const byMonth = {};
-                rows(trades()).forEach(t => {
-                    const d = new Date(t.ts || t.opened_at || t.entry_time || t.created_at || Date.now());
-                    const m = isNaN(d.getTime()) ? 'unknown' : d.toISOString().slice(0, 7);
-                    byMonth[m] = byMonth[m] || [];
-                    byMonth[m].push(t);
+                accTrades(accId).forEach(t => { (byMonth[monthKey(t)] = byMonth[monthKey(t)] || []).push(t); });
+                return Object.keys(byMonth).sort().reverse().map(m => {
+                    const [y, mo] = m.split('-');
+                    const from = new Date(y, mo - 1, 1).toISOString();
+                    const to = new Date(y, mo, 0, 23, 59, 59).toISOString();
+                    const a = core.analytics(accId, { from, to });
+                    return { month: m, n: a.n, net: a.net, winRate: a.winRate, pf: a.pf, avgR: a.avgR, bySymbol: a.bySymbol, bySetup: a.bySetup };
                 });
-                const el = $('report-months');
-                el.innerHTML = Object.keys(byMonth).sort().reverse().map(m => {
-                    const s = summarize(byMonth[m]);
-                    return '<tr class="border-b border-[#141419]">' +
-                        '<td class="px-4 py-2.5 font-semibold">' + m + '</td>' +
-                        '<td class="px-4 py-2.5 text-right num">' + s.n + '</td>' +
-                        '<td class="px-4 py-2.5 text-right num">' + s.wins + '</td>' +
-                        '<td class="px-4 py-2.5 text-right num" style="color:' + (s.net >= 0 ? '#34D399' : '#F87171') + '">' + money(s.net) + '</td>' +
-                        '<td class="px-4 py-2.5 text-right num">' + (s.avgR >= 0 ? '+' : '') + s.avgR.toFixed(2) + 'R</td>' +
-                        '<td class="px-4 py-2.5 text-right num">' + (s.winRate * 100).toFixed(0) + '%</td></tr>';
-                }).join('') || '<tr><td colspan="6" class="px-4 py-8 text-center text-[#6E6E78]">No trades yet — log one and it lands here.</td></tr>';
             }
-            function renderGroups() {
-                const bySym = {}, bySetup = {};
-                rows(trades()).forEach(t => {
-                    (bySym[t.symbol || '—'] = bySym[t.symbol || '—'] || []).push(t);
-                    (bySetup[t.setup || 'No setup'] = bySetup[t.setup || 'No setup'] || []).push(t);
-                });
-                const groupRows = (g) => Object.keys(g).map(k => {
-                    const s = summarize(g[k]);
-                    return '<tr class="border-b border-[#141419]"><td class="px-4 py-2.5">' + k + '</td>' +
-                        '<td class="px-4 py-2.5 text-right num">' + s.n + '</td>' +
-                        '<td class="px-4 py-2.5 text-right num" style="color:' + (s.net >= 0 ? '#34D399' : '#F87171') + '">' + money(s.net) + '</td>' +
-                        '<td class="px-4 py-2.5 text-right num">' + (s.winRate * 100).toFixed(0) + '%</td></tr>';
-                }).sort((a, b) => b - a).join('');
-                $('report-symbols').innerHTML = '<tr class="text-left text-[#6E6E78] text-[11px] uppercase tracking-wide border-b border-[#1C1C20]"><th class="px-4 py-2.5">Symbol</th><th class="px-4 py-2.5 text-right">Trades</th><th class="px-4 py-2.5 text-right">Net</th><th class="px-4 py-2.5 text-right">Win rate</th></tr>' + groupRows(bySym);
-                $('report-setups').innerHTML = '<tr class="text-left text-[#6E6E78] text-[11px] uppercase tracking-wide border-b border-[#1C1C20]"><th class="px-4 py-2.5">Setup</th><th class="px-4 py-2.5 text-right">Trades</th><th class="px-4 py-2.5 text-right">Net</th><th class="px-4 py-2.5 text-right">Win rate</th></tr>' + groupRows(bySetup);
+            function renderChrome() {
+                const acc = account();
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + money(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                    if (window.lucide) lucide.createIcons();
+                }
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc) { if (pName) pName.textContent = acc.name; if (pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+                if (acc) {
+                    $('acc-name-txt').textContent = acc.name;
+                    $('acc-meta').textContent = (acc.account_type || '') + ' · ' + (acc.currency || 'USD') + ' · ' + money(acc.current_equity) + ' equity';
+                } else {
+                    $('acc-name-txt').textContent = 'No account';
+                    $('acc-meta').textContent = 'Create an account in Strategy Lab to start building reports.';
+                }
             }
-            function csv() {
-                const cols = ['symbol', 'dir', 'setup', 'strategy', 'session', 'emotion', 'adherence', 'risk', 'r', 'pnl', 'ts', 'notes'];
-                const esc = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
-                const head = cols.join(',');
-                const body = rows(trades()).map(t => cols.map(c => esc(c === 'pnl' ? t.pnl : c === 'r' ? t.rr : t[c])).join(',')).join('\n');
-                return head + '\n' + body;
+
+            // ============ RENDER ============
+            function render() {
+                const accId = selectedAccId();
+                const acc = account();
+                if (!accId || !acc || !accTrades(accId).length) {
+                    $('report-body').classList.add('hidden');
+                    $('empty-state').classList.remove('hidden');
+                    renderChrome();
+                    return;
+                }
+                $('empty-state').classList.add('hidden');
+                $('report-body').classList.remove('hidden');
+                const a = core.analytics(accId);
+                renderSummary(a);
+                renderMonths(accId);
+                renderBreakdowns(a);
+                renderChrome();
             }
+            function renderSummary(a) {
+                const tiles = [
+                    ['Net P&L', money(a.net), a.net >= 0 ? 'pos' : 'neg', Math.round(a.winRate * a.n) + ' wins · ' + (a.n - Math.round(a.winRate * a.n)) + ' losses'],
+                    ['Win rate', fmtPct(a.winRate), '', a.n + ' trades'],
+                    ['Profit factor', fmtPF(a.pf), a.pf >= 1 ? 'pos' : (a.pf > 0 ? 'neg' : ''), 'gross win $' + (a.grossWin || 0) + ' / gross loss $' + (a.grossLoss || 0)],
+                    ['Trade count', String(a.n), '', 'this account']
+                ];
+                $('summary-strip').innerHTML = tiles.map(([l, v, cls, sub]) =>
+                    '<div class="glass p-4"><div class="label-xs">' + l + '</div>' +
+                    '<div class="num text-[24px] font-extrabold mt-1 tracking-tight ' + cls + '">' + v + '</div>' +
+                    '<div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">' + sub + '</div></div>').join('');
+            }
+            function renderMonths(accId) {
+                const rows = monthlyRows(accId);
+                const maxAbs = Math.max.apply(null, rows.map(r => Math.abs(r.net)).concat([1]));
+                const bars = rows.map(r => {
+                    const h = Math.max(4, (Math.abs(r.net) / maxAbs) * 100);
+                    const pos = r.net >= 0;
+                    return '<div class="bar-col" data-month="' + r.month + '">' +
+                        '<div class="bar-val num ' + (pos ? 'pos' : 'neg') + '">' + money(r.net) + '</div>' +
+                        '<div class="bar" style="height:' + h + 'px;background:' + (pos ? 'var(--tm-green)' : 'var(--tm-red)') + '"></div>' +
+                        '<div class="bar-label num">' + r.month + '</div>' +
+                    '</div>';
+                }).join('');
+                $('month-bars').innerHTML = '<div class="bar-track">' + bars + '</div>';
+                $('month-body').innerHTML = rows.map(r =>
+                    '<tr data-month="' + r.month + '">' +
+                        '<td class="font-semibold">' + fmtMonth(r.month) + '</td>' +
+                        '<td class="num">' + r.n + '</td>' +
+                        '<td class="num ' + (r.net >= 0 ? 'pos' : 'neg') + '">' + money(r.net) + '</td>' +
+                        '<td class="num">' + fmtPct(r.winRate) + '</td>' +
+                        '<td class="num">' + fmtPF(r.pf) + '</td>' +
+                        '<td class="num">' + fmtR(r.avgR) + '</td>' +
+                    '</tr>').join('') || '<tr><td colspan="6" class="!text-center text-[var(--tm-dim)]">No months yet.</td></tr>';
+            }
+            function renderBreakdowns(a) {
+                const rowsHtml = (rows, keyOf) => rows.map(r => {
+                    const badge = window.TMAssets && window.TMAssets.badgeHtml && keyOf === 'symbol' ? window.TMAssets.badgeHtml(r.key) : null;
+                    return '<tr>' +
+                        '<td class="font-semibold">' + (badge || esc(r.key || '—')) + '</td>' +
+                        '<td class="num">' + r.n + '</td>' +
+                        '<td class="num ' + (r.pnl >= 0 ? 'pos' : 'neg') + '">' + money(r.pnl) + '</td>' +
+                        '<td class="num">' + fmtPct(r.winRate) + '</td>' +
+                        '<td class="num">' + fmtR(r.avgR) + '</td>' +
+                    '</tr>';
+                }).join('');
+                $('symbol-body').innerHTML = rowsHtml(a.bySymbol || [], 'symbol') || '<tr><td colspan="5" class="!text-center text-[var(--tm-dim)]">No symbol data.</td></tr>';
+                $('setup-body').innerHTML = rowsHtml(a.bySetup || [], 'setup') || '<tr><td colspan="5" class="!text-center text-[var(--tm-dim)]">No setup data.</td></tr>';
+            }
+
+            // ============ MONTH DETAIL DRAWER ============
+            function openMonthDrawer(month) {
+                const row = monthlyRows(selectedAccId()).find(r => r.month === month);
+                if (!row) return;
+                $('md-month').textContent = fmtMonth(month);
+                const wins = Math.round(row.winRate * row.n);
+                const tiles = [
+                    ['Trades', row.n], ['Net P&L', money(row.net), row.net >= 0 ? 'pos' : 'neg'],
+                    ['Wins', row.n ? wins : 0], ['Win rate', fmtPct(row.winRate)],
+                    ['Profit factor', fmtPF(row.pf)], ['Avg R', fmtR(row.avgR)]
+                ];
+                const tileHtml = tiles.map(t =>
+                    '<div class="glass p-3.5"><div class="label-xs">' + t[0] + '</div><div class="num text-[17px] font-extrabold mt-1 ' + (t[2] || '') + '">' + t[1] + '</div></div>').join('');
+                const tableHtml = (rows) => rows.map(r =>
+                    '<div class="flex items-center justify-between py-2 border-b border-[var(--hairline)] last:border-none text-[12.5px]">' +
+                        '<span class="font-semibold">' + esc(r.key) + '</span>' +
+                        '<span class="num"><span class="text-[var(--tm-dim)]">' + r.n + ' trades · </span>' +
+                        '<span class="' + (r.pnl >= 0 ? 'pos' : 'neg') + '">' + money(r.pnl) + '</span> · ' + fmtPct(r.winRate) + ' · ' + fmtR(r.avgR) + '</span>' +
+                    '</div>').join('') || '<p class="text-[12px] text-[var(--tm-dim)]">No rows.</p>';
+                $('md-body').innerHTML =
+                    '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">' + tileHtml + '</div>' +
+                    '<div class="glass p-4"><div class="label-xs mb-2">By symbol</div>' + tableHtml(row.bySymbol || []) + '</div>' +
+                    '<div class="glass p-4"><div class="label-xs mb-2">By setup</div>' + tableHtml(row.bySetup || []) + '</div>' +
+                    '<div class="flex gap-2"><a href="calendar.html" class="btn-mini"><svg data-lucide="calendar-days" class="w-3.5 h-3.5"></svg> Open calendar</a>' +
+                    '<a href="journal.html" class="btn-mini"><svg data-lucide="book-open" class="w-3.5 h-3.5"></svg> Journal</a></div>';
+                $('drawer-overlay').classList.add('open');
+                $('month-drawer').classList.add('open');
+            }
+            function closeDrawer() {
+                $('drawer-overlay').classList.remove('open');
+                $('month-drawer').classList.remove('open');
+            }
+
+            // ============ EXPORT (preserved client-side behavior) ============
             function download(name, text, mime) {
                 const blob = new Blob([text], { type: mime || 'text/plain' });
                 const a = document.createElement('a');
@@ -443,20 +561,55 @@
                 a.click();
                 setTimeout(() => URL.revokeObjectURL(a.href), 4000);
             }
-            function boot() {
-                bootShell();
-                renderSummary(); renderMonths(); renderGroups();
-                $('export-csv').addEventListener('click', () => { download('31trades-journal.csv', csv(), 'text/csv'); showToast('CSV exported'); });
-                $('export-json').addEventListener('click', () => {
-                    const core = window.TradeMindCore;
-                    const payload = core ? { trades: core.Trades || [], accounts: core.Accounts || [], strategies: core.Strategies || [] } : { trades: trades() };
-                    download('31trades-backup.json', JSON.stringify(payload, null, 2), 'application/json');
-                    showToast('JSON backup exported');
-                });
+            function csv() {
+                const cols = ['symbol', 'dir', 'setup', 'strategy', 'session', 'emotion', 'adherence', 'risk', 'r', 'pnl', 'ts', 'notes'];
+                const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+                const head = cols.join(',');
+                const body = accTrades(selectedAccId()).map(t => cols.map(c => q(c === 'pnl' ? t.pnl : c === 'r' ? t.rr : t[c])).join(',')).join('\n');
+                return head + '\n' + body;
             }
-            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
-        })();
+            $('export-csv').addEventListener('click', () => {
+                if (!accTrades(selectedAccId()).length) { showToast('Nothing to export yet — log a trade first.'); return; }
+                download('battlexjournal-journal.csv', csv(), 'text/csv');
+                showToast('CSV exported');
+            });
+            $('export-json').addEventListener('click', () => {
+                if (!accTrades(selectedAccId()).length) { showToast('Nothing to export yet — log a trade first.'); return; }
+                const payload = core ? { trades: core.Trades || [], accounts: core.Accounts || [], strategies: core.StrategyMaster || [] } : { trades: [] };
+                download('battlexjournal-backup.json', JSON.stringify(payload, null, 2), 'application/json');
+                showToast('JSON backup exported');
+            });
 
+            // ============ EVENTS ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            $('acc-chip').addEventListener('click', () => {
+                if (!core || !core.Accounts || !core.Accounts.length) return;
+                const ids = core.Accounts.map(a => a.id);
+                const cur = selectedAccId() || ids[0];
+                const idx = ids.indexOf(cur);
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+                closeDrawer();
+                render();
+            });
+            $('drawer-overlay').addEventListener('click', closeDrawer);
+            $('md-close').addEventListener('click', closeDrawer);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDrawer(); });
+            document.addEventListener('click', e => {
+                const monthEl = e.target.closest && e.target.closest('[data-month]');
+                if (monthEl) { openMonthDrawer(monthEl.getAttribute('data-month')); }
+            });
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+            }
+            core.TradeMindBus.subscribe('trade.created', () => render());
+            core.TradeMindBus.subscribe('trade.updated', () => render());
+            core.TradeMindBus.subscribe('trade.deleted', () => render());
+            core.TradeMindBus.subscribe('config.changed', () => render());
+
+            render();
+            if (window.lucide) lucide.createIcons();
+        })();
     </script>
     <script src="assets/tour.js"></script>
     <script src="reset.js"></script>
