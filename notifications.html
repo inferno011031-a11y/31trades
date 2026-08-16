@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Notifications</title>
+    <title>BATTLEXJOURNAL — Notifications</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,159 +14,189 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
+    <script src="assets/asset-meta.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
-        body {
-            background: #0A0A0C; color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
-        .num {
-            font-family: 'JetBrains Mono', monospace;
-            font-variant-numeric: tabular-nums;
-            letter-spacing: -0.01em;
-        }
 
-        /* App shell */
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
-            display: flex;
-            flex-direction: column;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
         }
         body.collapsed .sidebar { width: 64px; }
-        .logo-badge {
-            width: 32px; height: 32px; border-radius: 9px; flex-shrink: 0;
-            background: linear-gradient(135deg, #10B981, #059669);
-            color: #052E1F; font-weight: 800; font-size: 14px;
-            display: flex; align-items: center; justify-content: center;
-        }
-        .collapse-btn {
-            background: none; border: none; color: #6E6E78; cursor: pointer;
-            padding: 6px; border-radius: 6px; transition: all 0.15s;
-        }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
 
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
-            text-decoration: none; transition: all 0.15s; white-space: nowrap;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active {
-            background: rgba(16, 185, 129, 0.08);
-            color: #FFFFFF;
-            box-shadow: inset 2px 0 0 #10B981;
-        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
-        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
-        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text { display: none; }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        /* ---- Glass system ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
+
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none; cursor: pointer;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
         .btn-ghost {
-            background: rgba(235, 242, 245, 0.05); color: #FFFFFF; font-weight: 600; font-size: 13px;
-            padding: 8px 14px; border-radius: 8px; border: 1px solid #26262B; cursor: pointer; transition: all 0.15s;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; }
-        .btn-danger {
-            background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 13px;
-            padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s;
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-mini {
+            background: transparent; border: 1px solid var(--tm-border-2); border-radius: 7px; color: var(--tm-muted);
+            padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.13s; text-decoration: none;
         }
-        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+        .btn-mini:hover { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
+        .btn-mini.primary { background: var(--tm-text); color: var(--tm-bg); border-color: var(--tm-text); }
+        .btn-mini.primary:hover { filter: brightness(1.1); }
 
-        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; }
-        .panel-title { font-size: 14px; font-weight: 700; color: #E8E8EC; }
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
 
-        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-        .tag-emerald { background: rgba(16,185,129,0.12); color: #34D399; }
-        .tag-red { background: rgba(239,68,68,0.12); color: #F87171; }
-        .tag-amber { background: rgba(245,158,11,0.12); color: #FBBF24; }
-        .tag-blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
-        .tag-purple { background: rgba(139,92,246,0.12); color: #A78BFA; }
-        .tag-gray { background: rgba(148,163,184,0.12); color: #94A3B8; }
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
 
-        .ins-tab {
-            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        /* ---- Category filters ---- */
+        .cat-btn {
+            padding: 7px 13px; border-radius: 8px; font-size: 12px; font-weight: 700; letter-spacing: 0.04em;
+            color: var(--tm-muted); background: transparent; border: 1px solid transparent; cursor: pointer;
+            transition: all 0.15s; text-transform: uppercase; white-space: nowrap;
         }
-        .ins-tab:hover { color: #E8E8EC; }
-        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+        .cat-btn:hover { color: var(--tm-text); }
+        .cat-btn.active { background: var(--tm-text); color: var(--tm-bg); }
+        .cat-count { opacity: 0.65; font-weight: 600; }
 
-        .notif-row { display: flex; gap: 12px; padding: 14px 16px; border-bottom: 1px solid #17171A; transition: background 0.12s; cursor: pointer; }
-        .notif-row:hover { background: rgba(255,255,255,0.03); }
-        .notif-row:last-child { border-bottom: none; }
-        .notif-ico {
-            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
+        /* ---- Notification rows ---- */
+        .notif-row {
+            display: flex; gap: 12px; padding: 13px 14px; border-radius: 10px;
+            border: 1px solid var(--hairline); background: var(--glass-inner);
+            transition: border-color 0.13s, background 0.13s; cursor: pointer; position: relative;
         }
-        .notif-dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; margin-top: 6px; }
-        .notif-action {
-            display: inline-flex; align-items: center; gap: 6px; margin-top: 9px;
-            padding: 6px 13px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            color: #34D399; background: rgba(16,185,129,0.12); border: 1px solid rgba(16,185,129,0.25);
-            cursor: pointer; transition: all 0.15s;
-        }
-        .notif-action:hover { background: rgba(16,185,129,0.2); border-color: rgba(16,185,129,0.45); }
-        .broker-overlay {
-            position: fixed; inset: 0; z-index: 90;
-            background: rgba(0,0,0,0.7); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-            display: flex; align-items: center; justify-content: center; padding: 20px;
-        }
-        .broker-card {
-            width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto;
-            background: #121620; border: 1px solid rgba(255,255,255,0.06); border-radius: 16px;
-            padding: 20px; box-shadow: 0 24px 60px rgba(0,0,0,0.5);
-        }
-        .broker-close {
-            width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(255,255,255,0.04); color: #8A8A93; transition: all 0.15s;
-        }
-        .broker-close:hover { background: rgba(255,255,255,0.1); color: #E8E8EC; }
-        .broker-list { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; }
-        .broker-row {
-            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
-            border-radius: 10px; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.05);
-            transition: background 0.15s;
-        }
-        .broker-row:hover { background: rgba(255,255,255,0.06); }
-        .broker-ico {
-            width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
-            display: flex; align-items: center; justify-content: center;
-            background: rgba(16,185,129,0.12); color: #34D399;
-        }
-        .broker-connect {
-            flex-shrink: 0; padding: 6px 14px; border-radius: 999px; font-size: 12px; font-weight: 700;
-            color: #0A0C10; background: #34D399; border: none; cursor: pointer; transition: all 0.15s;
-        }
-        .broker-connect:hover { background: #10B981; box-shadow: 0 0 18px rgba(16,185,129,0.35); }
+        .notif-row:hover { border-color: var(--glass-border-strong); background: var(--glass-bg); }
+        .notif-row.unread { background: var(--glass-bg); border-color: var(--glass-border-strong); }
+        .notif-row.unread .nt-title { font-weight: 800; }
+        .notif-row.unread::before { content: ''; position: absolute; left: -1px; top: 14px; bottom: 14px; width: 3px; border-radius: 3px; background: var(--tm-accent-2); }
+        .nt-ico { width: 34px; height: 34px; border-radius: 9px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .nt-ico svg { width: 16px; height: 16px; }
+        .nt-title { font-size: 13.5px; font-weight: 600; line-height: 1.35; }
+        .nt-body { font-size: 12.5px; color: var(--tm-muted); margin-top: 3px; line-height: 1.45; }
+        .sev-bar { width: 3px; border-radius: 3px; flex-shrink: 0; align-self: stretch; }
 
-        @media (max-width: 640px) {
-            .search-input { display: none; }
-            .topbar { padding-left: 12px; padding-right: 12px; }
-        }
+        /* ---- Broker picker ---- */
+        .broker-overlay { position: fixed; inset: 0; background: rgba(8, 10, 14, 0.55); z-index: 80; display: flex; align-items: center; justify-content: center; padding: 20px; }
+        .broker-card { width: 480px; max-width: 100%; max-height: 90vh; overflow-y: auto; border-radius: 14px; padding: 22px; }
+        .broker-row { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--hairline); margin-top: 8px; }
+        .broker-row:hover { border-color: var(--glass-border-strong); }
+        .broker-ico { width: 34px; height: 34px; border-radius: 9px; background: var(--glass-inner); display: flex; align-items: center; justify-content: center; color: var(--tm-muted); flex-shrink: 0; }
+
+        /* ---- Drawer ---- */
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(8, 10, 14, 0.45); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+        .drawer-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 460px; max-width: 94vw; z-index: 61; transform: translateX(102%); transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; border-left: 1px solid var(--glass-border-strong); }
+        .drawer-panel.open { transform: none; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
         @media (max-width: 1024px) {
             .search-input { width: 180px; }
             .sidebar { width: 64px; }
@@ -174,19 +204,25 @@
             .nav-item { justify-content: center; padding: 9px 0; }
             .hide-when-collapsed { display: none !important; }
         }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+        }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
 </head>
 <body>
 
-    <div class="flex h-screen">
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -209,17 +245,17 @@
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item active"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -230,81 +266,108 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
                     <input id="global-search" type="text" class="search-input" placeholder="Search notifications…">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <button class="btn-primary !py-2 !px-3.5" onclick="location.href='journal.html?log=1'">
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </button>
-                    <button class="account-select hide-when-collapsed" id="account-chip">
-                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Content -->
-            <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[1100px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1300px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div class="flex items-end gap-4">
+                            <div>
+                                <h1 class="text-[24px] font-bold tracking-tight">Notifications</h1>
+                                <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Everything that needs your attention.</p>
+                            </div>
+                            <div class="glass px-3.5 py-2 flex items-center gap-2.5">
+                                <span class="label-xs">Unread</span>
+                                <span class="num text-[20px] font-extrabold text-[var(--tm-accent-2)]" id="unread-count">—</span>
+                            </div>
+                        </div>
+                        <button id="mark-all" class="btn-ghost !py-2.5 !px-4" disabled>
+                            <svg data-lucide="check-check" class="w-4 h-4"></svg> Mark all as read
+                        </button>
+                    </div>
+
+                    <!-- Category filters -->
+                    <div class="flex items-center gap-1 glass !rounded-xl px-2 py-1.5 overflow-x-auto" id="cat-filters" role="tablist"></div>
+
+                    <!-- Loading -->
+                    <div id="loading-state" class="glass p-12 text-center text-[13.5px] text-[var(--tm-dim)]">Loading notifications…</div>
+
+                    <!-- Empty state -->
+                    <div id="empty-state" class="hidden glass p-12 text-center">
+                        <svg data-lucide="bell-off" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[18px] font-bold">Nothing needs your attention</h3>
+                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2">You're caught up.</p>
+                    </div>
+
+                    <!-- All-read banner -->
+                    <div id="caught-up" class="hidden glass px-5 py-4 flex items-center gap-3">
+                        <svg data-lucide="check-circle-2" class="w-5 h-5 text-[var(--tm-green)]"></svg>
                         <div>
-                            <h1 class="text-[22px] font-bold tracking-tight">Notifications</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">
-                                Alerts, breaches, review reminders and market events — derived from the same data as every screen.
-                            </p>
-                        </div>
-                        <div class="flex items-center gap-2.5">
-                            <button id="mark-all" class="btn-ghost">
-                                <svg data-lucide="check-check" class="w-4 h-4"></svg> Mark all read
-                            </button>
+                            <div class="text-[14px] font-bold">You're caught up</div>
+                            <div class="text-[12px] text-[var(--tm-dim)]">All notifications are read. Historical notifications stay below.</div>
                         </div>
                     </div>
 
-                    <!-- Unread summary -->
-                    <div id="summary" class="hidden"></div>
+                    <!-- Feed -->
+                    <div id="feed" class="hidden flex flex-col gap-4"></div>
 
-                    <!-- Filter tabs -->
-                    <div class="flex gap-1.5 overflow-x-auto pb-1" id="notif-tabs"></div>
-
-                    <!-- Notification list -->
-                    <div class="panel overflow-hidden">
-                        <div id="notif-list" class="flex flex-col">
-                            <div class="py-16 text-center text-[13px] text-[#6E6E78]">Loading notifications…</div>
-                        </div>
-                    </div>
-
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Notifications · single source of truth across all screens</p>
+                    <p class="text-center text-[11px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Notifications · every alert is derived from your canonical state</p>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- ============ DETAIL DRAWER ============ -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <aside class="drawer-panel glass-strong" id="detail-drawer">
+        <div class="flex items-center justify-between p-5 border-b border-[var(--hairline)]">
+            <div class="label-xs" id="dd-cat">—</div>
+            <button class="collapse-btn" id="dd-close" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4" id="dd-body"></div>
+    </aside>
+
     <!-- Toast -->
-    <div class="toast" id="toast">
-        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
-        <span id="toast-msg"></span>
-    </div>
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
 
     <script>
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
-            // authed API fetch: attaches the session token so requests work with auth ON;
-            // falls back to plain fetch when the core isn't booted or auth is off.
-            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
+            const core = window.TradeMindCore;
+            const apiFetch = (core && core.apiFetch) || ((url, options) => fetch(url, options));
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            let toastTimer = null;
+            function showToast(msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            }
+            const fmtMoney = n => n == null ? '—' : ((n > 0 ? '+' : '') + n);
 
-            // ---- unread tracking: server-side per user (the /api/notifications
-            // engine persists it). A local mirror keeps the page usable offline;
-            // whenever the backend answers it becomes authoritative. ----
+            // ============ READ STATE (server authoritative) ============
             const READ_KEY = '31trades.notifications.read.v1';
             let read = new Set();
             let fromServer = false;
@@ -315,29 +378,24 @@
             const saveRead = () => {
                 try { window.localStorage.setItem(READ_KEY, JSON.stringify([...read])); } catch (e) {}
             };
-            const pushRead = () => {
-                // best-effort: tell the backend engine which ids are read
-                try {
-                    apiFetch('/api/notifications/read', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ ids: [...read] })
-                    }).catch(() => {});
-                } catch (e) {}
+            const pushRead = (ids) => {
+                const list = (ids || [...read]).filter(Boolean);
+                if (!list.length) return;
+                apiFetch('/api/notifications/read', {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ ids: list })
+                }).catch(() => {});
             };
+            const isUnread = n => !read.has(n.id);
 
-            let activeTab = 'All';
+            // ============ STATE ============
+            const CATS = ['Onboarding', 'Risk', 'Discipline', 'Reviews', 'System', 'Market', 'Battles'];
+            const SEV_ORDER = { critical: 0, high: 1, warn: 2, info: 3 };
             let notifs = [];
+            let activeCat = 'All';
+            let unreadOnly = false;
 
-            // ---- toast ----
-            let toastTimer;
-            window.showToast = function (msg) {
-                $('toast-msg').textContent = msg;
-                $('toast').classList.add('show');
-                clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
-            };
-
-            // ---- fetch from the backend engine, fall back to the local core ----
+            // ============ FETCH ============
             async function loadNotifs() {
                 try {
                     const res = await apiFetch('/api/notifications');
@@ -345,7 +403,7 @@
                         const data = await res.json();
                         if (data && Array.isArray(data.notifications)) {
                             fromServer = true;
-                            notifs = data.notifications.map(n => ({ ...n, at: n.at || new Date().toISOString() }));
+                            notifs = data.notifications.map(n => ({ ...n, sev: n.sev || 'info', at: n.at || new Date().toISOString() }));
                             // server read state is authoritative; merge into local
                             (data.readIds || []).forEach(id => read.add(id));
                             saveRead();
@@ -359,255 +417,199 @@
                 render();
             }
 
-            // ---- offline fallback: identical derivation from the local core ----
+            // ============ OFFLINE FALLBACK (same derivation as the server engine) ============
             function buildNotifsLocal() {
-                const core = window.TradeMindCore;
                 const out = [];
-                const now = new Date().toISOString();
                 if (!core) return out;
-
-                // onboarding checklist (same derivation as the server engine)
+                const now = new Date().toISOString();
                 const hasAccounts = !!(core.Accounts && core.Accounts.length);
                 const hasStrategies = !!(core.StrategyMaster && core.StrategyMaster.length);
                 const hasTrades = !!(core.Trades && core.Trades.length);
                 let brokerConnected = false;
                 try { brokerConnected = localStorage.getItem('31trades.broker.connected') === '1'; } catch (e) {}
-                if (!hasAccounts) {
-                    out.push({ id: 'onb-account', cat: 'Onboarding', sev: 'info', at: now, icon: 'rocket', tint: 'emerald', title: 'Create your first account', body: 'Set an account name, size, currency and risk limits — every screen reads from it.', href: 'strategy-lab.html?tab=accounts' });
-                } else if (!hasStrategies) {
-                    out.push({ id: 'onb-strategy', cat: 'Onboarding', sev: 'info', at: now, icon: 'beaker', tint: 'emerald', title: 'Create your first strategy', body: 'Define setups, sessions, instruments and risk rules — the rule engine evaluates every trade against it.', href: 'strategy-lab.html?tab=strategies' });
-                } else if (!hasTrades) {
-                    out.push({ id: 'onb-trade', cat: 'Onboarding', sev: 'info', at: now, icon: 'book-open', tint: 'emerald', title: 'Log your first trade', body: 'One trade activates risk, discipline, analytics, insights and the calendar — all from the same ledger.', href: 'journal.html' });
-                }
+                if (!hasAccounts) out.push({ id: 'onb-account', cat: 'Onboarding', sev: 'info', at: now, icon: 'rocket', tint: 'emerald', title: 'Create your first account', body: 'Set an account name, size, currency and risk limits — every screen reads from it.', href: 'strategy-lab.html?tab=accounts' });
+                else if (!hasStrategies) out.push({ id: 'onb-strategy', cat: 'Onboarding', sev: 'info', at: now, icon: 'beaker', tint: 'emerald', title: 'Create your first strategy', body: 'Define setups, sessions, instruments and risk rules — the rule engine evaluates every trade against it.', href: 'strategy-lab.html?tab=strategies' });
+                else if (!hasTrades) out.push({ id: 'onb-trade', cat: 'Onboarding', sev: 'info', at: now, icon: 'book-open', tint: 'emerald', title: 'Log your first trade', body: 'One trade activates risk, discipline, analytics, insights and the calendar — all from the same ledger.', href: 'journal.html' });
                 if (hasTrades) {
-                    if (core.Trades.some(t => !t.reviewed)) {
-                        out.push({ id: 'onb-review', cat: 'Onboarding', sev: 'info', at: now, icon: 'clipboard-check', tint: 'emerald', title: 'Complete your first review', body: 'Review your recent trades while they are fresh — mark them reviewed in the Journal to keep discipline accurate.', href: 'journal.html?view=unreviewed' });
-                    }
-                    if (!brokerConnected) {
-                        out.push({ id: 'onb-broker', cat: 'Onboarding', sev: 'info', at: now, icon: 'plug', tint: 'emerald', title: 'Connect a broker', body: 'Auto-import live trades from MetaTrader, TradingView, cTrader and more — or keep logging manually.', href: 'journal.html', action: { kind: 'broker-picker', label: 'Connect broker' } });
-                    }
+                    if (core.Trades.some(t => !t.reviewed)) out.push({ id: 'onb-review', cat: 'Onboarding', sev: 'info', at: now, icon: 'clipboard-check', tint: 'emerald', title: 'Complete your first review', body: 'Review your recent trades while they are fresh — mark them reviewed in the Journal to keep discipline accurate.', href: 'journal.html?view=unreviewed' });
+                    if (!brokerConnected) out.push({ id: 'onb-broker', cat: 'Onboarding', sev: 'info', at: now, icon: 'plug', tint: 'emerald', title: 'Connect a broker', body: 'Auto-import live trades from MetaTrader, TradingView, cTrader and more — or keep logging manually.', href: 'journal.html', action: { kind: 'broker-picker', label: 'Connect broker' } });
                 }
-
                 const accId = core.selectedAccountId ? core.selectedAccountId() : null;
-                const account = core.Accounts.length ? core.Accounts.find(a => a.id === (accId || core.Accounts[0].id)) || core.Accounts[0] : null;
-                if (!account) return out;
-
+                const acc = core.Accounts.length ? core.Accounts.find(a => a.id === (accId || core.Accounts[0].id)) || core.Accounts[0] : null;
+                if (!acc) return out;
                 try {
-                    const rs = core.riskState(account.id);
-                    const at = new Date().toISOString();
-                    if (rs.status === 'LIMIT') {
-                        out.push({
-                            id: 'risk-limit', cat: 'Risk', sev: 'critical', at,
-                            icon: 'shield-alert', tint: 'red',
-                            title: 'Daily risk limit breached',
-                            body: rs.riskUsed + ' risk used of ' + rs.dailyRiskBudget + ' budget · ' + rs.lossUsed + ' loss · ' + rs.currentDrawdown + ' drawdown. Next trade is blocked until tomorrow.',
-                            href: 'risk.html'
-                        });
-                    }
-                    if (rs.status === 'HIGH') {
-                        out.push({
-                            id: 'risk-high', cat: 'Risk', sev: 'high', at,
-                            icon: 'alert-triangle', tint: 'amber',
-                            title: 'High risk — protect capital',
-                            body: 'Risk used ' + rs.riskUsed + ' / ' + rs.dailyRiskBudget + ' (' + Math.round((rs.riskUsed / (rs.dailyRiskBudget || 1)) * 100) + '%) · ' + rs.currentDrawdown + ' drawdown of ' + rs.drawdownLimit + '. Max allowed next risk: $' + rs.maxAllowedRisk + '.',
-                            href: 'risk.html'
-                        });
-                    }
-                    if (rs.status === 'CAUTION') {
-                        out.push({
-                            id: 'risk-caution', cat: 'Risk', sev: 'warn', at,
-                            icon: 'activity', tint: 'blue',
-                            title: 'Risk caution — above the first warning band',
-                            body: 'Risk used ' + rs.riskUsed + ' / ' + rs.dailyRiskBudget + ' · ' + rs.currentDrawdown + ' drawdown. Watch the next entries.',
-                            href: 'risk.html'
-                        });
-                    }
-                } catch (e) { /* no account policy yet */ }
-
-                core.Trades.filter(t => t.adherence_result === 'BLOCK').slice(0, 6).forEach(t => {
-                    out.push({
-                        id: 'block-' + t.id, cat: 'Risk', sev: 'high', at: new Date(t.ts).toISOString(),
-                        icon: 'ban', tint: 'red',
-                        title: 'Trade blocked — ' + t.symbol + ' ' + (t.dir || ''),
-                        body: (t.block_reason || 'Rule engine rejected this trade') + ' · risk $' + (t.risk || 0) + ' · ' + (t.strategy || '—'),
-                        href: 'journal.html?focus=' + t.id
-                    });
+                    const rs = core.riskState(acc.id);
+                    if (rs && rs.status === 'LIMIT') out.push({ id: 'risk-limit', cat: 'Risk', sev: 'critical', at: now, icon: 'shield-alert', tint: 'red', title: 'Limit breached — protect capital', body: 'Daily limit reached. Next trade is blocked until the constraint resets.', href: 'risk.html' });
+                    if (rs && rs.status === 'HIGH') out.push({ id: 'risk-high', cat: 'Risk', sev: 'high', at: now, icon: 'alert-triangle', tint: 'amber', title: 'High risk — protect capital', body: 'Risk used ' + rs.riskUsed + ' / ' + rs.dailyRiskBudget + ' · ' + rs.currentDrawdown + ' drawdown. Max allowed next risk: $' + rs.maxAllowedRisk + '.', href: 'risk.html' });
+                    if (rs && rs.status === 'CAUTION') out.push({ id: 'risk-caution', cat: 'Risk', sev: 'warn', at: now, icon: 'activity', tint: 'blue', title: 'Risk caution — above the first warning band', body: 'Risk used ' + rs.riskUsed + ' / ' + rs.dailyRiskBudget + '. Watch the next entries.', href: 'risk.html' });
+                } catch (e) {}
+                (core.Violations || []).filter(v => v.account_id === acc.id).slice().sort((a, b) => new Date(b.ts) - new Date(a.ts)).slice(0, 8).forEach(v => {
+                    out.push({ id: 'viol-' + (v.tradeId || 'x') + '-' + (v.ruleKey || 'x').replace(/\s+/g, '-'), cat: 'Discipline', sev: 'high', at: new Date(v.ts).toISOString(), icon: 'target', tint: 'red', title: 'Rule broken: ' + (v.ruleLabel || v.ruleKey || 'Rule'), body: (v.explanation || 'Hard-rule violation') + ' · P&L ' + fmtMoney(v.pnl) + ' · ' + (v.r != null ? (v.r > 0 ? '+' : '') + v.r.toFixed(2) + 'R' : ''), href: 'discipline.html' });
                 });
-
-                (core.Violations || []).slice().sort((a, b) => new Date(b.ts) - new Date(a.ts)).slice(0, 8).forEach(v => {
-                    out.push({
-                        id: 'viol-' + (v.tradeId || 'x') + '-' + (v.ruleKey || v.ruleLabel || 'x').replace(/\s+/g, '-'), cat: 'Discipline', sev: 'high', at: new Date(v.ts).toISOString(),
-                        icon: 'target', tint: 'red',
-                        title: 'Rule broken: ' + (v.ruleLabel || v.ruleKey || 'Rule'),
-                        body: (v.explanation || 'Hard-rule violation') + ' · P&L ' + (v.pnl != null ? (v.pnl > 0 ? '+' : '') + v.pnl : '—') + ' · ' + (v.r != null ? (v.r > 0 ? '+' : '') + v.r.toFixed(2) + 'R' : ''),
-                        href: 'discipline.html'
-                    });
+                const pending = core.Trades.filter(t => t.account_id === acc.id && !t.reviewed);
+                if (pending.length) out.push({ id: 'reviews-pending', cat: 'Reviews', sev: 'info', at: now, icon: 'message-square', tint: 'blue', title: pending.length + ' trade' + (pending.length === 1 ? '' : 's') + ' awaiting review', body: pending.slice(0, 3).map(t => t.symbol).join(' · ') + (pending.length > 3 ? ' +' + (pending.length - 3) + ' more' : '') + ' — reflect on execution while it is fresh.', href: 'journal.html?view=unreviewed' });
+                (core.getEventLog ? core.getEventLog() : []).slice(0, 6).forEach(ev => {
+                    out.push({ id: 'sys-' + (ev.at || ev.what || Math.random()), cat: 'System', sev: 'info', at: new Date(ev.at || Date.now()).toISOString(), icon: 'settings', tint: 'gray', title: (ev.what || 'Configuration change') + ' · ' + (ev.entity || ''), body: (ev.detail || '') + (ev.impact ? ' — ' + ev.impact : ''), href: 'strategy-lab.html?tab=history' });
                 });
-
-                const pending = core.Trades.filter(t => !t.reviewed);
-                if (pending.length) {
-                    out.push({
-                        id: 'reviews-pending', cat: 'Reviews', sev: 'info', at: new Date().toISOString(),
-                        icon: 'message-square', tint: 'blue',
-                        title: pending.length + ' trade' + (pending.length === 1 ? '' : 's') + ' awaiting review',
-                        body: pending.slice(0, 3).map(t => t.symbol + ' ' + (t.dir || '')).join(' · ') + (pending.length > 3 ? ' +' + (pending.length - 3) + ' more' : '') + ' — reflect on execution while it is fresh.',
-                        href: 'journal.html?view=unreviewed'
-                    });
-                }
-
-                (core.getEventLog ? core.getEventLog() : []).slice(0, 6).forEach((ev, i) => {
-                    const isWelcome = ev.what === 'Welcome' && ev.entity === '31Trades';
-                    out.push({
-                        id: 'sys-' + (ev.at || i), cat: 'System', sev: 'info', at: new Date(ev.at || Date.now()).toISOString(),
-                        icon: isWelcome ? 'sparkles' : 'settings',
-                        tint: isWelcome ? 'emerald' : 'gray',
-                        title: (ev.what || 'Configuration change') + ' · ' + (ev.entity || ''),
-                        body: (ev.detail || '') + (ev.impact ? ' — ' + ev.impact : ''),
-                        href: isWelcome ? 'dashboard.html' : 'strategy-lab.html?tab=history'
-                    });
-                });
-
-                if (window.__ecoUpcoming && window.__ecoUpcoming.length) {
-                    const next = window.__ecoUpcoming[0];
-                    const mins = Math.max(0, Math.round((new Date(next.ts) - new Date()) / 60000));
-                    const h = Math.floor(mins / 60), m = mins % 60;
-                    out.push({
-                        id: 'market-' + next.ts, cat: 'Market', sev: 'high', at: new Date(next.ts).toISOString(),
-                        icon: 'newspaper', tint: 'amber',
-                        title: (next.impact || 'High') + ' impact: ' + next.title,
-                        body: 'In ~' + (h ? h + 'h ' : '') + m + 'm · ' + (next.country || next.currency || '') +
-                            (next.forecast ? ' · consensus ' + next.forecast : '') + (next.previous ? ' · prev ' + next.previous : ''),
-                        href: 'journal.html'
-                    });
-                }
-
                 return out.sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, 50);
             }
 
-            // ---- render ----
-            const CAT_ICON = {
-                Onboarding: 'rocket', Risk: 'shield-alert', Discipline: 'target', Reviews: 'message-square',
-                System: 'settings', Market: 'newspaper'
-            };
-            const CAT_TINT = {
-                Onboarding: 'rgba(16,185,129,0.12)', Risk: 'rgba(239,68,68,0.12)', Discipline: 'rgba(245,158,11,0.12)',
-                Reviews: 'rgba(59,130,246,0.12)', System: 'rgba(148,163,184,0.12)',
-                Market: 'rgba(139,92,246,0.12)'
-            };
-            const CAT_COLOR = {
-                Onboarding: '#34D399', Risk: '#F87171', Discipline: '#FBBF24', Reviews: '#60A5FA',
-                System: '#94A3B8', Market: '#A78BFA'
-            };
-            const TINT_BG = { red: 'rgba(239,68,68,0.12)', amber: 'rgba(245,158,11,0.12)', blue: 'rgba(59,130,246,0.12)', gray: 'rgba(148,163,184,0.12)', emerald: 'rgba(16,185,129,0.12)', purple: 'rgba(139,92,246,0.12)' };
-            const TINT_FG = { red: '#F87171', amber: '#FBBF24', blue: '#60A5FA', gray: '#94A3B8', emerald: '#34D399', purple: '#A78BFA' };
-            const SEV_TAG = {
-                critical: '<span class="tag tag-red">Critical</span>',
-                high: '<span class="tag tag-red">High</span>',
-                warn: '<span class="tag tag-amber">Warning</span>',
-                info: '<span class="tag tag-blue">Info</span>'
-            };
+            // ============ FILTER / SORT / GROUP ============
+            function visibleNotifs() {
+                let list = notifs;
+                if (activeCat !== 'All') list = list.filter(n => n.cat === activeCat);
+                if (unreadOnly) list = list.filter(isUnread);
+                return list.slice().sort((a, b) => (SEV_ORDER[a.sev] - SEV_ORDER[b.sev]) || (new Date(b.at) - new Date(a.at)));
+            }
+            function groupLabel(at) {
+                const d = new Date(at), now = new Date();
+                const startOfDay = d => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+                const diff = startOfDay(now) - startOfDay(d);
+                if (diff < 0) return 'Upcoming';
+                if (diff === 0) return 'Today';
+                if (diff === 86400000) return 'Yesterday';
+                return d.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+            }
+            function fmtTime(at) {
+                const d = new Date(at);
+                const now = new Date();
+                const sameDay = d.toDateString() === now.toDateString();
+                if (sameDay) return 'Today · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+            }
 
-            function renderTabs() {
+            // ============ VISUALS ============
+            const TINTS = {
+                red: { bg: 'rgba(239,68,68,0.12)', c: 'var(--tm-red)' },
+                amber: { bg: 'rgba(245,158,11,0.12)', c: 'var(--tm-amber)' },
+                blue: { bg: 'rgba(59,130,246,0.12)', c: 'var(--tm-blue)' },
+                emerald: { bg: 'rgba(16,185,129,0.12)', c: 'var(--tm-green)' },
+                gray: { bg: 'rgba(148,163,184,0.12)', c: 'var(--tm-muted)' },
+                indigo: { bg: 'rgba(99,102,241,0.14)', c: 'var(--tm-accent-2)' }
+            };
+            const SEV_COLORS = { critical: 'var(--tm-red)', high: 'var(--tm-amber)', warn: 'var(--tm-amber)', info: 'var(--tm-blue)' };
+            const SEV_LABEL = { critical: 'CRITICAL', high: 'HIGH', warn: 'WARN', info: 'INFO' };
+            function catTag(cat) {
+                const m = { Onboarding: 'tag-emerald', Risk: 'tag-red', Discipline: 'tag-amber', Reviews: 'tag-blue', System: 'tag-gray', Market: 'tag-blue', Battles: 'tag-red' };
+                return '<span class="tag ' + (m[cat] || 'tag-gray') + ' !py-0 !px-1.5 text-[9.5px]">' + esc(cat.toUpperCase()) + '</span>';
+            }
+            function iconHtml(n) {
+                const t = TINTS[n.tint] || TINTS.gray;
+                return '<div class="nt-ico" style="background:' + t.bg + ';color:' + t.c + '"><svg data-lucide="' + esc(n.icon || 'bell') + '"></svg></div>';
+            }
+            function actionBtn(n) {
+                if (!n.href) return '';
+                if (n.action && n.action.kind === 'broker-picker') {
+                    return '<button class="btn-mini primary" data-broker-step="' + esc(n.id) + '"><svg data-lucide="plug" class="w-3.5 h-3.5"></svg> ' + esc(n.action.label || 'Connect broker') + '</button>';
+                }
+                return '<a class="btn-mini primary" href="' + esc(n.href) + '"><svg data-lucide="arrow-right" class="w-3.5 h-3.5"></svg> Open</a>';
+            }
+
+            // ============ RENDER ============
+            function renderCats() {
                 const counts = {};
                 notifs.forEach(n => { counts[n.cat] = (counts[n.cat] || 0) + 1; });
-                const cats = ['All'].concat(Object.keys(counts));
-                $('notif-tabs').innerHTML = cats.map(c =>
-                    '<button class="ins-tab' + (activeTab === c ? ' active' : '') + '" data-tab="' + c + '">' + c +
-                    ' <span class="num text-[11px] opacity-60">' + (c === 'All' ? notifs.length : counts[c]) + '</span></button>'
-                ).join('');
-                $('notif-tabs').querySelectorAll('button').forEach(b =>
-                    b.addEventListener('click', () => { activeTab = b.dataset.tab; render(); })
-                );
+                const btns = ['All'].concat(CATS).map(c =>
+                    '<button class="cat-btn ' + (activeCat === c ? 'active' : '') + '" data-cat="' + c + '">' +
+                    c + (c === 'All' ? ' <span class="cat-count">' + notifs.length + '</span>' : (counts[c] ? ' <span class="cat-count">' + counts[c] + '</span>' : '')) + '</button>').join('');
+                $('cat-filters').innerHTML = btns;
             }
-
-            function renderSummary() {
-                const unread = notifs.filter(n => !read.has(n.id));
-                const sum = $('summary');
-                if (!unread.length) { sum.classList.add('hidden'); sum.innerHTML = ''; return; }
-                const critical = unread.filter(n => n.sev === 'critical' || n.sev === 'high').length;
-                sum.classList.remove('hidden');
-                sum.innerHTML =
-                    '<div class="panel p-4 flex items-center gap-3 border-' + (critical ? '!border-[rgba(239,68,68,0.3)]' : '') + '">' +
-                        '<div class="' + (critical ? 'text-[#F87171]' : 'text-[#34D399]') + '"><svg data-lucide="' + (critical ? 'bell-ring' : 'bell') + '" class="w-5 h-5"></svg></div>' +
-                        '<div class="flex-1"><div class="text-[14px] font-bold text-white">' + unread.length + ' unread notification' + (unread.length === 1 ? '' : 's') + '</div>' +
-                        '<div class="text-[12px] text-[#6E6E78]">' + (critical ? critical + ' need' + (critical === 1 ? 's' : '') + ' your attention' : 'All caught up — no urgent items') + '</div></div>' +
-                        '<button class="btn-ghost !py-1.5 !px-3 !text-[12px]" onclick="window.markAllRead()">Mark all read</button>' +
-                    '</div>';
-                if (window.lucide) lucide.createIcons();
-            }
-
             function render() {
-                renderSummary();
-                renderTabs();
-                const list = $('notif-list');
-                const items = activeTab === 'All' ? notifs : notifs.filter(n => n.cat === activeTab);
-                if (!items.length) {
-                    list.innerHTML = '<div class="py-16 text-center"><svg data-lucide="bell-off" class="w-10 h-10 mx-auto text-[#3A3A41] mb-3"></svg>' +
-                        '<p class="text-[14px] font-semibold text-[#B4B4BD]">No notifications here</p>' +
-                        '<p class="text-[12.5px] text-[#6E6E78] mt-1">' + (activeTab === 'All' ? 'Nothing yet — log a trade or edit your risk limits to see alerts appear here.' : 'No ' + activeTab.toLowerCase() + ' notifications right now.') + '</p></div>';
-                    if (window.lucide) lucide.createIcons();
+                renderCats();
+                const list = visibleNotifs();
+                const unread = notifs.filter(isUnread).length;
+                $('unread-count').textContent = unread;
+                $('mark-all').disabled = unread === 0;
+                $('loading-state').classList.add('hidden');
+                if (!notifs.length) {
+                    $('empty-state').classList.remove('hidden');
+                    $('caught-up').classList.add('hidden');
+                    $('feed').classList.add('hidden');
                     return;
                 }
-                list.innerHTML = items.map(n => {
-                    const isRead = read.has(n.id);
-                    return '<div class="notif-row" data-id="' + n.id + '" onclick="window.openNotif(this)">' +
-                        '<div class="notif-ico" style="background:' + (TINT_BG[n.tint] || CAT_TINT[n.cat] || 'rgba(148,163,184,0.12)') + ';color:' + (TINT_FG[n.tint] || CAT_COLOR[n.cat] || '#94A3B8') + '">' +
-                            '<svg data-lucide="' + (n.icon || CAT_ICON[n.cat] || 'bell') + '" class="w-4 h-4"></svg></div>' +
-                        '<div class="flex-1 min-w-0">' +
-                            '<div class="flex items-center gap-2 flex-wrap"><span class="text-[13.5px] font-semibold ' + (isRead ? 'text-[#B4B4BD]' : 'text-white') + '">' + n.title + '</span>' +
-                            (SEV_TAG[n.sev] || '') + '<span class="tag tag-gray">' + n.cat + '</span></div>' +
-                            '<div class="text-[12.5px] text-[#8A8A93] mt-1">' + n.body + '</div>' +
-                            (n.action ? '<button class="notif-action" data-kind="' + n.action.kind + '" onclick="event.stopPropagation();window.runNotifAction(\'' + n.id + '\')">' + n.action.label + '</button>' : '') +
-                            '<div class="text-[11px] text-[#55555E] mt-1 num">' + fmtAgo(n.at) + '</div>' +
-                        '</div>' +
-                        (isRead ? '' : '<div class="notif-dot" style="background:' + (TINT_FG[n.tint] || CAT_COLOR[n.cat] || '#10B981') + ';box-shadow:0 0 6px ' + (TINT_FG[n.tint] || CAT_COLOR[n.cat] || '#10B981') + '"></div>') +
-                    '</div>';
-                }).join('');
+                $('empty-state').classList.add('hidden');
+                $('caught-up').classList.toggle('hidden', unread > 0);
+                if (!list.length) {
+                    $('feed').classList.remove('hidden');
+                    $('feed').innerHTML = '<div class="glass p-10 text-center text-[13px] text-[var(--tm-dim)]">' +
+                        (unreadOnly ? 'No unread ' + (activeCat === 'All' ? '' : activeCat.toLowerCase() + ' ') + 'notifications.' : 'No ' + (activeCat === 'All' ? '' : activeCat.toLowerCase() + ' ') + 'notifications here.') + '</div>';
+                    return;
+                }
+                $('feed').classList.remove('hidden');
+                // group by day, preserving severity order within each group
+                const groups = [];
+                const seen = {};
+                list.forEach(n => {
+                    const g = groupLabel(n.at);
+                    if (!seen[g]) { seen[g] = true; groups.push({ label: g, items: [] }); }
+                    groups[groups.length - 1].items.push(n);
+                });
+                $('feed').innerHTML = groups.map(g =>
+                    '<div>' +
+                        '<div class="label-xs mb-2 px-1">' + esc(g.label) + '</div>' +
+                        '<div class="flex flex-col gap-2">' + g.items.map(n => {
+                            const un = isUnread(n);
+                            const sevColor = SEV_COLORS[n.sev] || 'var(--tm-border-2)';
+                            return '<div class="notif-row ' + (un ? 'unread' : '') + '" data-id="' + esc(n.id) + '">' +
+                                '<div class="sev-bar" style="background:' + sevColor + '"></div>' +
+                                iconHtml(n) +
+                                '<div class="min-w-0 flex-1">' +
+                                    '<div class="flex flex-wrap items-center gap-1.5">' + catTag(n.cat) +
+                                        '<span class="tag tag-gray !py-0 !px-1.5 text-[9px]">' + SEV_LABEL[n.sev] + '</span>' +
+                                        '<span class="num text-[10.5px] text-[var(--tm-dim)] ml-auto">' + fmtTime(n.at) + '</span>' +
+                                    '</div>' +
+                                    '<div class="nt-title mt-1">' + esc(n.title) + '</div>' +
+                                    '<div class="nt-body">' + esc(n.body) + '</div>' +
+                                    '<div class="flex items-center gap-2 mt-2.5">' + actionBtn(n) + '</div>' +
+                                '</div>' +
+                            '</div>';
+                        }).join('') + '</div>' +
+                    '</div>').join('');
                 if (window.lucide) lucide.createIcons();
             }
 
-            function fmtAgo(d) {
-                const diff = Date.now() - new Date(d).getTime();
-                if (diff < 60000) return 'Just now';
-                if (diff < 3600000) return Math.floor(diff / 60000) + ' min ago';
-                if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
-                return new Date(d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+            // ============ DETAIL DRAWER ============
+            function openDetail(id) {
+                const n = notifs.find(x => x.id === id);
+                if (!n) return;
+                if (!read.has(id)) { read.add(id); saveRead(); pushRead([id]); render(); }
+                $('dd-cat').textContent = n.cat.toUpperCase() + ' · ' + SEV_LABEL[n.sev];
+                const sevColor = SEV_COLORS[n.sev] || 'var(--tm-border-2)';
+                const t = TINTS[n.tint] || TINTS.gray;
+                $('dd-body').innerHTML =
+                    '<div class="flex items-center gap-3">' + iconHtml(n) +
+                        '<div><div class="text-[17px] font-bold">' + esc(n.title) + '</div>' +
+                        '<div class="num text-[11.5px] text-[var(--tm-dim)] mt-0.5">' + fmtTime(n.at) + '</div></div>' +
+                    '</div>' +
+                    '<div class="glass p-4"><div class="label-xs mb-2">Message</div><p class="text-[13px] leading-relaxed">' + esc(n.body) + '</p></div>' +
+                    '<div class="glass p-4"><div class="label-xs mb-2">Details</div>' +
+                        '<div class="flex flex-col gap-1.5 text-[12.5px]">' +
+                            '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Category</span><span class="font-semibold">' + esc(n.cat) + '</span></div>' +
+                            '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Severity</span><span class="font-semibold" style="color:' + sevColor + '">' + SEV_LABEL[n.sev] + '</span></div>' +
+                            '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Status</span><span class="font-semibold text-[var(--tm-green)]">Read</span></div>' +
+                        '</div></div>' +
+                    (n.href ? '<div class="flex gap-2">' + actionBtn(n) + '</div>' : '');
+                $('drawer-overlay').classList.add('open');
+                $('detail-drawer').classList.add('open');
+                if (window.lucide) lucide.createIcons();
+            }
+            function closeDrawer() {
+                $('drawer-overlay').classList.remove('open');
+                $('detail-drawer').classList.remove('open');
             }
 
-            window.openNotif = function (el) {
-                const id = el.getAttribute('data-id');
-                if (!read.has(id)) {
-                    read.add(id);
-                    saveRead();
-                    pushRead();
-                    render();
-                }
-                const n = notifs.find(x => x.id === id);
-                if (n && n.href) location.href = n.href;
-            };
-
-            window.markAllRead = function () {
-                notifs.forEach(n => read.add(n.id));
+            // ============ MARK ALL READ ============
+            function markAllRead() {
+                const ids = notifs.filter(isUnread).map(n => n.id);
+                if (!ids.length) return;
+                ids.forEach(id => read.add(id));
                 saveRead();
-                pushRead();
+                pushRead(ids);
+                showToast(ids.length + ' notification' + (ids.length === 1 ? '' : 's') + ' marked as read');
                 render();
-                showToast('All notifications marked as read');
-            };
+            }
 
-            // ---- inline notification actions --------------------------------
-            // Notifications can carry an `action` (e.g. the onboarding broker
-            // step). The dispatcher marks the notification read and routes to the
-            // right handler — no page navigation needed.
-            window.runNotifAction = function (id) {
-                const n = notifs.find(x => x.id === id);
-                if (!n || !n.action) return;
-                if (!read.has(id)) {
-                    read.add(id); saveRead(); pushRead(); render();
-                }
-                if (n.action.kind === 'broker-picker') openBrokerPicker(id);
-            };
-
-            // ---- broker picker (opens from the onboarding notification) ------
+            // ============ BROKER PICKER ============
             const BROKERS = [
                 { name: 'MetaTrader', icon: 'trending-up', desc: 'MT4 / MT5 — the classic retail terminal' },
                 { name: 'TradingView', icon: 'candlestick-chart', desc: 'Charting-first platform with paper trading' },
@@ -618,41 +620,38 @@
                 { name: 'Interactive Brokers', icon: 'landmark', desc: 'Global multi-asset brokerage' }
             ];
             let brokerModalEl = null;
-
             function openBrokerPicker(notifId) {
                 closeBrokerPicker();
                 const ov = document.createElement('div');
                 ov.className = 'broker-overlay';
-                ov.innerHTML =
-                    '<div class="broker-card">' +
-                        '<div class="flex items-start justify-between gap-4">' +
-                            '<div><div class="text-[16px] font-bold text-white">Connect a broker</div>' +
-                            '<p class="text-[12.5px] text-[#8A8A93] mt-1">Pick your platform — auto-import for live trades arrives later; this syncs your choice across devices.</p></div>' +
-                            '<button class="broker-close" onclick="window.closeBrokerPicker()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
-                        '</div>' +
-                        '<div class="broker-list">' +
-                            BROKERS.map(b =>
-                                '<div class="broker-row">' +
-                                    '<div class="broker-ico"><svg data-lucide="' + b.icon + '" class="w-[18px] h-[18px]"></svg></div>' +
-                                    '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white">' + b.name + '</div>' +
-                                    '<div class="text-[12px] text-[#6E6E78]">' + b.desc + '</div></div>' +
-                                    '<button class="broker-connect" onclick="window.connectBroker(\'' + b.name.replace(/'/g, "\\'") + '\', \'' + (notifId || '') + '\')">Connect</button>' +
-                                '</div>'
-                            ).join('') +
-                        '</div>' +
-                        '<div class="text-[11px] text-[#55555E]">Or keep logging manually — this step just marks your preference.</div>' +
-                    '</div>';
+                ov.innerHTML = '<div class="broker-card glass-strong">' +
+                    '<div class="flex items-start justify-between gap-4">' +
+                        '<div><div class="text-[16px] font-bold">Connect a broker</div>' +
+                        '<p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Pick your platform — auto-import for live trades arrives later; this syncs your choice across devices.</p></div>' +
+                        '<button class="collapse-btn" id="broker-close"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                    '</div>' +
+                    '<div class="mt-3">' + BROKERS.map(b =>
+                        '<div class="broker-row">' +
+                            '<div class="broker-ico"><svg data-lucide="' + b.icon + '" class="w-[18px] h-[18px]"></svg></div>' +
+                            '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold">' + esc(b.name) + '</div>' +
+                            '<div class="text-[12px] text-[var(--tm-dim)]">' + esc(b.desc) + '</div></div>' +
+                            '<button class="btn-mini primary" data-broker-name="' + esc(b.name) + '">Connect</button>' +
+                        '</div>').join('') +
+                    '</div>' +
+                    '<div class="text-[11px] text-[var(--tm-dim)] mt-3">Or keep logging manually — this step just marks your preference.</div>' +
+                '</div>';
                 ov.addEventListener('click', e => { if (e.target === ov) closeBrokerPicker(); });
                 document.body.appendChild(ov);
                 brokerModalEl = ov;
+                const close = document.getElementById('broker-close');
+                if (close) close.addEventListener('click', closeBrokerPicker);
+                ov.querySelectorAll('[data-broker-name]').forEach(b => b.addEventListener('click', () => connectBroker(b.getAttribute('data-broker-name'), notifId)));
                 if (window.lucide) lucide.createIcons();
             }
-
-            window.closeBrokerPicker = function () {
+            function closeBrokerPicker() {
                 if (brokerModalEl) { brokerModalEl.remove(); brokerModalEl = null; }
-            };
-
-            window.connectBroker = async function (name, notifId) {
+            }
+            async function connectBroker(name, notifId) {
                 try {
                     const res = await apiFetch('/api/brokers/connect', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -662,59 +661,82 @@
                 } catch (e) { /* offline — the local flag still completes the step */ }
                 try { window.localStorage.setItem('31trades.broker.connected', '1'); } catch (e) {}
                 if (notifId && !read.has(notifId)) {
-                    read.add(notifId); saveRead(); pushRead();
+                    read.add(notifId); saveRead(); pushRead([notifId]);
                 }
                 closeBrokerPicker();
                 showToast(name + ' connected');
                 render();
                 loadNotifs();   // refresh so the broker step disappears server-side
-            };
-
-            // keyboard: Esc closes the picker
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBrokerPicker(); });
-
-            // exposed for the summary button handler
-            window.renderNotifs = render;
-
-            // ---- live market events feed (same endpoint as Dashboard/Journal) ----
-            async function loadEco() {
-                try {
-                    const res = await apiFetch('/api/ecocal');
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                    const data = await res.json();
-                    window.__ecoUpcoming = (data && data.upcoming) || [];
-                } catch (e) {
-                    window.__ecoUpcoming = [];
-                }
-                render();
             }
 
-            // ---- init ----
-            function boot() {
-                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
-                const core = window.TradeMindCore;
-                if (core && core.selectedAccountId) {
-                    const sel = core.selectedAccountId();
-                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
-                    const chip = $('account-chip');
-                    if (acc && chip) {
-                        const numEl = chip.querySelector('.num');
-                        if (numEl) numEl.textContent = '$' + Number(acc.starting_balance || 0).toLocaleString();
-                        const spans = chip.querySelectorAll('span');
-                        if (spans.length > 2) spans[2].textContent = acc.name;
+            // ============ CHROME ============
+            function renderChrome() {
+                const accId = core && core.selectedAccountId ? core.selectedAccountId() : null;
+                const acc = core && core.Accounts ? core.Accounts.find(a => a.id === accId) || core.Accounts[0] : null;
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        const eq = acc.current_equity;
+                        chip.innerHTML = '<span class="num text-[12px]">' + (eq != null ? ((eq > 0 ? '+' : '') + '$' + Number(eq).toLocaleString('en-US', { maximumFractionDigits: 0 })) : '—') + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
                     }
+                    if (window.lucide) lucide.createIcons();
                 }
-                render();
-                if (window.lucide) lucide.createIcons();
-                loadNotifs();   // backend engine first, local fallback
-                // stay fresh: rebuild whenever the canonical ledger changes
-                if (core && core.TradeMindBus) {
-                    ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.changed', 'review.completed'].forEach(ev =>
-                        core.TradeMindBus.subscribe(ev, loadNotifs)
-                    );
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc) { if (pName) pName.textContent = acc.name; if (pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+            }
+
+            // ============ EVENTS ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            $('mark-all').addEventListener('click', markAllRead);
+            $('drawer-overlay').addEventListener('click', closeDrawer);
+            $('dd-close').addEventListener('click', closeDrawer);
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') { closeDrawer(); closeBrokerPicker(); }
+            });
+            document.getElementById('cat-filters').addEventListener('click', e => {
+                const b = e.target.closest('[data-cat]');
+                if (b) { activeCat = b.getAttribute('data-cat'); render(); }
+            });
+            document.getElementById('feed').addEventListener('click', e => {
+                const row = e.target.closest('[data-id]');
+                const brokerStep = e.target.closest('[data-broker-step]');
+                if (brokerStep) { openBrokerPicker(brokerStep.getAttribute('data-broker-step')); return; }
+                const link = e.target.closest('a[href]');
+                if (link) return; // let navigation proceed
+                if (row) openDetail(row.getAttribute('data-id'));
+            });
+            $('acc-chip').addEventListener('click', () => {
+                if (!core || !core.Accounts || !core.Accounts.length) return;
+                const ids = core.Accounts.map(a => a.id);
+                const cur = core.selectedAccountId ? core.selectedAccountId() : ids[0];
+                const idx = ids.indexOf(cur);
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+                renderChrome();
+                loadNotifs();
+            });
+            const gs = $('global-search');
+            if (gs) {
+                gs.addEventListener('input', () => {
+                    const q = gs.value.trim().toLowerCase();
+                    const rows = document.querySelectorAll('#feed .notif-row');
+                    rows.forEach(r => { r.style.display = (!q || r.innerText.toLowerCase().includes(q)) ? '' : 'none'; });
+                });
+                if (window.TM_GLOBAL_SEARCH) {
+                    gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
                 }
             }
-            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+            core.TradeMindBus.subscribe('trade.created', () => loadNotifs());
+            core.TradeMindBus.subscribe('trade.updated', () => loadNotifs());
+            core.TradeMindBus.subscribe('trade.deleted', () => loadNotifs());
+            core.TradeMindBus.subscribe('config.changed', () => loadNotifs());
+
+            renderChrome();
+            loadNotifs();
+            if (window.lucide) lucide.createIcons();
         })();
     </script>
     <script src="assets/tour.js"></script>
