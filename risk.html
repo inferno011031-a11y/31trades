@@ -3,42 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Risk</title>
+    <title>BATTLEXJOURNAL — Risk</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS CDN, Lucide & shared demo data -->
+    <!-- Tailwind CSS CDN & Lucide -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
-
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             height: 100%;
-            background: #0A0A0C;
-            color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
 
-        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
         /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -53,107 +51,121 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
-        .panel-title { font-size: 13px; font-weight: 700; color: #E8E8EC; }
-        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+        .panel { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; }
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .panel-sub { font-size: 12px; color: var(--tm-dim); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
 
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none; cursor: pointer;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
         .btn-ghost {
-            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
 
-        .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
-        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
-        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
-        .tag-blue { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.25); }
-        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
-
-        .ins-tab {
-            padding: 9px 15px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            border: none; background: transparent; transition: all 0.15s; white-space: nowrap; cursor: pointer;
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
         }
-        .ins-tab:hover { color: #E8E8EC; }
-        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
 
-        .ins-panel { display: none; animation: fadeIn 0.3s ease; }
-        .ins-panel.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
-
-        .bar-track { height: 6px; background: #1F1F23; border-radius: 999px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 999px; }
-
-        .kpi { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 14px 16px; }
-        .kpi .k-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: #6E6E78; margin-bottom: 6px; }
-        .kpi .k-val { font-size: 21px; font-weight: 800; letter-spacing: -0.01em; }
-        .kpi .k-sub { font-size: 11px; color: #6E6E78; margin-top: 3px; }
-
-        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-        .tbl th {
-            text-align: left; padding: 8px 10px; color: #6E6E78; font-size: 10.5px; font-weight: 700;
-            text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #1F1F23;
-            white-space: nowrap;
+        .ctrl {
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
+            font-size: 13px; color: var(--tm-text); padding: 8px 12px; outline: none; transition: border-color 0.15s;
         }
-        .tbl td { padding: 8px 10px; border-bottom: 1px solid #17171A; white-space: nowrap; }
-        .tbl tbody tr:hover { background: #16161A; }
-        .tbl tbody tr:last-child td { border-bottom: none; }
-        .tbl-wrap { overflow-x: auto; }
+        .ctrl:focus { border-color: var(--tm-accent); }
+        select.ctrl option { background: var(--tm-card); color: var(--tm-text); }
+        .ctrl::placeholder { color: var(--tm-dim); }
 
-        .finput {
-            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
-            padding: 7px 10px; font-size: 13px; color: #E8E8EC;
-            outline: none; width: 110px; transition: border-color 0.15s;
+        /* ---- Risk-specific ---- */
+        .risk-card { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; padding: 16px; }
+        .risk-card .rc-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); margin-bottom: 10px; }
+        .risk-card .rc-big { font-size: 26px; font-weight: 800; letter-spacing: -0.02em; }
+        .rc-row { display: flex; align-items: center; justify-content: space-between; font-size: 12.5px; color: var(--tm-muted); }
+        .rc-row .num { color: var(--tm-text); font-weight: 600; }
+
+        .meter-track {
+            position: relative; height: 14px; border-radius: 999px; overflow: hidden;
+            background: linear-gradient(90deg,
+                rgba(16,185,129,0.55) 0%, rgba(16,185,129,0.55) 25%,
+                rgba(245,158,11,0.55) 25%, rgba(245,158,11,0.55) 50%,
+                rgba(239,68,68,0.55) 50%, rgba(239,68,68,0.55) 75%,
+                rgba(239,68,68,0.85) 75%, rgba(239,68,68,0.85) 100%);
+            border: 1px solid var(--tm-border-2);
         }
-        .finput:focus { border-color: #2E2E35; }
-        .fsel {
-            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
-            padding: 7px 10px; font-size: 12.5px; font-weight: 600; color: #C4C4CC;
-            outline: none; cursor: pointer;
+        .meter-needle {
+            position: absolute; top: -4px; bottom: -4px; width: 3px; border-radius: 2px;
+            background: var(--tm-text); box-shadow: 0 0 0 1px var(--tm-bg), 0 0 6px rgba(0,0,0,0.4);
+            transition: left 0.35s cubic-bezier(0.16,1,0.3,1);
         }
-        .fsel option { background: #121214; color: #C4C4CC; }
 
-        .status-banner { border-radius: 14px; padding: 22px 24px; border: 1px solid; }
-        .status-label { font-size: 12px; font-weight: 800; letter-spacing: 0.14em; }
-        .status-value { font-size: 40px; font-weight: 800; letter-spacing: -0.02em; }
+        .drawdown-scale { position: relative; height: 8px; border-radius: 999px; background: var(--tm-border-2); }
+        .dd-thumb {
+            position: absolute; top: -3px; width: 4px; height: 14px; border-radius: 2px;
+            background: var(--tm-text); box-shadow: 0 0 0 1px var(--tm-bg);
+        }
 
-        .state-pill { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 8px; font-weight: 700; font-size: 12.5px; }
+        .pt-status {
+            display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-radius: 10px;
+            border: 1px solid; font-size: 13px; line-height: 1.45;
+        }
 
-        .conf { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em; }
-        .conf .dot { width: 7px; height: 7px; border-radius: 999px; }
+        .ev-row { display: flex; gap: 12px; padding: 10px 4px; border-bottom: 1px solid var(--tm-border); }
+        .ev-row:last-child { border-bottom: none; }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; cursor: pointer; }
+        .limit-input {
+            width: 92px; text-align: right; background: var(--tm-bg);
+            border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 7px 10px;
+            font-size: 13px; color: var(--tm-text); outline: none; transition: border-color 0.15s;
+        }
+        .limit-input:focus { border-color: var(--tm-accent); }
+
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
+            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
-        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        .sum-value { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
 
         @media (max-width: 640px) {
             .search-input { display: none; }
@@ -176,9 +188,9 @@
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -201,17 +213,17 @@
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -222,550 +234,515 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                    <input type="text" class="search-input" placeholder="Ask anything… e.g. how much risk do I have left?">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. how much risk do I have left?">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
-                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Live</div>
-                    <a href="journal.html" class="btn-primary !py-2 !px-3.5">
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </a>
-                    <button id="account-btn" class="account-select hide-when-collapsed">
-                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Content -->
             <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+                <div class="max-w-[1500px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
                             <h1 class="text-[22px] font-bold tracking-tight">Risk</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">How much can I safely risk right now? Minimal screens, maximum decision clarity.</p>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Know exactly how much room you have left.</p>
                         </div>
-                        <span id="freshness" class="conf tag-gray"><span class="dot" style="background:#34D399"></span> Live · just now</span>
+                        <div class="flex items-center gap-2.5">
+                            <a href="journal.html" class="btn-ghost">
+                                <svg data-lucide="book-open" class="w-4 h-4"></svg> Open Journal
+                            </a>
+                            <a href="journal.html?log=1" class="btn-primary">
+                                <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                            </a>
+                        </div>
                     </div>
 
-                    <!-- Tabs -->
-                    <div class="panel p-1.5 flex gap-1 overflow-x-auto">
-                        <button class="ins-tab active" data-tab="overview">Risk Overview</button>
-                        <button class="ins-tab" data-tab="limits">Risk Limits</button>
-                        <button class="ins-tab" data-tab="drawdown">Drawdown</button>
-                        <button class="ins-tab" data-tab="history">Risk History</button>
+                    <!-- Empty state (no account) -->
+                    <div id="empty-state" class="hidden panel p-12 text-center">
+                        <svg data-lucide="shield-alert" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[18px] font-bold">No account yet</h3>
+                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">Risk is calculated from your account size and limits. Set up your first account to see your live risk state.</p>
+                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5">
+                            <svg data-lucide="settings" class="w-4 h-4"></svg> Set up account
+                        </a>
                     </div>
 
-                    <div id="panel-overview" class="ins-panel active"></div>
-                    <div id="panel-limits" class="ins-panel"></div>
-                    <div id="panel-drawdown" class="ins-panel"></div>
-                    <div id="panel-history" class="ins-panel"></div>
+                    <!-- No-policy state -->
+                    <div id="nopolicy-state" class="hidden panel p-8 text-center">
+                        <svg data-lucide="sliders-horizontal" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-3"></svg>
+                        <h3 class="text-[16px] font-bold">No risk policy yet</h3>
+                        <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto">Set your limits below and every screen — Journal, Dashboard, Discipline — evaluates from the same policy.</p>
+                    </div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Risk demo build · one source of truth across Risk, Dashboard and Discipline · data is illustrative</p>
+                    <div id="risk-body" class="flex flex-col gap-4">
+
+                        <!-- ============ CURRENT RISK STATE ============ -->
+                        <div class="grid grid-cols-2 xl:grid-cols-4 gap-3" id="state-cards"></div>
+
+                        <!-- ============ RISK METER ============ -->
+                        <div class="panel p-5">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="panel-title">Risk meter</div>
+                                <span id="meter-status" class="tag tag-emerald">SAFE</span>
+                            </div>
+                            <div class="meter-track">
+                                <div id="meter-needle" class="meter-needle" style="left:0%"></div>
+                            </div>
+                            <div class="flex justify-between text-[10.5px] text-[var(--tm-dim)] mt-2 num">
+                                <span>SAFE</span><span>CAUTION</span><span>HIGH</span><span>LIMIT</span>
+                            </div>
+                            <p id="meter-note" class="text-[12.5px] text-[var(--tm-dim)] mt-3"></p>
+                        </div>
+
+                        <!-- ============ DRAWDOWN PROXIMITY ============ -->
+                        <div class="panel p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="panel-title">Drawdown proximity</div>
+                                <span id="dd-status" class="tag tag-gray">—</span>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="dd-kpis"></div>
+                            <div class="relative">
+                                <div class="drawdown-scale">
+                                    <div id="dd-thumb" class="dd-thumb" style="left:0%"></div>
+                                </div>
+                                <div class="flex justify-between text-[10.5px] text-[var(--tm-dim)] mt-1.5 num">
+                                    <span>$0</span><span id="dd-warn-label">warn</span><span id="dd-high-label">high</span><span id="dd-limit-label">limit</span>
+                                </div>
+                            </div>
+                            <div id="dd-curve" class="mt-4"></div>
+                        </div>
+
+                        <!-- ============ PRE-TRADE CHECK + RISK EVENTS ============ -->
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-4">
+                            <div class="panel p-5">
+                                <div class="panel-title mb-1">Pre-trade check</div>
+                                <p class="panel-sub mb-4">Evaluate a proposed trade against every constraint — it does not place a trade.</p>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div>
+                                        <label class="label-xs mb-1.5 block">Planned risk ($)</label>
+                                        <input id="pt-risk" class="ctrl w-full num" type="number" min="0" step="1" placeholder="25">
+                                    </div>
+                                    <div>
+                                        <label class="label-xs mb-1.5 block">Session</label>
+                                        <select id="pt-session" class="ctrl w-full">
+                                            <option value="">Any session</option>
+                                            <option>Asia</option>
+                                            <option>London</option>
+                                            <option>New York</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="label-xs mb-1.5 block">Setup</label>
+                                        <select id="pt-setup" class="ctrl w-full">
+                                            <option value="">Any setup</option>
+                                            <option>Breakout</option>
+                                            <option>FVG</option>
+                                            <option>MSS + FVG</option>
+                                            <option>Order Block</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-end">
+                                        <button id="pt-check" class="btn-primary w-full justify-center !py-2.5">
+                                            <svg data-lucide="shield-check" class="w-4 h-4"></svg> Check Trade
+                                        </button>
+                                    </div>
+                                </div>
+                                <div id="pt-result"></div>
+                                <div id="pt-headroom" class="hidden grid grid-cols-2 md:grid-cols-4 gap-2 mt-4"></div>
+                            </div>
+
+                            <div class="panel p-5">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div class="panel-title">Risk events</div>
+                                    <span id="ev-count" class="tag tag-gray">0</span>
+                                </div>
+                                <div id="ev-list" class="max-h-[340px] overflow-y-auto"></div>
+                            </div>
+                        </div>
+
+                        <!-- ============ RISK POLICY ============ -->
+                        <div class="panel p-5">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                                <div>
+                                    <div class="panel-title">Risk policy</div>
+                                    <p class="panel-sub mt-0.5">Current limits for <span id="pol-account" class="font-semibold text-[var(--tm-text)]">—</span> · <span id="pol-version" class="num">—</span></p>
+                                </div>
+                                <button id="pol-save" class="btn-primary !py-2 !px-4 text-[13px]">
+                                    <svg data-lucide="save" class="w-4 h-4"></svg> Save limits
+                                </button>
+                            </div>
+                            <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3" id="pol-fields"></div>
+                            <p class="text-[11.5px] text-[var(--tm-dim)] mt-4">Saving creates a new immutable policy version. Historical trades keep the version they were evaluated under — changing limits never rewrites past evaluations.</p>
+                        </div>
+
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Risk · one source of truth across Risk, Journal, Dashboard, Discipline &amp; Notifications</p>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- Toast -->
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
+
     <script>
         (function () {
+            'use strict';
             const $ = id => document.getElementById(id);
-            const D = window.DemoTrades;
-            const { fmtMoney, fmtR, pct, stats, groupBy, day } = D;
-
-            const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-            const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-            const TODAY = iso(new Date());
-
-            // ============ CANONICAL DATA (single source of truth) ============
-            // Trades, accounts AND limits all come from the local store — this
-            // page never keeps its own dataset. A $45-risk trade logged in the
-            // Journal is the same $45 this page sees, instantly.
             const core = window.TradeMindCore;
-            const ACCOUNTS = {};
-            let ALL = [];
-            let accountId = null;
-            const LIMIT_LOG = [];
-
-            function refreshData() {
-                Object.keys(ACCOUNTS).forEach(k => delete ACCOUNTS[k]);
-                if (core && core.Accounts && core.Accounts.length) {
-                    core.Accounts.forEach(a => {
-                        const pol = core.activePolicy(a.id);
-                        const v = pol ? pol.values : {};
-                        ACCOUNTS[a.id] = {
-                            name: a.name, balance: a.current_equity, currency: a.currency,
-                            limits: {
-                                perTrade: v.riskPerTrade || 0,
-                                dailyRisk: v.maxDailyRisk || v.maxDailyLoss || 0,
-                                dailyLoss: v.maxDailyLoss || 0,
-                                drawdown: v.maxTotalDrawdown || 0,
-                                trades: v.maxTrades || 3,
-                                warnPct: (v.warn || [50, 70, 90])[0],
-                                highPct: (v.warn || [50, 70, 90])[2]
-                            },
-                            funded: null
-                        };
-                    });
-                    accountId = core.selectedAccountId() || core.Accounts[0].id;
-                    ALL = core.Trades.filter(t => t.account_id === accountId).map(t => ({ ...t, ts: new Date(t.ts) }));
-                } else {
-                    accountId = null;
-                    ALL = [];
-                }
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const fmtMoney = n => (n == null || isNaN(n)) ? '—' : ((n > 0 ? '+' : '') + '$' + Math.round(Math.abs(n) === n ? n : n).toLocaleString('en-US'));
+            const fmtNum = n => n == null || isNaN(n) ? '—' : '$' + Number(n).toLocaleString('en-US');
+            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US'));
+            let toastTimer = null;
+            function showToast(msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
             }
-            refreshData();
+            window.showToast = showToast;
 
-            const ANCHOR = new Date();
-            function account() { return accountId ? ACCOUNTS[accountId] : null; }
-            function limits() { const a = account(); return a ? a.limits : null; }
+            // ============ ACCOUNT RESOLUTION ============
+            function currentAccountId() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+            }
+            function account() { const id = currentAccountId(); return id ? core.Accounts.find(a => a.id === id) : null; }
+            function policy() { const id = currentAccountId(); return id ? core.activePolicy(id) : null; }
 
-            // ============ STATE COMPUTATION (one source of truth) ============
-            function computeState() {
-                const acc = account(), lim = limits();
-                const todays = (groupBy(ALL, t => iso(t.ts))[TODAY] || []).slice().sort((a, b) => a.ts - b.ts);
-                const riskUsed = todays.reduce((s, t) => s + t.risk, 0);
-                const dayLoss = Math.abs(todays.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
-                const dayPnl = todays.reduce((s, t) => s + t.pnl, 0);
+            // ============ STATUS HELPERS (mirror the core's label, never recompute) ============
+            const STATUS_META = {
+                NORMAL: { label: 'SAFE', tag: 'tag-emerald', text: 'var(--tm-green)', note: 'Comfortable distance from every limit.' },
+                CAUTION: { label: 'CAUTION', tag: 'tag-amber', text: 'var(--tm-amber)', note: 'Warning band reached — stay inside the remaining buffers.' },
+                HIGH: { label: 'HIGH RISK', tag: 'tag-red', text: 'var(--tm-red)', note: 'Close to a limit. Reduce size or stop for the day.' },
+                LIMIT: { label: 'LIMIT BREACHED', tag: 'tag-red', text: 'var(--tm-red)', note: 'A limit is breached — the next qualifying trade is blocked.' }
+            };
 
-                // equity curve with peak
-                let eq = acc.balance, peak = acc.balance, maxDD = 0;
-                ALL.slice().sort((a, b) => a.ts - b.ts).forEach(t => { eq += t.pnl; if (eq > peak) peak = eq; maxDD = Math.max(maxDD, peak - eq); });
-                const curDD = peak - eq;
-
-                const riskRemaining = Math.max(0, lim.dailyRisk - riskUsed);
-                const lossRemaining = Math.max(0, lim.dailyLoss - dayLoss);
-                const ddRemaining = Math.max(0, lim.drawdown - curDD);
-                const tradesLeft = Math.max(0, lim.trades - todays.length);
-
-                const riskPct = Math.round((riskUsed / lim.dailyRisk) * 100);
-                const lossPct = Math.round((dayLoss / lim.dailyLoss) * 100);
-                const ddPct = Math.round((curDD / lim.drawdown) * 100);
-
-                // recommended max risk = min of all constraints
-                const maxNext = Math.max(0, Math.round(Math.min(lim.perTrade, riskRemaining, lossRemaining, ddRemaining)));
-
-                // status: Limit Reached > High Risk > Caution > Safe
-                let status = 'safe', statusLabel = 'SAFE';
-                if (riskUsed >= lim.dailyRisk || dayLoss >= lim.dailyLoss || curDD >= lim.drawdown) { status = 'limit'; statusLabel = 'LIMIT REACHED'; }
-                else if (riskPct >= lim.highPct || lossPct >= lim.highPct || ddPct >= lim.highPct) { status = 'high'; statusLabel = 'HIGH RISK'; }
-                else if (riskPct >= lim.warnPct || lossPct >= lim.warnPct || ddPct >= lim.warnPct) { status = 'caution'; statusLabel = 'CAUTION'; }
-
-                // one dominant warning only (highest priority)
-                let warning = null;
-                if (status === 'limit') warning = { level: 'Limit reached', msg: (riskUsed >= lim.dailyRisk ? 'Daily risk budget reached ($' + lim.dailyRisk + '). Consider the day done.' : dayLoss >= lim.dailyLoss ? 'Daily loss limit reached (-$' + lim.dailyLoss + '). Stop for the day.' : 'Overall drawdown limit reached. Pause and review.') };
-                else if (status === 'high') warning = { level: 'High risk', msg: (riskPct >= lim.highPct ? 'Only $' + riskRemaining + ' of daily risk remains (' + riskPct + '% used). Reduce size or stop.' : 'Close to the daily loss limit — $' + lossRemaining + ' left.') };
-                else if (status === 'caution') warning = { level: 'Caution', msg: 'Daily risk is ' + riskPct + '% consumed — $' + riskRemaining + ' of $' + lim.dailyRisk + ' remaining.' };
-                else {
-                    // safe: still surface a drawdown or spike note if relevant
-                    if (curDD > lim.drawdown * 0.5) warning = { level: 'Drawdown watch', msg: '$' + ddRemaining + ' of drawdown buffer remains (' + ddPct + '% used).' };
+            // ============ CHROME (account chip, profile, session) ============
+            function renderChrome() {
+                const acc = account();
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + money(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                    if (window.lucide) lucide.createIcons();
                 }
-
-                return { acc, lim, todays, riskUsed, dayLoss, dayPnl, eq, peak, maxDD, curDD, riskRemaining, lossRemaining, ddRemaining, tradesLeft, riskPct, lossPct, ddPct, maxNext, status, statusLabel, warning };
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc && pName) pName.textContent = acc.name;
+                if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
             }
 
-            // ============ HELPERS ============
-            const kpi = (label, val, sub, cls) => '<div class="kpi"><div class="k-label">' + label + '</div><div class="k-val num ' + (cls || 'text-white') + '">' + val + '</div>' + (sub ? '<div class="k-sub">' + sub + '</div>' : '') + '</div>';
-            const panel = (title, body, extra) => '<div class="panel p-5"><div class="flex items-center justify-between mb-4"><div class="panel-title">' + title + '</div>' + (extra || '') + '</div>' + body + '</div>';
-            const statusColor = s => s === 'safe' ? { bg: 'rgba(16,185,129,0.08)', text: '#34D399', border: 'rgba(16,185,129,0.35)' } : s === 'caution' ? { bg: 'rgba(245,158,11,0.08)', text: '#FBBF24', border: 'rgba(245,158,11,0.35)' } : s === 'high' ? { bg: 'rgba(239,68,68,0.1)', text: '#F87171', border: 'rgba(239,68,68,0.4)' } : { bg: 'rgba(239,68,68,0.16)', text: '#FCA5A5', border: 'rgba(239,68,68,0.6)' };
+            // ============ CURRENT RISK STATE — 4 cards ============
+            function rc(label, big, cls, rows, statusTag) {
+                return '<div class="risk-card">' +
+                    '<div class="flex items-center justify-between mb-1"><div class="rc-label">' + label + '</div>' + (statusTag || '') + '</div>' +
+                    '<div class="rc-big num ' + (cls || '') + '">' + big + '</div>' +
+                    '<div class="flex flex-col gap-1.5 mt-3">' + rows.map(r =>
+                        '<div class="rc-row"><span>' + r[0] + '</span><span class="num">' + r[1] + '</span></div>').join('') + '</div></div>';
+            }
+            function pctBar(pct, color) {
+                return '<div class="mt-2.5 h-1.5 rounded-full overflow-hidden" style="background:var(--tm-border-2)"><div style="width:' + Math.min(100, Math.max(0, pct)) + '%;height:100%;background:' + color + '"></div></div>';
+            }
+            function renderStateCards(rs, polV) {
+                const warn = polV.warn || [50, 70, 90];
+                const riskPct = rs.dailyRiskBudget ? Math.round((rs.riskUsed / rs.dailyRiskBudget) * 100) : 0;
+                const lossPct = rs.dailyLossLimit ? Math.round((rs.lossUsed / rs.dailyLossLimit) * 100) : 0;
+                const ddPct = rs.drawdownLimit ? Math.round((rs.currentDrawdown / rs.drawdownLimit) * 100) : 0;
+                const g = 'var(--tm-green)', a = 'var(--tm-amber)', r = 'var(--tm-red)';
+                const riskColor = riskPct >= 100 ? r : riskPct >= warn[2] ? r : riskPct >= warn[0] ? a : g;
+                const lossColor = lossPct >= 100 ? r : lossPct >= warn[2] ? r : lossPct >= warn[0] ? a : g;
+                const ddColor = ddPct >= 100 ? r : ddPct >= warn[2] ? r : ddPct >= warn[0] ? a : g;
+                const tag = (txt, cls) => '<span class="tag ' + cls + ' !py-0.5 !px-2">' + txt + '</span>';
 
+                const cards = [
+                    rc('Daily Risk', money(rs.riskUsed), 'color:' + riskColor,
+                        [['Limit', fmtNum(rs.dailyRiskBudget)], ['Remaining', fmtNum(rs.riskRemaining)], ['Consumed', riskPct + '%']],
+                        tag(riskPct >= 100 ? 'LIMIT' : riskPct >= warn[2] ? 'HIGH' : riskPct >= warn[0] ? 'CAUTION' : 'SAFE', riskPct >= warn[2] ? 'tag-red' : riskPct >= warn[0] ? 'tag-amber' : 'tag-emerald')) +
+                    pctBar(riskPct, riskColor),
+                    rc('Daily Loss', money(-rs.lossUsed), 'color:' + lossColor,
+                        [['Limit', '-' + fmtNum(rs.dailyLossLimit)], ['Remaining', fmtNum(rs.lossRemaining)], ['Used', lossPct + '%']],
+                        tag(lossPct >= 100 ? 'LIMIT' : lossPct >= warn[2] ? 'HIGH' : lossPct >= warn[0] ? 'CAUTION' : 'SAFE', lossPct >= warn[2] ? 'tag-red' : lossPct >= warn[0] ? 'tag-amber' : 'tag-emerald')) +
+                    pctBar(lossPct, lossColor),
+                    rc('Drawdown', money(-rs.currentDrawdown), 'color:' + ddColor,
+                        [['Limit', fmtNum(rs.drawdownLimit)], ['Buffer left', fmtNum(rs.drawdownRemaining)], ['Used', ddPct + '%']],
+                        tag(ddPct >= 100 ? 'LIMIT' : ddPct >= warn[2] ? 'HIGH' : ddPct >= warn[0] ? 'CAUTION' : 'SAFE', ddPct >= warn[2] ? 'tag-red' : ddPct >= warn[0] ? 'tag-amber' : 'tag-emerald')) +
+                    pctBar(ddPct, ddColor),
+                    rc('Trade Risk', fmtNum(rs.maxAllowedRisk), 'color:var(--tm-text)',
+                        [['Policy limit', fmtNum(rs.riskPerTradeLimit)], ['Recommended max', fmtNum(rs.recommendedMaxRisk)], ['Open risk', rs.maxOpenRiskLimit ? fmtNum(rs.maxOpenRiskLimit) : '—']],
+                        tag('ALLOWED', 'tag-emerald'))
+                ];
+                $('state-cards').innerHTML = cards.join('');
+            }
+
+            // ============ RISK METER ============
+            function renderMeter(rs, polV) {
+                const warn = polV.warn || [50, 70, 90];
+                const riskPct = rs.dailyRiskBudget ? (rs.riskUsed / rs.dailyRiskBudget) * 100 : 0;
+                const lossPct = rs.dailyLossLimit ? (rs.lossUsed / rs.dailyLossLimit) * 100 : 0;
+                const ddPct = rs.drawdownLimit ? (rs.currentDrawdown / rs.drawdownLimit) * 100 : 0;
+                const worst = Math.max(riskPct, lossPct, ddPct);
+                const pos = Math.min(100, Math.max(0, worst));
+                const meta = STATUS_META[rs.status] || STATUS_META.NORMAL;
+                const st = $('meter-status');
+                st.className = 'tag ' + meta.tag;
+                st.textContent = meta.label;
+                $('meter-needle').style.left = pos + '%';
+                $('meter-note').textContent = meta.note + ' Meter reflects the highest-consumed constraint — risk ' + Math.round(riskPct) + '% · loss ' + Math.round(lossPct) + '% · drawdown ' + Math.round(ddPct) + '%.';
+            }
+
+            // ============ DRAWDOWN PROXIMITY ============
+            function equityCurve() {
+                const acc = account(); if (!acc) return [];
+                const list = core.Trades.filter(t => t.account_id === acc.id).slice().sort((a, b) => new Date(a.ts) - new Date(b.ts));
+                let eq = acc.starting_balance;
+                const pts = [{ t: acc.starting_balance, eq }];
+                list.forEach(t => { eq += (t.pnl || 0); pts.push({ t: eq, eq, ts: t.ts }); });
+                return pts;
+            }
             function lineSvg(series, opts) {
                 opts = opts || {};
-                if (series.length < 2) return '<p class="text-[12.5px] text-[#6E6E78] py-6 text-center">Not enough data.</p>';
-                const values = series.map(p => p.v);
-                const min = opts.min !== undefined ? opts.min : Math.min(...values);
-                const max = opts.max !== undefined ? opts.max : Math.max(...values);
+                if (series.length < 2) return '<p class="text-[12.5px] text-[var(--tm-dim)] py-5 text-center">Not enough data to draw the equity curve.</p>';
+                const vals = series.map(p => p.eq);
+                const min = opts.min !== undefined ? opts.min : Math.min(...vals);
+                const max = opts.max !== undefined ? opts.max : Math.max(...vals);
                 const span = (max - min) || 1;
-                const W = opts.w || 640, H = opts.h || 170, P = 8;
+                const W = opts.w || 640, H = opts.h || 110, P = 6;
                 const x = i => P + (i / (series.length - 1)) * (W - 2 * P);
                 const y = v => H - P - ((v - min) / span) * (H - 2 * P);
-                const line = series.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.v).toFixed(1)).join(' ');
+                const line = series.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.eq).toFixed(1)).join(' ');
                 const area = line + ' L' + x(series.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + x(0).toFixed(1) + ' ' + (H - P) + ' Z';
                 let grid = '';
-                for (let i = 1; i < 4; i++) {
-                    const gy = P + (i / 4) * (H - 2 * P);
-                    grid += '<line x1="' + P + '" y1="' + gy.toFixed(1) + '" x2="' + (W - P) + '" y2="' + gy.toFixed(1) + '" stroke="#17171A" stroke-width="1"/>';
-                }
-                let extra = '';
-                if (opts.markers) {
-                    opts.markers.forEach(m => {
-                        const mx = m.at !== undefined ? x(m.at) : x(series.length - 1);
-                        const my = y(m.v);
-                        extra += '<line x1="' + mx.toFixed(1) + '" y1="' + (P) + '" x2="' + mx.toFixed(1) + '" y2="' + (H - P) + '" stroke="' + m.color + '" stroke-width="1" stroke-dasharray="4 3"/>' +
-                            '<circle cx="' + mx.toFixed(1) + '" cy="' + my.toFixed(1) + '" r="4" fill="' + m.color + '"/>';
-                    });
-                }
+                for (let i = 1; i < 4; i++) { const gy = P + (i / 4) * (H - 2 * P); grid += '<line x1="' + P + '" y1="' + gy.toFixed(1) + '" x2="' + (W - P) + '" y2="' + gy.toFixed(1) + '" stroke="var(--tm-border)" stroke-width="1"/>'; }
+                const last = series[series.length - 1];
+                const col = last.eq >= series[0].eq ? 'var(--tm-green)' : 'var(--tm-red)';
                 return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full" style="height:auto">' + grid +
-                    '<path d="' + area + '" fill="' + (opts.fill || 'rgba(16,185,129,0.08)') + '"/>' +
-                    '<path d="' + line + '" fill="none" stroke="' + (opts.stroke || '#34D399') + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' + extra + '</svg>';
+                    '<path d="' + area + '" fill="' + (last.eq >= series[0].eq ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)') + '"/>' +
+                    '<path d="' + line + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>';
+            }
+            function renderDrawdown(rs, polV) {
+                const warn = polV.warn || [50, 70, 90];
+                const ddPct = rs.drawdownLimit ? Math.min(100, Math.max(0, (rs.currentDrawdown / rs.drawdownLimit) * 100)) : 0;
+                const ddc = rs.drawdownLimit && rs.currentDrawdown >= rs.drawdownLimit ? 'var(--tm-red)' : ddPct >= warn[2] ? 'var(--tm-red)' : ddPct >= warn[0] ? 'var(--tm-amber)' : 'var(--tm-green)';
+                const st = $('dd-status');
+                st.className = 'tag ' + (ddPct >= warn[2] ? 'tag-red' : ddPct >= warn[0] ? 'tag-amber' : 'tag-emerald');
+                st.textContent = ddPct >= 100 ? 'LIMIT' : ddPct >= warn[2] ? 'HIGH' : ddPct >= warn[0] ? 'CAUTION' : 'SAFE';
+                $('dd-kpis').innerHTML = [
+                    ['Current drawdown', money(-rs.currentDrawdown), 'color:' + ddc],
+                    ['Drawdown limit', fmtNum(rs.drawdownLimit), ''],
+                    ['Buffer remaining', fmtNum(rs.drawdownRemaining), rs.drawdownRemaining < (rs.drawdownLimit || 1) * 0.3 ? 'color:var(--tm-red)' : ''],
+                    ['Worst drawdown', fmtNum(rs.maxDrawdown), 'color:var(--tm-red)']
+                ].map(k => '<div class="risk-card !p-3.5"><div class="label-xs mb-1">' + k[0] + '</div><div class="num text-[18px] font-bold ' + k[2] + '">' + k[1] + '</div></div>').join('');
+                $('dd-thumb').style.left = ddPct + '%';
+                $('dd-warn-label').textContent = 'warn ' + warn[0] + '%';
+                $('dd-high-label').textContent = 'high ' + warn[2] + '%';
+                $('dd-limit-label').textContent = rs.drawdownLimit ? 'limit $' + rs.drawdownLimit : 'limit';
+                $('dd-curve').innerHTML = '<div class="label-xs mb-2">Equity vs peak (canonical ledger)</div>' + lineSvg(equityCurve());
             }
 
-            // ============ OVERVIEW ============
-            function renderOverview() {
-                const s = computeState();
-                const sc = statusColor(s.status);
-
-                const banner = '<div class="status-banner" style="background:' + sc.bg + ';border-color:' + sc.border + '">' +
-                    '<div class="flex flex-wrap items-center justify-between gap-4">' +
-                        '<div><div class="status-label" style="color:' + sc.text + '">RISK STATUS</div>' +
-                        '<div class="status-value" style="color:' + sc.text + '">' + s.statusLabel + '</div>' +
-                        '<div class="text-[13px] text-[#C4C4CC] mt-1">' + (s.status === 'limit' ? 'Trading should be considered stopped — optional hard block is on.' : s.status === 'high' ? 'Close to a limit. Reduce size or stop for the day.' : s.status === 'caution' ? 'Warning threshold reached. Stay inside remaining buffers.' : 'Comfortable distance from all limits.') + '</div></div>' +
-                        '<div class="grid grid-cols-2 gap-x-10 gap-y-3">' +
-                            '<div><div class="label-xs mb-1">Daily risk remaining</div><div class="num text-[24px] font-extrabold text-white">$' + s.riskRemaining + '</div></div>' +
-                            '<div><div class="label-xs mb-1">Daily loss remaining</div><div class="num text-[24px] font-extrabold text-white">$' + s.lossRemaining + '</div></div>' +
-                            '<div><div class="label-xs mb-1">Drawdown buffer</div><div class="num text-[24px] font-extrabold text-white">$' + s.ddRemaining + '</div></div>' +
-                            '<div><div class="label-xs mb-1">Recommended max risk</div><div class="num text-[24px] font-extrabold" style="color:' + sc.text + '">$' + s.maxNext + '</div></div>' +
-                        '</div>' +
-                    '</div>' +
-                    (s.warning ? '<div class="mt-4 flex items-center gap-3 px-4 py-3 rounded-xl bg-[#0A0A0C]/60 border border-[#26262B]"><svg data-lucide="alert-triangle" class="w-4 h-4 flex-shrink-0" style="color:' + sc.text + '"></svg><div><span class="text-[12px] font-bold" style="color:' + sc.text + '">' + s.warning.level + ' — </span><span class="text-[13px] text-[#C4C4CC]">' + s.warning.msg + '</span></div></div>' : '') +
-                    '<div class="flex flex-wrap gap-3 mt-4">' +
-                        '<button class="btn-ghost !py-2 !px-3.5 text-[12.5px]" data-go="limits"><svg data-lucide="sliders-horizontal" class="w-4 h-4"></svg> Open limits</button>' +
-                        '<button class="btn-ghost !py-2 !px-3.5 text-[12.5px]" data-go="drawdown"><svg data-lucide="trending-down" class="w-4 h-4"></svg> Review drawdown</button>' +
-                        '<a href="dashboard.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ml-auto"><svg data-lucide="layout-dashboard" class="w-4 h-4"></svg> Back to dashboard</a>' +
-                    '</div></div>';
-
-                // risk used today bar
-                const usedBar = panel('Risk used today',
-                    '<div class="flex items-end justify-between mb-2"><div class="num text-[28px] font-extrabold text-white">$' + s.riskUsed + '</div><div class="num text-[13px] text-[#6E6E78]">' + s.riskPct + '% of $' + s.lim.dailyRisk + ' budget</div></div>' +
-                    '<div class="bar-track !h-3"><div class="bar-fill" style="width:' + Math.min(100, s.riskPct) + '%;background:' + (s.riskPct >= 100 ? '#EF4444' : s.riskPct >= s.lim.highPct ? '#F59E0B' : s.riskPct >= s.lim.warnPct ? '#FBBF24' : '#34D399') + '"></div></div>' +
-                    '<div class="flex justify-between text-[10.5px] text-[#55555E] mt-2 num"><span>0</span><span>' + s.lim.warnPct + '% warn</span><span>' + s.lim.highPct + '% high</span><span>$' + s.lim.dailyRisk + ' limit</span></div>');
-
-                // pre-trade risk check
-                const pretrade = panel('Pre-trade risk check',
-                    '<div class="label-xs mb-2">Planned risk for next trade ($)</div>' +
-                    '<div class="flex items-center gap-3">' +
-                        '<input id="pt-risk" class="finput !w-32" type="number" value="' + Math.min(s.maxNext, s.lim.perTrade) + '">' +
-                        '<button id="pt-check" class="btn-primary !py-2 !px-4 text-[12.5px]">Check</button>' +
-                        '<span class="text-[12px] text-[#6E6E78]">max allowed now: <span class="num font-bold text-white">$' + s.maxNext + '</span></span>' +
-                    '</div>' +
-                    '<div id="pt-result" class="mt-3"></div>' +
-                    '<p class="text-[11.5px] text-[#55555E] mt-2">Maximum allowed = smallest of per-trade limit, daily risk remaining, daily loss remaining and drawdown buffer.</p>');
-
-                const kpis = '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' +
-                    kpi('Risk used today', '$' + s.riskUsed, s.riskPct + '% of $' + s.lim.dailyRisk, s.riskPct >= s.lim.highPct ? 'text-[#F87171]' : s.riskPct >= s.lim.warnPct ? 'text-[#FBBF24]' : 'text-white') +
-                    kpi('Today\'s trades', s.todays.length + ' / ' + s.lim.trades, s.tradesLeft + ' remaining', s.todays.length >= s.lim.trades ? 'text-[#FBBF24]' : 'text-white') +
-                    kpi('Current drawdown', '$' + s.curDD, s.ddPct + '% of $' + s.lim.drawdown + ' limit', s.ddPct >= s.lim.highPct ? 'text-[#F87171]' : s.ddPct >= s.lim.warnPct ? 'text-[#FBBF24]' : 'text-white') +
-                    kpi('Day P&L', fmtMoney(s.dayPnl), 'realized today', s.dayPnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
-                '</div>';
-
-                $('panel-overview').innerHTML =
-                    banner +
-                    '<div class="mt-4">' + kpis + '</div>' +
-                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4 mt-4">' + usedBar + pretrade + '</div>';
-            }
-
-            // ============ LIMITS ============
-            const LIMIT_FIELDS = [
-                { key: 'perTrade', label: 'Risk per trade', def: 'Maximum planned risk for a single trade.', unit: '$' },
-                { key: 'dailyRisk', label: 'Daily risk budget', def: 'Maximum total planned risk for the day.', unit: '$' },
-                { key: 'dailyLoss', label: 'Daily loss limit', def: 'Maximum daily realized loss.', unit: '$' },
-                { key: 'drawdown', label: 'Overall drawdown limit', def: 'Maximum account drawdown from peak.', unit: '$' },
-                { key: 'trades', label: 'Max trades per day', def: 'Optional discipline-linked trade limit.', unit: '' },
-                { key: 'warnPct', label: 'Warning threshold', def: 'Triggers the Caution state.', unit: '%' },
-                { key: 'highPct', label: 'High-risk threshold', def: 'Triggers the High Risk state.', unit: '%' }
-            ];
-
-            function renderLimits() {
-                const lim = limits();
-                const rows = LIMIT_FIELDS.map(f =>
-                    '<div class="flex items-center gap-4 py-3 border-b border-[#17171A] last:border-0">' +
-                        '<div class="flex-1"><div class="text-[13.5px] font-semibold text-white">' + f.label + '</div><div class="text-[11.5px] text-[#55555E]">' + f.def + '</div></div>' +
-                        '<div class="flex items-center gap-2"><span class="text-[#6E6E78]">' + (f.unit === '$' ? '$' : '') + '</span>' +
-                        '<input class="finput num" data-limit="' + f.key + '" type="number" value="' + lim[f.key] + '"' + (f.unit === '%' ? ' max="100" min="1"' : ' min="1"') + ' style="width:80px">' +
-                        (f.unit === '%' ? '<span class="text-[11px] text-[#55555E]">%</span>' : '') + '</div>' +
-                    '</div>').join('');
-
-                const log = LIMIT_LOG.slice().reverse().map(e =>
-                    '<div class="flex items-center justify-between px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23] mb-1.5">' +
-                        '<span class="text-[12.5px] text-[#C4C4CC]">' + esc(e.label) + '</span>' +
-                        '<span class="text-[11.5px] text-[#6E6E78] num">' + e.oldVal + ' → <b class="text-white">' + e.newVal + '</b> · ' + e.time + '</span></div>').join('');
-
-                $('panel-limits').innerHTML =
-                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
-                        panel('Risk limits — ' + account().name, rows +
-                            '<p class="text-[11.5px] text-[#55555E] mt-3">Defaults are conservative. Every change is logged with a timestamp and preserved historically — old trades are never re-evaluated against new limits.</p>') +
-                        '<div class="flex flex-col gap-4 xl:col-span-1">' +
-                            panel('Change log', log || '<p class="text-[12.5px] text-[#6E6E78]">No changes yet — using conservative defaults.</p>') +
-                            panel('Status thresholds', '<div class="flex flex-col gap-2">' +
-                                '<div class="flex justify-between text-[12.5px]"><span class="text-[#C4C4CC]">Caution at</span><span class="num font-bold text-[#FBBF24]">' + lim.warnPct + '% consumed</span></div>' +
-                                '<div class="flex justify-between text-[12.5px]"><span class="text-[#C4C4CC]">High risk at</span><span class="num font-bold text-[#F87171]">' + lim.highPct + '% consumed</span></div>' +
-                                '<div class="flex justify-between text-[12.5px]"><span class="text-[#C4C4CC]">Limit at</span><span class="num font-bold text-white">100% consumed</span></div></div>' +
-                                '<p class="text-[11.5px] text-[#55555E] mt-2">The status banner always reflects the highest-priority constraint.</p>') +
-                        '</div>' +
-                    '</div>';
-            }
-
-            // ============ DRAWDOWN ============
-            function renderDrawdown() {
-                const s = computeState();
-                const sc = statusColor(s.status);
-                const peakVal = s.peak;
-                const curVal = s.eq;
-                const limitVal = s.acc.balance - s.lim.drawdown;
-
-                // equity series
-                let eq2 = s.acc.balance;
-                const series = ALL.slice().sort((a, b) => a.ts - b.ts).map(t => { eq2 += t.pnl; return { date: iso(t.ts), label: iso(t.ts), v: Math.round(eq2) }; });
-
-                const chart = panel('Drawdown — room left in dollars',
-                    '<div class="flex items-center gap-6 mb-3 text-[12.5px]">' +
-                        '<span class="num"><span class="text-[#6E6E78]">Peak </span><b class="text-white">$' + peakVal.toLocaleString() + '</b></span>' +
-                        '<span class="text-[#55555E]">→</span>' +
-                        '<span class="num"><span class="text-[#6E6E78]">Current </span><b class="text-white">$' + curVal.toLocaleString() + '</b></span>' +
-                        '<span class="text-[#55555E]">→</span>' +
-                        '<span class="num"><span class="text-[#6E6E78]">Limit </span><b class="text-[#F87171]">$' + limitVal.toLocaleString() + '</b></span>' +
-                    '</div>' +
-                    '<div class="relative">' +
-                        lineSvg(series, { stroke: '#34D399', fill: 'rgba(16,185,129,0.08)', min: Math.min(limitVal - 200, ...series.map(p => p.v)), max: Math.max(...series.map(p => p.v), peakVal), markers: [{ at: 0, v: peakVal, color: '#FBBF24' }, { at: series.length - 1, v: curVal, color: '#34D399' }] }) +
-                        '<div class="absolute inset-x-0 bottom-0 text-[10.5px] text-[#F87171] num" style="bottom:2px">limit $' + limitVal.toLocaleString() + '</div>' +
-                    '</div>');
-
-                const statsGrid = panel('Drawdown metrics',
-                    '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">' +
-                        kpi('Current drawdown', '$' + s.curDD, s.ddPct + '% of limit', s.ddPct >= s.lim.highPct ? 'text-[#F87171]' : s.ddPct >= s.lim.warnPct ? 'text-[#FBBF24]' : 'text-white') +
-                        kpi('Drawdown %', (Math.round((s.curDD / s.acc.balance) * 1000) / 10) + '%', 'of account equity', 'text-white') +
-                        kpi('Buffer remaining', '$' + s.ddRemaining, 'before limit', s.ddRemaining < s.lim.drawdown * 0.3 ? 'text-[#F87171]' : 'text-white') +
-                        kpi('Worst drawdown', '$' + s.maxDD, 'historical max', 'text-[#F87171]') +
-                        kpi('Recovered from peak', (peakVal - curVal >= 0 ? '-$' + (peakVal - curVal) : '+$' + (curVal - peakVal)), 'vs running peak', curVal >= peakVal ? 'text-[#34D399]' : 'text-[#FBBF24]') +
-                        kpi('Current state', s.statusLabel, 'from active limits', s.status === 'safe' ? 'text-[#34D399]' : s.status === 'caution' ? 'text-[#FBBF24]' : 'text-[#F87171]') +
-                    '</div>' +
-                    '<div class="mt-4"><div class="flex justify-between text-[11.5px] text-[#6E6E78] mb-1.5"><span>Drawdown progress</span><span class="num">' + s.ddPct + '% of $' + s.lim.drawdown + '</span></div>' +
-                    '<div class="bar-track !h-3"><div class="bar-fill" style="width:' + Math.min(100, s.ddPct) + '%;background:' + (s.ddPct >= s.lim.highPct ? '#EF4444' : s.ddPct >= s.lim.warnPct ? '#F59E0B' : '#3B82F6') + '"></div></div>' +
-                    '<div class="flex justify-between text-[10px] text-[#55555E] mt-1.5 num"><span>$0</span><span>$' + s.lim.drawdown + ' limit</span></div></div>' +
-                    '<p class="text-[11.5px] text-[#55555E] mt-4">Deep drawdown analytics live in Analytics. This screen answers one question: how much room is left?</p>');
-
-                $('panel-drawdown').innerHTML =
-                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' + chart + '<div class="xl:col-span-1 flex flex-col gap-4">' + statsGrid + '</div></div>';
-            }
-
-            // ============ HISTORY ============
-            let histPeriod = '30d';
-            let drillDay = null;
-
-            function renderHistory() {
-                const lim = limits();
-                const days = Math.min(histPeriod === '7d' ? 7 : histPeriod === '30d' ? 30 : histPeriod === '90d' ? 90 : 9999, 90);
-                const cutoff = ANCHOR.getTime() - days * day;
-                const list = ALL.filter(t => t.ts.getTime() >= cutoff);
-                const perDay = groupBy(list, t => iso(t.ts));
-                const dayArr = Object.entries(perDay).sort((a, b) => a[0].localeCompare(b[0])).map(([d, tr]) => {
-                    const risk = tr.reduce((s, t) => s + t.risk, 0);
-                    const pnl = tr.reduce((s, t) => s + t.pnl, 0);
-                    const loss = Math.abs(tr.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
-                    return { d, risk, pnl, loss, n: tr.length, trades: tr };
-                });
-                const maxRisk = Math.max(1, ...dayArr.map(x => x.risk), lim.dailyRisk);
-                const maxPnl = Math.max(1, ...dayArr.map(x => Math.abs(x.pnl)));
-
-                const riskBars = dayArr.map(x => {
-                    const h = Math.max(4, (x.risk / maxRisk) * 100);
-                    const over = x.risk > lim.dailyRisk;
-                    return '<div class="flex-1 flex flex-col justify-end items-center gap-1" data-day="' + x.d + '" style="cursor:pointer" title="' + x.d + ' · $' + x.risk + ' risk">' +
-                        '<span class="num text-[9.5px] ' + (over ? 'text-[#F87171]' : 'text-[#6E6E78]') + '">' + x.risk + '</span>' +
-                        '<div class="w-full rounded-t" style="height:' + h + '%;background:' + (over ? '#EF4444' : x.risk >= lim.dailyRisk * 0.7 ? '#F59E0B' : '#3B82F6') + ';opacity:0.85"></div>' +
-                        '<span class="text-[9px] text-[#3A3A41]">' + x.d.slice(5).replace('-', '/') + '</span></div>';
-                }).join('');
-
-                const pnlBars = dayArr.map(x => {
-                    const h = Math.max(4, (Math.abs(x.pnl) / maxPnl) * 100);
-                    return '<div class="flex-1 flex flex-col justify-end items-center gap-1" data-day="' + x.d + '" style="cursor:pointer" title="' + x.d + ' · ' + fmtMoney(x.pnl) + '">' +
-                        '<span class="num text-[9.5px] ' + (x.pnl >= 0 ? 'text-[#6E6E78]' : 'text-[#6E6E78]') + '">' + (x.pnl > 0 ? '+' : '') + x.pnl + '</span>' +
-                        '<div class="w-full rounded-t" style="height:' + h + '%;background:' + (x.pnl >= 0 ? '#34D399' : '#EF4444') + ';opacity:0.85"></div>' +
-                        '<span class="text-[9px] text-[#3A3A41]">' + x.d.slice(5).replace('-', '/') + '</span></div>';
-                }).join('');
-
-                // events
-                const events = [];
-                dayArr.forEach(x => {
-                    if (x.risk >= lim.dailyRisk) events.push({ d: x.d, type: 'Limit breach', sev: 'red', msg: 'Daily risk budget hit — $' + x.risk + ' used vs $' + lim.dailyRisk + ' limit' });
-                    else if (x.risk >= lim.dailyRisk * (lim.highPct / 100)) events.push({ d: x.d, type: 'High risk day', sev: 'amber', msg: '$' + x.risk + ' risk used (' + Math.round((x.risk / lim.dailyRisk) * 100) + '% of budget)' });
-                    else if (x.risk >= lim.dailyRisk * (lim.warnPct / 100)) events.push({ d: x.d, type: 'Warning', sev: 'amber', msg: 'Approached daily risk budget — $' + x.risk + ' used' });
-                    if (x.loss >= lim.dailyLoss) events.push({ d: x.d, type: 'Daily loss limit', sev: 'red', msg: 'Day lost $' + x.loss + ' vs $' + lim.dailyLoss + ' limit' });
-                    const spikes = x.trades.filter(t => t.risk > lim.perTrade * 1.5);
-                    spikes.forEach(t => events.push({ d: x.d, type: 'Risk spike', sev: 'red', msg: t.symbol + ' risked $' + t.risk + ' vs $' + lim.perTrade + ' per-trade limit' }));
-                });
-                const eventsSorted = events.slice().sort((a, b) => b.d.localeCompare(a.d)).slice(0, 12);
-
-                // consistency
-                const avgRisk = list.length ? Math.round(list.reduce((s, t) => s + t.risk, 0) / list.length) : 0;
-                const risks = list.map(t => t.risk);
-                const mean = risks.length ? risks.reduce((a, b) => a + b, 0) / risks.length : 0;
-                const sd = risks.length ? Math.sqrt(risks.reduce((a, b) => a + (b - mean) * (b - mean), 0) / risks.length) : 0;
-                const cv = mean ? sd / mean : 0;
-                const consistency = Math.max(0, Math.min(100, Math.round(100 - cv * 130)));
-
-                const drill = drillDay && perDay[drillDay] ? panel('Trades on ' + drillDay + ' <button class="ml-2 text-[11px] text-[#F87171]" id="clear-drill">✕</button>',
-                    '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Time</th><th>Symbol</th><th>Setup</th><th>Session</th><th>Risk</th><th>P&L</th><th>R</th></tr></thead><tbody>' +
-                    perDay[drillDay].slice().sort((a, b) => a.ts - b.ts).map(t =>
-                        '<tr><td class="num text-[#6E6E78]">' + t.ts.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + '</td>' +
-                        '<td class="font-semibold text-white">' + esc(t.symbol) + '</td><td>' + esc(t.setup) + '</td><td>' + t.session + '</td>' +
-                        '<td class="num">$' + t.risk + '</td>' +
-                        '<td class="num ' + (t.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(t.pnl) + '</td>' +
-                        '<td class="num ' + (t.r >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(t.r) + '</td></tr>').join('') +
-                    '</tbody></table></div>') : '';
-
-                const periodBtns = ['7d', '30d', '90d', 'all'].map(p =>
-                    '<button class="ins-tab' + (histPeriod === p ? ' active' : '') + '" data-hist="' + p + '" style="padding:6px 12px">' + (p === 'all' ? 'All' : p.toUpperCase()) + '</button>').join('');
-
-                $('panel-history').innerHTML =
-                    '<div class="panel p-1.5 flex gap-1 overflow-x-auto mb-4 w-fit">' + periodBtns + '</div>' +
-                    '<div class="grid grid-cols-1 xl:grid-cols-2 gap-4">' +
-                        panel('Daily risk used', '<div class="flex items-end gap-0.5 h-[130px] mb-1">' + riskBars + '</div><p class="text-[11px] text-[#55555E] mt-1">Bars above the ' + '$' + lim.dailyRisk + ' budget line are breaches. Click a bar for that day\u2019s trades.</p>') +
-                        panel('Daily realized P&L', '<div class="flex items-end gap-0.5 h-[130px] mb-1">' + pnlBars + '</div><p class="text-[11px] text-[#55555E] mt-1">Click a bar to inspect that day\u2019s trades.</p>') +
-                    '</div>' +
-                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4 mt-4">' +
-                        panel('Risk consistency', '<div class="num text-[30px] font-extrabold ' + (consistency >= 80 ? 'text-[#34D399]' : consistency >= 60 ? 'text-[#FBBF24]' : 'text-[#F87171]') + '">' + consistency + '</div>' +
-                            '<div class="text-[12px] text-[#8A8A93] mt-1">' + list.length + ' trades · avg risk $' + avgRisk + ' · std dev $' + Math.round(sd) + '</div>' +
-                            '<div class="bar-track mt-3"><div class="bar-fill" style="width:' + consistency + '%;background:' + (consistency >= 80 ? '#34D399' : consistency >= 60 ? '#F59E0B' : '#EF4444') + '"></div></div>' +
-                            '<p class="text-[11.5px] text-[#55555E] mt-3">Lower variance = more consistent position sizing. Is your average risk creeping up?</p>') +
-                        panel('Major risk events', '<div class="flex flex-col gap-1.5 max-h-[220px] overflow-y-auto">' +
-                            (eventsSorted.length ? eventsSorted.map(e =>
-                                '<div class="flex items-start gap-2.5 px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23]"><span class="tag ' + (e.sev === 'red' ? 'tag-red' : 'tag-amber') + ' !py-0.5 !px-1.5 flex-shrink-0">' + e.type + '</span>' +
-                                '<div class="min-w-0"><div class="text-[12.5px] text-[#C4C4CC]">' + e.msg + '</div><div class="text-[10.5px] text-[#6E6E78] num">' + e.d + '</div></div></div>').join('')
-                                : '<p class="text-[12.5px] text-[#6E6E78]">No limit events in this period.</p>') + '</div>') +
-                        panel('Key questions', '<div class="flex flex-col gap-2">' +
-                            '<div class="text-[12.5px] text-[#C4C4CC]"><b>Am I risking more than normal?</b> ' + (avgRisk > 25 ? 'Yes — avg risk $' + avgRisk + ' is above your $25 per-trade limit.' : 'No — avg risk $' + avgRisk + ' stays inside your limits.') + '</div>' +
-                            '<div class="text-[12.5px] text-[#C4C4CC]"><b>How often do I approach my limit?</b> ' + dayArr.filter(x => x.risk >= lim.dailyRisk * 0.7).length + ' of ' + dayArr.length + ' days at 70%+ of budget.</div>' +
-                            '<div class="text-[12.5px] text-[#C4C4CC]"><b>Are risk spikes tied to losses?</b> Check the events list for risk spikes and their day P&L.</div>' +
-                            '</div>') +
-                    '</div>' +
-                    drill +
-                    '<p class="text-[11.5px] text-[#55555E] mt-3">This is a lightweight audit trail. Deep distributions and risk-vs-expectancy analysis live in Analytics.</p>';
-            }
-
-            // ============ RENDER ALL ============
-            function renderAll() {
-                refreshData();
-                if (!account()) {
-                    const empty = '<div class="panel p-10 text-center">' +
-                        '<svg data-lucide="shield-alert" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
-                        '<h3 class="text-[18px] font-bold text-white">No account yet</h3>' +
-                        '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Risk is calculated from your account size and limits. Set up your first account to see your live risk state.</p>' +
-                        '<a href="strategy-lab.html" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5"><svg data-lucide="settings" class="w-4 h-4"></svg> Set up account</a>' +
-                    '</div>';
-                    ['panel-overview', 'panel-limits', 'panel-drawdown', 'panel-history'].forEach(id => { $(id).innerHTML = empty; });
-                    $('account-btn').innerHTML = '<span class="text-[#6E6E78]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>';
-                    if (window.lucide) lucide.createIcons();
+            // ============ PRE-TRADE CHECK ============
+            function runPreTradeCheck() {
+                const accId = currentAccountId();
+                const el = $('pt-result');
+                if (!accId) { el.innerHTML = ''; return; }
+                if (!policy()) {
+                    el.innerHTML = '<div class="pt-status" style="border-color:var(--tm-border-2);background:var(--tm-bg)"><svg data-lucide="sliders-horizontal" class="w-4 h-4 text-[var(--tm-dim)] flex-shrink-0"></svg><span>Set risk limits below to enable the pre-trade check.</span></div>';
+                    $('pt-headroom').classList.add('hidden');
                     return;
                 }
-                const s = computeState();
-                // account selector in topbar
-                $('account-btn').innerHTML = '<span class="num text-[12px]">$' + account().balance.toLocaleString() + '</span><span class="text-[#6E6E78]">·</span><span>' + account().name + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>';
-                renderOverview();
-                renderLimits();
-                renderDrawdown();
-                renderHistory();
+                const planned = Number($('pt-risk').value);
+                if (!planned || planned <= 0) {
+                    el.innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)]">Enter a planned risk amount, then check.</p>';
+                    $('pt-headroom').classList.add('hidden');
+                    return;
+                }
+                const draft = { risk: planned, session: $('pt-session').value || undefined, setup: $('pt-setup').value || undefined };
+                let r;
+                try { r = core.preTradeCheck(accId, draft); } catch (e) { el.innerHTML = '<p class="text-[12.5px] text-[var(--tm-red)]">' + esc(e.message) + '</p>'; return; }
+
+                const meta = r.status === 'BLOCKED' ? { tag: 'tag-red', txt: 'BLOCKED', ic: 'ban', note: 'This trade would exceed a hard constraint and is blocked.' }
+                    : r.status === 'VIOLATION' ? { tag: 'tag-red', txt: 'VIOLATION', ic: 'alert-octagon', note: 'Hard rules would be violated — the trade is flagged.' }
+                    : r.status === 'CAUTION' ? { tag: 'tag-amber', txt: 'CAUTION', ic: 'alert-triangle', note: 'Soft warnings apply — proceed aware, or tighten the trade.' }
+                    : { tag: 'tag-emerald', txt: 'CLEAR', ic: 'shield-check', note: 'Inside every constraint under the active policy.' };
+                const iconCls = r.status === 'CLEAR' ? 'var(--tm-green)' : r.status === 'CAUTION' ? 'var(--tm-amber)' : 'var(--tm-red)';
+                const reasons = [];
+                (r.warnings || []).forEach(w => reasons.push({ t: 'Warning', cls: 'tag-amber', txt: w }));
+                (r.violations || []).forEach(v => reasons.push({ t: 'Violation', cls: 'tag-red', txt: v }));
+                (r.blocks || []).forEach(b => reasons.push({ t: 'Block', cls: 'tag-red', txt: b }));
+                el.innerHTML =
+                    '<div class="pt-status" style="border-color:' + iconCls + ';background:var(--tm-bg)">' +
+                        '<svg data-lucide="' + meta.ic + '" class="w-5 h-5 flex-shrink-0" style="color:' + iconCls + '"></svg>' +
+                        '<div class="flex-1 min-w-0"><span class="tag ' + meta.tag + ' mb-1">' + meta.txt + '</span>' +
+                        '<div class="text-[12.5px] text-[var(--tm-muted)] mt-1">' + meta.note + '</div></div>' +
+                    '</div>' +
+                    (reasons.length ? '<div class="flex flex-col gap-1.5 mt-2.5">' + reasons.map(x =>
+                        '<div class="flex items-start gap-2.5 px-3 py-2 rounded-lg" style="background:var(--tm-bg);border:1px solid var(--tm-border-2)">' +
+                        '<span class="tag ' + x.cls + ' !py-0.5 !px-1.5 flex-shrink-0">' + x.t + '</span>' +
+                        '<span class="text-[12.5px] text-[var(--tm-text)]">' + esc(x.txt) + '</span></div>').join('') + '</div>' : '');
                 if (window.lucide) lucide.createIcons();
+
+                const head = $('pt-headroom');
+                head.classList.remove('hidden');
+                head.innerHTML = [
+                    ['Requested', money(r.riskRequested)],
+                    ['Risk left', fmtNum(r.riskRemaining)],
+                    ['Loss left', fmtNum(r.lossRemaining)],
+                    ['Drawdown left', fmtNum(r.drawdownRemaining)],
+                    ['Max allowed', fmtNum(r.maxAllowedRisk)]
+                ].map(k => '<div class="risk-card !p-3"><div class="label-xs mb-1">' + k[0] + '</div><div class="num text-[15px] font-bold">' + k[1] + '</div></div>').join('');
+            }
+
+            // ============ RISK EVENTS ============
+            const EV_META = {
+                'risk-breach': { label: 'Risk breach', cls: 'tag-red' },
+                'loss-breach': { label: 'Loss breach', cls: 'tag-red' },
+                'drawdown-breach': { label: 'Drawdown breach', cls: 'tag-red' },
+                'block': { label: 'Trade blocked', cls: 'tag-red' },
+                'high-risk': { label: 'High risk', cls: 'tag-amber' },
+                'risk-warning': { label: 'Warning', cls: 'tag-amber' },
+                'risk-spike': { label: 'Risk spike', cls: 'tag-amber' }
+            };
+            function renderEvents() {
+                const accId = currentAccountId();
+                const el = $('ev-list');
+                if (!accId) { el.innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)] py-6 text-center">No account yet.</p>'; $('ev-count').textContent = '0'; return; }
+                let events = [];
+                try { events = core.riskEvents(accId); } catch (e) { /* no policy */ }
+                $('ev-count').textContent = events.length;
+                if (!events.length) {
+                    el.innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)] py-8 text-center">No risk events yet. They appear when limits are approached or breached.</p>';
+                    return;
+                }
+                el.innerHTML = events.map(ev => {
+                    const m = EV_META[ev.type] || { label: ev.type, cls: 'tag-gray' };
+                    const d = new Date(ev.at);
+                    const ts = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                    const tradeLink = ev.trade_id
+                        ? '<a href="journal.html?trade=' + encodeURIComponent(ev.trade_id) + '" class="text-[11px] font-semibold text-[var(--tm-accent)] hover:underline">Open trade →</a>'
+                        : '';
+                    return '<div class="ev-row">' +
+                        '<div class="mt-1"><span class="tag ' + m.cls + ' !py-0.5 !px-1.5">' + m.label + '</span></div>' +
+                        '<div class="flex-1 min-w-0"><div class="text-[12.5px] text-[var(--tm-text)] leading-snug">' + esc(ev.detail) + '</div>' +
+                        '<div class="flex items-center gap-3 mt-1 text-[10.5px] text-[var(--tm-dim)] num">' + ts + (tradeLink ? '<span>·</span>' + tradeLink : '') + '</div></div></div>';
+                }).join('');
+            }
+
+            // ============ RISK POLICY EDITOR ============
+            const POL_FIELDS = [
+                { key: 'riskPerTrade', label: 'Risk per trade', unit: '$', def: 'Maximum planned risk for a single trade.' },
+                { key: 'maxDailyRisk', label: 'Daily risk budget', unit: '$', def: 'Maximum total planned risk for the day.' },
+                { key: 'maxDailyLoss', label: 'Daily loss limit', unit: '$', def: 'Maximum daily realized loss.' },
+                { key: 'maxTotalDrawdown', label: 'Overall drawdown limit', unit: '$', def: 'Maximum account drawdown from peak.' },
+                { key: 'maxTrades', label: 'Max trades / day', unit: '', def: 'Optional frequency limit.' },
+                { key: 'maxOpenRisk', label: 'Max open risk', unit: '$', def: 'Planned cap for concurrent positions (ledger logs closed trades, so open exposure is not measured yet).' }
+            ];
+            function renderPolicy() {
+                const acc = account(), pol = policy();
+                const el = $('pol-fields');
+                $('pol-account').textContent = acc ? acc.name : '—';
+                $('pol-version').textContent = pol ? ((pol.version || '').startsWith('v') ? pol.version : 'v' + pol.version) : 'no policy';
+                if (!pol) { el.innerHTML = ''; return; }
+                const v = pol.values;
+                el.innerHTML = POL_FIELDS.map(f =>
+                    '<div class="risk-card !p-4"><div class="label-xs mb-1">' + f.label + '</div>' +
+                    '<div class="flex items-center gap-1.5"><span class="text-[var(--tm-dim)]">' + f.unit + '</span>' +
+                    '<input class="limit-input num" data-pol="' + f.key + '" type="number" min="0" step="1" value="' + (v[f.key] || 0) + '"></div>' +
+                    '<p class="text-[10.5px] text-[var(--tm-dim)] mt-2 leading-snug">' + f.def + '</p></div>').join('');
+            }
+            function savePolicy() {
+                const accId = currentAccountId();
+                if (!accId) return;
+                const values = {};
+                document.querySelectorAll('[data-pol]').forEach(inp => {
+                    const v = Number(inp.value);
+                    if (v > 0) values[inp.dataset.pol] = v;
+                });
+                const oldPol = policy();
+                const note = 'Limit edit from Risk page';
+                const nv = core.ConfigAPI.updateAccountLimits(accId, values, note);
+                const v = nv ? nv.values : values;
+                const ver = nv ? ((nv.version || '').startsWith('v') ? nv.version : 'v' + nv.version) : '';
+                showToast('Limits saved — new policy ' + ver + ' created. Historical trades keep their evaluated version.');
+                renderAll();
+            }
+
+            // ============ RENDER ============
+            function renderAll() {
+                renderChrome();
+                const accId = currentAccountId();
+                const empty = $('empty-state'), nopol = $('nopolicy-state'), body = $('risk-body');
+                if (!accId) {
+                    empty.classList.remove('hidden');
+                    nopol.classList.add('hidden');
+                    body.classList.add('hidden');
+                    return;
+                }
+                empty.classList.add('hidden');
+                body.classList.remove('hidden');
+                const pol = policy();
+                nopol.classList.toggle('hidden', !!pol);
+                if (!pol) return;
+                let rs;
+                try { rs = core.riskState(accId); } catch (e) { return; }
+                const polV = pol.values;
+                renderStateCards(rs, polV);
+                renderMeter(rs, polV);
+                renderDrawdown(rs, polV);
+                renderEvents();
+                renderPolicy();
+                // prefill the check input with the recommended amount
+                const pt = $('pt-risk');
+                if (pt && !pt.value) pt.value = rs.recommendedMaxRisk || 25;
             }
 
             // ============ EVENTS ============
-            function activateTab(tab) {
-                document.querySelectorAll('.ins-tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-                document.querySelectorAll('.ins-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
-            }
-            document.querySelectorAll('.ins-tab[data-tab]').forEach(btn => {
-                btn.addEventListener('click', () => activateTab(btn.dataset.tab));
-            });
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            $('pt-check').addEventListener('click', runPreTradeCheck);
+            $('pt-risk').addEventListener('keydown', e => { if (e.key === 'Enter') runPreTradeCheck(); });
+            $('pol-save').addEventListener('click', savePolicy);
 
-            // quick actions in overview
-            document.addEventListener('click', e => {
-                const go = e.target.closest && e.target.closest('[data-go]');
-                if (go) activateTab(go.getAttribute('data-go'));
-                // history drill-down
-                const bar = e.target.closest && e.target.closest('[data-day]');
-                if (bar && document.getElementById('panel-history').contains(bar)) { drillDay = bar.getAttribute('data-day'); renderHistory(); }
-                if (e.target.id === 'clear-drill') { drillDay = null; renderHistory(); }
-                // pre-trade check
-                if (e.target.id === 'pt-check') runPreTradeCheck();
-            });
-
-            // limit edits — every change goes through ConfigAPI, which creates a
-            // NEW immutable policy version and re-points assignments (the single
-            // source of truth; the audit log + all pages update from that).
-            document.addEventListener('change', e => {
-                const k = e.target.getAttribute && e.target.getAttribute('data-limit');
-                if (k && accountId) {
-                    const lim = limits();
-                    if (!lim) return;
-                    const oldVal = lim[k];
-                    const v = Number(e.target.value);
-                    if (v && v > 0 && v !== oldVal) {
-                        const next = Object.assign({}, lim);
-                        next[k] = k === 'highPct' ? Math.min(100, v) : v;
-                        LIMIT_LOG.push({ label: LIMIT_FIELDS.find(f => f.key === k).label, oldVal: oldVal + (LIMIT_FIELDS.find(f => f.key === k).unit === '$' ? '$' : ''), newVal: next[k] + (LIMIT_FIELDS.find(f => f.key === k).unit === '$' ? '$' : ''), time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) });
-                        if (core) {
-                            core.ConfigAPI.updateAccountLimits(accountId, {
-                                riskPerTrade: next.perTrade,
-                                maxDailyRisk: next.dailyRisk,
-                                maxDailyLoss: next.dailyLoss,
-                                maxTotalDrawdown: next.drawdown,
-                                maxTrades: next.trades,
-                                warn: [next.warnPct, Math.round((next.warnPct + next.highPct) / 2), next.highPct]
-                            }, LIMIT_FIELDS.find(f => f.key === k).label);
-                        }
-                        renderAll();
-                    }
-                }
-            });
-
-            // history period buttons (delegated, they have data-hist)
-            document.addEventListener('click', e => {
-                const h = e.target.closest && e.target.closest('[data-hist]');
-                if (h) { histPeriod = h.getAttribute('data-hist'); renderHistory(); }
-            });
-
-            // account switcher — cycles the SELECTED account (persisted, shared
-            // across every page). account.changed triggers a re-render.
-            $('account-btn').addEventListener('click', () => {
-                const ids = core && core.Accounts ? core.Accounts.map(a => a.id) : [];
-                if (ids.length < 2 || !accountId) return;
-                const idx = ids.indexOf(accountId);
+            // account switcher — cycles the SELECTED account (persisted, shared across pages)
+            $('acc-chip').addEventListener('click', () => {
+                if (!core || !core.Accounts || !core.Accounts.length) return;
+                const ids = core.Accounts.map(a => a.id);
+                const cur = currentAccountId() || ids[0];
+                const idx = ids.indexOf(cur);
                 core.setSelectedAccount(ids[(idx + 1) % ids.length]);
             });
 
-            // pre-trade check
-            function runPreTradeCheck() {
-                const s = computeState();
-                const planned = Number($('pt-risk').value) || 0;
-                const el = $('pt-result');
-                if (planned <= 0) { el.innerHTML = '<p class="text-[12.5px] text-[#6E6E78]">Enter a planned risk.</p>'; return; }
-                if (planned <= s.maxNext) {
-                    el.innerHTML = '<div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[rgba(16,185,129,0.08)] border border-[rgba(16,185,129,0.3)]"><span class="w-5 h-5 rounded-full bg-[rgba(16,185,129,0.2)] text-[#34D399] flex items-center justify-center text-[11px] font-bold">✓</span><span class="text-[13px] text-[#C4C4CC]"><b class="text-white">Safe</b> — $' + planned + ' fits inside all constraints (max $' + s.maxNext + ').</span></div>';
-                } else {
-                    const cut = planned - s.maxNext;
-                    el.innerHTML = '<div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[rgba(239,68,68,0.08)] border border-[rgba(239,68,68,0.35)]"><span class="w-5 h-5 rounded-full bg-[rgba(239,68,68,0.2)] text-[#F87171] flex items-center justify-center text-[11px] font-bold">✕</span><span class="text-[13px] text-[#C4C4CC]"><b class="text-[#F87171]">Reduce risk</b> — planned $' + planned + ' exceeds the maximum allowed now ($' + s.maxNext + '). Reduce by at least $' + cut + '.</span></div>';
-                }
+            // global search — mirror the shared boot (keeps the topbar functional)
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
             }
 
-            // ============ INIT ============
-            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
-
-            const VALID_TABS = ['overview', 'limits', 'drawdown', 'history'];
-            const hashTab = (location.hash || '').replace('#', '');
-            if (hashTab && VALID_TABS.includes(hashTab)) activateTab(hashTab);
-            window.addEventListener('hashchange', () => {
-                const t = (location.hash || '').replace('#', '');
-                if (t && VALID_TABS.includes(t)) activateTab(t);
-            });
-
-            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
-            // Downstream module: listens for domain events and updates itself —
-            // it never mutates configuration directly. refreshData() first so a
-            // config change (new policy version) is picked up before rendering.
-            if (core) {
-                core.TradeMindBus.subscribe('trade.created', () => { renderAll(); });
-                core.TradeMindBus.subscribe('trade.updated', () => { renderAll(); });
-                core.TradeMindBus.subscribe('trade.deleted', () => { renderAll(); });
-                core.TradeMindBus.subscribe('config.version.created', () => { renderAll(); });
-                core.TradeMindBus.subscribe('config.changed', () => { renderAll(); });
-                core.TradeMindBus.subscribe('account.changed', () => { renderAll(); });
+            // live updates from the canonical event bus
+            if (core && core.TradeMindBus) {
+                ['trade.created', 'trade.updated', 'trade.deleted', 'config.version.created', 'config.changed', 'account.changed'].forEach(ev =>
+                    core.TradeMindBus.subscribe(ev, renderAll));
             }
 
             renderAll();

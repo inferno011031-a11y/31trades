@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Journal</title>
+    <title>BATTLEXJOURNAL — Journal</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,31 +19,29 @@
     <script src="connection.js"></script>
     <script src="assets/asset-meta.js"></script>
 
-
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             height: 100%;
-            background: #0A0A0C;
-            color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
 
-        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
         /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
         }
-
         body.collapsed .sidebar { width: 64px; }
         body.collapsed .hide-when-collapsed { display: none !important; }
         body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
@@ -54,118 +52,116 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
-        .panel-title { font-size: 13px; font-weight: 700; color: #E8E8EC; }
-        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+        .panel { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; }
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .panel-sub { font-size: 12px; color: var(--tm-dim); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
 
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
 
         .btn-ghost {
-            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
 
         .tag {
             display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
-            font-size: 11.5px; font-weight: 600; white-space: nowrap;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
         }
-        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
-        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
-        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
-        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
-        .tag-blue { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.25); }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
 
         /* ---- Journal controls ---- */
         .view-chip {
-            padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            background: #121214; border: 1px solid #1F1F23; transition: all 0.15s; white-space: nowrap;
+            padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--tm-muted);
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); transition: all 0.15s; white-space: nowrap; cursor: pointer;
         }
-        .view-chip:hover { color: #E8E8EC; border-color: #2E2E35; }
-        .view-chip.active { background: #1F1F23; color: #FFFFFF; border-color: #2E2E35; }
-        .view-chip .count { color: #6E6E78; font-weight: 600; }
-        .view-chip.active .count { color: #8A8A93; }
+        .view-chip:hover { color: var(--tm-text); border-color: var(--tm-muted); }
+        .view-chip.active { background: var(--tm-text); color: var(--tm-bg); border-color: var(--tm-text); }
+        .view-chip .count { color: var(--tm-dim); font-weight: 600; }
+        .view-chip.active .count { color: inherit; opacity: 0.7; }
 
         .ctrl {
-            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
-            font-size: 13px; color: #C4C4CC; padding: 8px 12px; outline: none; transition: border-color 0.15s;
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
+            font-size: 13px; color: var(--tm-text); padding: 8px 12px; outline: none; transition: border-color 0.15s;
         }
-        .ctrl:focus { border-color: #2E2E35; }
-        select.ctrl option { background: #121214; color: #E8E8EC; }
-        .ctrl::placeholder { color: #55555E; }
+        .ctrl:focus { border-color: var(--tm-accent); }
+        select.ctrl option { background: var(--tm-card); color: var(--tm-text); }
+        .ctrl::placeholder { color: var(--tm-dim); }
 
         /* ---- Table ---- */
         .tbl th {
             text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-            color: #6E6E78; padding: 8px 12px; border-bottom: 1px solid #1F1F23; white-space: nowrap;
-            position: sticky; top: 0; background: #121214; z-index: 1;
+            color: var(--tm-muted); padding: 8px 12px; border-bottom: 1px solid var(--tm-border); white-space: nowrap;
+            position: sticky; top: 0; background: var(--tm-card); z-index: 1;
         }
-        .tbl td { padding: 9px 12px; font-size: 12.5px; color: #B4B4BD; border-bottom: 1px solid #17171A; white-space: nowrap; }
+        .tbl td { padding: 9px 12px; font-size: 12.5px; color: var(--tm-muted); border-bottom: 1px solid var(--tm-border); white-space: nowrap; }
         .tbl tbody tr { cursor: pointer; transition: background 0.1s; }
-        .tbl tbody tr:hover { background: #16161A; }
-        .tbl tbody tr.selected-row { background: rgba(16,185,129,0.04); }
-        .tbl input[type="checkbox"] { accent-color: #10B981; width: 14px; height: 14px; cursor: pointer; }
+        .tbl tbody tr:hover { background: var(--tm-hover); }
+        .tbl tbody tr.selected-row { background: rgba(16,185,129,0.05); }
+        .tbl input[type="checkbox"] { accent-color: var(--tm-green); width: 14px; height: 14px; cursor: pointer; }
 
         /* ---- Modal & drawer ---- */
-        .overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(2px); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .overlay { position: fixed; inset: 0; background: var(--modal-backdrop); backdrop-filter: blur(4px); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .overlay.open { opacity: 1; pointer-events: auto; }
 
-        .modal {
-            position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px;
-            opacity: 0; pointer-events: none; transition: opacity 0.2s;
-        }
+        .modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
         .modal.open { opacity: 1; pointer-events: auto; }
         .modal-box {
             width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto;
-            background: #121214; border: 1px solid #26262B; border-radius: 14px;
+            background: var(--modal-bg); border: 1px solid var(--modal-border); border-radius: var(--modal-radius);
             transform: translateY(10px) scale(0.98); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
         }
         .modal.open .modal-box { transform: none; }
 
         .drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; width: min(520px, 94vw); z-index: 50;
-            background: #0D0D0F; border-left: 1px solid #1C1C20;
+            position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 94vw); z-index: 50;
+            background: var(--tm-bg-elev); border-left: 1px solid var(--tm-border-2);
             transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
             display: flex; flex-direction: column;
         }
         .drawer.open { transform: none; }
 
         .entry-tab {
-            flex: 1; padding: 9px; border-radius: 7px; font-size: 13px; font-weight: 600; color: #8A8A93;
-            text-align: center; border: none; background: transparent; transition: all 0.15s;
+            flex: 1; padding: 9px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--tm-muted);
+            text-align: center; border: none; background: transparent; transition: all 0.15s; cursor: pointer;
         }
-        .entry-tab.active { background: #1F1F23; color: #FFFFFF; }
+        .entry-tab.active { background: var(--tm-text); color: var(--tm-bg); }
 
-        .field-label { display: block; font-size: 12px; font-weight: 600; color: #8A8A93; margin-bottom: 6px; }
-        .field { width: 100%; background: #0F0F11; border: 1px solid #1F1F23; border-radius: 8px; padding: 9px 12px; font-size: 13px; color: #E8E8EC; outline: none; transition: border-color 0.15s; }
-        .field:focus { border-color: #2E2E35; }
-        .field::placeholder { color: #55555E; }
-        select.field option { background: #121214; color: #E8E8EC; }
+        .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--tm-muted); margin-bottom: 6px; }
+        .field { width: 100%; background: var(--tm-bg); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--tm-text); outline: none; transition: border-color 0.15s; }
+        .field:focus { border-color: var(--tm-accent); }
+        .field::placeholder { color: var(--tm-dim); }
+        select.field option { background: var(--tm-card); color: var(--tm-text); }
 
         .chip-tag {
-            padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            background: #0F0F11; border: 1px solid #1F1F23; transition: all 0.15s;
+            padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--tm-muted);
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); transition: all 0.15s; cursor: pointer;
         }
-        .chip-tag.selected { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.5); color: #34D399; }
+        .chip-tag.selected { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.5); color: var(--tm-green); }
 
         /* Toast */
         .toast {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: #1C1C20; border: 1px solid #2E2E35; color: #E8E8EC; border-radius: 10px;
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
             padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
             transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
         }
@@ -173,29 +169,33 @@
 
         /* Timeline */
         .tl-item { display: flex; gap: 12px; position: relative; }
-        .tl-item::before { content: ""; position: absolute; left: 6px; top: 18px; bottom: -6px; width: 1px; background: #232327; }
+        .tl-item::before { content: ""; position: absolute; left: 6px; top: 18px; bottom: -6px; width: 1px; background: var(--tm-border-2); }
         .tl-item:last-child::before { display: none; }
-        .tl-dot { width: 13px; height: 13px; border-radius: 999px; border: 2px solid #10B981; background: #0D0D0F; flex-shrink: 0; margin-top: 2px; }
-        .tl-dot.muted { border-color: #4A4A52; }
+        .tl-dot { width: 13px; height: 13px; border-radius: 999px; border: 2px solid var(--tm-green); background: var(--tm-bg-elev); flex-shrink: 0; margin-top: 2px; }
+        .tl-dot.muted { border-color: var(--tm-muted); }
 
         /* Scrollbars */
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
-        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
         body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        /* Summary row */
+        .sum-cell { min-width: 0; }
+        .sum-value { font-size: 18px; font-weight: 700; letter-spacing: -0.02em; }
 
         @media (max-width: 640px) {
             .search-input { display: none; }
@@ -218,9 +218,9 @@
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -243,17 +243,17 @@
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -264,35 +264,35 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
                     <input id="global-search" type="text" class="search-input" placeholder="Search trades, symbols, strategies…">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
                     <button class="btn-primary !py-2 !px-3.5" onclick="openEntryModal()">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </button>
-                    <button class="account-select hide-when-collapsed">
-                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Content -->
             <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[1500px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+                <div class="max-w-[1500px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
                             <h1 class="text-[22px] font-bold tracking-tight">Journal</h1>
-                            <p id="journal-sub" class="text-[13px] text-[#6E6E78] mt-0.5"></p>
+                            <p id="journal-sub" class="text-[13px] text-[var(--tm-dim)] mt-0.5">Your trading decisions, rules, and evidence.</p>
                         </div>
                         <div class="flex items-center gap-2.5">
                             <button class="btn-ghost" onclick="showToast('Import — connect a broker or upload a CSV statement')">
@@ -304,50 +304,79 @@
                         </div>
                     </div>
 
-                    <!-- Saved views (PRD §6.1) -->
-                    <div id="views" class="flex gap-2 overflow-x-auto pb-1"></div>
-
-                    <!-- Filters (PRD §6.1) -->
-                    <div class="panel p-3.5 flex flex-wrap items-center gap-2.5">
-                        <div class="relative">
-                            <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                            <input id="f-search" type="text" class="ctrl !pl-9 w-[220px]" placeholder="Search symbol, setup, notes…">
+                    <!-- Summary row (real numbers from the canonical ledger) -->
+                    <div class="panel p-4 grid grid-cols-2 md:grid-cols-5 gap-4" id="j-sum">
+                        <div class="sum-cell">
+                            <div class="label-xs mb-1">Trades</div>
+                            <div class="sum-value num" id="j-sum-trades">—</div>
                         </div>
-                        <select id="f-market" class="ctrl">
-                            <option value="all">All markets</option>
-                        </select>
-                        <select id="f-setup" class="ctrl">
-                            <option value="all">All setups</option>
-                        </select>
-                        <select id="f-strategy" class="ctrl">
-                            <option value="all">All strategies</option>
-                        </select>
-                        <select id="f-session" class="ctrl">
-                            <option value="all">All sessions</option>
-                        </select>
-                        <select id="f-direction" class="ctrl">
+                        <div class="sum-cell">
+                            <div class="label-xs mb-1">Net P&amp;L</div>
+                            <div class="sum-value num" id="j-sum-pnl">—</div>
+                        </div>
+                        <div class="sum-cell">
+                            <div class="label-xs mb-1">Average R</div>
+                            <div class="sum-value num" id="j-sum-avgr">—</div>
+                        </div>
+                        <div class="sum-cell">
+                            <div class="label-xs mb-1">Rule adherence</div>
+                            <div class="sum-value num" id="j-sum-adh">—</div>
+                        </div>
+                        <div class="sum-cell">
+                            <div class="label-xs mb-1">Pending reviews</div>
+                            <div class="sum-value num" id="j-sum-pending">—</div>
+                        </div>
+                    </div>
+
+                    <!-- Pending review mode bar -->
+                    <div id="rev-bar" class="hidden items-center gap-4 px-4 py-3 rounded-lg border border-[rgba(59,130,246,0.25)] bg-[rgba(59,130,246,0.06)]">
+                        <span class="tag tag-blue">PENDING REVIEWS</span>
+                        <div class="flex items-center gap-4 text-[12.5px] text-[var(--tm-muted)]">
+                            <span><span id="rev-count" class="num font-bold text-[var(--tm-text)]">0</span> awaiting review</span>
+                            <span class="hidden md:inline">Oldest: <span id="rev-oldest" class="num">—</span></span>
+                            <span class="hidden md:inline">Now: <span id="rev-current" class="font-semibold text-[var(--tm-text)]">—</span></span>
+                        </div>
+                        <div class="flex items-center gap-2 ml-auto">
+                            <button class="btn-ghost !py-1.5 !px-3 !text-[12.5px]" onclick="reviewStep(-1)"><svg data-lucide="chevron-left" class="w-4 h-4"></svg> Previous</button>
+                            <button class="btn-ghost !py-1.5 !px-3 !text-[12.5px]" onclick="reviewStep(1)">Next <svg data-lucide="chevron-right" class="w-4 h-4"></svg></button>
+                            <button class="btn-primary !py-1.5 !px-3 !text-[12.5px]" onclick="completeReview()"><svg data-lucide="check" class="w-4 h-4"></svg> Complete Review</button>
+                        </div>
+                    </div>
+
+                    <!-- Saved views -->
+                    <div id="views" class="flex gap-2 overflow-x-auto pb-0.5"></div>
+
+                    <!-- Filters (compact) -->
+                    <div class="panel p-3 flex flex-wrap items-center gap-2">
+                        <div class="relative">
+                            <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                            <input id="f-search" type="text" class="ctrl !pl-9 w-[200px]" placeholder="Search symbol, setup, notes…">
+                        </div>
+                        <select id="f-market" class="ctrl" title="Market"><option value="all">All markets</option></select>
+                        <select id="f-setup" class="ctrl" title="Setup"><option value="all">All setups</option></select>
+                        <select id="f-strategy" class="ctrl" title="Strategy"><option value="all">All strategies</option></select>
+                        <select id="f-session" class="ctrl" title="Session"><option value="all">All sessions</option></select>
+                        <select id="f-direction" class="ctrl" title="Direction">
                             <option value="all">Both directions</option>
                             <option value="Long">Long only</option>
                             <option value="Short">Short only</option>
                         </select>
-                        <select id="f-result" class="ctrl">
+                        <select id="f-result" class="ctrl" title="Result">
                             <option value="all">All results</option>
                             <option value="win">Wins</option>
                             <option value="loss">Losses</option>
                             <option value="scratch">Scratches</option>
                         </select>
                         <input id="f-from" type="date" class="ctrl num" title="From date">
-                        <span class="text-[12px] text-[#6E6E78]">→</span>
+                        <span class="text-[12px] text-[var(--tm-dim)]">→</span>
                         <input id="f-to" type="date" class="ctrl num" title="To date">
-                        <button id="f-clear" class="btn-ghost !py-2 !px-3 !text-[12.5px] hidden">
-                            Clear all
-                        </button>
-                        <span id="f-count" class="ml-auto text-[12.5px] text-[#6E6E78] num"></span>
+                        <button id="f-clear" class="btn-ghost !py-1.5 !px-3 !text-[12.5px] hidden">Reset filters</button>
+                        <span id="f-count" class="ml-auto text-[12.5px] text-[var(--tm-dim)] num"></span>
                     </div>
 
-                    <!-- Bulk bar (PRD §6.1) -->
+                    <!-- Bulk bar -->
                     <div id="bulk-bar" class="hidden items-center gap-3 px-4 py-2.5 rounded-lg bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.25)]">
-                        <span id="bulk-count" class="text-[13px] font-semibold text-white num"></span>
+                        <span id="bulk-count" class="text-[13px] font-semibold text-[var(--tm-text)] num"></span>
                         <div class="flex items-center gap-2 ml-auto">
                             <button class="btn-ghost !py-1.5 !px-3 !text-[12.5px]" onclick="bulkMarkReviewed()">Mark reviewed</button>
                             <button class="btn-ghost !py-1.5 !px-3 !text-[12.5px]" onclick="showToast('Bulk tag — coming soon')">Add tag</button>
@@ -355,63 +384,75 @@
                         </div>
                     </div>
 
-                    <!-- Trade table (PRD §6.1) -->
+                    <!-- Journal insight strip -->
+                    <div id="j-ins" class="panel p-3.5 hidden">
+                        <div class="flex flex-wrap items-center gap-x-6 gap-y-2 text-[12.5px]">
+                            <span class="label-xs !text-[10px]">Your Journal</span>
+                            <span class="text-[var(--tm-dim)]">Most common setup: <span id="j-ins-setup" class="font-semibold text-[var(--tm-text)]">—</span></span>
+                            <span class="text-[var(--tm-dim)]">Best session: <span id="j-ins-best" class="font-semibold text-[var(--tm-text)]">—</span></span>
+                            <span class="text-[var(--tm-dim)]">Worst session: <span id="j-ins-worst" class="font-semibold text-[var(--tm-text)]">—</span></span>
+                            <span class="text-[var(--tm-dim)]">Rule adherence: <span id="j-ins-adh" class="num font-semibold text-[var(--tm-text)]">—</span></span>
+                            <span class="text-[var(--tm-dim)]">Pending reviews: <span id="j-ins-pending" class="num font-semibold text-[var(--tm-text)]">—</span></span>
+                        </div>
+                    </div>
+
+                    <!-- Trade table -->
                     <div class="panel overflow-hidden">
-                        <div class="overflow-x-auto max-h-[62vh] overflow-y-auto">
+                        <div class="overflow-x-auto max-h-[58vh] overflow-y-auto">
                             <table class="tbl w-full">
                                 <thead>
                                     <tr>
-                                        <th style="position:sticky;left:0;background:#121214;z-index:2;">
+                                        <th style="position:sticky;left:0;background:var(--tm-card);z-index:2;">
                                             <input type="checkbox" id="check-all" onclick="toggleAll(event)">
                                         </th>
-                                        <th>Time</th><th>Symbol</th><th>Dir</th><th>Setup</th><th>Strategy</th>
-                                        <th>Session</th><th>Entry</th><th>Exit</th><th>Size</th><th>Risk</th>
-                                        <th>P&amp;L</th><th>R</th><th>Adherence</th>
+                                        <th>Time</th><th>Symbol</th><th>Dir</th><th>Setup</th><th>Session</th>
+                                        <th>Risk</th><th>Result</th><th>R</th><th>Rule adherence</th><th>Review</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody"></tbody>
                             </table>
                             <div id="empty-state" class="hidden py-16 text-center">
-                                <svg data-lucide="search-x" class="w-10 h-10 mx-auto text-[#3A3A41] mb-3"></svg>
-                                <p class="text-[14px] font-semibold text-[#B4B4BD]">No trades match these filters</p>
-                                <p class="text-[12.5px] text-[#6E6E78] mt-1">Try clearing filters or logging a new trade.</p>
-                                <button class="btn-primary mt-5 !py-2.5 !px-5" onclick="openEntryModal()">Log your first trade</button>
+                                <svg data-lucide="search-x" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-3"></svg>
+                                <p class="text-[14px] font-semibold text-[var(--tm-text)]">No trades match these filters</p>
+                                <p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Try clearing filters or logging a new trade.</p>
+                                <button id="empty-clear" class="btn-ghost mt-5 !py-2.5 !px-5">Clear filters</button>
+                                <button id="empty-log" class="btn-primary mt-5 !py-2.5 !px-5 hidden" onclick="openEntryModal()">Log your first trade</button>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Market Events (live economic calendar — institutional widget) -->
+                    <!-- Market Events (live economic calendar) -->
                     <div class="panel p-5">
                         <div class="flex items-center justify-between mb-3">
                             <div class="panel-title">Market Events</div>
                             <span id="eco-live" class="tag tag-gray">Live calendar · loading…</span>
                         </div>
                         <div class="flex flex-wrap gap-1.5 mb-3" id="eco-sessions"></div>
-                        <div id="eco-list" class="flex flex-col divide-y divide-[#17171A]">
-                            <div class="py-6 text-center text-[12.5px] text-[#6E6E78]">Loading live economic events…</div>
+                        <div id="eco-list" class="flex flex-col divide-y divide-[var(--tm-border)]">
+                            <div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">Loading live economic events…</div>
                         </div>
                     </div>
 
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Journal demo build · data is illustrative</p>
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Journal · every decision, rule, and piece of evidence</p>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- ============ TRADE ENTRY MODAL (PRD §6.2) ============ -->
+    <!-- ============ TRADE ENTRY MODAL ============ -->
     <div class="overlay" id="entry-overlay" onclick="closeEntryModal()"></div>
     <div class="modal" id="entry-modal">
         <div class="modal-box">
-            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[#1F1F23]">
+            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[var(--tm-border)]">
                 <div>
                     <h2 class="text-[17px] font-bold">Log Trade</h2>
-                    <p class="text-[12.5px] text-[#6E6E78] mt-0.5">P&amp;L and R are calculated automatically</p>
+                    <p class="text-[12.5px] text-[var(--tm-dim)] mt-0.5">P&amp;L and R are calculated automatically</p>
                 </div>
                 <button class="collapse-btn" onclick="closeEntryModal()"><svg data-lucide="x" class="w-4 h-4"></svg></button>
             </div>
 
             <div class="px-6 pt-4">
-                <div class="flex bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1 mb-5">
+                <div class="flex bg-[var(--tm-bg)] border border-[var(--tm-border)] rounded-lg p-1 mb-5">
                     <button type="button" id="tab-fast" class="entry-tab active" onclick="switchEntryMode('fast')">Fast entry</button>
                     <button type="button" id="tab-detailed" class="entry-tab" onclick="switchEntryMode('detailed')">Detailed entry</button>
                 </div>
@@ -475,7 +516,7 @@
                         <div>
                             <label class="field-label" id="e-size-label">Size (lots)</label>
                             <input id="e-size" type="number" step="0.01" min="0" class="field num" placeholder="1.00">
-                            <div id="size-hint" class="text-[10.5px] text-[#55555E] mt-1"></div>
+                            <div id="size-hint" class="text-[10.5px] text-[var(--tm-dim)] mt-1"></div>
                         </div>
                         <div>
                             <label class="field-label">Stop loss</label>
@@ -492,7 +533,7 @@
                     </div>
                 </div>
 
-                <!-- Detailed-only fields (PRD §6.2) -->
+                <!-- Detailed-only fields -->
                 <div id="detailed-fields" class="hidden">
                     <div class="tm-sec">
                         <div class="tm-sec-head"><span class="tm-sec-num">+</span>Confluence &amp; Context</div>
@@ -546,7 +587,7 @@
                         </div>
                         <div class="mt-3">
                             <label class="field-label">Screenshot / chart annotation</label>
-                            <label class="field !py-3 flex items-center justify-center gap-2 text-[#6E6E78] cursor-pointer">
+                            <label class="field !py-3 flex items-center justify-center gap-2 text-[var(--tm-dim)] cursor-pointer">
                                 <svg data-lucide="image" class="w-4 h-4"></svg> Attach screenshot
                                 <input type="file" accept="image/*" class="hidden">
                             </label>
@@ -560,19 +601,19 @@
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         <div class="tm-readout">
                             <div class="label-xs mb-1">P&amp;L</div>
-                            <div id="calc-pnl" class="num text-[16px] font-bold text-[#34D399]">—</div>
+                            <div id="calc-pnl" class="num text-[16px] font-bold text-[var(--tm-green)]">—</div>
                         </div>
                         <div class="tm-readout">
                             <div class="label-xs mb-1">R multiple</div>
-                            <div id="calc-r" class="num text-[16px] font-bold text-white">—</div>
+                            <div id="calc-r" class="num text-[16px] font-bold text-[var(--tm-text)]">—</div>
                         </div>
                         <div class="tm-readout">
                             <div class="label-xs mb-1">Risk / reward</div>
-                            <div id="calc-rr" class="num text-[16px] font-bold text-white">—</div>
+                            <div id="calc-rr" class="num text-[16px] font-bold text-[var(--tm-text)]">—</div>
                         </div>
                         <div class="tm-readout">
                             <div class="label-xs mb-1">Duration</div>
-                            <div id="calc-dur" class="num text-[16px] font-bold text-white">—</div>
+                            <div id="calc-dur" class="num text-[16px] font-bold text-[var(--tm-text)]">—</div>
                         </div>
                     </div>
                 </div>
@@ -585,7 +626,7 @@
         </div>
     </div>
 
-    <!-- ============ TRADE DETAIL DRAWER (PRD §6.3) ============ -->
+    <!-- ============ TRADE DETAIL DRAWER ============ -->
     <div class="overlay" id="detail-overlay" onclick="closeDetail()"></div>
     <div class="drawer" id="detail-drawer">
         <div id="detail-body"></div>
@@ -593,12 +634,13 @@
 
     <!-- Toast -->
     <div class="toast" id="toast">
-        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[#34D399]"></svg>
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg>
         <span id="toast-msg"></span>
     </div>
 
     <script>
         (function() {
+            'use strict';
             // ============ HELPERS ============
             const $ = id => document.getElementById(id);
             const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
@@ -627,8 +669,6 @@
 
             function fmtPrice(symbol, v) {
                 if (v == null || isNaN(v)) return '—';
-                // spec-aware precision (5 decimals forex, 3 JPY, 2 gold/stocks,
-                // 0 indices) — delegated to the shared asset engine.
                 const core = window.TradeMindCore;
                 if (core && typeof core.fmtPrice === 'function') return core.fmtPrice(symbol, v);
                 if (symbol.indexOf('NAS') > -1 || symbol.indexOf('US30') > -1) return v.toFixed(0);
@@ -641,11 +681,17 @@
                 return m + ' ' + ts.getDate() + ', ' + ts.getFullYear() + ' · ' + ('0' + ts.getHours()).slice(-2) + ':' + ('0' + ts.getMinutes()).slice(-2);
             }
 
+            function fmtMoney(n) {
+                return (n >= 0 ? '+' : '-') + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
+            }
+
+            function fmtHoldMin(min) {
+                if (min == null || isNaN(min)) return '—';
+                if (min < 60) return Math.max(0, Math.round(min)) + ' min';
+                return Math.floor(min / 60) + 'h ' + Math.round(min % 60) + 'm';
+            }
+
             // ============ DATA ============
-            // Asset-aware P&L — the SHARED core engine (src/core) is the single
-            // source of truth: forex pips/lots, commodity pips/contracts, index
-            // points, stock shares/cents, crypto coins/$. The legacy formula is
-            // only a fallback before the core boots.
             function pipInfo(symbol) {
                 if (symbol.indexOf('XAU') > -1) return { pip: 0.1, val: 10 };
                 if (symbol.indexOf('NAS') > -1 || symbol.indexOf('US30') > -1) return { pip: 1, val: 1 };
@@ -659,63 +705,26 @@
                 return ((exit - entry) / p.pip) * size * p.val * (dir === 'Long' ? 1 : -1);
             }
 
-            // Asset-class / unit chip for the form: shows the detected class and
-            // the contract units (Pips · Points · Cents · Coins · Amount) plus
-            // the per-pip value, updating live as the symbol changes.
             function assetInfoFor(symbol) {
                 const core = window.TradeMindCore;
                 if (core && typeof core.assetSpecFor === 'function') {
                     const s = core.assetSpecFor(symbol) || {};
-                    return {
-                        cls: s.assetClass || 'Other', unit: s.unit || 'Units',
-                        sizeLabel: s.sizeLabel || 'Units',
-                        val: s.val != null ? s.val : null, pip: s.pip != null ? s.pip : null
-                    };
+                    return { cls: s.assetClass || 'Other', unit: s.unit || 'Units', sizeLabel: s.sizeLabel || 'Units', val: s.val != null ? s.val : null, pip: s.pip != null ? s.pip : null };
                 }
                 return { cls: 'Forex', unit: 'Pips', sizeLabel: 'Lots', val: 10, pip: 0.0001 };
             }
             function renderAssetInfo(symbol) {
-                // Only controlled values (class / unit / labels) — no escaping needed.
                 const info = assetInfoFor(symbol);
                 const chip = document.getElementById('asset-chip');
                 const sizelbl = document.getElementById('e-size-label');
                 if (chip) chip.innerHTML = '<span class="tag tag-blue !py-0.5 !px-2 text-[10.5px]">' + info.cls + '</span>' +
-                    '<span class="text-[11px] text-[#6E6E78]">' + info.unit + (info.val != null ? ' · $' + info.val + ' / ' + info.pip + ' / ' + info.sizeLabel.toLowerCase().replace(/s$/, '') : '') + '</span>';
+                    '<span class="text-[11px] text-[var(--tm-dim)]">' + info.unit + (info.val != null ? ' · $' + info.val + ' / ' + info.pip + ' / ' + info.sizeLabel.toLowerCase().replace(/s$/, '') : '') + '</span>';
                 if (sizelbl) sizelbl.textContent = 'Size (' + info.sizeLabel.toLowerCase() + ')';
                 return info;
             }
 
-            function buildTrades() {
-                const T = (d, h, m, sym, dir, entry, exit, size, risk, setup, strategy, session, adherence, reviewed, note) => {
-                    const pnl = Math.round(calcPnl(sym, dir, entry, exit, size) * 100) / 100;
-                    return {
-                        id: 't' + Math.random().toString(36).slice(2, 9),
-                        ts: daysAgo(d, h, m),
-                        symbol: sym, dir, entry, exit, size, risk,
-                        pnl, r: risk > 0 ? Math.round((pnl / risk) * 100) / 100 : 0,
-                        setup, strategy, session, adherence, reviewed, note: note || ''
-                    };
-                };
-                return [
-                    T(0, 9, 32, 'EURUSD', 'Long', 1.08845, 1.09085, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'London', 'followed', true, 'Textbook London session. Waited for confirmation after the sweep.'),
-                    T(0, 8, 14, 'XAUUSD', 'Long', 2345.10, 2345.10, 1, 100, 'FVG', 'ICT / SMC', 'London', 'followed', false, 'Scratched at entry — no follow-through, exited flat.'),
-                    T(1, 14, 20, 'GBPUSD', 'Short', 1.27100, 1.27000, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'New York', 'followed', true, ''),
-                    T(2, 9, 55, 'EURUSD', 'Short', 1.09200, 1.09300, 1, 100, 'FVG', 'ICT / SMC', 'London', 'early exit', true, 'Moved stop to BE too early, got stopped on noise.'),
-                    T(2, 15, 40, 'EURUSD', 'Long', 1.08500, 1.08884, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'New York', 'followed', true, ''),
-                    T(3, 9, 18, 'EURUSD', 'Long', 1.08350, 1.08460, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'London', 'followed', false, ''),
-                    T(3, 10, 5, 'GBPUSD', 'Long', 1.26450, 1.26350, 1, 100, 'Price Action', 'Price Action', 'London', 'moving stop', true, 'Lowered stop during drawdown — broke my own rule.'),
-                    T(4, 16, 10, 'XAUUSD', 'Long', 2330.20, 2331.70, 1, 100, 'FVG', 'ICT / SMC', 'New York', 'followed', true, ''),
-                    T(4, 17, 2, 'NAS100', 'Short', 21840, 21820, 1, 100, 'Breakout', 'Breakout', 'New York', 'followed', true, ''),
-                    T(5, 9, 30, 'EURUSD', 'Short', 1.09120, 1.09240, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'New York', 'no-plan', true, 'Entered without a plan. Cost me 1.2R.'),
-                    T(5, 12, 45, 'GBPUSD', 'Long', 1.26800, 1.26980, 1, 100, 'MSS + FVG', 'London MSS + FVG', 'London', 'followed', true, ''),
-                    T(6, 9, 25, 'XAUUSD', 'Short', 2350.40, 2349.50, 1, 100, 'FVG', 'ICT / SMC', 'London', 'followed', true, '')
-                ];
-            }
-
-            // Canonical source of truth (master §13 — the Journal is a view of
-            // the shared ledger, not a separate database). The ledger for the
-            // currently selected account is the active dataset (single source
-            // of truth); with no selection it reads every account's trades.
+            // Canonical source of truth — the Journal is a view of the shared
+            // ledger, not a separate database.
             function loadCanonicalTrades() {
                 const core = window.TradeMindCore;
                 if (!core || !core.Trades || !core.Trades.length) return null;
@@ -736,8 +745,6 @@
             }
 
             // ============ STATE ============
-            // Local-first: the Journal is a view of the canonical ledger. With no
-            // trades (first user) it starts EMPTY — it never fabricates history.
             let trades = loadCanonicalTrades() || [];
             let activeView = 'all';
             let filters = { market: 'all', setup: 'all', strategy: 'all', session: 'all', direction: 'all', result: 'all', search: '', from: null, to: null };
@@ -745,7 +752,7 @@
             let entryMode = 'fast';
             let emotion = '';
             let currentDetailId = null;
-            let editingId = null;   // set when the modal is in edit mode (TradeService.update)
+            let editingId = null;
 
             const VIEWS = [
                 { id: 'all', label: 'All Trades', test: () => true },
@@ -753,12 +760,11 @@
                 { id: 'week', label: 'This Week', test: t => (new Date() - t.ts) <= 7 * day },
                 { id: 'winners', label: 'Winners', test: t => t.pnl > 0 },
                 { id: 'losers', label: 'Losers', test: t => t.pnl < 0 },
-                { id: 'rulebreaks', label: 'Rule Breaks', test: t => t.adherence !== 'followed' },
-                { id: 'unreviewed', label: 'Unreviewed', test: t => !t.reviewed }
+                { id: 'rulebreaks', label: 'Rule Breaks', test: t => t.adherence !== 'followed' || t.adherence_result === 'VIOLATION' || t.adherence_result === 'BLOCK' },
+                { id: 'unreviewed', label: 'Needs Review', test: t => !t.reviewed }
             ];
 
             const ADHERENCE_LABEL = { followed: 'Followed', 'early exit': 'Early exit', 'moving stop': 'Moving stop', 'no-plan': 'No plan' };
-            // Market filter — asset class from the shared core engine (all classes).
             const MARKET_OF = { EURUSD: 'Forex', GBPUSD: 'Forex', XAUUSD: 'Commodities', NAS100: 'Indices' };
             const marketOf = s => {
                 const core = window.TradeMindCore;
@@ -766,7 +772,27 @@
                 return MARKET_OF[s] || 'Other';
             };
 
-            // ============ RENDER ============
+            // Rule-adherence status → badge (Followed / Warning / Violation / Blocked)
+            function adherenceInfo(t) {
+                if (t.adherence_result === 'BLOCK') return { label: 'Blocked', cls: 'tag-red', icon: 'shield-alert' };
+                if (t.adherence_result === 'VIOLATION') return { label: 'Violation', cls: 'tag-red', icon: 'alert-triangle' };
+                if (t.adherence && t.adherence !== 'followed') return { label: ADHERENCE_LABEL[t.adherence] || t.adherence, cls: 'tag-amber', icon: 'alert-triangle' };
+                return { label: 'Followed', cls: 'tag-emerald', icon: 'check' };
+            }
+
+            function reviewInfo(t) {
+                return t.reviewed
+                    ? { label: 'Reviewed', cls: 'tag-emerald' }
+                    : { label: 'Needs review', cls: 'tag-blue' };
+            }
+
+            function resultInfo(t) {
+                if (t.pnl > 0) return { label: 'Win', cls: 'text-[var(--tm-green)]' };
+                if (t.pnl < 0) return { label: 'Loss', cls: 'text-[var(--tm-red)]' };
+                return { label: 'Breakeven', cls: 'text-[var(--tm-dim)]' };
+            }
+
+            // ============ FILTER ============
             function filteredTrades() {
                 return trades
                     .filter(t => VIEWS.find(v => v.id === activeView).test(t))
@@ -794,6 +820,85 @@
                     .sort((a, b) => b.ts - a.ts);
             }
 
+            // ============ SUMMARY ROW ============
+            function renderSummary() {
+                const n = trades.length;
+                const pnl = trades.reduce((s, t) => s + t.pnl, 0);
+                const avgR = n ? trades.reduce((s, t) => s + (t.r || 0), 0) / n : 0;
+                const followed = trades.filter(t => t.adherence === 'followed' && t.adherence_result !== 'VIOLATION' && t.adherence_result !== 'BLOCK').length;
+                const adhPct = n ? Math.round(followed / n * 100) : null;
+                const pending = trades.filter(t => !t.reviewed).length;
+
+                const el = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+                el('j-sum-trades', n);
+                const pnlEl = $('j-sum-pnl');
+                if (pnlEl) { pnlEl.textContent = fmtMoney(pnl); pnlEl.className = 'sum-value num ' + (pnl >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]'); }
+                const rEl = $('j-sum-avgr');
+                if (rEl) { rEl.textContent = (avgR >= 0 ? '+' : '') + avgR.toFixed(2) + 'R'; rEl.className = 'sum-value num ' + (avgR >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]'); }
+                el('j-sum-adh', adhPct == null ? '—' : adhPct + '%');
+                el('j-sum-pending', pending);
+            }
+
+            // ============ INSIGHT STRIP ============
+            function renderInsightStrip() {
+                const wrap = $('j-ins');
+                if (!wrap) return;
+                if (!trades.length) { wrap.classList.add('hidden'); return; }
+                // most common setup
+                const setups = {};
+                trades.forEach(t => { setups[t.setup || '—'] = (setups[t.setup || '—'] || 0) + 1; });
+                const topSetup = Object.keys(setups).sort((a, b) => setups[b] - setups[a])[0];
+                // best / worst session by net pnl
+                const bySes = {};
+                trades.forEach(t => { bySes[t.session || '—'] = (bySes[t.session || '—'] || 0) + t.pnl; });
+                const sesKeys = Object.keys(bySes).sort((a, b) => bySes[b] - bySes[a]);
+                const best = sesKeys.length ? sesKeys[0] : '—';
+                const worst = sesKeys.length > 1 ? sesKeys[sesKeys.length - 1] : best;
+                const followed = trades.filter(t => t.adherence === 'followed' && t.adherence_result !== 'VIOLATION' && t.adherence_result !== 'BLOCK').length;
+                const pending = trades.filter(t => !t.reviewed).length;
+                const el = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+                el('j-ins-setup', topSetup);
+                el('j-ins-best', best);
+                el('j-ins-worst', worst);
+                el('j-ins-adh', Math.round(followed / trades.length * 100) + '%');
+                el('j-ins-pending', pending);
+                wrap.classList.remove('hidden');
+            }
+
+            // ============ REVIEW MODE ============
+            function reviewQueue() {
+                return trades.filter(t => !t.reviewed).sort((a, b) => a.ts - b.ts);
+            }
+            function renderReviewBar() {
+                const bar = $('rev-bar');
+                if (!bar) return;
+                const q = reviewQueue();
+                if (activeView !== 'unreviewed' || !q.length) { bar.classList.add('hidden'); bar.classList.remove('flex'); return; }
+                bar.classList.remove('hidden'); bar.classList.add('flex');
+                const oldest = q[0];
+                const cur = currentDetailId ? q.find(t => t.id === currentDetailId) : q[0];
+                const el = (id, v) => { const e = $(id); if (e) e.textContent = v; };
+                el('rev-count', q.length);
+                el('rev-oldest', fmtTs(oldest.ts));
+                el('rev-current', (cur ? cur.symbol + ' ' + cur.dir : '—'));
+            }
+            window.reviewStep = function(delta) {
+                const q = reviewQueue();
+                if (!q.length) return;
+                let idx = currentDetailId ? q.findIndex(t => t.id === currentDetailId) : 0;
+                if (idx < 0) idx = 0;
+                idx = Math.max(0, Math.min(q.length - 1, idx + delta));
+                openDetail(q[idx].id);
+            };
+            window.completeReview = function() {
+                const q = reviewQueue();
+                if (!q.length) return;
+                const cur = currentDetailId ? q.find(t => t.id === currentDetailId) : q[0];
+                if (cur) markReviewed(cur.id);
+                renderReviewBar();
+            };
+
+            // ============ RENDER ============
             function renderViews() {
                 const wrap = $('views');
                 wrap.innerHTML = '';
@@ -825,58 +930,64 @@
                 const list = filteredTrades();
                 const tbody = $('tbody');
                 tbody.innerHTML = '';
-                $('empty-state').classList.toggle('hidden', list.length > 0);
-                if (trades.length === 0) {
-                    $('journal-sub').textContent = 'No trades yet — log your first trade to start your dataset';
-                    const empty = $('empty-state');
-                    const ps = empty.querySelectorAll('p');
-                    if (ps[0]) ps[0].textContent = 'No trades yet';
-                    if (ps[1]) ps[1].textContent = 'Your trading intelligence starts with your first trade.';
-                    const btn = empty.querySelector('button');
-                    if (btn) btn.textContent = 'Log your first trade';
-                } else {
-                    $('journal-sub').textContent = trades.length + ' trades · ' + fmtTs(trades[0].ts).replace('Today ', '') + ' → today · ' + marketOf(trades[0].symbol) + ' & more';
+                const empty = $('empty-state');
+                const hasNoTrades = trades.length === 0;
+                empty.classList.toggle('hidden', list.length > 0);
+
+                // empty state copy per spec
+                const ps = empty.querySelectorAll('p');
+                const btnLog = $('empty-log');
+                const btnClear = $('empty-clear');
+                if (hasNoTrades) {
+                    if (ps[0]) ps[0].textContent = 'Your journal is empty.';
+                    if (ps[1]) ps[1].textContent = 'Your first trade becomes the first piece of evidence.';
+                    if (btnLog) btnLog.classList.remove('hidden');
+                    if (btnClear) btnClear.classList.add('hidden');
+                } else if (!list.length) {
+                    if (ps[0]) ps[0].textContent = 'No trades match these filters';
+                    if (ps[1]) ps[1].textContent = 'Try clearing filters or logging a new trade.';
+                    if (btnLog) btnLog.classList.add('hidden');
+                    if (btnClear) btnClear.classList.remove('hidden');
                 }
 
-                // topbar account chip — live from the canonical store
+                // account chip + profile (live from the canonical store)
                 const coreNow = window.TradeMindCore;
-                const accChip = document.querySelector('.account-select');
+                const accChip = $('acc-chip');
                 if (accChip && coreNow && coreNow.Accounts.length) {
                     const acc = coreNow.Accounts.find(a => a.id === coreNow.selectedAccountId()) || coreNow.Accounts[0];
-                    accChip.innerHTML = '<span class="num text-[12px]">$' + Number(acc.current_equity).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '</span><span class="text-[#6E6E78]">·</span><span>' + acc.name + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>';
+                    accChip.innerHTML = '<span class="num text-[12px]">$' + Number(acc.current_equity).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + acc.name + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
                     if (window.lucide) lucide.createIcons();
-                } else if (accChip) {
-                    accChip.innerHTML = '<span class="text-[#6E6E78]">No account yet</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>';
-                    if (window.lucide) lucide.createIcons();
+                }
+                const pName = $('profile-name');
+                const pAvatar = $('profile-avatar');
+                if (coreNow && coreNow.Accounts.length) {
+                    const acc2 = coreNow.Accounts.find(a => a.id === coreNow.selectedAccountId()) || coreNow.Accounts[0];
+                    if (pName) pName.textContent = acc2.name;
+                    if (pAvatar) pAvatar.textContent = acc2.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
                 }
 
                 list.forEach(t => {
                     const tr = document.createElement('tr');
                     tr.className = selected.has(t.id) ? 'selected-row' : '';
+                    const adh = adherenceInfo(t);
+                    const rev = reviewInfo(t);
+                    const res = resultInfo(t);
                     tr.innerHTML =
                         '<td style="position:sticky;left:0;background:inherit;" onclick="event.stopPropagation()">' +
                             '<input type="checkbox" data-id="' + t.id + '"' + (selected.has(t.id) ? ' checked' : '') + '>' +
                         '</td>' +
-                        '<td class="num text-[#6E6E78]">' + fmtTs(t.ts) + '</td>' +
+                        '<td class="num text-[var(--tm-dim)]">' + fmtTs(t.ts) + '</td>' +
                         '<td class="tm-sym-cell">' + (window.TMAssets && TMAssets.badgeHtml
                             ? '<span class="tm-sym-badge">' + TMAssets.badgeHtml(t.symbol) + '</span>'
                             : '') + '<span class="tm-sym-name">' + t.symbol + '</span></td>' +
                         '<td>' + (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</td>' +
-                        '<td class="text-[#C4C4CC]">' + t.setup + '</td>' +
-                        '<td class="text-[#8A8A93]">' + t.strategy + '</td>' +
-                        '<td class="text-[#8A8A93]">' + t.session + '</td>' +
-                        '<td class="num text-[#C4C4CC]">' + fmtPrice(t.symbol, t.entry) + '</td>' +
-                        '<td class="num text-[#C4C4CC]">' + fmtPrice(t.symbol, t.exit) + '</td>' +
-                        '<td class="num text-[#C4C4CC]">' + t.size + '</td>' +
-                        '<td class="num text-[#C4C4CC]">$' + t.risk + '</td>' +
-                        '<td class="num font-bold ' + (t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]') + '">' + fmt(t.pnl) + '</td>' +
-                        '<td class="num font-bold ' + (t.r > 0 ? 'text-[#34D399]' : t.r < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]') + '">' + (t.r > 0 ? '+' : '') + t.r.toFixed(1) + 'R</td>' +
-                        '<td>' + (t.adherence === 'followed'
-                            ? '<span class="tag tag-emerald">' + ADHERENCE_LABEL[t.adherence] + '</span>'
-                            : '<span class="tag tag-amber">' + ADHERENCE_LABEL[t.adherence] + '</span>') +
-                            (t.adherence_result === 'BLOCK' ? ' <span class="tag tag-red">Policy block</span>' : '') +
-                            (t.reviewed ? '' : '<span class="tag tag-blue ml-1">Pending</span>') +
-                        '</td>';
+                        '<td class="text-[var(--tm-text)]">' + (t.setup || '—') + '</td>' +
+                        '<td class="text-[var(--tm-dim)]">' + (t.session || '—') + '</td>' +
+                        '<td class="num text-[var(--tm-dim)]">$' + (t.risk || 0) + '</td>' +
+                        '<td><div class="num font-bold ' + res.cls + '">' + fmtMoney(t.pnl) + '</div><div class="text-[10px] ' + res.cls + ' opacity-70">' + res.label + '</div></td>' +
+                        '<td class="num font-bold ' + (t.r > 0 ? 'text-[var(--tm-green)]' : t.r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]') + '">' + (t.r > 0 ? '+' : '') + Number(t.r).toFixed(1) + 'R</td>' +
+                        '<td><span class="tag ' + adh.cls + '"><svg data-lucide="' + adh.icon + '" class="w-3 h-3"></svg> ' + adh.label + '</span></td>' +
+                        '<td><span class="tag ' + rev.cls + '">' + rev.label + '</span></td>';
                     tr.addEventListener('click', () => openDetail(t.id));
                     tbody.appendChild(tr);
                 });
@@ -893,6 +1004,7 @@
                 $('f-count').textContent = list.length + ' of ' + trades.length + ' trades';
                 const hasFilters = Object.values(filters).some(v => v !== 'all' && v !== '' && v !== null);
                 $('f-clear').classList.toggle('hidden', !hasFilters && activeView === 'all');
+                if (window.lucide) lucide.createIcons();
             }
 
             function renderBulk() {
@@ -902,7 +1014,7 @@
                 $('bulk-count').textContent = selected.size + ' selected';
             }
 
-            function renderAll() { renderViews(); renderSelects(); renderTable(); renderBulk(); }
+            function renderAll() { renderSummary(); renderViews(); renderSelects(); renderTable(); renderBulk(); renderInsightStrip(); renderReviewBar(); }
 
             // ============ FILTER EVENTS ============
             $('f-search').addEventListener('input', e => { filters.search = e.target.value; renderTable(); });
@@ -915,6 +1027,13 @@
             $('f-from').addEventListener('change', e => { filters.from = e.target.value || null; renderTable(); });
             $('f-to').addEventListener('change', e => { filters.to = e.target.value || null; renderTable(); });
             $('f-clear').addEventListener('click', () => {
+                filters = { market: 'all', setup: 'all', strategy: 'all', session: 'all', direction: 'all', result: 'all', search: '', from: null, to: null };
+                activeView = 'all';
+                $('f-search').value = ''; $('f-from').value = ''; $('f-to').value = '';
+                selected.clear();
+                renderAll();
+            });
+            $('empty-clear').addEventListener('click', () => {
                 filters = { market: 'all', setup: 'all', strategy: 'all', session: 'all', direction: 'all', result: 'all', search: '', from: null, to: null };
                 activeView = 'all';
                 $('f-search').value = ''; $('f-from').value = ''; $('f-to').value = '';
@@ -939,10 +1058,7 @@
                 showToast(n + ' trade' + (n === 1 ? '' : 's') + ' marked as reviewed');
             };
 
-            // ============ ENTRY MODAL (PRD §6.2) ============
-            // Asset picker (pill bar + flags/logos) — built once from the shared
-            // asset-meta module. The hidden #e-symbol select is kept as the
-            // canonical value node so every existing read/write keeps working.
+            // ============ ENTRY MODAL ============
             let assetPicker = null;
             if (window.TMAssets && $('asset-picker-root')) {
                 assetPicker = window.TMAssets.createPicker({
@@ -958,7 +1074,7 @@
                 $('tab-detailed').classList.remove('active');
                 $('detailed-fields').classList.add('hidden');
                 emotion = '';
-                editingId = prefill && prefill.id ? prefill.id : null;   // edit mode when id present
+                editingId = prefill && prefill.id ? prefill.id : null;
                 if (prefill) {
                     $('e-symbol').value = prefill.symbol;
                     if (assetPicker) assetPicker.syncFromSelect();
@@ -1011,11 +1127,7 @@
                 const exit = parseFloat($('e-exit').value);
                 const size = parseFloat($('e-size').value) || 0;
                 const risk = parseFloat($('e-risk').value) || 0;
-
-                // live asset-class + unit detection (Pips / Points / Cents / Coins)
                 const info = renderAssetInfo(symbol);
-
-                // suggested position size from risk budget + stop distance
                 const slVal = parseFloat($('e-sl').value);
                 const hintEl = $('size-hint');
                 if (hintEl) {
@@ -1036,15 +1148,14 @@
                     const pnl = calcPnl(symbol, dir, entry, exit, size);
                     const r = risk > 0 ? pnl / risk : 0;
                     $('calc-pnl').textContent = fmt(pnl);
-                    $('calc-pnl').className = 'num text-[16px] font-bold ' + (pnl > 0 ? 'text-[#34D399]' : pnl < 0 ? 'text-[#F87171]' : 'text-[#6E6E78]');
+                    $('calc-pnl').className = 'num text-[16px] font-bold ' + (pnl > 0 ? 'text-[var(--tm-green)]' : pnl < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]');
                     $('calc-r').textContent = (r >= 0 ? '+' : '') + r.toFixed(2) + 'R';
-                    $('calc-r').className = 'num text-[16px] font-bold ' + (r > 0 ? 'text-[#34D399]' : r < 0 ? 'text-[#F87171]' : 'text-white');
+                    $('calc-r').className = 'num text-[16px] font-bold ' + (r > 0 ? 'text-[var(--tm-green)]' : r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-text)]');
                 } else {
                     $('calc-pnl').textContent = '—';
                     $('calc-r').textContent = '—';
                 }
 
-                // R:R from SL/TP
                 const sl = parseFloat($('e-sl').value);
                 const tp = parseFloat($('e-tp').value);
                 if (!isNaN(sl) && !isNaN(tp) && !isNaN(entry) && sl !== entry) {
@@ -1054,7 +1165,6 @@
                     $('calc-rr').textContent = '—';
                 }
 
-                // Duration from entry/exit times
                 const ti = $('e-time-in').value, to = $('e-time-out').value;
                 if (ti && to) {
                     const [ih, im] = ti.split(':').map(Number);
@@ -1084,17 +1194,10 @@
                     showToast('Enter symbol, direction, entry, exit and size');
                     return;
                 }
-
                 const pnl = Math.round(calcPnl(symbol, dir, entry, exit, size) * 100) / 100;
-
-                // Defensive: any unexpected error in the save path must surface as
-                // a visible message — never leave the button "dead" (modal stuck
-                // open, no feedback). The modal only closes on a successful save.
+                const core = window.TradeMindCore;
                 try {
                     if (editingId) {
-                        // EDIT — a controlled mutation. TradeService.update recalculates
-                        // the full dependency graph: R, risk consumption, evaluations,
-                        // violations, discipline, equity — all from the canonical store.
                         const id = editingId;
                         editingId = null;
                         const stratSel = $('e-strategy');
@@ -1117,11 +1220,6 @@
                         renderAll();
                         showToast('Trade updated — risk, discipline & analytics recalculated');
                     } else {
-                        // 7-STEP PIPELINE (core.js — canonical data model):
-                        // 1 Resolve Context → 2 Load Policy → 3 Evaluate → 4 Persist Evidence
-                        // → 5 Update State → 6&7 Publish Events & Refresh.
-                        // The trade.created event on the bus drives the UI via the subscriber
-                        // below — this function only emits, it never renders directly.
                         const stratSel = $('e-strategy');
                         core.logTradePipeline({
                             account_id: accountId,
@@ -1148,7 +1246,7 @@
                 }
             };
 
-            // ============ TRADE EDIT / DELETE (TradeService) ============
+            // ============ TRADE EDIT / DELETE ============
             window.editTrade = function(id) {
                 const t = trades.find(x => x.id === id);
                 if (!t) return;
@@ -1160,7 +1258,7 @@
                 if (!window.confirm('Reverse / delete this trade? Equity, risk, discipline and analytics will recalculate.')) return;
                 const core = window.TradeMindCore;
                 if (core && core.Trades.some(t => t.id === id)) {
-                    core.TradeService.remove(id);   // publishes trade.deleted → all pages recalc
+                    core.TradeService.remove(id);
                 }
                 const idx = trades.findIndex(t => t.id === id);
                 if (idx >= 0) trades.splice(idx, 1);
@@ -1169,158 +1267,218 @@
                 showToast('Trade deleted — derived values recalculated');
             };
 
-            // ============ TRADE DETAIL (PRD §6.3) ============
+            // ============ TRADE DETAIL (evidence & accountability) ============
+            function versionLabel(core, id, entityType) {
+                if (!core || !core.ConfigVersions || !id) return null;
+                const cv = core.ConfigVersions.find(v => v.id === id);
+                if (!cv) return null;
+                return (cv.version || 'v?') + (entityType && cv.entity_type !== entityType ? '' : '');
+            }
+
+            function buildDetailBody(t) {
+                const core = window.TradeMindCore;
+                const related = trades.filter(x => x.setup === t.setup && x.id !== t.id).slice(0, 2);
+                const adh = adherenceInfo(t);
+                const rev = reviewInfo(t);
+                const res = resultInfo(t);
+
+                // B · YOUR PLAN — strategy + versions + rule context
+                const stratVersion = versionLabel(core, t.strategy_version_id, 'Strategy');
+                const policyVersion = versionLabel(core, t.config_version_id, 'RiskPolicy');
+                let ruleSetName = null, ruleSetVersion = null;
+                let evals = [];
+                try { evals = (core && core.TradeService && core.TradeService.evaluationsFor) ? core.TradeService.evaluationsFor(t.id) : []; } catch (e) { evals = []; }
+                const ev = evals[0];
+                if (ev && ev.ruleId && core) {
+                    const rs = core.ConfigVersions.find(v => v.id === ev.ruleId);
+                    if (rs) { ruleSetName = 'Rule Set'; ruleSetVersion = rs.version; }
+                }
+                const stratMaster = core && core.StrategyMaster.find(m => m.id === t.strategy_id);
+                const strategyName = (stratMaster && stratMaster.name) || t.strategy || '—';
+
+                // D · VIOLATIONS
+                let viols = [];
+                try { viols = (core && core.Violations) ? core.Violations.filter(v => v.tradeId === t.id) : []; } catch (e) { viols = []; }
+                const hardFails = evals.filter(e => e.state === 'FAIL' && e.severity === 'Hard');
+                const softFails = evals.filter(e => e.state === 'FAIL' && e.severity !== 'Hard');
+                const hasViolations = viols.length > 0 || hardFails.length > 0;
+
+                // F · EVIDENCE — the strategy's declared evidence is the plan;
+                // trades themselves carry no attached files in the ledger.
+                const declaredEvidence = (stratMaster && stratMaster.evidence) || [];
+                const expectedEvidence = evals.length ? [] : [];
+                const stratVersionObj = core && core.ConfigVersions.find(v => v.id === t.strategy_version_id);
+                const stratEvidence = (stratVersionObj && stratVersionObj.values && stratVersionObj.values.evidence) || declaredEvidence;
+
+                // G · AUTOPSY (filled async below)
+                const assoc = (core && core.assetSpecFor) ? (core.assetSpecFor(t.symbol) || {}) : {};
+                const unit = assoc.unit || 'units';
+                const sizeLabel = assoc.sizeLabel || 'units';
+
+                // hold duration
+                const holdMin = t.holdMin != null ? t.holdMin : null;
+
+                const sec = (title, inner) =>
+                    '<div class="rounded-lg border border-[var(--tm-border)] bg-[var(--tm-card)] p-4">' +
+                        '<div class="panel-title mb-3">' + title + '</div>' + inner +
+                    '</div>';
+
+                const row = (label, val, cls) =>
+                    '<div class="flex items-center justify-between py-1 text-[12.5px]"><span class="text-[var(--tm-dim)]">' + label + '</span><span class="num font-semibold ' + (cls || 'text-[var(--tm-text)]') + '">' + val + '</span></div>';
+
+                // ---- A · TRADE ----
+                const sectionA = sec('A · Trade',
+                    '<div class="flex items-center justify-between mb-3">' +
+                        '<div class="flex items-center gap-3">' +
+                            '<div class="tm-sym-badge">' + (window.TMAssets && TMAssets.badgeHtml ? TMAssets.badgeHtml(t.symbol) : (t.symbol || '—').slice(0, 2).toUpperCase()) + '</div>' +
+                            '<div><div class="text-[15px] font-bold text-[var(--tm-text)]">' + t.symbol + ' ' +
+                                (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</div>' +
+                                '<div class="text-[12px] text-[var(--tm-dim)] num">' + fmtDate(t.ts) + '</div></div>' +
+                        '</div>' +
+                        '<div class="text-right"><div class="num text-[20px] font-bold ' + res.cls + '">' + fmtMoney(t.pnl) + '</div>' +
+                        '<div class="num text-[13px] ' + res.cls + '">' + (t.r > 0 ? '+' : '') + t.r.toFixed(2) + 'R</div></div>' +
+                    '</div>' +
+                    '<div class="grid grid-cols-2 gap-x-4">' +
+                        row('Setup', t.setup || '—') + row('Session', t.session || '—') +
+                        row('Timeframe', t.timeframe || '—') + row('Hold duration', fmtHoldMin(holdMin)) +
+                        row('Entry', fmtPrice(t.symbol, t.entry)) + row('Exit', fmtPrice(t.symbol, t.exit)) +
+                        row('Stop loss', t.stop != null ? fmtPrice(t.symbol, t.stop) : '—') + row('Take profit', t.tp != null ? fmtPrice(t.symbol, t.tp) : '—') +
+                        row('Size', t.size + ' ' + sizeLabel.toLowerCase()) + row('Risk', '$' + (t.risk || 0)) +
+                    '</div>');
+
+                // ---- B · YOUR PLAN ----
+                const sectionB = sec('B · Your Plan',
+                    row('Strategy', strategyName) +
+                    (stratVersion ? row('Strategy version', stratVersion) : '') +
+                    row('Rule set', (ruleSetName || 'Default rules') + (ruleSetVersion ? ' · ' + ruleSetVersion : '')) +
+                    (policyVersion ? row('Policy version', policyVersion) : '') +
+                    row('Declared risk', '$' + (t.risk || 0)) +
+                    (t.setup ? row('Planned setup', t.setup) : '') +
+                    (t.session ? row('Planned session', t.session) : '') +
+                    (stratEvidence && stratEvidence.length
+                        ? '<div class="mt-2 pt-2 border-t border-[var(--tm-border)]"><div class="text-[11px] text-[var(--tm-dim)] mb-1.5">Evidence you committed to</div><div class="flex flex-wrap gap-1.5">' +
+                            stratEvidence.map(e => '<span class="tag tag-gray !py-0.5 !px-2 text-[10.5px]">' + e + '</span>').join('') +
+                          '</div></div>'
+                        : '') +
+                    '<p class="text-[11.5px] text-[var(--tm-dim)] mt-2">What did you say you were going to do?</p>');
+
+                // ---- C · WHAT ACTUALLY HAPPENED ----
+                const stateBadge = e => {
+                    if (e.state === 'FAIL' && e.severity === 'Hard') return '<span class="tag tag-red !py-0.5 !px-2 text-[10px]">VIOLATION</span>';
+                    if (e.state === 'FAIL') return '<span class="tag tag-amber !py-0.5 !px-2 text-[10px]">WARNING</span>';
+                    if (e.state === 'SKIP') return '<span class="tag tag-gray !py-0.5 !px-2 text-[10px]">NOT EVALUATED</span>';
+                    return '<span class="tag tag-emerald !py-0.5 !px-2 text-[10px]">PASSED</span>';
+                };
+                const sectionC = sec('C · What Actually Happened',
+                    evals.length
+                        ? '<div class="flex flex-col divide-y divide-[var(--tm-border)]">' + evals.map(e =>
+                            '<div class="flex items-start justify-between gap-3 py-2.5">' +
+                                '<div class="min-w-0"><div class="text-[13px] font-semibold text-[var(--tm-text)]">' + (e.ruleLabel || e.ruleKey) + '</div>' +
+                                '<div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">' + (e.explanation || '') + '</div></div>' +
+                                '<div class="flex-shrink-0">' + stateBadge(e) + '</div>' +
+                            '</div>').join('') + '</div>'
+                        : '<p class="text-[12.5px] text-[var(--tm-dim)]">No rule evaluations recorded for this trade.</p>');
+
+                // ---- D · VIOLATIONS ----
+                const sectionD = hasViolations
+                    ? '<div class="rounded-lg border border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.06)] p-4">' +
+                        '<div class="flex items-center gap-2 mb-3"><svg data-lucide="alert-triangle" class="w-4 h-4 text-[var(--tm-red)]"></svg><span class="panel-title text-[var(--tm-red)]">Rule Broken</span></div>' +
+                        (hardFails.map(e =>
+                            '<div class="py-1.5 text-[12.5px]"><div class="font-semibold text-[var(--tm-text)]">' + (e.ruleLabel || e.ruleKey) + '</div>' +
+                            '<div class="text-[var(--tm-dim)] mt-0.5">' + (e.explanation || '') + '</div></div>').join('')) +
+                        (viols.length ? viols.map(v =>
+                            '<div class="py-1.5 text-[12.5px] border-t border-[rgba(239,68,68,0.15)]"><div class="font-semibold text-[var(--tm-text)]">' + (v.ruleLabel || v.ruleKey) + '</div>' +
+                            '<div class="text-[var(--tm-dim)] mt-0.5">' + (v.explanation || '') + '</div></div>').join('') : '') +
+                        '<div class="grid grid-cols-2 gap-3 mt-3 pt-3 border-t border-[rgba(239,68,68,0.15)]">' +
+                            row('P&L impact', fmtMoney(t.pnl), t.pnl >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]') +
+                            row('R impact', (t.r > 0 ? '+' : '') + t.r.toFixed(2) + 'R', t.r >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]') +
+                        '</div>' +
+                        (t.block_reason ? '<p class="text-[11.5px] text-[var(--tm-red)] mt-2">Block reason: ' + t.block_reason + '</p>' : '') +
+                      '</div>'
+                    : '<div class="rounded-lg border border-[rgba(16,185,129,0.25)] bg-[rgba(16,185,129,0.05)] p-4 flex items-center gap-2.5">' +
+                        '<svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg>' +
+                        '<span class="text-[13px] font-semibold text-[var(--tm-green)]">All evaluated rules followed.</span>' +
+                      '</div>';
+
+                // ---- E · BEHAVIOR / EMOTION ----
+                const behaviorRows = [];
+                if (t.emotion) behaviorRows.push(row('Recorded emotion', t.emotion));
+                if (t.adherence) behaviorRows.push(row('Adherence', ADHERENCE_LABEL[t.adherence] || t.adherence, t.adherence === 'followed' ? 'text-[var(--tm-green)]' : 'text-[var(--tm-amber)]'));
+                if (t.postLoss != null) behaviorRows.push(row('Context', t.postLoss ? 'Entered after a loss' : 'Not after a loss'));
+                if (t.delayMin != null) behaviorRows.push(row('Delay since prior trade', t.delayMin + ' min'));
+                const sectionE = sec('E · Behavior / Emotion',
+                    (behaviorRows.length ? behaviorRows.join('') : '<p class="text-[12.5px] text-[var(--tm-dim)]">No behavioral fields recorded for this trade.</p>') +
+                    (t.note ? '<div class="mt-2 pt-2 border-t border-[var(--tm-border)]"><div class="text-[11px] text-[var(--tm-dim)] mb-1">Notes</div><p class="text-[12.5px] text-[var(--tm-text)] leading-relaxed">' + t.note + '</p></div>' : ''));
+
+                // ---- F · EVIDENCE ----
+                const sectionF = sec('F · Evidence',
+                    '<p class="text-[12.5px] text-[var(--tm-dim)]">No trade evidence attached.</p>' +
+                    (stratEvidence && stratEvidence.length
+                        ? '<p class="text-[11.5px] text-[var(--tm-dim)] mt-2">Expected for this strategy: ' + stratEvidence.join(', ') + '.</p>'
+                        : ''));
+
+                // ---- G · AI TRADE AUTOPSY (filled async) ----
+                const sectionG = sec('G · Trade Autopsy',
+                    '<div id="autopsy-body"><p class="text-[12.5px] text-[var(--tm-dim)]">Loading autopsy…</p></div>');
+
+                // ---- RELATED ----
+                const sectionRelated = '<div>' +
+                    '<div class="panel-title mb-3">Related trades · ' + t.setup + '</div>' +
+                    (related.length
+                        ? related.map(rt =>
+                            '<button class="w-full text-left flex items-center justify-between rounded-lg border border-[var(--tm-border)] bg-[var(--tm-card)] px-3.5 py-2.5 mb-2 hover:border-[var(--tm-muted)] transition-colors" onclick="openDetail(\'' + rt.id + '\')">' +
+                                '<span class="text-[13px] font-semibold text-[var(--tm-text)]">' + rt.symbol + ' <span class="text-[var(--tm-dim)] font-medium num">' + fmtDate(rt.ts) + '</span></span>' +
+                                '<span class="num text-[13px] font-bold ' + (rt.pnl > 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]') + '">' + fmtMoney(rt.pnl) + ' · ' + (rt.r > 0 ? '+' : '') + rt.r.toFixed(1) + 'R</span>' +
+                            '</button>').join('')
+                        : '<p class="text-[12.5px] text-[var(--tm-dim)]">No other trades on this setup yet.</p>') +
+                    '</div>';
+
+                // PLAN → TRADE → EVALUATE → REVIEW → LEARN (product principle)
+                const sequence = '<div class="flex items-center gap-2 text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">' +
+                    '<span>Plan</span><span class="text-[var(--tm-dim)]">→</span><span>Trade</span><span class="text-[var(--tm-dim)]">→</span><span>Evaluate</span><span class="text-[var(--tm-dim)]">→</span>' +
+                    '<span class="' + (hasViolations ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + (hasViolations ? 'Violation' : 'Followed') + '</span><span class="text-[var(--tm-dim)]">→</span><span>Review</span><span class="text-[var(--tm-dim)]">→</span><span>Learn</span>' +
+                    '</div>';
+
+                return (
+                    '<div class="flex items-center justify-between px-6 py-4 border-b border-[var(--tm-border)] flex-shrink-0">' +
+                        '<div class="flex items-center gap-3">' +
+                            '<div class="text-[15px] font-bold text-[var(--tm-text)]">Trade detail</div>' +
+                            '<span class="text-[12px] text-[var(--tm-dim)]">' + t.symbol + ' · ' + fmtTs(t.ts) + '</span>' +
+                        '</div>' +
+                        '<button class="collapse-btn" onclick="closeDetail()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                    '</div>' +
+                    '<div class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">' +
+                        sequence +
+                        sectionA +
+                        sectionB +
+                        sectionC +
+                        sectionD +
+                        sectionE +
+                        sectionF +
+                        sectionG +
+                        sectionRelated +
+                    '</div>' +
+                    '<div class="px-6 py-4 border-t border-[var(--tm-border)] flex items-center gap-2.5 flex-wrap flex-shrink-0">' +
+                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px]" onclick="editTrade(\'' + t.id + '\')"><svg data-lucide="pencil" class="w-4 h-4"></svg> Edit</button>' +
+                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px]" onclick="duplicateSetup(\'' + t.id + '\')"><svg data-lucide="copy" class="w-4 h-4"></svg> Duplicate setup</button>' +
+                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px] !text-[var(--tm-red)]" onclick="deleteTrade(\'' + t.id + '\')"><svg data-lucide="trash-2" class="w-4 h-4"></svg> Delete</button>' +
+                        (t.reviewed
+                            ? '<button class="btn-ghost !py-2 !px-3.5 !text-[13px] ml-auto"><svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg> Reviewed</button>'
+                            : '<button class="btn-primary !py-2 !px-3.5 !text-[13px] ml-auto" onclick="markReviewed(\'' + t.id + '\')"><svg data-lucide="check" class="w-4 h-4"></svg> Review trade</button>') +
+                    '</div>'
+                );
+            }
+
             window.openDetail = function(id) {
                 currentDetailId = id;
                 const t = trades.find(x => x.id === id);
                 if (!t) return;
-                const related = trades.filter(x => x.setup === t.setup && x.id !== id).slice(0, 2);
-                const adherenceBadge = t.adherence === 'followed'
-                    ? '<span class="tag tag-emerald">' + ADHERENCE_LABEL[t.adherence] + '</span>'
-                    : '<span class="tag tag-amber">' + ADHERENCE_LABEL[t.adherence] + '</span>';
-
-                $('detail-body').innerHTML =
-                    '<div class="flex items-center justify-between px-6 py-5 border-b border-[#1C1C20]">' +
-                        '<div class="flex items-center gap-3">' +
-                            '<div class="w-9 h-9 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[11px] font-bold ' + (t.dir === 'Long' ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + t.symbol.slice(0, 2).toUpperCase() + '</div>' +
-                            '<div>' +
-                                '<div class="text-[15px] font-bold text-white flex items-center gap-2">' + t.symbol + ' ' +
-                                    (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78] num">' + fmtDate(t.ts) + '</div>' +
-                            '</div>' +
-                        '</div>' +
-                        '<button class="collapse-btn" onclick="closeDetail()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
-                    '</div>' +
-
-                    '<div class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-5">' +
-
-                        // Result banner
-                        '<div class="rounded-lg border p-4 flex items-center justify-between ' + (t.pnl > 0 ? 'border-[rgba(16,185,129,0.3)] bg-[rgba(16,185,129,0.06)]' : t.pnl < 0 ? 'border-[rgba(239,68,68,0.3)] bg-[rgba(239,68,68,0.06)]' : 'border-[#26262B] bg-[#121214]') + '">' +
-                            '<div>' +
-                                '<div class="label-xs mb-1">Net result</div>' +
-                                '<div class="num text-[22px] font-bold ' + (t.pnl > 0 ? 'text-[#34D399]' : t.pnl < 0 ? 'text-[#F87171]' : 'text-white') + '">' + fmt(t.pnl) + '</div>' +
-                            '</div>' +
-                            '<div class="text-right">' +
-                                '<div class="label-xs mb-1">R multiple</div>' +
-                                '<div class="num text-[18px] font-bold ' + (t.r > 0 ? 'text-[#34D399]' : t.r < 0 ? 'text-[#F87171]' : 'text-white') + '">' + (t.r > 0 ? '+' : '') + t.r.toFixed(2) + 'R</div>' +
-                            '</div>' +
-                        '</div>' +
-
-                        // Chart / screenshot region
-                        '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] overflow-hidden">' +
-                            '<div class="flex items-center justify-between px-4 py-2.5 border-b border-[#1F1F23]">' +
-                                '<span class="text-[12px] font-semibold text-[#8A8A93]">Chart · ' + t.symbol + ' ' + t.setup + '</span>' +
-                                '<span class="text-[11px] text-[#6E6E78]">5m · annotated</span>' +
-                            '</div>' +
-                            '<svg viewBox="0 0 460 180" class="w-full block">' +
-                                '<rect x="0" y="0" width="460" height="180" fill="#0F0F11"/>' +
-                                '<g stroke="#1C1C20" stroke-width="1">' +
-                                    '<line x1="0" y1="36" x2="460" y2="36"/><line x1="0" y1="72" x2="460" y2="72"/>' +
-                                    '<line x1="0" y1="108" x2="460" y2="108"/><line x1="0" y1="144" x2="460" y2="144"/>' +
-                                '</g>' +
-                                '<rect x="140" y="34" width="52" height="58" fill="rgba(16,185,129,0.10)" stroke="rgba(16,185,129,0.35)" stroke-width="1" stroke-dasharray="4 3"/>' +
-                                '<text x="150" y="30" fill="#34D399" font-family="JetBrains Mono, monospace" font-size="9">FVG</text>' +
-                                '<g stroke="#10B981" stroke-width="1.2">' +
-                                    '<line x1="40" y1="120" x2="40" y2="104"/><rect x="38" y="108" width="4" height="12" fill="#10B981"/>' +
-                                    '<line x1="52" y1="112" x2="52" y2="96"/><rect x="50" y="100" width="4" height="12" fill="#10B981"/>' +
-                                    '<line x1="64" y1="102" x2="64" y2="88"/><rect x="62" y="92" width="4" height="10" fill="#10B981"/>' +
-                                    '<line x1="88" y1="96" x2="88" y2="60"/><rect x="86" y="68" width="4" height="22" fill="#10B981"/>' +
-                                    '<line x1="100" y1="80" x2="100" y2="50"/><rect x="98" y="56" width="4" height="20" fill="#10B981"/>' +
-                                    '<line x1="112" y1="66" x2="112" y2="44"/><rect x="110" y="48" width="4" height="14" fill="#10B981"/>' +
-                                    '<line x1="150" y1="70" x2="150" y2="92"/><rect x="148" y="74" width="4" height="12" fill="#ef4444"/>' +
-                                    '<line x1="162" y1="88" x2="162" y2="112"/><rect x="160" y="94" width="4" height="12" fill="#ef4444"/>' +
-                                    '<line x1="174" y1="100" x2="174" y2="120"/><rect x="172" y="104" width="4" height="12" fill="#ef4444"/>' +
-                                    '<line x1="198" y1="96" x2="198" y2="72"/><rect x="196" y="78" width="4" height="14" fill="#10B981"/>' +
-                                    '<line x1="210" y1="86" x2="210" y2="66"/><rect x="208" y="70" width="4" height="12" fill="#10B981"/>' +
-                                    '<line x1="234" y1="76" x2="234" y2="92"/><rect x="232" y="80" width="4" height="8" fill="#ef4444"/>' +
-                                    '<line x1="246" y1="84" x2="246" y2="100"/><rect x="244" y="88" width="4" height="8" fill="#ef4444"/>' +
-                                    '<line x1="258" y1="96" x2="258" y2="112"/><rect x="256" y="100" width="4" height="8" fill="#ef4444"/>' +
-                                '</g>' +
-                                '<line x1="0" y1="92" x2="460" y2="92" stroke="#10B981" stroke-width="1" stroke-dasharray="5 4"/>' +
-                                '<line x1="0" y1="120" x2="460" y2="120" stroke="#F87171" stroke-width="1" stroke-dasharray="5 4"/>' +
-                                '<text x="330" y="88" fill="#34D399" font-family="JetBrains Mono, monospace" font-size="9">exit ' + t.exit + '</text>' +
-                                '<text x="330" y="130" fill="#F87171" font-family="JetBrains Mono, monospace" font-size="9">stop ' + (t.entry - (t.dir === 'Long' ? 0.0015 : -0.0015)).toFixed(5) + '</text>' +
-                            '</svg>' +
-                        '</div>' +
-
-                        // Metrics
-                        '<div class="grid grid-cols-2 gap-3">' +
-                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                                '<div class="label-xs mb-2.5">Execution</div>' +
-                                '<div class="flex flex-col gap-2 text-[12.5px]">' +
-                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Entry</span><span class="num text-white">' + fmtPrice(t.symbol, t.entry) + '</span></div>' +
-                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Exit</span><span class="num text-white">' + fmtPrice(t.symbol, t.exit) + '</span></div>' +
-                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Size</span><span class="num text-white">' + t.size + ' lot' + (t.size === 1 ? '' : 's') + '</span></div>' +
-                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Slippage</span><span class="num text-[#34D399]">0.0</span></div>' +
-                                '</div>' +
-                            '</div>' +
-                            '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                                '<div class="label-xs mb-2.5">Risk</div>' +
-                                '<div class="flex flex-col gap-2 text-[12.5px]">' +
-                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Risk</span><span class="num text-white">$' + t.risk + '</span></div>' +
-                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">R multiple</span><span class="num ' + (t.r >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + (t.r > 0 ? '+' : '') + t.r.toFixed(2) + 'R</span></div>' +
-                                    '<div class="flex justify-between"><span class="text-[#8A8A93]">Position risk</span><span class="num text-white">' + (t.risk / 100).toFixed(1) + '%</span></div>' +
-                                '</div>' +
-                            '</div>' +
-                        '</div>' +
-
-                        // Timeline (PRD §6.3)
-                        '<div>' +
-                            '<div class="panel-title mb-3">Trade timeline</div>' +
-                            '<div class="flex flex-col gap-4">' +
-                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Plan</div><div class="text-[12px] text-[#8A8A93] mt-0.5">Setup identified: ' + t.setup + ' · strategy: ' + t.strategy + ' · session: ' + t.session + '</div></div></div>' +
-                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Entry</div><div class="text-[12px] text-[#8A8A93] mt-0.5 num">' + fmtPrice(t.symbol, t.entry) + ' · risk $' + t.risk + ' · 1R plan</div></div></div>' +
-                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Management</div><div class="text-[12px] text-[#8A8A93] mt-0.5">' + (t.adherence === 'followed' ? 'Left plan untouched' : ADHERENCE_LABEL[t.adherence]) + '</div></div></div>' +
-                                '<div class="tl-item"><span class="tl-dot"></span><div><div class="text-[13px] font-semibold text-white">Exit</div><div class="text-[12px] text-[#8A8A93] mt-0.5 num">' + fmtPrice(t.symbol, t.exit) + ' · ' + fmt(t.pnl) + ' (' + (t.r > 0 ? '+' : '') + t.r.toFixed(1) + 'R)</div></div></div>' +
-                            '</div>' +
-                        '</div>' +
-
-                        // Context
-                        '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                            '<div class="label-xs mb-2.5">Setup &amp; context</div>' +
-                            '<div class="flex flex-wrap gap-2">' +
-                                '<span class="tag tag-gray">' + t.setup + '</span>' +
-                                '<span class="tag tag-gray">' + t.strategy + '</span>' +
-                                '<span class="tag tag-gray">' + t.session + ' session</span>' +
-                                (t.adherence === 'followed' ? '' : adherenceBadge) +
-                                (t.reviewed ? '<span class="tag tag-emerald">Reviewed</span>' : '<span class="tag tag-blue">Pending review</span>') +
-                            '</div>' +
-                            (t.note ? '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed mt-3">' + t.note + '</p>' : '') +
-                        '</div>' +
-
-                        // AI critique (PRD §6.3)
-                        '<div class="rounded-lg border border-[#1F1F23] p-3.5">' +
-                            '<div class="flex items-center gap-2 mb-3"><svg data-lucide="sparkles" class="w-4 h-4 text-[#10B981]"></svg><span class="panel-title">AI critique</span></div>' +
-                            '<div class="flex flex-col gap-2.5 text-[12.5px] leading-relaxed">' +
-                                '<p><span class="text-[#34D399] font-semibold">Valid:</span> <span class="text-[#C4C4CC]">Entry at the FVG with confirmed MSS — matches your highest-probability setup.</span></p>' +
-                                '<p><span class="text-[#F59E0B] font-semibold">Weak:</span> <span class="text-[#C4C4CC]">' + (t.adherence === 'followed' ? 'Management was fine, but no explicit invalidation was written down before entry.' : ADHERENCE_LABEL[t.adherence] + ' — this violated your rules and cost ' + Math.abs(t.r).toFixed(1) + 'R.') + '</span></p>' +
-                                '<p><span class="text-[#3B82F6] font-semibold">Change:</span> <span class="text-[#C4C4CC]">Write the invalidation level before entry and log it with the plan. Consider a replay session for this setup.</span></p>' +
-                            '</div>' +
-                        '</div>' +
-
-                        // Related trades
-                        '<div>' +
-                            '<div class="panel-title mb-3">Related trades · ' + t.setup + '</div>' +
-                            (related.length
-                                ? related.map(rt =>
-                                    '<button class="w-full text-left flex items-center justify-between rounded-lg border border-[#1F1F23] bg-[#0F0F11] px-3.5 py-2.5 mb-2 hover:border-[#2E2E35] transition-colors" onclick="openDetail(\'' + rt.id + '\')">' +
-                                        '<span class="text-[13px] font-semibold text-white">' + rt.symbol + ' <span class="text-[#6E6E78] font-medium num">' + fmtDate(rt.ts) + '</span></span>' +
-                                        '<span class="num text-[13px] font-bold ' + (rt.pnl > 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmt(rt.pnl) + ' · ' + (rt.r > 0 ? '+' : '') + rt.r.toFixed(1) + 'R</span>' +
-                                    '</button>').join('')
-                                : '<p class="text-[12.5px] text-[#6E6E78]">No other trades on this setup yet.</p>') +
-                        '</div>' +
-                    '</div>' +
-
-                    '<div class="px-6 py-4 border-t border-[#1C1C20] flex items-center gap-2.5 flex-wrap">' +
-                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px]" onclick="editTrade(\'' + t.id + '\')"><svg data-lucide="pencil" class="w-4 h-4"></svg> Edit</button>' +
-                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px]" onclick="duplicateSetup(\'' + t.id + '\')"><svg data-lucide="copy" class="w-4 h-4"></svg> Duplicate setup</button>' +
-                        '<button class="btn-ghost !py-2 !px-3.5 !text-[13px] !text-[#F87171]" onclick="deleteTrade(\'' + t.id + '\')"><svg data-lucide="trash-2" class="w-4 h-4"></svg> Delete</button>' +
-                        '<button class="btn-primary !py-2 !px-3.5 !text-[13px] ml-auto" onclick="markReviewed(\'' + t.id + '\')">' + (t.reviewed ? 'Reviewed ✓' : 'Mark reviewed') + '</button>' +
-                    '</div>';
-
+                $('detail-body').innerHTML = buildDetailBody(t);
                 $('detail-overlay').classList.add('open');
                 $('detail-drawer').classList.add('open');
                 if (window.lucide) lucide.createIcons();
+                renderReviewBar();
+                loadAutopsy(id);
             };
 
             window.closeDetail = function() {
@@ -1328,12 +1486,58 @@
                 $('detail-drawer').classList.remove('open');
             };
 
+            // ---- AI TRADE AUTOPSY (existing endpoint, honest on failure) ----
+            async function loadAutopsy(id) {
+                const host = $('autopsy-body');
+                if (!host) return;
+                let autopsy = null;
+                try {
+                    const res = await apiFetch('/api/ai/autopsy/' + encodeURIComponent(id));
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    const j = await res.json();
+                    autopsy = j && j.autopsy;
+                } catch (e) {
+                    autopsy = null;
+                }
+                if (!host) return;
+                if (!autopsy) {
+                    host.innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)]">Trade autopsy unavailable right now. The rule evaluation above is from your actual data.</p>';
+                    return;
+                }
+                const verdictCls = autopsy.verdict === 'Followed plan' ? 'tag-emerald' : 'tag-red';
+                const rulesHtml = (autopsy.rules || []).map(r => {
+                    const st = r.state === 'FAIL' ? '<span class="tag tag-red !py-0.5 !px-2 text-[10px]">FAIL</span>'
+                        : r.state === 'SKIP' ? '<span class="tag tag-gray !py-0.5 !px-2 text-[10px]">SKIP</span>'
+                        : '<span class="tag tag-emerald !py-0.5 !px-2 text-[10px]">PASS</span>';
+                    return '<div class="flex items-center justify-between gap-3 py-1.5 text-[12px]">' +
+                        '<span class="text-[var(--tm-muted)]">' + (r.label || 'rule') + (r.expected != null ? ' · exp ' + r.expected : '') + (r.actual != null ? ' · got ' + r.actual : '') + '</span>' + st + '</div>';
+                }).join('');
+                host.innerHTML =
+                    '<div class="flex items-center justify-between mb-2">' +
+                        '<span class="tag ' + verdictCls + '">' + autopsy.verdict + '</span>' +
+                        '<span class="text-[11px] text-[var(--tm-dim)] num">' + (autopsy.assetClass || '') + ' · ' + (autopsy.unit || '') + ' · ' + (autopsy.sizeLabel || '') + '</span>' +
+                    '</div>' +
+                    (autopsy.note ? '<p class="text-[12.5px] text-[var(--tm-text)] leading-relaxed mb-3">' + autopsy.note + '</p>' : '') +
+                    (rulesHtml ? '<div class="flex flex-col divide-y divide-[var(--tm-border)]">' + rulesHtml + '</div>' : '');
+            }
+
             window.markReviewed = function(id) {
                 const t = trades.find(x => x.id === id);
-                if (t) { t.reviewed = true; }
+                const core = window.TradeMindCore;
+                if (t) {
+                    t.reviewed = true;
+                    if (core && core.TradeService && core.Trades.some(x => x.id === id)) {
+                        try { core.TradeService.update(id, { reviewed: true }); } catch (e) { /* local state already updated */ }
+                    }
+                }
                 renderAll();
-                openDetail(id);
-                showToast('Trade marked as reviewed');
+                showToast('Trade marked as reviewed — discipline & analytics refreshed');
+                // keep the detail open on the same trade, now showing Reviewed
+                if (currentDetailId === id && t) {
+                    $('detail-body').innerHTML = buildDetailBody(t);
+                    if (window.lucide) lucide.createIcons();
+                    loadAutopsy(id);
+                }
             };
 
             window.duplicateSetup = function(id) {
@@ -1352,12 +1556,9 @@
                 toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
             };
 
-            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
-            // The Journal listens for trade.created and updates itself — the save
-            // action only emits on the bus (see saveTrade → logTradePipeline).
+            // ============ EVENT BUS INTEGRATION ============
             const core = window.TradeMindCore;
             if (core) {
-                // populate the entry form's account selector from the canonical registry
                 const syncAccounts = () => {
                     if (core.Accounts.length) {
                         const sel = core.selectedAccountId();
@@ -1366,9 +1567,6 @@
                     } else {
                         $('e-account').innerHTML = '<option value="">No account yet — create one in Strategy Lab</option>';
                     }
-                    // Real strategies become selectable when logging a trade
-                    // (local-first §3). Fall back to the built-in presets only
-                    // when the user hasn't created any strategies yet.
                     const stratSel = $('e-strategy');
                     if (stratSel && core.StrategyMaster && core.StrategyMaster.length) {
                         const active = core.StrategyMaster.filter(s => s.status !== 'inactive');
@@ -1379,8 +1577,6 @@
                 syncAccounts();
                 core.TradeMindBus.subscribe('config.changed', syncAccounts);
                 core.TradeMindBus.subscribe('account.changed', syncAccounts);
-                // re-read the canonical ledger whenever it changes (hydration,
-                // edits, deletes — the ledger is the single source of truth)
                 const reloadFromCanonical = () => {
                     const canonical = loadCanonicalTrades();
                     if (canonical) { trades = canonical; activeView = 'all'; selected.clear(); renderAll(); }
@@ -1397,11 +1593,7 @@
                 });
             }
 
-            // ============ MARKET EVENTS (live economic calendar) ============
-            // The browser never hits the provider directly; GET /api/ecocal
-            // returns the day's High/Medium events with session tags and is
-            // cached server-side. Every failure degrades to an honest empty
-            // state — never fake events, never a broken layout.
+            // ============ MARKET EVENTS ============
             let ecoSession = 'All';
             let ecoData = null;
             function ecoImpactTag(impact) {
@@ -1416,7 +1608,7 @@
             function ecoTitle(t) {
                 const s = String(t || '');
                 const m = s.match(/^(.+?)\s+\((.+)\)$/);
-                return m ? m[1].trim() + ' <span class="text-[#6E6E78] font-normal">(' + m[2] + ')</span>' : s;
+                return m ? m[1].trim() + ' <span class="text-[var(--tm-dim)] font-normal">(' + m[2] + ')</span>' : s;
             }
             function renderEco() {
                 const list = $('eco-list');
@@ -1424,7 +1616,7 @@
                 const chips = $('eco-sessions');
                 if (!list) return;
                 if (!ecoData) {
-                    list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[#6E6E78]">Economic calendar unavailable right now — no fake events will be shown.</div>';
+                    list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">Economic calendar unavailable right now — no fake events will be shown.</div>';
                     if (live) live.innerHTML = '<span class="tag tag-red !py-1 !px-2.5">Calendar unavailable</span>';
                     return;
                 }
@@ -1445,15 +1637,15 @@
                 }
                 const events = ecoSession === 'All' ? (ecoData.events || []) : ((ecoData.by || {})[ecoSession] || []);
                 if (!events.length) {
-                    list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[#6E6E78]">No scheduled events for ' + ecoSession + ' today. The calendar is real — quiet sessions stay quiet.</div>';
+                    list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">No scheduled events for ' + ecoSession + ' today. The calendar is real — quiet sessions stay quiet.</div>';
                     return;
                 }
                 list.innerHTML = events.slice(0, 12).map(function (e) {
                     return '<div class="flex items-center gap-4 py-3">' +
-                        '<span class="num text-[12.5px] text-[#6E6E78] w-16 flex-shrink-0">' + ecoTime(e.ts) + '</span>' +
+                        '<span class="num text-[12.5px] text-[var(--tm-dim)] w-16 flex-shrink-0">' + ecoTime(e.ts) + '</span>' +
                         '<div class="flex-1 min-w-0">' +
-                            '<div class="text-[13.5px] font-semibold text-white truncate">' + ecoTitle(e.title) + '</div>' +
-                            '<div class="text-[12px] text-[#6E6E78] truncate">' + (e.impact || '') + ' impact · ' + (e.country || e.currency || '') +
+                            '<div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate">' + ecoTitle(e.title) + '</div>' +
+                            '<div class="text-[12px] text-[var(--tm-dim)] truncate">' + (e.impact || '') + ' impact · ' + (e.country || e.currency || '') +
                                 (e.forecast ? ' · consensus ' + e.forecast : '') + (e.previous ? ' · prev ' + e.previous : '') + (e.actual ? ' · actual ' + e.actual : '') +
                             '</div>' +
                         '</div>' +
@@ -1466,9 +1658,7 @@
                     const res = await apiFetch('/api/ecocal');
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     ecoData = await res.json();
-                } catch (e) {
-                    ecoData = null;
-                }
+                } catch (e) { ecoData = null; }
                 renderEco();
             }
 
@@ -1477,12 +1667,15 @@
             renderAll();
             if (window.lucide) lucide.createIcons();
             loadEco();
-            setInterval(loadEco, 5 * 60 * 1000);   // refresh the cached calendar every 5 min
-            // Deep link from the Dashboard's "Log Trade" buttons
-            // (journal.html?log=1) — open the entry modal right away.
-            if (new URLSearchParams(window.location.search).has('log')) {
-                openEntryModal();
-            }
+            setInterval(loadEco, 5 * 60 * 1000);
+
+            const _params = new URLSearchParams(window.location.search);
+            // journal.html?log=1 — open the entry modal right away
+            if (_params.has('log')) { openEntryModal(); }
+            // journal.html?trade=ID — open that trade's detail right away
+            if (_params.has('trade')) { setTimeout(function () { openDetail(_params.get('trade')); }, 80); }
+            // journal.html?view=unreviewed — enter pending-review mode
+            if (_params.get('view') === 'unreviewed') { activeView = 'unreviewed'; renderAll(); }
         })();
     </script>
     <script src="assets/tour.js"></script>

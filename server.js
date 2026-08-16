@@ -497,15 +497,20 @@ async function handleApi(req, res, url) {
             if (p === '/api/pre-trade-check') {
                 const accountId = q.get('accountId');
                 if (!accountId) return json(res, 400, { error: 'accountId required' });
+                // account ownership — the per-user core only knows this user's
+                // accounts, so a foreign id resolves to nothing.
+                if (!Core.Accounts.some(a => a.id === accountId)) return json(res, 404, { error: 'unknown account: ' + accountId });
                 const draft = { risk: Number(q.get('risk') || 0), session: q.get('session') || undefined, setup: q.get('setup') || undefined, emotion: q.get('emotion') || undefined, strategy_id: q.get('strategyId') || undefined };
                 return json(res, 200, Core.preTradeCheck(accountId, draft));
             }
             if (p === '/api/risk') {
-                const accountId = q.get('accountId') || 'acc-prop';
+                const accountId = q.get('accountId') || (Core.Accounts[0] ? Core.Accounts[0].id : null);
+                if (!accountId) return json(res, 200, { snapshot: null, preTrade: null, events: [] });
+                if (!Core.Accounts.some(a => a.id === accountId)) return json(res, 404, { error: 'unknown account: ' + accountId });
                 return json(res, 200, {
                     snapshot: Core.riskState(accountId),
                     preTrade: Core.preTradeCheck(accountId, { risk: Core.riskState(accountId).recommendedMaxRisk }),
-                    events: RiskEvents(Core, accountId)
+                    events: Core.riskEvents(accountId)
                 });
             }
             if (p === '/api/discipline') {
@@ -999,7 +1004,10 @@ async function handleApi(req, res, url) {
 
         // ---- pre-trade check ----
         if (p === '/api/pre-trade-check') {
-            return json(res, 200, Core.preTradeCheck(body.accountId, body.draft || body));
+            const accountId = (body.draft && body.draft.accountId) || body.accountId;
+            if (!accountId) return json(res, 400, { error: 'accountId required' });
+            if (!Core.Accounts.some(a => a.id === accountId)) return json(res, 404, { error: 'unknown account: ' + accountId });
+            return json(res, 200, Core.preTradeCheck(accountId, body.draft || body));
         }
 
         // ---- reviews ----
@@ -1148,32 +1156,9 @@ async function handleApi(req, res, url) {
     }
 }
 
-// Derived risk events (limit breach / high risk / loss breach) — same ledger
-// + policy math as RiskService.state, listed as an event feed.
-function RiskEvents(core, accountId) {
-    const account = core.Accounts.find(a => a.id === accountId);
-    if (!account) return [];
-    const policy = core.activePolicy(accountId);
-    const v = policy ? policy.values : {};
-    const limRisk = v.maxDailyRisk || v.maxDailyLoss || 0;
-    const limLoss = v.maxDailyLoss || 0;
-    const days = {};
-    core.Trades.filter(t => t.account_id === accountId).forEach(t => {
-        const d = new Date(t.ts);
-        const k = d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-        (days[k] = days[k] || []).push(t);
-    });
-    const events = [];
-    Object.keys(days).sort().forEach(k => {
-        const g = days[k];
-        const risk = g.reduce((s, t) => s + (t.risk || 0), 0);
-        const loss = Math.abs(g.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
-        if (limRisk && risk > limRisk) events.push({ day: k, type: 'risk-breach', severity: 'critical', detail: 'Risk used $' + risk + ' > $' + limRisk + ' daily budget' });
-        else if (limRisk && risk / limRisk >= 0.7) events.push({ day: k, type: 'high-risk', severity: 'warning', detail: 'Risk used $' + risk + ' (' + Math.round(risk / limRisk * 100) + '% of budget)' });
-        if (limLoss && loss > limLoss) events.push({ day: k, type: 'loss-breach', severity: 'critical', detail: 'Realized loss $' + loss + ' > $' + limLoss + ' daily loss limit' });
-    });
-    return events.reverse().slice(0, 20);
-}
+// Derived risk events (limit breach / high risk / loss breach / drawdown /
+// spikes / blocks) live in the core as Core.riskEvents(accountId) — the SAME
+// derivation the Risk page and notifications consume. Single source of truth.
 
 /* ---------------------------------------------------------------------------
    5. STATIC SERVING — the app pages, unchanged, from the project root

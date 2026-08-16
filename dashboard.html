@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Dashboard</title>
+    <title>BATTLEXJOURNAL — Dashboard</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -19,24 +19,19 @@
     <script src="core.js"></script>
     <script src="connection.js"></script>
 
-
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             height: 100%;
-            background: #0A0A0C;
-            color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
 
         .num {
-            font-family: 'JetBrains Mono', monospace;
+            font-family: var(--tm-mono);
             font-variant-numeric: tabular-nums;
             letter-spacing: -0.01em;
         }
@@ -45,8 +40,8 @@
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -67,53 +62,40 @@
             border-radius: 8px;
             font-size: 13.5px;
             font-weight: 500;
-            color: #8A8A93;
+            color: var(--tm-muted);
             text-decoration: none;
             transition: background 0.15s, color 0.15s;
             white-space: nowrap;
         }
 
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
         .nav-item.active {
-            background: rgba(16, 185, 129, 0.08);
-            color: #FFFFFF;
-            box-shadow: inset 2px 0 0 #10B981;
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(52, 211, 153, 0.10));
+            color: var(--tm-text);
+            box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.28);
         }
-
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
         /* Panels */
         .panel {
-            background: #121214;
-            border: 1px solid #1F1F23;
+            background: var(--tm-card);
+            border: 1px solid var(--tm-border);
             border-radius: 12px;
         }
-
-        .panel-title {
-            font-size: 13px;
-            font-weight: 700;
-            letter-spacing: 0.02em;
-            color: #E8E8EC;
-        }
-
-        .panel-sub {
-            font-size: 12px;
-            color: #6E6E78;
-        }
-
+        .panel-title { font-size: 13px; font-weight: 700; letter-spacing: 0.02em; color: var(--tm-text); }
+        .panel-sub { font-size: 12px; color: var(--tm-dim); }
         .label-xs {
             font-size: 11px;
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            color: #6E6E78;
+            color: var(--tm-muted);
         }
 
         /* Buttons */
         .btn-primary {
-            background: #FFFFFF;
-            color: #0A0A0C;
+            background: var(--tm-text);
+            color: var(--tm-bg);
             font-weight: 700;
             font-size: 13.5px;
             padding: 9px 16px;
@@ -121,127 +103,89 @@
             display: inline-flex;
             align-items: center;
             gap: 8px;
-            transition: background 0.15s, transform 0.15s;
+            transition: filter 0.15s, transform 0.15s;
             text-decoration: none;
+            border: 1px solid var(--tm-text);
         }
-
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
 
         .btn-ghost {
             background: transparent;
-            color: #B4B4BD;
+            color: var(--tm-muted);
             font-weight: 600;
             font-size: 13.5px;
             padding: 9px 16px;
             border-radius: 8px;
-            border: 1px solid #26262B;
+            border: 1px solid var(--tm-border-2);
             display: inline-flex;
             align-items: center;
             gap: 8px;
             transition: all 0.15s;
             text-decoration: none;
         }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
 
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
-
-        .quick-action {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 10px 14px;
-            border-radius: 8px;
-            background: #121214;
-            border: 1px solid #1F1F23;
-            font-size: 13px;
-            font-weight: 600;
-            color: #C4C4CC;
-            transition: all 0.15s;
-        }
-
-        .quick-action:hover { border-color: #2E2E35; color: #FFFFFF; background: #16161A; }
-        .quick-action svg { width: 16px; height: 16px; color: #10B981; }
-
-        /* KPI cards */
+        /* KPI / state cards */
         .kpi { position: relative; }
-
-        .kpi-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; }
-        .kpi-value.pos { color: #34D399; }
-        .kpi-value.neg { color: #F87171; }
+        .kpi-value { font-size: 24px; font-weight: 700; letter-spacing: -0.02em; color: var(--tm-text); }
+        .kpi-value.pos { color: var(--tm-green); }
+        .kpi-value.neg { color: var(--tm-red); }
 
         .mini-track {
             height: 4px;
-            background: #1F1F23;
+            background: var(--tm-card-2);
+            border: 1px solid var(--tm-border);
             border-radius: 999px;
             overflow: hidden;
         }
-
-        .mini-fill {
-            height: 100%;
-            border-radius: 999px;
-        }
+        .mini-fill { height: 100%; border-radius: 999px; background: var(--tm-green); }
 
         /* Risk meter */
         .risk-track {
             height: 10px;
             border-radius: 999px;
-            background: #1F1F23;
+            background: var(--tm-card-2);
+            border: 1px solid var(--tm-border);
             overflow: hidden;
             position: relative;
         }
-
-        .risk-consumed {
-            height: 100%;
-            border-radius: 999px;
-            background: #10B981;
-            transition: width 0.5s ease;
-        }
-
-        .risk-level-normal .risk-consumed { background: #10B981; }
-        .risk-level-caution .risk-consumed { background: #F59E0B; }
-        .risk-level-high .risk-consumed { background: #F97316; }
-        .risk-level-critical .risk-consumed { background: #EF4444; }
+        .risk-consumed { height: 100%; border-radius: 999px; background: var(--tm-green); transition: width 0.5s ease; }
+        .risk-level-caution .risk-consumed { background: var(--tm-amber); }
+        .risk-level-high .risk-consumed { background: var(--tm-red); }
+        .risk-level-critical .risk-consumed { background: var(--tm-red); }
 
         /* Drawdown threshold markers */
         .dd-track {
             height: 8px;
             border-radius: 999px;
-            background: #1F1F23;
+            background: var(--tm-card-2);
+            border: 1px solid var(--tm-border);
             position: relative;
             overflow: visible;
         }
+        .dd-fill { height: 100%; border-radius: 999px; background: var(--tm-green); }
+        .dd-marker { position: absolute; top: -4px; width: 2px; height: 16px; border-radius: 1px; background: var(--tm-muted); }
 
-        .dd-fill { height: 100%; border-radius: 999px; background: #10B981; }
-
-        .dd-marker {
-            position: absolute;
-            top: -4px;
-            width: 2px;
-            height: 16px;
-            border-radius: 1px;
-            background: #4A4A52;
-        }
-
-        /* Segmented control (chart period switch) */
+        /* Segmented control (chart period / unit switch) */
         .seg {
             display: inline-flex;
-            background: #0F0F11;
-            border: 1px solid #1F1F23;
+            background: var(--tm-card-2);
+            border: 1px solid var(--tm-border);
             border-radius: 8px;
             padding: 2px;
         }
-
         .seg button {
             padding: 5px 12px;
             border-radius: 6px;
             font-size: 12px;
             font-weight: 600;
-            color: #6E6E78;
+            color: var(--tm-muted);
             transition: all 0.15s;
             border: none;
             background: transparent;
+            cursor: pointer;
         }
-
-        .seg button.active { background: #1F1F23; color: #FFFFFF; }
+        .seg button.active { background: var(--tm-text); color: var(--tm-bg); }
 
         /* Tables */
         .tbl th {
@@ -250,22 +194,21 @@
             font-weight: 600;
             text-transform: uppercase;
             letter-spacing: 0.06em;
-            color: #6E6E78;
+            color: var(--tm-muted);
             padding: 8px 12px;
-            border-bottom: 1px solid #1F1F23;
+            border-bottom: 1px solid var(--tm-border);
             white-space: nowrap;
         }
-
         .tbl td {
             padding: 10px 12px;
             font-size: 13px;
-            color: #B4B4BD;
-            border-bottom: 1px solid #17171A;
+            color: var(--tm-muted);
+            border-bottom: 1px solid var(--tm-border);
             white-space: nowrap;
         }
-
         .tbl tr:last-child td { border-bottom: none; }
-        .tbl tbody tr:hover { background: #16161A; }
+        .tbl tbody tr { cursor: pointer; }
+        .tbl tbody tr:hover { background: var(--tm-hover); }
 
         .tag {
             display: inline-flex;
@@ -275,42 +218,42 @@
             border-radius: 6px;
             font-size: 11.5px;
             font-weight: 600;
+            border: 1px solid transparent;
         }
-
-        .tag-emerald { background: rgba(16, 185, 129, 0.1); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.25); }
-        .tag-red { background: rgba(239, 68, 68, 0.1); color: #F87171; border: 1px solid rgba(239, 68, 68, 0.25); }
-        .tag-amber { background: rgba(245, 158, 11, 0.1); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.25); }
-        .tag-gray { background: rgba(255, 255, 255, 0.04); color: #8A8A93; border: 1px solid #232327; }
+        .tag-emerald { background: rgba(16, 185, 129, 0.10); color: var(--tm-green); border-color: rgba(16, 185, 129, 0.25); }
+        .tag-red { background: rgba(239, 68, 68, 0.10); color: var(--tm-red); border-color: rgba(239, 68, 68, 0.25); }
+        .tag-amber { background: rgba(245, 158, 11, 0.10); color: var(--tm-amber); border-color: rgba(245, 158, 11, 0.25); }
+        .tag-blue { background: rgba(96, 165, 250, 0.12); color: var(--tm-blue); border-color: rgba(96, 165, 250, 0.25); }
+        .tag-purple { background: rgba(129, 140, 248, 0.14); color: var(--tm-accent); border-color: rgba(129, 140, 248, 0.28); }
+        .tag-gray { background: rgba(148, 163, 184, 0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
 
         .dot { width: 6px; height: 6px; border-radius: 999px; display: inline-block; }
 
         /* Scrollbars */
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
-        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
 
         /* Top bar */
         .topbar {
             height: 56px;
-            background: #0D0D0F;
-            border-bottom: 1px solid #1C1C20;
+            background: var(--tm-bg-elev);
+            border-bottom: 1px solid var(--tm-border);
         }
-
         .search-input {
-            background: #121214;
-            border: 1px solid #1F1F23;
+            background: var(--tm-card);
+            border: 1px solid var(--tm-border-2);
             border-radius: 8px;
             padding: 8px 12px 8px 36px;
             font-size: 13px;
-            color: #E8E8EC;
+            color: var(--tm-text);
             width: 320px;
             outline: none;
             transition: border-color 0.15s;
         }
-
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
 
         .session-chip {
             display: flex;
@@ -318,23 +261,26 @@
             gap: 8px;
             padding: 7px 12px;
             border-radius: 8px;
-            background: #121214;
-            border: 1px solid #1F1F23;
+            background: var(--tm-card);
+            border: 1px solid var(--tm-border-2);
             font-size: 12.5px;
             font-weight: 600;
-            color: #B4B4BD;
+            color: var(--tm-muted);
         }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
 
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        /* AI read sections */
+        .brief-section { border-left: 2px solid var(--tm-border-2); padding-left: 14px; }
+        .brief-section.happened { border-color: var(--tm-muted); }
+        .brief-section.why { border-color: var(--tm-accent); }
+        .brief-section.next { border-color: var(--tm-green); }
 
-        /* AI brief */
-        .brief-section { border-left: 2px solid #26262B; padding-left: 14px; }
-        .brief-section.happened { border-color: #8A8A93; }
-        .brief-section.why { border-color: #3B82F6; }
-        .brief-section.next { border-color: #10B981; }
-
-        /* Position rows */
-        .pos-row { border: 1px solid #1F1F23; border-radius: 8px; padding: 10px 12px; background: #0F0F11; }
+        /* Behavior dimensions */
+        .dim-row { display: flex; align-items: center; gap: 10px; }
+        .dim-bar { flex: 1; height: 6px; border-radius: 999px; background: var(--tm-card-2); border: 1px solid var(--tm-border); overflow: hidden; }
+        .dim-bar-fill { height: 100%; border-radius: 999px; background: var(--tm-accent); transition: width 0.5s ease; }
+        .dim-no-data { opacity: 0.55; }
+        .dim-bar.empty { border-style: dashed; background: transparent; opacity: 0.7; }
 
         .account-select {
             display: flex;
@@ -342,55 +288,34 @@
             gap: 8px;
             padding: 7px 12px;
             border-radius: 8px;
-            background: #121214;
-            border: 1px solid #1F1F23;
+            background: var(--tm-card);
+            border: 1px solid var(--tm-border-2);
             font-size: 12.5px;
             font-weight: 600;
-            color: #E8E8EC;
+            color: var(--tm-text);
         }
+        .account-select:hover { border-color: var(--tm-muted); }
 
-        /* Equity chart */
-        .eq-chart { display: none; }
-        .eq-chart.active { display: block; }
-
-        /* Sidebar collapse chevron */
         .collapse-btn {
-            width: 28px;
-            height: 28px;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            color: #6E6E78;
-            border: none;
             background: transparent;
-            transition: all 0.15s;
-        }
-
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-
-        /* Avatar */
-        .avatar {
-            width: 30px;
-            height: 30px;
+            border: none;
+            color: var(--tm-muted);
+            cursor: pointer;
+            padding: 6px;
             border-radius: 8px;
-            background: linear-gradient(135deg, #10B981, #059669);
-            color: #052E1F;
-            font-weight: 800;
-            font-size: 12px;
-            display: flex;
+            transition: all 0.15s;
+            display: inline-flex;
             align-items: center;
             justify-content: center;
-            flex-shrink: 0;
         }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
 
         .logo-badge {
             width: 30px;
             height: 30px;
             border-radius: 8px;
-            background: #FFFFFF;
-            color: #0A0A0C;
+            background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green));
+            color: #ffffff;
             font-weight: 900;
             font-size: 13px;
             display: flex;
@@ -398,12 +323,29 @@
             justify-content: center;
             flex-shrink: 0;
         }
+        .avatar {
+            width: 30px;
+            height: 30px;
+            border-radius: 999px;
+            background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green));
+            color: #ffffff;
+            font-weight: 800;
+            font-size: 11px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        /* Equity chart */
+        .eq-chart { display: none; }
+        .eq-chart.active { display: block; }
+        .eq-chart text { fill: var(--tm-muted); }
 
         @media (max-width: 640px) {
             .search-input { display: none; }
             .topbar { padding-left: 12px; padding-right: 12px; }
         }
-
         @media (max-width: 1024px) {
             .search-input { width: 180px; }
             .sidebar { width: 64px; }
@@ -420,11 +362,11 @@
 
     <div class="flex h-screen">
 
-        <!-- ============ LEFT SIDEBAR (PRD §3.1) ============ -->
+        <!-- ============ LEFT SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -439,7 +381,7 @@
                 </a>
                 <a href="insights.html" class="nav-item">
                     <svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span>
-                    <span class="nav-label ml-auto text-[10px] font-bold text-[#10B981] bg-[rgba(16,185,129,0.1)] px-1.5 py-0.5 rounded">NEW</span>
+                    <span class="nav-label ml-auto text-[10px] font-bold text-[var(--tm-green)] bg-[rgba(16,185,129,0.1)] px-1.5 py-0.5 rounded">NEW</span>
                 </a>
                 <a href="analytics.html" class="nav-item">
                     <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
@@ -472,7 +414,7 @@
                 </a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item">
                     <svg data-lucide="bell"></svg><span class="nav-label">Notifications</span>
                 </a>
@@ -482,13 +424,13 @@
                 <a href="settings.html" class="nav-item">
                     <svg data-lucide="settings"></svg><span class="nav-label">Settings</span>
                 </a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -496,18 +438,18 @@
         <!-- ============ MAIN AREA ============ -->
         <div class="flex-1 flex flex-col min-w-0">
 
-            <!-- Top global bar (PRD §3.1) -->
+            <!-- Top global bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
                     <input type="text" class="search-input" placeholder="Search trades, symbols, strategies…">
                 </div>
 
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
-                    <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
-                        London · 09:42
+                    <div class="session-chip hide-when-collapsed" id="session-chip">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                        <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed">
                         <span class="conn-dot"></span> Connected
@@ -515,11 +457,11 @@
                     <button class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </button>
-                    <button class="account-select hide-when-collapsed">
-                        <span class="num text-[12px]">$10,000</span>
-                        <span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span>
+                        <span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
@@ -528,96 +470,93 @@
             <main class="flex-1 overflow-y-auto">
                 <div id="dash-content" class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
 
-                    <!-- Page header (PRD §5.1) -->
+                    <!-- ============ SECTION 1 — HEADER ============ -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-[22px] font-bold tracking-tight">Good morning, Alex</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Tuesday, Aug 11, 2026 · London session · 2 trades today</p>
+                            <h1 class="text-[22px] font-bold tracking-tight" id="dash-h1">Good morning, Trader</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5" id="dash-sub">—</p>
                         </div>
                         <div class="flex items-center gap-2.5">
-                            <a href="#" class="btn-ghost">Start Review</a>
-                            <a href="#" class="btn-primary">Log Trade</a>
+                            <a href="journal.html" class="btn-ghost">Start Review</a>
+                            <a href="journal.html?log=1" class="btn-primary">Log Trade</a>
                         </div>
                     </div>
 
-                    <!-- KPI row — above the fold (PRD §5.1) -->
-                    <div class="grid grid-cols-2 xl:grid-cols-4 gap-4">
+                    <!-- ============ SECTION 2 — TODAY'S STATE ============ -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
 
+                        <!-- DISCIPLINE -->
+                        <a href="discipline.html" class="panel kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="label-xs">Discipline</span>
+                                <span class="tag tag-emerald" id="st-disc-state">—</span>
+                            </div>
+                            <div class="kpi-value num" id="st-disc-score">—<span class="text-[14px] text-[var(--tm-dim)] font-semibold">/100</span></div>
+                            <div class="flex items-center justify-between mt-2 text-[11.5px] text-[var(--tm-dim)]">
+                                <span>Strongest: <span class="font-semibold text-[var(--tm-text)]" id="st-disc-strong">—</span></span>
+                                <span>Weakest: <span class="font-semibold text-[var(--tm-text)]" id="st-disc-weak">—</span></span>
+                            </div>
+                            <div class="flex items-center justify-between mt-1.5 text-[11.5px] text-[var(--tm-dim)]">
+                                <span id="st-disc-viol">0 violations today</span>
+                                <span id="st-disc-streak" class="num">0 clean-day streak</span>
+                            </div>
+                        </a>
+
+                        <!-- DAILY RISK -->
+                        <a href="risk.html" class="panel kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="label-xs">Daily Risk</span>
+                                <span class="tag tag-emerald" id="st-risk-state">—</span>
+                            </div>
+                            <div class="kpi-value num" id="st-risk-budget">—</div>
+                            <div class="text-[12px] text-[var(--tm-dim)] mt-0.5"><span id="st-risk-used" class="num">—</span> used · <span id="st-risk-remain" class="num">—</span> remaining</div>
+                            <div class="mini-track mt-3"><div class="mini-fill" id="st-risk-fill" style="width:0%"></div></div>
+                            <div class="flex justify-between mt-1.5 text-[11px] text-[var(--tm-dim)]">
+                                <span class="num" id="st-risk-pct">0% consumed</span>
+                                <span id="st-risk-max" class="num">—</span>
+                            </div>
+                        </a>
+
+                        <!-- DRAWDOWN -->
+                        <a href="risk.html" class="panel kpi p-4 no-underline block transition-all hover:border-[var(--tm-border-2)]">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="label-xs">Drawdown</span>
+                                <span class="tag tag-gray" id="st-dd-state">—</span>
+                            </div>
+                            <div class="kpi-value num" id="st-dd-cur">—</div>
+                            <div class="text-[12px] text-[var(--tm-dim)] mt-0.5">of <span id="st-dd-limit" class="num">—</span> limit · <span id="st-dd-buffer" class="num">—</span> buffer left</div>
+                            <div class="mini-track mt-3"><div class="mini-fill" id="st-dd-fill" style="width:0%"></div></div>
+                            <div class="flex justify-between mt-1.5 text-[11px] text-[var(--tm-dim)]">
+                                <span class="num" id="st-dd-pct">0% of limit used</span>
+                                <span id="st-dd-marker">—</span>
+                            </div>
+                        </a>
+
+                        <!-- TODAY'S PERFORMANCE -->
                         <div class="panel kpi p-4">
                             <div class="flex items-center justify-between mb-2">
-                                <span class="label-xs">Net P&amp;L Today</span>
-                                <span class="tag tag-emerald">+1.25R</span>
+                                <span class="label-xs">Today's Performance</span>
+                                <span class="tag tag-gray" id="st-perf-trades">0 trades</span>
                             </div>
-                            <div class="kpi-value pos num">+$312.50</div>
-                            <div class="flex items-center gap-1.5 mt-2 text-[12px] text-[#6E6E78]">
-                                <svg data-lucide="trending-up" class="w-3.5 h-3.5 text-tm-green"></svg>
-                                <span class="text-tm-green num font-semibold">+$128.30</span>
-                                vs yesterday (+$184.20)
-                            </div>
-                        </div>
-
-                        <div class="panel kpi p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="label-xs">Daily Risk Budget</span>
-                                <span class="tag tag-emerald">Normal</span>
-                            </div>
-                            <div class="kpi-value num">$180</div>
-                            <div class="text-[12px] text-[#6E6E78] mt-0.5">remaining of $250</div>
-                            <div class="mini-track mt-3">
-                                <div class="mini-fill bg-[#10B981]" style="width:28%"></div>
-                            </div>
-                            <div class="flex justify-between mt-1.5 text-[11px] text-[#6E6E78]">
-                                <span class="num">Used $70 · 28%</span><span class="num">72% left</span>
-                            </div>
-                        </div>
-
-                        <div class="panel kpi p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="label-xs">Drawdown Remaining</span>
-                                <span class="tag tag-gray">18% used</span>
-                            </div>
-                            <div class="kpi-value num">$820</div>
-                            <div class="text-[12px] text-[#6E6E78] mt-0.5">of $1,000 limit</div>
-                            <div class="mini-track mt-3">
-                                <div class="mini-fill bg-[#10B981]" style="width:18%"></div>
-                            </div>
-                            <div class="flex justify-between mt-1.5 text-[11px] text-[#6E6E78]">
-                                <span class="num">Caution at $300</span><span class="num">Safe</span>
-                            </div>
-                        </div>
-
-                        <div class="panel kpi p-4">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="label-xs">Discipline Score</span>
-                                <span class="tag tag-emerald">On track</span>
-                            </div>
-                            <div class="kpi-value num">92<span class="text-[14px] text-[#6E6E78] font-semibold">/100</span></div>
-                            <div class="text-[12px] text-[#6E6E78] mt-0.5">rule adherence 94%</div>
-                            <div class="mini-track mt-3">
-                                <div class="mini-fill bg-[#10B981]" style="width:92%"></div>
-                            </div>
-                            <div class="flex justify-between mt-1.5 text-[11px] text-[#6E6E78]">
-                                <span class="num">0 violations today</span><span>▲ 3 pts</span>
+                            <div class="kpi-value num" id="st-perf-pnl">—</div>
+                            <div class="text-[12px] text-[var(--tm-dim)] mt-0.5"><span id="st-perf-wl" class="num">0W / 0L</span></div>
+                            <div class="mini-track mt-3"><div class="mini-fill" id="st-perf-fill" style="width:0%"></div></div>
+                            <div class="flex justify-between mt-1.5 text-[11px] text-[var(--tm-dim)]">
+                                <span class="num" id="st-perf-avgr">+0.00R avg</span>
+                                <span id="st-perf-ref">—</span>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Quick actions (PRD §5.2) -->
-                    <div class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
-                        <button class="quick-action"><svg data-lucide="plus"></svg> Log Trade</button>
-                        <button class="quick-action"><svg data-lucide="file-down"></svg> Import Trade</button>
-                        <button class="quick-action"><svg data-lucide="check-circle-2"></svg> Review Day</button>
-                        <button class="quick-action"><svg data-lucide="play"></svg> Open Replay</button>
-                        <button class="quick-action"><svg data-lucide="flask-conical"></svg> Test Strategy</button>
-                    </div>
+                    <!-- ============ SECTION 3 — PRIMARY WORKSPACE ============ -->
+                    <div class="grid grid-cols-1 lg:grid-cols-5 gap-4">
 
-                    <!-- Equity + Risk meter (PRD §5.2) -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <div class="panel p-5 lg:col-span-2">
+                        <!-- PERFORMANCE -->
+                        <div class="panel p-5 lg:col-span-3">
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <div class="panel-title">Equity Curve</div>
-                                    <div class="panel-sub mt-0.5">Last 7 days · +$312.50 today</div>
+                                    <div class="panel-title">Performance</div>
+                                    <div class="panel-sub mt-0.5" id="eq-sub">Equity curve from your live ledger</div>
                                 </div>
                                 <div class="flex items-center gap-3">
                                     <div class="seg" id="eq-units">
@@ -634,380 +573,227 @@
                             </div>
 
                             <!-- DAILY -->
-                            <div class="eq-chart active" data-chart="daily" data-zoom="usd">
-                                <svg viewBox="0 0 760 220" class="w-full" preserveAspectRatio="none">
+                            <div class="eq-chart active" data-chart="daily">
+                                <svg viewBox="0 0 760 200" class="w-full" preserveAspectRatio="none">
                                     <defs>
                                         <linearGradient id="eqfill-d" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="#10B981" stop-opacity="0.22"/>
-                                            <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                                            <stop offset="0%" stop-color="var(--tm-green)" stop-opacity="0.22"/>
+                                            <stop offset="100%" stop-color="var(--tm-green)" stop-opacity="0"/>
                                         </linearGradient>
                                     </defs>
-                                    <g stroke="#1F1F23" stroke-width="1">
-                                        <line x1="0" y1="30" x2="760" y2="30"/><line x1="0" y1="75" x2="760" y2="75"/>
-                                        <line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="165" x2="760" y2="165"/>
-                                        <line x1="0" y1="210" x2="760" y2="210"/>
-                                    </g>
-                                    <path d="M0 178 L108 168 L217 152 L326 160 L435 132 L544 108 L653 74 L760 30 L760 210 L0 210 Z" fill="url(#eqfill-d)"/>
-                                    <polyline points="0,178 108,168 217,152 326,160 435,132 544,108 653,74 760,30" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <g fill="#0A0A0C" stroke="#10B981" stroke-width="2">
-                                        <circle cx="0" cy="178" r="4"/><circle cx="108" cy="168" r="4"/><circle cx="217" cy="152" r="4"/><circle cx="326" cy="160" r="4"/>
-                                        <circle cx="435" cy="132" r="4"/><circle cx="544" cy="108" r="4"/><circle cx="653" cy="74" r="4"/><circle cx="760" cy="30" r="5" fill="#10B981"/>
-                                    </g>
-                                    <g fill="#6E6E78" font-family="JetBrains Mono, monospace" font-size="10">
-                                        <text x="0" y="212">May 14</text><text x="108" y="212">15</text><text x="217" y="212">16</text>
-                                        <text x="326" y="212">17</text><text x="435" y="212">18</text><text x="544" y="212">19</text>
-                                        <text x="653" y="212">20</text><text x="720" y="212">21</text>
-                                    </g>
                                 </svg>
                             </div>
 
                             <!-- WEEKLY -->
                             <div class="eq-chart" data-chart="weekly">
-                                <svg viewBox="0 0 760 220" class="w-full" preserveAspectRatio="none">
+                                <svg viewBox="0 0 760 200" class="w-full" preserveAspectRatio="none">
                                     <defs>
                                         <linearGradient id="eqfill-w" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="#10B981" stop-opacity="0.22"/>
-                                            <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                                            <stop offset="0%" stop-color="var(--tm-green)" stop-opacity="0.22"/>
+                                            <stop offset="100%" stop-color="var(--tm-green)" stop-opacity="0"/>
                                         </linearGradient>
                                     </defs>
-                                    <g stroke="#1F1F23" stroke-width="1">
-                                        <line x1="0" y1="30" x2="760" y2="30"/><line x1="0" y1="75" x2="760" y2="75"/>
-                                        <line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="165" x2="760" y2="165"/>
-                                        <line x1="0" y1="210" x2="760" y2="210"/>
-                                    </g>
-                                    <path d="M0 190 L152 172 L304 150 L456 140 L608 96 L760 40 L760 210 L0 210 Z" fill="url(#eqfill-w)"/>
-                                    <polyline points="0,190 152,172 304,150 456,140 608,96 760,40" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <g fill="#0A0A0C" stroke="#10B981" stroke-width="2">
-                                        <circle cx="0" cy="190" r="4"/><circle cx="152" cy="172" r="4"/><circle cx="304" cy="150" r="4"/><circle cx="456" cy="140" r="4"/><circle cx="608" cy="96" r="4"/><circle cx="760" cy="40" r="5" fill="#10B981"/>
-                                    </g>
-                                    <g fill="#6E6E78" font-family="JetBrains Mono, monospace" font-size="10">
-                                        <text x="0" y="212">W21</text><text x="152" y="212">W22</text><text x="304" y="212">W23</text>
-                                        <text x="456" y="212">W24</text><text x="608" y="212">W25</text><text x="720" y="212">W26</text>
-                                    </g>
                                 </svg>
                             </div>
 
                             <!-- MONTHLY -->
                             <div class="eq-chart" data-chart="monthly">
-                                <svg viewBox="0 0 760 220" class="w-full" preserveAspectRatio="none">
+                                <svg viewBox="0 0 760 200" class="w-full" preserveAspectRatio="none">
                                     <defs>
                                         <linearGradient id="eqfill-m" x1="0" y1="0" x2="0" y2="1">
-                                            <stop offset="0%" stop-color="#10B981" stop-opacity="0.22"/>
-                                            <stop offset="100%" stop-color="#10B981" stop-opacity="0"/>
+                                            <stop offset="0%" stop-color="var(--tm-green)" stop-opacity="0.22"/>
+                                            <stop offset="100%" stop-color="var(--tm-green)" stop-opacity="0"/>
                                         </linearGradient>
                                     </defs>
-                                    <g stroke="#1F1F23" stroke-width="1">
-                                        <line x1="0" y1="30" x2="760" y2="30"/><line x1="0" y1="75" x2="760" y2="75"/>
-                                        <line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="165" x2="760" y2="165"/>
-                                        <line x1="0" y1="210" x2="760" y2="210"/>
-                                    </g>
-                                    <path d="M0 180 L217 158 L434 128 L651 92 L760 60 L760 210 L0 210 Z" fill="url(#eqfill-m)"/>
-                                    <polyline points="0,180 217,158 434,128 651,92 760,60" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
-                                    <g fill="#0A0A0C" stroke="#10B981" stroke-width="2">
-                                        <circle cx="0" cy="180" r="4"/><circle cx="217" cy="158" r="4"/><circle cx="434" cy="128" r="4"/><circle cx="651" cy="92" r="4"/><circle cx="760" cy="60" r="5" fill="#10B981"/>
-                                    </g>
-                                    <g fill="#6E6E78" font-family="JetBrains Mono, monospace" font-size="10">
-                                        <text x="0" y="212">Mar</text><text x="217" y="212">Apr</text><text x="434" y="212">May</text>
-                                        <text x="651" y="212">Jun</text><text x="720" y="212">Jul</text>
-                                    </g>
                                 </svg>
                             </div>
 
-                            <div class="flex items-center gap-6 mt-3 text-[11.5px] text-[#6E6E78]">
-                                <span class="flex items-center gap-1.5"><span class="dot bg-[#10B981]"></span> Equity</span>
-                                <span class="num">Best day: <span class="text-tm-green">+$128.30 (May 19)</span></span>
-                                <span class="num">Worst day: <span class="text-tm-red">-$42.00 (May 17)</span></span>
-                            </div>
-                        </div>
-
-                        <!-- Risk meter + drawdown proximity (PRD §5.2) -->
-                        <div class="flex flex-col gap-4">
-                            <div class="panel p-5 risk-level-normal">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="panel-title">Risk Meter</div>
-                                    <span class="tag tag-emerald"><span class="dot bg-tm-green"></span> Normal</span>
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+                                <div class="rounded-lg border border-[var(--tm-border)] bg-[var(--tm-card-2)] p-3">
+                                    <div class="label-xs mb-1">Net P&amp;L</div>
+                                    <div class="num text-[15px] font-bold" id="perf-net">—</div>
                                 </div>
-                                <p class="text-[12px] text-[#6E6E78] mb-4">Daily loss limit $250</p>
-
-                                <div class="risk-track">
-                                    <div class="risk-consumed" style="width:28%"></div>
+                                <div class="rounded-lg border border-[var(--tm-border)] bg-[var(--tm-card-2)] p-3">
+                                    <div class="label-xs mb-1">Expectancy</div>
+                                    <div class="num text-[15px] font-bold" id="perf-exp">—</div>
                                 </div>
-
-                                <div class="grid grid-cols-3 gap-2 mt-4">
-                                    <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
-                                        <div class="label-xs mb-1">Limit</div>
-                                        <div class="num text-[16px] font-bold">$250</div>
-                                    </div>
-                                    <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
-                                        <div class="label-xs mb-1">Consumed</div>
-                                        <div class="num text-[16px] font-bold text-[#F59E0B]">$70</div>
-                                    </div>
-                                    <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
-                                        <div class="label-xs mb-1">Remaining</div>
-                                        <div class="num text-[16px] font-bold text-tm-green">$180</div>
-                                    </div>
+                                <div class="rounded-lg border border-[var(--tm-border)] bg-[var(--tm-card-2)] p-3">
+                                    <div class="label-xs mb-1">Average R</div>
+                                    <div class="num text-[15px] font-bold" id="perf-avgr">—</div>
+                                </div>
+                                <div class="rounded-lg border border-[var(--tm-border)] bg-[var(--tm-card-2)] p-3">
+                                    <div class="label-xs mb-1">Max Drawdown</div>
+                                    <div class="num text-[15px] font-bold" id="perf-maxdd">—</div>
                                 </div>
                             </div>
 
-                            <div class="panel p-5">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="panel-title">Drawdown Proximity</div>
-                                    <span class="tag tag-gray">Safe</span>
-                                </div>
-                                <p class="text-[12px] text-[#6E6E78] mb-4">$180 of $1,000 used</p>
-
-                                <div class="dd-track">
-                                    <div class="dd-fill" style="width:18%"></div>
-                                    <div class="dd-marker" style="left:70%"></div>
-                                    <div class="dd-marker" style="left:85%; background:#F59E0B;"></div>
-                                    <div class="dd-marker" style="left:95%; background:#EF4444;"></div>
-                                </div>
-
-                                <div class="flex justify-between mt-3 text-[11px] text-[#6E6E78]">
-                                    <span class="num">70% · Caution</span>
-                                    <span class="num text-[#F59E0B]">85% · High</span>
-                                    <span class="num text-tm-red">95% · Critical</span>
-                                </div>
-                                <p class="text-[12px] text-[#6E6E78] mt-4 leading-relaxed">
-                                    <span class="text-tm-green font-semibold">$820</span> of buffer left before the 70% caution threshold.
-                                </p>
+                            <div class="flex items-center gap-6 mt-3 text-[11.5px] text-[var(--tm-dim)]">
+                                <span class="flex items-center gap-1.5"><span class="dot bg-[var(--tm-green)]"></span> Equity</span>
+                                <span class="num" id="eq-best">—</span>
+                                <span class="num" id="eq-worst">—</span>
                             </div>
-                        </div>
-                    </div>
-
-                    <!-- Performance + Positions + AI brief -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-
-                        <!-- Performance snapshot (PRD §5.2) -->
-                        <div class="panel p-5">
-                            <div class="panel-title mb-4">Performance Snapshot</div>
-                            <div class="flex flex-col divide-y divide-[#17171A]">
-                                <div class="flex items-center justify-between py-2.5">
-                                    <span class="text-[13px] text-[#8A8A93]">Win rate</span>
-                                    <span class="num text-[15px] font-bold text-white">68.4%</span>
-                                </div>
-                                <div class="flex items-center justify-between py-2.5">
-                                    <span class="text-[13px] text-[#8A8A93]">Profit factor</span>
-                                    <span class="num text-[15px] font-bold text-white">2.18</span>
-                                </div>
-                                <div class="flex items-center justify-between py-2.5">
-                                    <span class="text-[13px] text-[#8A8A93]">Expectancy</span>
-                                    <span class="num text-[15px] font-bold text-tm-green">+1.82R</span>
-                                </div>
-                                <div class="flex items-center justify-between py-2.5">
-                                    <span class="text-[13px] text-[#8A8A93]">Average R</span>
-                                    <span class="num text-[15px] font-bold text-tm-green">+1.42R</span>
-                                </div>
-                                <div class="flex items-center justify-between py-2.5">
-                                    <span class="text-[13px] text-[#8A8A93]">Max drawdown</span>
-                                    <span class="num text-[15px] font-bold text-tm-red">-1.06R</span>
-                                </div>
-                                <div class="flex items-center justify-between py-2.5">
-                                    <span class="text-[13px] text-[#8A8A93]">Trades (60d)</span>
-                                    <span class="num text-[15px] font-bold text-white">60</span>
-                                </div>
-                            </div>
-                            <a href="analytics.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-3 hover:text-tm-green transition-colors">
+                            <a href="analytics.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[var(--tm-green)] mt-3 hover:opacity-80 transition-opacity">
                                 View full analytics <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
                             </a>
                         </div>
 
-                        <!-- Open positions (PRD §5.2) -->
-                        <div class="panel p-5">
+                        <!-- YOUR BEHAVIOR -->
+                        <div class="panel p-5 lg:col-span-2 flex flex-col">
                             <div class="flex items-center justify-between mb-4">
-                                <div class="panel-title">Open Positions</div>
-                                <span class="tag tag-gray">2 open</span>
-                            </div>
-                            <div class="flex flex-col gap-2.5">
-                                <div class="pos-row flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-tm-green">EU</div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="text-[13.5px] font-semibold text-white">EURUSD <span class="tag tag-emerald ml-1 !px-1.5 !py-0.5 text-[10px]">LONG</span></div>
-                                        <div class="text-[11.5px] text-[#6E6E78] num">1.08912 · 0.50 lots · risk $25</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="num text-[13.5px] font-bold text-tm-green">+$85.20</div>
-                                        <div class="num text-[11px] text-[#6E6E78]">+0.34R</div>
-                                    </div>
+                                <div>
+                                    <div class="panel-title">Your Behavior</div>
+                                    <div class="panel-sub mt-0.5">Process score, not profitability</div>
                                 </div>
-                                <div class="pos-row flex items-center gap-3">
-                                    <div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-tm-red">NQ</div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="text-[13.5px] font-semibold text-white">NAS100 <span class="tag tag-red ml-1 !px-1.5 !py-0.5 text-[10px]">SHORT</span></div>
-                                        <div class="text-[11.5px] text-[#6E6E78] num">21,845 · 1 contract · risk $30</div>
-                                    </div>
-                                    <div class="text-right">
-                                        <div class="num text-[13.5px] font-bold text-tm-green">+$124.00</div>
-                                        <div class="num text-[11px] text-[#6E6E78]">+0.50R</div>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex items-center justify-between mt-4 pt-3 border-t border-[#17171A]">
-                                <span class="text-[12.5px] text-[#8A8A93]">Total exposure</span>
-                                <span class="num text-[13px] font-bold text-white">$209.20 <span class="text-[#6E6E78] font-semibold">· 0.84R at risk</span></span>
-                            </div>
-                        </div>
-
-                        <!-- AI Daily Brief (PRD §5.2) -->
-                        <div class="panel p-5">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="panel-title flex items-center gap-2">
-                                    <svg data-lucide="sparkles" class="w-4 h-4 text-[#10B981]"></svg>
-                                    AI Daily Brief
-                                </div>
-                                <span class="text-[11px] text-[#6E6E78] num">09:40 · generated</span>
+                                <span class="tag" id="bh-state">—</span>
                             </div>
 
-                            <div class="flex flex-col gap-4">
-                                <div class="brief-section happened">
-                                    <div class="label-xs mb-1">What happened</div>
-                                    <p class="text-[13px] text-[#C4C4CC] leading-relaxed">Both trades followed the MSS + FVG plan in London. 1 win (+2.4R), 1 scratch — no rule breaks detected.</p>
-                                </div>
-                                <div class="brief-section why">
-                                    <div class="label-xs mb-1">Why it matters</div>
-                                    <p class="text-[13px] text-[#C4C4CC] leading-relaxed">Your best setup has now produced <span class="text-white font-semibold">72% of this month's profit</span> — consistency is compounding.</p>
-                                </div>
-                                <div class="brief-section next">
-                                    <div class="label-xs mb-1">What to do next</div>
-                                    <p class="text-[13px] text-[#C4C4CC] leading-relaxed">Stop for the morning. NY session bias is unclear — wait for the 10:00 CPI print before considering a new entry.</p>
-                                </div>
+                            <div class="flex items-end gap-2 mb-1">
+                                <span class="num text-[44px] font-bold leading-none" id="bh-score">—</span>
+                                <span class="num text-[14px] text-[var(--tm-dim)] font-semibold mb-1">/100</span>
                             </div>
 
-                            <a href="#" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-4 hover:text-tm-green transition-colors">
-                                View insights <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                            <div class="flex flex-col gap-2.5 mt-4" id="bh-dims"></div>
+
+                            <div class="flex items-center justify-between mt-4 pt-4 border-t border-[var(--tm-border)] text-[12px] text-[var(--tm-dim)]">
+                                <span id="bh-strong">—</span>
+                                <span id="bh-weak">—</span>
+                            </div>
+                            <div class="flex items-center justify-between mt-2 text-[12px] text-[var(--tm-dim)]">
+                                <span id="bh-streak" class="num">0 clean-day streak</span>
+                                <span id="bh-viol" class="num">0 violations</span>
+                            </div>
+
+                            <a href="discipline.html" class="btn-ghost mt-5 !py-2 !px-3.5 text-[12.5px] justify-center">
+                                View discipline <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
                             </a>
                         </div>
                     </div>
 
-                    <!-- Recent trades + Behavior -->
+                    <!-- ============ SECTION 4 — BATTLEX READ ============ -->
+                    <div class="panel p-5 relative overflow-hidden border-l-[3px] border-l-[var(--tm-accent)]">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                            <div class="flex items-center gap-2.5">
+                                <span class="logo-badge !w-7 !h-7 !text-[11px]">B</span>
+                                <div>
+                                    <div class="panel-title text-[15px]">Battlex Read</div>
+                                    <div class="panel-sub mt-0.5">The most important behavioral finding in your data right now</div>
+                                </div>
+                            </div>
+                            <span class="tag tag-gray" id="bx-sev">—</span>
+                        </div>
+                        <div id="bx-body"></div>
+                        <div class="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-[var(--tm-border)]">
+                            <a href="insights.html" class="btn-primary !py-2 !px-3.5 text-[12.5px]"><svg data-lucide="eye" class="w-4 h-4"></svg> View evidence</a>
+                            <a href="ai.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px]"><svg data-lucide="brain-circuit" class="w-4 h-4"></svg> Ask AI Mentor</a>
+                        </div>
+                    </div>
+
+                    <!-- ============ SECTION 5+6 — RECENT TRADES + CURRENT EXPOSURE ============ -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-                        <!-- Recent trades table (PRD §5.2) -->
+                        <!-- Recent trades table -->
                         <div class="panel lg:col-span-2 overflow-hidden">
                             <div class="flex items-center justify-between px-5 pt-5 pb-3">
                                 <div>
                                     <div class="panel-title">Recent Trades</div>
-                                    <div class="panel-sub mt-0.5">Today · London session</div>
+                                    <div class="panel-sub mt-0.5" id="rt-sub">From your live ledger</div>
                                 </div>
-                                <a href="journal.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] hover:text-tm-green transition-colors">
-                                    Open journal <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                                <a href="journal.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[var(--tm-green)] hover:opacity-80 transition-opacity">
+                                    Open Journal <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
                                 </a>
                             </div>
                             <div class="overflow-x-auto">
                                 <table class="tbl w-full">
                                     <thead>
                                         <tr>
-                                            <th>Time</th><th>Symbol</th><th>Dir</th><th>Setup</th><th>Session</th><th>Result</th><th>R</th><th>Discipline</th>
+                                            <th>Time</th><th>Symbol</th><th>Dir</th><th>Setup</th><th>Session</th><th>Result</th><th>R</th><th>Discipline</th><th>Review</th>
                                         </tr>
                                     </thead>
-                                    <tbody>
-                                        <tr>
-                                            <td class="num text-[#6E6E78]">09:32</td>
-                                            <td class="font-semibold text-white">EURUSD</td>
-                                            <td><span class="tag tag-emerald">Long</span></td>
-                                            <td>MSS + FVG</td>
-                                            <td class="num text-[#6E6E78]">London</td>
-                                            <td class="num font-bold text-tm-green">+240.00</td>
-                                            <td class="num font-bold text-tm-green">+2.4R</td>
-                                            <td><span class="flex items-center gap-1.5 text-tm-green"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="num text-[#6E6E78]">08:14</td>
-                                            <td class="font-semibold text-white">XAUUSD</td>
-                                            <td><span class="tag tag-emerald">Long</span></td>
-                                            <td>FVG</td>
-                                            <td class="num text-[#6E6E78]">London</td>
-                                            <td class="num font-bold text-[#6E6E78]">0.00</td>
-                                            <td class="num font-bold text-[#6E6E78]">0.0R</td>
-                                            <td><span class="flex items-center gap-1.5 text-tm-green"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="num text-[#6E6E78]">May 20</td>
-                                            <td class="font-semibold text-white">GBPUSD</td>
-                                            <td><span class="tag tag-red">Short</span></td>
-                                            <td>MSS + FVG</td>
-                                            <td class="num text-[#6E6E78]">New York</td>
-                                            <td class="num font-bold text-tm-green">+110.00</td>
-                                            <td class="num font-bold text-tm-green">+1.1R</td>
-                                            <td><span class="flex items-center gap-1.5 text-tm-green"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="num text-[#6E6E78]">May 19</td>
-                                            <td class="font-semibold text-white">EURUSD</td>
-                                            <td><span class="tag tag-red">Short</span></td>
-                                            <td>FVG</td>
-                                            <td class="num text-[#6E6E78]">London</td>
-                                            <td class="num font-bold text-tm-red">-100.00</td>
-                                            <td class="num font-bold text-tm-red">-1.0R</td>
-                                            <td><span class="flex items-center gap-1.5 text-[#F59E0B]"><svg data-lucide="alert-triangle" class="w-3.5 h-3.5"></svg> Early exit</span></td>
-                                        </tr>
-                                        <tr>
-                                            <td class="num text-[#6E6E78]">May 19</td>
-                                            <td class="font-semibold text-white">NAS100</td>
-                                            <td><span class="tag tag-emerald">Long</span></td>
-                                            <td>Breakout</td>
-                                            <td class="num text-[#6E6E78]">New York</td>
-                                            <td class="num font-bold text-tm-green">+384.00</td>
-                                            <td class="num font-bold text-tm-green">+3.84R</td>
-                                            <td><span class="flex items-center gap-1.5 text-tm-green"><svg data-lucide="check" class="w-3.5 h-3.5"></svg> Followed</span></td>
-                                        </tr>
-                                    </tbody>
+                                    <tbody id="rt-body"></tbody>
                                 </table>
                             </div>
                         </div>
 
-                        <!-- Today's behavior + journal completion (PRD §5.2) -->
+                        <!-- Current Exposure (compact) -->
                         <div class="panel p-5">
-                            <div class="panel-title mb-4">Today's Behavior</div>
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="panel-title">Current Exposure</div>
+                                <span class="tag tag-gray" id="ce-tag">0 today</span>
+                            </div>
+                            <div id="ce-body"></div>
+                        </div>
+                    </div>
 
-                            <div class="grid grid-cols-2 gap-3 mb-4">
-                                <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
-                                    <div class="label-xs mb-1">Trades</div>
-                                    <div class="num text-[18px] font-bold text-white">2</div>
-                                    <div class="text-[11px] text-[#6E6E78] num">1W / 1L</div>
+                    <!-- ============ SECTION 7+8 — AI DAILY READ + WEEKLY FOCUS ============ -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+                        <!-- AI Daily Read -->
+                        <div class="panel p-5 lg:col-span-2">
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="panel-title flex items-center gap-2">
+                                    <svg data-lucide="sparkles" class="w-4 h-4 text-[var(--tm-accent)]"></svg>
+                                    AI Daily Read
                                 </div>
-                                <div class="bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-3">
-                                    <div class="label-xs mb-1">Overtrading</div>
-                                    <div class="num text-[18px] font-bold text-tm-green">Low</div>
-                                    <div class="text-[11px] text-[#6E6E78]">2 of 5 trade budget</div>
+                                <span class="text-[11px] text-[var(--tm-dim)] num" id="ai-stamp">—</span>
+                            </div>
+                            <div class="flex flex-col gap-4">
+                                <div class="brief-section happened">
+                                    <div class="label-xs mb-1">What happened</div>
+                                    <p class="text-[13px] text-[var(--tm-muted)] leading-relaxed" id="ai-what">—</p>
+                                </div>
+                                <div class="brief-section why">
+                                    <div class="label-xs mb-1">Why it matters</div>
+                                    <p class="text-[13px] text-[var(--tm-muted)] leading-relaxed" id="ai-why">—</p>
+                                </div>
+                                <div class="brief-section next">
+                                    <div class="label-xs mb-1">What to do next</div>
+                                    <p class="text-[13px] text-[var(--tm-muted)] leading-relaxed" id="ai-next">—</p>
                                 </div>
                             </div>
+                            <a href="ai.html" class="flex items-center gap-1 text-[12.5px] font-semibold text-[var(--tm-green)] mt-4 hover:opacity-80 transition-opacity">
+                                Open AI Mentor <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                            </a>
+                        </div>
 
-                            <div class="flex flex-col gap-2.5 text-[13px]">
-                                <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
-                                    <span class="text-[#8A8A93]">Best setup today</span>
-                                    <span class="font-semibold text-white">MSS + FVG <span class="num text-tm-green">+2.4R</span></span>
+                        <!-- Weekly Focus -->
+                        <div class="panel p-5">
+                            <div class="panel-title mb-4">Weekly Focus</div>
+                            <div class="flex flex-col gap-4" id="wf-items">
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[12.5px] text-[var(--tm-dim)]">Trade budget</span>
+                                        <span class="num text-[12px] font-bold" id="wf-budget">—</span>
+                                    </div>
+                                    <div class="mini-track"><div class="mini-fill" id="wf-budget-fill" style="width:0%"></div></div>
                                 </div>
-                                <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
-                                    <span class="text-[#8A8A93]">Worst setup today</span>
-                                    <span class="text-[#6E6E78]">—</span>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[12.5px] text-[var(--tm-dim)]">Reviews completed</span>
+                                        <span class="num text-[12px] font-bold" id="wf-reviews">—</span>
+                                    </div>
+                                    <div class="mini-track"><div class="mini-fill" id="wf-reviews-fill" style="width:0%"></div></div>
                                 </div>
-                                <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
-                                    <span class="text-[#8A8A93]">Best behavior</span>
-                                    <span class="font-semibold text-white">Waited for confirmation</span>
+                                <div>
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-[12.5px] text-[var(--tm-dim)]">Replay practice</span>
+                                        <span class="num text-[12px] font-bold" id="wf-practice">—</span>
+                                    </div>
+                                    <div class="mini-track"><div class="mini-fill" id="wf-practice-fill" style="width:0%"></div></div>
                                 </div>
-                                <div class="flex items-center justify-between py-2 border-b border-[#17171A]">
-                                    <span class="text-[#8A8A93]">Worst behavior</span>
-                                    <span class="text-[#6E6E78]">None flagged</span>
+                                <div class="flex items-center justify-between text-[12.5px]">
+                                    <span class="text-[var(--tm-dim)]">Pending reviews</span>
+                                    <span class="num font-bold" id="wf-pending">—</span>
                                 </div>
-                            </div>
-
-                            <div class="mt-4 pt-4 border-t border-[#17171A]">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[12.5px] font-semibold text-white">Journal completion</span>
-                                    <span class="num text-[12px] text-[#F59E0B]">1 of 2 reviewed</span>
+                                <div class="flex items-center justify-between text-[12.5px]">
+                                    <span class="text-[var(--tm-dim)]">Discipline focus</span>
+                                    <span class="font-semibold" id="wf-focus">—</span>
                                 </div>
-                                <div class="mini-track">
-                                    <div class="mini-fill bg-[#F59E0B]" style="width:50%"></div>
-                                </div>
-                                <a href="#" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] mt-3 hover:text-tm-green transition-colors">
-                                    Review pending trade <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
-                                </a>
+                                <p class="text-[12px] text-[var(--tm-dim)] leading-relaxed mt-1" id="wf-note">—</p>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Market events + Weekly focus -->
+                    <!-- ============ SECTION 9 — MARKET EVENTS ============ -->
                     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
                         <div class="panel p-5 lg:col-span-2">
                             <div class="flex items-center justify-between mb-3">
@@ -1015,61 +801,30 @@
                                 <span id="ecocal-live" class="tag tag-gray">Live calendar · loading…</span>
                             </div>
                             <div class="flex flex-wrap gap-1.5 mb-3" id="ecocal-sessions"></div>
-                            <div id="ecocal-list" class="flex flex-col divide-y divide-[#17171A]">
-                                <div class="py-6 text-center text-[12.5px] text-[#6E6E78]">Loading live economic events…</div>
+                            <div id="ecocal-list" class="flex flex-col divide-y divide-[var(--tm-border)]">
+                                <div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">Loading live economic events…</div>
                             </div>
                         </div>
 
-                        <!-- Weekly focus -->
+                        <!-- Battles -->
                         <div class="panel p-5">
-                            <div class="panel-title mb-4">Weekly Focus</div>
-                            <div class="flex flex-col gap-4">
+                            <div class="flex items-center justify-between mb-4">
                                 <div>
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-[12.5px] text-[#8A8A93]">Trade budget</span>
-                                        <span class="num text-[12px] font-bold text-white">14 / 25</span>
-                                    </div>
-                                    <div class="mini-track"><div class="mini-fill bg-[#10B981]" style="width:56%"></div></div>
+                                    <div class="panel-title">Live Battles</div>
+                                    <div class="panel-sub mt-0.5">Everyone trades the same replay</div>
                                 </div>
-                                <div>
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-[12.5px] text-[#8A8A93]">Reviews completed</span>
-                                        <span class="num text-[12px] font-bold text-white">9 / 12</span>
-                                    </div>
-                                    <div class="mini-track"><div class="mini-fill bg-[#10B981]" style="width:75%"></div></div>
-                                </div>
-                                <div>
-                                    <div class="flex items-center justify-between mb-2">
-                                        <span class="text-[12.5px] text-[#8A8A93]">Replay practice</span>
-                                        <span class="num text-[12px] font-bold text-white">2 / 3</span>
-                                    </div>
-                                    <div class="mini-track"><div class="mini-fill bg-[#10B981]" style="width:66%"></div></div>
-                                </div>
-                                <p class="text-[12px] text-[#6E6E78] leading-relaxed mt-1">
-                                    On pace for a <span class="text-white font-semibold">green week</span> — 3 reviews behind target, 1 replay session left.
-                                </p>
+                                <a href="backtesting.html?mode=battle" class="flex items-center gap-1 text-[12.5px] font-semibold text-[var(--tm-green)] hover:opacity-80 transition-opacity">
+                                    Open <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
+                                </a>
                             </div>
+                            <div id="battles-active" class="flex flex-col divide-y divide-[var(--tm-border)]"></div>
+                            <div id="battles-invites" class="flex flex-col divide-y divide-[var(--tm-border)]"></div>
+                            <div id="battles-results" class="flex flex-col divide-y divide-[var(--tm-border)]"></div>
+                            <div id="battles-empty" class="py-5 text-center text-[12.5px] text-[var(--tm-dim)]">Loading battles…</div>
                         </div>
                     </div>
 
-                    <!-- Live Battles feed (real-time via /ws, same canonical data) -->
-                    <div class="panel p-5">
-                        <div class="flex items-center justify-between mb-4">
-                            <div>
-                                <div class="panel-title">Live Battles</div>
-                                <div class="panel-sub mt-0.5" id="battles-sub">Real-time — everyone trades the same replay</div>
-                            </div>
-                            <a href="backtesting.html?mode=battle" class="flex items-center gap-1 text-[12.5px] font-semibold text-[#10B981] hover:text-tm-green transition-colors">
-                                Open battles <svg data-lucide="chevron-right" class="w-3.5 h-3.5"></svg>
-                            </a>
-                        </div>
-                        <div id="battles-active" class="flex flex-col divide-y divide-[#17171A]"></div>
-                        <div id="battles-invites" class="flex flex-col divide-y divide-[#17171A]"></div>
-                        <div id="battles-results" class="flex flex-col divide-y divide-[#17171A]"></div>
-                        <div id="battles-empty" class="py-5 text-center text-[12.5px] text-[#6E6E78]">Loading battles…</div>
-                    </div>
-
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Dashboard demo build · data is illustrative</p>
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Dashboard · data from your live journal</p>
                 </div>
             </main>
         </div>
@@ -1103,11 +858,13 @@
                 });
             });
 
-            // Equity chart unit switch (R / $ / %) — demo: toggles active state
+            // Equity chart unit switch — re-plot with the chosen unit
             document.querySelectorAll('#eq-units button').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('#eq-units button').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
+                    window.__eqUnit = btn.dataset.unit;
+                    if (window.__plotEq) window.__plotEq();
                 });
             });
 
@@ -1116,9 +873,9 @@
     </script>
     <script>
         /* ------------------------------------------------------------------
-           Live Dashboard sync — headline numbers are read from the canonical
-           core store (RiskService / DisciplineService), never hardcoded.
-           The static layout stays untouched; only values are replaced.
+           Live Dashboard sync — every number is read from the canonical core
+           store (riskState / disciplineState / analytics / insights), never
+           hardcoded. Sections with no data show an honest empty state.
            ------------------------------------------------------------------ */
         (function () {
             'use strict';
@@ -1126,14 +883,10 @@
             var money = function (n) {
                 return (n >= 0 ? '+' : '-') + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
             };
-            var byTitle = function (root, title) {
-                var panels = root.querySelectorAll('.panel');
-                for (var i = 0; i < panels.length; i++) {
-                    var t = panels[i].querySelector('.panel-title');
-                    if (t && t.textContent.trim() === title) return panels[i];
-                }
-                return null;
+            var money0 = function (n) {
+                return (n >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(n)).toLocaleString('en-US');
             };
+            var byId = function (id) { return document.getElementById(id); };
 
             // ---- first-run welcome hero (dismissible, persists per browser) ----
             var WELCOME_KEY = '31trades.welcome.dismissed.v1';
@@ -1141,16 +894,12 @@
                 try { localStorage.setItem(WELCOME_KEY, '1'); } catch (e) {}
                 var hero = document.getElementById('dash-hero');
                 if (hero) hero.remove();
-                // first-run tour: walk the sidebar screens once, right after the
-                // hero is dismissed — unless it has already been completed.
                 if (window.startTour && window.tourCompleted && !window.tourCompleted()) {
                     window.setTimeout(window.startTour, 250);
                 }
             };
             function welcomeFirstName() {
                 try {
-                    // real signed-in user from the Supabase session (auth.html
-                    // stores it); falls back to the email prefix, then 'trader'
                     var s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
                     var u = s && s.user;
                     if (u && u.name) return String(u.name).split(/[\s@]/)[0];
@@ -1172,17 +921,16 @@
                 var name = welcomeFirstName();
                 var step1 = hasAccount ? 'ok' : 'next';
                 var step2 = hasAccount ? 'next' : 'todo';
-                var step3 = 'todo';
                 hero.innerHTML =
                     '<div class="absolute top-3 right-3 flex items-center gap-1.5">' +
-                        '<button onclick="window.startTour && window.startTour()" title="Take a guided tour" class="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-tm-green hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="compass" class="w-4 h-4"></svg></button>' +
-                        '<button onclick="window.dismissWelcome()" title="Dismiss" class="w-8 h-8 rounded-lg flex items-center justify-center text-[#6E6E78] hover:text-white hover:bg-[#16161A] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
+                        '<button onclick="window.startTour && window.startTour()" title="Take a guided tour" class="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--tm-dim)] hover:text-[var(--tm-green)] hover:bg-[var(--tm-hover)] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="compass" class="w-4 h-4"></svg></button>' +
+                        '<button onclick="window.dismissWelcome()" title="Dismiss" class="w-8 h-8 rounded-lg flex items-center justify-center text-[var(--tm-dim)] hover:text-[var(--tm-text)] hover:bg-[var(--tm-hover)] transition-colors border-none bg-transparent cursor-pointer"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
                     '</div>' +
                     '<div class="flex items-start gap-4">' +
-                        '<div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(16,185,129,0.15),rgba(59,130,246,0.12));border:1px solid rgba(16,185,129,0.3)"><svg data-lucide="sparkles" class="w-5 h-5 text-tm-green"></svg></div>' +
+                        '<div class="w-11 h-11 rounded-xl flex-shrink-0 flex items-center justify-center" style="background:linear-gradient(135deg,rgba(99,102,241,0.15),rgba(52,211,153,0.12));border:1px solid rgba(99,102,241,0.3)"><svg data-lucide="sparkles" class="w-5 h-5 text-[var(--tm-accent)]"></svg></div>' +
                         '<div class="min-w-0">' +
-                            '<div class="text-[17px] font-bold tracking-tight">Welcome to 31Trades, <span class="text-tm-green">' + name + '</span> 👋</div>' +
-                            '<p class="text-[13px] text-[#8A8A93] mt-1 max-w-2xl leading-relaxed">Your journal, risk engine and AI mentor are ready. Set up your workspace and log your first trade — every screen reads the same ledger.</p>' +
+                            '<div class="text-[17px] font-bold tracking-tight">Welcome to BattlexJournal, <span class="text-[var(--tm-green)]">' + name + '</span> 👋</div>' +
+                            '<p class="text-[13px] text-[var(--tm-muted)] mt-1 max-w-2xl leading-relaxed">Your journal, risk engine and AI mentor are ready. Set up your workspace and log your first trade — every screen reads the same ledger.</p>' +
                             '<div class="flex flex-wrap items-center gap-2 mt-4">' +
                                 '<a href="strategy-lab.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ' + (step1 === 'ok' ? 'opacity-50' : '') + '"><svg data-lucide="' + (step1 === 'ok' ? 'check-circle-2' : 'wallet') + '" class="w-4 h-4"></svg> Account</a>' +
                                 '<a href="strategy-lab.html" class="btn-ghost !py-2 !px-3.5 text-[12.5px] ' + (step2 === 'ok' ? 'opacity-50' : '') + '"><svg data-lucide="' + (step2 === 'ok' ? 'check-circle-2' : 'beaker') + '" class="w-4 h-4"></svg> Strategy</a>' +
@@ -1217,28 +965,26 @@
                     empty.id = 'dash-empty';
                     empty.className = 'py-24 text-center';
                     if (heroVisible) {
-                        // the first-run hero already greets the user — keep the
-                        // empty state as a quiet note instead of a second welcome
                         empty.innerHTML =
-                            '<p class="text-[13.5px] text-[#6E6E78] max-w-md mx-auto">' +
+                            '<p class="text-[13.5px] text-[var(--tm-dim)] max-w-md mx-auto">' +
                             (hasAccount
                                 ? 'No trades yet — everything below fills in as you journal.'
                                 : 'Your workspace is ready — complete the steps above and log your first trade.') +
                             '</p>';
                     } else if (hasAccount) {
                         empty.innerHTML =
-                            '<svg data-lucide="line-chart" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
-                            '<h2 class="text-[20px] font-bold text-white">No trades yet</h2>' +
-                            '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Your trading intelligence starts with your first trade. Create a strategy, then log a trade — every screen updates from the same local dataset.</p>' +
+                            '<svg data-lucide="line-chart" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>' +
+                            '<h2 class="text-[20px] font-bold">No trades yet</h2>' +
+                            '<p class="text-[13.5px] text-[var(--tm-muted)] mt-2 max-w-md mx-auto">Your trading intelligence starts with your first trade. Create a strategy, then log a trade — every screen updates from the same local dataset.</p>' +
                             '<div class="flex items-center justify-center gap-3 mt-6">' +
                                 '<a href="strategy-lab.html" class="btn-ghost !py-2.5 !px-5 text-[13px]"><svg data-lucide="flask-conical" class="w-4 h-4"></svg> Create First Strategy</a>' +
                                 '<a href="journal.html" class="btn-primary !py-2.5 !px-5 text-[13px]"><svg data-lucide="plus" class="w-4 h-4"></svg> Log First Trade</a>' +
                             '</div>';
                     } else {
                         empty.innerHTML =
-                            '<svg data-lucide="user-plus" class="w-12 h-12 mx-auto text-[#3A3A41] mb-4"></svg>' +
-                            '<h2 class="text-[20px] font-bold text-white">Welcome to 31Trades</h2>' +
-                            '<p class="text-[13.5px] text-[#8A8A93] mt-2 max-w-md mx-auto">Set up your first account (name, size, risk limits), then create a strategy and log your first trade.</p>' +
+                            '<svg data-lucide="user-plus" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>' +
+                            '<h2 class="text-[20px] font-bold">Welcome to BattlexJournal</h2>' +
+                            '<p class="text-[13.5px] text-[var(--tm-muted)] mt-2 max-w-md mx-auto">Set up your first account (name, size, risk limits), then create a strategy and log your first trade.</p>' +
                             '<a href="strategy-lab.html" class="btn-primary mt-6 !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2"><svg data-lucide="settings" class="w-4 h-4"></svg> Set up account</a>';
                     }
                     wrapper.prepend(empty);
@@ -1247,14 +993,96 @@
                 empty.classList.remove('hidden');
                 var kids2 = wrapper.children;
                 for (var j = 0; j < kids2.length; j++) if (kids2[j].id !== 'dash-empty' && kids2[j].id !== 'dash-hero') kids2[j].style.display = 'none';
-                var sub2 = null;
-                var mainP = document.querySelectorAll('main p');
-                for (var s3 = 0; s3 < mainP.length; s3++) {
-                    if (mainP[s3].className.indexOf('text-[13px]') !== -1) { sub2 = mainP[s3]; break; }
-                }
-                if (sub2) sub2.textContent = hasAccount ? 'No trades yet — everything below fills in as you journal' : 'Set up your account to begin';
                 return true;
             }
+
+            // ====================================================================
+            // EQUITY CURVE — real ledger equity, three spans, three units.
+            // The curve is derived from canonical trades; units only re-scale the
+            // same data ($ = raw equity, % = change from start, R = cumulative R).
+            // ====================================================================
+            window.__eqUnit = 'usd';
+            function eqSeries(span, count, trades, startBal) {
+                var now = new Date();
+                var weekNum = function (d) {
+                    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+                    t.setUTCDate(t.getUTCDate() + 4 - ((t.getUTCDay() + 6) % 7));
+                    var first = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
+                    return 1 + Math.round((t - first) / 604800000);
+                };
+                var offOf = function (d) {
+                    if (span === 'daily') return Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
+                    if (span === 'weekly') return weekNum(d) - weekNum(now);
+                    return (d.getFullYear() * 12 + d.getMonth()) - (now.getFullYear() * 12 + now.getMonth());
+                };
+                var buckets = [];
+                for (var i = count - 1; i >= 0; i--) {
+                    var d = new Date(now);
+                    if (span === 'daily') d.setDate(now.getDate() - i);
+                    else if (span === 'weekly') d.setDate(now.getDate() - i * 7);
+                    else d.setMonth(now.getMonth() - i);
+                    buckets.push({ label: span === 'daily' ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : span === 'weekly' ? 'W' + weekNum(d) : d.toLocaleDateString('en-US', { month: 'short' }), pnl: 0, r: 0, off: -i });
+                }
+                trades.forEach(function (t) {
+                    var off = offOf(new Date(t.ts));
+                    for (var b = 0; b < buckets.length; b++) {
+                        if (off === buckets[b].off) { buckets[b].pnl += t.pnl; buckets[b].r += (t.r || 0); break; }
+                    }
+                });
+                var eq = startBal, rSum = 0, series = [];
+                buckets.forEach(function (b) {
+                    eq += b.pnl; rSum += b.r;
+                    if (window.__eqUnit === 'r') series.push(rSum);
+                    else if (window.__eqUnit === 'pct') series.push(startBal ? ((eq / startBal - 1) * 100) : 0);
+                    else series.push(eq);
+                });
+                return { buckets: buckets, series: series };
+            }
+
+            // Raw data the chart is built from — kept per-account so the unit
+            // switch can re-derive the curve without re-reading the store.
+            window.__eqRaw = null;
+            window.__plotEq = function () {
+                var css = getComputedStyle(document.documentElement);
+                var green = (css.getPropertyValue('--tm-green') || '#10B981').trim();
+                var grid = (css.getPropertyValue('--tm-border') || 'rgba(255,255,255,0.06)').trim();
+                var dotFill = (css.getPropertyValue('--tm-bg') || '#0A0A0C').trim();
+                var W = 760, T = 28, B = 195;
+                var raw = window.__eqRaw;
+                if (!raw) return;
+                document.querySelectorAll('.eq-chart').forEach(function (host) {
+                    var svg = host.querySelector('svg');
+                    if (!svg) return;
+                    var span = host.getAttribute('data-chart');
+                    var count = span === 'weekly' ? 6 : span === 'monthly' ? 5 : 8;
+                    var data = eqSeries(span, count, raw.trades, raw.startBal);
+                    var series = data.series;
+                    var minV = Math.min.apply(null, series), maxV = Math.max.apply(null, series);
+                    if (minV === maxV) { minV -= 1; maxV += 1; }
+                    var y = function (v) { return B - ((v - minV) / (maxV - minV)) * (B - T); };
+                    var x = function (i) { return (i / (data.buckets.length - 1)) * W; };
+                    var pts = series.map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); });
+                    var fill = 'M0 ' + y(series[0]).toFixed(1) + ' L' + pts.join(' L') + ' L' + W + ' 200 L0 200 Z';
+                    var gid = span === 'weekly' ? 'eqfill-w' : span === 'monthly' ? 'eqfill-m' : 'eqfill-d';
+                    var circles = pts.map(function (p, i) {
+                        var r = i === pts.length - 1 ? 5 : 4;
+                        var f = i === pts.length - 1 ? green : dotFill;
+                        return '<circle cx="' + p.split(',')[0] + '" cy="' + p.split(',')[1] + '" r="' + r + '" fill="' + f + '" stroke="' + green + '" stroke-width="2"/>';
+                    }).join('');
+                    var labels = data.buckets.map(function (b, i) {
+                        return '<text x="' + x(i).toFixed(0) + '" y="198">' + b.label + '</text>';
+                    }).join('');
+                    svg.innerHTML = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
+                        '<stop offset="0%" stop-color="' + green + '" stop-opacity="0.22"/><stop offset="100%" stop-color="' + green + '" stop-opacity="0"/></linearGradient></defs>' +
+                        '<g stroke="' + grid + '" stroke-width="1"><line x1="0" y1="55" x2="760" y2="55"/><line x1="0" y1="95" x2="760" y2="95"/><line x1="0" y1="135" x2="760" y2="135"/><line x1="0" y1="175" x2="760" y2="175"/></g>' +
+                        '<path d="' + fill + '" fill="url(#' + gid + ')"/>' +
+                        '<polyline points="' + pts.join(' ') + '" fill="none" stroke="' + green + '" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
+                        '<g fill="' + dotFill + '" stroke="' + green + '" stroke-width="2">' + circles + '</g>' +
+                        '<g fill="' + (css.getPropertyValue('--tm-muted') || '#6E6E78').trim() + '" font-family="JetBrains Mono, monospace" font-size="10">' + labels + '</g>';
+                });
+                var sub = byId('eq-sub');
+                if (sub) sub.textContent = (window.__eqUnit === 'r' ? 'Cumulative R-multiples' : window.__eqUnit === 'pct' ? 'Percent change from start' : 'Equity curve') + ' · ' + (raw.trades.length) + ' trades';
+            };
 
             function sync() {
                 var core = window.TradeMindCore;
@@ -1263,14 +1091,24 @@
                 var accountId = core.selectedAccountId() || (core.Accounts.length ? core.Accounts[0].id : null);
                 if (!accountId) return;
                 var rs = core.riskState(accountId);
-                var today = core.Trades.filter(function (t) {
-                    return t.account_id === accountId && core.sameDay(t.ts, new Date());
-                });
+                var disc = core.disciplineState(accountId);
+                var a = core.analytics(accountId);
+                var today = core.Trades.filter(function (t) { return t.account_id === accountId && core.sameDay(t.ts, new Date()); });
                 var pnl = today.reduce(function (s, t) { return s + t.pnl; }, 0);
-                var rSum = today.reduce(function (s, t) { return s + t.r; }, 0);
+                var wins = today.filter(function (t) { return t.pnl > 0; }).length;
+                var losses = today.filter(function (t) { return t.pnl < 0; }).length;
+                var avgRToday = today.length ? today.reduce(function (s, t) { return s + (t.r || 0); }, 0) / today.length : 0;
+                var violToday = core.Violations ? core.Violations.filter(function (v) { return v.account_id === accountId && core.sameDay(v.ts, new Date()); }).length : 0;
 
-                // header subtitle
-                var sub = document.querySelector('main p.text-\\[13px\\]');
+                // ---- HEADER ----
+                var acc = core.Accounts.find(function (x) { return x.id === accountId; });
+                var h1 = byId('dash-h1');
+                if (h1 && acc) {
+                    var hh = new Date().getHours();
+                    var greet = hh < 12 ? 'Good morning' : hh < 18 ? 'Good afternoon' : 'Good evening';
+                    h1.textContent = greet + ', ' + acc.name;
+                }
+                var sub = byId('dash-sub');
                 if (sub) {
                     var d = new Date();
                     var h = d.getHours();
@@ -1278,288 +1116,105 @@
                     sub.textContent = d.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) +
                         ' · ' + session + ' session · ' + today.length + ' trades today';
                 }
-
-                // equity panel subtitle
-                var eqSub = document.querySelector('.panel-sub');
-                if (eqSub && eqSub.textContent.indexOf('Last 7 days') === 0) {
-                    eqSub.textContent = 'Last 7 days · ' + money(pnl) + ' today';
+                var chip = byId('session-chip-text');
+                if (chip) {
+                    var hh2 = new Date();
+                    chip.textContent = (hh2.getHours() >= 7 && hh2.getHours() < 12 ? 'London' : hh2.getHours() >= 12 && hh2.getHours() < 18 ? 'New York' : 'Asia') +
+                        ' · ' + hh2.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
                 }
 
-                // KPI cards
-                var cards = document.querySelectorAll('.panel.kpi');
-                for (var c = 0; c < cards.length; c++) {
-                    var card = cards[c];
-                    var label = card.querySelector('.label-xs');
-                    if (!label) continue;
-                    var key = label.textContent.trim();
-                    var value = card.querySelector('.kpi-value');
-                    var track = card.querySelector('.mini-fill');
-                    var tag = card.querySelector('.tag');
-                    var sub1 = card.querySelector('.text-\\[12px\\]');
-                    var stats = Array.prototype.slice.call(card.querySelectorAll('.num')).filter(function (el) { return el !== value; });
-                    var pct;
-                    if (key === 'Net P&L Today') {
-                        if (value) { value.textContent = money(pnl); value.className = 'kpi-value num ' + (pnl >= 0 ? 'pos' : 'neg'); }
-                        if (tag) tag.textContent = (rSum >= 0 ? '+' : '') + rSum.toFixed(2) + 'R';
-                    } else if (key === 'Daily Risk Budget') {
-                        var st = rs.statusLabel;
-                        if (tag) { tag.textContent = st; tag.className = 'tag ' + (st === 'SAFE' ? 'tag-emerald' : st === 'CAUTION' ? 'tag-amber' : 'tag-red'); }
-                        if (value) value.textContent = '$' + rs.riskRemaining;
-                        if (sub1) sub1.textContent = 'remaining of $' + rs.dailyRiskBudget;
-                        pct = rs.dailyRiskBudget ? Math.round(rs.riskUsed / rs.dailyRiskBudget * 100) : 0;
-                        if (track) track.style.width = Math.min(100, pct) + '%';
-                        if (stats[0]) stats[0].textContent = 'Used $' + rs.riskUsed + ' · ' + pct + '%';
-                        if (stats[1]) stats[1].textContent = (100 - pct) + '% left';
-                    } else if (key === 'Drawdown Remaining') {
-                        pct = rs.drawdownLimit ? Math.round(rs.currentDrawdown / rs.drawdownLimit * 100) : 0;
-                        if (tag) { tag.textContent = pct + '% used'; tag.className = 'tag ' + (pct >= 70 ? 'tag-red' : pct >= 50 ? 'tag-amber' : 'tag-gray'); }
-                        if (value) value.textContent = '$' + rs.drawdownRemaining;
-                        if (sub1) sub1.textContent = 'of $' + rs.drawdownLimit.toLocaleString() + ' limit';
-                        if (track) track.style.width = Math.min(100, pct) + '%';
-                        if (stats[0]) stats[0].textContent = pct + '% of limit used';
-                        if (stats[1]) stats[1].textContent = rs.statusLabel;
-                    } else if (key === 'Discipline Score') {
-                        var disc = core.disciplineState(accountId);
-                        if (value) value.innerHTML = (disc.score == null ? '—' : disc.score) + '<span class="text-[14px] text-[#6E6E78] font-semibold">/100</span>';
-                        if (track) track.style.width = Math.min(100, disc.score || 0) + '%';
-                        if (sub1) sub1.textContent = 'sample ' + disc.sample + ' trades';
-                        if (stats[0]) stats[0].textContent = disc.violations + ' violations';
+                // ---- ACCOUNT CHIP ----
+                var accChip = byId('acc-chip');
+                if (accChip && acc) {
+                    accChip.innerHTML = '<span class="num text-[12px]">$' + Number(acc.current_equity).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + acc.name + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    if (window.lucide) lucide.createIcons();
+                }
+                var pName = byId('profile-name');
+                if (pName && acc) pName.textContent = acc.name;
+                var pAvatar = byId('profile-avatar');
+                if (pAvatar && acc) pAvatar.textContent = acc.name.split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase();
+
+                // ---- DISCIPLINE CARD ----
+                if (byId('st-disc-score')) {
+                    var ds = disc.score;
+                    byId('st-disc-score').innerHTML = (ds == null ? '—' : ds) + '<span class="text-[14px] text-[var(--tm-dim)] font-semibold">/100</span>';
+                    var stTag = byId('st-disc-state');
+                    if (stTag) {
+                        var lbl = ds == null ? 'No data' : ds >= 80 ? 'On track' : ds >= 60 ? 'Watch' : 'At risk';
+                        var cls = ds == null ? 'tag-gray' : ds >= 80 ? 'tag-emerald' : ds >= 60 ? 'tag-amber' : 'tag-red';
+                        stTag.textContent = lbl; stTag.className = 'tag ' + cls;
                     }
+                    var dims = (disc.dims || []).filter(function (x) { return x.score != null; });
+                    var strong = dims.length ? dims.slice().sort(function (x, y) { return y.score - x.score; })[0] : null;
+                    var weak = dims.length ? dims.slice().sort(function (x, y) { return x.score - y.score; })[0] : null;
+                    byId('st-disc-strong').textContent = strong ? strong.label : '—';
+                    byId('st-disc-weak').textContent = weak ? weak.label : '—';
+                    byId('st-disc-viol').textContent = violToday + ' violation' + (violToday === 1 ? '' : 's') + ' today';
+                    byId('st-disc-streak').textContent = (disc.cleanDayStreak || 0) + ' clean-day streak';
                 }
 
-                // Risk Meter panel
-                var riskPanel = byTitle(document, 'Risk Meter');
-                if (riskPanel) {
-                    var rtag = riskPanel.querySelector('.tag');
-                    var rsub = riskPanel.querySelector('p');
-                    var rfill = riskPanel.querySelector('.risk-consumed');
-                    var rvals = riskPanel.querySelectorAll('.num');
-                    var rpct = rs.dailyRiskBudget ? Math.round(rs.riskUsed / rs.dailyRiskBudget * 100) : 0;
-                    if (rtag) { rtag.innerHTML = '<span class="dot bg-tm-green"></span> ' + rs.statusLabel; rtag.className = 'tag ' + (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'tag-red' : rs.status === 'CAUTION' ? 'tag-amber' : 'tag-emerald'); }
-                    if (rsub) rsub.textContent = 'Daily loss limit $' + rs.dailyLossLimit + ' · risk budget $' + rs.dailyRiskBudget;
-                    if (rfill) rfill.style.width = Math.min(100, rpct) + '%';
-                    if (rvals[0]) rvals[0].textContent = '$' + rs.dailyRiskBudget;
-                    if (rvals[1]) rvals[1].textContent = '$' + rs.riskUsed;
-                    if (rvals[2]) rvals[2].textContent = '$' + rs.riskRemaining;
-                }
-
-                // Drawdown Proximity panel
-                var ddPanel = byTitle(document, 'Drawdown Proximity');
-                if (ddPanel) {
-                    var dtag = ddPanel.querySelector('.tag');
-                    var dsub = ddPanel.querySelector('p');
-                    var dfill = ddPanel.querySelector('.dd-fill');
-                    var dpct = rs.drawdownLimit ? Math.round(rs.currentDrawdown / rs.drawdownLimit * 100) : 0;
-                    if (dtag) { dtag.textContent = rs.statusLabel; dtag.className = 'tag ' + (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'tag-red' : rs.status === 'CAUTION' ? 'tag-amber' : 'tag-gray'); }
-                    if (dsub) dsub.textContent = '$' + rs.currentDrawdown + ' of $' + rs.drawdownLimit.toLocaleString() + ' used';
-                    if (dfill) dfill.style.width = Math.min(100, dpct) + '%';
-                    var bufferSpan = null;
-                    var ddSpans = ddPanel.querySelectorAll('span');
-                    for (var s2 = 0; s2 < ddSpans.length; s2++) {
-                        if (ddSpans[s2].className.indexOf('text-tm-green') !== -1) { bufferSpan = ddSpans[s2]; break; }
-                    }
-                    if (bufferSpan) bufferSpan.textContent = '$' + rs.drawdownRemaining;
-                }
-
-                // Performance Snapshot — real numbers from the canonical analytics
-                var perfPanel = byTitle(document, 'Performance Snapshot');
-                if (perfPanel && core.analytics) {
-                    var a = core.analytics(accountId);
-                    var pRows = [].slice.call(perfPanel.querySelectorAll('.flex')).filter(function (el) {
-                        return el.className.indexOf('py-2.5') !== -1;
-                    });
-                    var pMap = {};
-                    for (var p = 0; p < pRows.length; p++) {
-                        var plbl = null;
-                        var plabels = pRows[p].querySelectorAll('span, div');
-                        for (var pl = 0; pl < plabels.length; pl++) {
-                            if (plabels[pl].className.indexOf('text-[13px]') !== -1) { plbl = plabels[pl]; break; }
-                        }
-                        if (plbl) pMap[plbl.textContent.trim()] = pRows[p].querySelector('.num');
-                    }
-                    if (pMap['Win rate']) pMap['Win rate'].textContent = Math.round(a.winRate * 100) + '%';
-                    if (pMap['Profit factor']) pMap['Profit factor'].textContent = (a.pf || 0).toFixed(2);
-                    if (pMap['Expectancy']) { pMap['Expectancy'].textContent = (a.expectancy >= 0 ? '+' : '') + a.expectancy.toFixed(2) + 'R'; pMap['Expectancy'].className = 'num text-[15px] font-bold ' + (a.expectancy >= 0 ? 'text-tm-green' : 'text-tm-red'); }
-                    if (pMap['Average R']) { pMap['Average R'].textContent = (a.avgR >= 0 ? '+' : '') + a.avgR.toFixed(2) + 'R'; pMap['Average R'].className = 'num text-[15px] font-bold ' + (a.avgR >= 0 ? 'text-tm-green' : 'text-tm-red'); }
-                    if (pMap['Max drawdown']) pMap['Max drawdown'].textContent = '-$' + a.maxDD;
-                    if (pMap['Trades (60d)']) pMap['Trades (60d)'].textContent = a.n;
-                }
-
-                // Recent Trades table — the actual ledger (last 5)
-                var rtPanel = byTitle(document, 'Recent Trades');
-                if (rtPanel) {
-                    var rtBody = rtPanel.querySelector('tbody');
-                    var recent = core.Trades.filter(function (t) { return t.account_id === accountId; })
-                        .slice().sort(function (x, y) { return new Date(y.ts) - new Date(x.ts); }).slice(0, 5);
-                    if (rtBody) {
-                        rtBody.innerHTML = recent.map(function (t) {
-                            var d = new Date(t.ts);
-                            var time = core.sameDay(t.ts, new Date())
-                                ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
-                                : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-                            var dirCls = t.dir === 'Long' ? 'tag-emerald' : 'tag-red';
-                            var pnlCls = t.pnl > 0 ? 'text-tm-green' : t.pnl < 0 ? 'text-tm-red' : 'text-[#6E6E78]';
-                            var rCls = t.r > 0 ? 'text-tm-green' : t.r < 0 ? 'text-tm-red' : 'text-[#6E6E78]';
-                            var adhere = t.adherence === 'followed' ? 'Followed' : (t.adherence || '—');
-                            var adhereCls = t.adherence === 'followed' ? 'text-tm-green' : 'text-[#F59E0B]';
-                            var adhereIcon = t.adherence === 'followed' ? 'check' : 'alert-triangle';
-                            return '<tr>' +
-                                '<td class="num text-[#6E6E78]">' + time + '</td>' +
-                                '<td class="font-semibold text-white">' + t.symbol + '</td>' +
-                                '<td><span class="tag ' + dirCls + '">' + t.dir + '</span></td>' +
-                                '<td>' + (t.setup || '—') + '</td>' +
-                                '<td class="num text-[#6E6E78]">' + (t.session || '—') + '</td>' +
-                                '<td class="num font-bold ' + pnlCls + '">' + money(t.pnl) + '</td>' +
-                                '<td class="num font-bold ' + rCls + '">' + (t.r > 0 ? '+' : '') + Number(t.r).toFixed(1) + 'R</td>' +
-                                '<td><span class="flex items-center gap-1.5 ' + adhereCls + '"><svg data-lucide="' + adhereIcon + '" class="w-3.5 h-3.5"></svg> ' + adhere + '</span></td>' +
-                                '</tr>';
-                        }).join('');
-                    }
-                    var rtSub = rtPanel.querySelector('.panel-sub');
-                    if (rtSub) rtSub.textContent = 'Last ' + Math.min(5, recent.length) + ' trades from your local ledger';
-                }
-
-                // Today's Behavior — trades + W/L from the ledger
-                var behPanel = byTitle(document, "Today's Behavior");
-                if (behPanel) {
-                    var dayTrades = core.Trades.filter(function (t) { return t.account_id === accountId && core.sameDay(t.ts, new Date()); });
-                    var w = dayTrades.filter(function (t) { return t.pnl > 0; }).length;
-                    var l = dayTrades.filter(function (t) { return t.pnl < 0; }).length;
-                    var numEls = behPanel.querySelectorAll('.num');
-                    if (numEls[0]) numEls[0].textContent = dayTrades.length;
-                    var wl = null;
-                    var wlEls = behPanel.querySelectorAll('div, span');
-                    for (var wi = 0; wi < wlEls.length; wi++) {
-                        if (wlEls[wi].className.indexOf('text-[11px]') !== -1 && wlEls[wi].textContent.indexOf('W /') !== -1) { wl = wlEls[wi]; break; }
-                    }
-                    if (wl) wl.textContent = w + 'W / ' + l + 'L';
-
-                    // overtrading level + trade budget (real limits from the policy)
-                    var policy = core.activePolicy ? core.activePolicy(accountId) : null;
-                    var maxPerDay = policy && policy.values.maxTrades ? policy.values.maxTrades : 5;
-                    var otLevel = dayTrades.length > maxPerDay ? 'High' : dayTrades.length >= Math.ceil(maxPerDay * 0.7) ? 'Medium' : 'Low';
-                    var otBox = behPanel.querySelectorAll('.bg-\\[\\#0F0F11\\]');
-                    if (otBox[1]) {
-                        var otVal = otBox[1].querySelector('.num');
-                        if (otVal) { otVal.textContent = otLevel; otVal.className = 'num text-[18px] font-bold ' + (otLevel === 'High' ? 'text-tm-red' : otLevel === 'Medium' ? 'text-[#F59E0B]' : 'text-tm-green'); }
-                        var otSub = otBox[1].querySelector('.text-\\[11px\\]');
-                        if (otSub) otSub.textContent = dayTrades.length + ' of ' + maxPerDay + ' trade budget';
-                    }
-
-                    // best / worst setup today (from the ledger)
-                    var bySetup = {};
-                    dayTrades.forEach(function (t) {
-                        bySetup[t.setup || '—'] = (bySetup[t.setup || '—'] || 0) + (t.r || 0);
-                    });
-                    var setupKeys = Object.keys(bySetup).sort(function (a, b) { return bySetup[b] - bySetup[a]; });
-                    var rowsB = behPanel.querySelectorAll('.border-b');
-                    if (rowsB[0] && setupKeys.length) {
-                        var bestR = bySetup[setupKeys[0]];
-                        rowsB[0].querySelector('.font-semibold').innerHTML = setupKeys[0] + ' <span class="num text-tm-green">' + (bestR >= 0 ? '+' : '') + bestR.toFixed(1) + 'R</span>';
-                    }
-                    if (rowsB[1]) {
-                        if (setupKeys.length > 1) {
-                            var worstR = bySetup[setupKeys[setupKeys.length - 1]];
-                            rowsB[1].innerHTML = '<span class="text-[#8A8A93]">Worst setup today</span><span class="font-semibold text-white">' + setupKeys[setupKeys.length - 1] + ' <span class="num text-tm-red">' + (worstR >= 0 ? '+' : '') + worstR.toFixed(1) + 'R</span></span>';
-                        } else {
-                            rowsB[1].innerHTML = '<span class="text-[#8A8A93]">Worst setup today</span><span class="text-[#6E6E78]">—</span>';
-                        }
-                    }
-
-                    // best / worst behavior today (adherence from the ledger)
-                    var violToday = dayTrades.filter(function (t) { return t.adherence && t.adherence !== 'followed'; });
-                    if (rowsB[2]) {
-                        var bestBeh = dayTrades.length ? (violToday.length < dayTrades.length ? 'Followed the plan' : '—') : '—';
-                        rowsB[2].innerHTML = '<span class="text-[#8A8A93]">Best behavior</span><span class="font-semibold text-white">' + bestBeh + '</span>';
-                    }
-                    if (rowsB[3]) {
-                        var worstBeh = violToday.length ? 'Rule break: ' + violToday[0].adherence : 'None flagged';
-                        rowsB[3].innerHTML = '<span class="text-[#8A8A93]">Worst behavior</span><span class="' + (violToday.length ? 'text-[#F59E0B]' : 'text-[#6E6E78]') + '">' + worstBeh + '</span>';
-                    }
-
-                    // journal completion
-                    var revEls = behPanel.querySelectorAll('.text-\\[12px\\]');
-                    if (revEls.length) {
-                        var reviewed = dayTrades.filter(function (t) { return t.reviewed; }).length;
-                        revEls[0].textContent = reviewed + ' of ' + dayTrades.length + ' reviewed';
-                        var revFill = behPanel.querySelector('.mini-fill');
-                        if (revFill) revFill.style.width = (dayTrades.length ? Math.round(reviewed / dayTrades.length * 100) : 0) + '%';
+                // ---- DAILY RISK CARD ----
+                if (byId('st-risk-budget')) {
+                    var riskPct = rs.dailyRiskBudget ? Math.round(rs.riskUsed / rs.dailyRiskBudget * 100) : 0;
+                    byId('st-risk-budget').textContent = rs.dailyRiskBudget ? '$' + rs.dailyRiskBudget : '—';
+                    byId('st-risk-used').textContent = '$' + rs.riskUsed;
+                    byId('st-risk-remain').textContent = '$' + rs.riskRemaining;
+                    byId('st-risk-pct').textContent = riskPct + '% consumed';
+                    byId('st-risk-max').textContent = 'limit $' + (rs.dailyRiskBudget || 0);
+                    byId('st-risk-fill').style.width = Math.min(100, riskPct) + '%';
+                    var rt = byId('st-risk-state');
+                    if (rt) {
+                        rt.textContent = rs.statusLabel;
+                        rt.className = 'tag ' + (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'tag-red' : rs.status === 'CAUTION' ? 'tag-amber' : 'tag-emerald');
                     }
                 }
 
-                // ---- HEADER GREETING (account name + time of day) ----
-                var acc = core.Accounts.find(function (a) { return a.id === accountId; });
-                var h1 = document.querySelector('#dash-content h1');
-                if (h1 && acc) {
-                    var hh = new Date().getHours();
-                    var greet = hh < 12 ? 'Good morning' : hh < 18 ? 'Good afternoon' : 'Good evening';
-                    h1.textContent = greet + ', ' + acc.name;
+                // ---- DRAWDOWN CARD ----
+                if (byId('st-dd-cur')) {
+                    var ddPct = rs.drawdownLimit ? Math.round(rs.currentDrawdown / rs.drawdownLimit * 100) : 0;
+                    byId('st-dd-cur').textContent = '$' + rs.currentDrawdown;
+                    byId('st-dd-limit').textContent = '$' + rs.drawdownLimit.toLocaleString();
+                    byId('st-dd-buffer').textContent = '$' + rs.drawdownRemaining;
+                    byId('st-dd-pct').textContent = ddPct + '% of limit used';
+                    byId('st-dd-marker').textContent = rs.statusLabel;
+                    byId('st-dd-fill').style.width = Math.min(100, ddPct) + '%';
+                    var dt = byId('st-dd-state');
+                    if (dt) {
+                        dt.textContent = rs.statusLabel;
+                        dt.className = 'tag ' + (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'tag-red' : rs.status === 'CAUTION' ? 'tag-amber' : 'tag-gray');
+                    }
                 }
 
-                // ---- EQUITY CURVE (all three charts, real ledger equity) ----
+                // ---- TODAY'S PERFORMANCE CARD ----
+                if (byId('st-perf-pnl')) {
+                    byId('st-perf-pnl').textContent = money(pnl);
+                    byId('st-perf-pnl').className = 'kpi-value num ' + (pnl >= 0 ? 'pos' : 'neg');
+                    byId('st-perf-wl').textContent = wins + 'W / ' + losses + 'L';
+                    byId('st-perf-trades').textContent = today.length + (today.length === 1 ? ' trade' : ' trades');
+                    byId('st-perf-avgr').textContent = (avgRToday >= 0 ? '+' : '') + avgRToday.toFixed(2) + 'R avg';
+                    byId('st-perf-ref').textContent = 'today';
+                    byId('st-perf-fill').style.width = (today.length ? Math.min(100, Math.round(wins / today.length * 100)) : 0) + '%';
+                }
+
+                // ---- PERFORMANCE PANEL ----
+                if (byId('perf-net')) {
+                    byId('perf-net').textContent = money0(a.net);
+                    byId('perf-net').className = 'num text-[15px] font-bold ' + (a.net >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]');
+                    byId('perf-exp').textContent = (a.expectancy >= 0 ? '+' : '') + a.expectancy.toFixed(2) + 'R';
+                    byId('perf-exp').className = 'num text-[15px] font-bold ' + (a.expectancy >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]');
+                    byId('perf-avgr').textContent = (a.avgR >= 0 ? '+' : '') + a.avgR.toFixed(2) + 'R';
+                    byId('perf-avgr').className = 'num text-[15px] font-bold ' + (a.avgR >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]');
+                    byId('perf-maxdd').textContent = '-$' + a.maxDD;
+                    byId('perf-maxdd').className = 'num text-[15px] font-bold text-[var(--tm-red)]';
+                    byId('eq-sub').textContent = (window.__eqUnit === 'r' ? 'Cumulative R-multiples' : window.__eqUnit === 'pct' ? 'Percent change from start' : 'Equity curve') + ' · ' + a.n + ' trades';
+                }
+
+                // ---- EQUITY CURVE ----
                 var startBal = acc ? acc.starting_balance : 0;
                 var acctTrades = core.Trades.filter(function (t) { return t.account_id === accountId; })
-                    .slice().sort(function (a, b) { return new Date(a.ts) - new Date(b.ts); });
-                var weekNum = function (d) {
-                    var t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
-                    t.setUTCDate(t.getUTCDate() + 4 - ((t.getUTCDay() + 6) % 7));
-                    var first = new Date(Date.UTC(t.getUTCFullYear(), 0, 1));
-                    return 1 + Math.round((t - first) / 604800000);
-                };
-                var eqSeries = function (span, count) {
-                    var now = new Date();
-                    var offOf = function (d) {
-                        if (span === 'daily') return Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()) - new Date(now.getFullYear(), now.getMonth(), now.getDate())) / 86400000);
-                        if (span === 'weekly') return weekNum(d) - weekNum(now);
-                        return (d.getFullYear() * 12 + d.getMonth()) - (now.getFullYear() * 12 + now.getMonth());
-                    };
-                    var buckets = [];
-                    for (var i = count - 1; i >= 0; i--) {
-                        var d = new Date(now);
-                        if (span === 'daily') d.setDate(now.getDate() - i);
-                        else if (span === 'weekly') d.setDate(now.getDate() - i * 7);
-                        else d.setMonth(now.getMonth() - i);
-                        buckets.push({ label: span === 'daily' ? d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : span === 'weekly' ? 'W' + weekNum(d) : d.toLocaleDateString('en-US', { month: 'short' }), pnl: 0, off: -i });
-                    }
-                    acctTrades.forEach(function (t) {
-                        var off = offOf(new Date(t.ts));
-                        for (var b = 0; b < buckets.length; b++) {
-                            if (off === buckets[b].off) { buckets[b].pnl += t.pnl; break; }
-                        }
-                    });
-                    var eq = startBal, series = [];
-                    buckets.forEach(function (b) { eq += b.pnl; series.push(eq); });
-                    return { buckets: buckets, series: series };
-                };
-                var W = 760, T = 30, B = 205;
-                var plotEq = function (svg) {
-                    var host = svg.closest ? svg.closest('.eq-chart') : null;
-                    var span = host ? host.getAttribute('data-chart') : 'daily';
-                    var count = span === 'weekly' ? 6 : span === 'monthly' ? 5 : 8;
-                    var data = eqSeries(span, count);
-                    var minV = Math.min.apply(null, data.series), maxV = Math.max.apply(null, data.series);
-                    if (minV === maxV) { minV -= 1; maxV += 1; }
-                    var y = function (v) { return B - ((v - minV) / (maxV - minV)) * (B - T); };
-                    var x = function (i) { return (i / (data.buckets.length - 1)) * W; };
-                    var pts = data.series.map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); });
-                    var fill = 'M0 ' + y(data.series[0]).toFixed(1) + ' L' + pts.join(' L') + ' L' + W + ' 210 L0 210 Z';
-                    var gid = span === 'weekly' ? 'eqfill-w' : span === 'monthly' ? 'eqfill-m' : 'eqfill-d';
-                    var circles = pts.map(function (p, i) {
-                        var r = i === pts.length - 1 ? 5 : 4, f = i === pts.length - 1 ? '#10B981' : '#0A0A0C';
-                        return '<circle cx="' + p.split(',')[0] + '" cy="' + p.split(',')[1] + '" r="' + r + '" fill="' + f + '" stroke="#10B981" stroke-width="2"/>';
-                    }).join('');
-                    var labels = data.buckets.map(function (b, i) {
-                        return '<text x="' + x(i).toFixed(0) + '" y="212">' + b.label + '</text>';
-                    }).join('');
-                    svg.innerHTML = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
-                        '<stop offset="0%" stop-color="#10B981" stop-opacity="0.22"/><stop offset="100%" stop-color="#10B981" stop-opacity="0"/></linearGradient></defs>' +
-                        '<g stroke="#1F1F23" stroke-width="1"><line x1="0" y1="30" x2="760" y2="30"/><line x1="0" y1="75" x2="760" y2="75"/><line x1="0" y1="120" x2="760" y2="120"/><line x1="0" y1="165" x2="760" y2="165"/><line x1="0" y1="210" x2="760" y2="210"/></g>' +
-                        '<path d="' + fill + '" fill="url(#' + gid + ')"/>' +
-                        '<polyline points="' + pts.join(' ') + '" fill="none" stroke="#10B981" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-                        '<g fill="#0A0A0C" stroke="#10B981" stroke-width="2">' + circles + '</g>' +
-                        '<g fill="#6E6E78" font-family="JetBrains Mono, monospace" font-size="10">' + labels + '</g>';
-                };
-                document.querySelectorAll('.eq-chart').forEach(function (c) { if (c.querySelector('svg')) plotEq(c.querySelector('svg')); });
+                    .slice().sort(function (a2, b2) { return new Date(a2.ts) - new Date(b2.ts); });
+                window.__eqRaw = { trades: acctTrades, startBal: startBal };
+                window.__plotEq();
 
                 // best / worst day footer (real daily pnl)
                 var dayPnl = {};
@@ -1568,121 +1223,203 @@
                     var k = ts.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
                     dayPnl[k] = (dayPnl[k] || 0) + t.pnl;
                 });
-                var dayKeys = Object.keys(dayPnl);
                 var bestDay = null, worstDay = null;
-                dayKeys.forEach(function (k) {
+                Object.keys(dayPnl).forEach(function (k) {
                     if (!bestDay || dayPnl[k] > dayPnl[bestDay]) bestDay = k;
                     if (!worstDay || dayPnl[k] < dayPnl[worstDay]) worstDay = k;
                 });
-                var bestWorst = null;
-                var eqPanel = document.querySelector('.eq-chart') ? document.querySelector('.eq-chart').closest('.panel') : null;
-                if (eqPanel) {
-                    var eqSpans = eqPanel.querySelectorAll('span');
-                    for (var es = 0; es < eqSpans.length; es++) {
-                        if (eqSpans[es].className.indexOf('text-tm-green') !== -1 && eqSpans[es].textContent.indexOf('Best day') === -1 && eqSpans[es].parentElement && eqSpans[es].parentElement.textContent.indexOf('Best day') !== -1) bestWorst = eqSpans[es];
+                if (byId('eq-best') && bestDay) byId('eq-best').innerHTML = 'Best day: <span class="text-[var(--tm-green)]">' + money(dayPnl[bestDay]) + ' (' + bestDay + ')</span>';
+                if (byId('eq-worst') && worstDay) byId('eq-worst').innerHTML = 'Worst day: <span class="text-[var(--tm-red)]">' + money(dayPnl[worstDay]) + ' (' + worstDay + ')</span>';
+
+                // ---- YOUR BEHAVIOR PANEL ----
+                if (byId('bh-score')) {
+                    byId('bh-score').textContent = disc.score == null ? '—' : disc.score;
+                    var bst = byId('bh-state');
+                    if (bst) {
+                        var blbl = disc.score == null ? 'No data' : disc.score >= 80 ? 'On track' : disc.score >= 60 ? 'Watch' : 'At risk';
+                        bst.textContent = blbl;
+                        bst.className = 'tag ' + (disc.score == null ? 'tag-gray' : disc.score >= 80 ? 'tag-emerald' : disc.score >= 60 ? 'tag-amber' : 'tag-red');
                     }
-                }
-                // simpler: rewrite the two labeled spans directly
-                var eqFoot = eqPanel ? eqPanel.querySelector('.flex.items-center.gap-6') : null;
-                if (eqFoot) {
-                    var bSpans = eqFoot.querySelectorAll('span.num');
-                    if (bSpans[0] && bestDay) bSpans[0].innerHTML = 'Best day: <span class="text-tm-green">' + money(dayPnl[bestDay]) + ' (' + bestDay + ')</span>';
-                    if (bSpans[1] && worstDay) bSpans[1].innerHTML = 'Worst day: <span class="text-tm-red">' + money(dayPnl[worstDay]) + ' (' + worstDay + ')</span>';
+                    var dimsWrap = byId('bh-dims');
+                    var dims = disc.dims || [];
+                    if (dimsWrap) {
+                        dimsWrap.innerHTML = dims.map(function (dm) {
+                            var noData = dm.score == null;
+                            var pct = noData ? 0 : Math.max(0, Math.min(100, dm.score));
+                            return '<div class="dim-row' + (noData ? ' dim-no-data' : '') + '">' +
+                                '<span class="w-[86px] text-[12.5px] text-[var(--tm-dim)]">' + dm.label + '</span>' +
+                                '<div class="dim-bar' + (noData ? ' empty' : '') + '">' + (noData ? '' : '<div class="dim-bar-fill" style="width:' + pct + '%"></div>') + '</div>' +
+                                (noData
+                                    ? '<span class="text-[10.5px] text-[var(--tm-dim)] italic whitespace-nowrap" title="Not enough evaluated trades for this dimension yet">Insufficient data</span>'
+                                    : '<span class="num text-[12.5px] font-bold w-[34px] text-right">' + dm.score + '</span>') +
+                            '</div>';
+                        }).join('');
+                    }
+                    var dims2 = dims.filter(function (x) { return x.score != null; });
+                    if (byId('bh-strong')) byId('bh-strong').innerHTML = dims2.length ? 'Strongest: <span class="font-semibold text-[var(--tm-text)]">' + dims2.slice().sort(function (x, y) { return y.score - x.score; })[0].label + '</span>' : 'Strongest: —';
+                    if (byId('bh-weak')) byId('bh-weak').innerHTML = dims2.length ? 'Weakest: <span class="font-semibold text-[var(--tm-text)]">' + dims2.slice().sort(function (x, y) { return x.score - y.score; })[0].label + '</span>' : 'Weakest: —';
+                    byId('bh-streak').textContent = (disc.cleanDayStreak || 0) + ' clean-day streak';
+                    byId('bh-viol').textContent = disc.violations + ' violations';
                 }
 
-                // ---- OPEN POSITIONS → today's real trades (model logs closed trades) ----
-                var opPanel = byTitle(document, 'Open Positions');
-                if (opPanel) {
-                    var opTag = opPanel.querySelector('.tag');
-                    if (opTag) opTag.textContent = today.length ? today.length + ' today' : '0 open';
-                    var opBody = opPanel.querySelector('.flex.flex-col');
-                    if (opBody) {
-                        if (!today.length) {
-                            opBody.innerHTML = '<div class="py-6 text-center"><p class="text-[13px] text-[#6E6E78]">No trades yet today. Log a trade and it shows up here.</p></div>';
-                        } else {
-                            opBody.innerHTML = today.slice().sort(function (a, b) { return new Date(b.ts) - new Date(a.ts); }).slice(0, 3).map(function (t) {
-                                var sym = t.symbol || '—', dirCls = t.dir === 'Short' ? 'tag-red' : 'tag-emerald';
-                                var pnlCls = t.pnl > 0 ? 'text-tm-green' : t.pnl < 0 ? 'text-tm-red' : 'text-[#6E6E78]';
-                                return '<div class="flex items-center gap-3">' +
-                                    '<div class="w-8 h-8 rounded-lg bg-[#16161A] border border-[#1F1F23] flex items-center justify-center text-[10px] font-bold text-[#10B981]">' + sym.slice(0, 2).toUpperCase() + '</div>' +
-                                    '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white">' + sym + ' <span class="tag ' + dirCls + ' ml-1 !px-1.5 !py-0.5 text-[10px]">' + (t.dir || '—').toUpperCase() + '</span></div>' +
-                                    '<div class="text-[11.5px] text-[#6E6E78] num">' + (t.setup || '—') + ' · risk $' + (t.risk || 0) + '</div></div>' +
-                                    '<div class="text-right"><div class="num text-[13.5px] font-bold ' + pnlCls + '">' + money(t.pnl) + '</div>' +
-                                    '<div class="num text-[11px] ' + pnlCls + '">' + (t.r >= 0 ? '+' : '') + t.r.toFixed(1) + 'R</div></div></div>';
-                            }).join('');
-                        }
+                // ---- BATTLEX READ ----
+                var bxBody = byId('bx-body');
+                if (bxBody) {
+                    var ins = (core.insights ? core.insights(accountId) : []) || [];
+                    var finding = null;
+                    for (var i2 = 0; i2 < ins.length; i2++) {
+                        if (ins[i2].type === 'developing') continue;
+                        if (!finding || (ins[i2].severity === 'negative' && finding.severity !== 'negative')) finding = ins[i2];
                     }
-                    var opFoot = opPanel.querySelector('.border-t');
-                    if (opFoot) {
-                        var opLbl = opFoot.querySelector('[class*="text-[12.5px]"]');
-                        var opVal = opFoot.querySelector('.num');
-                        if (opLbl) opLbl.textContent = 'Total P&L today';
-                        if (opVal) opVal.innerHTML = money(pnl) + ' <span class="text-[#6E6E78] font-semibold">· ' + today.length + ' trades</span>';
+                    var sevTag = byId('bx-sev');
+                    if (finding) {
+                        var sv = finding.severity;
+                        var sevLbl = sv === 'negative' ? 'RISK LEAK' : sv === 'positive' ? 'STRENGTH' : 'FINDING';
+                        sevTag.textContent = sevLbl;
+                        sevTag.className = 'tag ' + (sv === 'negative' ? 'tag-red' : sv === 'positive' ? 'tag-emerald' : 'tag-purple');
+                        var confLbl = finding.confidence === 'high' ? 'High confidence' : finding.confidence === 'medium' ? 'Medium confidence' : 'Low confidence';
+                        bxBody.innerHTML =
+                            '<div class="flex flex-wrap items-start justify-between gap-4">' +
+                                '<div class="min-w-0 flex-1">' +
+                                    '<div class="text-[17px] font-bold tracking-tight">' + finding.title + '</div>' +
+                                    '<p class="text-[13.5px] text-[var(--tm-muted)] mt-1.5 leading-relaxed max-w-3xl">' + finding.detail + '</p>' +
+                                '</div>' +
+                                '<div class="flex items-center gap-4 flex-shrink-0 text-[12px] text-[var(--tm-dim)]">' +
+                                    '<div class="text-center"><div class="num text-[18px] font-bold text-[var(--tm-text)]">' + (finding.sample || 0) + '</div><div class="mt-0.5">occurrences</div></div>' +
+                                    '<div class="text-center"><div class="num text-[18px] font-bold text-[var(--tm-text)]">' + (finding.evidence ? finding.evidence.length : 0) + '</div><div class="mt-0.5">evidence trades</div></div>' +
+                                    '<div class="text-center"><div class="num text-[18px] font-bold text-[var(--tm-accent)]">' + (confLbl.split(' ')[0]) + '</div><div class="mt-0.5">confidence</div></div>' +
+                                '</div>' +
+                            '</div>';
+                    } else {
+                        var dev = null;
+                        for (var i3 = 0; i3 < ins.length; i3++) if (ins[i3].type === 'developing') { dev = ins[i3]; break; }
+                        var count = dev ? dev.sample : a.n;
+                        sevTag.textContent = 'DEVELOPING';
+                        sevTag.className = 'tag tag-gray';
+                        bxBody.innerHTML =
+                            '<div class="flex flex-wrap items-start justify-between gap-4">' +
+                                '<div class="min-w-0 flex-1">' +
+                                    '<div class="text-[17px] font-bold tracking-tight">Not enough evidence yet</div>' +
+                                    '<p class="text-[13.5px] text-[var(--tm-muted)] mt-1.5 leading-relaxed max-w-3xl">Evidence-backed behavioral findings need at least <span class="font-semibold text-[var(--tm-text)]">10 trades</span>. You currently have <span class="num font-semibold text-[var(--tm-text)]">' + count + '</span> logged — keep journaling and this card fills in with your biggest leak, strongest setup, and risk patterns.</p>' +
+                                '</div>' +
+                                '<div class="flex items-center gap-4 flex-shrink-0 text-[12px] text-[var(--tm-dim)]">' +
+                                    '<div class="text-center"><div class="num text-[18px] font-bold text-[var(--tm-text)]">' + count + '</div><div class="mt-0.5">trades logged</div></div>' +
+                                    '<div class="text-center"><div class="num text-[18px] font-bold text-[var(--tm-dim)]">10</div><div class="mt-0.5">needed</div></div>' +
+                                '</div>' +
+                            '</div>';
                     }
                 }
 
-                // ---- AI DAILY BRIEF (real data + evidence-backed insights) ----
-                var brief = byTitle(document, 'AI Daily Brief');
-                if (brief) {
-                    var ins = core.insights ? core.insights(accountId) : [];
+                // ---- RECENT TRADES ----
+                var rtBody = byId('rt-body');
+                if (rtBody) {
+                    var recent = core.Trades.filter(function (t) { return t.account_id === accountId; })
+                        .slice().sort(function (x, y) { return new Date(y.ts) - new Date(x.ts); }).slice(0, 6);
+                    byId('rt-sub').textContent = 'Last ' + Math.min(6, recent.length) + ' trades from your ledger — click to open the journal detail';
+                    rtBody.innerHTML = recent.map(function (t) {
+                        var dd = new Date(t.ts);
+                        var time = core.sameDay(t.ts, new Date())
+                            ? dd.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+                            : dd.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                        var dirCls = t.dir === 'Long' ? 'tag-emerald' : 'tag-red';
+                        var pnlCls = t.pnl > 0 ? 'text-[var(--tm-green)]' : t.pnl < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]';
+                        var rCls = t.r > 0 ? 'text-[var(--tm-green)]' : t.r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]';
+                        var adhere = t.adherence === 'followed' ? 'Followed' : (t.adherence || '—');
+                        var adhereCls = t.adherence === 'followed' ? 'text-[var(--tm-green)]' : 'text-[var(--tm-amber)]';
+                        var adhereIcon = t.adherence === 'followed' ? 'check' : 'alert-triangle';
+                        var revBadge = t.reviewed
+                            ? '<span class="tag tag-emerald !py-0.5 !px-1.5 text-[10px]">Reviewed</span>'
+                            : '<span class="tag tag-blue !py-0.5 !px-1.5 text-[10px]">Pending</span>';
+                        return '<tr data-id="' + t.id + '">' +
+                            '<td class="num text-[var(--tm-dim)]">' + time + '</td>' +
+                            '<td class="font-semibold text-[var(--tm-text)]">' + t.symbol + '</td>' +
+                            '<td><span class="tag ' + dirCls + '">' + t.dir + '</span></td>' +
+                            '<td>' + (t.setup || '—') + '</td>' +
+                            '<td class="num text-[var(--tm-dim)]">' + (t.session || '—') + '</td>' +
+                            '<td class="num font-bold ' + pnlCls + '">' + money(t.pnl) + '</td>' +
+                            '<td class="num font-bold ' + rCls + '">' + (t.r > 0 ? '+' : '') + Number(t.r).toFixed(1) + 'R</td>' +
+                            '<td><span class="flex items-center gap-1.5 ' + adhereCls + '"><svg data-lucide="' + adhereIcon + '" class="w-3.5 h-3.5"></svg> ' + adhere + '</span></td>' +
+                            '<td>' + revBadge + '</td>' +
+                            '</tr>';
+                    }).join('');
+                    rtBody.querySelectorAll('tr').forEach(function (tr) {
+                        tr.addEventListener('click', function () {
+                            window.location.href = 'journal.html?trade=' + encodeURIComponent(tr.getAttribute('data-id'));
+                        });
+                    });
+                    if (window.lucide) lucide.createIcons();
+                }
+
+                // ---- CURRENT EXPOSURE (compact) ----
+                var ceBody = byId('ce-body');
+                if (ceBody) {
+                    byId('ce-tag').textContent = today.length ? today.length + ' today' : 'FLAT';
+                    if (!today.length) {
+                        ceBody.innerHTML =
+                            '<div class="flex items-center gap-2 py-1.5"><span class="text-[12.5px] text-[var(--tm-dim)]">No open positions.</span></div>';
+                    } else {
+                        var openRisk = today.reduce(function (s, t) { return s + (t.risk || 0); }, 0);
+                        ceBody.innerHTML = today.slice().sort(function (a2, b2) { return new Date(b2.ts) - new Date(a2.ts); }).slice(0, 3).map(function (t) {
+                            var sym = t.symbol || '—', dirCls = t.dir === 'Short' ? 'tag-red' : 'tag-emerald';
+                            var pnlCls = t.pnl > 0 ? 'text-[var(--tm-green)]' : t.pnl < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]';
+                            return '<div class="flex items-center gap-3 py-2">' +
+                                '<div class="w-8 h-8 rounded-lg border border-[var(--tm-border)] bg-[var(--tm-card-2)] flex items-center justify-center text-[10px] font-bold text-[var(--tm-accent)]">' + sym.slice(0, 2).toUpperCase() + '</div>' +
+                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-[var(--tm-text)]">' + sym + ' <span class="tag ' + dirCls + ' ml-1 !px-1.5 !py-0.5 text-[10px]">' + (t.dir || '—').toUpperCase() + '</span></div>' +
+                                '<div class="text-[11.5px] text-[var(--tm-dim)] num">' + (t.setup || '—') + ' · risk $' + (t.risk || 0) + '</div></div>' +
+                                '<div class="text-right"><div class="num text-[13.5px] font-bold ' + pnlCls + '">' + money(t.pnl) + '</div>' +
+                                '<div class="num text-[11px] ' + pnlCls + '">' + (t.r >= 0 ? '+' : '') + t.r.toFixed(1) + 'R</div></div></div>';
+                        }).join('') +
+                        '<div class="flex items-center justify-between mt-2 pt-3 border-t border-[var(--tm-border)]">' +
+                            '<span class="text-[12.5px] text-[var(--tm-dim)]">Risk at stake today</span>' +
+                            '<span class="num text-[13px] font-bold text-[var(--tm-text)]">$' + openRisk + ' <span class="text-[var(--tm-dim)] font-semibold">· ' + today.length + ' trades</span></span>' +
+                        '</div>';
+                    }
+                }
+
+                // ---- AI DAILY READ ----
+                if (byId('ai-what')) {
+                    var violCount = violToday;
+                    byId('ai-what').textContent = today.length + ' trades today · ' + wins + 'W / ' + losses + 'L · net ' + money(pnl) + (violCount ? ' · ' + violCount + ' rule violations' : '');
+                    var ins2 = core.insights ? core.insights(accountId) : [];
                     var pos = null;
-                    for (var ii = 0; ii < ins.length; ii++) if (ins[ii].severity === 'positive' && ins[ii].type === 'strength') { pos = ins[ii]; break; }
-                    var secs = brief.querySelectorAll('.brief-section');
-                    if (secs[0]) {
-                        var violCount = core.Violations ? core.Violations.filter(function (v) { return v.account_id === accountId && core.sameDay(new Date(v.ts), new Date()); }).length : 0;
-                        secs[0].querySelector('p').textContent = dayTrades.length + ' trades today · ' + w + 'W / ' + l + 'L · net ' + money(pnl) + (violCount ? ' · ' + violCount + ' rule violations' : '');
-                    }
-                    if (secs[1]) {
-                        var why = pos ? pos.title + ': ' + pos.detail : (ins.length && ins[0].type === 'developing' ? ins[0].detail : 'Keep journaling — patterns emerge as your sample grows.');
-                        secs[1].querySelector('p').textContent = why;
-                    }
-                    if (secs[2]) {
-                        var next = 'Remaining daily risk budget: $' + rs.riskRemaining + '.';
-                        if (rs.riskRemaining <= 0) next = 'Daily risk budget is exhausted — stop for the day.';
-                        else if (rs.statusLabel === 'HIGH' || rs.statusLabel === 'LIMIT') next = 'High risk warning — stay small or stop for the day.';
-                        else if (w + l > 0 && l > w) next = 'Down ' + (l - w) + ' trade' + (l - w > 1 ? 's' : '') + ' today — wait for a confirmed setup before re-entering.';
-                        secs[2].querySelector('p').textContent = next;
-                    }
-                    var briefStamp = brief.querySelector('[class*="text-[11px]"]');
-                    if (briefStamp) briefStamp.textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' · generated';
+                    for (var i4 = 0; i4 < ins2.length; i4++) if (ins2[i4].severity === 'positive' && ins2[i4].type === 'strength') { pos = ins2[i4]; break; }
+                    byId('ai-why').textContent = pos ? pos.title + ': ' + pos.detail : (ins2.length && ins2[0].type === 'developing' ? ins2[0].detail : 'Keep journaling — patterns emerge as your sample grows.');
+                    var nxt = 'Remaining daily risk budget: $' + rs.riskRemaining + '.';
+                    if (rs.riskRemaining <= 0) nxt = 'Daily risk budget is exhausted — stop for the day.';
+                    else if (rs.statusLabel === 'HIGH RISK' || rs.statusLabel === 'LIMIT BREACHED') nxt = 'High risk warning — stay small or stop for the day.';
+                    else if (wins + losses > 0 && losses > wins) nxt = 'Down ' + (losses - wins) + ' trade' + (losses - wins > 1 ? 's' : '') + ' today — wait for a confirmed setup before re-entering.';
+                    byId('ai-next').textContent = nxt;
+                    byId('ai-stamp').textContent = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) + ' · from your data';
                 }
 
-                // ---- WEEKLY FOCUS (real week-to-date progress) ----
-                var focus = byTitle(document, 'Weekly Focus');
-                if (focus) {
+                // ---- WEEKLY FOCUS ----
+                if (byId('wf-budget')) {
+                    var policy = core.activePolicy ? core.activePolicy(accountId) : null;
+                    var maxPerDay = policy && policy.values.maxTrades ? policy.values.maxTrades : 5;
                     var weekAgo = new Date(Date.now() - 7 * 86400000);
                     var weekTrades = core.Trades.filter(function (t) {
                         return t.account_id === accountId && new Date(t.ts) >= weekAgo;
                     });
                     var weekReviewed = weekTrades.filter(function (t) { return t.reviewed; }).length;
-                    var weekPnl = weekTrades.reduce(function (s, t) { return s + t.pnl; }, 0);
                     var weekBudget = maxPerDay * 5;
-                    var focusItems = focus.querySelectorAll('.flex.flex-col.gap-4 > div');
-                    if (focusItems[0]) {
-                        var f0 = focusItems[0].querySelector('.num');
-                        if (f0) f0.textContent = weekTrades.length + ' / ' + weekBudget;
-                        var f0fill = focusItems[0].querySelector('.mini-fill');
-                        if (f0fill) f0fill.style.width = Math.min(100, Math.round(weekTrades.length / weekBudget * 100)) + '%';
-                    }
-                    if (focusItems[1]) {
-                        var f1 = focusItems[1].querySelector('.num');
-                        if (f1) f1.textContent = weekReviewed + ' / ' + weekTrades.length;
-                        var f1fill = focusItems[1].querySelector('.mini-fill');
-                        if (f1fill) f1fill.style.width = (weekTrades.length ? Math.round(weekReviewed / weekTrades.length * 100) : 0) + '%';
-                    }
-                    var focusP = focus.querySelector('p');
-                    if (focusP) {
-                        var mood = weekPnl >= 0 ? 'green week' : 'red week';
-                        var pending = weekTrades.length - weekReviewed;
-                        focusP.innerHTML = 'On pace for a <span class="text-white font-semibold">' + mood + '</span>' + (pending ? ' — ' + pending + ' review' + (pending > 1 ? 's' : '') + ' pending.' : '.');
-                    }
+                    byId('wf-budget').textContent = weekTrades.length + ' / ' + weekBudget;
+                    byId('wf-budget-fill').style.width = Math.min(100, Math.round(weekTrades.length / weekBudget * 100)) + '%';
+                    byId('wf-reviews').textContent = weekReviewed + ' / ' + weekTrades.length;
+                    byId('wf-reviews-fill').style.width = (weekTrades.length ? Math.round(weekReviewed / weekTrades.length * 100) : 0) + '%';
+                    byId('wf-pending').textContent = (weekTrades.length - weekReviewed);
+                    var dims3 = (disc.dims || []).filter(function (x) { return x.score != null; });
+                    var focusDim = dims3.length ? dims3.slice().sort(function (x, y) { return x.score - y.score; })[0].label : '—';
+                    byId('wf-focus').textContent = focusDim;
+                    byId('wf-note').textContent = weekTrades.length
+                        ? (weekReviewed < weekTrades.length
+                            ? (weekTrades.length - weekReviewed) + ' review' + (weekTrades.length - weekReviewed > 1 ? 's' : '') + ' pending — focus on ' + focusDim + ' this week.'
+                            : 'All reviews done — keep your ' + focusDim + ' discipline sharp.')
+                        : 'No trades this week yet — your budget resets fresh.';
                 }
             }
 
             // ====================================================================
             // MARKET EVENTS — live economic calendar (server-fetched + cached).
-            // The browser never hits the provider directly; GET /api/ecocal
-            // returns the day's High/Medium events with session tags.
             // ====================================================================
             var ecoSession = 'All';
             var ecoData = null;
@@ -1698,18 +1435,17 @@
             function ecoTitle(t) {
                 var s = String(t || '');
                 var m = s.match(/^(.+?)\s+\((.+)\)$/);
-                return m ? m[1].trim() + ' <span class="text-[#6E6E78] font-normal">(' + m[2] + ')</span>' : s;
+                return m ? m[1].trim() + ' <span class="text-[var(--tm-dim)] font-normal">(' + m[2] + ')</span>' : s;
             }
             function renderEco() {
-                var list = document.getElementById('ecocal-list');
-                var live = document.getElementById('ecocal-live');
-                var chips = document.getElementById('ecocal-sessions');
-                if (!list || !ecoData) { if (list) list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[#6E6E78]">Economic calendar unavailable right now — no fake events will be shown.</div>'; return; }
+                var list = byId('ecocal-list');
+                var live = byId('ecocal-live');
+                var chips = byId('ecocal-sessions');
+                if (!list || !ecoData) { if (list) list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">Economic calendar unavailable right now — no fake events will be shown.</div>'; return; }
                 if (live) {
                     if (!ecoData.ok) live.innerHTML = '<span class="tag tag-red !py-1 !px-2.5">Calendar unavailable</span>';
                     else live.innerHTML = '<span class="tag tag-emerald !py-1 !px-2.5">Live · ' + ecoData.source + '</span>';
                 }
-                // session chips
                 if (chips) {
                     var ses = ['All'].concat(Object.keys(ecoData.by || {}));
                     chips.innerHTML = ses.map(function (s) {
@@ -1723,15 +1459,15 @@
                 }
                 var events = ecoSession === 'All' ? (ecoData.events || []) : ((ecoData.by || {})[ecoSession] || []);
                 if (!events.length) {
-                    list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[#6E6E78]">No scheduled events for ' + ecoSession + ' today. The calendar is real — quiet sessions stay quiet.</div>';
+                    list.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">No scheduled events for ' + ecoSession + ' today. The calendar is real — quiet sessions stay quiet.</div>';
                     return;
                 }
-                list.innerHTML = events.slice(0, 12).map(function (e) {
+                list.innerHTML = events.slice(0, 10).map(function (e) {
                     return '<div class="flex items-center gap-4 py-3">' +
-                        '<span class="num text-[12.5px] text-[#6E6E78] w-16 flex-shrink-0">' + ecoTime(e.ts) + '</span>' +
+                        '<span class="num text-[12.5px] text-[var(--tm-dim)] w-16 flex-shrink-0">' + ecoTime(e.ts) + '</span>' +
                         '<div class="flex-1 min-w-0">' +
-                            '<div class="text-[13.5px] font-semibold text-white truncate">' + ecoTitle(e.title) + '</div>' +
-                            '<div class="text-[12px] text-[#6E6E78] truncate">' + (e.impact || '') + ' impact · ' + (e.country || e.currency || '') +
+                            '<div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate">' + ecoTitle(e.title) + '</div>' +
+                            '<div class="text-[12px] text-[var(--tm-dim)] truncate">' + (e.impact || '') + ' impact · ' + (e.country || e.currency || '') +
                                 (e.forecast ? ' · consensus ' + e.forecast : '') + (e.previous ? ' · prev ' + e.previous : '') + (e.actual ? ' · actual ' + e.actual : '') +
                             '</div>' +
                         '</div>' +
@@ -1744,9 +1480,7 @@
                     var res = await apiFetch('/api/ecocal');
                     if (!res.ok) throw new Error('HTTP ' + res.status);
                     ecoData = await res.json();
-                } catch (e) {
-                    ecoData = null;
-                }
+                } catch (e) { ecoData = null; }
                 renderEco();
             }
 
@@ -1755,66 +1489,63 @@
             var battleWs = null;
             var battleWsTimer = null;
             function renderBattlesFeed() {
-                var active = document.getElementById('battles-active');
-                var invites = document.getElementById('battles-invites');
-                var results = document.getElementById('battles-results');
-                var empty = document.getElementById('battles-empty');
+                var active = byId('battles-active');
+                var invites = byId('battles-invites');
+                var results = byId('battles-results');
+                var empty = byId('battles-empty');
                 if (!active || !battleFeed) return;
                 var f = battleFeed;
                 var any = (f.active || []).length + (f.invites || []).length + (f.results || []).length;
                 if (empty) empty.style.display = any ? 'none' : 'block';
                 if (empty && !any) empty.textContent = 'No battles yet — host one from the Battles page and it will appear here in real time.';
-                // active (my seats)
                 if (active) {
                     active.innerHTML = (f.active || []).length
-                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[#6E6E78] font-semibold mb-1 mt-1">Active · ' + f.active.length + '</div>' + (f.active || []).map(function (b) {
+                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold mb-1 mt-1">Active · ' + f.active.length + '</div>' + (f.active || []).map(function (b) {
                             var pct = Math.round((b.cursor / Math.max(1, b.total)) * 100);
                             var st = b.myStats;
                             var pnlCell = '';
                             if (st) {
                                 var total = st.realized + st.unrealized;
-                                var col = total >= 0 ? '#34D399' : '#F87171';
+                                var col = total >= 0 ? 'var(--tm-green)' : 'var(--tm-red)';
                                 pnlCell = '<div class="flex items-center gap-3 flex-shrink-0">' +
                                     '<div class="text-right"><div class="num text-[13px] font-bold" style="color:' + col + '">' + (total >= 0 ? '+' : '') + '$' + Math.round(Math.abs(total)).toLocaleString() + '</div>' +
-                                    '<div class="text-[10.5px] text-[#6E6E78]">P&L · ' + st.trades + 'T · ' + st.wins + 'W</div></div>' +
-                                    '<span class="status-badge" style="background:rgba(99,102,241,0.14);color:#A5B4FC">#' + st.rank + ' of ' + st.seated + '</span>' +
+                                    '<div class="text-[10.5px] text-[var(--tm-dim)]">P&L · ' + st.trades + 'T · ' + st.wins + 'W</div></div>' +
+                                    '<span class="tag tag-purple">#' + st.rank + ' of ' + st.seated + '</span>' +
                                 '</div>';
                             }
                             return '<div class="flex items-center gap-4 py-2.5">' +
-                                '<span class="status-badge" style="background:rgba(16,185,129,0.14);color:#34D399">' + (b.status === 'lobby' ? 'LOBBY' : 'LIVE') + '</span>' +
-                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white truncate">' + b.title + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78]">' + b.symbol + ' ' + b.timeframe + ' · ' + b.taken + '/' + b.seats + ' seats · replay ' + pct + '%</div></div>' +
+                                '<span class="tag tag-emerald">' + (b.status === 'lobby' ? 'LOBBY' : 'LIVE') + '</span>' +
+                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate">' + b.title + '</div>' +
+                                '<div class="text-[12px] text-[var(--tm-dim)]">' + b.symbol + ' ' + b.timeframe + ' · ' + b.taken + '/' + b.seats + ' seats · replay ' + pct + '%</div></div>' +
                                 pnlCell +
-                                '<a href="backtesting.html?mode=battle" class="flex items-center gap-1 text-[12px] font-semibold text-[#10B981] hover:text-tm-green transition-colors">Watch <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
+                                '<a href="backtesting.html?mode=battle" class="flex items-center gap-1 text-[12px] font-semibold text-[var(--tm-green)] hover:opacity-80 transition-opacity">Watch <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
                             '</div>';
                         }).join('')
                         : '';
                 }
-                // invites (free seats)
                 if (invites) {
                     invites.innerHTML = (f.invites || []).length
-                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[#8A8A93] font-semibold mb-1 mt-2">Invites · open seats</div>' + (f.invites || []).map(function (b) {
+                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold mb-1 mt-2">Invites · open seats</div>' + (f.invites || []).map(function (b) {
                             return '<div class="flex items-center gap-4 py-2.5">' +
-                                '<span class="status-badge" style="background:rgba(59,130,246,0.14);color:#60A5FA">' + (b.status === 'lobby' ? 'OPEN' : 'LIVE') + '</span>' +
-                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white truncate">' + b.title + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78]">' + b.symbol + ' ' + b.timeframe + ' · ' + b.taken + '/' + b.seats + ' seats taken</div></div>' +
-                                '<a href="backtesting.html?mode=battle" class="flex items-center gap-1 text-[12px] font-semibold text-[#60A5FA] hover:text-[#93C5FD] transition-colors">Join <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
+                                '<span class="tag tag-blue">' + (b.status === 'lobby' ? 'OPEN' : 'LIVE') + '</span>' +
+                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate">' + b.title + '</div>' +
+                                '<div class="text-[12px] text-[var(--tm-dim)]">' + b.symbol + ' ' + b.timeframe + ' · ' + b.taken + '/' + b.seats + ' seats taken</div></div>' +
+                                '<a href="backtesting.html?mode=battle" class="flex items-center gap-1 text-[12px] font-semibold text-[var(--tm-blue)] hover:opacity-80 transition-opacity">Join <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
                             '</div>';
                         }).join('')
                         : '';
                 }
-                // results (last 7 days)
                 if (results) {
                     results.innerHTML = (f.results || []).length
-                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[#6E6E78] font-semibold mb-1 mt-2">Results · last 7 days</div>' + (f.results || []).slice(0, 5).map(function (b) {
+                        ? '<div class="text-[11.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold mb-1 mt-2">Results · last 7 days</div>' + (f.results || []).slice(0, 4).map(function (b) {
                             var w = b.winner;
                             var day = b.completedAt ? new Date(b.completedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) : '';
                             var net = w && w.detail && typeof w.detail.net === 'number' ? (w.detail.net >= 0 ? '+' : '') + '$' + Math.round(Math.abs(w.detail.net)).toLocaleString() : '—';
                             return '<div class="flex items-center gap-4 py-2.5">' +
-                                '<span class="status-badge" style="background:rgba(139,92,246,0.14);color:#A78BFA">DONE</span>' +
-                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-white truncate">' + b.title + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78]">' + day + ' · winner ' + (w ? w.name : '—') + (w && w.team ? ' (' + w.team + ')' : '') + ' · ' + net + '</div></div>' +
-                                '<a href="backtesting.html?mode=battle" class="flex items-center gap-1 text-[12px] font-semibold text-[#A78BFA] hover:text-[#C4B5FD] transition-colors">View <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
+                                '<span class="tag tag-purple">DONE</span>' +
+                                '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate">' + b.title + '</div>' +
+                                '<div class="text-[12px] text-[var(--tm-dim)]">' + day + ' · winner ' + (w ? w.name : '—') + (w && w.team ? ' (' + w.team + ')' : '') + ' · ' + net + '</div></div>' +
+                                '<a href="backtesting.html?mode=battle" class="flex items-center gap-1 text-[12px] font-semibold text-[var(--tm-purple)] hover:opacity-80 transition-opacity">View <svg data-lucide="chevron-right" class="w-3 h-3"></svg></a>' +
                             '</div>';
                         }).join('')
                         : '';
@@ -1845,15 +1576,42 @@
                 battleWsTimer = setInterval(function () { if (battleWs && battleWs.readyState === 1) battleWs.send('ping'); }, 30000);
             }
 
+            // Weekly Focus — replay practice count from the simulation engine
+            async function loadPractice() {
+                try {
+                    var res = await apiFetch('/api/backtest/sessions');
+                    if (!res.ok) throw new Error('HTTP ' + res.status);
+                    var j = await res.json();
+                    var sessions = (j && j.sessions) || [];
+                    var weekAgo = Date.now() - 7 * 86400000;
+                    var week = sessions.filter(function (s) {
+                        var ts = new Date(s.createdAt).getTime();
+                        return !isNaN(ts) && ts >= weekAgo;
+                    });
+                    var total = sessions.length;
+                    var el = byId('wf-practice');
+                    if (el) {
+                        el.textContent = week.length + ' this week';
+                        var fill = byId('wf-practice-fill');
+                        if (fill) fill.style.width = Math.min(100, Math.round((total ? week.length / total : 0) * 100)) + '%';
+                    }
+                } catch (e) {
+                    var el2 = byId('wf-practice');
+                    if (el2) el2.textContent = '—';
+                }
+            }
+
             function boot() {
                 loadEco();
-                setInterval(loadEco, 5 * 60 * 1000);   // refresh the cached calendar every 5 min
+                setInterval(loadEco, 5 * 60 * 1000);
                 loadBattlesFeed();
                 connectBattlesWs();
-                setInterval(loadBattlesFeed, 60 * 1000); // slow safety net if /ws is blocked
+                setInterval(loadBattlesFeed, 60 * 1000);
+                loadPractice();
                 if (window.TradeMindCore) {
                     var bus = window.TradeMindCore.TradeMindBus;
                     ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.changed'].forEach(function (ev) { bus.subscribe(ev, sync); });
+                    document.addEventListener('tm:theme', function () { window.__plotEq(); });
                     sync();
                 }
             }

@@ -120,13 +120,30 @@ function buildNotifications(Core, accountId, opts) {
 
     if (rs) {
         const riskPct = rs.dailyRiskBudget ? Math.round((rs.riskUsed / rs.dailyRiskBudget) * 100) : 0;
+        const lossPct = rs.dailyLossLimit ? Math.round((rs.lossUsed / rs.dailyLossLimit) * 100) : 0;
+        // each breached constraint gets its own stable-id notification; the
+        // generic limit alert names the actual constraint instead of assuming
+        // it was the risk budget.
+        const breached = [];
+        if (rs.dailyRiskBudget && rs.riskUsed >= rs.dailyRiskBudget) breached.push('daily risk budget ($' + rs.riskUsed + ' of $' + rs.dailyRiskBudget + ')');
+        if (rs.dailyLossLimit && rs.lossUsed >= rs.dailyLossLimit) breached.push('daily loss limit (-$' + rs.lossUsed + ' of -$' + rs.dailyLossLimit + ')');
+        if (rs.drawdownLimit && rs.currentDrawdown >= rs.drawdownLimit) breached.push('drawdown limit ($' + rs.currentDrawdown + ' of $' + rs.drawdownLimit + ')');
         if (rs.status === 'LIMIT') {
             out.push({
                 id: 'risk-limit', cat: 'Risk', sev: SEV.critical, at: nowISO(),
                 icon: 'shield-alert', tint: 'red',
-                title: 'Daily risk limit breached',
-                body: rs.riskUsed + ' risk used of ' + rs.dailyRiskBudget + ' budget · ' +
-                    rs.lossUsed + ' loss · ' + rs.currentDrawdown + ' drawdown. Next trade is blocked until tomorrow.',
+                title: 'Limit breached — ' + (breached[0] ? breached[0].replace(/^[a-z ]+/, '') : 'protect capital'),
+                body: (breached.length ? breached.join(' · ') : 'Daily limit reached') +
+                    ' · drawdown ' + rs.currentDrawdown + '. Next trade is blocked until the constraint resets.',
+                href: 'risk.html'
+            });
+        }
+        if (rs.dailyLossLimit && rs.lossUsed >= rs.dailyLossLimit) {
+            out.push({
+                id: 'risk-loss-limit', cat: 'Risk', sev: SEV.critical, at: nowISO(),
+                icon: 'shield-alert', tint: 'red',
+                title: 'Daily loss limit breached',
+                body: 'Realized -$' + rs.lossUsed + ' today of a -$' + rs.dailyLossLimit + ' limit (' + lossPct + '%). Consider the day done.',
                 href: 'risk.html'
             });
         }

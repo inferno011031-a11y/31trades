@@ -523,13 +523,21 @@
     }
 
     function reAssign(accountId, strategyId, policyId, strategyVersionId) {
+        // Guarantee strictly increasing active_from for the same account+strategy
+        // so the newest assignment always wins the desc sort in activeAssignment.
+        // Same-millisecond edits would otherwise tie and keep the OLDER
+        // assignment first — and the new policy version would never activate.
+        let from = Date.now();
+        StrategyAssignments
+            .filter(a => a.account_id === accountId && a.strategy_id === strategyId)
+            .forEach(a => { const t = new Date(a.active_from).getTime(); if (t >= from) from = t + 1; });
         StrategyAssignments.push({
             id: 'asgn-' + (++_asgnN),
             account_id: accountId,
             strategy_id: strategyId,
             policy_id: policyId,
             strategy_version_id: strategyVersionId,
-            active_from: nowISO()
+            active_from: new Date(from).toISOString()
         });
     }
 
@@ -636,7 +644,9 @@
                 status: fields.status || 'Active', note: 'Drawdown basis: ' + (fields.ddModel || 'static')
             });
             const v = newConfigVersion('RiskPolicy', id, 'v1.0', {
-                ddModel: fields.ddModel || 'static', maxDailyLoss: dailyLoss, maxTotalDrawdown: maxDD,
+                ddModel: fields.ddModel || 'static',
+                maxDailyRisk: fields.dailyRisk != null ? fields.dailyRisk : (fields.maxDailyRisk != null ? fields.maxDailyRisk : dailyLoss),
+                maxDailyLoss: dailyLoss, maxTotalDrawdown: maxDD,
                 riskPerTrade: risk, riskBasis: fields.basis || 'money', maxOpenRisk: fields.openR || fields.maxOpenRisk || 50, openBasis: 'money',
                 maxTrades: fields.maxTrades || 5, warn: fields.warn || [50, 70, 90]
             }, 'Created with account');
@@ -1387,6 +1397,9 @@
     }
 
     // Pre-trade check — deterministic decision from the rule engine + risk state.
+    // Returns a canonical contract: status (CLEAR/CAUTION/VIOLATION/BLOCKED) plus
+    // the actual constraint headroom so every surface (Risk page, Journal ticket,
+    // notifications, future AI) renders the exact same decision.
     function preTradeCheck(accountId, draft) {
         const account = Accounts.find(a => a.id === accountId);
         if (!account) throw new Error('unknown account ' + accountId);
@@ -1405,10 +1418,86 @@
         if (t.risk > rs.drawdownRemaining) blocks.push('Drawdown buffer — only $' + rs.drawdownRemaining + ' remaining');
         const state = blocks.length ? 'BLOCKED' : hard.length ? 'VIOLATION' : soft.length ? 'CAUTION' : 'CLEAR';
         return {
-            account_id: accountId, state,
-            checks, blocking_rules: [...hard.map(c => c.explanation), ...blocks],
-            recommended_max_risk: rs.recommendedMaxRisk
+            account_id: accountId, state, status: state,
+            riskRequested: t.risk,
+            riskRemaining: rs.riskRemaining, lossRemaining: rs.lossRemaining,
+            drawdownRemaining: rs.drawdownRemaining, maxAllowedRisk: rs.maxAllowedRisk,
+            recommended_max_risk: rs.recommendedMaxRisk,
+            checks,
+            blocking_rules: [...hard.map(c => c.explanation), ...blocks],
+            warnings: soft.map(c => c.explanation),
+            violations: hard.map(c => c.explanation),
+            blocks
         };
+    }
+
+    // Risk events — derived deterministically from the canonical ledger + policy
+    // (same math as riskState), listed newest-first. Nothing is persisted here,
+    // so re-deriving on every page load never duplicates events. Every event
+    // carries an optional trade_id for deep-linking into the Journal.
+    function riskEvents(accountId, opts) {
+        const account = Accounts.find(a => a.id === accountId);
+        if (!account) return [];
+        const policy = activePolicy(accountId);
+        const v = policy ? policy.values : {};
+        const limRisk = v.maxDailyRisk || v.maxDailyLoss || 0;
+        const limLoss = v.maxDailyLoss || 0;
+        const limDD = v.maxTotalDrawdown || 0;
+        const limTrade = v.riskPerTrade || 0;
+        const warn = v.warn || [50, 70, 90];
+
+        const list = Trades
+            .filter(t => t.account_id === accountId)
+            .slice()
+            .sort((a, b) => new Date(a.ts) - new Date(b.ts));
+        const days = {};
+        list.forEach(t => {
+            const k = dayKey(new Date(t.ts));
+            (days[k] = days[k] || []).push(t);
+        });
+
+        const events = [];
+        // drawdown track across the whole ledger (peak-to-current, same as riskState)
+        let eq = account.starting_balance, peak = account.starting_balance, maxDD = 0, curDD = 0;
+        const dayKeys = Object.keys(days).sort();
+        dayKeys.forEach(k => {
+            const g = days[k];
+            const risk = g.reduce((s, t) => s + (t.risk || 0), 0);
+            const loss = Math.abs(g.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
+            const riskPct = limRisk ? (risk / limRisk) * 100 : 0;
+            if (limRisk && risk > limRisk) {
+                events.push({ at: g[g.length - 1].ts, day: k, type: 'risk-breach', severity: 'critical',
+                    detail: 'Risk used $' + risk + ' > $' + limRisk + ' daily budget', trade_ids: g.map(t => t.id) });
+            } else if (limRisk && riskPct >= warn[0]) {
+                events.push({ at: g[g.length - 1].ts, day: k, type: riskPct >= warn[2] ? 'high-risk' : 'risk-warning',
+                    severity: riskPct >= warn[2] ? 'warning' : 'info',
+                    detail: 'Risk used $' + risk + ' (' + Math.round(riskPct) + '% of budget)', trade_ids: g.map(t => t.id) });
+            }
+            if (limLoss && loss > limLoss) {
+                events.push({ at: g[g.length - 1].ts, day: k, type: 'loss-breach', severity: 'critical',
+                    detail: 'Realized loss $' + loss + ' > $' + limLoss + ' daily loss limit', trade_ids: g.map(t => t.id) });
+            }
+            // end-of-day drawdown vs the running peak
+            g.forEach(t => { eq += (t.pnl || 0); if (eq > peak) peak = eq; maxDD = Math.max(maxDD, peak - eq); curDD = Math.max(0, peak - eq); });
+            if (limDD && curDD >= limDD) {
+                events.push({ at: g[g.length - 1].ts, day: k, type: 'drawdown-breach', severity: 'critical',
+                    detail: 'Drawdown $' + Math.round(curDD) + ' ≥ $' + limDD + ' limit', trade_ids: g.map(t => t.id) });
+            }
+            // per-trade spikes + policy blocks (deep-link into the Journal)
+            g.forEach(t => {
+                if (limTrade && t.risk > limTrade * 1.5) {
+                    events.push({ at: t.ts, day: k, type: 'risk-spike', severity: 'warning',
+                        detail: t.symbol + ' risked $' + t.risk + ' vs $' + limTrade + ' per-trade limit', trade_id: t.id });
+                }
+                if (t.adherence_result === 'BLOCK') {
+                    events.push({ at: t.ts, day: k, type: 'block', severity: 'high',
+                        detail: (t.block_reason || 'Rule engine rejected this trade') + ' · ' + t.symbol, trade_id: t.id });
+                }
+            });
+        });
+
+        const limit = (opts && opts.limit) || 20;
+        return events.sort((a, b) => new Date(b.at) - new Date(a.at)).slice(0, limit);
     }
 
     // ---- DISCIPLINE SERVICE (process score, not profitability) ----
@@ -1776,7 +1865,7 @@
         StrategyMaster, RuleSetMaster, TradeEvaluations, Violations,
         ConfigAPI,
         logTradePipeline, TradeService,
-        evaluateRules, preTradeCheck,
+        evaluateRules, preTradeCheck, riskEvents,
         riskState, disciplineState, analytics, calendarMonth, insights,
         // the SAME analytics math, runnable over any trade-shaped list — the
         // practice/backtest and battle views feed it flattened simulated trades
