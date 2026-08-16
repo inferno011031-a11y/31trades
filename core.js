@@ -238,6 +238,8 @@
         const _GS_PAGES = [
             { name: 'Dashboard', href: 'dashboard.html', icon: 'layout-dashboard' },
             { name: 'Journal', href: 'journal.html', icon: 'book-open' },
+            { name: 'Review', href: 'review.html', icon: 'clipboard-check' },
+            { name: 'Improve', href: 'improve.html', icon: 'refresh-cw' },
             { name: 'Insights', href: 'insights.html', icon: 'sparkles' },
             { name: 'Analytics', href: 'analytics.html', icon: 'bar-chart-3' },
             { name: 'AI Mentor', href: 'ai.html', icon: 'brain-circuit' },
@@ -250,8 +252,6 @@
             { name: 'Calendar', href: 'calendar.html', icon: 'calendar-days' },
             { name: 'Community', href: 'community.html', icon: 'users' },
             { name: 'Reports', href: 'reports.html', icon: 'file-text' },
-            { name: 'Review', href: 'review.html', icon: 'clipboard-check' },
-            { name: 'Improve', href: 'improve.html', icon: 'refresh-cw' },
             { name: 'Notifications', href: 'notifications.html', icon: 'bell' },
             { name: 'Settings', href: 'settings.html', icon: 'settings' },
             { name: 'Help', href: 'help.html', icon: 'help-circle' }
