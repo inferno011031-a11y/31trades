@@ -953,11 +953,13 @@ async function handleApi(req, res, url) {
 
         // ---- broker connections (per-user; onboarding checklist depends on it) ----
         if (p === '/api/brokers/connect') {
-            const b = await Brokers.connect(uc.userId, body.broker);
-            return json(res, 200, { ok: true, broker: b });
+            const r = await Brokers.connect(uc.userId, body.broker);
+            if (!r.ok) return json(res, 400, { error: r.error });
+            return json(res, 200, { ok: true, broker: r.broker });
         }
         if (p === '/api/brokers/disconnect') {
-            await Brokers.disconnect(uc.userId, body.broker);
+            const r = await Brokers.disconnect(uc.userId, body.broker);
+            if (!r.ok) return json(res, 400, { error: r.error });
             return json(res, 200, { ok: true });
         }
 
