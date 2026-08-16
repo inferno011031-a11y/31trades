@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Insights</title>
+    <title>BATTLEXJOURNAL — Insights</title>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -14,31 +14,30 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
-
+    <script src="assets/asset-meta.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             height: 100%;
-            background: #0A0A0C;
-            color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
             overflow: hidden;
         }
 
-        .num { font-family: 'JetBrains Mono', monospace; font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
         /* ---- App shell ---- */
         .sidebar {
             width: 224px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0D0D0F;
-            border-right: 1px solid #1C1C20;
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -53,105 +52,118 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #8A8A93;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active { background: rgba(16,185,129,0.08); color: #FFFFFF; box-shadow: inset 2px 0 0 #10B981; }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        .panel { background: #121214; border: 1px solid #1F1F23; border-radius: 12px; }
-        .panel-title { font-size: 13px; font-weight: 700; color: #E8E8EC; }
-        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: #6E6E78; }
+        .panel { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; }
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .panel-sub { font-size: 12px; color: var(--tm-dim); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
 
         .btn-primary {
-            background: #FFFFFF; color: #0A0A0C; font-weight: 700; font-size: 13.5px;
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
             padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: background 0.15s; border: none;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
         }
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+
         .btn-ghost {
-            background: transparent; color: #B4B4BD; font-weight: 600; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; border: 1px solid #26262B;
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s;
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
 
-        .tag { display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-        .tag-emerald { background: rgba(16,185,129,0.1); color: #34D399; border: 1px solid rgba(16,185,129,0.25); }
-        .tag-red { background: rgba(239,68,68,0.1); color: #F87171; border: 1px solid rgba(239,68,68,0.25); }
-        .tag-amber { background: rgba(245,158,11,0.1); color: #FBBF24; border: 1px solid rgba(245,158,11,0.25); }
-        .tag-blue { background: rgba(59,130,246,0.1); color: #93C5FD; border: 1px solid rgba(59,130,246,0.25); }
-        .tag-gray { background: rgba(255,255,255,0.04); color: #8A8A93; border: 1px solid #232327; }
-
-        /* Period chips */
-        .period-chip {
-            padding: 7px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #8A8A93;
-            background: #121214; border: 1px solid #1F1F23; transition: all 0.15s;
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
         }
-        .period-chip:hover { color: #E8E8EC; border-color: #2E2E35; }
-        .period-chip.active { background: #1F1F23; color: #FFFFFF; border-color: #2E2E35; }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
 
-        /* Tabs */
-        .ins-tab {
-            padding: 9px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; color: #8A8A93;
-            border: none; background: transparent; transition: all 0.15s; white-space: nowrap;
+        .ctrl {
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
+            font-size: 13px; color: var(--tm-text); padding: 8px 12px; outline: none; transition: border-color 0.15s;
         }
-        .ins-tab:hover { color: #E8E8EC; }
-        .ins-tab.active { background: #1F1F23; color: #FFFFFF; }
+        .ctrl:focus { border-color: var(--tm-accent); }
+        select.ctrl option { background: var(--tm-card); color: var(--tm-text); }
+        .ctrl::placeholder { color: var(--tm-dim); }
 
-        .ins-panel { display: none; animation: fadeIn 0.3s ease; }
-        .ins-panel.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        /* ---- Insight-specific ---- */
+        .finding-card { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 10px; }
+        .finding-card .fc-title { font-size: 14.5px; font-weight: 800; letter-spacing: -0.01em; color: var(--tm-text); }
+        .finding-card .fc-detail { font-size: 12.5px; color: var(--tm-muted); line-height: 1.5; }
 
-        /* Ranked rows */
-        .rank-row {
-            display: flex; align-items: center; gap: 12px;
-            padding: 11px 14px; border-radius: 8px; margin-bottom: 8px;
-            background: #0F0F11; border: 1px solid #1F1F23;
+        .stat-tile { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 10px; padding: 12px 14px; }
+        .stat-tile .st-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); }
+        .stat-tile .st-value { font-size: 20px; font-weight: 800; margin-top: 3px; }
+
+        .ev-chip {
+            display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 6px; font-size: 11px;
+            font-family: var(--tm-mono); background: var(--tm-bg); border: 1px solid var(--tm-border-2); color: var(--tm-muted);
         }
-        .rank-num { width: 22px; height: 22px; border-radius: 6px; background: #1F1F23; color: #8A8A93; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .rank-row.worst .rank-num { background: rgba(239,68,68,0.12); color: #F87171; }
-        .rank-row.best .rank-num { background: rgba(16,185,129,0.12); color: #34D399; }
 
-        .bar-track { height: 5px; background: #1F1F23; border-radius: 999px; overflow: hidden; }
-        .bar-fill { height: 100%; border-radius: 999px; }
-
-        .metric-mini { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 10px; padding: 12px 14px; }
-        .metric-mini .label-xs { margin-bottom: 6px; }
-        .metric-mini .val { font-size: 18px; font-weight: 700; }
-
-        .coach-q {
-            padding: 9px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: #B4B4BD;
-            background: #121214; border: 1px solid #1F1F23; transition: all 0.15s;
+        .mode-toggle { display: flex; border: 1px solid var(--tm-border-2); border-radius: 8px; overflow: hidden; }
+        .mode-toggle button {
+            padding: 8px 16px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer;
+            background: transparent; color: var(--tm-muted); border: none; transition: all 0.15s; text-transform: uppercase;
         }
-        .coach-q:hover { border-color: rgba(16,185,129,0.4); color: #34D399; }
+        .mode-toggle button:hover { color: var(--tm-text); }
+        .mode-toggle button.active { background: var(--tm-text); color: var(--tm-bg); }
 
-        /* Data confidence */
-        .conf {
-            display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: 999px;
-            font-size: 11.5px; font-weight: 700; letter-spacing: 0.02em;
+        /* ---- Evidence drawer ---- */
+        .drawer-overlay {
+            position: fixed; inset: 0; background: rgba(8, 10, 14, 0.45); z-index: 60;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s;
         }
-        .conf .dot { width: 7px; height: 7px; border-radius: 999px; }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+        .drawer-panel {
+            position: fixed; top: 0; right: 0; bottom: 0; width: 460px; max-width: 94vw;
+            background: var(--tm-card); border-left: 1px solid var(--tm-border); z-index: 61;
+            transform: translateX(102%); transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column;
+        }
+        .drawer-panel.open { transform: none; }
+
+        .ev-trade-row {
+            display: flex; align-items: center; gap: 10px; padding: 10px 12px; border: 1px solid var(--tm-border);
+            border-radius: 10px; text-decoration: none; transition: background 0.12s, border-color 0.12s;
+        }
+        .ev-trade-row:hover { background: var(--tm-hover); border-color: var(--tm-border-2); }
+
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
+            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
+            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
-        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
         body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
 
         @media (max-width: 640px) {
             .search-input { display: none; }
@@ -174,9 +186,9 @@
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -185,7 +197,7 @@
             <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
                 <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
                 <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
-                <a href="insights.html" class="nav-item active"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span><span class="nav-label ml-auto text-[10px] font-bold text-[#10B981] bg-[rgba(16,185,129,0.1)] px-1.5 py-0.5 rounded">NEW</span></a>
+                <a href="insights.html" class="nav-item active"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
                 <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
                 <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
                 <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
@@ -199,17 +211,17 @@
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -220,784 +232,597 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                    <input type="text" class="search-input" placeholder="Ask anything… e.g. why did I lose this week?">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. what patterns do you see?">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <a href="journal.html" class="btn-primary !py-2 !px-3.5">
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </a>
-                    <button class="account-select hide-when-collapsed">
-                        <span class="num text-[12px]">$10,000</span><span class="text-[#6E6E78]">·</span>
-                        <span>Prop Firm A</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Content -->
             <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+                <div class="max-w-[1500px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
                             <h1 class="text-[22px] font-bold tracking-tight">Insights</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">How you trade, why it happens, and what to improve next — built from your journal.</p>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Patterns in your trading, backed by your own evidence.</p>
                         </div>
-                        <div class="flex items-center gap-2 flex-wrap">
-                            <div id="period-chips" class="flex items-center gap-1.5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1"></div>
-                            <div class="flex items-center gap-1.5 bg-[#0F0F11] border border-[#1F1F23] rounded-lg p-1" id="mode-toggle">
-                                <button class="period-chip active" data-mode="live">Live</button>
-                                <button class="period-chip" data-mode="practice" title="Insights from backtest practice sessions — isolated from live P&L">Practice</button>
+                        <div class="flex items-center gap-2.5">
+                            <div class="mode-toggle" id="mode-toggle">
+                                <button class="active" data-mode="LIVE" id="mode-live">Live</button>
+                                <button data-mode="BACKTEST" id="mode-bt">Backtest</button>
                             </div>
-                            <span id="conf-badge" class="conf"></span>
+                            <a href="journal.html?log=1" class="btn-primary">
+                                <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                            </a>
                         </div>
                     </div>
 
-                    <!-- Row 1: score + 3 things -->
-                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                        <div class="panel p-5">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="panel-title">Performance Score</div>
-                                <span id="score-trend" class="tag tag-emerald"></span>
-                            </div>
-                            <div class="flex items-end gap-3">
-                                <div id="score-val" class="num text-[44px] font-bold leading-none"></div>
-                                <div class="text-[12px] text-[#6E6E78] pb-1.5">Composite of win rate, expectancy, profit factor &amp; drawdown</div>
-                            </div>
-                            <p id="score-expl" class="text-[12.5px] text-[#C4C4CC] leading-relaxed mt-4"></p>
-                            <div class="bar-track mt-4"><div id="score-bar" class="bar-fill bg-[#10B981]" style="width:0%"></div></div>
-                        </div>
-
-                        <div class="panel p-5 lg:col-span-2">
-                            <div class="panel-title mb-4">3 Things You Should Know</div>
-                            <div id="three-things" class="flex flex-col gap-3"></div>
-                        </div>
+                    <!-- Source banner (practice isolation) -->
+                    <div id="source-banner" class="hidden panel px-4 py-3 flex items-center gap-3">
+                        <svg data-lucide="flask-conical" class="w-4 h-4 text-[var(--tm-blue)] flex-shrink-0"></svg>
+                        <span class="text-[12.5px] text-[var(--tm-muted)]">Viewing <span class="tag tag-blue !py-0.5 !px-2">BACKTEST</span> practice insights — simulated sessions only. These findings never mix into, or modify, your live statistics.</span>
                     </div>
 
-                    <!-- Row 2: key metrics -->
-                    <div id="key-metrics" class="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3"></div>
-
-                    <!-- Row 3: making vs costing -->
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                        <div class="panel p-5">
-                            <div class="panel-title flex items-center gap-2 mb-4">
-                                <svg data-lucide="trending-up" class="w-4 h-4 text-[#34D399]"></svg>
-                                What's Making Me Money?
-                            </div>
-                            <div id="making-list"></div>
-                            <p class="text-[11.5px] text-[#55555E] mt-2">Ranked by contribution to profitable performance over the period.</p>
-                        </div>
-                        <div class="panel p-5">
-                            <div class="panel-title flex items-center gap-2 mb-4">
-                                <svg data-lucide="trending-down" class="w-4 h-4 text-[#F87171]"></svg>
-                                What's Costing Me Money?
-                            </div>
-                            <div id="costing-list"></div>
-                            <p class="text-[11.5px] text-[#55555E] mt-2">Analytical estimates from your own trade history — not exact recoverable amounts.</p>
-                        </div>
+                    <!-- Empty state (no account) -->
+                    <div id="empty-state" class="hidden panel p-12 text-center">
+                        <svg data-lucide="sparkles" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[18px] font-bold">No account yet</h3>
+                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">Insights find the patterns worth paying attention to in your trading. Create an account and log trades to start building your evidence.</p>
+                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5">
+                            <svg data-lucide="settings" class="w-4 h-4"></svg> Set up account
+                        </a>
                     </div>
 
-                    <!-- Row 4: strength / weakness / focus -->
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="panel p-5 border-l-2 !border-l-[#34D399]">
-                            <div class="label-xs mb-2">Top strength</div>
-                            <div id="top-strength" class="text-[14px] font-semibold text-white"></div>
-                            <p id="strength-ev" class="text-[12px] text-[#8A8A93] mt-1.5"></p>
+                    <div id="ins-body" class="hidden flex flex-col gap-4">
+
+                        <!-- Evidence status -->
+                        <div id="ev-status"></div>
+
+                        <!-- Primary finding -->
+                        <div id="primary-sec" class="hidden"></div>
+
+                        <!-- Strongest setup / session / instrument -->
+                        <div id="strength-sec" class="hidden">
+                            <div class="panel-title mb-3">Your strongest conditions</div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-3" id="strength-grid"></div>
                         </div>
-                        <div class="panel p-5 border-l-2 !border-l-[#F59E0B]">
-                            <div class="label-xs mb-2">Top weakness</div>
-                            <div id="top-weakness" class="text-[14px] font-semibold text-white"></div>
-                            <p id="weakness-ev" class="text-[12px] text-[#8A8A93] mt-1.5"></p>
+
+                        <!-- Behavioral patterns -->
+                        <div id="behavior-sec" class="hidden"></div>
+
+                        <!-- Risk patterns -->
+                        <div id="risk-sec" class="hidden"></div>
+
+                        <!-- Rule breaks cost -->
+                        <div id="rulebreak-sec" class="hidden"></div>
+
+                        <!-- All other findings -->
+                        <div id="cards-sec" class="hidden">
+                            <div class="panel-title mb-3">All findings</div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3" id="cards-grid"></div>
                         </div>
-                        <div class="panel p-5 border-l-2 !border-l-[#3B82F6]">
-                            <div class="label-xs mb-2">Next focus</div>
-                            <div id="next-focus" class="text-[14px] font-semibold text-white"></div>
-                            <p id="focus-ev" class="text-[12px] text-[#8A8A93] mt-1.5"></p>
+
+                        <!-- Cross-page -->
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
+                            <a href="ai.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="brain-circuit" class="w-4 h-4"></svg> AI Mentor</a>
+                            <a href="journal.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="book-open" class="w-4 h-4"></svg> Journal</a>
+                            <a href="discipline.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="target" class="w-4 h-4"></svg> Discipline</a>
+                            <a href="risk.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="shield-alert" class="w-4 h-4"></svg> Risk</a>
+                            <a href="analytics.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="bar-chart-3" class="w-4 h-4"></svg> Analytics</a>
                         </div>
+
                     </div>
 
-                    <!-- Tabs -->
-                    <div class="panel p-1.5 flex gap-1 overflow-x-auto">
-                        <button class="ins-tab active" data-tab="performance">Performance</button>
-                        <button class="ins-tab" data-tab="strategy">Strategy</button>
-                        <button class="ins-tab" data-tab="session">Session &amp; Time</button>
-                        <button class="ins-tab" data-tab="risk">Risk</button>
-                        <button class="ins-tab" data-tab="behavior">Behavior</button>
-                        <button class="ins-tab" data-tab="discipline">Discipline</button>
-                        <button class="ins-tab" data-tab="psychology">Psychology</button>
-                        <button class="ins-tab" data-tab="coach">AI Coach</button>
-                        <button class="ins-tab" data-tab="weekly">Weekly Review</button>
+                    <!-- Practice-unavailable state -->
+                    <div id="practice-offline" class="hidden panel p-10 text-center">
+                        <svg data-lucide="wifi-off" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-4"></svg>
+                        <h3 class="text-[16px] font-bold">Practice insights unavailable</h3>
+                        <p class="text-[13px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">The backtest insights API did not respond. Connect to the backend (or run practice sessions first), then retry.</p>
+                        <button id="practice-retry" class="btn-primary mt-5 inline-flex !py-2.5 !px-5">
+                            <svg data-lucide="refresh-cw" class="w-4 h-4"></svg> Retry
+                        </button>
                     </div>
 
-                    <div id="panel-performance" class="ins-panel active"></div>
-                    <div id="panel-strategy" class="ins-panel"></div>
-                    <div id="panel-session" class="ins-panel"></div>
-                    <div id="panel-risk" class="ins-panel"></div>
-                    <div id="panel-behavior" class="ins-panel"></div>
-                    <div id="panel-discipline" class="ins-panel"></div>
-                    <div id="panel-psychology" class="ins-panel"></div>
-                    <div id="panel-coach" class="ins-panel"></div>
-                    <div id="panel-weekly" class="ins-panel"></div>
-
-                    <p class="text-center text-[11.5px] text-[#4A4A52] pb-2">31TRADES · Insights demo build · metrics computed from the demo journal · data is illustrative</p>
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Insights · every finding from the same evidence engine the Dashboard reads</p>
                 </div>
             </main>
         </div>
     </div>
 
+    <!-- Evidence drawer -->
+    <div id="ev-overlay" class="drawer-overlay"></div>
+    <aside id="ev-drawer" class="drawer-panel" aria-hidden="true">
+        <div class="flex items-center justify-between px-5 py-4 border-b border-[var(--tm-border)] flex-shrink-0">
+            <div>
+                <div class="panel-title" id="ev-title">Evidence</div>
+                <div class="panel-sub mt-0.5" id="ev-sub">Why this finding exists</div>
+            </div>
+            <button id="ev-close" class="collapse-btn" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5" id="ev-body"></div>
+    </aside>
+
+    <!-- Toast -->
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
+
     <script>
-        (function() {
+        (function () {
+            'use strict';
             const $ = id => document.getElementById(id);
-            // Shared deterministic demo data (single source of truth — see demo-trades.js)
-            const day = DemoTrades.day;
-            const fmtMoney = DemoTrades.fmtMoney;
-            const fmtR = DemoTrades.fmtR;
-            const pct = DemoTrades.pct;
-            const genTrades = DemoTrades.genTrades;
-            const stats = DemoTrades.stats;
-            const confidence = DemoTrades.confidence;
-            const groupBy = DemoTrades.groupBy;
-
-            // ============ COMPUTE ============
-            // Canonical single source of truth — insights analyze the same local
-            // trades the Journal / Dashboard / Analytics / Risk all read.
             const core = window.TradeMindCore;
-            let ALL = [];
-            let accountId = null;
-            let dataMode = 'live';
-            let practiceTrades = null;
-            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
-            async function loadPracticeTrades() {
-                try {
-                    const r = await apiFetch('/api/practice/trades');
-                    const j = await r.json();
-                    practiceTrades = (j && Array.isArray(j.trades)) ? j.trades : [];
-                } catch (e) { practiceTrades = []; }
+            const apiFetch = (core && core.apiFetch) || ((url, options) => fetch(url, options));
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            const fmtR = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + Number(n).toFixed(2) + 'R');
+            const fmtPct = n => n == null || isNaN(n) ? '—' : (Math.round(n * 100) + '%');
+            let toastTimer = null;
+            function showToast(msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
             }
-            window.setMode = function (m) {
-                if (m !== 'live' && m !== 'practice') return;
-                dataMode = m;
-                document.querySelectorAll('#mode-toggle [data-mode]').forEach(b => b.classList.toggle('active', b.dataset.mode === m));
-                if (m === 'practice') {
-                    loadPracticeTrades().then(() => { refreshData(); renderAll(); });
-                } else {
-                    refreshData(); renderAll();
+            window.showToast = showToast;
+
+            let mode = 'LIVE';
+            let findings = [];       // normalized live or practice findings
+            let analyticsData = null;
+            let currentEvidence = null; // the finding currently shown in the drawer
+
+            // ============ ACCOUNT RESOLUTION ============
+            function currentAccountId() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+            }
+            function account() { const id = currentAccountId(); return id ? core.Accounts.find(a => a.id === id) : null; }
+
+            // ============ CHROME ============
+            function renderChrome() {
+                const acc = account();
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + money(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                    if (window.lucide) lucide.createIcons();
                 }
-            };
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc && pName) pName.textContent = acc.name;
+                if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+            }
 
-            function refreshData() {
-                if (dataMode === 'practice') {
-                    accountId = 'practice';
-                    ALL = practiceTrades || [];
-                } else if (core && core.Accounts && core.Accounts.length) {
-                    accountId = core.selectedAccountId() || core.Accounts[0].id;
-                    ALL = core.Trades.filter(t => t.account_id === accountId);
-                } else {
-                    accountId = null; ALL = [];
+            // ============ NORMALIZE ============
+            function norm(f) {
+                // live findings use severity; practice findings use sev + source
+                return {
+                    id: f.id, type: f.type, severity: f.severity || f.sev || 'neutral',
+                    title: f.title, detail: f.detail, evidence: f.evidence || [],
+                    sample: f.sample != null ? f.sample : ((f.evidence || []).length),
+                    confidence: f.confidence, status: f.status, source: f.source || 'LIVE'
+                };
+            }
+            function confidenceOf(f) {
+                const c = f.confidence;
+                if (c === 'high') return { label: 'High confidence', cls: 'tag-emerald' };
+                if (c === 'medium') return { label: 'Medium confidence', cls: 'tag-amber' };
+                if (c === 'low') return { label: 'Low confidence', cls: 'tag-gray' };
+                return null;
+            }
+            function severityOf(f) {
+                const s = f.severity;
+                if (s === 'positive') return { label: 'EDGE', cls: 'tag-emerald' };
+                if (s === 'negative') {
+                    if (/emotion/i.test(f.title)) return { label: 'BEHAVIOR', cls: 'tag-amber' };
+                    if (/rule break/i.test(f.title)) return { label: 'DISCIPLINE', cls: 'tag-red' };
+                    if (/risk/i.test(f.title)) return { label: 'RISK', cls: 'tag-red' };
+                    return { label: 'WATCH', cls: 'tag-red' };
                 }
-            }
-            refreshData();
-
-            const PERIODS = [
-                { id: '7d', label: '7D', days: 7 },
-                { id: '30d', label: '30D', days: 30 },
-                { id: '90d', label: '90D', days: 90 },
-                { id: 'all', label: 'All', days: Infinity }
-            ];
-            let periodId = '30d';
-
-            function tradesForPeriod(period) {
-                const cutoff = period.days === Infinity ? 0 : Date.now() - period.days * day;
-                return ALL.filter(t => new Date(t.ts).getTime() >= cutoff);
+                return { label: 'FINDING', cls: 'tag-blue' };
             }
 
-            function score(s) {
-                const winPts = s.winRate * 25;
-                const expPts = Math.max(-15, Math.min(20, s.expectancy * 22));
-                const pfPts = Math.max(-10, Math.min(20, (s.pf - 1) * 18));
-                const ddPts = Math.max(-15, -s.maxDD / 40);
-                return Math.max(5, Math.min(98, Math.round(40 + winPts + expPts + pfPts + ddPts)));
-            }
-
-            // ============ RENDER ============
-            function renderAll() {
-                const list = tradesForPeriod(PERIODS.find(p => p.id === periodId));
-                const s = stats(list);
-                const conf = confidence(s.n);
-
-                renderHeader(s, conf);
-                renderThree(s, list);
-                renderMetrics(s);
-                renderMaking(list);
-                renderCosting(list);
-                renderStrengthWeakness(s, list);
-                renderTabs(list, s);
-                lucide && lucide.createIcons();
-            }
-
-            function renderHeader(s, conf) {
-                // period chips
-                $('period-chips').innerHTML = PERIODS.map(p =>
-                    '<button class="period-chip' + (p.id === periodId ? ' active' : '') + '" onclick="setPeriod(\'' + p.id + '\')">' + p.label + '</button>').join('');
-
-                $('conf-badge').innerHTML = '<span class="dot" style="background:' + conf.dot + '"></span> ' + conf.label + ' · ' + s.n + ' trades';
-                $('conf-badge').className = 'conf ' + conf.cls;
-
-                const sc = score(s);
-                $('score-val').textContent = sc;
-                $('score-bar').style.width = sc + '%';
-                $('score-trend').textContent = s.expectancy >= 0 ? '▲ Improving' : '▼ Stagnating';
-                $('score-expl').textContent = conf.msg + ' Expectancy ' + fmtR(s.expectancy) + ' across ' + s.n + ' trades with ' + pct(s.winRate * 100, 100) + '% win rate.';
-            }
-
-            function renderThree(s, list) {
-                // Never manufacture findings: below 10 trades the page shows an
-                // honest "developing" state instead of guessed insights.
-                if (list.length < 10) {
-                    $('three-things').innerHTML = '<div class="flex gap-3 rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                        '<svg data-lucide="hourglass" class="w-4 h-4 flex-shrink-0 mt-0.5" style="color:#F59E0B"></svg>' +
-                        '<div><div class="text-[13px] font-semibold text-white">Developing — insufficient evidence</div>' +
-                        '<p class="text-[12px] text-[#8A8A93] mt-1 leading-relaxed">Insights are only shown when the data supports them. Log at least 10 trades to unlock evidence-backed findings — currently ' + list.length + '.</p></div></div>';
+            // ============ RENDER BODY ============
+            function renderBody() {
+                renderChrome();
+                const accId = currentAccountId();
+                const empty = $('empty-state'), body = $('ins-body'), offline = $('practice-offline');
+                if (!accId) {
+                    empty.classList.remove('hidden');
+                    body.classList.add('hidden');
+                    offline.classList.add('hidden');
                     return;
                 }
-                const bySetup = groupBy(list, 'setup');
-                const setupStats = Object.entries(bySetup).map(([name, tr]) => ({ name, s: stats(tr) })).sort((a, b) => b.s.expectancy - a.s.expectancy);
-                const bestSetup = setupStats[0];
-                const byEmotion = groupBy(list, 'emotion');
-                const fomo = byEmotion['FOMO'] || [];
-                const fomoExp = stats(fomo).expectancy;
-                const norm = list.filter(t => t.emotion !== 'FOMO' && t.emotion !== 'Revenge');
-                const normExp = stats(norm).expectancy;
-                const postLoss = list.filter(t => t.postLoss);
-                const postExp = stats(postLoss).expectancy;
-                const postDelay = postLoss.length ? postLoss.reduce((x, y) => x + (y.delayMin || 0), 0) / postLoss.length : 0;
-
-                const items = [];
-                if (bestSetup && bestSetup.s.expectancy > 0.3) {
-                    items.push({ icon: 'trending-up', color: '#34D399', title: 'Strength — ' + bestSetup.name + ' is your edge',
-                        body: bestSetup.name + ' trades average ' + fmtR(bestSetup.s.expectancy) + ' expectancy across ' + bestSetup.s.n + ' trades (' + pct(bestSetup.s.winRate * 100, 100) + '% win rate).' });
+                empty.classList.add('hidden');
+                offline.classList.add('hidden');
+                body.classList.remove('hidden');
+                if (mode === 'LIVE') {
+                    $('source-banner').classList.add('hidden');
+                    try {
+                        findings = core.insights(accId).map(norm);
+                        analyticsData = core.analytics(accId, {});
+                    } catch (e) { findings = []; analyticsData = null; }
+                    renderFindings();
                 } else {
-                    items.push({ icon: 'activity', color: '#8A8A93', title: 'Building your edge',
-                        body: 'No setup has a clearly positive expectancy yet. Keep logging and focus on your ' + (setupStats[0] ? setupStats[0].name : 'primary') + ' setup.' });
-                }
-
-                if (fomoExp < normExp - 0.2) {
-                    items.push({ icon: 'alert-triangle', color: '#F59E0B', title: 'Risk — FOMO entries cost you',
-                        body: 'FOMO-tagged trades average ' + fmtR(fomoExp) + ' vs ' + fmtR(normExp) + ' for normal trades. ' + fomo.length + ' trades affected this period.' });
-                } else if (postExp < normExp - 0.2) {
-                    items.push({ icon: 'alert-triangle', color: '#F59E0B', title: 'Risk — post-loss trades are weaker',
-                        body: 'Trades after a loss average ' + fmtR(postExp) + ' vs ' + fmtR(normExp) + ' normally, and come ' + Math.round(postDelay) + ' min sooner. Consider a cooldown.' });
-                } else {
-                    items.push({ icon: 'check-circle-2', color: '#34D399', title: 'Healthy — consistent behavior',
-                        body: 'No strong negative behavior patterns detected in this period.' });
-                }
-
-                const worstSetup = setupStats[setupStats.length - 1];
-                if (worstSetup && worstSetup.s.n >= 3 && worstSetup.s.expectancy < 0) {
-                    items.push({ icon: 'compass', color: '#3B82F6', title: 'Opportunity — cut or fix ' + worstSetup.name,
-                        body: worstSetup.name + ' averages ' + fmtR(worstSetup.s.expectancy) + ' over ' + worstSetup.s.n + ' trades. Fixing or dropping it could lift your total.' });
-                } else {
-                    items.push({ icon: 'compass', color: '#3B82F6', title: 'Opportunity — session edge',
-                        body: 'Try focusing trades into your best session and logging a confirmation condition for every entry.' });
-                }
-
-                $('three-things').innerHTML = items.map(it =>
-                    '<div class="flex gap-3 rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5">' +
-                        '<svg data-lucide="' + it.icon + '" class="w-4 h-4 flex-shrink-0 mt-0.5" style="color:' + it.color + '"></svg>' +
-                        '<div><div class="text-[13px] font-semibold text-white">' + it.title + '</div>' +
-                        '<p class="text-[12px] text-[#8A8A93] mt-1 leading-relaxed">' + it.body + '</p></div></div>').join('');
-            }
-
-            function renderMetrics(s) {
-                const cards = [
-                    ['Net P&L', fmtMoney(s.pnl), s.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'],
-                    ['Win rate', pct(s.winRate * 100, 100) + '%', 'text-white'],
-                    ['Expectancy', fmtR(s.expectancy), s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'],
-                    ['Profit factor', s.pf.toFixed(2), s.pf >= 1 ? 'text-[#34D399]' : 'text-[#F87171]'],
-                    ['Average R', fmtR(s.expectancy), s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]'],
-                    ['Max drawdown', '-$' + s.maxDD, 'text-[#F87171]']
-                ];
-                $('key-metrics').innerHTML = cards.map(c =>
-                    '<div class="metric-mini"><div class="label-xs">' + c[0] + '</div><div class="val num ' + c[2] + '">' + c[1] + '</div></div>').join('');
-            }
-
-            function ranked(list, key, dir) {
-                const g = groupBy(list, key);
-                return Object.entries(g).map(([name, tr]) => ({ name, s: stats(tr) }))
-                    .filter(x => x.s.n >= 2)
-                    .sort((a, b) => dir * (b.s.expectancy - a.s.expectancy));
-            }
-
-            function renderMaking(list) {
-                const rows = [];
-                const bySetup = ranked(list, 'setup', 1);
-                if (bySetup[0]) rows.push({ name: 'Best setup — ' + bySetup[0].name, ev: fmtR(bySetup[0].s.expectancy) + ' exp · ' + bySetup[0].s.n + ' trades · ' + pct(bySetup[0].s.winRate * 100, 100) + '% WR' });
-                const bySession = ranked(list, 'session', 1);
-                if (bySession[0]) rows.push({ name: 'Best session — ' + bySession[0].name, ev: fmtR(bySession[0].s.expectancy) + ' exp across ' + bySession[0].s.n + ' trades' });
-                const calm = list.filter(t => t.emotion === 'Calm' || t.emotion === 'Confident');
-                const calmS = stats(calm);
-                const anxiousS = stats(list.filter(t => t.emotion === 'Anxious'));
-                if (calm.length >= 3) rows.push({ name: 'Calm / confident entries', ev: fmtR(calmS.expectancy) + ' exp vs ' + fmtR(anxiousS.expectancy) + ' when anxious' });
-                const smallRisk = list.filter(t => t.risk <= 35);
-                const bigRisk = list.filter(t => t.risk > 35);
-                if (smallRisk.length >= 3 && bigRisk.length >= 3) rows.push({ name: 'Risk range $20–35', ev: fmtR(stats(smallRisk).expectancy) + ' exp vs ' + fmtR(stats(bigRisk).expectancy) + ' above $35' });
-                const followed = list.filter(t => t.adherence === 'followed');
-                const violated = list.filter(t => t.adherence !== 'followed');
-                if (followed.length >= 3) rows.push({ name: 'Following your rules', ev: fmtR(stats(followed).expectancy) + ' exp vs ' + fmtR(stats(violated).expectancy) + ' when rules are broken' });
-
-                $('making-list').innerHTML = rows.slice(0, 5).map((r, i) =>
-                    '<div class="rank-row best"><span class="rank-num">' + (i + 1) + '</span>' +
-                    '<div class="flex-1"><div class="text-[13px] font-semibold text-white">' + r.name + '</div>' +
-                    '<div class="text-[11.5px] text-[#6E6E78] num mt-0.5">' + r.ev + '</div></div></div>').join('')
-                    || '<p class="text-[12.5px] text-[#6E6E78]">Not enough data yet — keep logging trades.</p>';
-            }
-
-            function renderCosting(list) {
-                const rows = [];
-                const fomo = list.filter(t => t.emotion === 'FOMO');
-                const revenge = list.filter(t => t.emotion === 'Revenge');
-                const viol = list.filter(t => t.adherence !== 'followed');
-                const oversized = list.filter(t => t.risk > 40);
-                const perDay = groupBy(list, t => t.ts.toDateString());
-                const overDays = Object.entries(perDay).filter(([, tr]) => tr.length >= 5);
-                const overTrades = overDays.flatMap(([, tr]) => tr);
-
-                const impact = (label, tr) => {
-                    if (!tr.length) return null;
-                    const pnl = Math.round(tr.reduce((s, t) => s + t.pnl, 0));
-                    return { label, tr, impact: pnl < 0 ? pnl : Math.round(tr.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0)) };
-                };
-                const items = [impact('FOMO entries', fomo), impact('Revenge trades', revenge), impact('Rule breaks', viol),
-                    impact('Oversized risk (>$40)', oversized), impact('Overtrading days (5+ trades)', overTrades)]
-                    .filter(Boolean).sort((a, b) => a.impact - b.impact);
-
-                $('costing-list').innerHTML = items.map((it, i) =>
-                    '<div class="rank-row worst"><span class="rank-num">' + (i + 1) + '</span>' +
-                    '<div class="flex-1"><div class="text-[13px] font-semibold text-white">' + it.label + '</div>' +
-                    '<div class="text-[11.5px] text-[#6E6E78] num mt-0.5">' + it.tr.length + ' trades · estimated impact ' + fmtMoney(it.impact) + '</div></div>' +
-                    '<span class="num text-[13px] font-bold text-[#F87171]">' + fmtMoney(it.impact) + '</span></div>').join('')
-                    || '<p class="text-[12.5px] text-[#6E6E78]">No negative patterns detected this period. Nice work.</p>';
-            }
-
-            function renderStrengthWeakness(s, list) {
-                const bySetup = ranked(list, 'setup', 1);
-                const best = bySetup[0];
-                const worst = bySetup[bySetup.length - 1];
-
-                if (best && best.s.expectancy > 0) {
-                    $('top-strength').textContent = best.name + ' — ' + fmtR(best.s.expectancy) + ' expectancy';
-                    $('strength-ev').textContent = best.s.n + ' trades · ' + pct(best.s.winRate * 100, 100) + '% win rate · profit factor ' + best.s.pf.toFixed(2);
-                } else {
-                    $('top-strength').textContent = 'Consistent journaling';
-                    $('strength-ev').textContent = s.n + ' trades logged this period — the foundation for real insights.';
-                }
-
-                const fomo = list.filter(t => t.emotion === 'FOMO');
-                const viol = list.filter(t => t.adherence !== 'followed');
-                if (viol.length >= 3) {
-                    $('top-weakness').textContent = 'Rule breaks — ' + viol.length + ' trades';
-                    $('weakness-ev').textContent = fmtR(stats(viol).expectancy) + ' expectancy vs ' + fmtR(stats(list.filter(t => t.adherence === 'followed')).expectancy) + ' when rules are followed.';
-                } else if (fomo.length >= 3) {
-                    $('top-weakness').textContent = 'FOMO entries — ' + fomo.length + ' trades';
-                    $('weakness-ev').textContent = fmtR(stats(fomo).expectancy) + ' expectancy vs ' + fmtR(stats(list.filter(t => t.emotion !== 'FOMO')).expectancy) + ' otherwise.';
-                } else if (worst && worst.s.expectancy < 0) {
-                    $('top-weakness').textContent = worst.name + ' — ' + fmtR(worst.s.expectancy) + ' expectancy';
-                    $('weakness-ev').textContent = worst.s.n + ' trades dragging results.';
-                } else {
-                    $('top-weakness').textContent = 'No clear weakness';
-                    $('weakness-ev').textContent = 'Keep logging — more data will sharpen this.';
-                }
-
-                const postLoss = list.filter(t => t.postLoss);
-                if (postLoss.length >= 3 && stats(postLoss).expectancy < 0) {
-                    $('next-focus').textContent = 'Add a post-loss cooldown rule';
-                    $('focus-ev').textContent = 'Post-loss trades run ' + fmtR(stats(postLoss).expectancy) + ' expectancy. Set a 15-min cooldown and keep risk unchanged — then measure the next 20 trades.';
-                } else {
-                    $('next-focus').textContent = 'Log a confirmation for every entry';
-                    $('focus-ev').textContent = 'Confirmation tags unlock execution insights and let Insights separate strategy quality from timing.';
+                    $('source-banner').classList.remove('hidden');
+                    renderLoading();
+                    fetchPractice();
                 }
             }
 
-            // ============ TABS ============
-            function renderTabs(list, s) {
-                renderPerformance(list, s);
-                renderStrategy(list);
-                renderSession(list);
-                renderRisk(list);
-                renderBehavior(list);
-                renderDiscipline(list);
-                renderPsychology(list);
-                renderCoach(list);
-                renderWeekly(list);
+            function renderLoading() {
+                $('ev-status').innerHTML = '<div class="panel p-10 text-center"><div class="label-xs mb-2">Loading practice insights</div><p class="text-[13px] text-[var(--tm-dim)]">Fetching simulated backtest findings from the backend…</p></div>';
+                ['primary-sec', 'strength-sec', 'behavior-sec', 'risk-sec', 'rulebreak-sec', 'cards-sec'].forEach(id => $(id).classList.add('hidden'));
             }
 
-            function panel(title, body, extra) {
-                return '<div class="panel p-5"><div class="flex items-center justify-between mb-4"><div class="panel-title">' + title + '</div>' + (extra || '') + '</div>' + body + '</div>';
-            }
-
-            function equitySvg(list) {
-                const sorted = list.slice().sort((a, b) => a.ts - b.ts);
-                let eq = 0;
-                const pts = sorted.map(t => { eq += t.pnl; return eq; });
-                if (pts.length < 2) return '<p class="text-[12.5px] text-[#6E6E78]">Not enough data.</p>';
-                const min = Math.min(0, ...pts), max = Math.max(...pts), span = (max - min) || 1;
-                const W = 640, H = 180, P = 8;
-                const x = i => P + (i / (pts.length - 1)) * (W - 2 * P);
-                const y = v => H - P - ((v - min) / span) * (H - 2 * P);
-                const line = pts.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
-                const color = pts[pts.length - 1] >= pts[0] ? '#10B981' : '#F87171';
-                return '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full" preserveAspectRatio="none">' +
-                    '<g stroke="#1F1F23" stroke-width="1">' + [0.2,0.4,0.6,0.8].map(f => '<line x1="0" y1="' + (H * f).toFixed(0) + '" x2="' + W + '" y2="' + (H * f).toFixed(0) + '"/>').join('') + '</g>' +
-                    '<polyline points="' + pts.map((v, i) => x(i).toFixed(1) + ',' + y(v).toFixed(1)).join(' ') + '" fill="none" stroke="' + color + '" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
-                    '<circle cx="' + x(pts.length - 1).toFixed(1) + '" cy="' + y(pts[pts.length - 1]).toFixed(1) + '" r="4" fill="' + color + '"/>' +
-                    '</svg>';
-            }
-
-            function barRow(label, val, max, color) {
-                const w = max ? Math.max(3, Math.round((val / max) * 100)) : 0;
-                return '<div class="mb-3"><div class="flex items-center justify-between mb-1.5"><span class="text-[12.5px] text-[#B4B4BD]">' + label + '</span><span class="num text-[12px] font-bold ' + color + '">' + val + '</span></div>' +
-                    '<div class="bar-track"><div class="bar-fill" style="width:' + w + '%;background:' + (color === 'text-[#F87171]' ? '#EF4444' : color === 'text-[#F59E0B]' ? '#F59E0B' : '#10B981') + '"></div></div></div>';
-            }
-
-            function renderPerformance(list, s) {
-                const prev = stats(tradesForPeriod(PERIODS.find(p => p.id === periodId)).slice(0, Math.max(0, Math.floor(list.length / 2))));
-                const curWin = Math.round(s.winRate * 100), prevWin = Math.round(prev.winRate * 100);
-                const winDelta = curWin - prevWin;
-                const expDelta = s.expectancy - prev.expectancy;
-                const example = 'Your win rate is ' + (Math.abs(winDelta) < 3 ? 'flat' : winDelta > 0 ? 'up ' + winDelta + 'pts' : 'down ' + Math.abs(winDelta) + 'pts') + ' and average R ' + (expDelta > 0.05 ? 'improved' : expDelta < -0.05 ? 'declined' : 'held steady') + ' (' + fmtR(prev.expectancy) + ' → ' + fmtR(s.expectancy) + ').';
-                const insight = expDelta > 0.05 ? 'Profitability improved mainly because winners are being held longer.' : expDelta < -0.05 ? 'The drag is execution: check the Behavior tab for what changed.' : 'Expectancy is stable — consistency is the story.';
-
-                $('panel-performance').innerHTML =
-                    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' +
-                        panel('Equity Curve', equitySvg(list), '<span class="tag tag-emerald">' + fmtMoney(s.pnl) + '</span>') +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Trend', barRow('Win rate', curWin + '%', 100, 'text-white') +
-                                barRow('Expectancy', fmtR(s.expectancy), Math.abs(s.expectancy) || 1, s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') +
-                                barRow('Avg win', fmtR(s.avgWinR), Math.abs(s.avgWinR) || 1, 'text-[#34D399]') +
-                                barRow('Avg loss', fmtR(s.avgLossR), Math.abs(s.avgLossR) || 1, 'text-[#F87171]')) +
-                            panel('Current vs Previous', '<div class="flex flex-col gap-3 text-[12.5px]">' +
-                                '<div class="flex justify-between"><span class="text-[#8A8A93]">Win rate</span><span class="num text-white">' + prevWin + '% → ' + curWin + '%</span></div>' +
-                                '<div class="flex justify-between"><span class="text-[#8A8A93]">Expectancy</span><span class="num text-[#34D399]">' + fmtR(prev.expectancy) + ' → ' + fmtR(s.expectancy) + '</span></div>' +
-                                '<div class="flex justify-between"><span class="text-[#8A8A93]">Profit factor</span><span class="num text-white">' + prev.pf.toFixed(2) + ' → ' + s.pf.toFixed(2) + '</span></div>' +
-                                '<div class="flex justify-between"><span class="text-[#8A8A93]">Max drawdown</span><span class="num text-[#F87171]">-$' + prev.maxDD + ' → -$' + s.maxDD + '</span></div></div>') +
-                        '</div>' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('What the numbers say', '<div class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-3.5 text-[12.5px] text-[#C4C4CC] leading-relaxed">' + example + '<br><br>' + insight + '</div>') +
-                            panel('Sample size', '<div class="text-[12.5px] text-[#8A8A93] leading-relaxed">' + s.n + ' trades analysed. Confidence: <span class="text-white font-semibold">' + confidence(s.n).label + '</span>. ' + confidence(s.n).msg + '</div>') +
-                        '</div>' +
-                    '</div>';
-            }
-
-            function renderStrategy(list) {
-                const bySetup = ranked(list, 'setup', 1);
-                const max = Math.max(...bySetup.map(x => Math.abs(x.s.expectancy)), 0.1);
-                const rows = bySetup.map((x, i) =>
-                    '<div class="flex items-center gap-3 py-2.5 border-b border-[#17171A] last:border-0">' +
-                        '<span class="num text-[11px] font-bold text-[#6E6E78] w-6">' + (i + 1) + '</span>' +
-                        '<span class="text-[13px] font-semibold text-white w-32">' + x.name + '</span>' +
-                        '<div class="flex-1 bar-track"><div class="bar-fill" style="width:' + Math.max(4, Math.round((x.s.expectancy / max) * 100)) + '%;background:' + (x.s.expectancy >= 0 ? '#10B981' : '#EF4444') + '"></div></div>' +
-                        '<span class="num text-[12px] font-bold ' + (x.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + ' w-16 text-right">' + fmtR(x.s.expectancy) + '</span>' +
-                        '<span class="num text-[11.5px] text-[#6E6E78] w-20 text-right">' + x.s.n + ' · ' + pct(x.s.winRate * 100, 100) + '% WR</span>' +
-                    '</div>').join('');
-
-                const best = bySetup[0], worst = bySetup[bySetup.length - 1];
-                $('panel-strategy').innerHTML =
-                    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' +
-                        '<div class="lg:col-span-2">' + panel('Setup Performance — by expectancy, not win rate alone', rows) + '</div>' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Best setup', '<div class="text-[15px] font-bold text-white">' + (best ? best.name : '—') + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78] num mt-1">' + (best ? best.s.n + ' trades · ' + fmtR(best.s.expectancy) + ' exp · ' + pct(best.s.winRate * 100, 100) + '% WR · PF ' + best.s.pf.toFixed(2) : '') + '</div>') +
-                            panel('Weakest setup', '<div class="text-[15px] font-bold text-white">' + (worst ? worst.name : '—') + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78] num mt-1">' + (worst ? worst.s.n + ' trades · ' + fmtR(worst.s.expectancy) + ' exp · ' + pct(worst.s.winRate * 100, 100) + '% WR' : '') + '</div>' +
-                                (worst && worst.s.expectancy < 0 ? '<p class="text-[12px] text-[#F59E0B] mt-2">Negative expectancy — consider fixing or dropping this setup.</p>' : '')) +
-                            panel('Note', '<p class="text-[12px] text-[#8A8A93] leading-relaxed">Setups are never ranked by win rate alone. Sample size, expectancy and drawdown all count. A 90% win rate with 0.1R average is weaker than it looks.</p>') +
-                        '</div>' +
-                    '</div>';
-            }
-
-            function renderSession(list) {
-                const bySession = ranked(list, 'session', 1);
-                const maxS = Math.max(...bySession.map(x => Math.abs(x.s.expectancy)), 0.1);
-                const hourMap = groupBy(list, t => t.ts.getHours());
-                const hours = [];
-                for (let h = 0; h < 24; h++) hours.push(hourMap[h] ? stats(hourMap[h]) : null);
-                const hourCells = hours.map(h => {
-                    if (!h || !h.n) return '<div class="h-9 rounded flex items-center justify-center text-[10px] num text-[#3A3A41] border border-[#17171A]">—</div>';
-                    const col = h.expectancy > 0.3 ? '#10B981' : h.expectancy < 0 ? '#EF4444' : '#F59E0B';
-                    const alpha = Math.min(0.85, 0.25 + Math.abs(h.expectancy));
-                    return '<div class="h-9 rounded flex items-center justify-center text-[10px] num font-bold" style="background:' + col + alpha + ';color:#0A0A0C">' + h.expectancy.toFixed(1) + '</div>';
-                }).join('');
-
-                const best = bySession[0], worst = bySession[bySession.length - 1];
-                $('panel-session').innerHTML =
-                    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' +
-                        '<div class="lg:col-span-2 flex flex-col gap-4">' +
-                            panel('Session Expectancy', bySession.map(x =>
-                                '<div class="flex items-center gap-3 py-2.5 border-b border-[#17171A] last:border-0">' +
-                                    '<span class="text-[13px] font-semibold text-white w-28">' + x.name + '</span>' +
-                                    '<div class="flex-1 bar-track"><div class="bar-fill" style="width:' + Math.max(4, Math.round((x.s.expectancy / maxS) * 100)) + '%;background:' + (x.s.expectancy >= 0 ? '#10B981' : '#EF4444') + '"></div></div>' +
-                                    '<span class="num text-[12px] font-bold ' + (x.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + ' w-16 text-right">' + fmtR(x.s.expectancy) + '</span>' +
-                                    '<span class="num text-[11.5px] text-[#6E6E78] w-16 text-right">' + x.s.n + ' trades</span>' +
-                                '</div>').join('')) +
-                            panel('Hour of Day — expectancy', '<div class="grid grid-cols-8 gap-1.5">' + hourCells + '</div>' +
-                                '<div class="flex justify-between text-[10px] text-[#55555E] num mt-1.5"><span>00</span><span>04</span><span>08</span><span>12</span><span>16</span><span>20</span><span>23</span></div>') +
-                        '</div>' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Best window', '<div class="text-[15px] font-bold text-white">' + (best ? best.name : '—') + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78] num mt-1">' + (best ? fmtR(best.s.expectancy) + ' expectancy · ' + best.s.n + ' trades' : '') + '</div>') +
-                            panel('Worst window', '<div class="text-[15px] font-bold text-white">' + (worst ? worst.name : '—') + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78] num mt-1">' + (worst ? fmtR(worst.s.expectancy) + ' expectancy · ' + worst.s.n + ' trades' : '') + '</div>' +
-                                (worst && worst.s.expectancy < 0 ? '<p class="text-[12px] text-[#F59E0B] mt-2">Consider restricting trading in this window.</p>' : '')) +
-                        '</div>' +
-                    '</div>';
-            }
-
-            function renderRisk(list) {
-                const byRisk = groupBy(list, t => t.risk);
-                const postLoss = list.filter(t => t.postLoss);
-                const normal = list.filter(t => !t.postLoss);
-                const s = stats(list);
-                const over40 = list.filter(t => t.risk > 40);
-                const riskSets = Object.entries(byRisk).sort((a, b) => Number(a[0]) - Number(b[0]));
-
-                $('panel-risk').innerHTML =
-                    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Risk Consistency', barRow('Average risk', '$' + s.avgRisk.toFixed(0), 60, 'text-white') +
-                                barRow('Trades over $40', over40.length + ' (' + pct(over40.length, list.length) + '%)', list.length, over40.length > list.length * 0.2 ? 'text-[#F59E0B]' : 'text-white') +
-                                '<div class="text-[12px] text-[#8A8A93] leading-relaxed mt-1">Position sizing should be boring and consistent. Large swings in risk usually follow losses.</div>') +
-                            panel('Post-loss risk', '<div class="flex flex-col gap-3 text-[12.5px]">' +
-                                '<div class="flex justify-between"><span class="text-[#8A8A93]">Normal risk</span><span class="num text-white">$' + stats(normal).avgRisk.toFixed(0) + '</span></div>' +
-                                '<div class="flex justify-between"><span class="text-[#8A8A93]">Post-loss risk</span><span class="num ' + (stats(postLoss).avgRisk > stats(normal).avgRisk ? 'text-[#F59E0B]' : 'text-white') + '">$' + stats(postLoss).avgRisk.toFixed(0) + '</span></div>' +
-                                '<div class="flex justify-between"><span class="text-[#8A8A93]">Post-loss delay</span><span class="num text-white">' + Math.round(postLoss.reduce((x, y) => x + (y.delayMin || 0), 0) / Math.max(1, postLoss.length)) + ' min</span></div></div>') +
-                        '</div>' +
-                        '<div class="lg:col-span-2 flex flex-col gap-4">' +
-                            panel('Risk by Setup — expectancy', riskSets.length ? riskSets.map(([risk, tr]) => {
-                                const ex = stats(tr).expectancy;
-                                return '<div class="flex items-center gap-3 py-2 border-b border-[#17171A] last:border-0">' +
-                                    '<span class="text-[12.5px] font-semibold text-white w-16 num">$' + risk + '</span>' +
-                                    '<div class="flex-1 bar-track"><div class="bar-fill" style="width:' + Math.max(4, Math.min(100, Math.round((ex + 2) * 22))) + '%;background:' + (ex >= 0 ? '#10B981' : '#EF4444') + '"></div></div>' +
-                                    '<span class="num text-[12px] font-bold ' + (ex >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + ' w-14 text-right">' + fmtR(ex) + '</span>' +
-                                    '<span class="num text-[11px] text-[#6E6E78] w-16 text-right">' + tr.length + ' trades</span></div>';
-                            }).join('') : '<p class="text-[12.5px] text-[#6E6E78]">Not enough data.</p>') +
-                            panel('Daily budget usage', '<p class="text-[12.5px] text-[#8A8A93] leading-relaxed">Daily loss limit: <span class="text-white font-semibold">$250</span>. This period averaged <span class="num text-white font-semibold">$' + s.avgRisk.toFixed(0) + '</span> risk per trade — a 5-loss day stays inside budget at your average sizing.</p>') +
-                        '</div>' +
-                    '</div>';
-            }
-
-            function renderBehavior(list) {
-                const perDay = groupBy(list, t => t.ts.toDateString());
-                const dayStats = Object.entries(perDay).map(([d, tr]) => ({ d, n: tr.length, s: stats(tr) }));
-                const overDays = dayStats.filter(x => x.n >= 5);
-                const normDays = dayStats.filter(x => x.n <= 2);
-                const postLoss = list.filter(t => t.postLoss);
-                const normal = list.filter(t => !t.postLoss);
-                const fomo = list.filter(t => t.emotion === 'FOMO');
-                const revenge = list.filter(t => t.emotion === 'Revenge');
-
-                const card = (icon, title, body, tag) =>
-                    '<div class="panel p-5"><div class="flex items-center justify-between mb-3"><div class="panel-title flex items-center gap-2"><svg data-lucide="' + icon + '" class="w-4 h-4 text-[#F59E0B]"></svg>' + title + '</div>' + tag + '</div>' +
-                    '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed">' + body + '</p></div>';
-
-                const postExp = stats(postLoss).expectancy, normExp = stats(normal).expectancy;
-                const fomoExp = stats(fomo).expectancy;
-                const revExp = stats(revenge).expectancy;
-                const overAvg = overDays.length ? stats(overDays.flatMap(x => perDay[x.d])).expectancy : null;
-                const normDayAvg = normDays.length ? stats(normDays.flatMap(x => perDay[x.d])).expectancy : null;
-
-                const cards = [];
-                cards.push(card('activity', 'Overtrading', overDays.length
-                    ? 'You traded 5+ times on <b>' + overDays.length + ' day' + (overDays.length === 1 ? '' : 's') + '</b> this period. Those days averaged <b class="num">' + fmtR(overAvg) + '</b> expectancy vs <b class="num">' + fmtR(normDayAvg) + '</b> on 1–2 trade days. Frequency is hurting quality.'
-                    : 'No overtrading days detected — your best results come from restraint.', '<span class="tag tag-gray num">' + overDays.length + ' days</span>'));
-                cards.push(card('rotate-ccw', 'Post-loss / revenge', postLoss.length
-                    ? 'After a loss you enter <b class="num">' + Math.round(postLoss.reduce((x, y) => x + (y.delayMin || 0), 0) / postLoss.length) + ' min</b> later and risk <b class="num">$' + stats(postLoss).avgRisk.toFixed(0) + '</b>. Those trades average <b class="num">' + fmtR(postExp) + '</b> vs <b class="num">' + fmtR(normExp) + '</b> for normal trades.'
-                    : 'No post-loss pattern yet — good.', '<span class="tag tag-gray num">' + postLoss.length + ' trades</span>'));
-                cards.push(card('zap', 'FOMO entries', fomo.length
-                    ? 'FOMO-tagged trades average <b class="num">' + fmtR(fomoExp) + '</b> expectancy vs <b class="num">' + fmtR(normExp) + '</b> for everyone else. They are your most reliably expensive behavior.'
-                    : 'No FOMO tags logged. Either you are disciplined or you are not tagging — both matter.', '<span class="tag tag-gray num">' + fomo.length + ' trades</span>'));
-
-                $('panel-behavior').innerHTML =
-                    '<div class="grid grid-cols-1 md:grid-cols-3 gap-4">' + cards.join('') + '</div>' +
-                    '<div class="panel p-5 mt-4">' +
-                        '<div class="panel-title flex items-center gap-2 mb-3"><svg data-lucide="alert-triangle" class="w-4 h-4 text-[#F59E0B]"></svg> What this means</div>' +
-                        '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed">' + (fomo.length || overDays.length ? 'Your edge exists — it is being diluted by behavior, not strategy. Fix the entry conditions and frequency first.' : 'Your behavior is currently supporting your results. Keep the sample growing before drawing conclusions.') + '</p>' +
-                    '</div>';
-            }
-
-            function renderDiscipline(list) {
-                const followed = list.filter(t => t.adherence === 'followed');
-                const violated = list.filter(t => t.adherence !== 'followed');
-                const perDay = groupBy(list, t => t.ts.toDateString());
-                const daysOver4 = Object.values(perDay).filter(tr => tr.length > 4).length;
-                const totalDays = Object.keys(perDay).length;
-                const riskOk = list.filter(t => t.risk <= 40).length;
-                const mss = list.filter(t => t.setup === 'MSS + FVG');
-                const mssFollow = mss.filter(t => t.adherence === 'followed').length;
-
-                const rules = [
-                    ['Risk limit ($40 max)', pct(riskOk, list.length)],
-                    ['Daily trade limit (≤4)', totalDays ? pct(totalDays - daysOver4, totalDays) : 0],
-                    ['MSS confirmation', mss.length ? pct(mssFollow, mss.length) : 0],
-                    ['Overall rule adherence', pct(followed.length, list.length)]
-                ];
-                const weakest = rules.reduce((a, b) => (b[1] < a[1] ? b : a));
-                const weakDiff = stats(violated).expectancy - stats(followed).expectancy;
-
-                $('panel-discipline').innerHTML =
-                    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' +
-                        '<div class="lg:col-span-2">' + panel('Rule Adherence', rules.map(r =>
-                            '<div class="mb-3"><div class="flex items-center justify-between mb-1.5"><span class="text-[12.5px] text-[#B4B4BD]">' + r[0] + '</span><span class="num text-[12px] font-bold ' + (r[1] >= 90 ? 'text-[#34D399]' : r[1] >= 70 ? 'text-[#F59E0B]' : 'text-[#F87171]') + '">' + r[1] + '%</span></div>' +
-                            '<div class="bar-track"><div class="bar-fill" style="width:' + r[1] + '%;background:' + (r[1] >= 90 ? '#10B981' : r[1] >= 70 ? '#F59E0B' : '#EF4444') + '"></div></div></div>').join('')) + '</div>' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Weakest rule', '<div class="text-[15px] font-bold text-white">' + weakest[0] + '</div>' +
-                                '<div class="text-[12px] text-[#6E6E78] num mt-1">' + weakest[1] + '% adherence</div>' +
-                                '<p class="text-[12px] text-[#F59E0B] mt-2">Broken-rule trades average ' + fmtR(stats(violated).expectancy) + ' vs ' + fmtR(stats(followed).expectancy) + ' when followed.</p>') +
-                            panel('Cost of non-compliance', '<div class="num text-[20px] font-bold ' + (weakDiff < 0 ? 'text-[#F87171]' : 'text-[#34D399]') + '">' + fmtR(weakDiff) + '</div>' +
-                                '<p class="text-[12px] text-[#8A8A93] mt-1 leading-relaxed">Difference in expectancy between rule-following and rule-breaking trades.</p>') +
-                        '</div>' +
-                    '</div>';
-            }
-
-            function renderPsychology(list) {
-                const byEmotion = Object.entries(groupBy(list, 'emotion')).map(([name, tr]) => ({ name, s: stats(tr) })).sort((a, b) => b.s.expectancy - a.s.expectancy);
-                const maxE = Math.max(...byEmotion.map(x => Math.abs(x.s.expectancy)), 0.1);
-                const calm = byEmotion.find(x => x.name === 'Calm');
-                const fomo = byEmotion.find(x => x.name === 'FOMO');
-                const revenge = byEmotion.find(x => x.name === 'Revenge');
-
-                $('panel-psychology').innerHTML =
-                    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' +
-                        '<div class="lg:col-span-2">' + panel('Expectancy by Emotion', byEmotion.map(x =>
-                            '<div class="flex items-center gap-3 py-2.5 border-b border-[#17171A] last:border-0">' +
-                                '<span class="text-[13px] font-semibold text-white w-28">' + x.name + '</span>' +
-                                '<div class="flex-1 bar-track"><div class="bar-fill" style="width:' + Math.max(4, Math.round((x.s.expectancy / maxE) * 100)) + '%;background:' + (x.s.expectancy >= 0 ? '#10B981' : '#EF4444') + '"></div></div>' +
-                                '<span class="num text-[12px] font-bold ' + (x.s.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + ' w-16 text-right">' + fmtR(x.s.expectancy) + '</span>' +
-                                '<span class="num text-[11.5px] text-[#6E6E78] w-16 text-right">' + x.s.n + ' trades</span>' +
-                            '</div>').join('')) + '</div>' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Headline', '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed">' +
-                                (fomo && fomo.s.expectancy < 0 ? 'FOMO-tagged trades run <b class="num text-[#F87171]">' + fmtR(fomo.s.expectancy) + '</b> vs <b class="num text-[#34D399]">' + fmtR(calm ? calm.s.expectancy : 0.4) + '</b> when calm. Emotion is your most expensive input.' : 'Emotional states are not yet clearly separating your results.') + '</p>') +
-                            panel('What to do', '<p class="text-[12.5px] text-[#8A8A93] leading-relaxed">' + (fomo && fomo.s.expectancy < 0 ? 'Tag the emotion before every exit. One honest tag per trade is enough for Insights to track the pattern.' : 'Keep tagging emotions — this becomes your highest-signal data after about 30 trades.') + '</p>') +
-                        '</div>' +
-                    '</div>';
-            }
-
-            function renderCoach(list) {
-                const s = stats(list);
-                const postLoss = list.filter(t => t.postLoss);
-                const fomo = list.filter(t => t.emotion === 'FOMO');
-                const bySetup = ranked(list, 'setup', 1);
-                const bySession = ranked(list, 'session', 1);
-                const prev = stats(tradesForPeriod({ days: 30 }).slice(0, Math.max(1, Math.floor(list.length / 2))));
-
-                const answers = {
-                    working: 'Your edge is <b>' + (bySetup[0] ? bySetup[0].name : 'your primary setup') + '</b>: ' + (bySetup[0] ? fmtR(bySetup[0].s.expectancy) + ' expectancy across ' + bySetup[0].s.n + ' trades' : '') + '. You also trade best in ' + (bySession[0] ? bySession[0].name + ' (' + fmtR(bySession[0].s.expectancy) + 'R)' : 'your main session') + ', and rule-following trades outperform broken-rule trades by ' + Math.abs(stats(list.filter(t => t.adherence === 'followed')).expectancy - stats(list.filter(t => t.adherence !== 'followed')).expectancy).toFixed(2) + 'R.',
-                    hurting: fomo.length ? 'FOMO entries: <b class="num">' + fmtR(stats(fomo).expectancy) + '</b> expectancy (' + fomo.length + ' trades). Post-loss trades: <b class="num">' + fmtR(stats(postLoss).expectancy) + '</b> vs <b class="num">' + fmtR(stats(list.filter(t => !t.postLoss)).expectancy) + '</b> normal. These two behaviors explain most of the drag.' : 'The biggest drag is ' + (bySetup[bySetup.length - 1] && bySetup[bySetup.length - 1].s.expectancy < 0 ? bySetup[bySetup.length - 1].name + ' (' + fmtR(bySetup[bySetup.length - 1].s.expectancy) + ')' : 'consistency — spread is wide between your best and worst periods.'),
-                    changed: 'Expectancy moved from ' + fmtR(prev.expectancy) + ' to <b class="num">' + fmtR(s.expectancy) + '</b>, win rate ' + Math.round(prev.winRate * 100) + '% → ' + Math.round(s.winRate * 100) + '%. P&L for the period is ' + fmtMoney(s.pnl) + '.',
-                    losing: 'Your losses cluster around ' + (fomo.length ? 'FOMO and post-loss entries (see above)' : 'rule breaks — ' + Math.round(pct(list.filter(t => t.adherence !== 'followed').length, list.length)) + '% of trades)') + '. These are behavioral, not strategic: your setups carry positive expectancy when executed per plan.',
-                    improving: s.expectancy > 0.2 ? 'Yes — <b class="num">' + fmtR(s.expectancy) + '</b> expectancy over ' + s.n + ' trades with a ' + pct(s.winRate * 100, 100) + '% win rate and ' + s.pf.toFixed(2) + ' profit factor. Caveat: ' + confidence(s.n).label.toLowerCase() + ' sample, so treat the trend as direction, not proof.' : 'Not clearly yet — expectancy is ' + fmtR(s.expectancy) + ' over ' + s.n + ' trades. More data will separate noise from trend.'
-                };
-
-                $('panel-coach').innerHTML =
-                    '<div class="panel p-5">' +
-                        '<div class="panel-title flex items-center gap-2 mb-2"><svg data-lucide="sparkles" class="w-4 h-4 text-[#10B981]"></svg> AI Coach</div>' +
-                        '<p class="text-[12px] text-[#6E6E78] mb-4">Every answer is computed from your own journal — with sample sizes, never generic advice.</p>' +
-                        '<div class="flex flex-wrap gap-2 mb-5">' +
-                            '<button class="coach-q" onclick="coachAsk(\'working\')">What\u2019s working?</button>' +
-                            '<button class="coach-q" onclick="coachAsk(\'hurting\')">What\u2019s hurting?</button>' +
-                            '<button class="coach-q" onclick="coachAsk(\'changed\')">What changed?</button>' +
-                            '<button class="coach-q" onclick="coachAsk(\'losing\')">Why am I losing?</button>' +
-                            '<button class="coach-q" onclick="coachAsk(\'improving\')">Am I improving?</button>' +
-                        '</div>' +
-                        '<div id="coach-answer" class="rounded-lg border border-[#1F1F23] bg-[#0F0F11] p-4 min-h-[90px] flex items-start gap-3">' +
-                            '<svg data-lucide="sparkles" class="w-4 h-4 text-[#10B981] mt-0.5 flex-shrink-0"></svg>' +
-                            '<div class="text-[13px] text-[#C4C4CC] leading-relaxed" id="coach-answer-text">Ask one of the questions to get an evidence-based read on this period.</div>' +
-                        '</div>' +
-                    '</div>';
-
-                window.coachAsk = function(k) {
-                    $('coach-answer-text').innerHTML = answers[k];
-                    if (window.lucide) lucide.createIcons();
-                };
-            }
-
-            function renderWeekly(list) {
-                const week = list.filter(t => new Date(t.ts).getTime() >= Date.now() - 7 * day);
-                const prev = list.filter(t => new Date(t.ts).getTime() >= Date.now() - 14 * day && new Date(t.ts).getTime() < Date.now() - 7 * day);
-                const ws = stats(week), ps = stats(prev);
-                const bySetup = ranked(week, 'setup', 1);
-                const bySession = ranked(week, 'session', 1);
-                const viol = week.filter(t => t.adherence !== 'followed');
-                const fomo = week.filter(t => t.emotion === 'FOMO');
-
-                const biggestMistake = fomo.length ? 'FOMO entries (' + fomo.length + ')' : viol.length ? 'Rule breaks (' + viol.length + ')' : 'None flagged';
-                const focus = fomo.length ? 'Take no trade without a written confirmation' : viol.length ? 'Re-read your rules before the first trade each day' : 'Keep doing what you did this week';
-
-                $('panel-weekly').innerHTML =
-                    '<div class="grid grid-cols-1 lg:grid-cols-3 gap-4">' +
-                        '<div class="lg:col-span-2">' + panel('Weekly Review', '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">' +
-                            '<div class="metric-mini"><div class="label-xs">P&L</div><div class="val num ' + (ws.pnl >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(ws.pnl) + '</div></div>' +
-                            '<div class="metric-mini"><div class="label-xs">Win rate</div><div class="val num text-white">' + pct(ws.winRate * 100, 100) + '%</div></div>' +
-                            '<div class="metric-mini"><div class="label-xs">Expectancy</div><div class="val num ' + (ws.expectancy >= 0 ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtR(ws.expectancy) + '</div></div>' +
-                            '<div class="metric-mini"><div class="label-xs">Trades</div><div class="val num text-white">' + ws.n + '</div></div>' +
-                        '</div>' +
-                        '<div class="flex flex-col gap-2.5 text-[13px]">' +
-                            '<div class="flex justify-between py-2 border-b border-[#17171A]"><span class="text-[#8A8A93]">Best setup</span><span class="font-semibold text-white">' + (bySetup[0] ? bySetup[0].name + ' · ' + fmtR(bySetup[0].s.expectancy) : '—') + '</span></div>' +
-                            '<div class="flex justify-between py-2 border-b border-[#17171A]"><span class="text-[#8A8A93]">Best session</span><span class="font-semibold text-white">' + (bySession[0] ? bySession[0].name : '—') + '</span></div>' +
-                            '<div class="flex justify-between py-2 border-b border-[#17171A]"><span class="text-[#8A8A93]">Biggest mistake</span><span class="font-semibold text-[#F59E0B]">' + biggestMistake + '</span></div>' +
-                            '<div class="flex justify-between py-2 border-b border-[#17171A]"><span class="text-[#8A8A93]">Largest risk event</span><span class="num font-semibold text-white">$' + (week.length ? Math.max(...week.map(t => t.risk)) : 0) + '</span></div>' +
-                            '<div class="flex justify-between py-2"><span class="text-[#8A8A93]">vs previous week</span><span class="num font-semibold ' + (ws.pnl >= ps.pnl ? 'text-[#34D399]' : 'text-[#F87171]') + '">' + fmtMoney(ps.pnl) + ' → ' + fmtMoney(ws.pnl) + '</span></div>' +
-                        '</div>') + '</div>' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Next week\u2019s focus', '<div class="text-[15px] font-bold text-white">' + focus + '</div>' +
-                                '<p class="text-[12.5px] text-[#8A8A93] mt-2 leading-relaxed">Pick one change, define it as a rule, and let Insights measure it over the next 20 trades.</p>') +
-                            panel('Closing read', '<p class="text-[12.5px] text-[#C4C4CC] leading-relaxed">' +
-                                (ws.expectancy >= 0 ? 'Your strategy was profitable this week. ' : 'This week was negative on expectancy. ') +
-                                'The main drag was execution: ' + biggestMistake.toLowerCase() + '. Focus next week\u2019s reviews there.</p>') +
-                        '</div>' +
-                    '</div>';
-            }
-
-            // ============ TABS / PERIOD EVENTS ============
-            document.querySelectorAll('.ins-tab').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    document.querySelectorAll('.ins-tab').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    document.querySelectorAll('.ins-panel').forEach(p => p.classList.remove('active'));
-                    $('panel-' + btn.dataset.tab).classList.add('active');
+            function fetchPractice() {
+                apiFetch('/api/practice/insights').then(r => {
+                    if (!r.ok) throw new Error('HTTP ' + r.status);
+                    return r.json();
+                }).then(j => {
+                    if (!j || !Array.isArray(j.findings)) throw new Error('unexpected response');
+                    findings = j.findings.map(norm);
+                    analyticsData = null; // practice analytics share the same breakdowns but the page only needs findings
+                    renderFindings();
+                }).catch(err => {
+                    console.warn('[insights] practice fetch failed: ' + err.message);
+                    $('ins-body').classList.add('hidden');
+                    $('practice-offline').classList.remove('hidden');
                 });
-            });
-
-            window.setPeriod = function(id) {
-                periodId = id;
-                renderAll();
-            };
-
-            // ============ INIT ============
-            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
-            document.querySelectorAll('#mode-toggle [data-mode]').forEach(btn => {
-                btn.addEventListener('click', () => window.setMode(btn.dataset.mode));
-            });
-            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
-            // Downstream module: listens for domain events and updates itself —
-            // it never mutates configuration directly.
-            if (core) {
-                core.TradeMindBus.subscribe('trade.created', () => { renderAll(); });
-                core.TradeMindBus.subscribe('trade.updated', () => { renderAll(); });
-                core.TradeMindBus.subscribe('trade.deleted', () => { renderAll(); });
-                core.TradeMindBus.subscribe('config.version.created', () => { renderAll(); });
-                core.TradeMindBus.subscribe('config.changed', () => { renderAll(); });
-                core.TradeMindBus.subscribe('account.changed', () => { renderAll(); });
             }
 
-            renderAll();
+            // ============ RENDER FINDINGS ============
+            function renderFindings() {
+                const isBt = mode === 'BACKTEST';
+                const developing = findings.find(f => f.type === 'developing');
+                if (developing || !findings.length) {
+                    renderDeveloping(developing);
+                    return;
+                }
+                renderEvidenceStatus();
+                // primary = backend's own ordering (findings[0])
+                renderPrimary(findings[0]);
+                // strengths: setup / session / instrument
+                renderStrengths();
+                // dedicated sections
+                renderBehavior(findings);
+                renderRiskPattern(findings);
+                renderRuleBreaks(findings);
+                // everything not already featured
+                const featured = new Set([findings[0].id]);
+                findings.forEach(f => {
+                    if (/^Strongest (setup|session|instrument)$/i.test(f.title)) featured.add(f.id);
+                    if (/emotion/i.test(f.title)) featured.add(f.id);
+                    if (/risk escalates/i.test(f.title)) featured.add(f.id);
+                    if (/rule break/i.test(f.title)) featured.add(f.id);
+                });
+                renderCards(findings.filter(f => !featured.has(f.id)));
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ---- Developing / insufficient evidence ----
+            function renderDeveloping(dev) {
+                const accId = currentAccountId();
+                const n = dev && dev.sample != null ? dev.sample : (analyticsData ? analyticsData.n : 0);
+                const html =
+                    '<div class="panel p-6">' +
+                        '<div class="flex flex-wrap items-center gap-6">' +
+                            '<div class="min-w-[200px]">' +
+                                '<div class="label-xs mb-2">Building your evidence</div>' +
+                                '<div class="text-[26px] font-extrabold num">' + n + ' <span class="text-[15px] text-[var(--tm-dim)] font-semibold">of 10 trades</span></div>' +
+                            '</div>' +
+                            '<div class="flex-1 min-w-[260px]">' +
+                                '<p class="text-[13.5px] font-semibold text-[var(--tm-text)]">Your journal needs more trades before Battlex can make stronger behavioral conclusions.</p>' +
+                                '<p class="text-[12.5px] text-[var(--tm-dim)] mt-1.5 leading-relaxed">' + esc((dev && dev.detail) || '') + ' No findings are shown until the evidence floor is met — nothing is guessed.</p>' +
+                                '<div class="dim-track mt-4" style="height:6px;background:var(--tm-border-2);border-radius:999px;overflow:hidden"><div style="width:' + Math.min(100, (n / 10) * 100) + '%;height:100%;background:var(--tm-accent);border-radius:999px"></div></div>' +
+                                '<a href="journal.html?log=1" class="btn-primary mt-5 inline-flex !py-2.5 !px-5"><svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade</a>' +
+                            '</div>' +
+                        '</div>' +
+                    '</div>';
+                $('ev-status').innerHTML = html;
+                ['primary-sec', 'strength-sec', 'behavior-sec', 'risk-sec', 'rulebreak-sec', 'cards-sec'].forEach(id => $(id).classList.add('hidden'));
+            }
+
+            // ---- Evidence status ----
+            function renderEvidenceStatus() {
+                const a = analyticsData;
+                const n = a ? a.n : findings.reduce((s, f) => s + (f.sample || 0), 0);
+                const counts = { high: 0, medium: 0, low: 0 };
+                findings.forEach(f => { if (counts[f.confidence] != null) counts[f.confidence]++; });
+                const chips = [
+                    ['Trades analyzed', n],
+                    ['Findings', findings.length],
+                    ['High confidence', counts.high],
+                    ['Medium confidence', counts.medium]
+                ].filter(x => !(x[0] === 'High confidence' && x[1] === 0) && !(x[0] === 'Medium confidence' && x[1] === 0))
+                  .map(x => '<div class="stat-tile"><div class="st-label">' + x[0] + '</div><div class="st-value num">' + x[1] + '</div></div>').join('');
+                $('ev-status').innerHTML =
+                    '<div class="panel p-5">' +
+                        '<div class="flex flex-wrap items-center justify-between gap-3 mb-4">' +
+                            '<div class="panel-title">Evidence status</div>' +
+                            '<span class="tag tag-emerald">' + (mode === 'BACKTEST' ? 'source: BACKTEST' : 'source: LIVE') + '</span>' +
+                        '</div>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3">' + chips + '</div>' +
+                        '<p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Every finding below is derived from these trades — the evidence list is shown with each finding, and every evidence trade links to the Journal.</p>' +
+                    '</div>';
+            }
+
+            // ---- Primary finding ----
+            function renderPrimary(f) {
+                const sec = $('primary-sec');
+                const conf = confidenceOf(f);
+                const sev = severityOf(f);
+                const evCount = (f.evidence || []).length;
+                const accent = f.severity === 'positive' ? 'var(--tm-green)' : f.severity === 'negative' ? 'var(--tm-red)' : 'var(--tm-accent)';
+                sec.classList.remove('hidden');
+                sec.innerHTML =
+                    '<div class="panel p-6" style="border-color:' + accent + '33">' +
+                        '<div class="flex flex-wrap items-center gap-3 mb-4">' +
+                            '<span class="label-xs" style="color:' + accent + '">What Battlex sees</span>' +
+                            '<span class="tag ' + sev.cls + '">' + sev.label + '</span>' +
+                            (conf ? '<span class="tag ' + conf.cls + '">' + conf.label + '</span>' : '') +
+                            '<span class="tag tag-gray">' + evCount + ' evidence trade' + (evCount === 1 ? '' : 's') + '</span>' +
+                        '</div>' +
+                        '<div class="text-[22px] font-extrabold tracking-tight text-[var(--tm-text)]">' + esc(f.title) + '</div>' +
+                        '<p class="text-[13px] text-[var(--tm-muted)] mt-2 max-w-3xl leading-relaxed">' + esc(f.detail) + '</p>' +
+                        '<div class="flex flex-wrap items-center gap-3 mt-5">' +
+                            '<button class="btn-primary !py-2.5 !px-5" onclick="window.__openEvidence(\'' + esc(f.id) + '\')"><svg data-lucide="eye" class="w-4 h-4"></svg> View evidence</button>' +
+                            '<a href="ai.html" class="btn-ghost !py-2.5 !px-5"><svg data-lucide="brain-circuit" class="w-4 h-4"></svg> Investigate with AI Mentor</a>' +
+                        '</div>' +
+                    '</div>';
+            }
+
+            // ---- Strengths (setup / session / instrument) ----
+            function strengthRow(f, key) {
+                if (!f) return '';
+                const a = analyticsData;
+                const name = (f.detail || '').split(' — ')[0] || '';
+                const row = a && (key === 'setup' ? a.bySetup : key === 'session' ? a.bySession : a.bySymbol).find(r => String(r.key) === String(name));
+                const badge = key === 'symbol' && window.TMAssets && window.TMAssets.badgeHtml ? '<span class="tm-sym-badge">' + window.TMAssets.badgeHtml(name) + '</span> ' : '';
+                const conf = confidenceOf(f);
+                return '<div class="finding-card">' +
+                    '<div class="flex items-center justify-between"><span class="label-xs">Strongest ' + key + '</span>' + (conf ? '<span class="tag ' + conf.cls + ' !py-0.5 !px-2">' + conf.label + '</span>' : '') + '</div>' +
+                    '<div class="fc-title">' + badge + esc(name || '—') + '</div>' +
+                    '<div class="fc-detail">' + esc(f.detail) + '</div>' +
+                    '<div class="grid grid-cols-2 gap-2 mt-auto">' +
+                        '<div class="stat-tile !p-2.5"><div class="st-label">Trades</div><div class="st-value num text-[16px]">' + (row ? row.n : (f.sample != null ? f.sample : '—')) + '</div></div>' +
+                        '<div class="stat-tile !p-2.5"><div class="st-label">P&amp;L</div><div class="st-value num text-[16px]" style="' + ((row && row.pnl < 0) ? 'color:var(--tm-red)' : 'color:var(--tm-green)') + '">' + (row ? money(row.pnl) : '—') + '</div></div>' +
+                        '<div class="stat-tile !p-2.5"><div class="st-label">Win rate</div><div class="st-value num text-[16px]">' + (row ? fmtPct(row.winRate) : '—') + '</div></div>' +
+                        '<div class="stat-tile !p-2.5"><div class="st-label">Avg R</div><div class="st-value num text-[16px]" style="' + ((row && row.avgR < 0) ? 'color:var(--tm-red)' : 'color:var(--tm-green)') + '">' + (row ? fmtR(row.avgR) : '—') + '</div></div>' +
+                    '</div>' +
+                    '<button class="btn-ghost justify-center !py-2 text-[12.5px] w-full" onclick="window.__openEvidence(\'' + esc(f.id) + '\')"><svg data-lucide="eye" class="w-4 h-4"></svg> View evidence</button>' +
+                '</div>';
+            }
+            function renderStrengths() {
+                const sec = $('strength-sec');
+                const byTitle = t => findings.find(f => f.title === t);
+                const setup = byTitle('Strongest setup'), session = byTitle('Strongest session'), symbol = byTitle('Strongest instrument');
+                if (!setup && !session && !symbol) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                $('strength-grid').innerHTML = strengthRow(setup, 'setup') + strengthRow(session, 'session') + strengthRow(symbol, 'symbol');
+            }
+
+            // ---- Behavioral patterns (emotional entries) ----
+            function renderBehavior(list) {
+                const sec = $('behavior-sec');
+                const f = list.find(x => /emotion/i.test(x.title));
+                if (!f) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                const evCount = (f.evidence || []).length;
+                sec.innerHTML =
+                    '<div class="panel p-5">' +
+                        '<div class="flex flex-wrap items-center justify-between gap-3 mb-4">' +
+                            '<div class="panel-title">Behavioral patterns</div>' +
+                            '<span class="tag tag-amber">BEHAVIOR</span>' +
+                        '</div>' +
+                        '<div class="text-[17px] font-extrabold text-[var(--tm-text)]">' + esc(f.title) + '</div>' +
+                        '<p class="text-[13px] text-[var(--tm-muted)] mt-1.5 leading-relaxed">' + esc(f.detail) + '</p>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">' +
+                            '<div class="stat-tile"><div class="st-label">Occurrences</div><div class="st-value num">' + evCount + '</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Evidence trades</div><div class="st-value num">' + evCount + '</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Confidence</div><div class="st-value num text-[15px] !mt-2">' + (confidenceOf(f) ? confidenceOf(f).label : '—') + '</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Net P&amp;L</div><div class="st-value num" id="beh-pnl">—</div></div>' +
+                        '</div>' +
+                        '<div class="flex flex-wrap gap-2 mt-4">' + evChips(f, 'live') + '</div>' +
+                    '</div>';
+                // net pnl from the actual evidence trades (live only)
+                if (mode === 'LIVE' && evCount) {
+                    const ids = f.evidence;
+                    const pnl = core.Trades.filter(t => ids.indexOf(t.id) !== -1).reduce((s, t) => s + (t.pnl || 0), 0);
+                    const el = $('beh-pnl');
+                    if (el) { el.textContent = money(pnl); el.style.color = pnl < 0 ? 'var(--tm-red)' : 'var(--tm-green)'; }
+                }
+            }
+
+            // ---- Risk patterns (escalation) ----
+            function renderRiskPattern(list) {
+                const sec = $('risk-sec');
+                const f = list.find(x => /risk escalates/i.test(x.title));
+                if (!f) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                const evCount = (f.evidence || []).length;
+                const nums = (f.detail.match(/\$(\d+)/g) || []).map(s => Number(s.slice(1)));
+                sec.innerHTML =
+                    '<div class="panel p-5">' +
+                        '<div class="flex flex-wrap items-center justify-between gap-3 mb-4">' +
+                            '<div class="panel-title">Risk patterns</div>' +
+                            '<span class="tag tag-red">RISK</span>' +
+                        '</div>' +
+                        '<div class="text-[17px] font-extrabold text-[var(--tm-text)]">' + esc(f.title) + '</div>' +
+                        '<p class="text-[13px] text-[var(--tm-muted)] mt-1.5 leading-relaxed">' + esc(f.detail) + '</p>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">' +
+                            '<div class="stat-tile"><div class="st-label">Occurrences</div><div class="st-value num">' + evCount + '</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Avg risk after loss</div><div class="st-value num">' + (nums[0] != null ? '$' + nums[0] : '—') + '</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Baseline risk</div><div class="st-value num">' + (nums[1] != null ? '$' + nums[1] : '—') + '</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Confidence</div><div class="st-value num text-[15px] !mt-2">' + (confidenceOf(f) ? confidenceOf(f).label : '—') + '</div></div>' +
+                        '</div>' +
+                        '<div class="flex flex-wrap gap-2 mt-4">' + evChips(f, 'live') + '</div>' +
+                    '</div>';
+            }
+
+            // ---- Rule breaks cost ----
+            function renderRuleBreaks(list) {
+                const sec = $('rulebreak-sec');
+                const f = list.find(x => /rule break/i.test(x.title));
+                if (!f) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                const evCount = (f.evidence || []).length;
+                // the engine's own violation count is embedded in its detail text
+                const violM = (f.detail || '').match(/(\d+) hard-rule violations/);
+                const violCount = violM ? Number(violM[1]) : evCount;
+                sec.innerHTML =
+                    '<div class="panel p-5">' +
+                        '<div class="flex flex-wrap items-center justify-between gap-3 mb-4">' +
+                            '<div class="panel-title">Rule breaks cost you</div>' +
+                            '<span class="tag tag-red">DISCIPLINE</span>' +
+                        '</div>' +
+                        '<div class="text-[17px] font-extrabold text-[var(--tm-text)]">' + esc(f.title) + '</div>' +
+                        '<p class="text-[13px] text-[var(--tm-muted)] mt-1.5 leading-relaxed">' + esc(f.detail) + '</p>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">' +
+                            '<div class="stat-tile"><div class="st-label">Violations</div><div class="st-value num">' + violCount + '</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Financial impact</div><div class="st-value num" id="rb-pnl">—</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Evidence trades</div><div class="st-value num">' + evCount + '</div></div>' +
+                            '<div class="stat-tile"><div class="st-label">Confidence</div><div class="st-value num text-[15px] !mt-2">' + (confidenceOf(f) ? confidenceOf(f).label : '—') + '</div></div>' +
+                        '</div>' +
+                        '<div class="flex flex-wrap items-center gap-3 mt-4">' +
+                            '<a href="discipline.html" class="btn-ghost !py-2 !px-4 text-[12.5px]"><svg data-lucide="target" class="w-4 h-4"></svg> View violations</a>' +
+                            '<button class="btn-ghost !py-2 !px-4 text-[12.5px]" onclick="window.__openEvidence(\'' + esc(f.id) + '\')"><svg data-lucide="eye" class="w-4 h-4"></svg> View evidence</button>' +
+                            '<span class="text-[11.5px] text-[var(--tm-dim)]">The full violation list with per-trade impact lives on the Discipline page.</span>' +
+                        '</div>' +
+                    '</div>';
+                if (mode === 'LIVE') {
+                    const accId = currentAccountId();
+                    const pnl = core.Violations.filter(v => v.account_id === accId).reduce((s, v) => s + (v.pnl || 0), 0);
+                    const el = $('rb-pnl');
+                    if (el) { el.textContent = money(pnl); el.style.color = pnl < 0 ? 'var(--tm-red)' : 'var(--tm-green)'; }
+                }
+            }
+
+            // ---- Remaining findings grid ----
+            function renderCards(list) {
+                const sec = $('cards-sec');
+                if (!list.length) { sec.classList.add('hidden'); return; }
+                sec.classList.remove('hidden');
+                $('cards-grid').innerHTML = list.map(f => {
+                    const sev = severityOf(f), conf = confidenceOf(f);
+                    const evCount = (f.evidence || []).length;
+                    return '<div class="finding-card">' +
+                        '<div class="flex items-center justify-between"><span class="tag ' + sev.cls + ' !py-0.5 !px-2">' + sev.label + '</span>' + (conf ? '<span class="tag ' + conf.cls + ' !py-0.5 !px-2">' + conf.label + '</span>' : '') + '</div>' +
+                        '<div class="fc-title">' + esc(f.title) + '</div>' +
+                        '<div class="fc-detail">' + esc(f.detail) + '</div>' +
+                        '<div class="flex items-center gap-2 mt-auto"><span class="tag tag-gray">' + evCount + ' evidence</span></div>' +
+                        (evCount ? '<button class="btn-ghost justify-center !py-2 text-[12.5px] w-full" onclick="window.__openEvidence(\'' + esc(f.id) + '\')"><svg data-lucide="eye" class="w-4 h-4"></svg> View evidence</button>' : '') +
+                    '</div>';
+                }).join('');
+            }
+
+            // ---- Evidence chips ----
+            function evChips(f, mode) {
+                const ids = (f.evidence || []).slice(0, 12);
+                if (!ids.length) return '<span class="text-[12px] text-[var(--tm-dim)]">No individual evidence trades recorded.</span>';
+                return ids.map(id => '<span class="ev-chip" title="' + esc(id) + '">' + esc(id) + '</span>').join('');
+            }
+
+            // ============ EVIDENCE DRAWER ============
+            function openEvidence(findingId) {
+                const f = findings.find(x => x.id === findingId);
+                if (!f) return;
+                currentEvidence = f;
+                $('ev-title').textContent = f.title;
+                $('ev-sub').textContent = 'Why this finding exists — ' + (f.evidence || []).length + ' evidence trade(s)';
+                const ids = f.evidence || [];
+                let inner = '';
+                if (!ids.length) {
+                    inner = '<p class="text-[13px] text-[var(--tm-dim)]">This finding carries no individual evidence trade references.</p>';
+                } else if (mode === 'LIVE') {
+                    const rows = ids.map(id => {
+                        const t = core.Trades.find(x => x.id === id);
+                        if (!t) return null;
+                        const d = new Date(t.ts);
+                        const ts = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+                        const result = t.pnl > 0 ? '<span class="tag tag-emerald !py-0.5 !px-2">Win</span>' : t.pnl < 0 ? '<span class="tag tag-red !py-0.5 !px-2">Loss</span>' : '<span class="tag tag-gray !py-0.5 !px-2">Scratch</span>';
+                        return '<a class="ev-trade-row" href="journal.html?trade=' + encodeURIComponent(id) + '">' +
+                            '<span class="tm-sym-badge">' + (window.TMAssets && window.TMAssets.badgeHtml ? window.TMAssets.badgeHtml(t.symbol) : (t.symbol || '—').slice(0, 2).toUpperCase()) + '</span>' +
+                            '<span class="flex-1 min-w-0">' +
+                                '<span class="block text-[13px] font-bold text-[var(--tm-text)] truncate">' + esc(t.symbol) + ' · ' + esc(t.setup || '—') + '</span>' +
+                                '<span class="block text-[11px] text-[var(--tm-dim)] num">' + ts + ' · ' + esc((t.session || '—')) + ' · ' + (t.dir === 'long' ? 'Long' : 'Short') + '</span>' +
+                            '</span>' +
+                            result +
+                            '<span class="num text-[12px] ' + (t.r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + fmtR(t.r) + '</span>' +
+                        '</a>';
+                    }).filter(Boolean);
+                    inner = rows.length
+                        ? '<div class="flex flex-col gap-2">' + rows.join('') + '</div>' +
+                          '<p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Click a trade to open its full evidence record in the Journal.</p>'
+                        : '<p class="text-[13px] text-[var(--tm-dim)]">None of the evidence trades are in the current journal (they may belong to another account).</p>';
+                } else {
+                    inner = '<div class="flex flex-col gap-2">' + ids.map(id => '<div class="ev-trade-row"><span class="ev-chip">' + esc(id) + '</span><span class="text-[12px] text-[var(--tm-dim)]">practice trade</span></div>').join('') + '</div>' +
+                        '<p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Practice-session trades are reviewed on the Backtesting page — they are not in the live journal.</p>';
+                }
+                $('ev-body').innerHTML = inner;
+                $('ev-overlay').classList.add('open');
+                $('ev-drawer').classList.add('open');
+                $('ev-drawer').setAttribute('aria-hidden', 'false');
+                if (window.lucide) lucide.createIcons();
+            }
+            function closeEvidence() {
+                $('ev-overlay').classList.remove('open');
+                $('ev-drawer').classList.remove('open');
+                $('ev-drawer').setAttribute('aria-hidden', 'true');
+            }
+            window.__openEvidence = openEvidence;
+
+            // ============ EVENTS ============
+            function setMode(m) {
+                mode = m;
+                $('mode-live').classList.toggle('active', m === 'LIVE');
+                $('mode-bt').classList.toggle('active', m === 'BACKTEST');
+                closeEvidence();
+                renderBody();
+            }
+            document.querySelectorAll('#mode-toggle button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
+            $('ev-close').addEventListener('click', closeEvidence);
+            $('ev-overlay').addEventListener('click', closeEvidence);
+            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEvidence(); });
+            $('practice-retry').addEventListener('click', () => { $('practice-offline').classList.add('hidden'); $('ins-body').classList.remove('hidden'); renderBody(); });
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            $('acc-chip').addEventListener('click', () => {
+                if (!core || !core.Accounts || !core.Accounts.length) return;
+                const ids = core.Accounts.map(a => a.id);
+                const cur = currentAccountId() || ids[0];
+                const idx = ids.indexOf(cur);
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+                closeEvidence();
+                renderBody();
+            });
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+            }
+            if (core && core.TradeMindBus) {
+                ['trade.created', 'trade.updated', 'trade.deleted', 'config.version.created', 'config.changed', 'account.changed'].forEach(ev =>
+                    core.TradeMindBus.subscribe(ev, () => { closeEvidence(); renderBody(); }));
+            }
+
+            renderBody();
             if (window.lucide) lucide.createIcons();
         })();
     </script>
