@@ -3,117 +3,219 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>31TRADES — Strategy Lab</title>
+    <title>BATTLEXJOURNAL — Strategy Lab</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="assets/tailwind-config.js"></script>
     <script src="https://unpkg.com/lucide@latest"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+    <script src="assets/asset-meta.js"></script>
+
     <style>
-        * { box-sizing: border-box; }
-        body {
-            margin: 0; background: #0A0A0C; color: #E8E8EC;
-            font-family: 'Plus Jakarta Sans', -apple-system, sans-serif;
-            font-size: 14px; -webkit-font-smoothing: antialiased;
-        }
-        .num, .mono { font-family: 'JetBrains Mono', monospace; }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
 
-        .sidebar { width: 232px; background: #0D0D0F; border-right: 1px solid #1C1C20; display: flex; flex-direction: column; flex-shrink: 0; transition: width 0.2s; }
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
+            overflow: hidden;
+        }
+
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
+        }
         body.collapsed .sidebar { width: 64px; }
-        body.collapsed .nav-label, body.collapsed .logo-text, body.collapsed .profile-text, body.collapsed .hide-when-collapsed { display: none; }
-        .nav-item { display: flex; align-items: center; gap: 10px; padding: 8.5px 12px; border-radius: 8px; color: #8A8A93; font-size: 13px; font-weight: 600; text-decoration: none; transition: all 0.15s; }
-        .nav-item svg { width: 16px; height: 16px; flex-shrink: 0; }
-        .nav-item:hover { background: #16161A; color: #E8E8EC; }
-        .nav-item.active { background: linear-gradient(135deg, rgba(16,185,129,0.14), rgba(16,185,129,0.05)); color: #34D399; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
 
-        .btn-primary { display: inline-flex; align-items: center; gap: 7px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 700; font-size: 12.5px; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; transition: opacity 0.15s; }
-        .btn-primary:hover { opacity: 0.88; }
-        .btn-ghost { display: inline-flex; align-items: center; gap: 7px; background: #121214; color: #C4C4CC; font-weight: 600; font-size: 12.5px; padding: 8px 14px; border-radius: 8px; border: 1px solid #1F1F23; cursor: pointer; transition: all 0.15s; }
-        .btn-ghost:hover { border-color: #2E2E35; color: #FFFFFF; }
-        .btn-danger { display: inline-flex; align-items: center; gap: 7px; background: rgba(239,68,68,0.12); color: #F87171; font-weight: 600; font-size: 12.5px; padding: 8px 14px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.3); cursor: pointer; transition: all 0.15s; }
-        .btn-danger:hover { background: rgba(239,68,68,0.2); }
-
-        .panel { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; padding: 16px; }
-        .panel-title { font-size: 12px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; color: #6E6E78; }
-        .tag { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 6px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.03em; }
-        .tag-emerald { background: rgba(16,185,129,0.12); color: #34D399; }
-        .tag-red { background: rgba(239,68,68,0.12); color: #F87171; }
-        .tag-amber { background: rgba(245,158,11,0.12); color: #FBBF24; }
-        .tag-blue { background: rgba(59,130,246,0.12); color: #60A5FA; }
-        .tag-gray { background: rgba(110,110,120,0.14); color: #9A9AA3; }
-        .tag-purple { background: rgba(168,85,247,0.14); color: #C084FC; }
-
-        .kpi { background: #0F0F11; border: 1px solid #1F1F23; border-radius: 12px; padding: 14px 16px; }
-        .kpi .k-label { font-size: 11px; color: #6E6E78; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
-        .kpi .k-val { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-top: 4px; }
-
-        .ins-tab { padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #8A8A93; background: transparent; border: none; cursor: pointer; transition: all 0.15s; }
-        .ins-tab:hover { color: #E8E8EC; }
-        .ins-tab.active { background: #16161A; color: #FFFFFF; }
-
-        .ins-panel { display: none; }
-        .ins-panel.active { display: block; }
-
-        .finput, .fselect, .ftext {
-            background: #121214; border: 1px solid #1F1F23; border-radius: 8px;
-            padding: 8px 11px; font-size: 13px; color: #E8E8EC;
-            outline: none; transition: border-color 0.15s; width: 100%;
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
         }
-        .finput:focus, .fselect:focus, .ftext:focus { border-color: #2E2E35; }
-        .fselect { appearance: none; cursor: pointer; }
-        .fselect option { background: #121214; color: #C4C4CC; }
-        .ftext { resize: vertical; min-height: 64px; }
-        .flabel { font-size: 11px; font-weight: 700; color: #8A8A93; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 6px; display: block; }
-        .fhelp { font-size: 11.5px; color: #55555E; margin-top: 5px; }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: none; align-items: flex-start; justify-content: center; z-index: 50; padding: 40px 16px; overflow-y: auto; backdrop-filter: blur(2px); }
-        .modal-overlay.open { display: flex; }
-        .modal { background: #0F0F11; border: 1px solid #26262B; border-radius: 16px; width: 100%; max-width: 860px; box-shadow: 0 24px 60px rgba(0,0,0,0.5); }
+        /* ---- Glass system (Calendar/AI parity) ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
 
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .panel-sub { font-size: 12px; color: var(--tm-dim); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
+        .btn-primary {
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
+        }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-ghost {
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
+        }
+        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-mini {
+            background: transparent; border: 1px solid var(--tm-border-2); border-radius: 7px; color: var(--tm-muted);
+            padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.13s;
+        }
+        .btn-mini:hover { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
+
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        /* ---- Tabs ---- */
+        .lab-tab {
+            padding: 8px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.04em;
+            color: var(--tm-muted); background: transparent; border: 1px solid transparent; cursor: pointer;
+            transition: all 0.15s; text-transform: uppercase;
+        }
+        .lab-tab:hover { color: var(--tm-text); }
+        .lab-tab.active { background: var(--tm-text); color: var(--tm-bg); }
+        .lab-panel { display: none; }
+        .lab-panel.active { display: block; animation: fadeUp 0.22s ease; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+
+        /* ---- Tables ---- */
         .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
-        .tbl th { text-align: left; padding: 8px 10px; color: #6E6E78; font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; border-bottom: 1px solid #1F1F23; white-space: nowrap; }
-        .tbl td { padding: 8px 10px; border-bottom: 1px solid #17171A; white-space: nowrap; }
-        .tbl tbody tr:hover { background: #16161A; }
+        .tbl th { text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: 0.07em; text-transform: uppercase; color: var(--tm-muted); padding: 8px 10px; border-bottom: 1px solid var(--tm-border); white-space: nowrap; }
+        .tbl td { padding: 9px 10px; border-bottom: 1px solid var(--hairline); vertical-align: middle; }
         .tbl tbody tr:last-child td { border-bottom: none; }
+        .tbl tbody tr:hover td { background: var(--glass-inner); }
         .tbl-wrap { overflow-x: auto; }
 
-        .state-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; font-size: 11px; font-weight: 700; }
-        .st-healthy { background: rgba(16,185,129,0.12); color: #34D399; }
-        .st-approaching { background: rgba(245,158,11,0.12); color: #FBBF24; }
-        .st-breached { background: rgba(239,68,68,0.14); color: #F87171; }
-        .st-disabled { background: rgba(110,110,120,0.14); color: #9A9AA3; }
-        .st-noteval { background: rgba(59,130,246,0.1); color: #60A5FA; }
+        /* ---- Version timeline ---- */
+        .ver-item { display: flex; gap: 12px; position: relative; padding-bottom: 14px; }
+        .ver-item:last-child { padding-bottom: 0; }
+        .ver-item::before { content: ''; position: absolute; left: 13px; top: 26px; bottom: 0; width: 2px; background: var(--tm-border-2); }
+        .ver-item:last-child::before { display: none; }
+        .ver-dot { width: 28px; height: 28px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800; flex-shrink: 0; border: 1px solid var(--tm-border-2); background: var(--tm-card); color: var(--tm-muted); z-index: 1; }
+        .ver-item.current .ver-dot { background: var(--tm-text); color: var(--tm-bg); border-color: var(--tm-text); }
 
-        .map-node { background: #0F0F11; border: 1px solid #26262B; border-radius: 12px; padding: 12px 14px; min-width: 150px; }
-        .map-arrow { display: flex; align-items: center; color: #3A3A41; padding: 0 6px; flex-shrink: 0; }
+        /* ---- System map ---- */
+        .map-node {
+            display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border-radius: 10px;
+            background: var(--glass-bg); border: 1px solid var(--glass-border); min-width: 190px;
+            transition: border-color 0.15s, transform 0.15s; cursor: pointer; text-decoration: none;
+        }
+        .map-node:hover { border-color: var(--glass-border-strong); transform: translateY(-2px); }
+        .map-arrow { display: flex; align-items: center; color: var(--tm-dim); flex-shrink: 0; }
 
-        .step-dot { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; flex-shrink: 0; transition: all 0.15s; }
-        .step-dot.done { background: rgba(16,185,129,0.15); color: #34D399; }
-        .step-dot.active { background: #10B981; color: #052E1F; }
-        .step-dot.todo { background: #16161A; color: #6E6E78; }
+        /* ---- Drawers / modals ---- */
+        .drawer-overlay { position: fixed; inset: 0; background: rgba(8, 10, 14, 0.45); z-index: 60; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
+        .drawer-panel { position: fixed; top: 0; right: 0; bottom: 0; width: 480px; max-width: 94vw; z-index: 61; transform: translateX(102%); transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1); display: flex; flex-direction: column; border-left: 1px solid var(--glass-border-strong); }
+        .drawer-panel.open { transform: none; }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(8, 10, 14, 0.5); z-index: 70; display: none; align-items: center; justify-content: center; padding: 20px; }
+        .modal-overlay.open { display: flex; }
+        .modal-card { width: 640px; max-width: 100%; max-height: 92vh; overflow-y: auto; border-radius: 14px; }
 
-        .topbar { height: 56px; background: #0D0D0F; border-bottom: 1px solid #1C1C20; }
-        .search-input { background: #121214; border: 1px solid #1F1F23; border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: #E8E8EC; width: 320px; outline: none; }
-        .search-input:focus { border-color: #2E2E35; }
-        .search-input::placeholder { color: #55555E; }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #B4B4BD; }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #10B981; box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, #10B981, #059669); color: #052E1F; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: #FFFFFF; color: #0A0A0C; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #6E6E78; border: none; background: transparent; transition: all 0.15s; }
-        .collapse-btn:hover { background: #16161A; color: #FFFFFF; }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: #121214; border: 1px solid #1F1F23; font-size: 12.5px; font-weight: 600; color: #E8E8EC; cursor: pointer; }
+        .finput, .fselect, .ftext {
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
+            padding: 8px 11px; font-size: 13px; color: var(--tm-text); width: 100%;
+            outline: none; transition: border-color 0.15s; font-family: inherit;
+        }
+        .finput:focus, .fselect:focus, .ftext:focus { border-color: var(--tm-accent); }
+        .flabel { display: block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--tm-muted); margin-bottom: 6px; }
+        .fhelp { font-size: 11.5px; color: var(--tm-dim); margin-top: 5px; }
+        .step-dot { width: 26px; height: 26px; border-radius: 999px; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 800; border: 1px solid var(--tm-border-2); color: var(--tm-muted); background: var(--tm-card); }
+        .step-dot.active { border-color: var(--tm-accent); color: var(--tm-accent); }
+        .step-dot.done { background: var(--tm-green); border-color: var(--tm-green); color: #fff; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
 
         ::-webkit-scrollbar { width: 10px; height: 10px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #26262B; border-radius: 999px; border: 2px solid #0A0A0C; }
-        ::-webkit-scrollbar-thumb:hover { background: #34343B; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
 
-        @media (max-width: 640px) {
-            .search-input { display: none; }
-            .topbar { padding-left: 12px; padding-right: 12px; }
-        }
         @media (max-width: 1024px) {
             .search-input { width: 180px; }
             .sidebar { width: 64px; }
@@ -121,19 +223,26 @@
             .nav-item { justify-content: center; padding: 9px 0; }
             .hide-when-collapsed { display: none !important; }
         }
+        @media (max-width: 640px) {
+            .search-input { display: none; }
+            .topbar { padding-left: 12px; padding-right: 12px; }
+            .lab-tab { padding: 7px 10px; font-size: 11px; }
+        }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
 </head>
 <body>
 
-    <div class="flex h-screen">
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#1C1C20] flex-shrink-0">
-                <div class="logo-badge">31</div>
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">31TRADES</span>
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
@@ -156,17 +265,17 @@
                 <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
             </nav>
 
-            <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
                 <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
                 <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
                 <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[#16161A] transition-colors">
-                    <div class="avatar">AJ</div>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[#E8E8EC] truncate">Alex Turner</div>
-                        <div class="text-[11px] text-[#6E6E78]">Pro plan</div>
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]">Free plan</div>
                     </div>
-                    <svg class="w-4 h-4 text-[#6E6E78] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
                 </div>
             </div>
         </aside>
@@ -177,264 +286,195 @@
             <!-- Top bar -->
             <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
                 <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#55555E]"></svg>
-                    <input type="text" class="search-input" placeholder="Ask anything… e.g. what does my system enforce?">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. which setup is my edge?">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
                     <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
                     <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg> London · 09:42
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
-                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Live</div>
-                    <a href="journal.html" class="btn-primary !py-2 !px-3.5">
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                    </button>
                 </div>
             </div>
 
             <!-- Content -->
-            <main class="flex-1 overflow-y-auto">
-                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1500px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-[22px] font-bold tracking-tight">Strategy Lab</h1>
-                            <p class="text-[13px] text-[#6E6E78] mt-0.5">Define your trading system once — every screen reads the same rules and current state.</p>
+                            <h1 class="text-[24px] font-bold tracking-tight">Strategy Lab</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Build the system you expect yourself to follow.</p>
                         </div>
-                        <div class="flex items-center gap-2">
-                            <button class="btn-ghost" data-action="new-strategy"><svg data-lucide="plus" class="w-4 h-4"></svg> New Strategy</button>
-                            <button class="btn-primary" data-action="new-account"><svg data-lucide="plus" class="w-4 h-4"></svg> New Account</button>
+                        <div class="flex items-center gap-3">
+                            <a href="journal.html?log=1" class="btn-primary !py-2.5 !px-4">
+                                <svg data-lucide="plus" class="w-4 h-4"></svg> Create Strategy
+                            </a>
+                            <button class="btn-ghost !py-2.5 !px-4" data-action="new-account">
+                                <svg data-lucide="wallet" class="w-4 h-4"></svg> Create Account
+                            </button>
                         </div>
                     </div>
+
+                    <!-- System overview strip -->
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="overview-strip"></div>
 
                     <!-- Tabs -->
-                    <div class="flex items-center gap-1 overflow-x-auto pb-1">
-                        <button class="ins-tab active" data-tab="home">Home</button>
-                        <button class="ins-tab" data-tab="accounts">Accounts</button>
-                        <button class="ins-tab" data-tab="strategies">Strategies</button>
-                        <button class="ins-tab" data-tab="rulesets">Rule Sets</button>
-                        <button class="ins-tab" data-tab="tags">Tags</button>
-                        <button class="ins-tab" data-tab="map">System Map</button>
-                        <button class="ins-tab" data-tab="history">History</button>
+                    <div class="flex flex-wrap items-center gap-1.5 glass !rounded-xl px-2 py-1.5 overflow-x-auto" role="tablist">
+                        <button class="lab-tab active" data-tab="home">Home</button>
+                        <button class="lab-tab" data-tab="accounts">Accounts</button>
+                        <button class="lab-tab" data-tab="strategies">Strategies</button>
+                        <button class="lab-tab" data-tab="rulesets">Rule Sets</button>
+                        <button class="lab-tab" data-tab="tags">Tags</button>
+                        <button class="lab-tab" data-tab="map">System Map</button>
+                        <button class="lab-tab" data-tab="history">History</button>
                     </div>
 
-                    <div id="panel-home" class="ins-panel active"></div>
-                    <div id="panel-accounts" class="ins-panel"></div>
-                    <div id="panel-strategies" class="ins-panel"></div>
-                    <div id="panel-rulesets" class="ins-panel"></div>
-                    <div id="panel-tags" class="ins-panel"></div>
-                    <div id="panel-map" class="ins-panel"></div>
-                    <div id="panel-history" class="ins-panel"></div>
+                    <!-- HOME -->
+                    <section class="lab-panel active" id="panel-home"></section>
+                    <!-- ACCOUNTS -->
+                    <section class="lab-panel" id="panel-accounts"></section>
+                    <!-- STRATEGIES -->
+                    <section class="lab-panel" id="panel-strategies"></section>
+                    <!-- RULE SETS -->
+                    <section class="lab-panel" id="panel-rulesets"></section>
+                    <!-- TAGS -->
+                    <section class="lab-panel" id="panel-tags"></section>
+                    <!-- SYSTEM MAP -->
+                    <section class="lab-panel" id="panel-map"></section>
+                    <!-- HISTORY -->
+                    <section class="lab-panel" id="panel-history"></section>
 
-                    <p class="text-[11.5px] text-[#55555E]">31TRADES · Strategy Lab demo build · single source of truth across Dashboard, Risk, Discipline, Analytics, Insights, Journal and Backtesting · data is illustrative</p>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Account editor modal -->
-    <div id="acc-modal" class="modal-overlay">
-        <div class="modal">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-[#1F1F23]">
-                <h2 id="acc-modal-title" class="text-[16px] font-bold">New Account</h2>
-                <button class="collapse-btn" data-action="close-acc"><svg data-lucide="x" class="w-4 h-4"></svg></button>
-            </div>
-            <div class="p-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <div class="flex flex-col gap-4">
-                    <div>
-                        <label class="flabel">Account name</label>
-                        <input id="acc-name" class="finput" placeholder="FTMO 5K">
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="flabel">Type</label>
-                            <select id="acc-type" class="fselect">
-                                <option>Personal</option><option>Prop / Funded</option><option>Demo</option><option>Backtest</option><option>Other</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="flabel">Currency</label>
-                            <select id="acc-currency" class="fselect"><option>USD</option><option>EUR</option><option>GBP</option></select>
-                        </div>
-                        <div>
-                            <label class="flabel">Trading style</label>
-                            <select id="acc-style" class="fselect">
-                                <option>Scalping</option><option>Intraday</option><option>Swing</option><option>Position</option>
-                            </select>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="flabel">Starting balance</label>
-                            <input id="acc-start" type="number" class="finput num" placeholder="10000">
-                        </div>
-                        <div>
-                            <label class="flabel">Current equity</label>
-                            <input id="acc-equity" type="number" class="finput num" placeholder="10319">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="flabel">Drawdown model <span class="tag tag-blue !py-0.5">Static · Trailing · Daily · Custom</span></label>
-                        <select id="acc-ddmodel" class="fselect">
-                            <option value="static">Static — max loss from starting balance</option>
-                            <option value="trailing">Trailing — threshold moves with peak equity</option>
-                            <option value="daily">Daily reset — loss budget resets each day</option>
-                            <option value="custom">Custom — manual label + limit</option>
-                        </select>
-                        <p class="fhelp">The calculation basis is always shown next to the number — never a bare drawdown figure.</p>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="flabel">Daily loss limit ($)</label>
-                            <input id="acc-dayloss" type="number" class="finput num" placeholder="100">
-                        </div>
-                        <div>
-                            <label class="flabel">Max drawdown ($)</label>
-                            <input id="acc-maxdd" type="number" class="finput num" placeholder="500">
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="flabel">Risk per trade</label>
-                            <div class="flex gap-2">
-                                <input id="acc-risk" type="number" class="finput num" placeholder="25">
-                                <select id="acc-riskbasis" class="fselect !w-[70px]"><option value="money">$</option><option value="pct">%</option></select>
-                            </div>
-                        </div>
-                        <div>
-                            <label class="flabel">Max open risk</label>
-                            <div class="flex gap-2">
-                                <input id="acc-openrisk" type="number" class="finput num" placeholder="50">
-                                <select id="acc-openbasis" class="fselect !w-[70px]"><option value="money">$</option><option value="pct">%</option></select>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3">
-                        <div>
-                            <label class="flabel">Max trades / day</label>
-                            <input id="acc-maxtrades" type="number" class="finput num" placeholder="3">
-                        </div>
-                        <div>
-                            <label class="flabel">Status</label>
-                            <select id="acc-status" class="fselect"><option>Active</option><option>Paused</option><option>Archived</option></select>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="flabel">Warning thresholds (%)</label>
-                        <input id="acc-warn" class="finput" value="50, 70, 90">
-                        <p class="fhelp">Comma-separated. User thresholds override presets.</p>
-                    </div>
-                </div>
-                <div class="flex flex-col gap-4">
-                    <div class="panel">
-                        <div class="panel-title mb-3">What TradeMind will enforce</div>
-                        <div id="acc-preview" class="flex flex-col gap-2"></div>
-                    </div>
-                    <div class="panel">
-                        <div class="panel-title mb-3">Cross-section reflection</div>
-                        <div class="flex flex-col gap-1.5 text-[12.5px] text-[#C4C4CC]">
-                            <div>· <b class="text-white">Risk</b> — daily/total/monthly state & proximity alerts</div>
-                            <div>· <b class="text-white">Discipline</b> — hard vs soft rule evaluation</div>
-                            <div>· <b class="text-white">Journal</b> — allowed risk, strategy validation, rule status</div>
-                            <div>· <b class="text-white">Dashboard</b> — remaining budget, drawdown used, system status</div>
-                            <div>· <b class="text-white">Analytics / Insights</b> — segmentation by account, strategy, compliance</div>
-                        </div>
-                    </div>
+    <!-- ============ STRATEGY DETAIL DRAWER ============ -->
+    <div class="drawer-overlay" id="drawer-overlay"></div>
+    <aside class="drawer-panel glass-strong" id="strategy-drawer">
+        <div class="flex items-center justify-between p-5 border-b border-[var(--hairline)]">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-[15px]" id="sd-avatar">S</div>
+                <div>
+                    <div class="text-[16px] font-bold" id="sd-name">—</div>
+                    <div class="text-[12px] text-[var(--tm-dim)]" id="sd-desc">—</div>
                 </div>
             </div>
-            <div class="flex items-center justify-end gap-2 px-6 py-4 border-t border-[#1F1F23]">
+            <button class="collapse-btn" data-action="close-drawer" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-5" id="sd-body"></div>
+    </aside>
+
+    <!-- ============ ACCOUNT MODAL ============ -->
+    <div class="modal-overlay" id="acc-modal">
+        <div class="modal-card glass-strong p-6">
+            <div class="flex items-center justify-between mb-5">
+                <h3 class="text-[17px] font-bold" id="acc-modal-title">New Account</h3>
+                <button class="collapse-btn" data-action="close-acc" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div><label class="flabel">Account name</label><input id="acc-name" class="finput" placeholder="Prop Firm A"></div>
+                <div><label class="flabel">Type</label><select id="acc-type" class="fselect"><option>Prop / Funded</option><option>Personal</option><option>Demo</option></select></div>
+                <div><label class="flabel">Currency</label><select id="acc-currency" class="fselect"><option>USD</option><option>EUR</option><option>GBP</option></select></div>
+                <div><label class="flabel">Style</label><select id="acc-style" class="fselect"><option>Intraday</option><option>Swing</option><option>Scalping</option></select></div>
+                <div><label class="flabel">Starting balance</label><input id="acc-start" type="number" class="finput num" value="10000"></div>
+                <div><label class="flabel">Current equity</label><input id="acc-equity" type="number" class="finput num" value="10000"></div>
+                <div><label class="flabel">Drawdown model</label><select id="acc-ddmodel" class="fselect"><option value="static">Static</option><option value="trailing">Trailing</option><option value="daily">Daily reset</option></select></div>
+                <div><label class="flabel">Status</label><select id="acc-status" class="fselect"><option>Active</option><option>Paused</option><option>Archived</option></select></div>
+                <div><label class="flabel">Daily loss limit</label><input id="acc-dayloss" type="number" class="finput num" value="100"></div>
+                <div><label class="flabel">Max drawdown</label><input id="acc-maxdd" type="number" class="finput num" value="500"></div>
+                <div><label class="flabel">Risk per trade</label><input id="acc-risk" type="number" class="finput num" value="25"></div>
+                <div><label class="flabel">Risk basis</label><select id="acc-riskbasis" class="fselect"><option value="money">Money ($)</option><option value="pct">% of equity</option></select></div>
+                <div><label class="flabel">Max open risk</label><input id="acc-openrisk" type="number" class="finput num" value="50"></div>
+                <div><label class="flabel">Max trades / day</label><input id="acc-maxtrades" type="number" class="finput num" value="5"></div>
+                <div class="md:col-span-2"><label class="flabel">Warning thresholds (%, comma separated)</label><input id="acc-warn" class="finput num" value="50, 70, 90"></div>
+            </div>
+            <div class="mt-4 p-4 rounded-xl bg-[var(--glass-inner)] border border-[var(--hairline)] text-[12.5px]" id="acc-preview"></div>
+            <div class="flex justify-end gap-2.5 mt-5">
                 <button class="btn-ghost" data-action="close-acc">Cancel</button>
-                <button id="acc-save" class="btn-primary">Save account</button>
+                <button class="btn-primary" id="acc-save"><svg data-lucide="check" class="w-4 h-4"></svg> Save account</button>
             </div>
         </div>
     </div>
 
-    <!-- Strategy builder modal -->
-    <div id="strat-modal" class="modal-overlay">
-        <div class="modal !max-w-[1040px]">
-            <div class="flex items-center justify-between px-6 py-4 border-b border-[#1F1F23]">
-                <h2 id="strat-modal-title" class="text-[16px] font-bold">New Strategy</h2>
-                <button class="collapse-btn" data-action="close-strat"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+    <!-- ============ STRATEGY BUILDER MODAL ============ -->
+    <div class="modal-overlay" id="strat-modal">
+        <div class="modal-card glass-strong p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-[17px] font-bold" id="strat-modal-title">New Strategy</h3>
+                <button class="collapse-btn" data-action="close-strat" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
             </div>
-            <div class="p-6 grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-6">
-                <div>
-                    <div id="strat-steps" class="flex items-center gap-1.5 mb-5 overflow-x-auto pb-1"></div>
-                    <div id="strat-step-body" class="flex flex-col gap-4"></div>
-                </div>
-                <div>
-                    <div class="panel sticky top-0">
-                        <div class="panel-title mb-3">Strategy Snapshot · live</div>
-                        <div id="strat-snapshot" class="flex flex-col gap-2"></div>
-                    </div>
-                </div>
+            <p class="text-[12px] text-[var(--tm-dim)] mb-4" id="strat-ver-note"></p>
+            <div class="flex items-center gap-1.5 overflow-x-auto pb-3 mb-4" id="strat-steps"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-5">
+                <div id="strat-step-body"></div>
+                <div class="rounded-xl bg-[var(--glass-inner)] border border-[var(--hairline)] p-4 text-[12px] flex flex-col gap-2 h-fit" id="strat-snapshot"></div>
             </div>
-            <div class="flex items-center justify-between px-6 py-4 border-t border-[#1F1F23]">
-                <div id="strat-ver-note" class="text-[11.5px] text-[#6E6E78]"></div>
-                <div class="flex gap-2">
-                    <button class="btn-ghost" data-action="strat-prev">← Back</button>
-                    <button id="strat-next" class="btn-ghost">Next →</button>
-                    <button id="strat-save" class="btn-primary" style="display:none">Save strategy · new version</button>
-                </div>
+            <div class="flex justify-end gap-2.5 mt-5">
+                <button class="btn-ghost" id="strat-next"><svg data-lucide="arrow-right" class="w-4 h-4"></svg> Next</button>
+                <button class="btn-primary" id="strat-save" style="display:none"><svg data-lucide="check" class="w-4 h-4"></svg> Save strategy</button>
             </div>
         </div>
     </div>
 
-    <script src="demo-trades.js"></script>
-    <script src="src/core/index.js"></script>
-    <script src="core.js"></script>
-    <script src="connection.js"></script>
+    <!-- Toast -->
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
 
     <script>
         (function () {
+            'use strict';
             const $ = id => document.getElementById(id);
-            const D = window.DemoTrades;
-            const { fmtMoney, fmtR, pct, groupBy, day } = D;
-
-            const ANCHOR = new Date();
-            const iso = d => d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
-            const TODAY = iso(new Date());
-            const MONTH = new Date().getMonth();
-            // Canonical ledger — Home risk state, rule evaluation and the monthly
-            // view read the SAME local trades every other screen reads.
-            let ALL = [];
-            function refreshTrades() {
-                if (core && core.Accounts && core.Accounts.length) {
-                    const accId = core.selectedAccountId() || core.Accounts[0].id;
-                    ALL = core.Trades.filter(t => t.account_id === accId);
-                } else { ALL = []; }
-            }
-            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;');
-            const now = () => new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-            const $money = n => (n >= 0 ? '' : '-') + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
-
-            // ============ CANONICAL CONFIG STORE (core.js — single source of truth) ============
-            // ACCOUNTS / STRATEGIES / RULE_SETS are now *derived views* over the canonical
-            // relational model (Accounts, ConfigVersions, StrategyAssignments, Trades).
-            // Every mutation goes through TradeMindCore.ConfigAPI, which creates an
-            // immutable ConfigVersion and publishes events on the bus — the modules
-            // (including this page) listen and update themselves.
             const core = window.TradeMindCore;
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+            const $money = n => n == null || isNaN(n) ? '—' : ((n >= 0 ? '' : '-') + '$' + Math.abs(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            const fmtDate = ts => ts ? new Date(ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) : '—';
+            const fmtDateTime = ts => ts ? new Date(ts).toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) : '—';
+            let toastTimer = null;
+            function showToast(msg, ok) {
+                $('toast-msg').textContent = msg;
+                $('toast').style.borderColor = ok === false ? 'var(--tm-red)' : 'var(--tm-border-2)';
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2800);
+            }
 
+            // ============ CANONICAL CONFIG STORE (core — single source of truth) ============
+            // Accounts / strategies / rule sets / versions / assignments / history all come
+            // from TradeMindCore. Every mutation goes through ConfigAPI, which creates an
+            // immutable ConfigVersion and publishes events — this page only displays.
+            function selectedAccId() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+            }
             function resolveAccounts() {
                 return core.Accounts.map(a => {
-                    const pol = core.activePolicy(a.id);
+                    const pol = core.ConfigAPI.activePolicy(a.id);
                     const v = pol ? pol.values : {};
                     return {
                         id: a.id, name: a.name, type: a.account_type, currency: a.currency,
                         starting: a.starting_balance, equity: a.current_equity,
                         ddModel: v.ddModel, dailyLoss: v.maxDailyLoss, maxDD: v.maxTotalDrawdown,
                         riskPerTrade: v.riskPerTrade, riskBasis: v.riskBasis,
-                        maxOpenRisk: v.maxOpenRisk, openBasis: v.openBasis,
-                        maxTrades: v.maxTrades, warn: v.warn,
-                        status: a.status, stratIds: core.strategiesFor(a.id).map(s => s.id),
-                        note: a.note, policyId: pol ? pol.id : null, policyVersion: pol ? pol.version : null
+                        maxOpenRisk: v.maxOpenRisk, maxTrades: v.maxTrades,
+                        status: a.status, stratIds: core.ConfigAPI.strategiesFor(a.id).map(s => s.id),
+                        policyId: pol ? pol.id : null, policyVersion: pol ? pol.version : null, note: a.note
                     };
                 });
             }
             function resolveStrategies() {
                 return core.StrategyMaster.map(m => {
-                    const ver = core.activeStrategyVersion(m.id);
+                    const ver = core.ConfigAPI.activeStrategyVersion(m.id);
                     const val = ver ? ver.values : {};
                     return {
                         id: m.id, name: val.name || m.name, desc: m.desc, version: ver ? ver.version : 'v0.0',
@@ -443,16 +483,16 @@
                         risk: val.risk || { riskPerTrade: '—', minRR: 1.5, stopRequired: true, maxPositions: 1 },
                         entry: val.entry, exit: val.exit,
                         behavior: val.behavior || [], evidence: val.evidence || [], tags: val.tags || [],
-                        accounts: core.accountIdsForStrategy(m.id)
+                        accounts: core.ConfigAPI.accountIdsForStrategy(m.id)
                     };
                 });
             }
             function resolveRuleSets() {
                 return core.RuleSetMaster.map(m => {
-                    const ver = core.activeRuleSetVersion(m.id);
+                    const ver = core.ConfigAPI.activeRuleSetVersion(m.id);
                     return {
                         id: m.id, name: m.name, scope: m.scope,
-                        version: ver ? ver.version : 'v0.0', status: 'Active',
+                        version: ver ? ver.version : 'v0.0',
                         rules: ver ? ver.values.rules : []
                     };
                 });
@@ -462,468 +502,381 @@
             let RULE_SETS = resolveRuleSets();
             let CHANGES = core.getEventLog();
             function syncDerived() {
-                refreshTrades();
                 ACCOUNTS = resolveAccounts();
                 STRATEGIES = resolveStrategies();
                 RULE_SETS = resolveRuleSets();
                 CHANGES = core.getEventLog();
             }
 
-            const TAG_CATS = {
-                'Setup Quality': { color: '#10B981', tags: ['A+ Setup', 'A Setup', 'B Setup'] },
-                'Session': { color: '#3B82F6', tags: ['London', 'New York', 'Asia'] },
-                'Market State': { color: '#F59E0B', tags: ['Trend', 'Range', 'High Volatility'] },
-                'Execution': { color: '#C084FC', tags: ['Clean Entry', 'Late Entry', 'Early Entry'] },
-                'Mistake': { color: '#EF4444', tags: ['FOMO', 'Revenge', 'Oversize'] },
-                'Emotion': { color: '#F472B6', tags: ['Calm', 'Confident', 'Anxious'] },
-                'Outcome': { color: '#34D399', tags: ['Win', 'Loss', 'BE'] },
-                'Custom': { color: '#6E6E78', tags: ['#31Trades', 'Scalp'] }
-            };
-            const ARCHIVED_TAGS = ['BE', 'Anxious'];
-
-            // CHANGES is now the live audit log from core.js (event bus) — see syncDerived().
-
-            // ============ RISK STATE ENGINE (from config + real journal data) ============
-            function riskState(acc) {
-                const todays = (groupBy(ALL, t => iso(t.ts))[TODAY] || []);
-                const riskUsed = todays.reduce((s, t) => s + t.risk, 0);
-                const dayLoss = Math.abs(todays.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
-                const dayPnl = todays.reduce((s, t) => s + t.pnl, 0);
-
-                // equity curve (all trades sorted) for drawdown from peak
-                let peak = acc.starting, cur = acc.starting, maxDD = 0;
-                ALL.slice().sort((a, b) => a.ts - b.ts).forEach(t => {
-                    cur += t.pnl;
-                    if (cur > peak) peak = cur;
-                    maxDD = Math.max(maxDD, peak - cur);
-                });
-                const ddFromPeak = Math.max(0, peak - acc.equity);
-                const ddPct = acc.maxDD ? Math.min(100, Math.round((ddFromPeak / acc.maxDD) * 100)) : 0;
-                const dailyPct = acc.dailyLoss ? Math.min(100, Math.round((dayLoss / acc.dailyLoss) * 100)) : 0;
-                const riskPct = acc.dailyLoss ? Math.min(100, Math.round((riskUsed / acc.dailyLoss) * 100)) : 0;
-
-                // month-level risk (PRD §9.1)
-                const monthTrades = ALL.filter(t => t.ts.getMonth() === MONTH);
-                const planned = monthTrades.reduce((s, t) => s + t.risk, 0);
-                const realizedLoss = Math.abs(monthTrades.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0));
-                let mPeak = acc.starting, mCur = acc.starting, mWorst = 0;
-                monthTrades.slice().sort((a, b) => a.ts - b.ts).forEach(t => {
-                    mCur += t.pnl; if (mCur > mPeak) mPeak = mCur;
-                    mWorst = Math.max(mWorst, mPeak - mCur);
-                });
-                const perDay = groupBy(monthTrades, t => iso(t.ts));
-                const breachDays = Object.values(perDay).filter(tr => tr.reduce((s, t) => s + t.risk, 0) > acc.dailyLoss).length;
-                const highDays = Object.values(perDay).filter(tr => tr.reduce((s, t) => s + t.risk, 0) > acc.dailyLoss * 0.7).length;
-
-                const openRisk = Math.min(acc.maxOpenRisk, Math.round(riskUsed * 0.5));
-
-                return { riskUsed, dayLoss, dayPnl, ddFromPeak, ddPct, dailyPct, riskPct, openRisk,
-                    month: { planned, realizedLoss, worst: mWorst, avgRisk: monthTrades.length ? Math.round(planned / monthTrades.length) : 0, breachDays, highDays, n: monthTrades.length },
-                    dailyRemaining: Math.max(0, acc.dailyLoss - dayLoss), ddRemaining: Math.max(0, acc.maxDD - ddFromPeak) };
-            }
-
-            // ============ RULE EVALUATION (against real trades) ============
-            function evaluateRules() {
-                const sorted = ALL.slice().sort((a, b) => a.ts - b.ts);
-                const todays = (groupBy(ALL, t => iso(t.ts))[TODAY] || []);
-                const maxDailyRisk = Math.max(...Object.values(groupBy(ALL, t => iso(t.ts))).map(tr => tr.reduce((s, t) => s + t.risk, 0)));
-                const maxDayLoss = Math.max(...Object.values(groupBy(ALL, t => iso(t.ts))).map(tr => Math.abs(tr.filter(t => t.pnl < 0).reduce((s, t) => s + t.pnl, 0))));
-
-                return RULE_SETS.flatMap(rs => rs.rules.filter(r => r.enabled).map(r => {
-                    let state, msg, ev = 0, breaches = 0;
-                    if (r.key === 'riskPerTrade') {
-                        const over = ALL.filter(t => t.risk > r.threshold);
-                        breaches = over.length; ev = ALL.length;
-                        state = breaches ? 'breached' : 'healthy';
-                        msg = breaches ? breaches + ' of ' + ALL.length + ' trades risked more than $' + r.threshold : 'All ' + ALL.length + ' trades within $' + r.threshold + ' risk';
-                    } else if (r.key === 'dailyRisk') {
-                        breaches = maxDailyRisk > r.threshold ? 1 : 0; ev = 1;
-                        state = breaches ? 'breached' : 'healthy';
-                        msg = 'Worst day risked $' + maxDailyRisk + ' vs $' + r.threshold + ' budget';
-                    } else if (r.key === 'dailyLoss') {
-                        breaches = maxDayLoss > r.threshold ? 1 : 0; ev = 1;
-                        state = breaches ? 'breached' : 'healthy';
-                        msg = 'Worst day lost $' + maxDayLoss + ' vs $' + r.threshold + ' limit';
-                    } else if (r.key === 'maxTrades') {
-                        const dayCounts = Object.values(groupBy(ALL, t => iso(t.ts))).map(tr => tr.length);
-                        const maxN = Math.max(...dayCounts);
-                        breaches = maxN > r.threshold ? 1 : 0; ev = dayCounts.length;
-                        state = breaches ? 'breached' : 'healthy';
-                        msg = 'Most active day had ' + maxN + ' trades vs ' + r.threshold + ' limit';
-                    } else if (r.key === 'maxOpenRisk') {
-                        state = 'noteval'; msg = 'Open positions are not journaled — cannot evaluate';
-                    } else if (r.key === 'cooldown') {
-                        const gaps = [];
-                        for (let i = 1; i < sorted.length; i++) {
-                            if (sorted[i - 1].pnl < 0) gaps.push((sorted[i].ts - sorted[i - 1].ts) / 60000);
-                        }
-                        const fast = gaps.filter(g => g < r.threshold);
-                        breaches = fast.length; ev = gaps.length;
-                        state = ev ? (breaches ? 'approaching' : 'healthy') : 'noteval';
-                        msg = ev ? fast.length + ' re-entries within ' + r.threshold + ' min of a loss' : 'No loss sequences to evaluate';
-                    } else if (r.key === 'stopRequired') {
-                        state = 'noteval'; msg = 'Every demo trade carries a stop — treated as satisfied';
-                    } else if (r.key === 'minRR') {
-                        const low = ALL.filter(t => t.rr && t.rr < r.threshold);
-                        breaches = low.length; ev = ALL.length;
-                        state = breaches ? 'approaching' : 'healthy';
-                        msg = breaches + ' trades below ' + r.threshold + 'R minimum';
-                    } else if (r.key === 'noRevenge') {
-                        const todayLosses = todays.filter(t => t.pnl < 0);
-                        const after = [];
-                        for (let i = 1; i < todays.length; i++) if (todays[i - 1].pnl < 0) after.push(todays[i]);
-                        const revenge = after.filter(t => t.risk > 25);
-                        breaches = revenge.length; ev = after.length;
-                        state = ev ? (breaches ? 'breached' : 'healthy') : 'noteval';
-                        msg = ev ? (breaches ? revenge.length + ' trades escalated risk right after a loss' : 'No risk escalation after losses today') : 'No loss-to-trade sequences today';
-                    } else if (r.key === 'noAddLoser') {
-                        state = 'noteval'; msg = 'Position-averaging is not journaled';
-                    } else {
-                        state = 'noteval'; msg = 'Not enough data to evaluate';
-                    }
-                    if (r.key === 'maxTrades' && todays.length >= 3) { state = 'approaching'; msg = todays.length + ' of ' + r.threshold + ' trades used today'; }
-                    return { ...r, rs: rs.name, state, msg, ev, breaches };
-                }));
-            }
-
-            function systemAdherence() {
-                const over = ALL.filter(t => t.risk > 25);
-                return pct(ALL.length - over.length, ALL.length);
-            }
-
-            // ============ CONFIG HEALTH ============
-            function healthFlags() {
-                const flags = [];
-                if (ACCOUNTS.some(a => !a.dailyLoss || !a.maxDD)) flags.push({ sev: 'amber', msg: 'An account is missing a daily loss or drawdown limit — risk cannot be fully evaluated.' });
-                STRATEGIES.forEach(s => {
-                    if (!s.risk || !s.risk.riskPerTrade) flags.push({ sev: 'amber', msg: 'Strategy “' + s.name + '” has no defined risk limit — discipline risk evaluation is incomplete.' });
-                    if (s.sessions.length === 0) flags.push({ sev: 'amber', msg: 'Strategy “' + s.name + '” has no allowed sessions.' });
-                    if (!s.accounts.length) flags.push({ sev: 'red', msg: 'Strategy “' + s.name + '” is not assigned to any account.' });
-                });
-                if (STRATEGIES.length && !STRATEGIES.some(s => s.sessions.length && s.sessions[0] === 'London')) flags.push({ sev: 'blue', msg: 'No strategy targets the London session — your best session has no system.' });
-                const used = new Set(ALL.flatMap(t => [t.setup, t.session, t.emotion]));
-                const tagCount = Object.values(TAG_CATS).flat().length;
-                if (tagCount > used.size + 2) flags.push({ sev: 'gray', msg: tagCount + ' tags defined · ' + used.size + ' appear in journaled trades — consider archiving unused ones.' });
-                return flags.length ? flags : [{ sev: 'emerald', msg: 'All systems nominal — no configuration gaps detected.' }];
-            }
-
-            // ============ UI HELPERS ============
-            const panel = (title, body) => '<div class="panel"><div class="panel-title mb-3">' + title + '</div>' + body + '</div>';
-            const pill = (state, label) => '<span class="state-pill st-' + state + '"><span class="w-1.5 h-1.5 rounded-full" style="background:currentColor"></span>' + label + '</span>';
-
+            // ============ TABS ============
+            const VALID_TABS = ['home', 'accounts', 'strategies', 'rulesets', 'tags', 'map', 'history'];
             function activateTab(tab) {
-                document.querySelectorAll('.ins-tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-                document.querySelectorAll('.ins-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+                if (!VALID_TABS.includes(tab)) tab = 'home';
+                document.querySelectorAll('.lab-tab[data-tab]').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+                document.querySelectorAll('.lab-panel').forEach(p => p.classList.toggle('active', p.id === 'panel-' + tab));
+            }
+            function tabFromUrl() {
+                const q = new URLSearchParams(location.search);
+                const qs = q.get('tab');
+                if (qs && VALID_TABS.includes(qs)) return qs;
+                const h = (location.hash || '').replace('#', '');
+                if (h && VALID_TABS.includes(h)) return h;
+                return 'home';
+            }
+
+            // ============ RENDER: OVERVIEW STRIP ============
+            function renderOverview() {
+                const activeAssign = core.StrategyAssignments.filter(a => ACCOUNTS.find(x => x.id === a.account_id)).length;
+                const tiles = [
+                    ['Accounts', ACCOUNTS.length, ACCOUNTS.filter(a => a.status === 'Active').length + ' active'],
+                    ['Strategies', STRATEGIES.length, STRATEGIES.filter(s => s.status === 'Active').length + ' active'],
+                    ['Rule Sets', RULE_SETS.length, RULE_SETS.reduce((s, r) => s + r.rules.filter(x => x.enabled).length, 0) + ' rules enabled'],
+                    ['Active assignments', activeAssign, 'account → strategy → policy']
+                ];
+                $('overview-strip').innerHTML = tiles.map(([l, v, sub]) =>
+                    '<div class="glass p-4"><div class="label-xs">' + l + '</div>' +
+                    '<div class="num text-[26px] font-extrabold mt-1 tracking-tight">' + v + '</div>' +
+                    '<div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">' + sub + '</div></div>').join('');
             }
 
             // ============ RENDER: HOME ============
             function renderHome() {
-                const activeAccs = ACCOUNTS.filter(a => a.status === 'Active');
-                const activeStrats = STRATEGIES.filter(s => s.status === 'Active');
-                const totalCapital = activeAccs.reduce((s, a) => s + a.equity, 0);
-                const totalBudget = activeAccs.reduce((s, a) => s + a.dailyLoss, 0);
-                const totalDD = activeAccs.reduce((s, a) => s + a.maxDD, 0);
-                const ddUsed = activeAccs.reduce((s, a) => s + riskState(a).ddFromPeak, 0);
-                const adh = systemAdherence();
-                const flags = healthFlags();
+                const accId = selectedAccId();
+                const acc = ACCOUNTS.find(a => a.id === accId);
+                const html = [];
+                if (!acc) {
+                    html.push('<div class="glass p-12 text-center">' +
+                        '<svg data-lucide="beaker" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>' +
+                        '<h3 class="text-[18px] font-bold">Create your first account</h3>' +
+                        '<p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">Your trading system starts with an account and its risk policy — daily loss, drawdown, risk per trade.</p>' +
+                        '<button class="btn-primary mt-6 inline-flex items-center gap-2" data-action="new-account"><svg data-lucide="wallet" class="w-4 h-4"></svg> Create account</button>' +
+                    '</div>');
+                } else {
+                    const strats = STRATEGIES.filter(s => s.accounts.includes(acc.id));
+                    const pol = core.ConfigAPI.activePolicy(acc.id);
+                    const asgn = core.ConfigAPI.activeAssignment(acc.id);
+                    const strat = strats[0] || null;
+                    const ruleSetsHtml = RULE_SETS.map(rs =>
+                        '<div class="flex items-center justify-between py-2.5 border-b border-[var(--hairline)] last:border-none">' +
+                            '<div><div class="text-[13px] font-semibold">' + esc(rs.name) + '</div>' +
+                            '<div class="text-[11.5px] text-[var(--tm-dim)]">' + esc(rs.scope) + ' · ' + rs.rules.length + ' rules · ' + rs.rules.filter(r => r.enabled).length + ' enabled</div></div>' +
+                            '<span class="tag tag-blue num">' + esc(rs.version) + '</span>' +
+                        '</div>').join('') || '<div class="text-[12.5px] text-[var(--tm-dim)] py-2">Create your first rule set.</div>';
 
-                const cards = activeAccs.map(a => {
-                    const rs = riskState(a);
-                    const statusCls = rs.dailyPct >= 90 ? 'tag-red' : rs.dailyPct >= 70 ? 'tag-amber' : 'tag-emerald';
-                    const statusTxt = rs.dailyPct >= 90 ? 'High risk' : rs.dailyPct >= 70 ? 'Caution' : 'Healthy';
-                    return '<div class="panel p-5">' +
-                        '<div class="flex items-start justify-between gap-3 mb-3">' +
-                            '<div>' +
-                                '<div class="text-[15px] font-bold text-white">' + esc(a.name) + '</div>' +
-                                '<div class="text-[11.5px] text-[#6E6E78] mt-0.5">' + a.type + ' · ' + a.currency + ' · ' + a.stratIds.length + ' strategies · ' + a.ddModel + ' drawdown</div>' +
+                    html.push(
+                        '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
+                            '<div class="glass p-5">' +
+                                '<div class="label-xs mb-3">Current account</div>' +
+                                '<div class="text-[17px] font-bold">' + esc(acc.name) + '</div>' +
+                                '<div class="flex flex-wrap gap-1.5 mt-2">' +
+                                    '<span class="tag ' + (acc.status === 'Active' ? 'tag-emerald' : 'tag-gray') + '">' + esc(acc.status) + '</span>' +
+                                    '<span class="tag tag-gray">' + esc(acc.type) + '</span>' +
+                                    '<span class="tag tag-gray num">' + esc(acc.ddModel) + ' DD</span>' +
+                                '</div>' +
+                                '<div class="grid grid-cols-2 gap-3 mt-4 text-[12.5px]">' +
+                                    '<div><div class="text-[var(--tm-dim)]">Starting</div><div class="num font-bold mt-0.5">' + $money(acc.starting) + '</div></div>' +
+                                    '<div><div class="text-[var(--tm-dim)]">Equity</div><div class="num font-bold mt-0.5">' + $money(acc.equity) + '</div></div>' +
+                                    '<div><div class="text-[var(--tm-dim)]">Daily loss</div><div class="num font-bold mt-0.5">$' + acc.dailyLoss + '</div></div>' +
+                                    '<div><div class="text-[var(--tm-dim)]">Max DD</div><div class="num font-bold mt-0.5">$' + acc.maxDD + '</div></div>' +
+                                    '<div><div class="text-[var(--tm-dim)]">Risk / trade</div><div class="num font-bold mt-0.5">' + (acc.riskBasis === 'pct' ? acc.riskPerTrade + '%' : '$' + acc.riskPerTrade) + '</div></div>' +
+                                    '<div><div class="text-[var(--tm-dim)]">Max trades</div><div class="num font-bold mt-0.5">' + (acc.maxTrades || '—') + '</div></div>' +
+                                '</div>' +
+                                '<div class="mt-4 pt-3 border-t border-[var(--hairline)]"><a href="risk.html" class="btn-mini"><svg data-lucide="shield-alert" class="w-3.5 h-3.5"></svg> Open risk state</a></div>' +
                             '</div>' +
-                            '<span class="tag ' + statusCls + '">' + statusTxt + '</span>' +
-                        '</div>' +
-                        '<div class="flex items-end justify-between mb-4">' +
-                            '<div><div class="text-[10.5px] text-[#6E6E78] font-bold uppercase tracking-wide">Current equity</div><div class="num text-[26px] font-extrabold text-white">' + $money(a.equity) + '</div></div>' +
-                            '<div class="text-right"><div class="text-[10.5px] text-[#6E6E78] font-bold uppercase tracking-wide">Starting</div><div class="num text-[13px] text-[#8A8A93]">' + $money(a.starting) + '</div></div>' +
-                        '</div>' +
-                        '<div class="grid grid-cols-2 sm:grid-cols-4 gap-3">' +
-                            kpi('Daily loss remaining', $money(rs.dailyRemaining) + ' <span class="text-[12px] text-[#6E6E78]">of $' + a.dailyLoss + '</span>') +
-                            kpi('Drawdown remaining', $money(rs.ddRemaining) + ' <span class="text-[12px] text-[#6E6E78]">' + (100 - rs.ddPct) + '% left</span>') +
-                            kpi('Risk / trade', (a.riskBasis === 'pct' ? a.riskPerTrade + '%' : '$' + a.riskPerTrade)) +
-                            kpi('Daily risk used', '$' + rs.riskUsed + ' <span class="text-[12px] text-[#6E6E78]">' + rs.riskPct + '%</span>') +
-                        '</div>' +
-                        '<div class="mt-3 flex items-center justify-between text-[11.5px] text-[#6E6E78]">' +
-                            '<span>Max drawdown $' + a.maxDD + ' (' + a.ddModel + ' from ' + (a.ddModel === 'trailing' ? 'peak equity' : 'starting balance') + ')</span>' +
-                            '<span>Max ' + a.maxTrades + ' trades/day · open risk $' + a.maxOpenRisk + '</span>' +
-                        '</div>' +
-                    '</div>';
-                }).join('');
-
-                // monthly risk (PRD §9.1) — zero-account first-user state must
-                // render (not crash): ACCOUNTS[0] is undefined until an account
-                // exists, and a throw here blanks the whole page under the header.
-                const m = ACCOUNTS.length
-                    ? riskState(ACCOUNTS[0]).month
-                    : { planned: 0, realizedLoss: 0, worst: 0, avgRisk: 0, breachDays: 0, highDays: 0, n: 0 };
-                const monthCards = [
-                    kpi('Planned risk (Aug)', $money(m.planned)),
-                    kpi('Realized loss', $money(-m.realizedLoss)),
-                    kpi('Worst drawdown', $money(-m.worst)),
-                    kpi('Avg risk / trade', '$' + m.avgRisk),
-                    kpi('Rule breach days', m.breachDays + ' <span class="text-[12px] text-[#6E6E78]">of ' + m.n + ' days</span>'),
-                    kpi('High-risk days', m.highDays)
-                ].join('');
-
-                $('panel-home').innerHTML =
-                    '<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4">' +
-                        kpi('Active accounts', ACCOUNTS.filter(a => a.status === 'Active').length) +
-                        kpi('Active strategies', activeStrats.length) +
-                        kpi('Configured capital', $money(totalCapital)) +
-                        kpi('Daily risk budget', $money(totalBudget)) +
-                        kpi('Drawdown consumed', (totalDD ? Math.round((ddUsed / totalDD) * 100) : 0) + '% <span class="text-[12px] text-[#6E6E78]">of $' + (totalDD || 0).toLocaleString() + '</span>') +
-                        kpi('System adherence', adh + '% <span class="text-[12px] text-[#6E6E78]">journaled</span>') +
-                    '</div>' +
-                    '<div class="grid grid-cols-1 xl:grid-cols-3 gap-4">' +
-                        '<div class="xl:col-span-2 flex flex-col gap-4">' +
-                            '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + cards + '</div>' +
-                            panel('Monthly risk — August (derived from config + journal)', '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">' + monthCards + '</div><p class="text-[11.5px] text-[#55555E] mt-3">Monthly risk is derived automatically from account limits plus journaled activity — no separate monthly rule required.</p>') +
-                        '</div>' +
-                        '<div class="flex flex-col gap-4">' +
-                            panel('Configuration health', '<div class="flex flex-col gap-2">' + flags.map(f =>
-                                '<div class="flex items-start gap-2.5 px-3 py-2 rounded-lg bg-[#0F0F11] border border-[#1F1F23]"><span class="tag tag-' + (f.sev === 'emerald' ? 'emerald' : f.sev) + ' !py-0.5">' + f.sev.toUpperCase() + '</span><span class="text-[12px] text-[#C4C4CC]">' + f.msg + '</span></div>'
-                            ).join('') + '</div>') +
-                            panel('Recent changes', '<div class="flex flex-col gap-2.5">' + CHANGES.slice(0, 4).map(c =>
-                                '<div class="text-[12px] text-[#C4C4CC]"><div class="flex items-center gap-2"><b class="text-white">' + esc(c.entity) + '</b><span class="tag tag-blue !py-0 !px-1.5 text-[9.5px]">' + esc(c.what) + '</span></div><div class="text-[11.5px] text-[#8A8A93] mt-0.5">' + esc(c.detail) + ' · ' + c.at + '</div></div>'
-                            ).join('') + '</div>') +
-                        '</div>' +
-                    '</div>';
+                            '<div class="glass p-5">' +
+                                '<div class="label-xs mb-3">Current strategy</div>' +
+                                (strat
+                                    ? '<div class="flex items-center gap-3">' +
+                                        '<div class="w-9 h-9 rounded-lg flex items-center justify-center font-extrabold text-[13px]" style="background:' + strat.color + '22;color:' + strat.color + '">' + esc(strat.name[0]) + '</div>' +
+                                        '<div><div class="text-[15px] font-bold">' + esc(strat.name) + '</div>' +
+                                        '<div class="text-[11.5px] text-[var(--tm-dim)]">' + esc(strat.desc || '') + '</div></div>' +
+                                      '</div>' +
+                                      '<div class="flex flex-wrap gap-1.5 mt-3">' +
+                                        '<span class="tag tag-blue num">' + esc(strat.version) + '</span>' +
+                                        '<span class="tag tag-gray">' + esc(strat.markets) + '</span>' +
+                                        '<span class="tag tag-gray">Setup: ' + esc(strat.setup) + '</span>' +
+                                        '<span class="tag tag-gray">' + strat.sessions.join(', ') + '</span>' +
+                                      '</div>' +
+                                      '<div class="text-[12px] text-[var(--tm-dim)] mt-3">Risk ' + esc(strat.risk.riskPerTrade) + ' · min RR ' + strat.risk.minRR + 'R · stop ' + (strat.risk.stopRequired ? 'required' : 'optional') + '</div>' +
+                                      '<div class="mt-4 pt-3 border-t border-[var(--hairline)]"><button class="btn-mini" data-open-strat="' + esc(strat.id) + '"><svg data-lucide="git-branch" class="w-3.5 h-3.5"></svg> View version chain</button></div>'
+                                    : '<div class="text-[12.5px] text-[var(--tm-dim)]">No strategy assigned to this account yet.</div><button class="btn-primary mt-4 !py-2 !px-3.5 text-[12.5px]" data-action="new-strategy"><svg data-lucide="plus" class="w-4 h-4"></svg> Create strategy</button>') +
+                            '</div>' +
+                            '<div class="glass p-5">' +
+                                '<div class="label-xs mb-1">Active rule sets</div>' +
+                                '<div class="text-[11px] text-[var(--tm-dim)] mb-2">Rules evaluated against every trade, at the version active when it was taken.</div>' +
+                                ruleSetsHtml +
+                                '<div class="mt-4 pt-3 border-t border-[var(--hairline)]"><button class="btn-mini" data-tab-go="rulesets"><svg data-lucide="list-checks" class="w-3.5 h-3.5"></svg> View rule sets</button></div>' +
+                            '</div>' +
+                        '</div>'
+                    );
+                    html.push(
+                        '<div class="glass p-5">' +
+                            '<div class="label-xs mb-4">Current assignment</div>' +
+                            '<div class="flex flex-wrap items-center gap-2.5">' +
+                                '<div class="map-node !min-w-0"><span class="tag tag-blue !py-0.5">ACCOUNT</span><b class="text-[13px]">' + esc(acc.name) + '</b></div>' +
+                                '<div class="map-arrow"><svg data-lucide="arrow-right" class="w-4 h-4"></svg></div>' +
+                                (strat
+                                    ? '<div class="map-node !min-w-0"><span class="tag tag-purple !py-0.5">STRATEGY</span><b class="text-[13px]">' + esc(strat.name) + '</b><span class="num text-[11px] text-[var(--tm-dim)]">' + esc(strat.version) + '</span></div>'
+                                    : '<div class="map-node !min-w-0"><span class="text-[12px] text-[var(--tm-dim)]">No strategy</span></div>') +
+                                '<div class="map-arrow"><svg data-lucide="arrow-right" class="w-4 h-4"></svg></div>' +
+                                '<div class="map-node !min-w-0"><span class="tag tag-red !py-0.5">RISK POLICY</span><b class="text-[13px]">' + (pol ? 'Limits' : 'None') + '</b><span class="num text-[11px] text-[var(--tm-dim)]">' + (pol ? esc(pol.version) : '—') + '</span></div>' +
+                            '</div>' +
+                            '<p class="text-[11.5px] text-[var(--tm-dim)] mt-4">Trades on this account are evaluated against the strategy and policy versions active at their timestamp. Changing a version never rewrites history.</p>' +
+                        '</div>'
+                    );
+                }
+                $('panel-home').innerHTML = html.join('');
             }
 
             // ============ RENDER: ACCOUNTS ============
             function renderAccounts() {
-                const rows = ACCOUNTS.map(a => {
-                    const rs = riskState(a);
-                    const st = a.status === 'Active' ? (rs.dailyPct >= 90 ? 'High risk' : rs.dailyPct >= 70 ? 'Caution' : 'Healthy') : a.status;
-                    const stCls = a.status !== 'Active' ? 'tag-gray' : rs.dailyPct >= 90 ? 'tag-red' : rs.dailyPct >= 70 ? 'tag-amber' : 'tag-emerald';
-                    return '<tr>' +
-                        '<td><div class="font-semibold text-white">' + esc(a.name) + '</div><div class="text-[10.5px] text-[#6E6E78]">' + a.type + ' · ' + a.ddModel + '</div></td>' +
+                const rows = ACCOUNTS.map(a =>
+                    '<tr>' +
+                        '<td><div class="font-semibold">' + esc(a.name) + '</div><div class="text-[11px] text-[var(--tm-dim)]">' + esc(a.type) + ' · ' + esc(a.ddModel) + ' DD</div></td>' +
                         '<td class="num">' + $money(a.starting) + '</td>' +
-                        '<td class="num text-white">' + $money(a.equity) + '</td>' +
+                        '<td class="num font-bold">' + $money(a.equity) + '</td>' +
                         '<td class="num">$' + a.dailyLoss + '</td>' +
                         '<td class="num">$' + a.maxDD + '</td>' +
                         '<td class="num">' + (a.riskBasis === 'pct' ? a.riskPerTrade + '%' : '$' + a.riskPerTrade) + '</td>' +
-                        '<td class="num ' + (rs.dailyRemaining <= a.dailyLoss * 0.3 ? 'text-[#F87171]' : 'text-[#34D399]') + '">$' + rs.dailyRemaining + '</td>' +
-                        '<td class="num ' + (rs.ddRemaining <= a.maxDD * 0.3 ? 'text-[#F87171]' : 'text-[#34D399]') + '">$' + rs.ddRemaining + '</td>' +
-                        '<td><span class="tag ' + stCls + '">' + st + '</span></td>' +
+                        '<td><span class="tag ' + (a.status === 'Active' ? 'tag-emerald' : 'tag-gray') + '">' + esc(a.status) + '</span></td>' +
                         '<td class="num">' + a.stratIds.length + '</td>' +
                         '<td><div class="flex gap-1.5">' +
-                            '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-edit-acc="' + a.id + '">Edit</button>' +
-                            '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-dup-acc="' + a.id + '">Duplicate</button>' +
-                            (a.status === 'Active'
-                                ? '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-archive-acc="' + a.id + '">Archive</button>'
-                                : '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-unarchive-acc="' + a.id + '">Activate</button>') +
+                            '<button class="btn-mini" data-edit-acc="' + esc(a.id) + '">Edit</button>' +
+                            '<button class="btn-mini" data-dup-acc="' + esc(a.id) + '">Duplicate</button>' +
+                            '<button class="btn-mini" data-archive-acc="' + esc(a.id) + '">' + (a.status === 'Active' ? 'Archive' : 'Activate') + '</button>' +
                         '</div></td>' +
-                    '</tr>';
-                }).join('');
-
-                $('panel-accounts').innerHTML =
-                    '<div class="flex items-center justify-between mb-3">' +
-                        '<h2 class="text-[15px] font-bold">Accounts</h2>' +
-                        '<button class="btn-primary !py-1.5 !px-3 !text-[12px]" data-action="new-account"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> New Account</button>' +
-                    '</div>' +
-                    '<div class="panel"><div class="tbl-wrap"><table class="tbl">' +
-                        '<thead><tr><th>Account</th><th>Start</th><th>Equity</th><th>Daily loss</th><th>Max DD</th><th>Risk/trade</th><th>Daily left</th><th>DD left</th><th>Status</th><th>Strats</th><th></th></tr></thead>' +
-                        '<tbody>' + rows + '</tbody></table></div></div>' +
-                    '<p class="text-[11.5px] text-[#55555E] mt-3">Money values come first; percentages are supporting context. Drawdown basis is always shown: ' + ACCOUNTS.map(a => esc(a.name) + ' = ' + a.ddModel).join(', ') + '.</p>';
+                    '</tr>').join('');
+                $('panel-accounts').innerHTML = ACCOUNTS.length
+                    ? '<div class="glass p-5">' +
+                        '<div class="flex items-center justify-between mb-4">' +
+                            '<h2 class="text-[15px] font-bold">Accounts</h2>' +
+                            '<button class="btn-primary !py-2 !px-3.5 text-[12.5px]" data-action="new-account"><svg data-lucide="plus" class="w-4 h-4"></svg> New account</button>' +
+                        '</div>' +
+                        '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Account</th><th>Start</th><th>Equity</th><th>Daily loss</th><th>Max DD</th><th>Risk / trade</th><th>Status</th><th>Strats</th><th></th></tr></thead>' +
+                        '<tbody>' + rows + '</tbody></table></div>' +
+                        '<p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Risk limits are account-specific and versioned — editing creates a new immutable policy; historical trades keep the version they were evaluated under.</p>' +
+                      '</div>'
+                    : '<div class="glass p-12 text-center"><svg data-lucide="wallet" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg><h3 class="text-[18px] font-bold">Create your first account</h3><p class="text-[13.5px] text-[var(--tm-dim)] mt-2">An account carries its own risk policy and strategy assignments.</p><button class="btn-primary mt-6" data-action="new-account"><svg data-lucide="plus" class="w-4 h-4"></svg> New account</button></div>';
             }
 
             // ============ RENDER: STRATEGIES ============
             function renderStrategies() {
                 const cards = STRATEGIES.map(s => {
-                    const accNames = s.accounts.map(id => (ACCOUNTS.find(a => a.id === id) || {}).name || id).join(', ');
-                    return '<div class="panel p-5 flex flex-col gap-3">' +
+                    const accNames = s.accounts.map(id => (ACCOUNTS.find(a => a.id === id) || {}).name || id).join(', ') || '—';
+                    return '<div class="glass p-5 flex flex-col gap-3">' +
                         '<div class="flex items-start justify-between gap-3">' +
                             '<div class="flex items-center gap-3">' +
-                                '<div class="w-9 h-9 rounded-lg flex items-center justify-center font-extrabold text-[13px]" style="background:' + s.color + '22;color:' + s.color + '">' + esc(s.name[0]) + '</div>' +
-                                '<div><div class="text-[15px] font-bold text-white">' + esc(s.name) + '</div>' +
-                                '<div class="text-[11.5px] text-[#6E6E78]">' + esc(s.desc) + '</div></div>' +
+                                '<div class="w-10 h-10 rounded-lg flex items-center justify-center font-extrabold text-[14px]" style="background:' + s.color + '22;color:' + s.color + '">' + esc(s.name[0]) + '</div>' +
+                                '<div><div class="text-[15px] font-bold">' + esc(s.name) + '</div>' +
+                                '<div class="text-[11.5px] text-[var(--tm-dim)]">' + esc(s.desc || '') + '</div></div>' +
                             '</div>' +
-                            '<div class="flex flex-col items-end gap-1.5">' +
-                                '<span class="tag tag-emerald">' + esc(s.version) + ' · Active</span>' +
-                            '</div>' +
+                            '<span class="tag tag-blue num">' + esc(s.version) + '</span>' +
                         '</div>' +
                         '<div class="flex flex-wrap gap-1.5">' +
-                            '<span class="tag tag-blue">' + esc(s.markets) + '</span>' +
-                            '<span class="tag tag-purple">' + s.sessions.map(x => esc(x)).join(', ') + '</span>' +
+                            '<span class="tag tag-gray">' + esc(s.markets) + '</span>' +
+                            '<span class="tag tag-gray">' + s.sessions.join(', ') + '</span>' +
                             '<span class="tag tag-gray">Setup: ' + esc(s.setup) + '</span>' +
                             '<span class="tag tag-gray">Risk: ' + esc(s.risk.riskPerTrade) + ' · min RR ' + s.risk.minRR + 'R</span>' +
                         '</div>' +
-                        '<div class="text-[11.5px] text-[#8A8A93]">Behavior: ' + s.behavior.map(esc).join(' · ') + '</div>' +
-                        '<div class="flex items-center justify-between mt-auto pt-2 border-t border-[#17171A]">' +
-                            '<span class="text-[11.5px] text-[#6E6E78]">Accounts: <b class="text-[#C4C4CC]">' + esc(accNames) + '</b> · Tags: ' + s.tags.map(esc).join(', ') + '</span>' +
+                        '<div class="text-[11.5px] text-[var(--tm-muted)]">Behavior: ' + (s.behavior.length ? s.behavior.map(esc).join(' · ') : '—') + '</div>' +
+                        '<div class="flex items-center justify-between mt-auto pt-3 border-t border-[var(--hairline)]">' +
+                            '<span class="text-[11.5px] text-[var(--tm-dim)]">Accounts: <b class="text-[var(--tm-muted)]">' + esc(accNames) + '</b></span>' +
                             '<div class="flex gap-1.5">' +
-                                '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-edit-strat="' + s.id + '">Edit · new version</button>' +
-                                '<button class="btn-ghost !py-1 !px-2 !text-[11px]" data-dup-strat="' + s.id + '">Duplicate</button>' +
+                                '<button class="btn-mini" data-open-strat="' + esc(s.id) + '">Open</button>' +
+                                '<button class="btn-mini" data-edit-strat="' + esc(s.id) + '">Edit · new version</button>' +
+                                '<button class="btn-mini" data-dup-strat="' + esc(s.id) + '">Duplicate</button>' +
                             '</div>' +
                         '</div>' +
                     '</div>';
                 }).join('');
-
-                $('panel-strategies').innerHTML =
-                    '<div class="flex items-center justify-between mb-3">' +
+                $('panel-strategies').innerHTML = STRATEGIES.length
+                    ? '<div class="flex items-center justify-between mb-4">' +
                         '<h2 class="text-[15px] font-bold">Strategies</h2>' +
-                        '<button class="btn-primary !py-1.5 !px-3 !text-[12px]" data-action="new-strategy"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> New Strategy</button>' +
-                    '</div>' +
-                    '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + cards + '</div>' +
-                    '<p class="text-[11.5px] text-[#55555E] mt-3">Editing a strategy creates a new version with an effective timestamp — historical trades retain the version active when they were taken (PRD §6.3).</p>';
+                        '<button class="btn-primary !py-2 !px-3.5 text-[12.5px]" data-action="new-strategy"><svg data-lucide="plus" class="w-4 h-4"></svg> New strategy</button>' +
+                      '</div>' +
+                      '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + cards + '</div>' +
+                      '<p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Editing a strategy creates a new immutable version with an effective timestamp — historical trades retain the version active when they were taken.</p>'
+                    : '<div class="glass p-12 text-center"><svg data-lucide="beaker" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg><h3 class="text-[18px] font-bold">Create your first strategy</h3><p class="text-[13.5px] text-[var(--tm-dim)] mt-2">A strategy defines markets, sessions, setup, risk and behavior — the system you expect yourself to follow.</p><button class="btn-primary mt-6" data-action="new-strategy"><svg data-lucide="plus" class="w-4 h-4"></svg> New strategy</button></div>';
             }
 
             // ============ RENDER: RULE SETS ============
+            const DIM_ORDER = ['Risk', 'Strategy', 'Execution', 'Frequency', 'Session', 'Behavior'];
             function renderRuleSets() {
-                const evals = evaluateRules();
                 const sets = RULE_SETS.map(rs => {
-                    const rules = evals.filter(e => e.rs === rs.name);
-                    const rows = rules.map(r => {
-                        const stMap = { healthy: ['st-healthy', 'Healthy'], approaching: ['st-approaching', 'Approaching'], breached: ['st-breached', 'Breached'], disabled: ['st-disabled', 'Disabled'], noteval: ['st-noteval', 'Not evaluated'] };
-                        const [cls, label] = stMap[r.state];
-                        return '<tr>' +
-                            '<td><div class="font-semibold text-white">' + esc(r.label) + '</div><div class="text-[10.5px] text-[#6E6E78]">' + r.cat + ' · ' + esc(r.rs) + '</div></td>' +
-                            '<td class="num">' + r.op + ' ' + esc(r.threshold) + (r.unit ? ' ' + r.unit : '') + '</td>' +
-                            '<td><span class="tag ' + (r.severity === 'Hard' ? 'tag-red' : 'tag-amber') + '">' + r.severity + '</span></td>' +
-                            '<td><span class="state-pill ' + cls + '">' + label + '</span></td>' +
-                            '<td class="text-[11.5px] text-[#8A8A93] max-w-[260px]">' + esc(r.msg) + '</td>' +
-                            '<td><button class="btn-ghost !py-0.5 !px-2 !text-[10.5px]" data-toggle-rule="' + r.key + '">' + (r.enabled ? 'Disable' : 'Enable') + '</button></td>' +
-                        '</tr>';
-                    }).join('');
-                    return panel('<div class="flex items-center gap-2">' + esc(rs.name) + ' <span class="tag tag-gray !py-0.5 !px-1.5">' + esc(rs.version) + '</span> <span class="tag tag-blue !py-0.5 !px-1.5">' + esc(rs.scope) + '</span></div>',
-                        '<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Rule</th><th>Limit</th><th>Severity</th><th>State</th><th>Evaluation</th><th></th></tr></thead><tbody>' + rows + '</tbody></table></div>');
-                }).join('');
-
-                $('panel-rulesets').innerHTML =
-                    '<div class="grid grid-cols-1 gap-4">' + sets + '</div>' +
-                    '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">' +
-                        panel('Rule priority', '<div class="flex flex-col gap-1.5 text-[12px] text-[#C4C4CC]">' +
-                            '<div><b class="text-white">1 · System safety</b> — platform constraints</div>' +
-                            '<div><b class="text-white">2 · Account hard limit</b> — drawdown / daily loss / open risk</div>' +
-                            '<div><b class="text-white">3 · Strategy hard limit</b> — strategy risk & execution</div>' +
-                            '<div><b class="text-white">4 · User soft rule</b> — warnings only</div>' +
-                            '<div><b class="text-white">5 · Analytics heuristic</b> — AI patterns, never silent hard rules</div></div>') +
-                        panel('Hard vs soft', '<div class="flex flex-col gap-2 text-[12px] text-[#C4C4CC]">' +
-                            '<div><span class="tag tag-red !py-0.5">HARD</span> Breach blocks or flags the trade — visible in Discipline & Journal validation.</div>' +
-                            '<div class="mt-1"><span class="tag tag-amber !py-0.5">SOFT</span> Miss is a preference, never a violation. Prefer min RR, cooldown, evidence.</div></div>') +
-                        panel('When rules apply', '<div class="flex flex-col gap-1.5 text-[12px] text-[#C4C4CC]">' +
-                            '<div><b class="text-white">Risk rules</b> — before trade + after trade + live state</div>' +
-                            '<div><b class="text-white">Frequency</b> — trade creation + end of day</div>' +
-                            '<div><b class="text-white">Qualification</b> — pre-trade / journal completion</div>' +
-                            '<div><b class="text-white">Behavior</b> — sequence analysis / journal</div>' +
-                            '<div><b class="text-white">Evidence</b> — journal completion</div></div>') +
+                    const byDim = {};
+                    (rs.rules || []).forEach(r => { (byDim[r.cat || 'Other'] = byDim[r.cat || 'Other'] || []).push(r); });
+                    const dims = Object.keys(byDim).sort((a, b) => (DIM_ORDER.indexOf(a) < 0 ? 99 : DIM_ORDER.indexOf(a)) - (DIM_ORDER.indexOf(b) < 0 ? 99 : DIM_ORDER.indexOf(b)));
+                    const dimHtml = dims.map(d =>
+                        '<div class="mb-4 last:mb-0">' +
+                            '<div class="label-xs mb-2 flex items-center gap-2">' + esc(d) +
+                                '<span class="tag tag-gray !py-0 !px-1.5 text-[9.5px]">' + byDim[d].length + '</span>' +
+                            '</div>' +
+                            '<div class="flex flex-col gap-1.5">' + byDim[d].map(r => {
+                                const sevCls = r.severity === 'Hard' ? 'tag-red' : 'tag-amber';
+                                return '<div class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[var(--glass-inner)] border border-[var(--hairline)]">' +
+                                    '<div class="min-w-0 flex-1"><div class="text-[12.5px] font-semibold">' + esc(r.label) + '</div>' +
+                                    '<div class="num text-[11px] text-[var(--tm-dim)]">' + esc(r.op) + ' ' + esc(r.threshold) + (r.unit ? ' ' + esc(r.unit) : '') + '</div></div>' +
+                                    '<span class="tag ' + sevCls + ' !py-0.5 !px-2">' + esc(r.severity === 'Hard' ? 'HARD' : 'SOFT') + '</span>' +
+                                    '<span class="tag ' + (r.enabled ? 'tag-emerald' : 'tag-gray') + ' !py-0.5 !px-2">' + (r.enabled ? 'Enabled' : 'Disabled') + '</span>' +
+                                    '<button class="btn-mini" data-toggle-rule="' + esc(r.key) + '">' + (r.enabled ? 'Disable' : 'Enable') + '</button>' +
+                                '</div>';
+                            }).join('') + '</div>' +
+                        '</div>').join('');
+                    return '<div class="glass p-5">' +
+                        '<div class="flex items-center gap-2 mb-4">' +
+                            '<h3 class="text-[15px] font-bold">' + esc(rs.name) + '</h3>' +
+                            '<span class="tag tag-blue num !py-0.5">' + esc(rs.version) + '</span>' +
+                            '<span class="tag tag-gray !py-0.5">' + esc(rs.scope) + '</span>' +
+                        '</div>' +
+                        dimHtml +
                     '</div>';
+                }).join('');
+                $('panel-rulesets').innerHTML = RULE_SETS.length
+                    ? '<div class="grid grid-cols-1 gap-4">' + sets + '</div>' +
+                      '<div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">' +
+                        '<div class="glass p-4"><div class="label-xs mb-2.5">Rule priority</div><div class="flex flex-col gap-1.5 text-[12px] text-[var(--tm-muted)]">' +
+                            '<div><b class="text-[var(--tm-text)]">1 · System safety</b> — platform constraints</div>' +
+                            '<div><b class="text-[var(--tm-text)]">2 · Account hard limit</b> — drawdown / daily loss / open risk</div>' +
+                            '<div><b class="text-[var(--tm-text)]">3 · Strategy hard limit</b> — strategy risk &amp; execution</div>' +
+                            '<div><b class="text-[var(--tm-text)]">4 · User soft rule</b> — warnings only</div>' +
+                            '<div><b class="text-[var(--tm-text)]">5 · Analytics heuristic</b> — AI patterns, never silent hard rules</div></div></div>' +
+                        '<div class="glass p-4"><div class="label-xs mb-2.5">Hard vs soft</div><div class="flex flex-col gap-2 text-[12px] text-[var(--tm-muted)]">' +
+                            '<div><span class="tag tag-red !py-0.5">HARD</span> Breach blocks or flags the trade — visible in Discipline &amp; Journal validation.</div>' +
+                            '<div class="mt-1"><span class="tag tag-amber !py-0.5">SOFT</span> Miss is a preference, never a violation. Prefer min RR, cooldown, evidence.</div></div></div>' +
+                        '<div class="glass p-4"><div class="label-xs mb-2.5">When rules apply</div><div class="flex flex-col gap-1.5 text-[12px] text-[var(--tm-muted)]">' +
+                            '<div><b class="text-[var(--tm-text)]">Risk rules</b> — before trade + after trade + live state</div>' +
+                            '<div><b class="text-[var(--tm-text)]">Frequency</b> — trade creation + end of day</div>' +
+                            '<div><b class="text-[var(--tm-text)]">Qualification</b> — pre-trade / journal completion</div>' +
+                            '<div><b class="text-[var(--tm-text)]">Behavior</b> — sequence analysis / journal</div>' +
+                            '<div><b class="text-[var(--tm-text)]">Evidence</b> — journal completion</div></div></div>' +
+                      '</div>' +
+                      '<p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Toggling a rule creates a new immutable RuleSet version — historical evaluations keep the version under which they ran.</p>'
+                    : '<div class="glass p-12 text-center"><svg data-lucide="list-checks" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg><h3 class="text-[18px] font-bold">Create your first rule set</h3><p class="text-[13.5px] text-[var(--tm-dim)] mt-2">Rule sets hold the hard and soft rules your trades are evaluated against.</p></div>';
             }
 
-            // ============ RENDER: TAGS ============
+            // ============ RENDER: TAGS (honest unavailable state) ============
             function renderTags() {
-                const usage = {};
-                ALL.forEach(t => {
-                    (usage[t.setup] = usage[t.setup] || 0);
-                    usage[t.setup]++;
-                    usage[t.session] = (usage[t.session] || 0) + 1;
-                    usage[t.emotion] = (usage[t.emotion] || 0) + 1;
-                });
-                const cats = Object.entries(TAG_CATS).map(([cat, c]) => {
-                    const chips = c.tags.map(tg => {
-                        const archived = ARCHIVED_TAGS.includes(tg);
-                        const n = usage[tg] || 0;
-                        return '<div class="flex items-center gap-2 px-2.5 py-1.5 rounded-lg border ' + (archived ? 'border-[#1F1F23] opacity-50' : 'border-[#26262B]') + '" style="background:' + c.color + '0F">' +
-                            '<span class="w-2 h-2 rounded-full" style="background:' + c.color + '"></span>' +
-                            '<span class="text-[12px] font-semibold text-[#E8E8EC]">' + esc(tg) + '</span>' +
-                            '<span class="num text-[10.5px] text-[#6E6E78]">' + n + '×</span>' +
-                            (archived ? '<span class="tag tag-gray !py-0 !px-1.5 text-[9px]">archived</span>' : '') +
-                            '<button class="ml-auto text-[10.5px] ' + (archived ? 'text-[#34D399]' : 'text-[#6E6E78] hover:text-[#F87171]') + '" data-archive-tag="' + esc(tg) + '">' + (archived ? 'restore' : 'archive') + '</button>' +
-                        '</div>';
-                    }).join('');
-                    return panel('<div class="flex items-center gap-2">' + esc(cat) + ' <span class="tag tag-gray !py-0.5 !px-1.5">' + c.tags.length + '</span></div>', '<div class="flex flex-wrap gap-2">' + chips + '</div>');
-                }).join('');
-
                 $('panel-tags').innerHTML =
-                    '<div class="flex items-center justify-between mb-3">' +
-                        '<h2 class="text-[15px] font-bold">Tags & Classification</h2>' +
-                        '<button class="btn-ghost !py-1.5 !px-3 !text-[12px]" data-action="new-tag"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> Quick-create tag</button>' +
-                    '</div>' +
-                    '<div class="grid grid-cols-1 lg:grid-cols-2 gap-4">' + cats + '</div>' +
-                    '<p class="text-[11.5px] text-[#55555E] mt-3">Tags are archived, never hard-deleted — historical trades keep their tags and analytics stay intact. Usage counts come from real journaled trades.</p>';
+                    '<div class="glass p-12 text-center max-w-2xl mx-auto">' +
+                        '<svg data-lucide="tags" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>' +
+                        '<h3 class="text-[18px] font-bold">Tag management — not available yet</h3>' +
+                        '<p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">Tag configuration is not implemented in the backend yet. Setup, session and emotion are still recorded per trade in the Journal, so analytics and insights already have their data.</p>' +
+                        '<a href="journal.html" class="btn-ghost mt-6 inline-flex items-center gap-2"><svg data-lucide="book-open" class="w-4 h-4"></svg> Open Journal</a>' +
+                    '</div>';
             }
 
             // ============ RENDER: SYSTEM MAP ============
             function renderMap() {
-                const accNode = (a) => '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-blue !py-0.5">ACCOUNT</span><b class="text-[12.5px] text-white">' + esc(a.name) + '</b></div>' +
-                    '<div class="text-[11px] text-[#8A8A93]">' + $money(a.equity) + ' · ' + a.stratIds.length + ' strategies</div>' +
-                    '<div class="text-[11px] text-[#6E6E78]">' + (a.status === 'Active' ? 'Active' : a.status) + ' · ' + a.ddModel + ' DD</div></div>';
-                const stratNode = (s) => '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-purple !py-0.5">STRATEGY</span><b class="text-[12.5px] text-white">' + esc(s.name) + '</b></div>' +
-                    '<div class="text-[11px] text-[#8A8A93]">' + esc(s.version) + ' · ' + esc(s.markets) + '</div>' +
-                    '<div class="text-[11px] text-[#6E6E78]">' + s.sessions.map(esc).join(', ') + ' · ' + esc(s.risk.riskPerTrade) + ' risk</div></div>';
-                const rulesNode = '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-amber !py-0.5">RULE SETS</span></div>' +
-                    '<div class="text-[11px] text-[#8A8A93]">' + RULE_SETS.length + ' sets · ' + RULE_SETS.reduce((s, r) => s + r.rules.length, 0) + ' rules</div>' +
-                    '<div class="text-[11px] text-[#6E6E78]">Hard & soft · priority 1–5</div></div>';
-                const tagsNode = '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-emerald !py-0.5">TAGS</span></div>' +
-                    '<div class="text-[11px] text-[#8A8A93]">' + Object.values(TAG_CATS).reduce((s, c) => s + c.tags.length, 0) + ' tags · ' + Object.keys(TAG_CATS).length + ' categories</div>' +
-                    '<div class="text-[11px] text-[#6E6E78]">Setup · session · emotion · outcome</div></div>';
-                const tradeNode = '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-gray !py-0.5">TRADE</span></div>' +
-                    '<div class="text-[11px] text-[#8A8A93]">' + core.Trades.length + ' trades · immutable ledger</div>' +
-                    '<div class="text-[11px] text-[#6E6E78]">each linked to a ConfigVersion</div></div>';
-                const riskNode = '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-red !py-0.5">RISK STATE</span></div>' +
-                    '<div class="text-[11px] text-[#8A8A93]">daily · total · monthly</div>' +
-                    '<div class="text-[11px] text-[#6E6E78]">computed live from rules + trades</div></div>';
-
+                const accId = selectedAccId();
+                const accs = accId ? ACCOUNTS.filter(a => a.id === accId) : ACCOUNTS;
+                const chains = accs.length ? accs.map(acc => {
+                    const strats = STRATEGIES.filter(s => s.accounts.includes(acc.id));
+                    const pol = core.ConfigAPI.activePolicy(acc.id);
+                    const nodeAcc = '<div class="map-node" data-tab-go="accounts"><span class="tag tag-blue !py-0.5">ACCOUNT</span><b class="text-[13px]">' + esc(acc.name) + '</b><div class="text-[11px] text-[var(--tm-dim)]">' + $money(acc.equity) + ' · ' + (acc.status === 'Active' ? 'Active' : esc(acc.status)) + '</div></div>';
+                    const nodePol = '<div class="map-node" data-tab-go="history"><span class="tag tag-red !py-0.5">RISK POLICY</span><b class="text-[13px]">' + (pol ? esc(pol.version) : 'None') + '</b><div class="text-[11px] text-[var(--tm-dim)]">' + (pol ? 'daily $' + (pol.values.maxDailyLoss || '—') + ' · DD $' + (pol.values.maxTotalDrawdown || '—') : 'no policy yet') + '</div></div>';
+                    const nodeRules = '<div class="map-node" data-tab-go="rulesets"><span class="tag tag-amber !py-0.5">RULE SETS</span><b class="text-[13px]">' + RULE_SETS.length + ' sets</b><div class="text-[11px] text-[var(--tm-dim)]">' + RULE_SETS.reduce((s, r) => s + r.rules.filter(x => x.enabled).length, 0) + ' enabled rules</div></div>';
+                    const arrow = '<div class="map-arrow"><svg data-lucide="arrow-right" class="w-4 h-4"></svg></div>';
+                    const stratChains = strats.length
+                        ? strats.map(s => {
+                            const chain = core.ConfigAPI.getVersionChain(s.id);
+                            const nodeStrat = '<div class="map-node" data-open-strat="' + esc(s.id) + '"><span class="tag tag-purple !py-0.5">STRATEGY</span><b class="text-[13px]">' + esc(s.name) + '</b><div class="text-[11px] text-[var(--tm-dim)]">' + esc(s.version) + ' · ' + esc(s.markets) + '</div></div>';
+                            const nodeVer = '<div class="map-node" data-open-strat="' + esc(s.id) + '"><span class="tag tag-gray !py-0.5">STRATEGY VERSION</span><b class="text-[13px] num">' + esc(s.version) + '</b><div class="text-[11px] text-[var(--tm-dim)]">' + (chain.length ? chain.length + ' versions in chain' : '—') + '</div></div>';
+                            return '<div class="flex flex-wrap items-center gap-2.5">' + nodeAcc + arrow + nodeStrat + arrow + nodeVer + arrow + nodePol + arrow + nodeRules + '</div>';
+                        }).join('')
+                        : '<div class="flex flex-wrap items-center gap-2.5">' + nodeAcc + arrow + '<div class="map-node"><span class="tag tag-purple !py-0.5">STRATEGY</span><b class="text-[13px] text-[var(--tm-dim)]">None assigned</b></div>' + arrow + nodePol + arrow + nodeRules + '</div>';
+                    return stratChains;
+                }).join('') : '';
                 const downstream = [
-                    ['Discipline', 'Adherence vs your rules', 'discipline.html'],
-                    ['Analytics', 'Segmentation by account / strategy / tag', 'analytics.html'],
-                    ['Insights', 'Rule & breach patterns', 'insights.html'],
                     ['Journal', 'Validation at save time', 'journal.html'],
-                    ['Dashboard', 'Remaining budget + system status', 'dashboard.html'],
-                    ['Reports', 'Period reports with rule context', '#']
+                    ['Discipline', 'Adherence vs your rules', 'discipline.html'],
+                    ['Risk', 'Live remaining budget', 'risk.html'],
+                    ['Analytics', 'Segmentation by strategy / setup', 'analytics.html'],
+                    ['Insights', 'Rule & breach patterns', 'insights.html'],
+                    ['AI Mentor', 'Strategy & rule behavior', 'ai.html']
                 ].map(([n, d, href]) =>
-                    '<a href="' + href + '" class="map-node flex flex-col gap-1 no-underline hover:border-[#3A3A41] transition-colors"><b class="text-[12.5px] text-white">' + n + '</b><div class="text-[11px] text-[#8A8A93]">' + d + '</div></a>').join('');
-
-                const arrow = '<div class="map-arrow"><svg data-lucide="chevron-right" class="w-4 h-4"></svg></div>';
-
+                    '<a href="' + href + '" class="map-node text-decoration-none"><b class="text-[13px]">' + n + '</b><div class="text-[11px] text-[var(--tm-dim)]">' + d + '</div></a>').join('');
                 $('panel-map').innerHTML =
-                    '<div class="panel"><div class="panel-title mb-4">Your trading system — how configuration flows through TradeMind</div>' +
-                    '<div class="flex items-center overflow-x-auto pb-2 gap-0">' +
-                        (ACCOUNTS.length ? accNode(ACCOUNTS[0]) : '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-blue !py-0.5">ACCOUNT</span><b class="text-[12.5px] text-white">None yet</b></div><div class="text-[11px] text-[#8A8A93]">Create your first account to begin</div></div>') + arrow +
-                        (STRATEGIES.length ? stratNode(STRATEGIES[0]) : '<div class="map-node flex flex-col gap-1"><div class="flex items-center gap-2"><span class="tag tag-purple !py-0.5">STRATEGY</span><b class="text-[12.5px] text-white">None yet</b></div><div class="text-[11px] text-[#8A8A93]">Create your first strategy to begin</div></div>') + arrow +
-                        rulesNode + arrow + tagsNode + arrow + tradeNode + arrow + riskNode +
+                    '<div class="glass p-6">' +
+                        '<div class="label-xs mb-5">Your trading system — how configuration flows</div>' +
+                        '<div class="flex flex-col gap-5">' + chains + '</div>' +
+                        '<p class="text-[11.5px] text-[var(--tm-dim)] mt-5">Click any node to open its source. Only actual assignments are rendered — nothing invented.</p>' +
                     '</div>' +
-                    '<div class="flex items-center justify-center gap-2 mt-2 mb-4"><span class="text-[11px] text-[#6E6E78] font-semibold">consumed by</span><svg data-lucide="arrow-down" class="w-4 h-4 text-[#3A3A41]"></svg></div>' +
-                    '<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">' + downstream + '</div>' +
-                    '<p class="text-[11.5px] text-[#55555E] mt-3">Click any node to open its configuration source; click a downstream section to open it. The same rule is never configured twice.</p>' +
-                    '</div>' +
-                    '<div class="panel mt-4"><div class="panel-title mb-3">End-to-end example (PRD §26)</div>' +
-                    (ACCOUNTS.length && STRATEGIES.length
-                        ? '<div class="text-[12.5px] text-[#C4C4CC] leading-relaxed">“' + esc(ACCOUNTS[0].name) + '” carries $' + ACCOUNTS[0].starting.toLocaleString() + ', $' + ACCOUNTS[0].dailyLoss + ' daily loss and $' + ACCOUNTS[0].maxDD + ' max drawdown. ' + esc(STRATEGIES[0].name) + ' allows ' + esc(STRATEGIES[0].risk.riskPerTrade) + ' risk per trade and max ' + ACCOUNTS[0].maxTrades + ' trades/day. The Journal validates each trade against the active version; the Risk page shows the live remaining budget; a third trade would breach the frequency rule, Discipline counts the breach, Analytics segments it as non-compliant, and the monthly view aggregates it all.</div>'
-                        : '<div class="text-[12.5px] text-[#C4C4CC] leading-relaxed">Create an account and a strategy to see how a trade flows through the system — Journal validates it, Risk shows the remaining budget, Discipline scores adherence, Analytics segments it, and Calendar aggregates the day.</div>') +
+                    '<div class="glass p-6 mt-4">' +
+                        '<div class="label-xs mb-4">Consumed by</div>' +
+                        '<div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3">' + downstream + '</div>' +
                     '</div>';
             }
 
             // ============ RENDER: HISTORY ============
             function renderHistory() {
                 const items = CHANGES.map(c =>
-                    '<div class="flex items-start gap-3 px-4 py-3 rounded-xl bg-[#0F0F11] border border-[#1F1F23]">' +
-                        '<div class="w-8 h-8 rounded-lg bg-[#16161A] flex items-center justify-center flex-shrink-0"><svg data-lucide="git-commit" class="w-4 h-4 text-[#8A8A93]"></svg></div>' +
+                    '<div class="flex items-start gap-3 px-4 py-3 rounded-xl bg-[var(--glass-inner)] border border-[var(--hairline)]">' +
+                        '<div class="w-8 h-8 rounded-lg bg-[var(--tm-card)] flex items-center justify-center flex-shrink-0"><svg data-lucide="git-commit" class="w-4 h-4 text-[var(--tm-dim)]"></svg></div>' +
                         '<div class="min-w-0 flex-1">' +
-                            '<div class="flex flex-wrap items-center gap-2"><b class="text-[13px] text-white">' + esc(c.entity) + '</b><span class="tag tag-blue !py-0 !px-1.5 text-[9.5px]">' + esc(c.what) + '</span><span class="num text-[10.5px] text-[#6E6E78] ml-auto">' + c.at + '</span></div>' +
-                            '<div class="text-[12px] text-[#C4C4CC] mt-1 num">' + esc(c.detail) + '</div>' +
-                            '<div class="text-[11px] text-[#6E6E78] mt-0.5">Impact: ' + esc(c.impact) + '</div>' +
+                            '<div class="flex flex-wrap items-center gap-2"><b class="text-[13px]">' + esc(c.entity) + '</b><span class="tag tag-blue !py-0 !px-1.5 text-[9.5px]">' + esc(c.what) + '</span><span class="num text-[10.5px] text-[var(--tm-dim)] ml-auto">' + (c.at || fmtDateTime(c.ts)) + '</span></div>' +
+                            '<div class="text-[12px] text-[var(--tm-muted)] mt-1 num">' + esc(c.detail) + '</div>' +
+                            (c.impact ? '<div class="text-[11px] text-[var(--tm-dim)] mt-0.5">Impact: ' + esc(c.impact) + '</div>' : '') +
                         '</div>' +
                     '</div>').join('');
-
                 $('panel-history').innerHTML =
-                    '<div class="flex items-center justify-between mb-3">' +
-                        '<h2 class="text-[15px] font-bold">Configuration history & audit</h2>' +
-                        '<button class="btn-ghost !py-1.5 !px-3 !text-[12px]" data-action="add-change"><svg data-lucide="plus" class="w-3.5 h-3.5"></svg> Record change</button>' +
+                    '<div class="flex items-center justify-between mb-4">' +
+                        '<h2 class="text-[15px] font-bold">Configuration history &amp; audit</h2>' +
+                        '<button class="btn-ghost !py-2 !px-3.5 text-[12.5px]" data-action="add-change"><svg data-lucide="plus" class="w-4 h-4"></svg> Record change</button>' +
                     '</div>' +
-                    '<div class="flex flex-col gap-2.5">' + items + '</div>' +
-                    '<p class="text-[11.5px] text-[#55555E] mt-3">Every meaningful change is versioned with an effective timestamp. Undo creates a new version from an older one — history is never rewritten (PRD §17).</p>';
+                    (CHANGES.length
+                        ? '<div class="flex flex-col gap-2.5">' + items + '</div>' +
+                          '<p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Every meaningful change is versioned with an effective timestamp. History is never rewritten.</p>'
+                        : '<div class="glass p-12 text-center"><svg data-lucide="history" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg><h3 class="text-[18px] font-bold">No configuration changes yet</h3><p class="text-[13.5px] text-[var(--tm-dim)] mt-2">Create or edit an account, strategy or rule set and every change will appear here.</p></div>');
+            }
+
+            // ============ RENDER: STRATEGY DETAIL DRAWER ============
+            let drawerOpen = false;
+            function openDrawer() { drawerOpen = true; $('drawer-overlay').classList.add('open'); $('strategy-drawer').classList.add('open'); }
+            function closeDrawer() { drawerOpen = false; $('drawer-overlay').classList.remove('open'); $('strategy-drawer').classList.remove('open'); }
+            function renderStrategyDrawer(id) {
+                const s = STRATEGIES.find(x => x.id === id);
+                if (!s) return;
+                $('sd-avatar').style.background = s.color + '22';
+                $('sd-avatar').style.color = s.color;
+                $('sd-avatar').textContent = s.name[0].toUpperCase();
+                $('sd-name').textContent = s.name;
+                $('sd-desc').textContent = s.desc || '—';
+                const chain = core.ConfigAPI.getVersionChain(id);
+                const verHtml = chain.length
+                    ? chain.map((v, i) => {
+                        const current = v.id === (core.ConfigAPI.activeStrategyVersion(id) || {}).id;
+                        return '<div class="ver-item ' + (current ? 'current' : '') + '">' +
+                            '<div class="ver-dot num">' + v.version + '</div>' +
+                            '<div class="min-w-0 flex-1">' +
+                                '<div class="flex items-center gap-2"><b class="text-[13px] num">' + esc(v.version) + '</b>' +
+                                (current ? '<span class="tag tag-emerald !py-0 !px-1.5 text-[9.5px]">CURRENT</span>' : '') + '</div>' +
+                                '<div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">' + fmtDateTime(v.created_at) + '</div>' +
+                                (v.note ? '<div class="text-[11.5px] text-[var(--tm-muted)] mt-0.5">' + esc(v.note) + '</div>' : '') +
+                            '</div>' +
+                        '</div>';
+                    }).join('')
+                    : '<div class="text-[12.5px] text-[var(--tm-dim)]">No versions yet.</div>';
+                const accNames = s.accounts.map(id => (ACCOUNTS.find(a => a.id === id) || {}).name || id).join(', ') || 'None';
+                const values = [
+                    ['Markets', s.markets], ['Sessions', s.sessions.join(', ')], ['Setup', s.setup],
+                    ['Risk', s.risk.riskPerTrade + ' · min RR ' + s.risk.minRR + 'R'], ['Stop loss', s.risk.stopRequired ? 'required' : 'optional'],
+                    ['Entry', s.entry], ['Exit', s.exit], ['Behavior', s.behavior.join('; ') || '—'], ['Tags', s.tags.join(', ') || '—']
+                ];
+                $('sd-body').innerHTML =
+                    '<div class="glass p-4"><div class="label-xs mb-3">Version history (immutable)</div>' + verHtml +
+                    '<p class="text-[11px] text-[var(--tm-dim)] mt-3">Historical trades keep the version active when they were taken — analytics never change.</p></div>' +
+                    '<div class="glass p-4"><div class="label-xs mb-3">Configuration</div><div class="flex flex-col gap-2 text-[12.5px]">' +
+                        values.map(([k, v]) => '<div class="flex items-start justify-between gap-3"><span class="text-[var(--tm-dim)]">' + k + '</span><span class="font-semibold text-right">' + esc(v || '—') + '</span></div>').join('') +
+                    '</div></div>' +
+                    '<div class="glass p-4"><div class="label-xs mb-3">Assigned accounts</div><div class="text-[12.5px]">' + esc(accNames) + '</div>' +
+                    '<div class="flex gap-2 mt-4"><button class="btn-mini" data-edit-strat="' + esc(s.id) + '">Edit · new version</button>' +
+                    '<button class="btn-mini" data-dup-strat="' + esc(s.id) + '">Duplicate</button></div></div>';
+                openDrawer();
             }
 
             // ============ RENDER ALL ============
             function renderAll() {
+                renderOverview();
                 renderHome();
                 renderAccounts();
                 renderStrategies();
@@ -933,8 +886,6 @@
                 renderHistory();
                 if (window.lucide) lucide.createIcons();
             }
-
-            const kpi = (label, val) => '<div class="kpi"><div class="k-label">' + label + '</div><div class="k-val">' + val + '</div></div>';
 
             // ============ ACCOUNT MODAL ============
             let editingAcc = null;
@@ -953,45 +904,45 @@
                 $('acc-risk').value = acc ? acc.riskPerTrade : 25;
                 $('acc-riskbasis').value = acc ? acc.riskBasis : 'money';
                 $('acc-openrisk').value = acc ? acc.maxOpenRisk : 50;
-                $('acc-openbasis').value = acc ? acc.openBasis : 'money';
-                $('acc-maxtrades').value = acc ? acc.maxTrades : 3;
+                $('acc-maxtrades').value = acc ? acc.maxTrades : 5;
                 $('acc-status').value = acc ? acc.status : 'Active';
-                $('acc-warn').value = acc ? acc.warn.join(', ') : '50, 70, 90';
+                $('acc-warn').value = (acc && acc.warn) ? acc.warn.join(', ') : '50, 70, 90';
                 updateAccPreview();
                 $('acc-modal').classList.add('open');
             }
             function closeAccModal() { $('acc-modal').classList.remove('open'); editingAcc = null; }
-
             function accFormState() {
                 const risk = Number($('acc-risk').value) || 0;
                 const basis = $('acc-riskbasis').value;
                 const riskVal = basis === 'pct' ? '$' + Math.round((risk / 100) * (Number($('acc-equity').value) || 0)) + ' (' + risk + '%)' : '$' + risk;
-                const dailyLoss = Number($('acc-dayloss').value) || 0;
-                const maxDD = Number($('acc-maxdd').value) || 0;
-                const openR = Number($('acc-openrisk').value) || 0;
-                return { name: $('acc-name').value || 'Unnamed', type: $('acc-type').value, currency: $('acc-currency').value, style: $('acc-style').value,
-                    start: Number($('acc-start').value) || 0,
-                    equity: Number($('acc-equity').value) || 0, ddModel: $('acc-ddmodel').value, dailyLoss, maxDD,
-                    risk, basis, riskVal, openR, maxTrades: Number($('acc-maxtrades').value) || 0, status: $('acc-status').value };
+                return {
+                    name: $('acc-name').value || 'Unnamed', type: $('acc-type').value, currency: $('acc-currency').value, style: $('acc-style').value,
+                    start: Number($('acc-start').value) || 0, equity: Number($('acc-equity').value) || 0,
+                    ddModel: $('acc-ddmodel').value, dailyLoss: Number($('acc-dayloss').value) || 0, maxDD: Number($('acc-maxdd').value) || 0,
+                    risk, basis, riskVal, openR: Number($('acc-openrisk').value) || 0, maxTrades: Number($('acc-maxtrades').value) || 0,
+                    status: $('acc-status').value
+                };
             }
-
             function updateAccPreview() {
                 const f = accFormState();
                 const ddTxt = f.ddModel === 'trailing' ? 'Trailing — threshold moves with peak equity' : f.ddModel === 'static' ? 'Static — measured from starting balance' : f.ddModel === 'daily' ? 'Daily reset — budget resets at day boundary' : 'Custom';
                 $('acc-preview').innerHTML =
-                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Daily loss limit</span><b class="num text-white">$' + f.dailyLoss + '</b></div>' +
-                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Max drawdown</span><b class="num text-white">$' + f.maxDD + ' · ' + ddTxt + '</b></div>' +
-                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Risk per trade</span><b class="num text-white">' + f.riskVal + '</b></div>' +
-                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Max open risk</span><b class="num text-white">' + (f.openR ? '$' + f.openR : 'not set') + '</b></div>' +
-                    '<div class="flex items-center justify-between text-[12.5px]"><span class="text-[#8A8A93]">Max trades / day</span><b class="num text-white">' + (f.maxTrades ? f.maxTrades : 'not set') + '</b></div>' +
-                    '<div class="mt-2 pt-2 border-t border-[#1F1F23] text-[11.5px] text-[#6E6E78]">Risk screen will show “$' + f.dailyLoss + ' daily loss remaining” as the primary number; Discipline evaluates trades against these limits.</div>';
+                    '<div class="flex items-center justify-between py-1"><span class="text-[var(--tm-dim)]">Daily loss limit</span><b class="num">$' + f.dailyLoss + '</b></div>' +
+                    '<div class="flex items-center justify-between py-1"><span class="text-[var(--tm-dim)]">Max drawdown</span><b class="num">$' + f.maxDD + ' · ' + ddTxt + '</b></div>' +
+                    '<div class="flex items-center justify-between py-1"><span class="text-[var(--tm-dim)]">Risk per trade</span><b class="num">' + f.riskVal + '</b></div>' +
+                    '<div class="flex items-center justify-between py-1"><span class="text-[var(--tm-dim)]">Max open risk</span><b class="num">' + (f.openR ? '$' + f.openR : 'not set') + '</b></div>' +
+                    '<div class="flex items-center justify-between py-1"><span class="text-[var(--tm-dim)]">Max trades / day</span><b class="num">' + (f.maxTrades || 'not set') + '</b></div>' +
+                    '<div class="mt-2 pt-2 border-t border-[var(--hairline)] text-[11.5px] text-[var(--tm-dim)]">Risk is evaluated by the canonical risk engine — this policy becomes an immutable version on save.</div>';
             }
 
             // ============ STRATEGY BUILDER ============
             const STRAT_STEPS = ['Identity', 'Where', 'Setup', 'Risk', 'Execution', 'Behavior', 'Tags', 'Review'];
             let editingStrat = null, stratStep = 0;
             const stratDraft = {};
-
+            function bumpVer(v) {
+                const m = String(v).match(/v(\d+)\.(\d+)/);
+                return m ? 'v' + m[1] + '.' + (Number(m[2]) + 1) : 'v1.0';
+            }
             function openStratModal(s) {
                 editingStrat = s || null;
                 stratStep = 0;
@@ -1000,80 +951,65 @@
                     sessions: s ? s.sessions.slice() : ['London'], setup: s ? s.setup : 'MSS + FVG',
                     riskPerTrade: s ? s.risk.riskPerTrade : '1%', minRR: s ? s.risk.minRR : 1.5,
                     stopRequired: s ? s.risk.stopRequired : true, entry: s ? s.entry : '', exit: s ? s.exit : '',
-                    behavior: s ? s.behavior.slice() : [], evidence: s ? s.evidence.slice() : [],
-                    tags: s ? s.tags.slice() : [], color: s ? s.color : '#10B981', accounts: s ? s.accounts.slice() : ['acc-prop']
+                    behavior: s ? s.behavior.slice() : [], tags: s ? s.tags.slice() : [], color: s ? s.color : '#10B981'
                 });
                 $('strat-modal-title').textContent = s ? 'Edit strategy — ' + s.name + ' (creates ' + bumpVer(s.version) + ')' : 'New Strategy';
-                $('strat-ver-note').textContent = s ? 'Saving creates version ' + bumpVer(s.version) + ' — historical trades keep ' + s.version + '.' : '';
+                $('strat-ver-note').textContent = s ? 'Saving creates version ' + bumpVer(s.version) + ' — historical trades keep ' + s.version + '. Nothing is overwritten.' : 'Saving creates a v1.0 immutable version.';
                 $('strat-modal').classList.add('open');
                 renderStratBuilder();
             }
-            function bumpVer(v) {
-                const m = v.match(/v(\d+)\.(\d+)/);
-                return m ? 'v' + m[1] + '.' + (Number(m[2]) + 1) : 'v1.0';
-            }
-
             function renderStratBuilder() {
-                const dots = STRAT_STEPS.map((s, i) =>
-                    '<div class="flex items-center gap-1.5 flex-shrink-0"><div class="step-dot ' + (i < stratStep ? 'done' : i === stratStep ? 'active' : 'todo') + '">' + (i < stratStep ? '✓' : i + 1) + '</div><span class="text-[11px] font-semibold ' + (i === stratStep ? 'text-white' : 'text-[#6E6E78]') + '">' + s + '</span></div>'
-                ).join('<div class="w-4 h-px bg-[#26262B] flex-shrink-0"></div>');
+                const dots = STRAT_STEPS.map((st, i) =>
+                    '<div class="flex items-center gap-1.5 flex-shrink-0"><div class="step-dot ' + (i < stratStep ? 'done' : i === stratStep ? 'active' : '') + '">' + (i < stratStep ? '✓' : i + 1) + '</div><span class="text-[10.5px] font-semibold ' + (i === stratStep ? 'text-[var(--tm-text)]' : 'text-[var(--tm-dim)]') + '">' + st + '</span></div>'
+                ).join('<div class="w-4 h-px bg-[var(--tm-border-2)] flex-shrink-0"></div>');
                 $('strat-steps').innerHTML = dots;
                 $('strat-step-body').innerHTML = stepBody(STRAT_STEPS[stratStep]);
                 $('strat-next').style.display = stratStep < STRAT_STEPS.length - 1 ? '' : 'none';
                 $('strat-save').style.display = stratStep === STRAT_STEPS.length - 1 ? '' : 'none';
                 renderStratSnapshot();
             }
-
+            const field = (label, inner) => '<div><label class="flabel">' + label + '</label>' + inner + '</div>';
+            const chk = (label, key) => '<label class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[var(--tm-card)] border border-[var(--tm-border-2)] cursor-pointer text-[13px]"><input type="checkbox" data-draft-check="' + key + '" ' + (stratDraft[key] ? 'checked' : '') + ' class="accent-[var(--tm-green)]">' + label + '</label>';
             function stepBody(step) {
-                const chk = (label, key) => '<label class="flex items-center gap-2.5 px-3 py-2.5 rounded-lg bg-[#121214] border border-[#1F1F23] cursor-pointer"><input type="checkbox" data-draft-check="' + key + '" ' + (stratDraft[key] ? 'checked' : '') + ' class="accent-[#10B981]"><span class="text-[13px] text-[#C4C4CC]">' + label + '</span></label>';
-                if (step === 'Identity') return field('Name', '<input id="d-name" class="finput" value="' + esc(stratDraft.name) + '" placeholder="London FVG">') + field('Description', '<textarea id="d-desc" class="ftext" placeholder="One-liner for what this system trades">' + esc(stratDraft.desc) + '</textarea>') + field('Color', '<input id="d-color" type="color" value="' + esc(stratDraft.color) + '" class="h-[38px] w-16 bg-transparent border border-[#1F1F23] rounded-lg cursor-pointer">');
-                if (step === 'Where') return field('Markets / instruments', '<input id="d-markets" class="finput" value="' + esc(stratDraft.markets) + '">') + field('Allowed sessions', sessionSelect()) + field('Long / short', '<div class="flex gap-2">' + ['Long', 'Short', 'Both'].map(x => '<label class="flex-1 text-center px-3 py-2 rounded-lg border cursor-pointer text-[12.5px] font-semibold ' + (stratDraft.dir === x ? 'border-[#10B981] text-[#34D399] bg-[rgba(16,185,129,0.08)]' : 'border-[#1F1F23] text-[#8A8A93] bg-[#121214]') + '"><input type="radio" name="d-dir" data-draft-dir="' + x + '" ' + (stratDraft.dir === x ? 'checked' : '') + ' class="hidden">' + x + '</label>').join('') + '</div>');
+                if (step === 'Identity') return field('Name', '<input id="d-name" class="finput" value="' + esc(stratDraft.name) + '" placeholder="London FVG">') + field('Description', '<textarea id="d-desc" class="ftext" rows="2" placeholder="One-liner for what this system trades">' + esc(stratDraft.desc) + '</textarea>') + field('Color', '<input id="d-color" type="color" value="' + esc(stratDraft.color) + '" class="h-[38px] w-16 bg-transparent border border-[var(--tm-border-2)] rounded-lg cursor-pointer">');
+                if (step === 'Where') return field('Markets / instruments', '<input id="d-markets" class="finput" value="' + esc(stratDraft.markets) + '">') + field('Allowed sessions', '<div class="flex flex-wrap gap-1.5">' + ['London', 'New York', 'Asia'].map(x =>
+                    '<button type="button" class="btn-mini ' + (stratDraft.sessions.includes(x) ? '!border-[var(--tm-green)] !text-[var(--tm-green)]' : '') + '" data-draft-session="' + x + '">' + x + '</button>').join('') + '</div>');
                 if (step === 'Setup') return field('Required setup conditions', '<input id="d-setup" class="finput" value="' + esc(stratDraft.setup) + '" placeholder="MSS + FVG, FVG">') + '<p class="fhelp">A trade only qualifies when one of these setups is present — Journal validates this before save.</p>';
-                if (step === 'Risk') return '<div class="grid grid-cols-2 gap-3">' + field('Risk per trade', '<input id="d-risk" class="finput" value="' + esc(stratDraft.riskPerTrade) + '">') + field('Minimum RR', '<input id="d-minrr" type="number" step="0.1" class="finput num" value="' + stratDraft.minRR + '">') + '</div>' + chk('Stop loss required', 'stopRequired') + field('Max simultaneous positions', '<input id="d-positions" type="number" class="finput num" value="1">');
+                if (step === 'Risk') return '<div class="grid grid-cols-2 gap-3">' + field('Risk per trade', '<input id="d-risk" class="finput" value="' + esc(stratDraft.riskPerTrade) + '">') + field('Minimum RR', '<input id="d-minrr" type="number" step="0.1" class="finput num" value="' + stratDraft.minRR + '">') + '</div>' + chk('Stop loss required', 'stopRequired');
                 if (step === 'Execution') return field('Entry trigger', '<input id="d-entry" class="finput" value="' + esc(stratDraft.entry) + '" placeholder="FVG fill + MSS confirmation">') + field('Exit logic', '<input id="d-exit" class="finput" value="' + esc(stratDraft.exit) + '" placeholder="TP at opposing liquidity">');
                 if (step === 'Behavior') return field('Behavior rules (comma-separated)', '<input id="d-behavior" class="finput" value="' + esc(stratDraft.behavior.join(', ')) + '" placeholder="No revenge entry, Cooldown 15 min after loss">');
                 if (step === 'Tags') return field('Required tags (comma-separated)', '<input id="d-tags" class="finput" value="' + esc(stratDraft.tags.join(', ')) + '" placeholder="A+ Setup, London, Clean Entry">');
                 return '<div class="flex flex-col gap-2.5">' +
-                    '<div class="px-4 py-3 rounded-lg bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.25)] text-[12.5px] text-[#C4C4CC]"><b class="text-[#34D399]">TradeMind will enforce:</b> ' + esc(stratDraft.name || 'Unnamed') + ' on ' + esc(stratDraft.markets) + ' during ' + stratDraft.sessions.join(', ') + ' with ' + esc(stratDraft.riskPerTrade) + ' risk, min RR ' + stratDraft.minRR + 'R, stop ' + (stratDraft.stopRequired ? 'required' : 'optional') + ', setups: ' + esc(stratDraft.setup) + '.</div>' +
-                    '<div class="px-4 py-3 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12.5px] text-[#C4C4CC]"><b class="text-white">Journal integration:</b> auto-selects this strategy, calculates allowed risk + remaining budget, shows the rule checklist pre-trade, and labels violations at save.</div>' +
-                    '<div class="px-4 py-3 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12.5px] text-[#C4C4CC]"><b class="text-white">Discipline integration:</b> adherence is scored against THIS system — plan, risk, execution, frequency, behavior and review dimensions.</div>' +
-                    (editingStrat ? '<div class="px-4 py-3 rounded-lg bg-[#121214] border border-[#1F1F23] text-[12px] text-[#6E6E78]">Saving this edit creates a new version. Historical trades keep ' + esc(editingStrat.version) + ' — their analytics never change.</div>' : '');
+                    '<div class="px-4 py-3 rounded-lg bg-[rgba(16,185,129,0.06)] border border-[rgba(16,185,129,0.25)] text-[12.5px]"><b class="text-[var(--tm-green)]">TradeMind will enforce:</b> ' + esc(stratDraft.name || 'Unnamed') + ' on ' + esc(stratDraft.markets) + ' during ' + stratDraft.sessions.join(', ') + ' with ' + esc(stratDraft.riskPerTrade) + ' risk, min RR ' + stratDraft.minRR + 'R, stop ' + (stratDraft.stopRequired ? 'required' : 'optional') + ', setups: ' + esc(stratDraft.setup) + '.</div>' +
+                    '<div class="px-4 py-3 rounded-lg bg-[var(--tm-card)] border border-[var(--tm-border-2)] text-[12.5px]"><b>Journal integration:</b> auto-selects this strategy, calculates allowed risk + remaining budget, shows the rule checklist pre-trade, and labels violations at save.</div>' +
+                    '<div class="px-4 py-3 rounded-lg bg-[var(--tm-card)] border border-[var(--tm-border-2)] text-[12.5px]"><b>Discipline integration:</b> adherence is scored against THIS system — plan, risk, execution, frequency, behavior and review dimensions.</div>' +
+                    (editingStrat ? '<div class="px-4 py-3 rounded-lg bg-[var(--tm-card)] border border-[var(--tm-border-2)] text-[12px] text-[var(--tm-dim)]">Saving this edit creates a new immutable version. Historical trades keep ' + esc(editingStrat.version) + ' — their analytics never change.</div>' : '');
             }
-            const field = (label, inner) => '<div><label class="flabel">' + label + '</label>' + inner + '</div>';
-            function sessionSelect() {
-                return '<div class="flex flex-wrap gap-1.5">' + ['London', 'New York', 'Asia'].map(s =>
-                    '<button class="btn-ghost !py-1.5 !px-3 !text-[12px] ' + (stratDraft.sessions.includes(s) ? '!border-[#10B981] !text-[#34D399]' : '') + '" data-draft-session="' + s + '">' + s + '</button>').join('') + '</div>';
-            }
-
             function renderStratSnapshot() {
                 $('strat-snapshot').innerHTML =
-                    '<div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-[12px]" style="background:' + esc(stratDraft.color) + '22;color:' + esc(stratDraft.color) + '">' + esc((stratDraft.name || '?')[0].toUpperCase()) + '</div><b class="text-[13px] text-white">' + esc(stratDraft.name || 'Unnamed') + '</b></div>' +
-                    '<div class="flex flex-col gap-1.5 text-[11.5px] text-[#8A8A93]">' +
-                        '<div><b class="text-[#C4C4CC]">Markets:</b> ' + esc(stratDraft.markets) + '</div>' +
-                        '<div><b class="text-[#C4C4CC]">Sessions:</b> ' + (stratDraft.sessions.length ? stratDraft.sessions.join(', ') : '—') + '</div>' +
-                        '<div><b class="text-[#C4C4CC]">Setup:</b> ' + esc(stratDraft.setup) + '</div>' +
-                        '<div><b class="text-[#C4C4CC]">Risk:</b> ' + esc(stratDraft.riskPerTrade) + ' · min RR ' + stratDraft.minRR + 'R</div>' +
-                        '<div><b class="text-[#C4C4CC]">Stop:</b> ' + (stratDraft.stopRequired ? 'required' : 'optional') + '</div>' +
-                        '<div><b class="text-[#C4C4CC]">Entry:</b> ' + esc(stratDraft.entry || '—') + '</div>' +
-                        '<div><b class="text-[#C4C4CC]">Exit:</b> ' + esc(stratDraft.exit || '—') + '</div>' +
-                        '<div><b class="text-[#C4C4CC]">Behavior:</b> ' + (stratDraft.behavior.length ? stratDraft.behavior.join('; ') : '—') + '</div>' +
-                        '<div><b class="text-[#C4C4CC]">Tags:</b> ' + (stratDraft.tags.length ? stratDraft.tags.join(', ') : '—') + '</div>' +
+                    '<div class="flex items-center gap-2"><div class="w-7 h-7 rounded-lg flex items-center justify-center font-extrabold text-[12px]" style="background:' + esc(stratDraft.color) + '22;color:' + esc(stratDraft.color) + '">' + esc((stratDraft.name || '?')[0].toUpperCase()) + '</div><b class="text-[13px]">' + esc(stratDraft.name || 'Unnamed') + '</b></div>' +
+                    '<div class="flex flex-col gap-1.5 text-[11.5px] text-[var(--tm-muted)] mt-2">' +
+                        '<div><b class="text-[var(--tm-text)]">Markets:</b> ' + esc(stratDraft.markets) + '</div>' +
+                        '<div><b class="text-[var(--tm-text)]">Sessions:</b> ' + (stratDraft.sessions.length ? stratDraft.sessions.join(', ') : '—') + '</div>' +
+                        '<div><b class="text-[var(--tm-text)]">Setup:</b> ' + esc(stratDraft.setup) + '</div>' +
+                        '<div><b class="text-[var(--tm-text)]">Risk:</b> ' + esc(stratDraft.riskPerTrade) + ' · min RR ' + stratDraft.minRR + 'R</div>' +
+                        '<div><b class="text-[var(--tm-text)]">Stop:</b> ' + (stratDraft.stopRequired ? 'required' : 'optional') + '</div>' +
+                        '<div><b class="text-[var(--tm-text)]">Entry:</b> ' + esc(stratDraft.entry || '—') + '</div>' +
+                        '<div><b class="text-[var(--tm-text)]">Exit:</b> ' + esc(stratDraft.exit || '—') + '</div>' +
+                        '<div><b class="text-[var(--tm-text)]">Behavior:</b> ' + (stratDraft.behavior.length ? stratDraft.behavior.join('; ') : '—') + '</div>' +
+                        '<div><b class="text-[var(--tm-text)]">Tags:</b> ' + (stratDraft.tags.length ? stratDraft.tags.join(', ') : '—') + '</div>' +
                     '</div>';
             }
-
             function saveStrategy() {
-                // Mutations go through the ConfigAPI: it creates a NEW immutable
-                // ConfigVersion (version bump for edits), re-points assignments and
-                // publishes config.version.created + config.changed on the bus.
-                // The bus subscriber re-renders this page — no direct UI calls here.
                 if (editingStrat) {
                     core.ConfigAPI.updateStrategy(editingStrat.id, {
                         name: stratDraft.name || editingStrat.name, markets: stratDraft.markets,
                         sessions: stratDraft.sessions.slice(), setup: stratDraft.setup,
                         riskPerTrade: stratDraft.riskPerTrade, minRR: Number(stratDraft.minRR) || 1.5,
                         stopRequired: stratDraft.stopRequired, entry: stratDraft.entry, exit: stratDraft.exit,
-                        behavior: stratDraft.behavior.slice(), evidence: stratDraft.evidence || [], tags: stratDraft.tags.slice()
+                        behavior: stratDraft.behavior.slice(), tags: stratDraft.tags.slice()
                     });
+                    showToast('Strategy updated — new immutable version created.');
                 } else {
                     core.ConfigAPI.createStrategy({
                         name: stratDraft.name || 'Unnamed', desc: stratDraft.desc, color: stratDraft.color || '#10B981',
@@ -1082,6 +1018,7 @@
                         stopRequired: stratDraft.stopRequired, entry: stratDraft.entry, exit: stratDraft.exit,
                         behavior: stratDraft.behavior.slice(), tags: stratDraft.tags.slice()
                     });
+                    showToast('Strategy created — v1.0 active.');
                 }
                 $('strat-modal').classList.remove('open');
                 editingStrat = null;
@@ -1090,19 +1027,12 @@
             // ============ EVENTS ============
             $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
 
-            const VALID_TABS = ['home', 'accounts', 'strategies', 'rulesets', 'tags', 'map', 'history'];
-            const hashTab = (location.hash || '').replace('#', '');
-            if (hashTab && VALID_TABS.includes(hashTab)) activateTab(hashTab);
-            window.addEventListener('hashchange', () => {
-                const t = (location.hash || '').replace('#', '');
-                if (t && VALID_TABS.includes(t)) activateTab(t);
-            });
-
-            document.querySelectorAll('.ins-tab[data-tab]').forEach(btn => {
+            document.querySelectorAll('.lab-tab[data-tab]').forEach(btn => {
                 btn.addEventListener('click', () => activateTab(btn.dataset.tab));
             });
+            window.addEventListener('hashchange', () => activateTab((location.hash || '').replace('#', '')));
+            window.addEventListener('popstate', () => activateTab(tabFromUrl()));
 
-            // account modal live preview
             ['acc-name', 'acc-type', 'acc-start', 'acc-equity', 'acc-ddmodel', 'acc-dayloss', 'acc-maxdd', 'acc-risk', 'acc-riskbasis', 'acc-openrisk', 'acc-maxtrades', 'acc-status', 'acc-warn'].forEach(id => {
                 const el = $(id);
                 if (el) el.addEventListener('input', updateAccPreview);
@@ -1118,33 +1048,32 @@
                     if (a === 'new-strategy') openStratModal(null);
                     if (a === 'close-strat') { $('strat-modal').classList.remove('open'); editingStrat = null; }
                     if (a === 'strat-prev' && stratStep > 0) { stratStep--; renderStratBuilder(); }
-                    if (a === 'new-tag') {
-                        const t = prompt('Quick-create tag (name: Category)');
-                        if (t && t.trim()) {
-                            const [name, cat] = t.split(':').map(x => x.trim());
-                            const c = cat || 'Custom';
-                            (TAG_CATS[c] = TAG_CATS[c] || { color: '#6E6E78', tags: [] }).tags.push(name);
-                            core.ConfigAPI.logTagEvent('Tags', 'Tag created', '“' + name + '” in ' + c, 'Available for Journal & filtering now');
-                        }
-                    }
+                    if (a === 'close-drawer') closeDrawer();
                     if (a === 'add-change') {
                         const d = prompt('Record a config change — e.g. "Lowered drawdown limit $500 → $400"');
-                        if (d && d.trim()) core.ConfigAPI.recordManualChange(d.trim());
+                        if (d && d.trim()) { core.ConfigAPI.recordManualChange(d.trim()); showToast('Change recorded to history.'); }
                     }
                     return;
                 }
+                const tabGo = e.target.closest && e.target.closest('[data-tab-go]');
+                if (tabGo) { activateTab(tabGo.getAttribute('data-tab-go')); return; }
+                const openStrat = e.target.closest && e.target.closest('[data-open-strat]');
+                if (openStrat) { renderStrategyDrawer(openStrat.getAttribute('data-open-strat')); return; }
                 const editAcc = e.target.closest && e.target.closest('[data-edit-acc]');
                 if (editAcc) { openAccountModal(ACCOUNTS.find(a => a.id === editAcc.getAttribute('data-edit-acc'))); return; }
                 const dupAcc = e.target.closest && e.target.closest('[data-dup-acc]');
                 if (dupAcc) {
                     core.ConfigAPI.duplicateAccount(dupAcc.getAttribute('data-dup-acc'));
+                    showToast('Account duplicated (paused on creation).');
                     return;
                 }
                 const arcAcc = e.target.closest && e.target.closest('[data-archive-acc]');
                 if (arcAcc) {
                     const id = arcAcc.getAttribute('data-archive-acc');
                     const a = core.ConfigAPI.getAccount(id);
-                    core.ConfigAPI.setAccountStatus(id, a && a.status === 'Active' ? 'Archived' : 'Active');
+                    const next = a && a.status === 'Active' ? 'Archived' : 'Active';
+                    core.ConfigAPI.setAccountStatus(id, next);
+                    showToast('Account ' + (next === 'Active' ? 'activated.' : 'archived.'));
                     return;
                 }
                 const editStrat = e.target.closest && e.target.closest('[data-edit-strat]');
@@ -1152,20 +1081,13 @@
                 const dupStrat = e.target.closest && e.target.closest('[data-dup-strat]');
                 if (dupStrat) {
                     core.ConfigAPI.duplicateStrategy(dupStrat.getAttribute('data-dup-strat'));
+                    showToast('Strategy duplicated.');
                     return;
                 }
                 const toggleRule = e.target.closest && e.target.closest('[data-toggle-rule]');
                 if (toggleRule) {
-                    // versioned toggle — creates a new immutable RuleSet version via the ConfigAPI
                     core.ConfigAPI.toggleRule(toggleRule.getAttribute('data-toggle-rule'));
-                    return;
-                }
-                const arcTag = e.target.closest && e.target.closest('[data-archive-tag]');
-                if (arcTag) {
-                    const tg = arcTag.getAttribute('data-archive-tag');
-                    const i = ARCHIVED_TAGS.indexOf(tg);
-                    if (i >= 0) ARCHIVED_TAGS.splice(i, 1); else ARCHIVED_TAGS.push(tg);
-                    core.ConfigAPI.logTagEvent('Tags', i >= 0 ? 'Tag restored' : 'Tag archived', '“' + tg + '”', i >= 0 ? 'Usable on new trades again' : '12 historical trades keep the tag; analytics preserved');
+                    showToast('Rule toggled — new immutable RuleSet version created.');
                     return;
                 }
                 const ses = e.target.closest && e.target.closest('[data-draft-session]');
@@ -1178,7 +1100,6 @@
                 }
             });
 
-            // draft inputs (strategy builder)
             document.addEventListener('input', e => {
                 const t = e.target;
                 if (t.id === 'd-name') stratDraft.name = t.value;
@@ -1196,25 +1117,31 @@
             document.addEventListener('change', e => {
                 const c = e.target.getAttribute && e.target.getAttribute('data-draft-check');
                 if (c) stratDraft[c] = e.target.checked;
-                const d = e.target.getAttribute && e.target.getAttribute('data-draft-dir');
-                if (d) stratDraft.dir = d;
             });
+            document.addEventListener('keydown', e => {
+                if (e.key === 'Escape') {
+                    closeDrawer();
+                    if ($('acc-modal').classList.contains('open')) closeAccModal();
+                    if ($('strat-modal').classList.contains('open')) { $('strat-modal').classList.remove('open'); editingStrat = null; }
+                }
+            });
+            $('drawer-overlay').addEventListener('click', closeDrawer);
 
             $('acc-save').addEventListener('click', () => {
                 const f = accFormState();
                 const warn = $('acc-warn').value.split(',').map(x => Number(x.trim())).filter(Boolean);
                 if (editingAcc) {
-                    // identity change (not versioned) + limits change (NEW immutable policy version)
                     core.ConfigAPI.updateAccount(editingAcc.id, {
                         name: f.name, account_type: f.type, currency: f.currency, style: f.style,
-                        starting_balance: f.start,
-                        current_equity: f.equity, status: f.status, note: 'Drawdown basis: ' + f.ddModel
+                        starting_balance: f.start, current_equity: f.equity, status: f.status,
+                        note: 'Drawdown basis: ' + f.ddModel
                     });
                     core.ConfigAPI.updateAccountLimits(editingAcc.id, {
                         ddModel: f.ddModel, maxDailyLoss: f.dailyLoss, maxTotalDrawdown: f.maxDD,
                         riskPerTrade: f.risk, riskBasis: f.basis, maxOpenRisk: f.openR, openBasis: 'money',
                         maxTrades: f.maxTrades, warn: warn.length ? warn : [50, 70, 90]
                     });
+                    showToast('Account updated — new policy version created.');
                 } else {
                     core.ConfigAPI.createAccount({
                         name: f.name, type: f.type, currency: f.currency, style: f.style,
@@ -1222,6 +1149,7 @@
                         dailyLoss: f.dailyLoss, maxDD: f.maxDD, risk: f.risk, basis: f.basis,
                         openR: f.openR, maxTrades: f.maxTrades, status: f.status, warn: warn.length ? warn : [50, 70, 90]
                     });
+                    showToast('Account created.');
                 }
                 closeAccModal();
             });
@@ -1231,17 +1159,48 @@
             });
             $('strat-save').addEventListener('click', saveStrategy);
 
-            // ============ EVENT BUS INTEGRATION (PRD architecture) ============
-            // USER → STRATEGY LAB → CONFIGURATION API → VERSIONED RULES → EVENT BUS →
-            // modules (this page included) listen and update themselves. Mutations
-            // never call renderAll directly — the bus drives the re-render.
-            core.TradeMindBus.subscribe('config.changed', () => { syncDerived(); renderAll(); });
+            // account chip — cycles the selected account
+            function renderChrome() {
+                const acc = ACCOUNTS.find(a => a.id === selectedAccId());
+                const chip = $('acc-chip');
+                if (chip) {
+                    if (acc) {
+                        chip.innerHTML = '<span class="num text-[12px]">' + $money(acc.equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    } else {
+                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                    if (window.lucide) lucide.createIcons();
+                }
+                const pName = $('profile-name'), pAvatar = $('profile-avatar');
+                if (acc) { if (pName) pName.textContent = acc.name; if (pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase(); }
+                const sess = $('session-chip-text');
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+            }
+            $('acc-chip').addEventListener('click', () => {
+                if (!core || !core.Accounts || !core.Accounts.length) return;
+                const ids = core.Accounts.map(a => a.id);
+                const cur = selectedAccId() || ids[0];
+                const idx = ids.indexOf(cur);
+                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
+                syncDerived();
+                renderAll();
+                renderChrome();
+            });
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+            }
+
+            // ============ EVENT BUS (single source of truth) ============
+            core.TradeMindBus.subscribe('config.changed', () => { syncDerived(); renderAll(); renderChrome(); });
             core.TradeMindBus.subscribe('trade.created', () => { syncDerived(); renderAll(); });
             core.TradeMindBus.subscribe('trade.updated', () => { syncDerived(); renderAll(); });
             core.TradeMindBus.subscribe('trade.deleted', () => { syncDerived(); renderAll(); });
 
             syncDerived();
+            activateTab(tabFromUrl());
             renderAll();
+            renderChrome();
             if (window.lucide) lucide.createIcons();
         })();
     </script>
