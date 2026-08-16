@@ -271,8 +271,11 @@
 
                     <div id="disc-body" class="hidden flex flex-col gap-4">
 
+                        <!-- Battlex Trader Card -->
+                        <div id="trader-card" class="fade-up"></div>
+
                         <!-- ============ HERO — DISCIPLINE SCORE ============ -->
-                        <div class="panel p-6">
+                        <div class="panel p-6" id="disc-hero">
                             <div class="flex flex-wrap items-center gap-8">
                                 <div class="min-w-[200px]">
                                     <div class="label-xs mb-2">Discipline score</div>
@@ -825,6 +828,16 @@
             }
 
             // ============ RENDER ============
+            function renderTraderCard() {
+                const el = $('trader-card');
+                if (!el) return;
+                if (window.TMTraderCard) {
+                    TMTraderCard.render(el, { viewHref: '#disc-hero', viewLabel: 'Discipline detail' });
+                } else {
+                    // asset may still be loading on a slow first paint — retry
+                    setTimeout(renderTraderCard, 120);
+                }
+            }
             function renderAll() {
                 renderChrome();
                 const accId = currentAccountId();
@@ -839,6 +852,7 @@
                 let disc = null;
                 try { disc = core.disciplineState(accId); } catch (e) { return; }
                 if (!disc) return;
+                renderTraderCard();
                 renderStates(disc);
                 renderHero(disc);
                 renderDims(disc.dims);
@@ -901,6 +915,7 @@
             if (window.lucide) lucide.createIcons();
         })();
     </script>
+    <script src="assets/trader-card.js"></script>
     <script src="assets/tour.js"></script>
     <script src="reset.js"></script>
 </body>

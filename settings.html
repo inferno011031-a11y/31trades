@@ -428,6 +428,16 @@
                                     </button>
                                 </div>
                             </div>
+
+                            <!-- Battlex Trader Card -->
+                            <div>
+                                <div class="flex items-center gap-2.5 mb-3">
+                                    <div class="panel-title">Battlex trader card</div>
+                                    <span class="tag tag-indigo">Identity</span>
+                                </div>
+                                <p class="text-[12px] text-[var(--tm-dim)] mb-4">Who you are as a trader — built from repeated decisions. Discipline, streaks and dimensions come from the same engine the Discipline page reads.</p>
+                                <div id="trader-card"></div>
+                            </div>
                         </section>
 
                         <!-- ================= BROKERS ================= -->
@@ -963,6 +973,15 @@
                 });
             }
 
+            function renderTraderCard() {
+                const el = $('trader-card');
+                if (!el) return;
+                if (window.TMTraderCard) {
+                    TMTraderCard.render(el, { viewHref: 'discipline.html' });
+                } else {
+                    setTimeout(renderTraderCard, 120);
+                }
+            }
             function boot() {
                 $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
                 $('add-broker-btn').addEventListener('click', () => window.openBrokerPicker());
@@ -973,6 +992,7 @@
                 }
                 renderChrome();
                 renderProfile();
+                renderTraderCard();
                 loadBrokers();
                 renderLastChanged();
                 renderStrength();
@@ -985,6 +1005,7 @@
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();
     </script>
+    <script src="assets/trader-card.js"></script>
     <script src="assets/tour.js"></script>
     <script src="reset.js"></script>
 </body>

@@ -1191,8 +1191,11 @@
                 if (window.lucide) lucide.createIcons();
                 const qs = new URLSearchParams(window.location.search);
                 const inviteCode = qs.get('invite');
+                const battleId = qs.get('battle');
                 if (inviteCode) {
                     loadAll().then(() => resolveInvite(inviteCode));
+                } else if (battleId) {
+                    loadAll().then(() => openBattle(battleId));
                 } else {
                     loadAll();
                 }

@@ -228,6 +228,105 @@
             });
         })();
 
+        // ---- global search: one client-side search over the canonical data
+        // (trades, symbols, accounts, strategies, rule sets, rules). Every page
+        // renders a #global-search input; Enter opens a result panel and
+        // navigates to the existing destination for each result type. No new
+        // backend — this reads the same core data every page already uses.
+        const _fm = n => (n == null || isNaN(n) ? '—' : '$' + Number(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+        const _fd = iso => { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }); } catch (e) { return '—'; } };
+        window.TM_GLOBAL_SEARCH = function (query) {
+            const q = String(query || '').trim().toLowerCase();
+            if (!q) return;
+            const results = [];
+            const push = (type, label, sub, href, extra) => results.push({ type, label, sub, href, extra });
+
+            // trades + symbols
+            (core.Trades || []).slice().sort((a, b) => new Date(b.ts) - new Date(a.ts)).forEach(t => {
+                const hay = [t.symbol, t.setup, t.strategy, t.session, t.emotion, t.notes].join(' ').toLowerCase();
+                if (hay.indexOf(q) !== -1) {
+                    const sym = t.symbol || '—';
+                    push('Trade', sym + ' · ' + (t.setup || '—'), _fd(t.ts) + ' · ' + _fm(t.pnl), 'journal.html?trade=' + encodeURIComponent(t.id), { sym: sym.toLowerCase() });
+                }
+            });
+            // accounts → select the account and open the dashboard
+            (core.Accounts || []).forEach(a => {
+                if ((a.name || '').toLowerCase().indexOf(q) !== -1) {
+                    push('Account', a.name, _fm(a.current_equity != null ? a.current_equity : a.starting_balance || 0) + ' equity', null, { selectAccount: a.id });
+                }
+            });
+            // strategies → Strategy Lab
+            (core.StrategyMaster || []).forEach(s => {
+                if (((s.name || '') + ' ' + (s.desc || '')).toLowerCase().indexOf(q) !== -1) {
+                    push('Strategy', s.name, s.desc || '', 'strategy-lab.html?tab=strategies');
+                }
+            });
+            // rule sets + individual rules → Strategy Lab rule sets
+            (core.RuleSetMaster || []).forEach(rs => {
+                if ((rs.name || '').toLowerCase().indexOf(q) !== -1) {
+                    push('Rule set', rs.name, (rs.scope || '') + ' scope', 'strategy-lab.html?tab=rulesets');
+                }
+            });
+            const seenRules = {};
+            (core.ConfigVersions || []).forEach(v => {
+                (v.rules || []).forEach(r => {
+                    const lbl = r.label || r.key || '';
+                    if (!lbl || seenRules[lbl]) return;
+                    seenRules[lbl] = true;
+                    if (lbl.toLowerCase().indexOf(q) !== -1) {
+                        push('Rule', lbl, (r.cat || '') + ' · ' + (r.severity || ''), 'strategy-lab.html?tab=rulesets');
+                    }
+                });
+            });
+
+            // symbol shortcut: no direct trade hit, but a known symbol matches
+            if (!results.length) {
+                const syms = {};
+                (core.Trades || []).forEach(t => { syms[(t.symbol || '').toLowerCase()] = t.symbol; });
+                if (syms[q]) {
+                    const hit = core.Trades.find(t => (t.symbol || '').toLowerCase() === q);
+                    if (hit) push('Symbol', syms[q], 'Open the latest ' + syms[q] + ' trade in the Journal', 'journal.html?trade=' + encodeURIComponent(hit.id));
+                }
+            }
+
+            if (!results.length) {
+                window.showToast && window.showToast('No matches for "' + String(query).trim() + '"');
+                return;
+            }
+
+            const input = document.getElementById('global-search');
+            const r = input ? input.getBoundingClientRect() : null;
+            const panel = document.createElement('div');
+            panel.style.cssText = 'position:fixed;z-index:200;min-width:340px;max-width:440px;max-height:420px;overflow-y:auto;' +
+                'background:var(--tm-card);border:1px solid var(--tm-border-2);border-radius:12px;box-shadow:0 18px 40px -14px rgba(0,0,0,0.45);' +
+                'font-family:var(--tm-sans);font-size:13px;color:var(--tm-text);' +
+                (r ? 'top:' + Math.round(r.bottom + 6) + 'px;left:' + Math.round(r.left) + 'px;' : 'top:70px;left:16px;');
+            panel.innerHTML = '<div class="gs-head" style="padding:10px 14px;border-bottom:1px solid var(--tm-border);font-size:10.5px;font-weight:700;letter-spacing:0.07em;text-transform:uppercase;color:var(--tm-muted);display:flex;align-items:center;justify-content:space-between;">' +
+                '<span>Search results</span><span style="font-weight:600;">' + results.length + '</span></div>' +
+                '<div class="gs-list">' + results.slice(0, 14).map((res, i) => {
+                    const tagColor = res.type === 'Trade' ? 'rgba(59,130,246,0.14);color:var(--tm-blue)' : res.type === 'Account' ? 'rgba(16,185,129,0.14);color:var(--tm-green)' : res.type === 'Strategy' || res.type === 'Rule set' ? 'rgba(99,102,241,0.14);color:var(--tm-accent-2)' : 'rgba(245,158,11,0.14);color:var(--tm-amber)';
+                    return '<div class="gs-row" data-i="' + i + '" style="padding:9px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;transition:background 0.1s;border-bottom:1px solid var(--hairline);" onmouseenter="this.style.background=\'var(--tm-hover)\';" onmouseleave="this.style.background=\'transparent\';">' +
+                        '<span style="flex-shrink:0;font-size:9.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:' + tagColor + '">' + res.type + '</span>' +
+                        '<div style="flex:1;min-width:0;"><div style="font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + String(res.label).replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c])) + '</div>' +
+                        '<div style="font-size:11px;color:var(--tm-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">' + String(res.sub || '').replace(/[<>&"]/g, c => ({ '<': '&lt;', '>': '&gt;', '&': '&amp;', '"': '&quot;' }[c])) + '</div></div>' +
+                    '</div>';
+                }).join('') + '</div>';
+            document.body.appendChild(panel);
+            function go(res) {
+                if (res.selectAccount && core.setSelectedAccount) core.setSelectedAccount(res.selectAccount);
+                if (res.href) { window.location.href = res.href; return; }
+                window.location.href = 'dashboard.html';
+            }
+            panel.querySelectorAll('.gs-row').forEach(row => {
+                row.addEventListener('click', () => go(results[Number(row.dataset.i)]));
+            });
+            function close() { try { document.body.removeChild(panel); } catch (e) {} document.removeEventListener('click', onDoc, true); document.removeEventListener('keydown', onKey, true); }
+            function onDoc(e) { if (!panel.contains(e.target) && e.target !== input) close(); }
+            function onKey(e) { if (e.key === 'Escape') close(); }
+            document.addEventListener('click', onDoc, true);
+            document.addEventListener('keydown', onKey, true);
+        };
+
         return core;
     }
 
