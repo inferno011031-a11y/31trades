@@ -817,14 +817,22 @@
             };
 
             window.connectBroker = async function (name) {
+                let ok = true;
                 try {
                     const res = await apiFetch('/api/brokers/connect', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ broker: name })
                     });
                     if (!res.ok) throw new Error('HTTP ' + res.status);
-                } catch (e) { /* offline — the local flag still completes the step */ }
+                } catch (e) { ok = false; /* offline — the local flag still completes the step */ }
                 try { localStorage.setItem('31trades.broker.connected', '1'); } catch (e) {}
+                if (ok && window.TradeMindCore && window.TradeMindCore.ConfigAPI) {
+                    window.TradeMindCore.ConfigAPI.logTagEvent(
+                        'Broker · ' + name, 'Connected', 'Connected · ' + name,
+                        'Broker state shown in Settings & onboarding checklist',
+                        { sync: false }   // the /api/brokers route already logged it server-side
+                    );
+                }
                 closeBrokerPicker();
                 showToast(name + ' connected');
                 loadBrokers();
@@ -832,14 +840,22 @@
 
             window.disconnectBroker = async function (name) {
                 if (!window.confirm('Disconnect ' + name + '? Your trading history stays untouched.')) return;
+                let ok = true;
                 try {
                     const res = await apiFetch('/api/brokers/disconnect', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ broker: name })
                     });
                     if (!res.ok) throw new Error('HTTP ' + res.status);
-                } catch (e) { /* offline */ }
+                } catch (e) { ok = false; /* offline */ }
                 try { localStorage.removeItem('31trades.broker.connected'); } catch (e) {}
+                if (ok && window.TradeMindCore && window.TradeMindCore.ConfigAPI) {
+                    window.TradeMindCore.ConfigAPI.logTagEvent(
+                        'Broker · ' + name, 'Disconnected', 'Disconnected · ' + name,
+                        'Broker state shown in Settings & onboarding checklist',
+                        { sync: false }   // the /api/brokers route already logged it server-side
+                    );
+                }
                 showToast(name + ' disconnected');
                 loadBrokers();
             };

@@ -808,10 +808,15 @@
             syncToBackend('/api/events', { action: 'manual', detail: detail });
         },
 
-        logTagEvent(entity, what, detail, impact) {
+        logTagEvent(entity, what, detail, impact, opts) {
             logEvent({ entity, what, detail, impact });
             TradeMindBus.publish('config.changed', { tag: true });
-            syncToBackend('/api/events', { action: 'tag', entity, what, detail, impact });
+            // opts.sync === false → record locally only (e.g. broker events,
+            // which the /api/brokers routes already write to the server log, so
+            // the client mirrors locally without duplicating the server entry).
+            if (!opts || opts.sync !== false) {
+                syncToBackend('/api/events', { action: 'tag', entity, what, detail, impact });
+            }
         },
 
         // ---- rule sets: add / edit a rule (always a new immutable version) ----

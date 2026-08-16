@@ -230,6 +230,20 @@ function logWelcomeEvent(uc, user) {
     uc.scheduleSave();
 }
 
+// Record a broker connect/disconnect in the user's canonical event log so it
+// shows up in audit history (Strategy Lab → History, /api/audit) and in the
+// System notification feed — the same channel as every other config change.
+// No secrets: only the registry fields (broker name + state) ever reach the log.
+function logBrokerEvent(Core, broker, what) {
+    const name = typeof broker === 'string' ? broker : String(broker || 'Broker');
+    Core.ConfigAPI.logTagEvent(
+        'Broker · ' + name,
+        what,
+        what + ' · ' + name,
+        'Broker state shown in Settings & onboarding checklist'
+    );
+}
+
 function bearerToken(req) {
     const h = req.headers.authorization || '';
     return h.startsWith('Bearer ') ? h.slice(7).trim() : '';
@@ -955,11 +969,15 @@ async function handleApi(req, res, url) {
         if (p === '/api/brokers/connect') {
             const r = await Brokers.connect(uc.userId, body.broker);
             if (!r.ok) return json(res, 400, { error: r.error });
+            logBrokerEvent(Core, r.broker.broker, 'Connected');
+            uc.scheduleSave();
             return json(res, 200, { ok: true, broker: r.broker });
         }
         if (p === '/api/brokers/disconnect') {
             const r = await Brokers.disconnect(uc.userId, body.broker);
             if (!r.ok) return json(res, 400, { error: r.error });
+            logBrokerEvent(Core, body.broker, 'Disconnected');
+            uc.scheduleSave();
             return json(res, 200, { ok: true });
         }
 

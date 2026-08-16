@@ -36,11 +36,17 @@ function makeCore(trades) {
         adherence_result: null, block_reason: null, reviewed: true,
         strategy: 'London FVG', ...t
     }));
+    const EVENT_LOG = [];
     return {
         Accounts: [{ id: 'acc-prop', name: 'Prop Firm A', starting_balance: 10000, current_equity: 10319 }],
         Trades,
         Violations: [],
-        getEventLog: () => [],
+        getEventLog: () => EVENT_LOG,
+        ConfigAPI: {
+            logTagEvent(entity, what, detail, impact) {
+                EVENT_LOG.unshift({ entity, what, detail, impact, at: 'Aug 16, 10:00' });
+            }
+        },
         riskState: () => ({ status: 'NORMAL', dailyRiskBudget: 100, riskUsed: 0 })
     };
 }
@@ -135,6 +141,50 @@ console.log('\n== Brokers ==');
     ok(!absent.some(n => n.id === 'onb-broker'), 'onb-broker absent when a broker is connected');
     const present = Notif.buildNotifications(core, 'acc-prop', { brokerConnected: false, upcomingEvents: [] });
     ok(present.some(n => n.id === 'onb-broker'), 'onb-broker present when no broker is connected');
+}
+
+// ---- 7b · broker connect/disconnect writes the canonical event log -----------
+// Mirrors server.js's logBrokerEvent() exactly (the route helper is tested
+// against the same core surface the server uses). Events must land in the
+// event log and surface as System notifications + audit history.
+{
+    const core = makeCore([{ id: 't0' }]);
+    const logBrokerEvent = (Core, broker, what) => {
+        const name = typeof broker === 'string' ? broker : String(broker || 'Broker');
+        Core.ConfigAPI.logTagEvent(
+            'Broker · ' + name, what, what + ' · ' + name,
+            'Broker state shown in Settings & onboarding checklist'
+        );
+    };
+
+    // connect event
+    logBrokerEvent(core, 'TradingView', 'Connected');
+    let log = core.getEventLog();
+    ok(log.length === 1, 'connect writes one event-log entry');
+    ok(log[0].entity === 'Broker · TradingView' && log[0].what === 'Connected',
+        'connect event entity/what correct');
+    ok(log[0].detail === 'Connected · TradingView' && typeof log[0].impact === 'string',
+        'connect event has detail + impact');
+    ok(!/secret|token|key|password/i.test(JSON.stringify(log[0])),
+        'connect event contains no credential material');
+
+    // disconnect event
+    logBrokerEvent(core, 'TradingView', 'Disconnected');
+    log = core.getEventLog();
+    ok(log.length === 2 && log[0].what === 'Disconnected', 'disconnect writes its own event');
+
+    // the same event surfaces in the System notification feed
+    const feed = Notif.buildNotifications(core, 'acc-prop', { brokerConnected: false, upcomingEvents: [] });
+    const sys = feed.filter(n => n.cat === 'System');
+    ok(sys.length >= 2, 'broker events surface in System notifications');
+    ok(sys.some(n => n.title === 'Connected · Broker · TradingView' && n.body.indexOf('TradingView') !== -1),
+        'System feed shows the broker Connected notification');
+    ok(sys.some(n => n.title === 'Disconnected · Broker · TradingView'),
+        'System feed shows the broker Disconnected notification');
+    // (the announcement, if present, is also a System entry with its own href)
+    const brokerSys = sys.filter(n => /Broker ·/.test(n.title));
+    ok(brokerSys.length === 2 && brokerSys.every(n => n.href === 'strategy-lab.html?tab=history'),
+        'broker events link to audit history like other config changes');
 }
 
 // ---- 8 · DB path: merge + fallback (stubbed pool) ----------------------------
