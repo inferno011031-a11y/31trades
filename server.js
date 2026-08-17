@@ -376,10 +376,14 @@ async function handleImportUpload(req, res, uc, Core) {
         strategies: Core.StrategyMaster,
         batchFps: []
     };
-    // re-upload detection: previously imported fingerprints for this account
+    // re-upload detection: fingerprints from batches whose trades actually
+    // entered the ledger (COMPLETED/PARTIAL). Rolled-back or cancelled batches
+    // keep their record but must NOT block re-importing the same file.
     try {
         const prev = await Imports.listBatches(uc.userId);
-        prev.filter(b => b.accountId === accountId && Array.isArray(b.fingerprints))
+        prev.filter(b => b.accountId === accountId
+            && (b.status === 'COMPLETED' || b.status === 'PARTIAL')
+            && Array.isArray(b.fingerprints))
             .forEach(b => ctx.batchFps.push(...b.fingerprints));
     } catch (e) { /* non-fatal */ }
 

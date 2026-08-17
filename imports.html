@@ -1,0 +1,890 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BATTLEXJOURNAL — Import Journal</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind CSS CDN & Lucide -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="assets/tailwind-config.js"></script>
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+    <script src="assets/asset-meta.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
+            overflow: hidden;
+        }
+
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 224px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* ---- Glass system (Calendar/AI parity) ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+        .ai-bg {
+            position: fixed; inset: 0; z-index: 0; pointer-events: none;
+            background:
+                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
+                var(--tm-bg);
+        }
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .ai-layer { position: relative; z-index: 1; }
+        .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
+
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
+        .btn-primary {
+            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
+        }
+        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+        .btn-ghost {
+            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
+            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
+        }
+        .btn-ghost:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .btn-ghost:disabled { opacity: 0.5; pointer-events: none; }
+        .btn-mini {
+            display: inline-flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 600;
+            color: var(--tm-muted); padding: 6px 10px; border-radius: 7px; cursor: pointer;
+            border: 1px solid var(--tm-border-2); background: transparent; text-decoration: none; transition: all 0.15s;
+        }
+        .btn-mini:hover { background: var(--tm-hover); color: var(--tm-text); }
+
+        /* ---- Page-specific ---- */
+        .dropzone {
+            border: 1.5px dashed var(--tm-border-2);
+            border-radius: 12px;
+            background: var(--tm-card);
+            transition: border-color 0.15s, background 0.15s;
+            cursor: pointer;
+        }
+        .dropzone:hover, .dropzone.dragover { border-color: var(--tm-purple); background: rgba(129, 140, 248, 0.05); }
+
+        .map-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border: 1px solid var(--tm-border); border-radius: 9px; background: var(--tm-card); }
+        .map-row .arrow { color: var(--tm-dim); flex-shrink: 0; }
+
+        .src-chip {
+            font-family: var(--tm-mono); font-size: 12px; padding: 2px 8px; border-radius: 6px;
+            background: rgba(129, 140, 248, 0.10); color: var(--tm-purple);
+        }
+
+        .import-table { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .import-table th {
+            text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em;
+            color: var(--tm-muted); padding: 8px 10px; border-bottom: 1px solid var(--tm-border);
+            position: sticky; top: 0; background: var(--tm-bg-elev); z-index: 1;
+        }
+        .import-table td { padding: 7px 10px; border-bottom: 1px solid var(--hairline); vertical-align: top; }
+        .import-table tr:hover td { background: var(--tm-hover); }
+        .issue-txt { font-size: 11.5px; color: var(--tm-red); line-height: 1.35; }
+        .issue-txt.warn { color: var(--tm-amber); }
+
+        .hist-row { display: grid; grid-template-columns: 1.4fr 0.7fr 0.9fr 0.9fr auto; gap: 12px; align-items: center; padding: 10px 14px; border: 1px solid var(--tm-border); border-radius: 10px; background: var(--tm-card); }
+        @media (max-width: 768px) { .hist-row { grid-template-columns: 1fr 1fr; } }
+
+        select.acc-select {
+            background: var(--tm-card); color: var(--tm-text); border: 1px solid var(--tm-border-2);
+            border-radius: 8px; padding: 8px 12px; font-size: 13.5px; font-weight: 600;
+            font-family: var(--tm-sans); outline: none; max-width: 100%;
+        }
+        select.acc-select:focus { border-color: var(--tm-purple); }
+
+        textarea.paste-input {
+            width: 100%; min-height: 130px; resize: vertical;
+            background: var(--tm-card); color: var(--tm-text);
+            border: 1px solid var(--tm-border-2); border-radius: 10px;
+            padding: 12px 14px; font-family: var(--tm-mono); font-size: 12.5px; line-height: 1.5;
+            outline: none; transition: border-color 0.15s;
+        }
+        textarea.paste-input:focus { border-color: var(--tm-purple); }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        .opt-row { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--tm-text); cursor: pointer; padding: 4px 0; }
+        .opt-row input { accent-color: var(--tm-purple); width: 15px; height: 15px; cursor: pointer; }
+    </style>
+    <script src="assets/theme-toggle.js"></script>
+</head>
+<body>
+
+    <div class="ai-bg"></div>
+
+    <div class="flex h-screen ai-layer">
+
+        <!-- ============ SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <div class="logo-badge">B</div>
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
+                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                <a href="imports.html" class="nav-item active"><svg data-lucide="file-import"></svg><span class="nav-label">Import</span></a>
+                <a href="review.html" class="nav-item"><svg data-lucide="clipboard-check"></svg><span class="nav-label">Review</span></a>
+                <a href="improve.html" class="nav-item"><svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span></a>
+                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
+                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
+                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
+                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            </nav>
+
+            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
+                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
+                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
+                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
+                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
+                    <div class="avatar" id="profile-avatar">TR</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11px] text-[var(--tm-dim)]" id="profile-meta">Battlex Trader</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. how was last month?">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
+                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
+                    </a>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[24px] font-bold tracking-tight">Import journal</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Bring your historical trades into Battlex — CSV, Excel, Google Sheets or Notion exports.</p>
+                        </div>
+                        <a href="journal.html" class="btn-ghost !py-2.5 !px-4"><svg data-lucide="book-open" class="w-4 h-4"></svg> Open Journal</a>
+                    </div>
+
+                    <!-- Account target -->
+                    <div class="glass px-4 py-3 flex flex-wrap items-center gap-3">
+                        <span class="label-xs">Import into</span>
+                        <select id="acc-select" class="acc-select"></select>
+                        <span class="text-[11.5px] text-[var(--tm-dim)]" id="acc-meta"></span>
+                    </div>
+
+                    <!-- ============ STEP 1 · SOURCE ============ -->
+                    <div class="glass p-5" id="source-panel">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <div class="label-xs">01 · Source</div>
+                                <div class="text-[12px] text-[var(--tm-dim)] mt-1">Upload a file, or paste spreadsheet data below.</div>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                            <!-- File drop -->
+                            <div>
+                                <div class="dropzone p-6 text-center" id="dropzone">
+                                    <svg data-lucide="upload" class="w-8 h-8 mx-auto text-[var(--tm-dim)] mb-3"></svg>
+                                    <div class="text-[13.5px] font-semibold" id="dz-title">Drop a CSV or Excel file here</div>
+                                    <div class="text-[12px] text-[var(--tm-dim)] mt-1" id="dz-sub">or click to browse · .csv / .xlsx · up to 5 MB</div>
+                                    <div class="text-[11.5px] text-[var(--tm-dim)] mt-3 hidden" id="dz-file"></div>
+                                    <input type="file" id="file-input" accept=".csv,.xlsx,text/csv,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" class="hidden">
+                                </div>
+                                <div class="flex flex-wrap gap-2 mt-3">
+                                    <button class="btn-mini" data-src="CSV">CSV</button>
+                                    <button class="btn-mini" data-src="GOOGLE_SHEETS_EXPORT">Google Sheets export</button>
+                                    <button class="btn-mini" data-src="NOTION_EXPORT">Notion export</button>
+                                    <button class="btn-mini" data-src="XLSX">Excel (.xlsx)</button>
+                                </div>
+                            </div>
+
+                            <!-- Pasted data -->
+                            <div>
+                                <textarea class="paste-input" id="paste-input" placeholder="Paste spreadsheet data here — tabs or commas work:&#10;&#10;Date&#9;Symbol&#9;Side&#9;Entry&#9;Exit&#9;P&amp;L&#10;08/12&#9;EURUSD&#9;Long&#9;1.17&#9;1.18&#9;67&#10;08/13&#9;GBPUSD&#9;Short&#9;1.31&#9;1.30&#9;120"></textarea>
+                                <div class="text-[11.5px] text-[var(--tm-dim)] mt-1.5">Google Sheets / Notion CSV exports are treated as CSV — no API integration needed.</div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-center gap-3 mt-4">
+                            <button id="analyze-btn" class="btn-primary !py-2.5 !px-5"><svg data-lucide="scan-search" class="w-4 h-4"></svg> Analyze import</button>
+                            <span id="analyze-note" class="text-[12px] text-[var(--tm-dim)]"></span>
+                        </div>
+                    </div>
+
+                    <!-- ============ STEP 2 · MAPPING ============ -->
+                    <div class="glass p-5 hidden" id="mapping-panel">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <div class="label-xs">02 · Column mapping</div>
+                                <div class="text-[12px] text-[var(--tm-dim)] mt-1">How Battlex read your columns. Low-confidence mappings were kept conservative — nothing is guessed.</div>
+                            </div>
+                            <a href="journal.html" class="btn-mini"><svg data-lucide="book-open" class="w-3.5 h-3.5"></svg> See the canonical fields</a>
+                        </div>
+                        <div id="mapping-list" class="grid grid-cols-1 md:grid-cols-2 gap-2"></div>
+                        <div id="mapping-warn" class="mt-3 text-[12px] text-[var(--tm-dim)]"></div>
+                    </div>
+
+                    <!-- ============ STEP 3 · PREVIEW ============ -->
+                    <div class="glass p-5 hidden" id="preview-panel">
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                            <div>
+                                <div class="label-xs">03 · Preview</div>
+                                <div class="text-[12px] text-[var(--tm-dim)] mt-1" id="preview-sub">Nothing is imported until you confirm.</div>
+                            </div>
+                            <div class="flex flex-wrap items-center gap-2" id="stats-strip"></div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-4 mb-3">
+                            <label class="opt-row"><input type="checkbox" id="opt-warnings" checked> Import rows with warnings</label>
+                            <label class="opt-row"><input type="checkbox" id="opt-skip-dupes" checked> Skip duplicates</label>
+                            <label class="opt-row"><input type="checkbox" id="opt-possible"> Include possible duplicates</label>
+                        </div>
+
+                        <div class="tbl-wrap overflow-x-auto">
+                            <table class="import-table">
+                                <thead>
+                                    <tr>
+                                        <th>Row</th>
+                                        <th>Date</th>
+                                        <th>Symbol</th>
+                                        <th>Dir</th>
+                                        <th class="text-right">Entry</th>
+                                        <th class="text-right">Exit</th>
+                                        <th class="text-right">Size</th>
+                                        <th class="text-right">P&amp;L</th>
+                                        <th class="text-right">R</th>
+                                        <th>State</th>
+                                        <th>Issues</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="preview-body"></tbody>
+                            </table>
+                        </div>
+                        <div id="preview-more" class="text-[11.5px] text-[var(--tm-dim)] mt-2"></div>
+
+                        <div class="flex flex-wrap items-center gap-3 mt-4">
+                            <button id="commit-btn" class="btn-primary !py-2.5 !px-5"><svg data-lucide="check-circle-2" class="w-4 h-4"></svg> Confirm &amp; import</button>
+                            <button id="cancel-batch-btn" class="btn-ghost !py-2.5 !px-4"><svg data-lucide="ban" class="w-4 h-4"></svg> Cancel this import</button>
+                            <span id="commit-note" class="text-[12px] text-[var(--tm-dim)]"></span>
+                        </div>
+                    </div>
+
+                    <!-- ============ RESULT / ROLLBACK ============ -->
+                    <div class="glass p-5 hidden" id="result-panel">
+                        <div class="flex flex-wrap items-center justify-between gap-3">
+                            <div class="flex items-center gap-3">
+                                <svg data-lucide="database" class="w-6 h-6 text-[var(--tm-green)]"></svg>
+                                <div>
+                                    <div class="text-[15px] font-bold" id="result-title">Import complete</div>
+                                    <div class="text-[12.5px] text-[var(--tm-dim)] mt-0.5" id="result-sub"></div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <button id="rollback-btn" class="btn-danger !py-2.5 !px-4"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg> Roll back</button>
+                                <a href="journal.html" class="btn-primary !py-2.5 !px-4"><svg data-lucide="book-open" class="w-4 h-4"></svg> View in Journal</a>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap gap-2 mt-4" id="result-stats"></div>
+                    </div>
+
+                    <!-- ============ HISTORY ============ -->
+                    <div class="glass p-5" id="history-panel">
+                        <div class="flex items-center justify-between mb-3">
+                            <div>
+                                <div class="label-xs">Import history</div>
+                                <div class="text-[12px] text-[var(--tm-dim)] mt-1">Every import batch, with its status and counts.</div>
+                            </div>
+                            <button id="refresh-history" class="btn-mini"><svg data-lucide="refresh-cw" class="w-3.5 h-3.5"></svg> Refresh</button>
+                        </div>
+                        <div id="history-list" class="flex flex-col gap-2"></div>
+                        <div id="history-empty" class="hidden text-center py-6">
+                            <div class="text-[13.5px] font-semibold text-[var(--tm-muted)]">No imports yet</div>
+                            <div class="text-[12px] text-[var(--tm-dim)] mt-1">Your imported journals will appear here.</div>
+                        </div>
+                    </div>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div id="toast" class="toast"><span id="toast-msg"></span></div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const core = window.TradeMindCore;
+            const $ = id => document.getElementById(id);
+            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
+            const num = n => n == null || isNaN(n) ? '—' : String(n);
+            const fmtDate = iso => {
+                if (!iso) return '—';
+                const d = new Date(iso);
+                if (isNaN(d.getTime())) return '—';
+                return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+            };
+            const fmtTime = iso => {
+                if (!iso) return '—';
+                const d = new Date(iso);
+                if (isNaN(d.getTime())) return '—';
+                return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' });
+            };
+            const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+            let toastTimer = null;
+            function showToast(msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            }
+
+            // ============ CANONICAL DATA ============
+            function selectedAccId() {
+                if (!core || !core.Accounts || !core.Accounts.length) return null;
+                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+            }
+            function account() { const id = selectedAccId(); return id ? core.Accounts.find(a => a.id === id) : null; }
+            function refreshChrome() {
+                const acc = account();
+                const chip = $('acc-chip');
+                if (chip) {
+                    chip.innerHTML = '';
+                    if (acc) {
+                        const eq = acc.current_equity != null ? money(acc.current_equity) : '—';
+                        const sp = document.createElement('span'); sp.className = 'num text-[12px]'; sp.textContent = eq;
+                        const dot = document.createElement('span'); dot.className = 'text-[var(--tm-dim)]'; dot.textContent = '·';
+                        const name = document.createElement('span'); name.textContent = acc.name;
+                        const chev = document.createElement('svg'); chev.setAttribute('data-lucide', 'chevron-down'); chev.setAttribute('class', 'w-3.5 h-3.5 text-[var(--tm-dim)]');
+                        chip.append(sp, dot, name, chev);
+                    } else {
+                        chip.innerHTML = '<span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span><span>No account</span>';
+                    }
+                }
+                // account select for import target
+                const sel = $('acc-select');
+                const prev = sel.value;
+                sel.innerHTML = '';
+                (core.Accounts || []).forEach(a => {
+                    const o = document.createElement('option');
+                    o.value = a.id;
+                    o.textContent = a.name + ' · ' + (a.account_type || 'Account') + (a.current_equity != null ? ' · ' + money(a.current_equity) : '');
+                    sel.appendChild(o);
+                });
+                if (prev && (core.Accounts || []).some(a => a.id === prev)) sel.value = prev;
+                else if (selectedAccId()) sel.value = selectedAccId();
+                const meta = $('acc-meta');
+                const acc2 = (core.Accounts || []).find(a => a.id === sel.value);
+                meta.textContent = acc2 ? (acc2.status === 'active' ? 'Active' : acc2.status || '') + (acc2.is_broker ? ' · Broker-connected' : ' · Manual account') : '';
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ============ STATE ============
+            let currentBatch = null;      // preview batch (READY)
+            let currentFile = null;       // { name, type, data (base64) | text, sourceType }
+            let busy = false;
+
+            function api() { return (window.TradeMindCore && TradeMindCore.apiFetch) ? TradeMindCore.apiFetch.bind(TradeMindCore) : fetch; }
+            async function apiJson(url, opts) {
+                const r = await api()(url, opts);
+                let body = null;
+                try { body = await r.json(); } catch (e) { /* non-JSON */ }
+                return { status: r.status, ok: r.ok, body };
+            }
+
+            // ============ STEP 1 · SOURCE ============
+            const dz = $('dropzone');
+            const fileInput = $('file-input');
+            dz.addEventListener('click', () => fileInput.click());
+            dz.addEventListener('dragover', e => { e.preventDefault(); dz.classList.add('dragover'); });
+            dz.addEventListener('dragleave', () => dz.classList.remove('dragover'));
+            dz.addEventListener('drop', e => {
+                e.preventDefault();
+                dz.classList.remove('dragover');
+                if (e.dataTransfer.files && e.dataTransfer.files.length) pickFile(e.dataTransfer.files[0]);
+            });
+            fileInput.addEventListener('change', () => { if (fileInput.files && fileInput.files.length) pickFile(fileInput.files[0]); });
+
+            function pickFile(file) {
+                const ok = /\.(csv|xlsx)$/i.test(file.name);
+                if (!ok) { showToast('Unsupported file — use .csv or .xlsx'); return; }
+                currentFile = { name: file.name, type: file.type || '', sourceType: /\.xlsx$/i.test(file.name) ? 'XLSX' : 'CSV' };
+                $('dz-file').classList.remove('hidden');
+                $('dz-file').textContent = file.name + ' · ' + (file.size / 1024).toFixed(1) + ' KB';
+                $('dz-title').textContent = 'File ready';
+                const reader = new FileReader();
+                if (/\.xlsx$/i.test(file.name)) {
+                    reader.onload = () => {
+                        const bytes = new Uint8Array(reader.result);
+                        let bin = '';
+                        const chunk = 0x8000;
+                        for (let i = 0; i < bytes.length; i += chunk) {
+                            bin += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+                        }
+                        currentFile.data = btoa(bin);
+                        $('dz-sub').textContent = 'Excel workbook loaded — formulas are never executed.';
+                        if (window.lucide) lucide.createIcons();
+                    };
+                    reader.readAsArrayBuffer(file);
+                } else {
+                    reader.onload = () => {
+                        currentFile.text = String(reader.result || '');
+                        $('dz-sub').textContent = 'CSV loaded — ' + currentFile.text.length + ' characters.';
+                    };
+                    reader.readAsText(file);
+                }
+            }
+
+            // source-type pills
+            document.querySelectorAll('[data-src]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const st = btn.getAttribute('data-src');
+                    if (currentFile) currentFile.sourceType = st;
+                    else currentFile = { sourceType: st, name: 'import.csv', type: 'text/csv' };
+                    showToast('Source set to ' + st.replace(/_/g, ' '));
+                });
+            });
+
+            async function analyze() {
+                if (busy) return;
+                const accId = $('acc-select').value;
+                if (!accId) { showToast('Choose an account to import into first.'); return; }
+                const pasted = $('paste-input').value.trim();
+                let payload = null;
+                if (currentFile && currentFile.data) {
+                    payload = { accountId: accId, filename: currentFile.name, contentType: currentFile.type, sourceType: currentFile.sourceType, data: currentFile.data };
+                } else if (currentFile && currentFile.text) {
+                    payload = { accountId: accId, filename: currentFile.name, contentType: currentFile.type, sourceType: currentFile.sourceType, text: currentFile.text };
+                } else if (pasted) {
+                    payload = { accountId: accId, filename: 'pasted-data.csv', contentType: 'text/csv', sourceType: 'PASTED_DATA', text: pasted };
+                }
+                if (!payload) { showToast('Add a file or paste some data first.'); return; }
+
+                busy = true;
+                $('analyze-btn').disabled = true;
+                $('analyze-note').textContent = 'Parsing, normalizing and validating…';
+                try {
+                    const { ok, body } = await apiJson('/api/imports/upload', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    if (!ok || !body || !body.batch) {
+                        const msg = (body && body.error) ? (body.error.message || 'Import rejected.') : 'Import rejected.';
+                        showToast(msg);
+                        $('analyze-note').textContent = '';
+                        return;
+                    }
+                    currentBatch = body;
+                    renderMapping(body);
+                    renderPreview(body);
+                    $('mapping-panel').classList.remove('hidden');
+                    $('preview-panel').classList.remove('hidden');
+                    $('result-panel').classList.add('hidden');
+                    $('source-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    showToast('Ready — ' + body.batch.validCount + ' valid rows detected');
+                } catch (err) {
+                    console.error('analyze failed', err);
+                    showToast('Could not reach the import service.');
+                } finally {
+                    busy = false;
+                    $('analyze-btn').disabled = false;
+                    $('analyze-note').textContent = '';
+                }
+            }
+            $('analyze-btn').addEventListener('click', analyze);
+
+            // ============ STEP 2 · MAPPING ============
+            function renderMapping(pre) {
+                const list = $('mapping-list');
+                list.innerHTML = '';
+                (pre.mapping || []).forEach(m => {
+                    const row = document.createElement('div');
+                    row.className = 'map-row';
+                    const conf = m.confidence || 'medium';
+                    const confColor = conf === 'high' ? 'var(--tm-green)' : conf === 'low' ? 'var(--tm-amber)' : 'var(--tm-muted)';
+                    row.innerHTML =
+                        '<span class="src-chip">' + esc(m.sourceColumn) + '</span>' +
+                        '<svg data-lucide="arrow-right" class="w-3.5 h-3.5 arrow"></svg>' +
+                        '<span class="text-[12.5px] font-semibold">' + esc(m.targetField) + '</span>' +
+                        '<span class="text-[11px] ml-auto" style="color:' + confColor + ';font-weight:600;text-transform:uppercase;letter-spacing:0.04em">' + esc(conf) + '</span>';
+                    list.appendChild(row);
+                });
+                const warns = [];
+                if (pre.unmappedColumns && pre.unmappedColumns.length) warns.push('Unmapped: ' + pre.unmappedColumns.join(', '));
+                if (pre.unsupportedColumns && pre.unsupportedColumns.length) warns.push('Unsupported (not part of the Battlex trade model): ' + pre.unsupportedColumns.join(', '));
+                const w = $('mapping-warn');
+                if (warns.length) { w.textContent = warns.join(' · '); w.classList.remove('hidden'); }
+                else { w.classList.add('hidden'); }
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ============ STEP 3 · PREVIEW ============
+            const STATE_TAG = {
+                VALID: ['tag-emerald', 'Valid'],
+                WARNING: ['tag-amber', 'Warning'],
+                ERROR: ['tag-red', 'Error'],
+                DUPLICATE: ['tag-gray', 'Duplicate'],
+                POSSIBLE_DUPLICATE: ['tag-purple', 'Possible dup']
+            };
+            function renderPreview(pre) {
+                const b = pre.batch || {};
+                const stats = [
+                    ['Total', b.rowCount],
+                    ['Valid', b.validCount],
+                    ['Warnings', b.warningCount],
+                    ['Errors', b.errorCount],
+                    ['Duplicates', b.duplicateCount],
+                    ['Possible', b.possibleDuplicateCount]
+                ];
+                const strip = $('stats-strip');
+                strip.innerHTML = '';
+                stats.forEach(([label, val]) => {
+                    const el = document.createElement('div');
+                    el.className = 'flex items-baseline gap-1.5 rounded-lg px-2.5 py-1.5 border border-[var(--tm-border)] bg-[var(--tm-card)]';
+                    el.innerHTML = '<span class="label-xs !text-[10px]">' + label + '</span><span class="num text-[14px] font-bold">' + (val == null ? '—' : val) + '</span>';
+                    strip.appendChild(el);
+                });
+
+                const body = $('preview-body');
+                body.innerHTML = '';
+                const rows = pre.rows || [];
+                rows.forEach(r => {
+                    const v = r.values || {};
+                    const tr = document.createElement('tr');
+                    const issues = [];
+                    (r.errors || []).forEach(e => issues.push(e.field + ': ' + e.problem));
+                    (r.warnings || []).forEach(w => issues.push(w.field + ': ' + w.problem));
+                    if (r.dupReason) issues.push(r.dupReason);
+                    const [tagCls, tagTxt] = STATE_TAG[r.state] || ['tag-gray', r.state || '—'];
+                    tr.innerHTML =
+                        '<td class="num text-[var(--tm-dim)]">' + (r.rowNumber || '') + '</td>' +
+                        '<td class="num">' + esc(fmtDate(v.ts)) + '</td>' +
+                        '<td class="font-semibold">' + esc(v.symbol || '—') + '</td>' +
+                        '<td>' + esc(v.dir || '—') + '</td>' +
+                        '<td class="num text-right">' + num(v.entry) + '</td>' +
+                        '<td class="num text-right">' + num(v.exit) + '</td>' +
+                        '<td class="num text-right">' + num(v.size) + '</td>' +
+                        '<td class="num text-right" style="color:' + ((v.pnl != null && v.pnl > 0) ? 'var(--tm-green)' : (v.pnl != null && v.pnl < 0) ? 'var(--tm-red)' : 'inherit') + '">' + (v.pnl != null ? money(v.pnl) : '—') + '</td>' +
+                        '<td class="num text-right">' + (v.r != null ? num(v.r) + 'R' : '—') + '</td>' +
+                        '<td><span class="tag ' + tagCls + '">' + tagTxt + '</span></td>' +
+                        '<td class="' + (r.state === 'ERROR' ? 'issue-txt' : r.state === 'WARNING' ? 'issue-txt warn' : 'text-[11.5px] text-[var(--tm-dim)]') + '">' + esc(issues.slice(0, 2).join(' · ')) + '</td>';
+                    body.appendChild(tr);
+                });
+                const more = $('preview-more');
+                more.textContent = rows.length + ' of ' + b.rowCount + ' rows shown' + (b.rowCount > rows.length ? ' (preview capped at 300)' : '');
+                $('preview-sub').textContent = b.filename + ' · ' + (b.sourceType || '').replace(/_/g, ' ') + ' · ready to review';
+            }
+
+            // ============ COMMIT / CANCEL / ROLLBACK ============
+            async function commitImport() {
+                if (busy || !currentBatch) return;
+                busy = true;
+                $('commit-btn').disabled = true;
+                $('commit-note').textContent = 'Importing…';
+                try {
+                    const { ok, body } = await apiJson('/api/imports/' + currentBatch.batch.id + '/commit', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            includeWarnings: $('opt-warnings').checked,
+                            skipDuplicates: $('opt-skip-dupes').checked,
+                            includePossibleDuplicates: $('opt-possible').checked
+                        })
+                    });
+                    if (!ok || !body || !body.ok) {
+                        const msg = (body && body.error) ? (body.error.message || 'Import failed.') : 'Import failed.';
+                        showToast(msg);
+                        $('commit-note').textContent = '';
+                        return;
+                    }
+                    if (body.idempotent) showToast('Already imported — no duplicates created.');
+                    else showToast(body.importedCount + ' trades imported · ' + body.skippedCount + ' skipped');
+                    // refresh canonical state so Journal/Analytics/etc reflect the ledger
+                    try {
+                        const r = await api()('/api/state');
+                        const s = await r.json();
+                        if (s && core && typeof core.hydrate === 'function') {
+                            core.hydrate(s);
+                            if (typeof core.persist === 'function') core.persist();
+                        }
+                    } catch (e) { console.warn('[imports] state refresh failed', e); }
+                    showResult(body);
+                    $('preview-panel').classList.add('hidden');
+                    $('mapping-panel').classList.add('hidden');
+                    currentBatch = null;
+                    loadHistory();
+                } catch (err) {
+                    console.error('commit failed', err);
+                    showToast('Could not complete the import.');
+                } finally {
+                    busy = false;
+                    $('commit-btn').disabled = false;
+                    $('commit-note').textContent = '';
+                }
+            }
+            $('commit-btn').addEventListener('click', commitImport);
+
+            async function cancelBatch() {
+                if (busy || !currentBatch) return;
+                if (!confirm('Cancel this import? Nothing has been imported yet.')) return;
+                busy = true;
+                try {
+                    const { ok, body } = await apiJson('/api/imports/' + currentBatch.batch.id + '/cancel', { method: 'POST' });
+                    if (ok && body && body.ok) {
+                        showToast('Import cancelled');
+                        $('preview-panel').classList.add('hidden');
+                        $('mapping-panel').classList.add('hidden');
+                        currentBatch = null;
+                        loadHistory();
+                    } else {
+                        showToast((body && body.error && body.error.message) || 'Could not cancel this import.');
+                    }
+                } catch (err) { showToast('Could not cancel this import.'); }
+                finally { busy = false; }
+            }
+            $('cancel-batch-btn').addEventListener('click', cancelBatch);
+
+            async function rollbackBatch(id) {
+                if (busy) return;
+                if (!confirm('Roll back this import? Only the trades created by this batch will be removed.')) return;
+                busy = true;
+                try {
+                    const { ok, body } = await apiJson('/api/imports/' + id + '/rollback', { method: 'POST' });
+                    if (ok && body && body.ok) {
+                        showToast('Import rolled back — ' + (body.removed != null ? body.removed : 0) + ' trades removed');
+                        try {
+                            const r = await api()('/api/state');
+                            const s = await r.json();
+                            if (s && core && typeof core.hydrate === 'function') {
+                                core.hydrate(s);
+                                if (typeof core.persist === 'function') core.persist();
+                            }
+                        } catch (e) { /* non-fatal */ }
+                        $('result-panel').classList.add('hidden');
+                        loadHistory();
+                    } else {
+                        showToast((body && body.error && body.error.message) || 'Could not roll back this import.');
+                    }
+                } catch (err) { showToast('Could not roll back this import.'); }
+                finally { busy = false; }
+            }
+
+            function showResult(body) {
+                $('result-title').textContent = body.status === 'PARTIAL' ? 'Import completed with errors' : 'Import complete';
+                $('result-sub').textContent = (body.importedCount || 0) + ' trades imported · ' + (body.skippedCount || 0) + ' skipped · ' + (body.duplicateCount || 0) + ' duplicates';
+                const strip = $('result-stats');
+                strip.innerHTML = '';
+                [
+                    ['Imported', body.importedCount],
+                    ['Skipped', body.skippedCount],
+                    ['Duplicates', body.duplicateCount],
+                    ['Possible', body.possibleDuplicateCount],
+                    ['Ledger size', body.totalTrades]
+                ].forEach(([label, val]) => {
+                    const el = document.createElement('div');
+                    el.className = 'flex items-baseline gap-1.5 rounded-lg px-2.5 py-1.5 border border-[var(--tm-border)] bg-[var(--tm-card)]';
+                    el.innerHTML = '<span class="label-xs !text-[10px]">' + label + '</span><span class="num text-[14px] font-bold">' + (val == null ? '—' : val) + '</span>';
+                    strip.appendChild(el);
+                });
+                $('rollback-btn').onclick = () => rollbackBatch(body.batchId);
+                $('result-panel').classList.remove('hidden');
+                $('result-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            // ============ HISTORY ============
+            const HIST_STATUS = {
+                UPLOADED: ['tag-gray', 'Uploaded'],
+                PARSING: ['tag-blue', 'Parsing'],
+                MAPPING: ['tag-blue', 'Mapping'],
+                VALIDATING: ['tag-blue', 'Validating'],
+                READY: ['tag-blue', 'Ready'],
+                IMPORTING: ['tag-amber', 'Importing'],
+                COMPLETED: ['tag-emerald', 'Completed'],
+                PARTIAL: ['tag-amber', 'Partial'],
+                FAILED: ['tag-red', 'Failed'],
+                CANCELLED: ['tag-gray', 'Cancelled'],
+                ROLLED_BACK: ['tag-gray', 'Rolled back']
+            };
+            async function loadHistory() {
+                try {
+                    const { ok, body } = await apiJson('/api/imports');
+                    if (!ok || !body || !body.imports) return;
+                    const list = $('history-list');
+                    list.innerHTML = '';
+                    const imports = body.imports.slice().sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''));
+                    if (!imports.length) { $('history-empty').classList.remove('hidden'); return; }
+                    $('history-empty').classList.add('hidden');
+                    imports.forEach(imp => {
+                        const b = imp.batch || imp;
+                        const row = document.createElement('div');
+                        row.className = 'hist-row';
+                        const [tagCls, tagTxt] = HIST_STATUS[b.status] || ['tag-gray', b.status || '—'];
+                        const canRollback = b.status === 'COMPLETED' || b.status === 'PARTIAL';
+                        const canCancel = b.status === 'READY';
+                        row.innerHTML =
+                            '<div class="min-w-0">' +
+                                '<div class="text-[13px] font-semibold truncate">' + esc(b.filename || 'import') + '</div>' +
+                                '<div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">' + esc((b.sourceType || '').replace(/_/g, ' ')) + ' · ' + esc(fmtTime(b.createdAt)) + '</div>' +
+                            '</div>' +
+                            '<div><span class="tag ' + tagCls + '">' + tagTxt + '</span></div>' +
+                            '<div class="text-[11.5px] text-[var(--tm-dim)]">' + (b.importedCount != null ? '<span class="num">' + b.importedCount + '</span> imported' : '—') + '</div>' +
+                            '<div class="text-[11.5px] text-[var(--tm-dim)]">' + (b.rowCount != null ? '<span class="num">' + b.rowCount + '</span> rows · <span class="num">' + (b.errorCount || 0) + '</span> errors' : '—') + '</div>' +
+                            '<div class="flex items-center gap-2 justify-end">' +
+                                (canRollback ? '<button class="btn-mini !text-[var(--tm-red)]" data-rollback="' + b.id + '"><svg data-lucide="rotate-ccw" class="w-3.5 h-3.5"></svg> Roll back</button>' : '') +
+                                (canCancel ? '<button class="btn-mini" data-cancel="' + b.id + '"><svg data-lucide="ban" class="w-3.5 h-3.5"></svg> Cancel</button>' : '') +
+                            '</div>';
+                        list.appendChild(row);
+                    });
+                    list.querySelectorAll('[data-rollback]').forEach(btn => btn.addEventListener('click', () => rollbackBatch(btn.getAttribute('data-rollback'))));
+                    list.querySelectorAll('[data-cancel]').forEach(btn => btn.addEventListener('click', async () => {
+                        const id = btn.getAttribute('data-cancel');
+                        if (!confirm('Cancel this import? Nothing has been imported yet.')) return;
+                        const { ok, body } = await apiJson('/api/imports/' + id + '/cancel', { method: 'POST' });
+                        if (ok && body && body.ok) { showToast('Import cancelled'); loadHistory(); }
+                        else showToast((body && body.error && body.error.message) || 'Could not cancel this import.');
+                    }));
+                    if (window.lucide) lucide.createIcons();
+                } catch (err) {
+                    console.error('history load failed', err);
+                    $('history-empty').classList.remove('hidden');
+                }
+            }
+            $('refresh-history').addEventListener('click', loadHistory);
+
+            // ============ BOOT ============
+            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+            const gs = $('global-search');
+            if (gs && window.TM_GLOBAL_SEARCH) {
+                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
+            }
+            $('acc-select').addEventListener('change', e => {
+                const id = e.target.value;
+                if (core && id && core.Accounts.some(a => a.id === id)) core.setSelectedAccount(id);
+                refreshChrome();
+            });
+            core.TradeMindBus.subscribe('account.changed', () => refreshChrome());
+
+            refreshChrome();
+            loadHistory();
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="assets/profile-meta.js"></script>
+    <script src="assets/account-switcher.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>

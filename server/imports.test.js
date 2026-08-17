@@ -425,6 +425,14 @@ async function main() {
         const afterRb = await j('GET', '/api/trades?accountId=' + accountId);
         ok(afterRb.data.trades.length === 0, 'ledger empty after rollback');
 
+        // rolled-back batches must NOT block re-importing the same file
+        const rup = await j('POST', '/api/imports/upload', { accountId, filename: 'a.csv', text: csv });
+        ok(rup.status === 201 && rup.data.batch.validCount === 2 && rup.data.batch.duplicateCount === 0, 're-upload after rollback is valid, not flagged duplicate');
+        const rupCommit = await j('POST', '/api/imports/' + rup.data.batchId + '/commit', {});
+        ok(rupCommit.status === 200 && rupCommit.data.importedCount === 2, 're-import after rollback succeeds');
+        const afterRup = await j('GET', '/api/trades?accountId=' + accountId);
+        ok(afterRup.data.trades.length === 2, 'ledger has the re-imported trades');
+
         const acc2 = await j('POST', '/api/accounts', { name: 'Analytics Test', type: 'Personal', start: 10000, dailyLoss: 100, maxDD: 500, risk: 25 });
         const csv2 = 'Date,Symbol,Side,P&L\n2026-03-01,EURUSD,Buy,150\n2026-03-02,EURUSD,Buy,-50\n';
         const up2 = await j('POST', '/api/imports/upload', { accountId: acc2.data.id, filename: 'a.csv', text: csv2 });
