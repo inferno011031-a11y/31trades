@@ -565,7 +565,18 @@
             }
             function csv() {
                 const cols = ['symbol', 'dir', 'setup', 'strategy', 'session', 'emotion', 'adherence', 'risk', 'r', 'pnl', 'ts', 'notes'];
-                const q = v => '"' + String(v == null ? '' : v).replace(/"/g, '""') + '"';
+                // CSV-injection-safe cell: quoted always; string values that start
+// with = + - @ (formula triggers) get a leading ' so they can never
+// execute as spreadsheet formulas when the export is re-opened.
+const q = v => {
+    const s = String(v == null ? '' : v);
+    const t = s.trim();
+    const isPlainNumber = /^-?\d+(\.\d+)?$/.test(t);
+    if (typeof v !== 'number' && (/^[=+@]/.test(t) || (/^-/.test(t) && !isPlainNumber))) {
+        return "'" + s.replace(/"/g, '""') + "'";
+    }
+    return '"' + s.replace(/"/g, '""') + '"';
+};
                 const head = cols.join(',');
                 const body = accTrades(selectedAccId()).map(t => cols.map(c => q(c === 'pnl' ? t.pnl : c === 'r' ? t.rr : t[c])).join(',')).join('\n');
                 return head + '\n' + body;

@@ -7,7 +7,14 @@
 // configured via SUPABASE_DB_URL. Tracks applied files in schema_migrations,
 // so re-running is a no-op. Each migration runs in its own transaction.
 //
-// Usage:  npm run db:migrate   (or  node db/migrate.js)
+// Usage:  npm run db:migrate            (strict — fails loudly when the DB is
+//                                        unreachable; for manual/CI runs)
+//         node db/migrate.js --deploy   (best-effort — runs as part of `npm
+//                                        start` on every deploy, so the Railway
+//                                        container applies pending migrations
+//                                        with its own real credentials; if the
+//                                        DB is unreachable it logs and exits 0
+//                                        so the app still boots in file mode)
 // ============================================================================
 
 const fs = require('node:fs');
@@ -16,6 +23,21 @@ const { Pool } = require('pg');
 const { loadEnv } = require('../server/env.js');
 
 loadEnv();
+
+// --deploy = best-effort deploy-time mode (never fail the boot)
+const DEPLOY_MODE = process.argv.includes('--deploy');
+function exit0(msg) {
+    if (msg) console.log(msg);
+    process.exit(0);
+}
+function dbGone(err) {
+    if (DEPLOY_MODE) {
+        console.log('[migrate] database unreachable (' + err.message + ') — skipping migrations, app continues in file-fallback mode');
+        return exit0();
+    }
+    console.error('Cannot reach the database: ' + err.message);
+    process.exit(1);
+}
 
 const MIGRATIONS_DIR = path.join(__dirname, 'migrations');
 
@@ -53,8 +75,7 @@ async function run() {
             ')'
         );
     } catch (err) {
-        console.error('Cannot reach the database: ' + err.message);
-        process.exit(1);
+        dbGone(err);
     }
 
     const { rows } = await pool.query('SELECT version FROM schema_migrations');
@@ -89,6 +110,10 @@ async function run() {
 }
 
 run().catch(err => {
+    if (DEPLOY_MODE) {
+        console.log('[migrate] skipped (best-effort deploy mode): ' + err.message);
+        process.exit(0);
+    }
     console.error(err.message);
     process.exit(1);
 });

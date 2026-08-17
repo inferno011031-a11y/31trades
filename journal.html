@@ -981,7 +981,8 @@
                         '<td class="num text-[var(--tm-dim)]">' + fmtTs(t.ts) + '</td>' +
                         '<td class="tm-sym-cell">' + (window.TMAssets && TMAssets.badgeHtml
                             ? '<span class="tm-sym-badge">' + TMAssets.badgeHtml(t.symbol) + '</span>'
-                            : '') + '<span class="tm-sym-name">' + t.symbol + '</span></td>' +
+                            : '') + '<span class="tm-sym-name">' + t.symbol + '</span>' +
+                        (t.source === 'IMPORT' ? ' <span class="tag tag-gray !py-0.5 !px-1.5 text-[10px] align-middle">Imported</span>' : '') + '</td>' +
                         '<td>' + (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</td>' +
                         '<td class="text-[var(--tm-text)]">' + (t.setup || '—') + '</td>' +
                         '<td class="text-[var(--tm-dim)]">' + (t.session || '—') + '</td>' +

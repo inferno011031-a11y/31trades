@@ -49,7 +49,7 @@ const TABLE_COLUMNS = {
     strategies: ['id', 'user_id', 'name', 'description', 'color', 'status'],
     rule_sets: ['id', 'user_id', 'name', 'scope'],
     assignments: ['id', 'user_id', 'account_id', 'strategy_id', 'policy_version_id', 'strategy_version_id', 'active_from'],
-    trades: ['id', 'user_id', 'account_id', 'strategy_id', 'config_version_id', 'strategy_version_id', 'ts', 'symbol', 'dir', 'setup', 'session', 'emotion', 'adherence', 'entry', 'exit', 'size', 'risk', 'pnl', 'r', 'stop', 'tp', 'note', 'reviewed', 'adherence_result', 'block_reason', 'evidence', 'created_at', 'updated_at'],
+    trades: ['id', 'user_id', 'account_id', 'strategy_id', 'config_version_id', 'strategy_version_id', 'ts', 'symbol', 'dir', 'setup', 'session', 'emotion', 'adherence', 'entry', 'exit', 'size', 'risk', 'pnl', 'r', 'stop', 'tp', 'note', 'reviewed', 'adherence_result', 'block_reason', 'evidence', 'source', 'import_batch_id', 'import_meta', 'created_at', 'updated_at'],
     trade_evaluations: ['trade_id', 'user_id', 'account_id', 'rule_id', 'rule_key', 'rule_label', 'rule_version', 'category', 'severity', 'expected', 'actual', 'state', 'explanation', 'evaluated_at'],
     violations: ['trade_id', 'user_id', 'account_id', 'rule_key', 'rule_label', 'rule_version', 'severity', 'expected', 'actual', 'explanation', 'pnl', 'r', 'review_state', 'ts', 'created_at'],
     audit_log: ['user_id', 'entity_type', 'entity_id', 'action', 'detail', 'new_value', 'created_at']
@@ -138,6 +138,7 @@ function stateToRows(state, userId) {
         v(t.entry), v(t.exit), v(t.size), v(t.risk), v(t.pnl), v(t.r), v(t.stop), v(t.tp),
         v(t.note), v(!!t.reviewed), v(t.adherence_result), v(t.block_reason),
         JSON.stringify(t.evidence || []),
+        v(t.source), v(t.import_batch_id), t.import_meta ? JSON.stringify(t.import_meta) : null,
         t.created_at ? new Date(t.created_at) : new Date(t.ts),
         new Date()
     ]));
@@ -199,7 +200,8 @@ function rowsToState(rows) {
             risk: num(r.risk), pnl: num(r.pnl), r: num(r.r),
             stop: num(r.stop), tp: num(r.tp), note: r.note, reviewed: !!r.reviewed,
             adherence_result: r.adherence_result, block_reason: r.block_reason,
-            evidence: r.evidence || [], created_at: r.created_at
+            evidence: r.evidence || [], source: r.source, import_batch_id: r.import_batch_id,
+            import_meta: r.import_meta || null, created_at: r.created_at
         })),
         TradeEvaluations: (rows.tradeEvaluations || []).map(r => ({
             id: r.id, tradeId: r.trade_id, account_id: r.account_id, ruleId: r.rule_id,

@@ -52,6 +52,7 @@ const Battle = require('./server/battle.js');
 const AICoach = require('./server/ai-coach.js');
 const BattleWs = require('./server/battle-ws.js');
 const Prefs = require('./server/prefs.js');
+const Imports = require('./server/imports.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -101,6 +102,7 @@ const createCore = require('./src/core/index.js');
 
 let DB_MODE = false;                  // true once a user state round-trips Postgres
 const cores = new Map();              // userId → user core wrapper
+const importInFlight = new Set();     // "userId:batchId" — concurrency lock for commits
 
 function serializeCore(core) {
     const cp = o => JSON.parse(JSON.stringify(o));
@@ -244,6 +246,157 @@ function logBrokerEvent(Core, broker, what) {
     );
 }
 
+// Record an import lifecycle event in the user's canonical event log (flows
+// into audit history + System notifications). Counts only — never trade
+// contents or sensitive file data.
+function logImportEvent(Core, batch, what, detail) {
+    Core.ConfigAPI.logTagEvent(
+        'Import · ' + (batch.filename || 'journal'),
+        what,
+        detail || (what + ' · ' + batch.rowCount + ' rows · ' + batch.importedCount + ' imported'),
+        'Canonical ledger updated from a journal import'
+    );
+}
+
+// Compact preview shape for /api/imports responses (rows are trimmed to a
+// representative slice; full rows live only inside the stored batch).
+function importPreviewOf(batch) {
+    const rows = (batch.rows || []).slice(0, 300).map(r => ({
+        rowNumber: r.rowNumber, state: r.state, errors: r.errors, warnings: r.warnings,
+        dupReason: r.dupReason, values: r.values
+    }));
+    return {
+        batch: {
+            id: batch.id, status: batch.status, filename: batch.filename,
+            sourceType: batch.sourceType, createdAt: batch.createdAt,
+            accountId: batch.accountId, fileSize: batch.fileSize,
+            rowCount: batch.rowCount, validCount: batch.validCount,
+            warningCount: batch.warningCount, errorCount: batch.errorCount,
+            duplicateCount: batch.duplicateCount, possibleDuplicateCount: batch.possibleDuplicateCount,
+            importedCount: batch.importedCount, skippedCount: batch.skippedCount,
+            errorCode: batch.errorCode || null
+        },
+        mapping: batch.mapping || [],
+        unmappedColumns: batch.unmappedColumns || [],
+        unsupportedColumns: batch.unsupportedColumns || [],
+        rows
+    };
+}
+
+// POST /api/imports/upload — validate → parse → detect columns → normalize +
+// validate every row → save the batch in READY state → return the preview.
+// Nothing is imported until the user confirms via /commit.
+async function handleImportUpload(req, res, uc, Core) {
+    const rl = Imports.rateLimit(uc.userId, 'import-upload', 10, 60000);
+    if (!rl.allowed) return json(res, 429, { error: { code: 'IMPORT_RATE_LIMITED', message: 'Too many uploads — try again shortly.' } });
+
+    let raw;
+    try { raw = await readBodyRaw(req, Imports.MAX_UPLOAD_BODY); }
+    catch (e) { return json(res, 413, { error: { code: 'IMPORT_TOO_LARGE', message: e.message } }); }
+    let body;
+    try { body = JSON.parse(raw.toString('utf8')); }
+    catch (e) { return json(res, 400, { error: { code: 'IMPORT_BAD_PAYLOAD', message: 'invalid JSON body' } }); }
+
+    const accountId = String(body.accountId || '');
+    if (!accountId) {
+        return json(res, 400, { error: { code: 'IMPORT_ACCOUNT_REQUIRED', message: 'Choose a Battlex account to import into.' } });
+    }
+    if (!Core.Accounts.some(a => a.id === accountId)) {
+        return json(res, 404, { error: { code: 'IMPORT_UNKNOWN_ACCOUNT', message: 'Unknown account — create it in Strategy Lab first.' } });
+    }
+
+    // data: base64 (binary-safe .xlsx) or plain text (CSV / pasted data)
+    let buffer;
+    if (typeof body.data === 'string' && body.data) {
+        try { buffer = Buffer.from(body.data, 'base64'); }
+        catch (e) { return json(res, 400, { error: { code: 'IMPORT_BAD_ENCODING', message: 'Invalid base64 payload.' } }); }
+    } else if (typeof body.text === 'string' && body.text) {
+        buffer = Buffer.from(body.text, 'utf8');
+    } else {
+        return json(res, 400, { error: { code: 'IMPORT_NO_DATA', message: 'No file data received.' } });
+    }
+
+    const v = Imports.validateUpload({ filename: body.filename, contentType: body.contentType, data: buffer });
+    if (!v.ok) return json(res, 400, { error: { code: 'IMPORT_REJECTED', message: v.error } });
+
+    const wantSource = String(body.sourceType || '').toUpperCase();
+    const sourceType = Imports.SOURCE_TYPES.includes(wantSource) ? wantSource : (v.ext === '.xlsx' ? 'XLSX' : 'CSV');
+
+    let parsed;
+    try {
+        if (v.ext === '.xlsx') {
+            parsed = Imports.parseXlsx(v.buffer);
+        } else {
+            const text = v.encoding === 'utf16le' ? v.buffer.toString('utf16le') : v.buffer.toString('utf8');
+            parsed = Imports.parseCsv(text);
+        }
+    } catch (err) {
+        return json(res, 400, { error: { code: err.importCode || 'IMPORT_PARSE_FAILED', message: err.message } });
+    }
+    if (!parsed.headers.length) {
+        return json(res, 400, { error: { code: 'IMPORT_EMPTY', message: 'No columns detected — the file appears empty.' } });
+    }
+    if (!parsed.rows.length) {
+        return json(res, 400, { error: { code: 'IMPORT_EMPTY', message: 'No data rows detected — add rows below the header row.' } });
+    }
+
+    const mapping = Imports.detectColumns(parsed.headers);
+    if (!mapping.mapping.length) {
+        return json(res, 400, { error: { code: 'IMPORT_NO_COLUMNS', message: 'Could not map any columns — check that the file has a header row with recognizable fields (date, symbol, direction, entry/exit or P&L).' } });
+    }
+
+    const batch = {
+        id: Imports.genBatchId(),
+        userId: uc.userId,
+        accountId,
+        sourceType,
+        filename: String(body.filename || 'import').slice(0, 255),
+        contentType: String(body.contentType || '').slice(0, 200),
+        fileHash: Imports.fileHash(v.buffer),
+        fileSize: v.buffer.length,
+        status: 'READY',
+        createdAt: new Date().toISOString(),
+        completedAt: null,
+        rowCount: parsed.rows.length,
+        headers: parsed.headers,
+        mapping: mapping.mapping,
+        unmappedColumns: mapping.unmappedColumns,
+        unsupportedColumns: mapping.unsupportedColumns,
+        rows: null,
+        fingerprints: [],
+        validCount: 0, warningCount: 0, errorCount: 0,
+        duplicateCount: 0, possibleDuplicateCount: 0,
+        importedCount: 0, skippedCount: 0,
+        errorCode: null
+    };
+
+    const ctx = {
+        accountId, batchId: batch.id, filename: batch.filename,
+        existingTrades: Core.Trades,
+        strategies: Core.StrategyMaster,
+        batchFps: []
+    };
+    // re-upload detection: previously imported fingerprints for this account
+    try {
+        const prev = await Imports.listBatches(uc.userId);
+        prev.filter(b => b.accountId === accountId && Array.isArray(b.fingerprints))
+            .forEach(b => ctx.batchFps.push(...b.fingerprints));
+    } catch (e) { /* non-fatal */ }
+
+    const rows = Imports.buildRows(parsed.headers, parsed.rows, mapping.mapping, ctx);
+    const stats = Imports.summarize(rows);
+    batch.rows = rows;
+    batch.rowCount = stats.total;
+    batch.validCount = stats.valid;
+    batch.warningCount = stats.warning;
+    batch.errorCount = stats.error;
+    batch.duplicateCount = stats.duplicate;
+    batch.possibleDuplicateCount = stats.possibleDuplicate;
+
+    await Imports.saveBatch(uc.userId, batch);
+    return json(res, 201, { ok: true, batchId: batch.id, ...importPreviewOf(batch) });
+}
+
 function bearerToken(req) {
     const h = req.headers.authorization || '';
     return h.startsWith('Bearer ') ? h.slice(7).trim() : '';
@@ -363,6 +516,26 @@ function readBody(req) {
             if (!data) return resolve({});
             try { resolve(JSON.parse(data)); } catch (e) { reject(new Error('invalid JSON body')); }
         });
+        req.on('error', reject);
+    });
+}
+
+// Binary-safe body reader with a larger cap — used ONLY by the import upload
+// route (base64-encoded .xlsx can exceed the 2 MB JSON cap).
+function readBodyRaw(req, maxBytes) {
+    return new Promise((resolve, reject) => {
+        const chunks = [];
+        let total = 0;
+        req.on('data', chunk => {
+            total += chunk.length;
+            if (total > maxBytes) {
+                req.destroy();
+                reject(new Error('request body too large'));
+                return;
+            }
+            chunks.push(chunk);
+        });
+        req.on('end', () => resolve(Buffer.concat(chunks)));
         req.on('error', reject);
     });
 }
@@ -745,11 +918,40 @@ async function handleApi(req, res, url) {
                 if (!t) return json(res, 404, { error: 'unknown trade: ' + m[1] });
                 return json(res, 200, { ok: true, autopsy: AI.autopsy(Core, t) });
             }
+
+            // ---------- Legacy Journal Import (history / preview / errors) ----------
+            if (p === '/api/imports') {
+                const list = (await Imports.listBatches(uc.userId)).map(b => importPreviewOf(b));
+                return json(res, 200, { ok: true, imports: list });
+            }
+            if ((m = p.match(/^\/api\/imports\/([^/]+)$/))) {
+                const b = await Imports.getBatch(uc.userId, m[1]);
+                if (!b) return json(res, 404, { error: 'unknown import batch' });
+                return json(res, 200, { ok: true, import: importPreviewOf(b) });
+            }
+            if ((m = p.match(/^\/api\/imports\/([^/]+)\/preview$/))) {
+                const b = await Imports.getBatch(uc.userId, m[1]);
+                if (!b) return json(res, 404, { error: 'unknown import batch' });
+                return json(res, 200, importPreviewOf(b));
+            }
+            if ((m = p.match(/^\/api\/imports\/([^/]+)\/errors$/))) {
+                const b = await Imports.getBatch(uc.userId, m[1]);
+                if (!b) return json(res, 404, { error: 'unknown import batch' });
+                const errors = (b.rows || [])
+                    .filter(r => r.state === 'ERROR')
+                    .map(r => ({ rowNumber: r.rowNumber, errors: r.errors }));
+                return json(res, 200, { ok: true, total: errors.length, errors });
+            }
         } catch (err) {
             console.error('[31trades] GET ' + p + ' failed: ' + err.message);
             return json(res, 400, { error: err.message });
         }
         return json(res, 404, { error: 'unknown endpoint: ' + p });
+    }
+
+    // ---------- Journal Import upload (raw body — base64 for binary files) ----------
+    if (p === '/api/imports/upload' && req.method === 'POST') {
+        return handleImportUpload(req, res, uc, Core);
     }
 
     // ---------- write endpoints ----------
@@ -979,6 +1181,127 @@ async function handleApi(req, res, url) {
             logBrokerEvent(Core, body.broker, 'Disconnected');
             uc.scheduleSave();
             return json(res, 200, { ok: true });
+        }
+
+        // ---- Journal Import lifecycle (commit / cancel / rollback) ----
+        // In-flight lock: Node's single thread makes check-and-set atomic, so
+        // two concurrent commits of the same batch can never double-import.
+        if ((m = p.match(/^\/api\/imports\/([^/]+)\/commit$/))) {
+            const rl = Imports.rateLimit(uc.userId, 'import-commit', 10, 60000);
+            if (!rl.allowed) return json(res, 429, { error: { code: 'IMPORT_RATE_LIMITED', message: 'Too many import commits — try again shortly.' } });
+            const bid = m[1];
+            const batch = await Imports.getBatch(uc.userId, bid);
+            if (!batch) return json(res, 404, { error: { code: 'IMPORT_NOT_FOUND', message: 'unknown import batch' } });
+            if (batch.status === 'COMPLETED' || batch.status === 'PARTIAL') {
+                // idempotent replay — the second press must not duplicate trades
+                return json(res, 200, { ok: true, idempotent: true, batchId: bid, status: batch.status, importedCount: batch.importedCount, skippedCount: batch.skippedCount, duplicateCount: batch.duplicateCount });
+            }
+            if (batch.status === 'IMPORTING') return json(res, 409, { error: { code: 'IMPORT_IN_PROGRESS', message: 'This import is already running.' } });
+            if (batch.status !== 'READY') return json(res, 409, { error: { code: 'IMPORT_NOT_IMPORTABLE', message: 'Import is ' + batch.status.toLowerCase() + ' — it can no longer be committed.' } });
+            if (importInFlight.has(uc.userId + ':' + bid)) return json(res, 409, { error: { code: 'IMPORT_IN_PROGRESS', message: 'This import is already running.' } });
+            importInFlight.add(uc.userId + ':' + bid);
+            try {
+                batch.status = 'IMPORTING';
+                await Imports.saveBatch(uc.userId, batch);
+                logImportEvent(Core, batch, 'Import started', 'Preparing ' + batch.validCount + ' valid rows · ' + batch.rowCount + ' total');
+
+                const includeWarnings = body.includeWarnings !== false;
+                const skipDuplicates = body.skipDuplicates !== false;
+                const includePossibleDuplicates = body.includePossibleDuplicates === true;
+                const errors = [];
+                let imported = 0;
+                let skipped = 0;
+
+                for (const row of (batch.rows || [])) {
+                    const importIt = row.state === 'VALID'
+                        || (row.state === 'WARNING' && includeWarnings)
+                        || (row.state === 'DUPLICATE' && !skipDuplicates)
+                        || (row.state === 'POSSIBLE_DUPLICATE' && includePossibleDuplicates);
+                    if (!importIt) { skipped++; continue; }
+                    try {
+                        const trade = {
+                            ...row.values,
+                            id: 'imp-' + bid + '-' + row.rowNumber,   // deterministic → idempotent replay
+                            import_batch_id: bid
+                        };
+                        Core.logTradePipeline(trade);
+                        imported++;
+                        batch.fingerprints.push(Imports.fingerprintOf(trade));
+                    } catch (err) {
+                        skipped++;
+                        errors.push({ rowNumber: row.rowNumber, message: err.message });
+                    }
+                }
+
+                batch.importedCount = imported;
+                batch.skippedCount = skipped;
+                batch.rowErrors = errors;
+                // PARTIAL = some rows imported, some row-level failures
+                // COMPLETED = imported (even 0 — an all-duplicates commit is a
+                //   clean no-op, not a failure)
+                // FAILED = nothing imported AND row-level failures
+                batch.status = errors.length && imported ? 'PARTIAL' : (imported || !errors.length ? 'COMPLETED' : 'FAILED');
+                if (batch.status === 'FAILED') batch.errorCode = 'IMPORT_ROW_FAILURE';
+                batch.completedAt = new Date().toISOString();
+                // drop the raw rows — the ledger is now the record; keep counts +
+                // fingerprints (for re-upload duplicate detection) + row errors
+                batch.rows = null;
+                await Imports.saveBatch(uc.userId, batch);
+                uc.scheduleSave();
+                if (batch.status === 'FAILED') {
+                    logImportEvent(Core, batch, 'Import failed', 'No rows could be imported');
+                    return json(res, 400, { error: { code: 'IMPORT_ROW_FAILURE', message: 'No rows could be imported.', details: { errors } } });
+                }
+                logImportEvent(Core, batch, 'Import completed', imported + ' trades imported · ' + skipped + ' skipped · ' + batch.duplicateCount + ' duplicates');
+                return json(res, 200, {
+                    ok: true, batchId: bid, status: batch.status,
+                    importedCount: imported, skippedCount: skipped,
+                    duplicateCount: batch.duplicateCount, possibleDuplicateCount: batch.possibleDuplicateCount,
+                    totalTrades: Core.Trades.length, errors: errors.slice(0, 50)
+                });
+            } catch (err) {
+                batch.status = 'FAILED';
+                batch.errorCode = 'IMPORT_COMMIT_FAILED';
+                batch.rows = null;
+                await Imports.saveBatch(uc.userId, batch).catch(() => {});
+                logImportEvent(Core, batch, 'Import failed', err.message);
+                throw err;
+            } finally {
+                importInFlight.delete(uc.userId + ':' + bid);
+            }
+        }
+        if ((m = p.match(/^\/api\/imports\/([^/]+)\/cancel$/))) {
+            const batch = await Imports.getBatch(uc.userId, m[1]);
+            if (!batch) return json(res, 404, { error: { code: 'IMPORT_NOT_FOUND', message: 'unknown import batch' } });
+            if (batch.status === 'COMPLETED' || batch.status === 'PARTIAL' || batch.status === 'ROLLED_BACK') {
+                return json(res, 409, { error: { code: 'IMPORT_NOT_CANCELLABLE', message: 'Import is ' + batch.status.toLowerCase() + ' — it cannot be cancelled.' } });
+            }
+            batch.status = 'CANCELLED';
+            batch.rows = null;
+            batch.completedAt = new Date().toISOString();
+            await Imports.saveBatch(uc.userId, batch);
+            logImportEvent(Core, batch, 'Import cancelled', 'Import discarded before committing');
+            return json(res, 200, { ok: true, batchId: m[1], status: batch.status });
+        }
+        if ((m = p.match(/^\/api\/imports\/([^/]+)\/rollback$/))) {
+            const batch = await Imports.getBatch(uc.userId, m[1]);
+            if (!batch) return json(res, 404, { error: { code: 'IMPORT_NOT_FOUND', message: 'unknown import batch' } });
+            if (batch.status !== 'COMPLETED' && batch.status !== 'PARTIAL') {
+                return json(res, 409, { error: { code: 'IMPORT_NOT_ROLLBACKABLE', message: 'Only completed imports can be rolled back.' } });
+            }
+            const doomed = Core.Trades.filter(t => t.import_batch_id === m[1]);
+            let removed = 0;
+            for (const t of doomed.slice()) {
+                try { Core.TradeService.remove(t.id); removed++; } catch (e) { /* keep going */ }
+            }
+            batch.status = 'ROLLED_BACK';
+            batch.importedCount = 0;
+            batch.rows = null;
+            batch.completedAt = new Date().toISOString();
+            await Imports.saveBatch(uc.userId, batch);
+            uc.scheduleSave();
+            logImportEvent(Core, batch, 'Import rolled back', removed + ' imported trades removed from the ledger');
+            return json(res, 200, { ok: true, batchId: m[1], status: batch.status, removed });
         }
 
         // ---- reset to the first-user state (zero trades / accounts) ----
