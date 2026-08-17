@@ -239,7 +239,7 @@
             { name: 'Dashboard', href: 'dashboard.html', icon: 'layout-dashboard' },
             { name: 'Journal', href: 'journal.html', icon: 'book-open' },
             { name: 'Review', href: 'review.html', icon: 'clipboard-check' },
-            { name: 'Import', href: 'imports.html', icon: 'file-import' },
+            { name: 'Import', href: 'imports.html', icon: 'file-up' },
             { name: 'Improve', href: 'improve.html', icon: 'refresh-cw' },
             { name: 'Insights', href: 'insights.html', icon: 'sparkles' },
             { name: 'Analytics', href: 'analytics.html', icon: 'bar-chart-3' },
