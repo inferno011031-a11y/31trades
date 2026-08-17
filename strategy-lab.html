@@ -1204,10 +1204,17 @@
             renderAll();
             renderChrome();
             if (window.lucide) lucide.createIcons();
+
+            // Global account switcher deep-link: open the account creation modal.
+            try {
+                const q = new URLSearchParams(location.search);
+                if (q.get('new') === '1') setTimeout(() => openAccountModal(null), 250);
+            } catch (e) { /* non-critical */ }
         })();
     </script>
     <script src="assets/tour.js"></script>
     <script src="assets/profile-meta.js"></script>
+    <script src="assets/account-switcher.js"></script>
     <script src="reset.js"></script>
 </body>
 </html>
