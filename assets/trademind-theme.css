@@ -22,6 +22,22 @@ body:not(.tm-landing) {
     font-family: var(--tm-sans);
 }
 
+/* ---- Glass + hairline tokens (canonical) -----------------------------------
+   Some pages (ai, dashboard, calendar, …) carry their own local :root copies of
+   these tokens; battles/improve/review rely on them without local definitions.
+   This block is the source of truth — loaded after page <style> blocks, so the
+   values here win the cascade and every page gets the same glass treatment.
+   ============================================================================ */
+:root {
+    --glass-bg: rgba(23, 26, 34, 0.55);
+    --glass-bg-strong: rgba(28, 32, 42, 0.78);
+    --glass-border: rgba(255, 255, 255, 0.09);
+    --glass-border-strong: rgba(255, 255, 255, 0.16);
+    --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+    --glass-inner: rgba(255, 255, 255, 0.04);
+    --hairline: rgba(255, 255, 255, 0.06);
+}
+
 /* ---- App shell ----------------------------------------------------------- */
 body:not(.tm-landing) .sidebar {
     background: var(--tm-bg-elev) !important;
@@ -266,6 +282,14 @@ input:focus, select:focus, textarea:focus {
 .cal-day.empty, .cal-day.other { background: transparent !important; border-color: transparent; }
 .cal-day.empty:hover { background: transparent !important; transform: none; }
 .cal-daynum { color: var(--tm-dim); }
+
+/* ---- Narrow-desktop topbar: drop secondary status chips so the Log Trade
+   button and account selector never clip (they overflow at ~1024–1280px when
+   the sidebar is still expanded). Below 1024px the shell already hides them
+   via the pages' own hide-when-collapsed rules. -------------------------------- */
+@media (max-width: 1280px) {
+    .topbar .session-chip { display: none !important; }
+}
 
 /* ---- Toast / misc ------------------------------------------------------------- */
 .toast {
@@ -571,6 +595,13 @@ html[data-theme="light"] {
     --tm-amber: #d97706;
     --tm-purple: #7c3aed;
     --tm-blue: #2563eb;
+    --glass-bg: rgba(255, 255, 255, 0.66);
+    --glass-bg-strong: rgba(255, 255, 255, 0.86);
+    --glass-border: rgba(15, 23, 42, 0.12);
+    --glass-border-strong: rgba(148, 163, 184, 0.35);
+    --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+    --glass-inner: rgba(255, 255, 255, 0.5);
+    --hairline: rgba(15, 23, 42, 0.07);
 }
 
 html[data-theme="light"] .sidebar,
