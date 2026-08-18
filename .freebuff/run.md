@@ -12,11 +12,31 @@
    `schema_migrations`). All migrations (001–009) must be applied — 001–007
    for per-user scoping, 008 for AI findings, 009 for notification read state.
 
+## How to reproduce the compiled Tailwind CSS
+
+`assets/tailwind-compiled.css` is committed, but if you change markup/JS
+classes, regenerate it:
+
+```bash
+npm install                  # includes devDependency tailwindcss
+npx tailwindcss -c tailwind.config.js -i assets/tailwind-input.css -o assets/tailwind-compiled.css --minify
+```
+
+Every page links this static file INSTEAD of the Tailwind CDN runtime (the
+~400KB in-browser compiler is gone). `assets/tailwind-config.js` and
+`assets/tailwind-input.css` are the build inputs. lucide is pinned at
+`lucide@1.31.0` — do not bump without re-checking icon availability
+(`file-import` does not exist in 1.31.0; the app uses `file-up`).
+
 ## How to run the server
 
 ```bash
-npm start          # = node server.js  → http://127.0.0.1:8080
+npm start          # = node db/migrate.js --deploy && node server.js  → http://127.0.0.1:8080
 ```
+
+Static assets are served with brotli/gzip compression (cached in memory),
+ETag revalidation (304s), and `Cache-Control` (`no-cache` for HTML,
+`max-age=86400` for js/css/svg/woff2). JSON API responses over 1KB get gzip.
 
 - Port: `process.env.PORT` wins (Railway), else `TRADEMIND_PORT` (dev/tests), default `8080`. Server binds `0.0.0.0`.
 - Boot logs print a Supabase env diagnostic (SUPABASE_URL / SUPABASE_ANON_KEY / SUPABASE_DB_URL detected or missing) plus a live database ping — check them in Railway runtime logs if the app falls back to data/db.json.

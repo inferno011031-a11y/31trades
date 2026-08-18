@@ -86,6 +86,69 @@ const MIME = {
 };
 
 /* ---------------------------------------------------------------------------
+   0.5 COMPRESSION + CACHE HELPERS
+   ---------------------------------------------------------------------------
+   Static text assets get brotli (or gzip fallback) with an in-memory cache
+   keyed by path + mtime + encoding, plus ETag/Last-Modified revalidation so
+   repeat visits serve 304s instead of re-downloading. JSON API payloads get
+   fast gzip when the client accepts it. Only text-like types compress — binary
+   (png/jpg/woff2) is already compressed.
+   --------------------------------------------------------------------------- */
+const zlib = require('zlib');
+
+const COMPRESSIBLE = { '.html': 1, '.js': 1, '.css': 1, '.json': 1, '.svg': 1, '.txt': 1, '.map': 1, '.md': 1 };
+const compCache = new Map();          // `${path}|${mtimeMs}|br|${len}` -> Buffer
+const COMP_CACHE_MAX = 60;            // bounded memory (a few MB)
+
+function pickEncoding(req) {
+    const ae = String(req.headers['accept-encoding'] || '');
+    if (ae.includes('br')) return 'br';
+    if (ae.includes('gzip')) return 'gzip';
+    return null;
+}
+
+function compressSync(buf, enc) {
+    return enc === 'br'
+        ? zlib.brotliCompressSync(buf, { params: { [zlib.constants.BROTLI_PARAM_QUALITY]: 5 } })
+        : zlib.gzipSync(buf, { level: 6 });
+}
+
+function compressedVariant(file, data, enc) {
+    let st;
+    try { st = fs.statSync(file); } catch (e) { st = { mtimeMs: 0 }; }
+    const key = `${file}|${st.mtimeMs}|${enc}|${data.length}`;
+    let out = compCache.get(key);
+    if (!out) {
+        out = compressSync(data, enc);
+        compCache.set(key, out);
+        if (compCache.size > COMP_CACHE_MAX) {
+            const first = compCache.keys().next().value;
+            compCache.delete(first);
+        }
+    }
+    return { buf: out, etag: `"${st.mtimeMs.toString(16)}-${data.length.toString(16)}"` };
+}
+
+function gzipJson(res, body, enc) {
+    const raw = Buffer.from(JSON.stringify(body), 'utf8');
+    if (enc && raw.length > 1024) {
+        const out = compressSync(raw, 'gzip');   // fast path for dynamic JSON
+        res.writeHead(200, {
+            'Content-Type': 'application/json; charset=utf-8',
+            'Content-Encoding': 'gzip',
+            'Vary': 'Accept-Encoding',
+            'Cache-Control': 'no-store'
+        });
+        return res.end(out);
+    }
+    res.writeHead(200, {
+        'Content-Type': 'application/json; charset=utf-8',
+        'Cache-Control': 'no-store'
+    });
+    return res.end(raw);
+}
+
+/* ---------------------------------------------------------------------------
    1. PER-USER CORE INSTANCES
    ---------------------------------------------------------------------------
    src/core/index.js is a UMD factory with ZERO DOM/localStorage dependencies;
@@ -499,6 +562,10 @@ async function boot() {
    3. HTTP HELPERS
    --------------------------------------------------------------------------- */
 function json(res, code, body) {
+    const req = res._req;   // attached at the API entry point (per-request, race-free)
+    if (code === 200 && req && req.headers['accept-encoding']) {
+        return gzipJson(res, body, pickEncoding(req));
+    }
     res.writeHead(code, {
         'Content-Type': 'application/json; charset=utf-8',
         'Cache-Control': 'no-store'
@@ -549,6 +616,7 @@ function readBodyRaw(req, maxBytes) {
       Every mutation persists via save(). Errors are returned as JSON 400s.
    --------------------------------------------------------------------------- */
 async function handleApi(req, res, url) {
+    res._req = req;   // lets json() gzip large 200 responses without touching 200+ call sites
     const p = url.pathname;
     const q = url.searchParams;
 
@@ -1520,7 +1588,7 @@ async function handleApi(req, res, url) {
 /* ---------------------------------------------------------------------------
    5. STATIC SERVING — the app pages, unchanged, from the project root
    --------------------------------------------------------------------------- */
-function serveStatic(res, urlPath) {
+function serveStatic(req, res, urlPath) {
     let p;
     try { p = decodeURIComponent(urlPath); } catch (e) { return json(res, 400, { error: 'bad path' }); }
     if (p === '/') p = '/index.html';
@@ -1530,15 +1598,45 @@ function serveStatic(res, urlPath) {
         return json(res, 403, { error: 'forbidden' });
     }
 
-    fs.readFile(file, (err, data) => {
-        if (err) return json(res, 404, { error: 'not found: ' + p });
+    fs.stat(file, (serr, st) => {
+        if (serr) return json(res, 404, { error: 'not found: ' + p });
         const ext = path.extname(file).toLowerCase();
-        res.writeHead(200, {
-            'Content-Type': MIME[ext] || 'application/octet-stream',
-            'Cache-Control': 'no-cache'
+        const etag = `"${st.mtimeMs.toString(16)}-${st.size.toString(16)}"`;
+
+        // Revalidation: if the browser already has this exact version, send 304.
+        if (req.headers['if-none-match'] === etag) {
+            res.writeHead(304, { 'ETag': etag, 'Cache-Control': cacheFor(ext) });
+            return res.end();
+        }
+
+        fs.readFile(file, (err, data) => {
+            if (err) return json(res, 404, { error: 'not found: ' + p });
+            const enc = COMPRESSIBLE[ext] ? pickEncoding(req) : null;
+            const headers = {
+                'Content-Type': MIME[ext] || 'application/octet-stream',
+                'Cache-Control': cacheFor(ext),
+                'ETag': etag,
+                'Vary': 'Accept-Encoding'
+            };
+            if (enc) {
+                const { buf } = compressedVariant(file, data, enc);
+                headers['Content-Encoding'] = enc;
+                res.writeHead(200, headers);
+                return res.end(buf);
+            }
+            res.writeHead(200, headers);
+            res.end(data);
         });
-        res.end(data);
     });
+}
+
+// HTML revalidates (fast 304s); fingerprint-able subresources cache hard.
+function cacheFor(ext) {
+    if (ext === '.html') return 'no-cache';
+    if (ext === '.js' || ext === '.css' || ext === '.svg' || ext === '.woff2' || ext === '.map') {
+        return 'public, max-age=86400';
+    }
+    return 'public, max-age=3600';
 }
 
 /* ---------------------------------------------------------------------------
@@ -1574,7 +1672,7 @@ boot().then(() => {
             handleApi(req, res, url).catch(err => json(res, 500, { error: err.message }));
             return;
         }
-        serveStatic(res, url.pathname);
+        serveStatic(req, res, url.pathname);
     // 0.0.0.0 — Railway (and other hosts) route external traffic to the
     // container this way; loopback clients (127.0.0.1) are still served.
     });

@@ -5,6 +5,7 @@ module.exports = {
     ],
     "content": [
       "./*.html",
+      "./*.js",
       "./assets/**/*.js",
       "./src/**/*.js"
     ],
