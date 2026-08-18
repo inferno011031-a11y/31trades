@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="icon" href="/assets/logo.svg" type="image/png">
+    <!-- SEO:META -->
+    <link rel="stylesheet" href="/assets/seo.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+<header class="bx-header">
+    <div class="bx-header-inner">
+        <a class="bx-logo" href="/">
+            <img
+                src="/assets/logo.svg"
+                alt="BattlexJournal"
+                class="bx-logo-img"
+                width="26"
+                height="26"
+            >
+            BATTLEXJOURNAL
+        </a>
+        <nav aria-label="Primary">
+            <ul class="bx-nav">
+                <li><a class="bx-nav-link" href="/trading-journal">Trading Journal</a></li>
+                <li><a class="bx-nav-link" href="/trading-journal-template">Template</a></li>
+                <li><a class="bx-nav-link" href="/trade-journal-import">Import</a></li>
+                <li><a class="bx-nav-link" href="/blog/">Blog</a></li>
+                <li><a class="bx-cta" href="/auth.html">Start free</a></li>
+            </ul>
+        </nav>
+    </div>
+</header>
+
+<main class="bx-main bx-main-narrow">
+    <!-- SEO:BREADCRUMB -->
+
+    <div class="bx-hero">
+        <p class="bx-eyebrow">Trading Journal</p>
+        <h1>Trading Journal</h1>
+        <p class="bx-lede">A trading journal is the record of every decision you make in the market — what you traded, why, how much you risked, and what happened. BattlexJournal turns that record into a connected system of review, discipline and performance analysis.</p>
+    </div>
+
+    <div class="bx-prose">
+
+        <h2>What is a trading journal?</h2>
+        <p>A trading journal is a log of your trades. At its simplest, it answers five questions about every trade: <strong>what</strong> you traded, <strong>when</strong>, <strong>which direction</strong>, <strong>at what price</strong>, and <strong>with what result</strong>. Most traders quickly add a sixth question that separates good journals from bad ones: <strong>why</strong> you took the trade.</p>
+        <p>That "why" — the setup you saw, the session you were in, the risk you planned, the notes you wrote while the trade was live — is what turns a list of prices into something you can actually learn from.</p>
+
+        <h2>Why traders keep one</h2>
+        <p>Markets are noisy. A single trade, or even a week of trades, tells you very little — one good setup can lose, and one bad habit can win. A journal lets you step back from the noise and answer questions your memory cannot:</p>
+        <ul>
+            <li><strong>Which setups actually make you money?</strong> Not which ones you think should.</li>
+            <li><strong>Where does your risk actually go?</strong> Trades taken on emotion, revenge entries after a loss, oversized positions after a win streak.</li>
+            <li><strong>Are you following your own rules?</strong> The journal is where rule-breaking becomes visible instead of forgettable.</li>
+            <li><strong>Is your process improving?</strong> Win rate and profit factor change slowly; what changes first is consistency.</li>
+        </ul>
+        <p>None of this requires special discipline as a personality trait. It requires a record you can measure — which is exactly what a journal is for.</p>
+
+        <h2>What should be recorded</h2>
+        <p>A useful journal entry captures the decision <em>and</em> the context around it. These are the fields BattlexJournal stores for every trade:</p>
+        <table>
+            <thead>
+                <tr><th>Field</th><th>What it captures</th></tr>
+            </thead>
+            <tbody>
+                <tr><td>Date &amp; time</td><td>When the trade was opened — the raw material for session analysis.</td></tr>
+                <tr><td>Symbol &amp; direction</td><td>What you traded (EURUSD, NQ, BTC…) and whether you were long or short.</td></tr>
+                <tr><td>Entry &amp; exit</td><td>Fill prices, plus stop loss and take profit if you set them.</td></tr>
+                <tr><td>Risk &amp; R</td><td>Dollar risk on the trade and the result expressed in R multiples — the unit that makes performance comparable across trades.</td></tr>
+                <tr><td>Session</td><td>Which session you traded (London, New York, Asia…), since session is one of the strongest predictors of performance.</td></tr>
+                <tr><td>Setup</td><td>The pattern or condition that triggered the entry — so you can measure setups instead of guessing about them.</td></tr>
+                <tr><td>Strategy &amp; rules</td><td>Which of your strategies the trade belonged to, and which rules applied to it.</td></tr>
+                <tr><td>Notes</td><td>Your own context: news, mood, why the trade looked good, what you were thinking.</td></tr>
+            </tbody>
+        </table>
+
+        <h2>How BattlexJournal handles journaling</h2>
+        <p>BattlexJournal is built around the journal as the single source of truth. When you log a trade it:</p>
+        <ul>
+            <li><strong>Calculates the numbers for you</strong> — P&amp;L, position size, risk and R are computed from your entry, exit and stop, with asset-aware pricing for forex, futures, indices, crypto and stocks.</li>
+            <li><strong>Runs your rule set</strong> — each trade is evaluated against the rules you have defined, and violations or blocks are recorded next to the trade.</li>
+            <li><strong>Updates everything downstream</strong> — your equity curve, risk state, discipline score and analytics all recompute from the same ledger, so every screen shows the same numbers.</li>
+            <li><strong>Flags unreviewed trades</strong> — pending reviews are surfaced until you have reviewed the decision, not just the result.</li>
+        </ul>
+        <p>You can log trades manually, or bring an existing history in with the <a href="/trade-journal-import">trade journal import</a> for CSV, Excel, Google Sheets and Notion exports.</p>
+
+        <h2>Beyond the log: review, discipline, risk</h2>
+        <p>A journal is only the first step. The value compounds when the same records feed the rest of your process:</p>
+        <ul>
+            <li><a href="/trading-discipline">Trading discipline</a> — your rule adherence is scored across risk, strategy, execution, frequency, session and behavior, with violations tied back to the exact trade.</li>
+            <li><a href="/trading-risk-management">Trading risk management</a> — daily risk budgets, loss limits and drawdown are tracked automatically against your journal history.</li>
+            <li><a href="/trading-performance-analytics">Trading performance analytics</a> — win rate, profit factor, expectancy, average R, drawdown and equity curve, broken down by strategy, setup, session and symbol.</li>
+            <li><a href="/trading-replay">Trading replay</a> — practice new ideas on historical market data before they touch your journal.</li>
+        </ul>
+
+        <h2>Start with a template</h2>
+        <p>Not sure where to begin? See the <a href="/trading-journal-template">trading journal template</a> — the exact fields a complete journal entry contains and how to structure them. For step-by-step instructions, read the <a href="/trading-journal-guide">complete guide to keeping a trading journal</a>.</p>
+
+        <p>If you trade a specific market, these guides cover the details:</p>
+        <ul>
+            <li><a href="/trading-journal-for-forex">Forex trading journal</a></li>
+            <li><a href="/trading-journal-for-futures">Futures trading journal</a></li>
+            <li><a href="/trading-journal-for-prop-firm-traders">Prop firm trading journal</a></li>
+            <li><a href="/trading-journal-for-day-traders">Day trading journal</a></li>
+        </ul>
+    </div>
+
+    <section class="bx-cta-band">
+        <h2>Start your trading journal</h2>
+        <p>Log your first trade in under a minute. Your journal, risk and analytics are connected from day one.</p>
+        <a class="bx-btn" href="/auth.html">Create your free journal</a>
+    </section>
+</main>
+
+<footer class="bx-footer">
+    <div class="bx-footer-inner">
+        <div>
+            <h4>BattlexJournal</h4>
+            <ul>
+                <li><a href="/">Home</a></li>
+                <li><a href="/auth.html">Sign in</a></li>
+                <li><a href="/auth.html">Create account</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>Trading Journal</h4>
+            <ul>
+                <li><a href="/trading-journal">Trading journal</a></li>
+                <li><a href="/trading-journal-template">Journal template</a></li>
+                <li><a href="/trade-journal-import">Journal import</a></li>
+                <li><a href="/trading-journal-guide">Journal guide</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>By Market</h4>
+            <ul>
+                <li><a href="/trading-journal-for-forex">Forex trading journal</a></li>
+                <li><a href="/trading-journal-for-futures">Futures trading journal</a></li>
+                <li><a href="/trading-journal-for-prop-firm-traders">Prop firm trading journal</a></li>
+                <li><a href="/trading-journal-for-day-traders">Day trading journal</a></li>
+            </ul>
+        </div>
+        <div>
+            <h4>Improve</h4>
+            <ul>
+                <li><a href="/trading-discipline">Trading discipline</a></li>
+                <li><a href="/trading-risk-management">Trading risk management</a></li>
+                <li><a href="/trading-performance-analytics">Performance analytics</a></li>
+                <li><a href="/trading-replay">Trading replay</a></li>
+            </ul>
+        </div>
+        <p class="bx-legal">Trading involves substantial risk of loss and is not suitable for every investor. BattlexJournal is a journaling and analytics tool — nothing on this site is financial advice or a promise of trading results.</p>
+    </div>
+</footer>
+</body>
+</html>

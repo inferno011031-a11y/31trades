@@ -53,6 +53,7 @@ const AICoach = require('./server/ai-coach.js');
 const BattleWs = require('./server/battle-ws.js');
 const Prefs = require('./server/prefs.js');
 const Imports = require('./server/imports.js');
+const SEO = require('./server/seo.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
 
 loadEnv();   // reads .env into process.env (real env vars win)
@@ -1586,11 +1587,135 @@ async function handleApi(req, res, url) {
 // derivation the Risk page and notifications consume. Single source of truth.
 
 /* ---------------------------------------------------------------------------
-   5. STATIC SERVING — the app pages, unchanged, from the project root
+   5. STATIC SERVING — public SEO routes + the app pages from the project root
+   ---------------------------------------------------------------------------
+   Routing order:
+     1. /robots.txt + /sitemap.xml     — generated from server/seo.js (registry)
+     2. exact-match 301 redirects      — legacy/alternate URL forms
+     3. public SEO routes              — canonicalized, registry-injected <head>
+     4. private app pages              — X-Robots-Tag noindex + robots-meta rewrite
+     5. missing pages                  — branded 404 page (real HTTP 404)
+   Public pages never load app bundles; private data stays behind auth-gated APIs.
    --------------------------------------------------------------------------- */
+const NOINDEX_DIRECTIVE = 'noindex, nofollow, noarchive';
+
+function sendRedirect(res, location) {
+    res.writeHead(301, {
+        'Location': location,
+        'Cache-Control': 'public, max-age=3600'
+    });
+    res.end();
+}
+
+function sendText(req, res, body, contentType, cacheControl) {
+    const raw = Buffer.from(body, 'utf8');
+    const enc = pickEncoding(req);
+    const headers = {
+        'Content-Type': contentType,
+        'Cache-Control': cacheControl || 'public, max-age=3600',
+        'Vary': 'Accept-Encoding'
+    };
+    if (enc) {
+        headers['Content-Encoding'] = enc;
+        res.writeHead(200, headers);
+        return res.end(compressSync(raw, enc));
+    }
+    res.writeHead(200, headers);
+    res.end(raw);
+}
+
+// Branded 404 page with a REAL 404 status (never a soft-200), for page-like
+// requests. Assets/APIs keep the compact JSON 404.
+function serveNotFound(req, res, p) {
+    const ext = path.extname(p).toLowerCase();
+    const wantsHtml = ext === '' || ext === '.html';
+    if (!wantsHtml) return json(res, 404, { error: 'not found: ' + p });
+    fs.readFile(path.join(ROOT, '404.html'), (err, data) => {
+        if (err) return json(res, 404, { error: 'not found: ' + p });
+        res.writeHead(404, {
+            'Content-Type': MIME['.html'],
+            'Cache-Control': 'no-cache',
+            'X-Robots-Tag': 'noindex, nofollow'
+        });
+        res.end(data);
+    });
+}
+
+// Serve a registered public page: inject the registry-driven SEO head and
+// breadcrumb nav into the static template, then serve (compressed, ETagged).
+function servePublicPage(req, res, pub) {
+    const file = path.join(ROOT, pub.entry.file);
+    fs.stat(file, (serr, st) => {
+        if (serr) return serveNotFound(req, res, pub.route);
+        const etag = `"${st.mtimeMs.toString(16)}-${st.size.toString(16)}"`;
+        if (req.headers['if-none-match'] === etag) {
+            res.writeHead(304, { 'ETag': etag, 'Cache-Control': cacheFor('.html') });
+            return res.end();
+        }
+        fs.readFile(file, (err, data) => {
+            if (err) return serveNotFound(req, res, pub.route);
+            const html = data.toString('utf8')
+                .replace('<!-- SEO:META -->', SEO.seoHead(pub.route))
+                .replace('<!-- SEO:BREADCRUMB -->', SEO.breadcrumbNav(pub.route));
+            data = Buffer.from(html, 'utf8');
+            const enc = COMPRESSIBLE['.html'] ? pickEncoding(req) : null;
+            const headers = {
+                'Content-Type': MIME['.html'],
+                'Cache-Control': cacheFor('.html'),
+                'ETag': etag,
+                'Vary': 'Accept-Encoding'
+            };
+            if (enc) {
+                const { buf } = compressedVariant(file, data, enc);
+                headers['Content-Encoding'] = enc;
+                res.writeHead(200, headers);
+                return res.end(buf);
+            }
+            res.writeHead(200, headers);
+            res.end(data);
+        });
+    });
+}
+
+// Defense in depth on private pages: rewrite any index,follow robots meta to
+// noindex at serve time, so even a stale cached page never says "index".
+function rewriteRobotsMeta(html) {
+    return html
+        .replace(/<meta name="robots" content="index, follow">/g, '<meta name="robots" content="' + NOINDEX_DIRECTIVE + '">')
+        .replace(/<meta name="robots" content="index,follow">/g, '<meta name="robots" content="' + NOINDEX_DIRECTIVE + '">');
+}
+
 function serveStatic(req, res, urlPath) {
     let p;
     try { p = decodeURIComponent(urlPath); } catch (e) { return json(res, 400, { error: 'bad path' }); }
+
+    // ---- 1. registry-generated SEO endpoints ----
+    if (p === '/robots.txt') return sendText(req, res, SEO.robotsTxt(), 'text/plain; charset=utf-8', 'public, max-age=86400');
+    if (p === '/sitemap.xml') return sendText(req, res, SEO.sitemapXml(), 'application/xml; charset=utf-8', 'public, max-age=3600');
+
+    // ---- 2. exact-match 301 redirects (no chains — every target is final) ----
+    const redir = SEO.redirectFor(p);
+    if (redir) return sendRedirect(res, redir);
+
+    // ---- 3. public SEO routes (trailing-slash/case canonicalization + injection) ----
+    const pub = SEO.publicRouteFor(p);
+    if (pub) {
+        if (pub.redirect) return sendRedirect(res, pub.redirect);
+        return servePublicPage(req, res, pub);
+    }
+
+    // ---- 4. private app pages: noindex headers ----
+    const privatePath = SEO.isPrivatePath(p);
+
+    // ---- 4b. never serve storage/source trees or dotfiles over HTTP. The app
+    // only loads /src and /assets; /data (per-user trade mirrors), /db, /server
+    // and .env must stay off the wire regardless of robots.txt. ----
+    const firstSeg = p.replace(/^\/+/, '').split('/')[0].toLowerCase();
+    const dotSeg = (p.split('/')[1] || '').toLowerCase();
+    if (firstSeg === 'data' || firstSeg === 'db' || firstSeg === 'server' || (dotSeg && dotSeg.startsWith('.') && dotSeg !== '.well-known')) {
+        return json(res, 403, { error: 'forbidden' });
+    }
+
     if (p === '/') p = '/index.html';
 
     const file = path.normalize(path.join(ROOT, p));
@@ -1599,7 +1724,7 @@ function serveStatic(req, res, urlPath) {
     }
 
     fs.stat(file, (serr, st) => {
-        if (serr) return json(res, 404, { error: 'not found: ' + p });
+        if (serr) return serveNotFound(req, res, p);
         const ext = path.extname(file).toLowerCase();
         const etag = `"${st.mtimeMs.toString(16)}-${st.size.toString(16)}"`;
 
@@ -1610,14 +1735,27 @@ function serveStatic(req, res, urlPath) {
         }
 
         fs.readFile(file, (err, data) => {
-            if (err) return json(res, 404, { error: 'not found: ' + p });
-            const enc = COMPRESSIBLE[ext] ? pickEncoding(req) : null;
+            if (err) return serveNotFound(req, res, p);
+            // assets/logo.svg is a binary image (PNG/JPEG — the logo asset is
+            // dropped in under a .svg name); sniff the real type so the header
+            // <img> and the favicon render instead of failing an SVG parse, and
+            // skip brotli/gzip (binary images are already compressed).
+            let logoType = null;
+            if (p === '/assets/logo.svg' && ext === '.svg' && data.length > 3) {
+                if (data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4E && data[3] === 0x47) logoType = 'image/png';
+                else if (data[0] === 0xFF && data[1] === 0xD8 && data[2] === 0xFF) logoType = 'image/jpeg';
+            }
+            const enc = COMPRESSIBLE[ext] && !logoType ? pickEncoding(req) : null;
             const headers = {
-                'Content-Type': MIME[ext] || 'application/octet-stream',
+                'Content-Type': logoType || (MIME[ext] || 'application/octet-stream'),
                 'Cache-Control': cacheFor(ext),
                 'ETag': etag,
                 'Vary': 'Accept-Encoding'
             };
+            if (privatePath && ext === '.html') {
+                headers['X-Robots-Tag'] = NOINDEX_DIRECTIVE;
+                data = Buffer.from(rewriteRobotsMeta(data.toString('utf8')), 'utf8');
+            }
             if (enc) {
                 const { buf } = compressedVariant(file, data, enc);
                 headers['Content-Encoding'] = enc;
