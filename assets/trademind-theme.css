@@ -29,13 +29,13 @@ body:not(.tm-landing) {
    values here win the cascade and every page gets the same glass treatment.
    ============================================================================ */
 :root {
-    --glass-bg: rgba(23, 26, 34, 0.55);
-    --glass-bg-strong: rgba(28, 32, 42, 0.78);
-    --glass-border: rgba(255, 255, 255, 0.09);
-    --glass-border-strong: rgba(255, 255, 255, 0.16);
-    --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
-    --glass-inner: rgba(255, 255, 255, 0.04);
-    --hairline: rgba(255, 255, 255, 0.06);
+    --glass-bg: rgba(20, 20, 24, 0.72);
+    --glass-bg-strong: rgba(24, 24, 28, 0.88);
+    --glass-border: rgba(255, 255, 255, 0.07);
+    --glass-border-strong: rgba(255, 255, 255, 0.12);
+    --glass-shadow: 0 8px 24px rgba(0, 0, 0, 0.40), 0 1px 4px rgba(0, 0, 0, 0.25);
+    --glass-inner: rgba(255, 255, 255, 0.03);
+    --hairline: rgba(255, 255, 255, 0.05);
 }
 
 /* ---- App shell ----------------------------------------------------------- */
@@ -51,8 +51,8 @@ body:not(.tm-landing) .topbar {
 .sidebar .logo-text,
 .topbar .logo-text { color: var(--tm-text); }
 .logo-badge {
-    background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)) !important;
-    box-shadow: 0 0 18px rgba(99, 102, 241, 0.35);
+    background: var(--tm-accent-2) !important;
+    box-shadow: none !important;
 }
 
 /* ---- Navigation: pill-style active, soft hover --------------------------- */
@@ -66,11 +66,11 @@ body:not(.tm-landing) .topbar {
     color: var(--tm-text);
 }
 .nav-item.active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.18), rgba(52, 211, 153, 0.10)) !important;
-    color: #ffffff !important;
-    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.28), 0 0 20px rgba(99, 102, 241, 0.12);
+    background: rgba(255, 255, 255, 0.06) !important;
+    color: var(--tm-text) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10);
 }
-body.collapsed .nav-item.active { box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.28); }
+body.collapsed .nav-item.active { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10); }
 
 /* ---- Cards / panels ------------------------------------------------------- */
 .panel,
@@ -188,9 +188,9 @@ body.collapsed .nav-item.active { box-shadow: inset 0 0 0 1px rgba(129, 140, 248
     background: var(--tm-hover);
 }
 .ins-tab.active, .entry-tab.active, .auth-tab.active, .seg.active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.20), rgba(52, 211, 153, 0.12)) !important;
-    color: #ffffff !important;
-    box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.30);
+    background: rgba(255, 255, 255, 0.08) !important;
+    color: var(--tm-text) !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12);
 }
 
 /* ---- Badges / status: soft translucent tints -------------------------------- */
@@ -202,12 +202,12 @@ body.collapsed .nav-item.active { box-shadow: inset 0 0 0 1px rgba(129, 140, 248
 .tag-gray, .st-noteval, .risk-level-normal { background: rgba(148, 163, 184, 0.10) !important; color: var(--tm-muted) !important; }
 .tag { border-radius: var(--primitive-radius-full); }
 .state-pill { border-radius: var(--primitive-radius-full); }
-.badge-dot { box-shadow: 0 0 8px currentColor; }
+.badge-dot { box-shadow: none; }
 
 /* ---- Modals / drawers: blurred backdrop, rounded ----------------------------- */
 .modal-overlay {
     background: var(--modal-backdrop) !important;
-    backdrop-filter: blur(6px);
+    backdrop-filter: blur(2px);
 }
 .modal,
 .modal-box {
@@ -301,8 +301,8 @@ input:focus, select:focus, textarea:focus {
     backdrop-filter: blur(8px);
 }
 .divider, .divider-line { background: var(--tm-border); }
-.avatar { background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)) !important; color: #ffffff; }
-.conn-dot { background: var(--tm-green); box-shadow: 0 0 0 3px rgba(52, 211, 153, 0.18), 0 0 10px rgba(52, 211, 153, 0.5); }
+.avatar { background: var(--tm-accent-2) !important; color: #ffffff; }
+.conn-dot { background: var(--tm-green); box-shadow: none; }
 
 /* ---- Landing pages keep their own card/panel surfaces ---------------------------- */
 body.tm-landing .panel,
@@ -330,10 +330,10 @@ body.tm-landing .hero-card { background: inherit !important; border: inherit; }
     display: inline-flex; align-items: center; justify-content: center;
     min-width: 20px; height: 20px; padding: 0 5px;
     border-radius: var(--primitive-radius-xs);
-    background: rgba(99, 102, 241, 0.16);
-    color: var(--tm-purple);
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--tm-muted);
     font-family: var(--tm-mono); font-size: 10px; font-weight: 700;
-    border: 1px solid rgba(129, 140, 248, 0.25);
+    border: 1px solid rgba(255, 255, 255, 0.10);
 }
 .tm-readout {
     background: var(--tm-bg);
@@ -361,8 +361,8 @@ body.tm-landing .hero-card { background: inherit !important; border: inherit; }
 }
 .tm-cat-pill:hover { color: var(--tm-text); background: var(--tm-hover); }
 .tm-cat-pill.active {
-    background: linear-gradient(135deg, rgba(99, 102, 241, 0.22), rgba(52, 211, 153, 0.14));
-    color: #ffffff; border-color: rgba(129, 140, 248, 0.30);
+    background: rgba(255, 255, 255, 0.10);
+    color: var(--tm-text); border-color: rgba(255, 255, 255, 0.14);
 }
 .tm-picker-trigger {
     display: flex; align-items: center; gap: 10px;
@@ -372,10 +372,10 @@ body.tm-landing .hero-card { background: inherit !important; border: inherit; }
     color: var(--tm-text); cursor: pointer;
     transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
-.tm-picker-trigger:hover { border-color: rgba(129, 140, 248, 0.5); }
+.tm-picker-trigger:hover { border-color: var(--tm-border-2); }
 .tm-picker-trigger:focus-visible {
-    outline: none; border-color: rgba(129, 140, 248, 0.55);
-    box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+    outline: none; border-color: var(--input-focus-border);
+    box-shadow: var(--input-focus-ring);
 }
 .tm-picker-value { display: flex; align-items: center; gap: 9px; min-width: 0; }
 .tm-picker-sym { font-weight: 700; font-family: var(--tm-mono); font-size: 13px; }
@@ -480,12 +480,12 @@ textarea:focus-visible,
 .tm-asset-row:focus-visible,
 .tbl tbody tr[tabindex]:focus-visible,
 .cal-day[tabindex]:focus-visible {
-    outline: 2px solid var(--tm-accent) !important;
+    outline: 1px solid rgba(255, 255, 255, 0.35) !important;
     outline-offset: 2px;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.18) !important;
+    box-shadow: none !important;
 }
 input:focus-visible:not([type="hidden"]) {
-    outline: 2px solid rgba(129, 140, 248, 0.55) !important;
+    outline: 1px solid rgba(129, 140, 248, 0.55) !important;
     outline-offset: 0;
 }
 
@@ -569,6 +569,38 @@ body.tm-tour-lock { overflow: hidden; }
     width: 6px; height: 6px; border-radius: 999px; background: #2a3040;
 }
 .tm-tour-dot.active { background: #34D399; }
+
+/* ============================================================================
+   MINIMAL CLEANUP — remove AI-slop effects app-wide
+   Flat page backgrounds, restrained glass, no glow, no animated conic borders.
+   Loaded after every page <style> block, so these rules win the cascade.
+   ============================================================================ */
+
+/* ---- Ambient radial page backgrounds → flat surface -------------------- */
+.ai-bg, .cal-bg, .im-bg, .rv-bg {
+    background: var(--tm-bg) !important;
+}
+
+/* ---- Glass: subtle surface, minimal blur -------------------------------- */
+.glass, .glass-strong, .glass-card {
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+}
+
+/* ---- Calendar: disable the mouse-follow conic glow, keep flat cells ----- */
+.cal-shell { --glow-green: transparent; --glow-red: transparent; }
+.cal-cell::after { display: none !important; }
+.cal-cell.is-win::before,
+.cal-cell.is-loss::before { display: none !important; }
+.cal-cell.is-selected {
+    box-shadow: inset 0 0 0 1px var(--tm-accent) !important;
+}
+.cal-risk-fill {
+    background: var(--tm-amber) !important;
+}
+
+/* ---- Landing spin rings / pulsing glows: quiet them --------------------- */
+@keyframes tm-pulse-ring { 0%, 100% { box-shadow: 0 0 0 0 rgba(255,255,255,0.06); } 50% { box-shadow: 0 0 0 0 rgba(255,255,255,0.06); } }
 
 /* ============================================================================
    LIGHT THEME — html[data-theme="light"]

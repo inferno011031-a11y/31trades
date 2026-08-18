@@ -54,29 +54,22 @@
           animation: flow 1.5s linear infinite;
         }
         
-        /* Subtle pulsing glow for the main 31TRADES box */
-        @keyframes subtle-glow {
-          0%, 100% { box-shadow: 0 0 20px rgba(255, 255, 255, 0.05); border-color: rgba(255,255,255,0.1); }
-          50% { box-shadow: 0 0 35px rgba(255, 255, 255, 0.15); border-color: rgba(255,255,255,0.25); }
-        }
+        /* Static hairline border for the main 31TRADES box */
         .glow-box {
-          animation: subtle-glow 4s ease-in-out infinite;
+          box-shadow: 0 0 0 0 rgba(255,255,255,0);
+          border-color: rgba(255,255,255,0.1);
         }
 
-        /* Heavy 3D Rock Float on Hover */
+        /* Quiet lift on hover */
         .rock-float-3d {
-          /* The custom transition makes it feel heavy and smooth, not cheap/fast */
-          transition: all 0.7s cubic-bezier(0.25, 1, 0.3, 1);
-          /* Default resting state */
-          transform: perspective(1200px) rotateX(0deg) rotateY(0deg) translateY(0px) scale(1);
+          transition: all 0.35s cubic-bezier(0.25, 1, 0.3, 1);
+          transform: translateY(0px);
           will-change: transform, box-shadow, border-color;
         }
 
         .rock-float-3d:hover {
-          /* Lifts it up, scales it slightly, and tilts it in 3D space */
-          transform: perspective(1200px) rotateX(2deg) rotateY(-1deg) translateY(-16px) scale(1.02);
-          /* Creates a massive, dark drop shadow to simulate distance from the background */
-          box-shadow: 0 40px 80px -20px rgba(0, 0, 0, 0.9), 0 0 40px rgba(255, 255, 255, 0.04);
+          transform: translateY(-4px);
+          box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
           /* Slightly brightens the border to simulate catching the light */
           border-color: rgba(255, 255, 255, 0.2);
           z-index: 50;
@@ -137,14 +130,14 @@
           animation: dash-flow 1s linear infinite;
         }
         .glow-drop {
-          filter: drop-shadow(0 0 8px var(--accent));
+          filter: none;
         }
 
         html, body {
             width: 100%;
             min-height: 100vh;
-            background: linear-gradient(180deg, #1A1B1C 0%, #000000 100%) !important;
-            background-color: #000000 !important;
+            background: #0a0a0b !important;
+            background-color: #0a0a0b !important;
             color: #FFFFFF !important;
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow-x: hidden;
@@ -245,7 +238,7 @@
             align-items: center;
             justify-content: center;
             transition: all 0.2s;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.15);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
         }
 
         .btn-primary:hover {
@@ -492,12 +485,7 @@
         .analytics-card {
           width: 100%;
           background:
-            radial-gradient(
-              circle at 20% 0%,
-              rgba(255, 255, 255, 0.035),
-              transparent 35%
-            ),
-            linear-gradient(145deg, #1f1f1f 0%, #111111 55%, #0b0b0b 100%);
+            #141417;
           border: 1px solid rgba(255, 255, 255, 0.10);
           border-radius: 22px;
           overflow: hidden;
@@ -725,13 +713,10 @@
                 <a href="auth.html" class="btn-primary" style="padding: 16px 36px; font-size: 16px;">
                     Start for Free
                 </a>
-                <!-- Spinning Conic-Gradient Master Control Button -->
-                <button id="action-btn" class="relative inline-flex overflow-hidden rounded-xl p-px group cursor-pointer focus:outline-none">
+                <!-- Master Control Button -->
+                <button id="action-btn" class="relative inline-flex overflow-hidden rounded-xl border border-white/15 group cursor-pointer focus:outline-none transition-colors hover:border-white/30">
                   <span
-                    class="absolute inset-[-1000%] animate-[spin_2s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#c2c2c2_0%,#505050_50%,#bebebe_100%)]"
-                  ></span>
-                  <span
-                    class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-[11px] bg-neutral-950 px-8 py-3.5 text-base font-semibold text-gray-50 backdrop-blur-3xl transition-all group-hover:bg-neutral-900 shadow-xl"
+                    class="inline-flex h-full w-full cursor-pointer items-center justify-center rounded-[11px] bg-neutral-950 px-8 py-3.5 text-base font-semibold text-gray-50 transition-colors group-hover:bg-neutral-900"
                   >
                     <span class="btn-label">See How It Works</span>
                   </span>
@@ -1382,13 +1367,11 @@
     <!-- 31TRADES Interactive Flow Section -->
     <section id="features" class="w-full flex justify-center py-20 px-4 sm:px-6 relative z-20">
       
-      <!-- MASTER FULL DESKTOP CONTAINER (Spinning Conic-Gradient Border + Ambient Glass Container) -->
-      <div class="rock-float-3d w-full max-w-[1050px] relative inline-flex overflow-hidden rounded-[2.5rem] sm:rounded-[3rem] p-px shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
-        <!-- Spinning Conic-Gradient Animated Border Layer -->
-        <span class="absolute inset-[-1000%] animate-[spin_3s_linear_infinite] bg-[conic-gradient(from_90deg_at_50%_50%,#c2c2c2_0%,#505050_50%,#bebebe_100%)] opacity-80"></span>
+      <!-- MASTER FULL DESKTOP CONTAINER (hairline border + flat glass container) -->
+      <div class="rock-float-3d w-full max-w-[1050px] relative inline-flex overflow-hidden rounded-[2.5rem] sm:rounded-[3rem] border border-white/10 shadow-[0_20px_50px_rgba(0,0,0,0.5)]">
         
         <!-- Inner Card Content Layer -->
-        <div class="w-full h-full bg-[#0E0E10]/90 backdrop-blur-3xl rounded-[2.4rem] sm:rounded-[2.9rem] p-6 sm:p-12 flex flex-col relative z-10">
+        <div class="w-full h-full bg-[#0E0E10]/95 rounded-[2.4rem] sm:rounded-[2.9rem] p-6 sm:p-12 flex flex-col relative z-10">
         
         <!-- Top Brand Logo -->
         <div class="flex justify-center mb-6">
