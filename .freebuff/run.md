@@ -74,3 +74,15 @@ Theme: every shell page includes `assets/theme-toggle.js` + a sun/moon button;
 `html[data-theme="light"]` re-points the semantic token layer in
 `assets/trademind-theme.css` (flip point for the whole app). Charts listen for
 the `tm:theme` CustomEvent to re-theme live.
+
+## Preview (Freebuff thread)
+
+```bash
+TRADEMIND_PORT=8099 node server.js   # avoid clashing with the default 8080
+```
+
+Serves the same app + landing-page chat widget. With `GEMINI_API_KEY` in `.env`
+the widget's `POST /api/chat-test` answers with real Gemini replies; without
+it, it returns 503 "not configured". CSP is report-only by default — the
+landing page (and app pages) ship inline scripts, so do NOT set
+`CSP_ENFORCE=true` until those are externalized.

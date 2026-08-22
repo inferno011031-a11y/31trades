@@ -349,8 +349,12 @@ async function runHttp() {
         // ---- §7 SECURITY HEADERS ----
         r = await httpGet('/');
         const h = r.headers;
-        ok(h['content-security-policy'] && h['content-security-policy'].includes("default-src 'self'"), 'CSP header present with default-src self');
-        ok(h['content-security-policy'] && h['content-security-policy'].includes("frame-ancestors 'none'"), 'CSP frame-ancestors none');
+        // CSP defaults to REPORT-ONLY (the app ships inline scripts; enforcing
+        // breaks them). The report-only header carries the same directives.
+        const csp = h['content-security-policy-report-only'] || h['content-security-policy'] || '';
+        ok(!!h['content-security-policy-report-only'], 'CSP is report-only by default (inline scripts keep working until CSP_ENFORCE=true)', h['content-security-policy-report-only'] ? 'report-only' : 'enforcing');
+        ok(csp.includes("default-src 'self'"), 'CSP directives present (default-src self)', csp.slice(0, 60));
+        ok(csp.includes("frame-ancestors 'none'"), 'CSP frame-ancestors none');
         ok(h['x-content-type-options'] === 'nosniff', 'X-Content-Type-Options nosniff', h['x-content-type-options']);
         ok(h['x-frame-options'] === 'DENY', 'X-Frame-Options DENY', h['x-frame-options']);
         ok(h['x-xss-protection'] === '0', 'X-XSS-Protection disabled (CSP replaces it)', h['x-xss-protection']);
@@ -385,8 +389,11 @@ async function runHttp() {
         // ---- §11 STANDALONE TEST CHATBOT (/api/chat-test + landing widget) ----
         r = await httpGet('/assets/chat-test.js');
         ok(r.status === 200 && r.headers['content-type'].includes('javascript'), 'chat widget asset served', r.headers['content-type']);
+        r = await httpGet('/assets/cursor.js');
+        ok(r.status === 200 && r.headers['content-type'].includes('javascript'), 'smooth-cursor asset served', r.headers['content-type']);
         r = await httpGet('/');
         ok(r.body.includes('/assets/chat-test.js'), 'homepage loads the chat widget');
+        ok(r.body.includes('<script src="/assets/cursor.js"') && !r.body.includes('tx = innerWidth'), 'homepage loads cursor.js externally (no inline copy)');
         ok(!r.body.includes('localStorage') || r.body.includes('/assets/chat-test.js'), 'widget always present on homepage');
 
         // endpoint validation (each invalid POST also consumes rate-limit quota)

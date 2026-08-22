@@ -1680,7 +1680,10 @@ function securityHeaders(res) {
         "upgrade-insecure-requests"
     ].join('; ');
 
-    res.setHeader('Content-Security-Policy', CSP_ENFORCE ? csp : csp + "; report-uri /api/csp-report");
+    // Default is REPORT-ONLY (the app uses inline scripts on many pages, so an
+    // enforced CSP would break them). Set CSP_ENFORCE=true in .env only after
+    // inline scripts are migrated to external files / hashed.
+    res.setHeader(CSP_ENFORCE ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only', csp + "; report-uri /api/csp-report");
     res.setHeader('X-Content-Type-Options', 'nosniff');
     res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '0');
