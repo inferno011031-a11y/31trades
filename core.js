@@ -322,12 +322,12 @@
 
             function row(item, i) {
                 return '<div class="tm-gs-row' + (i === sel ? ' sel' : '') + '" data-i="' + i + '" onmouseenter="this.classList.add(\'sel\')" onmouseleave="this.classList.remove(\'sel\')">' +
-                    '<span class="flex-shrink-0" style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--glass-inner);border:1px solid var(--hairline)"><svg data-lucide="' + item.icon + '" class="w-4 h-4" style="color:var(--tm-muted)"></svg></span>' +
+                    '<span class="flex-shrink-0" style="width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;background:var(--glass-inner);border:1px solid var(--hairline)"><svg data-lucide="' + _gsEsc(item.icon) + '" class="w-4 h-4" style="color:var(--tm-muted)"></svg></span>' +
                     '<div class="flex-1 min-w-0">' +
                         '<div class="truncate" style="font-size:13.5px;font-weight:700">' + _gsEsc(item.title) + '</div>' +
                         (item.sub ? '<div class="truncate" style="font-size:11.5px;color:var(--tm-dim);margin-top:1px">' + _gsEsc(item.sub) + '</div>' : '') +
                     '</div>' +
-                    '<span class="flex-shrink-0" style="font-size:9.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:var(--glass-inner);border:1px solid var(--hairline);color:var(--tm-muted)">' + item.type + '</span>' +
+                    '<span class="flex-shrink-0" style="font-size:9.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;padding:3px 7px;border-radius:5px;background:var(--glass-inner);border:1px solid var(--hairline);color:var(--tm-muted)">' + _gsEsc(item.type) + '</span>' +
                 '</div>';
             }
             function section(label) {

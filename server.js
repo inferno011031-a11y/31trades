@@ -625,8 +625,16 @@ async function handleApi(req, res, url) {
     if (p === '/api/auth/signup' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        // Rate limit: per-IP + per-email
+        const ipRL = authIPRateLimit(req);
+        if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
+        const rlKey = 'signup:' + String(b.email || '').toLowerCase();
+        const rl = authRateLimit(rlKey, MAX_SIGNUP_ATTEMPTS);
+        if (!rl.allowed) { res.setHeader('Retry-After', String(rl.retryAfter)); return json(res, 429, { error: rl.error }); }
         try {
             const r = await auth.signup({ email: b.email, password: b.password, name: b.name });
+            authRLRecord(rlKey, true);
+            authRLRecord(ipRLKey(req), true);
             const signupUser = r.user || (r.session && r.session.user);
             if (signupUser) recordUserEmail(signupUser);   // email→id for battle invites
             // Welcome message: record a personalized welcome in the user's
@@ -649,11 +657,22 @@ async function handleApi(req, res, url) {
     if (p === '/api/auth/login' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        // Rate limit: per-IP + per-email, with lockout
+        const ipRL = authIPRateLimit(req);
+        if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
+        const rlKey = 'login:' + String(b.email || '').toLowerCase();
+        const rl = authRateLimit(rlKey, MAX_LOGIN_ATTEMPTS);
+        if (!rl.allowed) { res.setHeader('Retry-After', String(rl.retryAfter)); return json(res, 429, { error: rl.error }); }
         try {
             const r = await auth.login({ email: b.email, password: b.password });
             if (r.session && r.session.user) recordUserEmail(r.session.user);
+            authRLRecord(rlKey, true);
+            authRLRecord(ipRLKey(req), true);
             return json(res, 200, { ok: true, session: r.session });
-        } catch (err) { return json(res, err.code || 400, { error: err.message }); }
+        } catch (err) {
+            authRLRecord(rlKey, false);
+            return json(res, err.code || 400, { error: err.message });
+        }
     }
     if (p === '/api/auth/logout' && req.method === 'POST') {
         await auth.logout(bearerToken(req));
@@ -671,6 +690,9 @@ async function handleApi(req, res, url) {
     if (p === '/api/auth/change-password' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        // Rate limit: per-IP (requires auth, so per-email is redundant)
+        const ipRL = authIPRateLimit(req);
+        if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
         try {
             return json(res, 200, await auth.changePassword({
                 token: bearerToken(req),
@@ -682,6 +704,12 @@ async function handleApi(req, res, url) {
     if (p === '/api/auth/forgot' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        // Rate limit: per-IP + per-email (prevents reset-email flooding)
+        const ipRL = authIPRateLimit(req);
+        if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
+        const rlKey = 'forgot:' + String(b.email || '').toLowerCase();
+        const rl = authRateLimit(rlKey, MAX_FORGOT_ATTEMPTS);
+        if (!rl.allowed) { res.setHeader('Retry-After', String(rl.retryAfter)); return json(res, 429, { error: rl.error }); }
         try { return json(res, 200, await auth.requestPasswordReset({ email: b.email })); }
         catch (err) { return json(res, err.code || 400, { error: err.message }); }
     }
@@ -710,6 +738,35 @@ async function handleApi(req, res, url) {
     }
     if (p === '/api/health/db') {
         return json(res, 200, { ok: true, db: await db.ping() });
+    }
+
+    // ---------- standalone test chatbot (public landing-page widget) ----------
+    // Free-form Gemini chat, intentionally NOT grounded in any journal data and
+    // NOT tied to any account or user store. Server-side proxy: the API key
+    // never leaves the server. Per-IP rate limiting keeps the key from being
+    // burned by crawlers/abusers. Session memory is held by the widget in the
+    // browser only — nothing is persisted server-side.
+    if (p === '/api/chat-test' && req.method === 'POST') {
+        const rl = chatRateLimit(req);
+        if (!rl.allowed) {
+            res.setHeader('Retry-After', String(rl.retryAfter));
+            return json(res, 429, { error: rl.error });
+        }
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        const message = String(b.message || '').trim();
+        if (!message) return json(res, 400, { error: 'message required' });
+        if (message.length > 2000) return json(res, 400, { error: 'message too long (max 2000 chars)' });
+        // Only accept well-formed history entries; cap at 20 turns.
+        const history = (Array.isArray(b.history) ? b.history : [])
+            .filter(h => h && (h.role === 'user' || h.role === 'model') && typeof h.text === 'string' && h.text.length <= 2000)
+            .slice(-20);
+        if (!process.env.GEMINI_API_KEY) {
+            return json(res, 503, { error: 'AI chat is not configured yet — no GEMINI_API_KEY on the server.' });
+        }
+        const reply = await chatWithGemini(history, message);
+        if (!reply) return json(res, 502, { error: 'AI service unreachable — try again in a moment.' });
+        return json(res, 200, { ok: true, reply });
     }
 
     // ---------- everything below requires a user context ----------
@@ -1599,6 +1656,160 @@ async function handleApi(req, res, url) {
    --------------------------------------------------------------------------- */
 const NOINDEX_DIRECTIVE = 'noindex, nofollow, noarchive';
 
+/* ---------------------------------------------------------------------------
+   SECURITY HEADERS
+   ---------------------------------------------------------------------------
+   Applied to every response — API and static alike. CSP starts in report-only
+   mode (set CSP_ENFORCE=true in .env to enforce). These headers close the
+   most common browser-side attack vectors without touching application code.
+   --------------------------------------------------------------------------- */
+const SITE_URL = (process.env.SITE_URL || 'https://31trades-production.up.railway.app').replace(/\/+$/, '');
+const CSP_ENFORCE = process.env.CSP_ENFORCE === 'true';
+
+function securityHeaders(res) {
+    const csp = [
+        "default-src 'self'",
+        "script-src 'self' https://fonts.googleapis.com",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+        "font-src 'self' https://fonts.gstatic.com",
+        "img-src 'self' data: blob:",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
+        "frame-ancestors 'none'",
+        "base-uri 'self'",
+        "form-action 'self'",
+        "upgrade-insecure-requests"
+    ].join('; ');
+
+    res.setHeader('Content-Security-Policy', CSP_ENFORCE ? csp : csp + "; report-uri /api/csp-report");
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '0');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');
+    if (SITE_URL.startsWith('https://')) {
+        res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+}
+
+/* ---------------------------------------------------------------------------
+   AUTH RATE LIMITING
+   ---------------------------------------------------------------------------
+   Per-email + per-IP sliding-window counters for login, signup, forgot and
+   change-password endpoints. Prevents brute-force, credential stuffing and
+   password-reset flooding without any external dependency.
+   --------------------------------------------------------------------------- */
+const authAttempts = new Map(); // key → { attempts: [{ ts, ok }], lockedUntil }
+const AUTH_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
+const MAX_LOGIN_ATTEMPTS = 8;
+const MAX_SIGNUP_ATTEMPTS = 5;
+const MAX_FORGOT_ATTEMPTS = 3;
+const LOCKOUT_MS = 15 * 60 * 1000; // 15-minute lockout
+const GLOBAL_IP_LIMIT = 120; // max auth requests per IP per window
+
+function _authRLTrim(entry) {
+    const cutoff = Date.now() - AUTH_WINDOW_MS;
+    entry.attempts = entry.attempts.filter(a => a.ts > cutoff);
+}
+
+function authRateLimit(key, maxAttempts) {
+    let entry = authAttempts.get(key);
+    if (!entry) { entry = { attempts: [], lockedUntil: 0 }; authAttempts.set(key, entry); }
+    if (entry.lockedUntil > Date.now()) {
+        const waitSec = Math.ceil((entry.lockedUntil - Date.now()) / 1000);
+        return { allowed: false, retryAfter: waitSec, error: 'Too many attempts. Try again in ' + Math.ceil(waitSec / 60) + ' minute(s).' };
+    }
+    _authRLTrim(entry);
+    if (entry.attempts.length >= maxAttempts) {
+        entry.lockedUntil = Date.now() + LOCKOUT_MS;
+        authAttempts.set(key, entry);
+        return { allowed: false, retryAfter: Math.ceil(LOCKOUT_MS / 1000), error: 'Account temporarily locked due to repeated failures.' };
+    }
+    return { allowed: true };
+}
+
+function authRLRecord(key, success) {
+    let entry = authAttempts.get(key);
+    if (!entry) { entry = { attempts: [], lockedUntil: 0 }; authAttempts.set(key, entry); }
+    entry.attempts.push({ ts: Date.now(), ok: success });
+    if (success) entry.lockedUntil = 0; // clear lockout on success
+    _authRLTrim(entry);
+}
+
+function ipRLKey(req) { return 'ip:' + (req.socket.remoteAddress || '').replace(/^::ffff:/, ''); }
+function authIPRateLimit(req) {
+    const key = ipRLKey(req);
+    return authRateLimit(key, GLOBAL_IP_LIMIT);
+}
+
+// Periodic cleanup to prevent memory leak from abandoned keys
+setInterval(() => {
+    const cutoff = Date.now() - AUTH_WINDOW_MS * 2;
+    for (const [k, v] of authAttempts) {
+        if (v.lockedUntil < cutoff || (v.attempts.length === 0 && v.lockedUntil < Date.now())) {
+            authAttempts.delete(k);
+        }
+    }
+}, 5 * 60 * 1000);
+
+/* ---------------------------------------------------------------------------
+   STANDALONE TEST CHATBOT (public /api/chat-test)
+   ---------------------------------------------------------------------------
+   Per-IP sliding-window limiter for the landing-page widget. The endpoint is
+   deliberately unauthenticated (the page is public), so this IP limit is the
+   only abuse protection for the shared Gemini key.
+   --------------------------------------------------------------------------- */
+const chatAttempts = new Map(); // ip → [timestamps]
+const CHAT_WINDOW_MS = 15 * 60 * 1000; // 15-minute sliding window
+const MAX_CHAT_PER_WINDOW = 30; // messages per IP per window
+
+function chatRateLimit(req) {
+    const ip = (req.socket.remoteAddress || '').replace(/^::ffff:/, '');
+    const now = Date.now();
+    let arr = (chatAttempts.get(ip) || []).filter(t => t > now - CHAT_WINDOW_MS);
+    if (arr.length >= MAX_CHAT_PER_WINDOW) {
+        const waitSec = Math.ceil((arr[0] + CHAT_WINDOW_MS - now) / 1000);
+        chatAttempts.set(ip, arr);
+        return { allowed: false, retryAfter: waitSec, error: 'Chat limit reached — try again in ' + Math.ceil(waitSec / 60) + ' minute(s).' };
+    }
+    arr.push(now);
+    chatAttempts.set(ip, arr);
+    return { allowed: true };
+}
+
+// Free-form Gemini call for the test chatbot. Reuses the Interactions API
+// (+ parseResponse) from server/llm.js. Multi-turn context is folded into the
+// prompt text; nothing is persisted. Returns null on any failure (network,
+// timeout, non-200, malformed/empty response) — the endpoint maps that to a
+// friendly 502.
+async function chatWithGemini(history, message) {
+    const key = process.env.GEMINI_API_KEY;
+    if (!key) return null;
+    const turns = (history || []).map(h => (h.role === 'model' ? 'Assistant: ' : 'User: ') + h.text).join('\n');
+    const input =
+        'You are the AI assistant for BattlexJournal, a trading journal app. You are a friendly, concise assistant ' +
+        'having a free-form conversation (this is a testing chat, not connected to any user data). ' +
+        'Answer helpfully and keep replies under ~150 words.\n\n' +
+        (turns ? turns + '\n' : '') +
+        'User: ' + message + '\nAssistant:';
+    const ctl = new AbortController();
+    const timer = setTimeout(() => ctl.abort(), 25000);
+    try {
+        const res = await fetch(LLM.GEMINI_BASE + '/v1beta/interactions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+            body: JSON.stringify({ model: LLM.GEMINI_MODEL, input, store: false }),
+            signal: ctl.signal
+        });
+        if (!res || !res.ok) return null;
+        const json = await res.json();
+        return LLM.parseResponse(json);
+    } catch (e) {
+        return null;
+    } finally {
+        clearTimeout(timer);
+    }
+}
+
 function sendRedirect(res, location) {
     res.writeHead(301, {
         'Location': location,
@@ -1806,7 +2017,23 @@ boot().then(() => {
         let url;
         try { url = new URL(req.url, 'http://127.0.0.1:' + PORT); } catch (e) { return json(res, 400, { error: 'bad url' }); }
 
+        // Security headers on EVERY response (API + static)
+        securityHeaders(res);
+
+        // CORS for API requests
         if (url.pathname.startsWith('/api/')) {
+            const origin = req.headers.origin || '';
+            if (origin && origin === SITE_URL) {
+                res.setHeader('Access-Control-Allow-Origin', origin);
+                res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+                res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization, Idempotency-Key');
+                res.setHeader('Access-Control-Allow-Credentials', 'true');
+                res.setHeader('Access-Control-Max-Age', '86400');
+            }
+            if (req.method === 'OPTIONS') {
+                res.writeHead(204);
+                return res.end();
+            }
             handleApi(req, res, url).catch(err => json(res, 500, { error: err.message }));
             return;
         }

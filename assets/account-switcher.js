@@ -23,7 +23,7 @@
 
     function core() { return window.TradeMindCore; }
     function $(id) { return document.getElementById(id); }
-    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+    function esc(s) { return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;'); }
     function money(n) {
         if (n == null || isNaN(n)) return '—';
         return (n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });

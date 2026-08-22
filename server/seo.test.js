@@ -206,7 +206,7 @@ function startServer() {
         serverProc = spawn(process.execPath, ['server.js'], {
             cwd: ROOT,
             // auth ON (production default) + a deterministic canonical origin
-            env: { ...process.env, TRADEMIND_PORT: String(PORT), TRADEMIND_AUTH: 'on', SITE_URL: process.env.SITE_URL },
+            env: { ...process.env, TRADEMIND_PORT: String(PORT), TRADEMIND_AUTH: 'on', SITE_URL: process.env.SITE_URL, GEMINI_API_KEY: '' },
             stdio: ['ignore', 'pipe', 'pipe']
         });
         serverProc.stdout.on('data', d => { serverLog += d; });
@@ -235,6 +235,29 @@ async function httpGet(p) {
     const body = await r.text();
     return { status: r.status, headers: Object.fromEntries(r.headers.entries()), body };
 }
+
+async function httpPost(p, body, extraHeaders) {
+    const r = await fetch(API + p, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', ...extraHeaders },
+        body: JSON.stringify(body)
+    });
+    const text = await r.text();
+    let jsonBody;
+    try { jsonBody = JSON.parse(text); } catch (e) { jsonBody = text; }
+    return { status: r.status, headers: Object.fromEntries(r.headers.entries()), body: jsonBody };
+}
+
+async function httpReq(method, p, extraHeaders) {
+    const r = await fetch(API + p, {
+        method,
+        headers: { ...extraHeaders },
+        redirect: 'manual'
+    });
+    const body = await r.text();
+    return { status: r.status, headers: Object.fromEntries(r.headers.entries()), body };
+}
+
 // normalize a Location header (absolute or relative) to its path form
 const locPath = l => String(l).replace(/^https?:\/\/[^/]+/, '');
 
@@ -322,6 +345,70 @@ async function runHttp() {
         ok(r.status === 200 && r.headers['content-type'].includes('text/css'), 'assets/seo.css served');
         r = await httpGet('/assets/tailwind-compiled.css');
         ok(r.status === 200, 'assets/tailwind-compiled.css served');
+
+        // ---- §7 SECURITY HEADERS ----
+        r = await httpGet('/');
+        const h = r.headers;
+        ok(h['content-security-policy'] && h['content-security-policy'].includes("default-src 'self'"), 'CSP header present with default-src self');
+        ok(h['content-security-policy'] && h['content-security-policy'].includes("frame-ancestors 'none'"), 'CSP frame-ancestors none');
+        ok(h['x-content-type-options'] === 'nosniff', 'X-Content-Type-Options nosniff', h['x-content-type-options']);
+        ok(h['x-frame-options'] === 'DENY', 'X-Frame-Options DENY', h['x-frame-options']);
+        ok(h['x-xss-protection'] === '0', 'X-XSS-Protection disabled (CSP replaces it)', h['x-xss-protection']);
+        ok(h['referrer-policy'] === 'strict-origin-when-cross-origin', 'Referrer-Policy set', h['referrer-policy']);
+        ok(h['permissions-policy'] && h['permissions-policy'].includes('camera='), 'Permissions-Policy set', h['permissions-policy']);
+        ok(h['strict-transport-security'] && h['strict-transport-security'].includes('max-age=31536000'), 'HSTS set with long max-age', h['strict-transport-security']);
+
+        // ---- §8 CORS ----
+        const evilResp = await httpReq('OPTIONS', '/api/health', { origin: 'https://evil.com' });
+        ok(!evilResp.headers['access-control-allowed-origin'] || evilResp.headers['access-control-allowed-origin'] !== 'https://evil.com', 'CORS rejects evil origin');
+
+        // ---- §9 SELF-HOSTED LUCIDE ----
+        r = await httpGet('/assets/lucide.min.js');
+        ok(r.status === 200 && r.headers['content-type'].includes('javascript'), 'Self-hosted lucide.min.js served', r.headers['content-type']);
+
+        const appPages = ['ai.html', 'dashboard.html', 'journal.html', 'auth.html'];
+        for (const pg of appPages) {
+            const resp = await httpGet('/' + pg);
+            ok(!resp.body.includes('unpkg.com/lucide'), pg + ' has no CDN lucide reference');
+            ok(resp.body.includes('/assets/lucide.min.js'), pg + ' references self-hosted lucide');
+        }
+
+        // ---- §10 RATE LIMITING ----
+        for (let i = 0; i < 9; i++) {
+            await httpPost('/api/auth/login', { email: 'ratelimittest@test.com', password: 'wrong' });
+        }
+        const rlResp = await httpPost('/api/auth/login', { email: 'ratelimittest@test.com', password: 'wrong' });
+        ok(rlResp.status === 429, 'Rate limiting returns 429 after repeated failures', rlResp.status);
+        ok(rlResp.body.error && (rlResp.body.error.includes('locked') || rlResp.body.error.includes('Too many')), 'Rate limit error message present', JSON.stringify(rlResp.body));
+        ok(rlResp.headers['retry-after'], 'Retry-After header present on 429', rlResp.headers['retry-after']);
+
+        // ---- §11 STANDALONE TEST CHATBOT (/api/chat-test + landing widget) ----
+        r = await httpGet('/assets/chat-test.js');
+        ok(r.status === 200 && r.headers['content-type'].includes('javascript'), 'chat widget asset served', r.headers['content-type']);
+        r = await httpGet('/');
+        ok(r.body.includes('/assets/chat-test.js'), 'homepage loads the chat widget');
+        ok(!r.body.includes('localStorage') || r.body.includes('/assets/chat-test.js'), 'widget always present on homepage');
+
+        // endpoint validation (each invalid POST also consumes rate-limit quota)
+        r = await httpPost('/api/chat-test', {});
+        ok(r.status === 400, 'chat-test rejects empty message', r.status);
+        r = await httpPost('/api/chat-test', { message: 'x'.repeat(2001) });
+        ok(r.status === 400, 'chat-test rejects over-long message', r.status);
+        r = await httpPost('/api/chat-test', { message: '  ', history: 'nope' });
+        ok(r.status === 400, 'chat-test rejects blank message', r.status);
+        r = await httpPost('/api/chat-test', { message: 'hello', history: [{ role: 'admin', text: 'pwn' }] });
+        ok(r.status === 503, 'chat-test without GEMINI_API_KEY returns 503', r.status);
+        ok(r.body.error && r.body.error.includes('GEMINI_API_KEY'), 'chat-test 503 names the missing key', JSON.stringify(r.body));
+        r = await httpPost('/api/chat-test', { message: 'hello', history: [{ role: 'user', text: 'hi' }, { role: 'model', text: 'hello' }] });
+        ok(r.status === 503, 'chat-test with valid history still 503 without key', r.status);
+
+        // per-IP rate limit: 4 consumed above → 26 more → 31st is 429
+        for (let i = 0; i < 26; i++) {
+            await httpPost('/api/chat-test', { message: 'ping ' + i });
+        }
+        r = await httpPost('/api/chat-test', { message: 'one too many' });
+        ok(r.status === 429, 'chat-test rate limited per IP', r.status);
+        ok(r.headers['retry-after'], 'chat-test 429 has Retry-After', r.headers['retry-after']);
     } finally {
         await stopServer();
     }
