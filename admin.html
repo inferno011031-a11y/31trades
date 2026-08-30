@@ -1,0 +1,786 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BATTLEXJOURNAL — Admin Command Center</title>
+    <meta name="description" content="BattleXJournal Master Admin Dashboard & 2FA Analytics Console">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="theme-color" content="#0a0a0b">
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+
+    <link rel="stylesheet" href="assets/tokens.css">
+    <link rel="stylesheet" href="assets/tailwind-compiled.css">
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="/assets/lucide.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body {
+            width: 100%; min-height: 100vh; min-height: 100dvh;
+            background: #090a0d !important;
+            color: #FFFFFF !important;
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            overflow-x: hidden;
+        }
+        .admin-shell {
+            max-width: 1440px; margin: 0 auto; padding: 24px 20px 80px;
+        }
+        .card-kpi {
+            background: #121317; border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px; padding: 20px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+            display: flex; flex-direction: column; justify-content: space-between;
+            transition: all 0.2s ease;
+        }
+        .card-kpi:hover {
+            border-color: rgba(255, 255, 255, 0.16);
+            transform: translateY(-2px);
+        }
+        .kpi-title { font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: #71717A; }
+        .kpi-val { font-family: 'JetBrains Mono', monospace; font-size: 28px; font-weight: 800; color: #FFFFFF; line-height: 1.1; margin: 8px 0 4px; }
+        .kpi-sub { font-size: 12px; color: #A1A1AA; }
+        
+        .panel-box {
+            background: #121317; border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px; padding: 22px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+        }
+        
+        .data-table {
+            width: 100%; border-collapse: separate; border-spacing: 0; text-align: left; font-size: 13px;
+        }
+        .data-table th {
+            padding: 12px 14px; font-size: 11px; font-weight: 700; letter-spacing: 0.05em; text-transform: uppercase;
+            color: #71717A; border-bottom: 1px solid rgba(255, 255, 255, 0.08); background: #0e0f13;
+        }
+        .data-table td {
+            padding: 14px; border-bottom: 1px solid rgba(255, 255, 255, 0.05); color: #E4E4E7; vertical-align: middle;
+        }
+        .data-table tr:hover td { background: rgba(255, 255, 255, 0.02); }
+        
+        .auth-gate-modal {
+            position: fixed; inset: 0; z-index: 99999;
+            background: rgba(5, 5, 8, 0.88); backdrop-filter: blur(16px);
+            display: flex; align-items: center; justify-content: center; padding: 16px;
+        }
+        .auth-gate-card {
+            width: 100%; max-width: 420px; background: #131418;
+            border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 20px;
+            padding: 32px 28px; box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+        }
+        .pin-box {
+            letter-spacing: 0.3em; font-size: 24px; text-align: center; font-weight: 800; font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- ============ 2FA ADMIN AUTHENTICATION GATE ============ -->
+    <div id="admin-auth-gate" class="auth-gate-modal">
+        <div class="auth-gate-card">
+            
+            <!-- Step 1: Admin Credentials -->
+            <div id="step-creds">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 mb-3 text-indigo-400">
+                        <svg data-lucide="shield-check" class="w-6 h-6"></svg>
+                    </div>
+                    <h2 class="text-xl font-bold tracking-tight text-white">BattleX Admin Console</h2>
+                    <p class="text-[13px] text-zinc-400 mt-1">Master credentials required for access.</p>
+                </div>
+
+                <form id="form-admin-creds" class="flex flex-col gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1.5" for="adm-user">Admin Username</label>
+                        <input type="text" id="adm-user" class="field-input !py-2.5 !px-3.5 !text-sm" placeholder="battlex_admin" required autofocus>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1.5" for="adm-pass">Master Password</label>
+                        <input type="password" id="adm-pass" class="field-input !py-2.5 !px-3.5 !text-sm" placeholder="••••••••••••" required>
+                    </div>
+
+                    <div id="gate-error-1" class="hidden p-3 rounded-lg bg-red-950/60 border border-red-800/80 text-red-300 text-xs font-medium"></div>
+
+                    <button type="submit" id="btn-gate-1" class="btn-primary w-full justify-center !py-3 font-bold text-sm mt-1">
+                        Proceed to 2FA Verification →
+                    </button>
+                </form>
+            </div>
+
+            <!-- Step 2: 2FA Master Security PIN -->
+            <div id="step-2fa" class="hidden">
+                <div class="text-center mb-6">
+                    <div class="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 mb-3 text-emerald-400">
+                        <svg data-lucide="key" class="w-6 h-6"></svg>
+                    </div>
+                    <h2 class="text-xl font-bold tracking-tight text-white">2FA Security Verification</h2>
+                    <p class="text-[13px] text-zinc-400 mt-1">Enter your 6-digit Master Security PIN</p>
+                </div>
+
+                <form id="form-admin-2fa" class="flex flex-col gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-zinc-400 mb-1.5 text-center" for="adm-pin">6-Digit 2FA PIN</label>
+                        <input type="password" id="adm-pin" maxlength="6" class="field-input pin-box !py-3" placeholder="••••••" required autofocus>
+                    </div>
+
+                    <div id="gate-error-2" class="hidden p-3 rounded-lg bg-red-950/60 border border-red-800/80 text-red-300 text-xs font-medium"></div>
+
+                    <button type="submit" id="btn-gate-2" class="btn-primary w-full justify-center !py-3 font-bold text-sm mt-1">
+                        Verify & Access Command Center
+                    </button>
+
+                    <button type="button" id="btn-back-creds" class="text-xs text-zinc-400 hover:text-white transition-colors text-center mt-2">
+                        ← Back to credentials
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+
+    <!-- ============ MAIN ADMIN DASHBOARD ============ -->
+    <div class="admin-shell" id="admin-main" style="display: none;">
+        
+        <!-- Header Bar -->
+        <header class="flex flex-wrap items-center justify-between gap-4 mb-8 pb-6 border-b border-zinc-800/80">
+            <div class="flex items-center gap-3.5">
+                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-10 h-10 rounded-xl border border-white/20 bg-black">
+                <div>
+                    <div class="flex items-center gap-2">
+                        <h1 class="text-xl font-extrabold tracking-tight text-white">BATTLEXJOURNAL</h1>
+                        <span class="tag tag-purple font-mono !py-0.5 !px-2 !text-[10px]">COMMAND CENTER</span>
+                    </div>
+                    <p class="text-xs text-zinc-400 mt-0.5">Real-time system telemetry, 60-tester quota & user activity</p>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-3 flex-wrap">
+                <div class="flex items-center gap-1.5 bg-[#121317] border border-zinc-800 rounded-lg p-1">
+                    <button type="button" class="range-btn active px-3 py-1.5 rounded text-xs font-semibold" data-range="today">Today</button>
+                    <button type="button" class="range-btn px-3 py-1.5 rounded text-xs font-semibold" data-range="7d">7 Days</button>
+                    <button type="button" class="range-btn px-3 py-1.5 rounded text-xs font-semibold" data-range="30d">30 Days</button>
+                    <button type="button" class="range-btn px-3 py-1.5 rounded text-xs font-semibold" data-range="all">All Time</button>
+                </div>
+
+                <button type="button" id="btn-refresh" class="btn-ghost !py-2 !px-3 !text-xs" title="Refresh Telemetry">
+                    <svg data-lucide="refresh-cw" class="w-4 h-4"></svg>
+                </button>
+
+                <button type="button" id="btn-admin-logout" class="btn-ghost !py-2 !px-3.5 !text-xs text-red-400 hover:text-red-300">
+                    <svg data-lucide="log-out" class="w-3.5 h-3.5"></svg> Sign out
+                </button>
+            </div>
+        </header>
+
+        <!-- KPI Metrics Grid (6 Cards) -->
+        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 mb-8">
+            <div class="card-kpi">
+                <div class="kpi-title flex items-center justify-between">
+                    <span>Total Users</span>
+                    <svg data-lucide="users" class="w-4 h-4 text-indigo-400"></svg>
+                </div>
+                <div class="kpi-val" id="kpi-total-users">0</div>
+                <div class="kpi-sub">Unique auth accounts</div>
+            </div>
+
+            <div class="card-kpi">
+                <div class="kpi-title flex items-center justify-between">
+                    <span>New Users</span>
+                    <svg data-lucide="user-plus" class="w-4 h-4 text-emerald-400"></svg>
+                </div>
+                <div class="kpi-val text-emerald-400" id="kpi-new-users">0</div>
+                <div class="kpi-sub">In selected time range</div>
+            </div>
+
+            <div class="card-kpi">
+                <div class="kpi-title flex items-center justify-between">
+                    <span>Active Today</span>
+                    <svg data-lucide="activity" class="w-4 h-4 text-blue-400"></svg>
+                </div>
+                <div class="kpi-val text-blue-400" id="kpi-active-today">0</div>
+                <div class="kpi-sub" id="kpi-active-sub">0 DAU / 0 WAU</div>
+            </div>
+
+            <div class="card-kpi">
+                <div class="kpi-title flex items-center justify-between">
+                    <span>AI Requests</span>
+                    <svg data-lucide="brain-circuit" class="w-4 h-4 text-purple-400"></svg>
+                </div>
+                <div class="kpi-val text-purple-400" id="kpi-ai-total">0</div>
+                <div class="kpi-sub" id="kpi-ai-today">0 requests today</div>
+            </div>
+
+            <div class="card-kpi">
+                <div class="kpi-title flex items-center justify-between">
+                    <span>Tester Users</span>
+                    <svg data-lucide="ticket" class="w-4 h-4 text-amber-400"></svg>
+                </div>
+                <div class="kpi-val text-amber-400" id="kpi-testers">0 / 60</div>
+                <div class="kpi-sub" id="kpi-testers-sub">60 slots remaining</div>
+            </div>
+
+            <div class="card-kpi">
+                <div class="kpi-title flex items-center justify-between">
+                    <span>Standard Users</span>
+                    <svg data-lucide="shield" class="w-4 h-4 text-zinc-400"></svg>
+                </div>
+                <div class="kpi-val" id="kpi-normal-users">0</div>
+                <div class="kpi-sub">50 Lifetime AI plan</div>
+            </div>
+        </section>
+
+        <!-- Visual Analytics Row (Charts & Tester Groups) -->
+        <section class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <!-- 60-Tester Groups Capacity Breakdown -->
+            <div class="panel-box flex flex-col justify-between">
+                <div>
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="text-sm font-bold text-white tracking-tight">60-Tester Program Allocation</h3>
+                        <span class="tag tag-amber font-mono !text-[10px]">1-YEAR CAP</span>
+                    </div>
+                    <p class="text-xs text-zinc-400 mb-5">Group A & Group B live redemption status</p>
+                    
+                    <div class="flex flex-col gap-4" id="tester-groups-container">
+                        <!-- Group A -->
+                        <div class="p-3.5 rounded-xl bg-black/40 border border-zinc-800/80">
+                            <div class="flex items-center justify-between text-xs font-mono font-bold mb-1.5">
+                                <span class="text-indigo-400">BXJ-2026-A</span>
+                                <span id="grp-a-count" class="text-white">0 / 30</span>
+                            </div>
+                            <div class="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+                                <div id="grp-a-bar" class="bg-indigo-500 h-full rounded-full transition-all" style="width: 0%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Group B -->
+                        <div class="p-3.5 rounded-xl bg-black/40 border border-zinc-800/80">
+                            <div class="flex items-center justify-between text-xs font-mono font-bold mb-1.5">
+                                <span class="text-purple-400">BXJ-2026-B</span>
+                                <span id="grp-b-count" class="text-white">0 / 30</span>
+                            </div>
+                            <div class="w-full bg-zinc-800 h-2 rounded-full overflow-hidden">
+                                <div id="grp-b-bar" class="bg-purple-500 h-full rounded-full transition-all" style="width: 0%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-zinc-800/80 flex items-center justify-between text-xs text-zinc-400">
+                    <span>Total Tester Seats Claimed:</span>
+                    <span class="font-mono font-bold text-white" id="grp-total-claimed">0 / 60</span>
+                </div>
+            </div>
+
+            <!-- AI Consumption Distribution -->
+            <div class="panel-box">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-bold text-white tracking-tight">AI Quota Distribution</h3>
+                    <span class="tag tag-purple font-mono !text-[10px]">TELEMETRY</span>
+                </div>
+                <p class="text-xs text-zinc-400 mb-4">Standard 50-request user consumption buckets</p>
+
+                <div class="flex flex-col gap-3 text-xs" id="ai-dist-container">
+                    <div class="flex items-center justify-between">
+                        <span class="text-zinc-400">Under 25% (0–12 reqs)</span>
+                        <span class="font-mono font-bold" id="dist-u25">0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-zinc-400">25% – 50% (13–24 reqs)</span>
+                        <span class="font-mono font-bold" id="dist-25-50">0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-zinc-400">50% – 75% (25–37 reqs)</span>
+                        <span class="font-mono font-bold" id="dist-50-75">0</span>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-zinc-400">75% – 99% (38–49 reqs)</span>
+                        <span class="font-mono font-bold" id="dist-75-99">0</span>
+                    </div>
+                    <div class="flex items-center justify-between text-red-400 font-semibold">
+                        <span>Limit Reached (50 reqs)</span>
+                        <span class="font-mono font-bold" id="dist-max">0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Top AI Users -->
+            <div class="panel-box">
+                <div class="flex items-center justify-between mb-2">
+                    <h3 class="text-sm font-bold text-white tracking-tight">Top AI Power Users</h3>
+                    <span class="tag tag-blue font-mono !text-[10px]">LEADERBOARD</span>
+                </div>
+                <p class="text-xs text-zinc-400 mb-4">Users with highest AI request volume</p>
+                <div class="flex flex-col gap-2.5" id="top-ai-list">
+                    <div class="text-xs text-zinc-500 italic py-4 text-center">No AI usage recorded yet</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- User Intelligence Explorer Table -->
+        <section class="panel-box mb-8">
+            <div class="flex flex-wrap items-center justify-between gap-4 mb-5">
+                <div>
+                    <h2 class="text-base font-bold text-white tracking-tight">Authenticated User Directory</h2>
+                    <p class="text-xs text-zinc-400 mt-0.5">Live database records with entitlements and AI counters</p>
+                </div>
+
+                <div class="flex items-center gap-3 flex-wrap">
+                    <!-- Search Input -->
+                    <div class="relative">
+                        <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"></svg>
+                        <input type="text" id="user-search" class="field-input !py-2 !pl-9 !pr-4 !text-xs !w-64" placeholder="Search by name, email, or UUID…">
+                    </div>
+
+                    <!-- Filter Dropdown -->
+                    <select id="user-filter" class="field-input !py-2 !px-3 !text-xs !w-auto bg-[#141417]">
+                        <option value="all">All Users</option>
+                        <option value="tester">Testers (1-Year)</option>
+                        <option value="normal">Standard (50 AI)</option>
+                        <option value="expired">Expired Testers</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Table -->
+            <div class="overflow-x-auto rounded-xl border border-zinc-800/80">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>User</th>
+                            <th>Unique UUID</th>
+                            <th>Plan / Tier</th>
+                            <th>AI Consumed</th>
+                            <th>Joined</th>
+                            <th>Last Active</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body">
+                        <tr>
+                            <td colspan="7" class="text-center py-8 text-zinc-500">Loading user directory…</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Pagination Bar -->
+            <div class="flex items-center justify-between mt-4 pt-3 border-t border-zinc-800/80 text-xs text-zinc-400">
+                <span id="page-info">Showing 0 of 0 users</span>
+                <div class="flex items-center gap-2">
+                    <button type="button" id="btn-prev-page" class="btn-ghost !py-1.5 !px-3 !text-xs" disabled>Previous</button>
+                    <button type="button" id="btn-next-page" class="btn-ghost !py-1.5 !px-3 !text-xs" disabled>Next</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Live Activity Audit Feed -->
+        <section class="panel-box">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-sm font-bold text-white tracking-tight">System Audit Log</h3>
+                    <p class="text-xs text-zinc-400 mt-0.5">Real-time authentication, code redemptions, and AI events</p>
+                </div>
+            </div>
+
+            <div class="flex flex-col gap-2" id="activity-feed-list">
+                <div class="text-xs text-zinc-500 italic py-4 text-center">No activity events recorded yet</div>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- ============ USER DOSSIER MODAL ============ -->
+    <div id="user-dossier-modal" class="hidden fixed inset-0 z-[100000] bg-black/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="w-full max-w-lg bg-[#141519] border border-zinc-800 rounded-2xl p-6 shadow-2xl">
+            <div class="flex items-center justify-between pb-4 border-b border-zinc-800 mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold font-mono" id="dos-avatar">TR</div>
+                    <div>
+                        <h3 class="text-base font-bold text-white" id="dos-name">—</h3>
+                        <p class="text-xs text-zinc-400" id="dos-email">—</p>
+                    </div>
+                </div>
+                <button type="button" id="btn-close-dossier" class="btn-ghost !p-2">
+                    <svg data-lucide="x" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <div class="flex flex-col gap-3 text-xs">
+                <div class="p-3 rounded-lg bg-black/40 border border-zinc-800/80 flex flex-col gap-1">
+                    <span class="text-zinc-500 font-mono">SUPABASE UUID:</span>
+                    <span class="font-mono text-zinc-300 font-bold select-all break-all" id="dos-uuid">—</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 rounded-lg bg-black/40 border border-zinc-800/80">
+                        <span class="text-zinc-500">Access Tier:</span>
+                        <div class="font-bold text-white mt-1" id="dos-tier">—</div>
+                    </div>
+                    <div class="p-3 rounded-lg bg-black/40 border border-zinc-800/80">
+                        <span class="text-zinc-500">Invite Code:</span>
+                        <div class="font-bold text-amber-400 font-mono mt-1" id="dos-code">—</div>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div class="p-3 rounded-lg bg-black/40 border border-zinc-800/80">
+                        <span class="text-zinc-500">AI Usage:</span>
+                        <div class="font-bold text-purple-400 font-mono mt-1" id="dos-ai">—</div>
+                    </div>
+                    <div class="p-3 rounded-lg bg-black/40 border border-zinc-800/80">
+                        <span class="text-zinc-500">Access Expiry:</span>
+                        <div class="font-bold text-emerald-400 font-mono mt-1" id="dos-exp">—</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 pt-4 border-t border-zinc-800 flex justify-end">
+                <button type="button" id="btn-close-dossier-2" class="btn-primary !py-2 !px-5 !text-xs">Close Dossier</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ JAVASCRIPT CONTROLLER ============ -->
+    <script>
+        (function() {
+            'use strict';
+            const $ = id => document.getElementById(id);
+
+            let preAuthToken = null;
+            let currentRange = '30d';
+            let currentPage = 1;
+            let currentSearch = '';
+            let currentFilter = 'all';
+
+            function getAdminToken() {
+                return localStorage.getItem('battlex.admin.token');
+            }
+            function setAdminToken(t) {
+                localStorage.setItem('battlex.admin.token', t);
+            }
+            function clearAdminToken() {
+                localStorage.removeItem('battlex.admin.token');
+            }
+
+            async function adminFetch(url, opts = {}) {
+                const token = getAdminToken();
+                const headers = Object.assign({}, opts.headers || {});
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                if (opts.body && typeof opts.body !== 'string' && !headers['Content-Type']) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                const res = await fetch(url, Object.assign({}, opts, { headers }));
+                if (res.status === 401) {
+                    clearAdminToken();
+                    showAuthGate();
+                    throw new Error('Admin session expired.');
+                }
+                return res;
+            }
+
+            function showAuthGate() {
+                $('admin-auth-gate').style.display = 'flex';
+                $('admin-main').style.display = 'none';
+                $('step-creds').classList.remove('hidden');
+                $('step-2fa').classList.add('hidden');
+            }
+
+            function showDashboard() {
+                $('admin-auth-gate').style.display = 'none';
+                $('admin-main').style.display = 'block';
+                loadDashboardData();
+            }
+
+            // Step 1: Admin Credentials Form
+            $('form-admin-creds').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const user = $('adm-user').value.trim();
+                const pass = $('adm-pass').value.trim();
+                const errEl = $('gate-error-1');
+                const btn = $('btn-gate-1');
+
+                btn.disabled = true;
+                btn.textContent = 'Verifying…';
+                errEl.classList.add('hidden');
+
+                try {
+                    const res = await fetch('/api/admin/auth/login', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ username: user, password: pass })
+                    });
+                    const j = await res.json();
+                    if (!res.ok || !j.ok) throw new Error(j.error || 'Invalid credentials.');
+
+                    preAuthToken = j.preAuthToken;
+                    $('step-creds').classList.add('hidden');
+                    $('step-2fa').classList.remove('hidden');
+                    $('adm-pin').focus();
+                } catch (err) {
+                    errEl.textContent = err.message || 'Login failed.';
+                    errEl.classList.remove('hidden');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Proceed to 2FA Verification →';
+                }
+            });
+
+            // Step 2: 2FA Form
+            $('form-admin-2fa').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const pin = $('adm-pin').value.trim();
+                const errEl = $('gate-error-2');
+                const btn = $('btn-gate-2');
+
+                btn.disabled = true;
+                btn.textContent = 'Authenticating…';
+                errEl.classList.add('hidden');
+
+                try {
+                    const res = await fetch('/api/admin/auth/verify-2fa', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ preAuthToken, pin })
+                    });
+                    const j = await res.json();
+                    if (!res.ok || !j.ok) throw new Error(j.error || 'Invalid 2FA PIN.');
+
+                    setAdminToken(j.adminToken);
+                    showDashboard();
+                } catch (err) {
+                    errEl.textContent = err.message || '2FA verification failed.';
+                    errEl.classList.remove('hidden');
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = 'Verify & Access Command Center';
+                }
+            });
+
+            $('btn-back-creds').addEventListener('click', () => {
+                $('step-2fa').classList.add('hidden');
+                $('step-creds').classList.remove('hidden');
+            });
+
+            $('btn-admin-logout').addEventListener('click', async () => {
+                try { await adminFetch('/api/admin/auth/logout', { method: 'POST' }); } catch (e) {}
+                clearAdminToken();
+                showAuthGate();
+            });
+
+            // Range buttons
+            document.querySelectorAll('.range-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.range-btn').forEach(b => b.classList.remove('active', 'bg-white/10'));
+                    btn.classList.add('active', 'bg-white/10');
+                    currentRange = btn.dataset.range;
+                    loadDashboardData();
+                });
+            });
+
+            $('btn-refresh').addEventListener('click', loadDashboardData);
+
+            // Load all telemetry
+            async function loadDashboardData() {
+                try {
+                    const mRes = await adminFetch('/api/admin/metrics?range=' + currentRange);
+                    const m = await mRes.json();
+                    if (m && m.ok) {
+                        $('kpi-total-users').textContent = m.totalUsers.toLocaleString();
+                        $('kpi-new-users').textContent = '+' + m.newUsers.toLocaleString();
+                        $('kpi-active-today').textContent = m.activeUsers.today.toLocaleString();
+                        $('kpi-active-sub').textContent = m.activeUsers.today + ' DAU / ' + m.activeUsers.week + ' WAU';
+                        $('kpi-ai-total').textContent = m.aiRequests.total.toLocaleString();
+                        $('kpi-ai-today').textContent = m.aiRequests.today + ' requests today';
+                        $('kpi-testers').textContent = m.testers.used + ' / ' + m.testers.max;
+                        $('kpi-testers-sub').textContent = m.testers.remaining + ' slots remaining';
+                        $('kpi-normal-users').textContent = m.normalUsers.toLocaleString();
+
+                        // Tester Groups Breakdown
+                        if (m.testers && m.testers.groups) {
+                            const ga = m.testers.groups.find(g => g.code === 'BXJ-2026-A') || { usedCount: 0, maxUses: 30 };
+                            const gb = m.testers.groups.find(g => g.code === 'BXJ-2026-B') || { usedCount: 0, maxUses: 30 };
+                            $('grp-a-count').textContent = ga.usedCount + ' / ' + ga.maxUses;
+                            $('grp-a-bar').style.width = ((ga.usedCount / ga.maxUses) * 100) + '%';
+                            $('grp-b-count').textContent = gb.usedCount + ' / ' + gb.maxUses;
+                            $('grp-b-bar').style.width = ((gb.usedCount / gb.maxUses) * 100) + '%';
+                            $('grp-total-claimed').textContent = (ga.usedCount + gb.usedCount) + ' / 60';
+                        }
+
+                        // AI Distribution
+                        if (m.aiDistribution) {
+                            $('dist-u25').textContent = m.aiDistribution.under_25 || 0;
+                            $('dist-25-50').textContent = m.aiDistribution.p25_50 || 0;
+                            $('dist-50-75').textContent = m.aiDistribution.p50_75 || 0;
+                            $('dist-75-99').textContent = m.aiDistribution.p75_99 || 0;
+                            $('dist-max').textContent = m.aiDistribution.max_reached || 0;
+                        }
+
+                        // Top AI Users
+                        const topList = $('top-ai-list');
+                        if (m.topAiUsers && m.topAiUsers.length) {
+                            topList.innerHTML = m.topAiUsers.map(u => `
+                                <div class="flex items-center justify-between p-2 rounded-lg bg-black/30 text-xs">
+                                    <div class="truncate max-w-[150px] font-medium text-zinc-300">${u.email}</div>
+                                    <div class="font-mono font-bold text-purple-400">${u.requests} reqs</div>
+                                </div>
+                            `).join('');
+                        } else {
+                            topList.innerHTML = '<div class="text-xs text-zinc-500 italic py-4 text-center">No AI usage recorded yet</div>';
+                        }
+                    }
+                } catch (e) {}
+
+                loadUsers();
+                loadActivity();
+            }
+
+            // User Table & Search
+            async function loadUsers() {
+                try {
+                    const uRes = await adminFetch(`/api/admin/users?page=${currentPage}&limit=15&search=${encodeURIComponent(currentSearch)}&filter=${currentFilter}`);
+                    const uData = await uRes.json();
+                    const tbody = $('user-table-body');
+                    if (!uData || !uData.users || !uData.users.length) {
+                        tbody.innerHTML = '<tr><td colspan="7" class="text-center py-8 text-zinc-500">No users found.</td></tr>';
+                        $('page-info').textContent = 'Showing 0 of 0 users';
+                        $('btn-prev-page').disabled = true;
+                        $('btn-next-page').disabled = true;
+                        return;
+                    }
+
+                    tbody.innerHTML = uData.users.map(u => {
+                        const tierBadge = u.accessType === 'tester'
+                            ? '<span class="tag tag-purple font-mono !text-[10px]">1-Year Tester</span>'
+                            : u.accessType === 'expired'
+                            ? '<span class="tag tag-red font-mono !text-[10px]">Expired</span>'
+                            : '<span class="tag tag-blue font-mono !text-[10px]">Standard</span>';
+
+                        const joinedStr = new Date(u.joinedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+                        const activeStr = new Date(u.lastActive).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+
+                        return `
+                            <tr>
+                                <td>
+                                    <div class="font-semibold text-white">${u.name}</div>
+                                    <div class="text-[11px] text-zinc-400">${u.email}</div>
+                                </td>
+                                <td>
+                                    <div class="flex items-center gap-1.5">
+                                        <code class="font-mono text-zinc-400 text-xs bg-black/40 px-2 py-1 rounded select-all">${u.id.slice(0, 8)}…</code>
+                                        <button class="btn-ghost !p-1" onclick="navigator.clipboard.writeText('${u.id}'); alert('UUID copied!');" title="Copy UUID">
+                                            <svg data-lucide="copy" class="w-3.5 h-3.5"></svg>
+                                        </button>
+                                    </div>
+                                </td>
+                                <td>${tierBadge}</td>
+                                <td class="font-mono font-bold text-zinc-300">${u.aiUsed} / ${u.aiLimit}</td>
+                                <td class="text-zinc-400 text-xs">${joinedStr}</td>
+                                <td class="text-zinc-400 text-xs">${activeStr}</td>
+                                <td>
+                                    <button class="btn-ghost !py-1 !px-2.5 !text-xs text-indigo-400 hover:text-indigo-300" onclick="window.__openDossier('${u.id}')">
+                                        Inspect
+                                    </button>
+                                </td>
+                            </tr>
+                        `;
+                    }).join('');
+
+                    $('page-info').textContent = `Showing ${(uData.page - 1) * uData.limit + 1}–${Math.min(uData.total, uData.page * uData.limit)} of ${uData.total} users`;
+                    $('btn-prev-page').disabled = uData.page <= 1;
+                    $('btn-next-page').disabled = uData.page >= uData.totalPages;
+                    if (window.lucide) lucide.createIcons();
+                } catch (e) {}
+            }
+
+            // User Search and Filter Event Handlers
+            $('user-search').addEventListener('input', function() {
+                currentSearch = this.value;
+                currentPage = 1;
+                loadUsers();
+            });
+            $('user-filter').addEventListener('change', function() {
+                currentFilter = this.value;
+                currentPage = 1;
+                loadUsers();
+            });
+            $('btn-prev-page').addEventListener('click', () => { if (currentPage > 1) { currentPage--; loadUsers(); } });
+            $('btn-next-page').addEventListener('click', () => { currentPage++; loadUsers(); });
+
+            // Activity Log
+            async function loadActivity() {
+                try {
+                    const aRes = await adminFetch('/api/admin/activity?page=1&limit=20');
+                    const aData = await aRes.json();
+                    const list = $('activity-feed-list');
+                    if (!aData || !aData.activities || !aData.activities.length) {
+                        list.innerHTML = '<div class="text-xs text-zinc-500 italic py-4 text-center">No activity events recorded yet</div>';
+                        return;
+                    }
+
+                    list.innerHTML = aData.activities.map(a => {
+                        const timeStr = new Date(a.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+                        let icon = 'activity';
+                        let color = 'text-blue-400';
+                        if (a.event_type === 'login') { icon = 'log-in'; color = 'text-emerald-400'; }
+                        else if (a.event_type === 'ai_request') { icon = 'brain-circuit'; color = 'text-purple-400'; }
+                        else if (a.event_type === 'code_redeem') { icon = 'ticket'; color = 'text-amber-400'; }
+
+                        return `
+                            <div class="flex items-center justify-between p-2.5 rounded-lg bg-black/30 text-xs border border-zinc-800/40">
+                                <div class="flex items-center gap-2.5">
+                                    <svg data-lucide="${icon}" class="w-4 h-4 ${color}"></svg>
+                                    <span class="font-medium text-zinc-300">${a.user_email}</span>
+                                    <span class="text-zinc-500">— ${a.event_type}</span>
+                                </div>
+                                <span class="font-mono text-zinc-500 text-[11px]">${timeStr}</span>
+                            </div>
+                        `;
+                    }).join('');
+                    if (window.lucide) lucide.createIcons();
+                } catch (e) {}
+            }
+
+            // User Dossier Inspector
+            window.__openDossier = async function(uid) {
+                try {
+                    const res = await adminFetch('/api/admin/user/' + uid);
+                    const d = await res.json();
+                    if (!d || !d.ok) return;
+
+                    $('dos-avatar').textContent = (d.name || d.email).slice(0, 2).toUpperCase();
+                    $('dos-name').textContent = d.name || 'Trader';
+                    $('dos-email').textContent = d.email;
+                    $('dos-uuid').textContent = d.id;
+                    $('dos-tier').textContent = d.accessType ? d.accessType.toUpperCase() : 'NORMAL';
+                    $('dos-code').textContent = d.redeemedCode || 'None';
+                    $('dos-ai').textContent = (d.aiUsage?.lifetimeUsed || 0) + ' lifetime / ' + (d.aiUsage?.testerUsed || 0) + ' monthly';
+                    $('dos-exp').textContent = d.accessExpiresAt ? new Date(d.accessExpiresAt).toLocaleDateString() : 'N/A';
+
+                    $('user-dossier-modal').classList.remove('hidden');
+                } catch (e) {
+                    alert('Failed to load user dossier: ' + e.message);
+                }
+            };
+
+            const closeDossier = () => $('user-dossier-modal').classList.add('hidden');
+            $('btn-close-dossier').addEventListener('click', closeDossier);
+            $('btn-close-dossier-2').addEventListener('click', closeDossier);
+
+            // Boot flow: check token
+            if (getAdminToken()) {
+                showDashboard();
+            } else {
+                showAuthGate();
+            }
+
+            if (window.lucide) lucide.createIcons();
+        })();
+    </script>
+</body>
+</html>

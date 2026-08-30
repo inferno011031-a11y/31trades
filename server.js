@@ -38,6 +38,7 @@ const { loadEnv } = require('./server/env.js');
 const db = require('./server/db.js');
 const auth = require('./server/auth.js');
 const Access = require('./server/access.js');
+const Admin = require('./server/admin.js');
 const AI = require('./server/ai-mentor.js');
 const Bot = require('./server/ai-bot.js');
 const EcoCal = require('./server/ecocal.js');
@@ -774,6 +775,88 @@ async function handleApi(req, res, url) {
             return json(res, 200, Object.assign({ ok: true }, stats));
         } catch (err) {
             return json(res, 500, { error: err.message });
+        }
+    }
+
+    // ============ BATTLEX ADMIN DASHBOARD & 2FA APIS ============
+    if (p === '/api/admin/auth/login' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        try {
+            const resData = Admin.adminLogin(b);
+            return json(res, 200, resData);
+        } catch (err) {
+            return json(res, err.code || 401, { ok: false, error: err.message });
+        }
+    }
+
+    if (p === '/api/admin/auth/verify-2fa' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        try {
+            const resData = Admin.adminVerify2FA(b);
+            return json(res, 200, resData);
+        } catch (err) {
+            return json(res, err.code || 401, { ok: false, error: err.message });
+        }
+    }
+
+    if (p === '/api/admin/auth/logout' && req.method === 'POST') {
+        const token = bearerToken(req);
+        Admin.adminLogout(token);
+        return json(res, 200, { ok: true });
+    }
+
+    // Protected Admin Endpoints Gate
+    if (p.startsWith('/api/admin/')) {
+        const token = bearerToken(req) || req.headers['x-admin-token'];
+        const adminSession = Admin.verifyAdminSession(token);
+        if (!adminSession) {
+            return json(res, 401, { ok: false, error: 'Unauthorized. Admin 2FA authentication required.' });
+        }
+
+        if (p === '/api/admin/metrics' && req.method === 'GET') {
+            try {
+                const range = q.range || '30d';
+                const metrics = await Admin.getDashboardMetrics(range);
+                return json(res, 200, Object.assign({ ok: true }, metrics));
+            } catch (err) {
+                return json(res, 500, { error: err.message });
+            }
+        }
+
+        if (p === '/api/admin/users' && req.method === 'GET') {
+            try {
+                const page = q.page || 1;
+                const limit = q.limit || 25;
+                const search = q.search || '';
+                const filter = q.filter || 'all';
+                const list = await Admin.getUsersList({ page, limit, search, filter });
+                return json(res, 200, Object.assign({ ok: true }, list));
+            } catch (err) {
+                return json(res, 500, { error: err.message });
+            }
+        }
+
+        if (p.startsWith('/api/admin/user/') && req.method === 'GET') {
+            try {
+                const uid = p.replace('/api/admin/user/', '').trim();
+                const details = await Admin.getUserDetails(uid);
+                return json(res, 200, Object.assign({ ok: true }, details));
+            } catch (err) {
+                return json(res, err.code || 500, { error: err.message });
+            }
+        }
+
+        if (p === '/api/admin/activity' && req.method === 'GET') {
+            try {
+                const page = q.page || 1;
+                const limit = q.limit || 30;
+                const feed = await Admin.getActivityFeed({ page, limit });
+                return json(res, 200, Object.assign({ ok: true }, feed));
+            } catch (err) {
+                return json(res, 500, { error: err.message });
+            }
         }
     }
 
@@ -1554,6 +1637,7 @@ async function handleApi(req, res, url) {
             if (AUTH_REQUIRED && process.env.SUPABASE_URL) {
                 try {
                     await Access.enforceAiQuota(uc.userId);
+                    Admin.logActivity(uc.userId, 'ai_request', { question: (b && b.question ? String(b.question).slice(0, 60) : '') });
                 } catch (err) {
                     return json(res, err.code || 403, { ok: false, error: err.message });
                 }
