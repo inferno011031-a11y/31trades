@@ -727,24 +727,22 @@ async function handleApi(req, res, url) {
     }
     // ---------- 60-Member 1-Year Invite Access System ----------
     if (p === '/api/access/status' && req.method === 'GET') {
-        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) {
-            return json(res, 200, {
-                ok: true,
-                hasAccess: true,
-                plan: 'yearly_invite',
-                expiresAt: new Date(Date.now() + 365 * 86400000).toISOString(),
-                activatedAt: new Date().toISOString(),
-                aiUsage: { used: 0, limit: 100, remaining: 100, month: new Date().toISOString().slice(0, 7) }
-            });
+        let userId = LOCAL_USER_ID;
+        if (AUTH_REQUIRED && process.env.SUPABASE_URL) {
+            const token = bearerToken(req);
+            if (!token) return json(res, 401, { error: 'Authentication required' });
+            try {
+                const user = await auth.verify(token);
+                userId = user.id;
+            } catch (err) {
+                return json(res, err.code || 401, { error: err.message });
+            }
         }
-        const token = bearerToken(req);
-        if (!token) return json(res, 401, { error: 'Authentication required' });
         try {
-            const user = await auth.verify(token);
-            const status = await Access.getAccessStatus(user.id);
+            const status = await Access.getAccessStatus(userId);
             return json(res, 200, Object.assign({ ok: true }, status));
         } catch (err) {
-            return json(res, err.code || 401, { error: err.message });
+            return json(res, 500, { error: err.message });
         }
     }
 

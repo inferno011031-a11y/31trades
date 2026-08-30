@@ -111,6 +111,35 @@
             const errEl = document.getElementById('act-error');
             const succEl = document.getElementById('act-success');
 
+            function getAuthToken() {
+                try {
+                    const raw = localStorage.getItem('31trades.session.v1');
+                    if (raw) {
+                        const s = JSON.parse(raw);
+                        if (s && s.token) return s.token;
+                    }
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                            const sb = JSON.parse(localStorage.getItem(k));
+                            if (sb && sb.access_token) return sb.access_token;
+                        }
+                    }
+                } catch (e) {}
+                return null;
+            }
+
+            async function secureApiFetch(url, opts) {
+                opts = opts || {};
+                const token = getAuthToken();
+                const headers = Object.assign({}, opts.headers || {});
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                if (opts.body && typeof opts.body !== 'string' && !headers['Content-Type']) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                return fetch(url, Object.assign({}, opts, { headers }));
+            }
+
             function getSession() {
                 try {
                     const raw = localStorage.getItem('31trades.session.v1');
@@ -126,7 +155,7 @@
 
             // Check if already active tester
             fetch('/api/access/status', {
-                headers: { 'Authorization': 'Bearer ' + session.token }
+                headers: { 'Authorization': 'Bearer ' + (getAuthToken() || '') }
             })
             .then(r => r.json())
             .then(st => {
@@ -157,7 +186,7 @@
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',
-                            'Authorization': 'Bearer ' + session.token
+                            'Authorization': 'Bearer ' + (getAuthToken() || '')
                         },
                         body: JSON.stringify({ code })
                     });

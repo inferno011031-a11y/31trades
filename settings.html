@@ -852,7 +852,147 @@
 
 
 
+            // ============ AUTH & TESTER ENTITLEMENT ENGINE ============
+            function getAuthToken() {
+                try {
+                    const raw = localStorage.getItem('31trades.session.v1');
+                    if (raw) {
+                        const s = JSON.parse(raw);
+                        if (s && s.token) return s.token;
+                    }
+                    for (let i = 0; i < localStorage.length; i++) {
+                        const k = localStorage.key(i);
+                        if (k && k.startsWith('sb-') && k.endsWith('-auth-token')) {
+                            const sb = JSON.parse(localStorage.getItem(k));
+                            if (sb && sb.access_token) return sb.access_token;
+                        }
+                    }
+                } catch (e) {}
+                return null;
+            }
+
+            async function secureApiFetch(url, opts) {
+                opts = opts || {};
+                const token = getAuthToken();
+                const headers = Object.assign({}, opts.headers || {});
+                if (token) headers['Authorization'] = 'Bearer ' + token;
+                if (opts.body && typeof opts.body !== 'string' && !headers['Content-Type']) {
+                    headers['Content-Type'] = 'application/json';
+                }
+                return fetch(url, Object.assign({}, opts, { headers }));
+            }
+
+            async function loadTesterEntitlement() {
+                try {
+                    const r = await secureApiFetch('/api/access/status');
+                    if (!r.ok) return;
+                    const st = await r.json();
+                    const badge = $('entitlement-status-badge');
+                    const aiText = $('entitlement-ai-text');
+                    const expRow = $('entitlement-exp-row');
+                    const expText = $('entitlement-exp-text');
+                    const redeemBox = $('redeem-box');
+
+                    if (st.isTester) {
+                        if (badge) {
+                            badge.className = 'tag tag-purple font-mono';
+                            badge.textContent = '1-Year Tester Active';
+                        }
+                        if (aiText && st.aiUsage) {
+                            aiText.textContent = st.aiUsage.remaining + ' / ' + st.aiUsage.limit + ' requests left this month';
+                        }
+                        if (expRow && st.expiresAt) {
+                            expRow.style.display = 'flex';
+                            const d = new Date(st.expiresAt);
+                            if (expText) expText.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                        }
+                        if (redeemBox) {
+                            redeemBox.innerHTML = '<div class="p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-medium flex items-center gap-2"><svg data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></svg> Your 1-Year Tester Access is active and permanently tied to this account.</div>';
+                            if (window.lucide) lucide.createIcons();
+                        }
+                    } else {
+                        if (badge) {
+                            badge.className = 'tag tag-blue font-mono';
+                            badge.textContent = 'Standard Plan';
+                        }
+                        if (aiText && st.aiUsage) {
+                            aiText.textContent = st.aiUsage.remaining + ' / ' + st.aiUsage.limit + ' lifetime requests remaining';
+                        }
+                        if (expRow) expRow.style.display = 'none';
+                    }
+                } catch (e) {
+                    console.warn('[settings] loadTesterEntitlement error:', e.message);
+                }
+            }
+
+            function setupRedemptionEvents() {
+                const btnRedeem = $('btn-settings-redeem');
+                const inputCode = $('settings-invite-code');
+                const msgRedeem = $('settings-redeem-msg');
+
+                async function doRedeem() {
+                    if (!btnRedeem || !inputCode) return;
+                    const code = inputCode.value.trim();
+                    if (!code) {
+                        if (msgRedeem) {
+                            msgRedeem.className = 'p-3 rounded-lg bg-red-950/50 border border-red-800/60 text-red-300 text-xs font-medium';
+                            msgRedeem.textContent = 'Please enter an invite code.';
+                            msgRedeem.classList.remove('hidden');
+                        }
+                        return;
+                    }
+
+                    btnRedeem.disabled = true;
+                    btnRedeem.textContent = 'Activating…';
+                    if (msgRedeem) msgRedeem.classList.add('hidden');
+
+                    try {
+                        const r = await secureApiFetch('/api/access/redeem', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code })
+                        });
+                        const j = await r.json();
+                        if (!r.ok || !j.ok) {
+                            throw new Error(j.error || 'Invalid tester code. Please try again.');
+                        }
+
+                        if (msgRedeem) {
+                            msgRedeem.className = 'p-3 rounded-lg bg-emerald-950/50 border border-emerald-800/60 text-emerald-300 text-xs font-medium';
+                            msgRedeem.textContent = j.message || 'Tester access activated. Your 1-year BattleXJournal tester access is now active.';
+                            msgRedeem.classList.remove('hidden');
+                        }
+                        inputCode.value = '';
+                        loadTesterEntitlement();
+                        showToast('Tester access activated successfully!', true);
+                    } catch (err) {
+                        if (msgRedeem) {
+                            msgRedeem.className = 'p-3 rounded-lg bg-red-950/50 border border-red-800/60 text-red-300 text-xs font-medium';
+                            msgRedeem.textContent = err.message || 'Invalid tester code. Please check the code and try again.';
+                            msgRedeem.classList.remove('hidden');
+                        }
+                    } finally {
+                        btnRedeem.disabled = false;
+                        btnRedeem.textContent = 'Activate Code';
+                    }
+                }
+
+                if (btnRedeem) {
+                    btnRedeem.onclick = (e) => { e.preventDefault(); doRedeem(); };
+                }
+                if (inputCode) {
+                    inputCode.onkeydown = (e) => {
+                        if (e.key === 'Enter') {
+                            e.preventDefault();
+                            doRedeem();
+                        }
+                    };
+                }
+            }
+
             document.addEventListener("DOMContentLoaded", () => {
+                setupRedemptionEvents();
+                loadTesterEntitlement();
                 renderProfile();
                 renderChrome();
                 renderBrokers();
