@@ -636,28 +636,33 @@
                 const accId = currentAccountId();
                 const empty = $('empty-state'), offline = $('offline-state'), body = $('ai-body');
                 if (!accId) {
-                    empty.classList.remove('hidden');
-                    offline.classList.add('hidden');
-                    body.classList.add('hidden');
+                    if (empty) empty.classList.remove('hidden');
+                    if (offline) offline.classList.add('hidden');
+                    if (body) body.classList.add('hidden');
                     return;
                 }
-                empty.classList.add('hidden');
-                offline.classList.add('hidden');
-                body.classList.remove('hidden');
-                if (showLoader) {
+                if (empty) empty.classList.add('hidden');
+                if (offline) offline.classList.add('hidden');
+                if (body) body.classList.remove('hidden');
+                if (showLoader && $('coach-msg')) {
                     $('coach-msg').textContent = 'Reading your trading data…';
                 }
                 try {
                     const r = await apiFetch('/api/ai/mentor?accountId=' + encodeURIComponent(accId) + '&period=' + PERIOD);
                     if (!r.ok) throw new Error('HTTP ' + r.status);
                     const j = await r.json();
-                    if (!j || !j.bundle) throw new Error('empty bundle');
+                    if (!j || !j.bundle) {
+                        if (empty) empty.classList.remove('hidden');
+                        if (offline) offline.classList.add('hidden');
+                        if (body) body.classList.add('hidden');
+                        return;
+                    }
                     bundle = j.bundle;
                     renderAll();
                 } catch (err) {
                     console.warn('[ai] mentor fetch failed: ' + err.message);
-                    body.classList.add('hidden');
-                    offline.classList.remove('hidden');
+                    if (body) body.classList.add('hidden');
+                    if (offline) offline.classList.remove('hidden');
                 }
             }
 
@@ -673,7 +678,9 @@
                 renderDiscipline();
                 renderSessions();
                 renderAutopsies();
-                if (window.lucide) lucide.createIcons();
+                if (window.lucide && typeof window.lucide.createIcons === 'function') {
+                    lucide.createIcons();
+                }
             }
 
             function sevMeta(f) {
@@ -693,27 +700,20 @@
             // ---- Coach hero ----
             function renderCoach() {
                 const sec = $('coach-sec');
-                if (!bundle.coach || !bundle.coach.message) { sec.classList.add('hidden'); return; }
-                sec.classList.remove('hidden');
-                $('coach-period').textContent = 'period: ' + PERIOD.toUpperCase();
-                $('coach-msg').textContent = bundle.coach.message;
-                const top = (bundle.coach.patterns || [])[0];
-                $('coach-evidence').innerHTML = top
-                    ? '<span class="tag tag-red">' + top.count + ' occurrences</span>' +
-                      (top.cost != null ? '<span class="tag tag-gray num">' + money(top.cost) + '</span>' : '') +
-                      confTag(top)
-                    : '';
-                const evBtn = $('coach-view-evidence');
-                if (top && (top.ev || []).length) {
-                    evBtn.classList.remove('hidden');
-                    evBtn.onclick = () => openEvidence(top);
-                } else {
-                    evBtn.classList.add('hidden');
+                if (!bundle || !bundle.coach || !bundle.coach.message) {
+                    if (sec) sec.classList.add('hidden');
+                    return;
                 }
-                $('coach-ask').onclick = () => {
-                    if (top) askAbout(top.title);
-                    else sendChat(bundle.coach.message.split('"')[1] || 'What should I focus on?');
-                };
+                if (sec) sec.classList.remove('hidden');
+                if ($('coach-period')) $('coach-period').textContent = 'period: ' + PERIOD.toUpperCase();
+                if ($('coach-msg')) $('coach-msg').textContent = bundle.coach.message;
+                const top = (bundle.coach.patterns || [])[0];
+                if ($('coach-ask')) {
+                    $('coach-ask').onclick = () => {
+                        if (top) askAbout(top.title);
+                        else sendChat((bundle.coach && bundle.coach.message && bundle.coach.message.split('"')[1]) || 'What should I focus on?');
+                    };
+                }
             }
 
             // ---- Context strip ----

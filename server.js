@@ -1017,9 +1017,9 @@ async function handleApi(req, res, url) {
                         const cal = await EcoCal.getCalendar();
                         bundle.context.upcomingEvents = EcoCal.upcomingHighImpact(cal, 12);
                     } catch (e) { bundle.context.upcomingEvents = []; }
-                    if (process.env.GEMINI_API_KEY) {
+                    if (process.env.GEMINI_API_KEY || process.env.AICREDITS_API_KEY || process.env.OPENAI_API_KEY) {
                         const narrated = await LLM.narrateCoachMessage(bundle);
-                        if (narrated) { bundle.coach.message = narrated; bundle.ai = 'gemini'; }
+                        if (narrated) { bundle.coach.message = narrated; bundle.ai = 'aicredits'; }
                     }
                 }
                 return json(res, 200, { ok: true, bundle });
