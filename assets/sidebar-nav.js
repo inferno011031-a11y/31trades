@@ -1,3 +1,26 @@
+// Global signout handler accessible everywhere
+    window.handleSignOut = async function () {
+        try {
+            const raw = localStorage.getItem('31trades.session.v1');
+            const sess = raw ? JSON.parse(raw) : null;
+            if (sess && sess.token) {
+                await fetch('/api/auth/logout', {
+                    method: 'POST',
+                    headers: { 'Authorization': 'Bearer ' + sess.token }
+                }).catch(() => {});
+            }
+        } catch (e) {}
+        try {
+            if (window.TradeMindAuth && window.TradeMindAuth.clearSession) {
+                window.TradeMindAuth.clearSession();
+            } else {
+                localStorage.removeItem('31trades.session.v1');
+            }
+        } catch (e) {}
+        window.location.replace('auth.html');
+    };
+    window.signOut = window.handleSignOut;
+
 /**
  * BattleXJournal — Authoritative Dual-Mode (Desktop & Mobile) Navigation Controller
  */
@@ -208,6 +231,26 @@
     });
 
     // 7. Profile Popover
+    // Add mobile signout button to sidebar footer if not present
+    const profileFooter = sidebar.querySelector('div.border-t');
+    if (profileFooter && !profileFooter.querySelector('.mobile-drawer-signout-btn')) {
+        const signoutBtn = document.createElement('button');
+        signoutBtn.type = 'button';
+        signoutBtn.className = 'mobile-drawer-signout-btn';
+        signoutBtn.innerHTML = '<svg data-lucide="log-out" class="w-4 h-4"></svg><span>Sign out</span>';
+        signoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.handleSignOut();
+        });
+        signoutBtn.addEventListener('touchend', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            window.handleSignOut();
+        });
+        profileFooter.appendChild(signoutBtn);
+    }
+
     const profileChip = sidebar.querySelector('#profile-chip');
     if (profileChip) {
       let popover = document.getElementById('sidebar-profile-popover');
@@ -229,7 +272,7 @@
             <a href="settings.html" class="spp-item"><svg data-lucide="settings" class="w-4 h-4"></svg><span>Settings</span></a>
           </div>
           <div class="spp-foot">
-            <button type="button" class="spp-logout" onclick="window.signOut ? window.signOut() : (location.href='auth.html')">
+            <button type="button" class="spp-logout" onclick="window.handleSignOut()">
               <svg data-lucide="log-out" class="w-4 h-4"></svg><span>Sign out</span>
             </button>
           </div>
