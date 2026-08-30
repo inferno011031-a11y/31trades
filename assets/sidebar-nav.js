@@ -121,6 +121,23 @@
       document.body.appendChild(backdrop);
     }
 
+    // Add mobile close button inside sidebar header if missing
+    const sidebarHeader = sidebar.querySelector('div:first-child');
+    if (sidebarHeader && !sidebarHeader.querySelector('.mobile-sidebar-close-btn')) {
+      const closeBtn = document.createElement('button');
+      closeBtn.type = 'button';
+      closeBtn.className = 'mobile-sidebar-close-btn';
+      closeBtn.setAttribute('aria-label', 'Close menu');
+      closeBtn.innerHTML = '<svg data-lucide="x" class="w-4 h-4"></svg>';
+      sidebarHeader.appendChild(closeBtn);
+      
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        document.body.classList.remove('mobile-sidebar-open');
+      });
+    }
+
     // Add mobile hamburger button to topbar if missing
     const topbar = document.querySelector('.topbar');
     if (topbar && !topbar.querySelector('.mobile-menu-btn')) {
@@ -130,15 +147,19 @@
       menuBtn.setAttribute('aria-label', 'Open navigation menu');
       menuBtn.innerHTML = '<svg data-lucide="menu" class="w-5 h-5"></svg>';
       topbar.insertBefore(menuBtn, topbar.firstChild);
-      if (window.lucide && typeof window.lucide.createIcons === 'function') {
-        window.lucide.createIcons();
-      }
       
       menuBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
         document.body.classList.toggle('mobile-sidebar-open');
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
       });
+    }
+
+    if (window.lucide && typeof window.lucide.createIcons === 'function') {
+      window.lucide.createIcons();
     }
 
     // Close mobile drawer on backdrop click
@@ -149,7 +170,7 @@
     // Close mobile drawer when any link is clicked inside the sidebar
     sidebar.querySelectorAll('.nav-item').forEach(link => {
       link.addEventListener('click', () => {
-        if (window.innerWidth < 768) {
+        if (window.innerWidth <= 1024) {
           document.body.classList.remove('mobile-sidebar-open');
         }
       });
