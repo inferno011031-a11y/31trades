@@ -29,7 +29,7 @@ const OPENAI_BASE = process.env.AICREDITS_API_KEY
     ? (process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.aicredits.in/v1')
     : (process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.openai.com/v1');
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || process.env.LLM_MODEL || 'gpt-4o-mini';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || process.env.LLM_MODEL || 'openai/gpt-oss-120b';
 
 function apiKey() {
     return process.env.AICREDITS_API_KEY || process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || '';
