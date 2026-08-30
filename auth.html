@@ -1219,11 +1219,10 @@
                 btn.addEventListener('click', () => startOAuth('google'));
             });
 
-            // OAuth callback: #access_token=..&type=oauth — resolve the user from
-            // the token, save the session, and land on the dashboard.
+            // OAuth callback: #access_token=.. (standard Supabase GoTrue OAuth hash)
             function parseOAuthSession() {
                 const h = location.hash.replace(/^#/, '');
-                if (!h || h.indexOf('type=oauth') === -1) return null;
+                if (!h || h.indexOf('type=recovery') !== -1) return null;
                 const params = new URLSearchParams(h);
                 const token = params.get('access_token') || '';
                 if (!token) return null;
