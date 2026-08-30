@@ -266,6 +266,7 @@
             </div>
           </div>
           <div class="spp-menu">
+            <a href="settings.html" class="spp-item" style="color:#a5b4fc;"><svg data-lucide="ticket" class="w-4 h-4 text-indigo-400"></svg><span>Redeem Tester Code</span></a>
             <a href="community.html" class="spp-item"><svg data-lucide="users" class="w-4 h-4"></svg><span>Community</span></a>
             <a href="notifications.html" class="spp-item"><svg data-lucide="bell" class="w-4 h-4"></svg><span>Notifications</span></a>
             <a href="help.html" class="spp-item"><svg data-lucide="help-circle" class="w-4 h-4"></svg><span>Help & Docs</span></a>

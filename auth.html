@@ -1147,7 +1147,23 @@
                         }
 
                         setTimeout(() => {
-                            window.location.replace('dashboard.html');
+                                                    const fullSession = Object.assign({}, oauthSession, { user: me.user });
+                        saveSession(fullSession);
+                        history.replaceState(null, '', location.pathname);
+
+                        try {
+                            const accRes = await fetch('/api/access/status', {
+                                headers: { Authorization: 'Bearer ' + oauthSession.token }
+                            }).then(r => r.json());
+
+                            if (accRes && accRes.isTester) {
+                                window.location.replace('dashboard.html');
+                            } else {
+                                window.location.replace('activate.html');
+                            }
+                        } catch (e) {
+                            window.location.replace('activate.html');
+                        }
                         }, 1200);
                     } catch (err) {
                         showActError(err.message || 'Invalid invite code. Please check the code and try again.');

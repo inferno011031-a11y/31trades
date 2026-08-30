@@ -548,6 +548,46 @@
                             </div>
                         </div>
 
+                        <!-- ================= TESTER INVITE ACCESS CARD ================= -->
+                        <div class="panel p-6 sm:p-7 rounded-xl flex flex-col gap-4 border border-[var(--tm-border-2)]" id="tester-access-panel">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="w-8 h-8 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400">
+                                        <svg data-lucide="ticket" class="w-4 h-4"></svg>
+                                    </div>
+                                    <div>
+                                        <div class="panel-title text-[16px]">BattleX Early Access & Tester Entitlement</div>
+                                        <div class="text-[12px] text-[var(--tm-dim)]">1-Year tester program (60 member limit) with monthly AI quota.</div>
+                                    </div>
+                                </div>
+                                <div id="entitlement-badge-container">
+                                    <span class="tag tag-blue font-mono" id="entitlement-status-badge">Standard Plan</span>
+                                </div>
+                            </div>
+
+                            <div class="p-4 rounded-xl bg-[var(--tm-card)] border border-[var(--tm-border-2)] flex flex-col gap-3">
+                                <div class="flex flex-wrap items-center justify-between text-xs gap-2">
+                                    <span class="text-[var(--tm-muted)]">Current AI Allowance:</span>
+                                    <span class="font-mono font-bold text-[var(--tm-text)]" id="entitlement-ai-text">50 Lifetime Requests</span>
+                                </div>
+                                <div class="flex flex-wrap items-center justify-between text-xs gap-2" id="entitlement-exp-row" style="display:none;">
+                                    <span class="text-[var(--tm-muted)]">Access Expiration:</span>
+                                    <span class="font-mono font-bold text-emerald-400" id="entitlement-exp-text">—</span>
+                                </div>
+                            </div>
+
+                            <div id="redeem-box" class="flex flex-col gap-3 pt-2">
+                                <label class="label-xs" for="settings-invite-code">Redeem 1-Year Tester Code</label>
+                                <div class="flex items-center gap-2 flex-wrap sm:flex-nowrap">
+                                    <input type="text" id="settings-invite-code" class="field-input uppercase font-mono tracking-wider !py-2.5 !px-3.5 !text-[14px] !font-bold flex-1" placeholder="e.g. BXJ-2026-A" autocomplete="off">
+                                    <button type="button" id="btn-settings-redeem" class="btn-primary !py-2.5 !px-5 !text-[13px] whitespace-nowrap">
+                                        Activate Code
+                                    </button>
+                                </div>
+                                <div id="settings-redeem-msg" class="hidden p-3 rounded-lg text-xs leading-relaxed font-medium"></div>
+                            </div>
+                        </div>
+
                         <!-- Battlex Trader Card -->
                         <div class="panel p-6 sm:p-7 rounded-xl flex flex-col gap-4">
                             <div class="flex items-center justify-between">

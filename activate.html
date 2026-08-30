@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BATTLEXJOURNAL — Activate Access</title>
-    <meta name="description" content="Activate your 1-year BattleXJournal access code.">
+    <title>BATTLEXJOURNAL — Activate Tester Access</title>
+    <meta name="description" content="Activate your 1-year BattleXJournal tester access code.">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="theme-color" content="#0a0a0b">
     <link rel="icon" type="image/png" href="assets/favicon.png">
@@ -18,7 +18,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,6 +53,12 @@
         }
         .btn-primary:hover { background: #e2e8f0 !important; transform: translateY(-1px); }
         .btn-primary:disabled { opacity: 0.5; pointer-events: none; }
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.05); color: #A1A1AA; font-weight: 600; font-size: 13px;
+            padding: 11px 16px; border-radius: 10px; display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+            transition: all 0.15s ease; border: 1px solid rgba(255, 255, 255, 0.08); text-decoration: none; cursor: pointer; width: 100%;
+        }
+        .btn-secondary:hover { background: rgba(255, 255, 255, 0.10); color: #FFFFFF; }
         .logo-badge {
             width: 44px; height: 44px; border-radius: 10px;
             border: 1px solid rgba(255, 255, 255, 0.18); object-fit: contain; background: #000000;
@@ -68,23 +74,27 @@
             </div>
             <h1 class="text-[22px] font-bold tracking-tight text-white">Welcome to BattleXJournal</h1>
             <p class="text-[13.5px] text-zinc-400 mt-1.5 leading-relaxed">
-                Enter your access code to activate<br>1 year of BattleXJournal access.
+                Have a tester invitation code? Enter it below to unlock <strong>1 Year of Tester Access + 100 AI Requests/mo</strong>.
             </p>
         </div>
 
         <form id="act-form" class="flex flex-col gap-4">
             <div>
-                <label class="field-label" for="act-code">Invite Access Code</label>
-                <input type="text" id="act-code" class="field-input uppercase" placeholder="BXJ-2026-A" required autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" autofocus>
+                <label class="field-label" for="act-code">Tester Invite Code</label>
+                <input type="text" id="act-code" class="field-input uppercase" placeholder="e.g. BXJ-2026-A" autocomplete="off" autocorrect="off" autocapitalize="characters" spellcheck="false" autofocus>
                 <p class="text-[11.5px] text-zinc-500 mt-2">60-member early access beta. Access is tied to your account for 365 days.</p>
             </div>
 
             <div id="act-error" class="hidden p-3.5 rounded-xl bg-red-950/60 border border-red-800/80 text-red-300 text-xs leading-relaxed font-medium"></div>
             <div id="act-success" class="hidden p-3.5 rounded-xl bg-emerald-950/60 border border-emerald-800/80 text-emerald-300 text-xs leading-relaxed font-medium"></div>
 
-            <button type="submit" id="act-btn" class="btn-primary mt-2">
-                Activate Access
+            <button type="submit" id="act-btn" class="btn-primary mt-1">
+                Activate 1-Year Access
             </button>
+
+            <a href="dashboard.html" class="btn-secondary mt-1">
+                Skip & Continue on Standard Plan (50 Lifetime AI) →
+            </a>
         </form>
 
         <div class="mt-6 pt-4 border-t border-zinc-800/80 text-center">
@@ -114,14 +124,14 @@
                 return;
             }
 
-            // Check if already active
+            // Check if already active tester
             fetch('/api/access/status', {
                 headers: { 'Authorization': 'Bearer ' + session.token }
             })
             .then(r => r.json())
             .then(st => {
-                if (st && st.hasAccess) {
-                    succEl.textContent = 'Your BattleXJournal access is already active. Redirecting to Dashboard…';
+                if (st && st.isTester) {
+                    succEl.textContent = 'Your BattleXJournal tester access is already active! Redirecting…';
                     succEl.classList.remove('hidden');
                     setTimeout(() => window.location.replace('dashboard.html'), 1000);
                 }
@@ -131,7 +141,11 @@
             form.addEventListener('submit', async function(e) {
                 e.preventDefault();
                 const code = codeInput.value.trim();
-                if (!code) return;
+                if (!code) {
+                    errEl.textContent = 'Please enter an invite code or click Skip below.';
+                    errEl.classList.remove('hidden');
+                    return;
+                }
 
                 btn.disabled = true;
                 btn.textContent = 'Activating…';
@@ -149,14 +163,14 @@
                     });
                     const j = await res.json();
                     if (!res.ok || !j.ok) {
-                        throw new Error(j.error || 'Invalid invite code. Please check the code and try again.');
+                        throw new Error(j.error || 'Invalid tester code. Please check the code and try again.');
                     }
 
-                    succEl.textContent = j.message || 'Access activated. Your 1-year BattleXJournal access is now active.';
+                    succEl.textContent = j.message || 'Tester access activated. Your 1-year BattleXJournal tester access is now active.';
                     succEl.classList.remove('hidden');
 
                     if (session.user) {
-                        session.user.access_plan = j.plan;
+                        session.user.access_plan = j.plan || 'tester';
                         session.user.access_expires_at = j.expires_at;
                         localStorage.setItem('31trades.session.v1', JSON.stringify(session));
                     }
@@ -165,10 +179,10 @@
                         window.location.replace('dashboard.html');
                     }, 1200);
                 } catch (err) {
-                    errEl.textContent = err.message || 'Invalid invite code. Please check the code and try again.';
+                    errEl.textContent = err.message || 'Invalid tester code. Please check the code and try again.';
                     errEl.classList.remove('hidden');
                     btn.disabled = false;
-                    btn.textContent = 'Activate Access';
+                    btn.textContent = 'Activate 1-Year Access';
                 }
             });
 
