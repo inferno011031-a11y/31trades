@@ -120,6 +120,13 @@
       menuBtn.setAttribute('aria-label', 'Open navigation menu');
       menuBtn.innerHTML = '<svg data-lucide="menu" class="w-5 h-5"></svg>';
       topbar.insertBefore(menuBtn, topbar.firstChild);
+      if (!topbar.querySelector('.mobile-topbar-logo')) {
+        const mobLogo = document.createElement('img');
+        mobLogo.src = 'assets/battlex-logo.png';
+        mobLogo.alt = 'BattleX';
+        mobLogo.className = 'mobile-topbar-logo';
+        topbar.insertBefore(mobLogo, menuBtn.nextSibling);
+      }
 
       const openHandler = (e) => {
         e.preventDefault();
