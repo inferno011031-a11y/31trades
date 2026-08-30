@@ -1,3 +1,29 @@
+/* ============================================================================
+   STRICT MODAL DISPLAY ENGINE — ZERO UNWANTED OVERLAYS ON PAGE LOAD
+   ============================================================================ */
+.modal-overlay:not(.open):not(.active),
+#strat-modal:not(.open),
+#acc-modal:not(.open),
+#entry-modal:not(.open),
+.drawer-overlay:not(.open):not(.active),
+.drawer-panel:not(.open):not(.active) {
+    display: none !important;
+    pointer-events: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+}
+
+.modal-overlay.open,
+.modal-overlay.active,
+#strat-modal.open,
+#acc-modal.open,
+#entry-modal.open {
+    display: flex !important;
+    pointer-events: auto !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+}
+
 /* Ensure no wrapper container ever traps sidebar stacking context */
 .dash-layer,
 .ai-layer,
