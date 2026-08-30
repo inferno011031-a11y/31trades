@@ -2070,7 +2070,7 @@ function serveStatic(req, res, urlPath) {
         return json(res, 403, { error: 'forbidden' });
     }
 
-    if (p === '/') p = '/dashboard.html';
+    if (p === '/') p = '/index.html';
     if (p === '/admin' || p === '/admin/') p = '/admin.html';
     if (p === '/activate' || p === '/activate/') p = '/activate.html';
 

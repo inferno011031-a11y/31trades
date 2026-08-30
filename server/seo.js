@@ -35,11 +35,11 @@ const BRAND_DESC = 'BattlexJournal — a trading journal, risk engine, disciplin
 const PUBLIC_PAGES = [
     {
         route: '/',
-        file: 'dashboard.html',
-        title: 'Dashboard | BattlexJournal',
-        description: 'BattlexJournal is a private trading journal with risk management, discipline tracking and performance analytics.',
+        file: 'index.html',
+        title: 'BattleXJournal — Trade with Proof, Not Memory',
+        description: 'BattleXJournal is the all-in-one private trading journal, market replay simulator, strategy lab, risk management engine, and AI trading coach.',
         priority: '1.0', changefreq: 'daily',
-        h1: 'Dashboard'
+        h1: 'BattleXJournal'
     },
     {
         route: '/trading-journal',
@@ -61,7 +61,7 @@ const PUBLIC_PAGES = [
         route: '/trade-journal-import',
         file: 'public/trade-journal-import.html',
         title: 'Trade Journal Import — CSV, Excel & Google Sheets | BattlexJournal',
-        description: 'Import your existing trading journal into BattlexJournal from CSV, Excel (.xlsx), Google Sheets or Notion exports. Validate every row before it enters your ledger.',
+description: 'Import your existing trading journal into BattlexJournal from CSV, Excel (.xlsx), Google Sheets or Notion exports. Validate every row before it enters your ledger.',
         priority: '0.8', changefreq: 'monthly',
         breadcrumbs: [{ name: 'Home', route: '/' }, { name: 'Trading Journal', route: '/trading-journal' }]
     },
