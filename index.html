@@ -135,6 +135,35 @@
             position: relative;
         }
 
+        
+        /* Interactive 3D Showcase & Spotlight */
+        .showcase-perspective-container {
+            perspective: 1200px;
+        }
+        .showcase-3d-card {
+            transition: transform 0.15s ease-out, box-shadow 0.3s ease;
+            transform-style: preserve-3d;
+            will-change: transform;
+        }
+        .showcase-spotlight {
+            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(16, 185, 129, 0.12), transparent 45%);
+        }
+        .tab-btn-active {
+            background: rgba(255, 255, 255, 0.12) !important;
+            color: #FFFFFF !important;
+            border-color: rgba(255, 255, 255, 0.25) !important;
+            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
+        }
+        .tab-btn-inactive {
+            background: rgba(255, 255, 255, 0.03) !important;
+            color: #888888 !important;
+            border-color: rgba(255, 255, 255, 0.06) !important;
+        }
+        .tab-btn-inactive:hover {
+            color: #FFFFFF !important;
+            background: rgba(255, 255, 255, 0.07) !important;
+        }
+
         /* Infinite Marquee */
         @keyframes infinite-scroll {
             from { transform: translateX(0); }
@@ -217,16 +246,49 @@
 
         </div>
 
-        <!-- ==================== TRADESPAD SPECIFICATION LAPTOP COMPONENT (1287.93px × 645.14px) ==================== -->
-        <div class="w-full max-w-[1288px] mx-auto px-4 sm:px-6 relative z-10">
-            <div class="relative w-full min-w-0 shrink-0 overflow-hidden rounded-tl-[13px] rounded-bl-none border-[10px] border-black bg-black md:rounded-[calc(2.25rem-6px)] md:border-[14px] cursor-crosshair transition-all">
+        <!-- ==================== INTERACTIVE 3D HERO SHOWCASE WITH TABS & PARALLAX ==================== -->
+        <div class="w-full max-w-[1288px] mx-auto px-4 sm:px-6 relative z-10 showcase-perspective-container">
+            
+            <!-- Interactive Switcher Tabs Pill Bar -->
+            <div class="flex items-center justify-center gap-1.5 sm:gap-2 mb-8 flex-wrap">
+                <button onclick="switchView('dashboard')" id="tab-dashboard" class="tab-btn-active px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span>Dashboard & Calendar</span>
+                </button>
+                <button onclick="switchView('replay')" id="tab-replay" class="tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                    <span>Market Replay (5x)</span>
+                </button>
+                <button onclick="switchView('analytics')" id="tab-analytics" class="tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                    <span>Trade Analytics</span>
+                </button>
+                <button onclick="switchView('risk')" id="tab-risk" class="tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-red-400"></span>
+                    <span>Risk Circuit Breaker</span>
+                </button>
+                <button onclick="switchView('ai')" id="tab-ai" class="tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                    <span>AI Mentor</span>
+                </button>
+            </div>
+
+            <!-- 3D Parallax Card Container -->
+            <div id="interactive-hero-card" class="showcase-3d-card relative w-full min-w-0 shrink-0 overflow-hidden rounded-tl-[13px] rounded-bl-none border-[10px] border-black bg-black md:rounded-[calc(2.25rem-6px)] md:border-[14px] shadow-[0_30px_100px_rgba(0,0,0,0.9),0_0_60px_rgba(16,185,129,0.1)] group">
+                
+                <!-- Dynamic Cursor Spotlight Overlay -->
+                <div id="showcase-spotlight-layer" class="showcase-spotlight absolute inset-0 pointer-events-none z-30 transition-opacity duration-300 opacity-0 group-hover:opacity-100"></div>
+
                 <!-- MacBook Top Notch Bar -->
-                <div class="pointer-events-none absolute left-1/2 -top-px z-30 hidden h-6 w-44 -translate-x-1/2 items-start justify-center rounded-b-md bg-black pt-px md:flex md:rounded-b-lg" aria-hidden="true">
+                <div class="pointer-events-none absolute left-1/2 -top-px z-40 hidden h-6 w-44 -translate-x-1/2 items-start justify-center rounded-b-md bg-black pt-px md:flex md:rounded-b-lg" aria-hidden="true">
                     <span class="w-2 h-2 rounded-full bg-[#121212] ring-1 ring-[#080808]"></span>
                 </div>
+
                 <!-- Inner Screen Frame -->
                 <div class="relative overflow-hidden rounded-tl-md rounded-bl-none bg-black md:rounded-[1rem]">
-                    <div class="overflow-hidden rounded-tl-md rounded-bl-none md:rounded-[1rem]">
+                    
+                    <!-- View 1: Main High-Res Dashboard & Calendar -->
+                    <div id="view-dashboard" class="relative block transition-opacity duration-300">
                         <img 
                             alt="BattleXJournal app display" 
                             width="1288" 
@@ -235,12 +297,160 @@
                             class="block h-auto w-full object-cover object-left max-md:scale-100 md:scale-[1.00] md:object-center" 
                             src="assets/dashboard-mockup-1288x681.jpg"
                         />
+
+                        <!-- Floating Live Badges on the screen -->
+                        <div class="absolute top-4 sm:top-8 right-4 sm:right-8 z-20 bg-black/85 backdrop-blur-xl border border-emerald-500/30 px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-2xl animate-pulse">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                            <span class="text-[11px] font-mono font-bold text-emerald-400">+2.45R Realized Profit</span>
+                        </div>
                     </div>
+
+                    <!-- View 2: Live Canvas Market Replay -->
+                    <div id="view-replay" class="relative hidden bg-[#0A0B0E] p-6 sm:p-10 min-h-[420px] sm:min-h-[580px] text-left transition-opacity duration-300">
+                        <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
+                                    <svg data-lucide="play" class="w-4 h-4"></svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white font-mono">EURUSD • 5-Minute Session Replay</h4>
+                                    <p class="text-[11px] text-zinc-400">Tick-by-tick simulation without risking live capital</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 font-mono text-xs">
+                                <span class="px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 font-bold">Speed: 5x</span>
+                                <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold">In Trade (+1.80R)</span>
+                            </div>
+                        </div>
+
+                        <!-- Candlestick Canvas -->
+                        <div class="w-full h-64 sm:h-96 rounded-xl bg-black/60 border border-white/[0.06] relative overflow-hidden flex items-center justify-center">
+                            <canvas id="live-replay-canvas" class="w-full h-full"></canvas>
+                        </div>
+                    </div>
+
+                    <!-- View 3: Trade Analytics & Metrics -->
+                    <div id="view-analytics" class="relative hidden bg-[#090A0D] p-6 sm:p-10 min-h-[420px] sm:min-h-[580px] text-left transition-opacity duration-300">
+                        <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
+                            <div>
+                                <h4 class="text-sm font-bold text-white font-mono">Trade Expectancy & Strategy Attribution</h4>
+                                <p class="text-[11px] text-zinc-400">Mathematical breakdown across 124 executed trades</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-mono font-bold">Profit Factor: 2.34</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 font-mono">
+                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
+                                <span class="text-[10px] text-zinc-500 uppercase">Win Rate</span>
+                                <p class="text-xl font-bold text-white">68.4%</p>
+                                <span class="text-[10px] text-emerald-400">+4.2% this month</span>
+                            </div>
+                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
+                                <span class="text-[10px] text-zinc-500 uppercase">Total Net P&L</span>
+                                <p class="text-xl font-bold text-emerald-400">+$12,480.00</p>
+                                <span class="text-[10px] text-zinc-400">124 trades logged</span>
+                            </div>
+                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
+                                <span class="text-[10px] text-zinc-500 uppercase">Avg Realized RR</span>
+                                <p class="text-xl font-bold text-white">2.45R</p>
+                                <span class="text-[10px] text-emerald-400">Above 2R target</span>
+                            </div>
+                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
+                                <span class="text-[10px] text-zinc-500 uppercase">Max Drawdown</span>
+                                <p class="text-xl font-bold text-red-400">-1.85%</p>
+                                <span class="text-[10px] text-emerald-400">Safe ($750 limit)</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06] font-mono text-xs text-zinc-300">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="font-bold text-white">Top Performing Setup: MSS + FVG</span>
+                                <span class="text-emerald-400 font-bold">78% Win Rate (2.85 Avg R)</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-400">Consistently delivers highest expectancy during New York AM Session (09:30 - 11:30 EST).</p>
+                        </div>
+                    </div>
+
+                    <!-- View 4: Risk Circuit Breaker -->
+                    <div id="view-risk" class="relative hidden bg-[#090A0D] p-6 sm:p-10 min-h-[420px] sm:min-h-[580px] text-left transition-opacity duration-300 font-mono">
+                        <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
+                            <div>
+                                <h4 class="text-sm font-bold text-white">Capital Protection Engine</h4>
+                                <p class="text-[11px] text-zinc-400">Automated daily loss limits & position sizing checks</p>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">Status: SAFE</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+                            <div class="p-4 rounded-xl bg-[#121316] border border-emerald-500/20">
+                                <span class="text-[10px] text-zinc-500 uppercase">Daily Risk Budget</span>
+                                <p class="text-2xl font-bold text-white mt-1">$1,000</p>
+                                <span class="text-[11px] text-emerald-400">$1,000 buffer remaining</span>
+                            </div>
+                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
+                                <span class="text-[10px] text-zinc-500 uppercase">Max Account Drawdown</span>
+                                <p class="text-2xl font-bold text-white mt-1">$0</p>
+                                <span class="text-[11px] text-zinc-400">Limit: $750.00</span>
+                            </div>
+                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
+                                <span class="text-[10px] text-zinc-500 uppercase">Position Sizing Calculator</span>
+                                <p class="text-2xl font-bold text-purple-400 mt-1">1.25 Lots</p>
+                                <span class="text-[11px] text-zinc-400">1.0% ($250 risk) per trade</span>
+                            </div>
+                        </div>
+
+                        <div class="p-4 rounded-xl bg-black/60 border border-white/[0.08] text-xs text-zinc-300">
+                            <span class="text-emerald-400 font-bold block mb-1">🛡️ Circuit Breaker Active:</span>
+                            Trading will automatically lock if daily loss exceeds $1,000 to prevent revenge trading spirals.
+                        </div>
+                    </div>
+
+                    <!-- View 5: AI Mentor -->
+                    <div id="view-ai" class="relative hidden bg-[#090A0D] p-6 sm:p-10 min-h-[420px] sm:min-h-[580px] text-left transition-opacity duration-300 font-sans">
+                        <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
+                            <div class="flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
+                                    <svg data-lucide="brain-circuit" class="w-4 h-4"></svg>
+                                </div>
+                                <div>
+                                    <h4 class="text-sm font-bold text-white">Gemini 2.5 Flash Trade Critique</h4>
+                                    <p class="text-[11px] text-zinc-400">AI analysis of trade setup, risk sizing & execution discipline</p>
+                                </div>
+                            </div>
+                            <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-mono font-bold">AI Coach Ready</span>
+                        </div>
+
+                        <div class="p-5 rounded-2xl bg-[#121316] border border-white/[0.08] mb-4">
+                            <div class="flex items-center gap-2 mb-2 font-mono text-xs text-zinc-400">
+                                <span class="text-indigo-400 font-bold">BattleX AI Mentor:</span>
+                                <span>Analysis for EURUSD Long (+2.45R)</span>
+                            </div>
+                            <p class="text-xs text-zinc-300 leading-relaxed mb-3">
+                                "Excellent patience waiting for the 5-minute Market Structure Shift (MSS) confirmation before entering on the Fair Value Gap (FVG) discount. Your 12-pip stop loss respected the swing low properly. Execution score is 95/100."
+                            </p>
+                            <div class="flex items-center gap-3 text-[11px] font-mono text-emerald-400">
+                                <span>✓ Proper Risk Sizing (1.0%)</span>
+                                <span>✓ Followed Trade Plan</span>
+                                <span>✓ Target Met (2.45R)</span>
+                            </div>
+                        </div>
+
+                        <div class="text-center">
+                            <a href="auth.html" class="btn-white-pill !py-2 !px-5 !text-xs">
+                                Try AI Mentor on Your Trades →
+                            </a>
+                        </div>
+                    </div>
+
                 </div>
+
             </div>
+
         </div>
 
     </section>
+
+    <!-- ==================== 3. PLATFORM INTEGRATIONS & SYNC ==================== -->
 
     <!-- ==================== 3. PLATFORM INTEGRATIONS & SYNC ==================== -->
 
@@ -453,5 +663,135 @@
             }
         });
     </script>
+
+    <!-- Interactive 3D Showcase Controller -->
+    <script>
+        // 1. Tab Switcher Controller
+        const views = ['dashboard', 'replay', 'analytics', 'risk', 'ai'];
+        function switchView(target) {
+            views.forEach(v => {
+                const el = document.getElementById('view-' + v);
+                const tab = document.getElementById('tab-' + v);
+                if (el) {
+                    if (v === target) {
+                        el.classList.remove('hidden');
+                        el.classList.add('block');
+                    } else {
+                        el.classList.remove('block');
+                        el.classList.add('hidden');
+                    }
+                }
+                if (tab) {
+                    if (v === target) {
+                        tab.className = 'tab-btn-active px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5';
+                    } else {
+                        tab.className = 'tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5';
+                    }
+                }
+            });
+
+            if (target === 'replay') {
+                setTimeout(drawInteractiveCandles, 50);
+            }
+        }
+
+        // 2. 3D Mouse Parallax & Dynamic Spotlight Tracker
+        (function() {
+            const card = document.getElementById('interactive-hero-card');
+            const spotlight = document.getElementById('showcase-spotlight-layer');
+            if (!card) return;
+
+            card.addEventListener('mousemove', (e) => {
+                const rect = card.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                const centerX = rect.width / 2;
+                const centerY = rect.height / 2;
+
+                const rotateX = ((y - centerY) / centerY) * -4.5;
+                const rotateY = ((x - centerX) / centerX) * 4.5;
+
+                card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.008, 1.008, 1.008)`;
+                
+                if (spotlight) {
+                    spotlight.style.setProperty('--mouse-x', `${x}px`);
+                    spotlight.style.setProperty('--mouse-y', `${y}px`);
+                }
+            });
+
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
+            });
+        })();
+
+        // 3. HTML5 Live Replay Candlestick Canvas
+        function drawInteractiveCandles() {
+            const canvas = document.getElementById('live-replay-canvas');
+            if (!canvas || !canvas.parentElement) return;
+
+            canvas.width = canvas.parentElement.clientWidth;
+            canvas.height = canvas.parentElement.clientHeight;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+            // Draw grid
+            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
+            ctx.lineWidth = 1;
+            for (let y = 30; y < canvas.height; y += 40) {
+                ctx.beginPath();
+                ctx.moveTo(0, y);
+                ctx.lineTo(canvas.width, y);
+                ctx.stroke();
+            }
+
+            // Draw 24 simulated candles
+            const total = 24;
+            const candleWidth = Math.max(6, (canvas.width - 60) / total - 6);
+            let price = 1.0850;
+
+            for (let i = 0; i < total; i++) {
+                const isBull = Math.random() > 0.42;
+                const change = (Math.random() * 0.0004) * (isBull ? 1 : -1);
+                const open = price;
+                const close = open + change;
+                const high = Math.max(open, close) + Math.random() * 0.0002;
+                const low = Math.min(open, close) - Math.random() * 0.0002;
+                price = close;
+
+                const x = 30 + i * (candleWidth + 6);
+                const minP = 1.0830;
+                const maxP = 1.0890;
+                const range = maxP - minP;
+
+                const openY = canvas.height - ((open - minP) / range) * canvas.height;
+                const closeY = canvas.height - ((close - minP) / range) * canvas.height;
+                const highY = canvas.height - ((high - minP) / range) * canvas.height;
+                const lowY = canvas.height - ((low - minP) / range) * canvas.height;
+
+                const color = isBull ? '#10B981' : '#EF4444';
+
+                // Wick
+                ctx.strokeStyle = color;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(x + candleWidth / 2, highY);
+                ctx.lineTo(x + candleWidth / 2, lowY);
+                ctx.stroke();
+
+                // Body
+                ctx.fillStyle = color;
+                ctx.fillRect(x, Math.min(openY, closeY), candleWidth, Math.max(3, Math.abs(closeY - openY)));
+            }
+        }
+        window.addEventListener('resize', () => {
+            if (document.getElementById('view-replay') && !document.getElementById('view-replay').classList.contains('hidden')) {
+                drawInteractiveCandles();
+            }
+        });
+    </script>
+
 </body>
 </html>
