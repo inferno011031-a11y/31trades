@@ -210,7 +210,7 @@ const PRIVATE_ROUTES = [
 ];
 
 const PRIVATE_FILES = [
-    'app.html', 'auth.html', 'ai.html', 'analytics.html', 'backtesting.html',
+    'admin.html', 'activate.html', 'app.html', 'auth.html', 'ai.html', 'analytics.html', 'backtesting.html',
     'battles.html', 'calendar.html', 'community.html', 'dashboard.html',
     'discipline.html', 'help.html', 'imports.html', 'improve.html',
     'insights.html', 'journal.html', 'notifications.html', 'replay.html',
@@ -225,6 +225,8 @@ const REDIRECTS = {
     '/home': '/',
     '/trading': '/trading-journal',
     '/blog': '/blog/',
+    '/admin': '/admin.html',
+    '/activate': '/activate.html',
     '/dashboard': '/dashboard.html',
     '/journal': '/journal.html',
     '/review': '/review.html',

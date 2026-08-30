@@ -2071,6 +2071,8 @@ function serveStatic(req, res, urlPath) {
     }
 
     if (p === '/') p = '/dashboard.html';
+    if (p === '/admin' || p === '/admin/') p = '/admin.html';
+    if (p === '/activate' || p === '/activate/') p = '/activate.html';
 
     const file = path.normalize(path.join(ROOT, p));
     if (file !== ROOT && !file.startsWith(ROOT + path.sep)) {
