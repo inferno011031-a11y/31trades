@@ -9,9 +9,7 @@
     if (!sidebar) return;
 
     // Portal sidebar to body on mobile so it is never trapped in flex/overflow clipping
-    if (sidebar.parentElement && sidebar.parentElement !== document.body) {
-      document.body.appendChild(sidebar);
-    }
+    
 
     let currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
     if (currentPath === 'index.html' || currentPath === '') {
