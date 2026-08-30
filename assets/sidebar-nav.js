@@ -1,6 +1,5 @@
 /**
- * BattleXJournal — Compact Tree Sidebar Controller
- * Manages active states, collapsible accordion folders, search, and collapse toggle.
+ * BattleXJournal — Compact Tree Sidebar Controller & Hardware-Accelerated Mobile Engine
  */
 (function () {
   'use strict';
@@ -8,6 +7,11 @@
   function init() {
     const sidebar = document.querySelector('.sidebar');
     if (!sidebar) return;
+
+    // Portal sidebar to body on mobile so it is never trapped in flex/overflow clipping
+    if (sidebar.parentElement && sidebar.parentElement !== document.body) {
+      document.body.appendChild(sidebar);
+    }
 
     let currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
     if (currentPath === 'index.html' || currentPath === '') {
@@ -43,7 +47,7 @@
       }
     });
 
-    // 2. Accordion Toggle Handlers (Single-expansion accordion pattern)
+    // 2. Accordion Toggle Handlers
     sections.forEach((sec) => {
       const header = sec.querySelector(".sidebar-section-header");
       if (!header) return;
@@ -51,16 +55,8 @@
       header.addEventListener("click", (e) => {
         e.preventDefault();
         const isAlreadyOpen = sec.classList.contains("open");
-
-        // Close all sections first
-        sections.forEach((s) => {
-          s.classList.remove("open");
-        });
-
-        // If it wasn't open, open it (toggles open/close)
-        if (!isAlreadyOpen) {
-          sec.classList.add("open");
-        }
+        sections.forEach((s) => s.classList.remove("open"));
+        if (!isAlreadyOpen) sec.classList.add("open");
       });
     });
 
@@ -69,37 +65,18 @@
     if (searchInput) {
       searchInput.addEventListener('input', function () {
         const q = this.value.trim().toLowerCase();
-
-        if (!q) {
-          groups.forEach(g => {
-            g.style.display = '';
-            const hasActive = g.querySelector('.tree-item.active');
-            const isJournal = g.getAttribute('data-group-id') === 'journal';
-            const shouldBeOpen = hasActive || (!activeItem && isJournal);
-            g.classList.toggle('open', !!shouldBeOpen);
-            g.querySelectorAll('.tree-item').forEach(i => i.style.display = '');
-          });
-          return;
-        }
-
-        groups.forEach(g => {
+        sections.forEach(sec => {
           let hasMatch = false;
-          g.querySelectorAll('.tree-item').forEach(item => {
+          sec.querySelectorAll('.nav-item').forEach(item => {
             const txt = item.textContent.toLowerCase();
-            if (txt.includes(q)) {
+            if (!q || txt.includes(q)) {
               item.style.display = 'flex';
-              hasMatch = true;
+              if (q && txt.includes(q)) hasMatch = true;
             } else {
               item.style.display = 'none';
             }
           });
-
-          if (hasMatch) {
-            g.style.display = '';
-            g.classList.add('open');
-          } else {
-            g.style.display = 'none';
-          }
+          if (q) sec.classList.toggle('open', hasMatch);
         });
       });
     }
@@ -158,6 +135,40 @@
       });
     }
 
+    // 6. Mobile Bottom Navigation Bar
+    let bottomNav = document.querySelector('.mobile-bottom-nav');
+    if (!bottomNav) {
+      bottomNav = document.createElement('nav');
+      bottomNav.className = 'mobile-bottom-nav';
+      bottomNav.innerHTML = `
+        <a href="dashboard.html" class="mbn-item ${currentPath === 'dashboard.html' ? 'active' : ''}">
+          <svg data-lucide="layout-dashboard"></svg><span>Dashboard</span>
+        </a>
+        <a href="journal.html" class="mbn-item ${currentPath === 'journal.html' ? 'active' : ''}">
+          <svg data-lucide="book-open"></svg><span>Journal</span>
+        </a>
+        <a href="notes.html" class="mbn-item ${currentPath === 'notes.html' ? 'active' : ''}">
+          <svg data-lucide="file-edit"></svg><span>Notes</span>
+        </a>
+        <a href="ai.html" class="mbn-item ${currentPath === 'ai.html' ? 'active' : ''}">
+          <svg data-lucide="brain-circuit"></svg><span>AI Coach</span>
+        </a>
+        <button type="button" class="mbn-item mbn-menu-trigger">
+          <svg data-lucide="menu"></svg><span>More</span>
+        </button>
+      `;
+      document.body.appendChild(bottomNav);
+
+      bottomNav.querySelector('.mbn-menu-trigger').addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        document.body.classList.toggle('mobile-sidebar-open');
+        if (window.lucide && typeof window.lucide.createIcons === 'function') {
+          window.lucide.createIcons();
+        }
+      });
+    }
+
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons();
     }
@@ -183,7 +194,7 @@
       }
     });
 
-    // 6. User Profile Popover Card (Community, Notifications, Help, Settings, Sign Out)
+    // 7. User Profile Popover Card
     const profileChip = sidebar.querySelector('#profile-chip');
     if (profileChip) {
       let popover = document.getElementById('sidebar-profile-popover');
@@ -199,27 +210,14 @@
             </div>
           </div>
           <div class="spp-menu">
-            <a href="community.html" class="spp-item">
-              <svg data-lucide="users" class="w-4 h-4"></svg>
-              <span>Community</span>
-            </a>
-            <a href="notifications.html" class="spp-item">
-              <svg data-lucide="bell" class="w-4 h-4"></svg>
-              <span>Notifications</span>
-            </a>
-            <a href="help.html" class="spp-item">
-              <svg data-lucide="help-circle" class="w-4 h-4"></svg>
-              <span>Help & Docs</span>
-            </a>
-            <a href="settings.html" class="spp-item">
-              <svg data-lucide="settings" class="w-4 h-4"></svg>
-              <span>Settings</span>
-            </a>
+            <a href="community.html" class="spp-item"><svg data-lucide="users" class="w-4 h-4"></svg><span>Community</span></a>
+            <a href="notifications.html" class="spp-item"><svg data-lucide="bell" class="w-4 h-4"></svg><span>Notifications</span></a>
+            <a href="help.html" class="spp-item"><svg data-lucide="help-circle" class="w-4 h-4"></svg><span>Help & Docs</span></a>
+            <a href="settings.html" class="spp-item"><svg data-lucide="settings" class="w-4 h-4"></svg><span>Settings</span></a>
           </div>
           <div class="spp-foot">
             <button type="button" class="spp-logout" onclick="window.signOut ? window.signOut() : (location.href='auth.html')">
-              <svg data-lucide="log-out" class="w-4 h-4"></svg>
-              <span>Sign out</span>
+              <svg data-lucide="log-out" class="w-4 h-4"></svg><span>Sign out</span>
             </button>
           </div>
         `;
@@ -240,7 +238,6 @@
         if (isOpen) {
           popover.classList.remove('show');
         } else {
-          // Sync user info from session if available
           try {
             if (window.TradeMindCore && window.TradeMindCore.user) {
               const u = window.TradeMindCore.user();
@@ -272,21 +269,11 @@
         if (popover.classList.contains('show')) positionPopover();
       });
     }
-
-    if (window.lucide && typeof window.lucide.createIcons === 'function') {
-      window.lucide.createIcons();
-    }
   }
 
-  let initialized = false;
-  function tryInit() {
-    if (initialized) return;
-    if (document.readyState === 'loading') return;
-    initialized = true;
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
     init();
   }
-
-  document.addEventListener('DOMContentLoaded', tryInit);
-  window.addEventListener('load', tryInit);
-  tryInit();
 })();
