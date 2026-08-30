@@ -1,5 +1,5 @@
 /**
- * BattleXJournal — Compact Tree Sidebar Controller & Hardware-Accelerated Mobile Engine
+ * BattleXJournal — Authoritative Dual-Mode (Desktop & Mobile) Navigation Controller
  */
 (function () {
   'use strict';
@@ -8,15 +8,12 @@
     const sidebar = document.querySelector('.sidebar');
     if (!sidebar) return;
 
-    // Portal sidebar to body on mobile so it is never trapped in flex/overflow clipping
-    
-
     let currentPath = window.location.pathname.split('/').pop() || 'dashboard.html';
     if (currentPath === 'index.html' || currentPath === '') {
       currentPath = 'dashboard.html';
     }
 
-    // 1. Mark active item and open its group
+    // 1. Active item & group resolution
     let activeItem = null;
     let activeSectionId = 'core';
     sidebar.querySelectorAll('.nav-item').forEach(item => {
@@ -34,7 +31,7 @@
       }
     });
 
-    // Apply initial single-open state to DOM elements on load
+    // 2. Accordion Groups
     const sections = sidebar.querySelectorAll(".sidebar-section");
     sections.forEach((sec) => {
       const secId = sec.getAttribute('data-section');
@@ -45,7 +42,6 @@
       }
     });
 
-    // 2. Accordion Toggle Handlers
     sections.forEach((sec) => {
       const header = sec.querySelector(".sidebar-section-header");
       if (!header) return;
@@ -58,7 +54,7 @@
       });
     });
 
-    // 3. Search Filter
+    // 3. Search Filter in Sidebar
     const searchInput = sidebar.querySelector('#nav-search-input');
     if (searchInput) {
       searchInput.addEventListener('input', function () {
@@ -79,7 +75,7 @@
       });
     }
 
-    // 4. Collapse Toggle
+    // 4. Desktop Collapse Toggle
     const collapseBtn = sidebar.querySelector('#collapse-btn');
     if (collapseBtn) {
       collapseBtn.addEventListener('click', (e) => {
@@ -88,7 +84,7 @@
       });
     }
 
-    // 5. Mobile Drawer & Backdrop Controller
+    // 5. Mobile Drawer & Backdrop Setup
     let backdrop = document.querySelector('.mobile-sidebar-backdrop');
     if (!backdrop) {
       backdrop = document.createElement('div');
@@ -96,24 +92,26 @@
       document.body.appendChild(backdrop);
     }
 
-    // Add mobile close button inside sidebar header if missing
+    // Mobile Close [X] Button inside Sidebar Header
     const sidebarHeader = sidebar.querySelector('div:first-child');
     if (sidebarHeader && !sidebarHeader.querySelector('.mobile-sidebar-close-btn')) {
       const closeBtn = document.createElement('button');
       closeBtn.type = 'button';
       closeBtn.className = 'mobile-sidebar-close-btn';
-      closeBtn.setAttribute('aria-label', 'Close menu');
+      closeBtn.setAttribute('aria-label', 'Close navigation menu');
       closeBtn.innerHTML = '<svg data-lucide="x" class="w-4 h-4"></svg>';
       sidebarHeader.appendChild(closeBtn);
-      
-      closeBtn.addEventListener('click', (e) => {
+
+      const closeHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         document.body.classList.remove('mobile-sidebar-open');
-      });
+      };
+      closeBtn.addEventListener('click', closeHandler);
+      closeBtn.addEventListener('touchend', closeHandler);
     }
 
-    // Add mobile hamburger button to topbar if missing
+    // Mobile Hamburger [☰] Button in Topbar
     const topbar = document.querySelector('.topbar');
     if (topbar && !topbar.querySelector('.mobile-menu-btn')) {
       const menuBtn = document.createElement('button');
@@ -122,15 +120,17 @@
       menuBtn.setAttribute('aria-label', 'Open navigation menu');
       menuBtn.innerHTML = '<svg data-lucide="menu" class="w-5 h-5"></svg>';
       topbar.insertBefore(menuBtn, topbar.firstChild);
-      
-      menuBtn.addEventListener('click', (e) => {
+
+      const openHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         document.body.classList.toggle('mobile-sidebar-open');
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
           window.lucide.createIcons();
         }
-      });
+      };
+      menuBtn.addEventListener('click', openHandler);
+      menuBtn.addEventListener('touchend', openHandler);
     }
 
     // 6. Mobile Bottom Navigation Bar
@@ -157,26 +157,34 @@
       `;
       document.body.appendChild(bottomNav);
 
-      bottomNav.querySelector('.mbn-menu-trigger').addEventListener('click', (e) => {
+      const moreHandler = (e) => {
         e.preventDefault();
         e.stopPropagation();
         document.body.classList.toggle('mobile-sidebar-open');
         if (window.lucide && typeof window.lucide.createIcons === 'function') {
           window.lucide.createIcons();
         }
-      });
+      };
+      const trigger = bottomNav.querySelector('.mbn-menu-trigger');
+      if (trigger) {
+        trigger.addEventListener('click', moreHandler);
+        trigger.addEventListener('touchend', moreHandler);
+      }
     }
 
     if (window.lucide && typeof window.lucide.createIcons === 'function') {
       window.lucide.createIcons();
     }
 
-    // Close mobile drawer on backdrop click
-    backdrop.addEventListener('click', () => {
+    // Backdrop tap closes drawer
+    const backdropClose = (e) => {
+      e.preventDefault();
       document.body.classList.remove('mobile-sidebar-open');
-    });
+    };
+    backdrop.addEventListener('click', backdropClose);
+    backdrop.addEventListener('touchend', backdropClose);
 
-    // Close mobile drawer when any link is clicked inside the sidebar
+    // Sidebar link click on mobile closes drawer
     sidebar.querySelectorAll('.nav-item').forEach(link => {
       link.addEventListener('click', () => {
         if (window.innerWidth <= 1024) {
@@ -185,14 +193,14 @@
       });
     });
 
-    // Close on Escape key
+    // Escape key closes drawer
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape' && document.body.classList.contains('mobile-sidebar-open')) {
         document.body.classList.remove('mobile-sidebar-open');
       }
     });
 
-    // 7. User Profile Popover Card
+    // 7. Profile Popover
     const profileChip = sidebar.querySelector('#profile-chip');
     if (profileChip) {
       let popover = document.getElementById('sidebar-profile-popover');
