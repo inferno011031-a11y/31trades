@@ -3,18 +3,18 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>31TRADES — Sign In / Create Account</title>
-    <meta name="description" content="Sign in or create your 31TRADES account. Journal your trades, measure discipline and review your decisions.">
+    <title>BATTLEXJOURNAL — Sign In / Create Account</title>
+    <meta name="description" content="Sign in or create your BattleXJournal account. Journal your trades, measure discipline and review your decisions.">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="theme-color" content="#0a0a0b">
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="31TRADES">
-    <meta property="og:title" content="31TRADES — Sign In / Create Account">
-    <meta property="og:description" content="Sign in or create your 31TRADES account. Journal your trades, measure discipline and review your decisions.">
+    <meta property="og:site_name" content="BATTLEXJOURNAL">
+    <meta property="og:title" content="BATTLEXJOURNAL — Sign In / Create Account">
+    <meta property="og:description" content="Sign in or create your BattleXJournal account. Journal your trades, measure discipline and review your decisions.">
     <meta property="og:url" content="https://31trades-production.up.railway.app/auth.html">
     <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="31TRADES — Sign In / Create Account">
-    <meta name="twitter:description" content="Sign in or create your 31TRADES account. Journal your trades, measure discipline and review your decisions.">
+    <meta name="twitter:title" content="BATTLEXJOURNAL — Sign In / Create Account">
+    <meta name="twitter:description" content="Sign in or create your BattleXJournal account. Journal your trades, measure discipline and review your decisions.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/auth.html">
 
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
@@ -625,7 +625,7 @@
         <div class="nav-container">
             <a href="index.html" class="logo">
                 <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
-                <span>31TRADES</span>
+                <img src="assets/battlex-logo.png" alt="BattleX" class="w-7 h-7 rounded-lg border border-white/20 bg-black mr-1.5"><span>BATTLEXJOURNAL</span>
             </a>
 
             <nav class="nav-capsule header-nav">
@@ -828,7 +828,7 @@
                     </button>
 
                     <p class="text-center text-[13.5px] text-[#888888] mt-7">
-                        New to 31TRADES?
+                        New to BattleXJournal?
                         <button type="button" id="switch-to-signup" class="text-emerald-400 hover:text-emerald-300 font-semibold bg-transparent border-none p-0">Create an account</button>
                     </p>
                 </div>
@@ -991,7 +991,7 @@
 
     <footer class="relative z-10 w-full border-t border-[#27272A] bg-black/60 backdrop-blur-xl py-6 text-center">
         <p class="text-[12.5px] text-[#666666] font-medium">
-            © 2026 31TRADES · Privacy-first trading journal — <a href="index.html" class="text-[#888888] hover:text-white transition-colors no-underline">Back to home</a>
+            © 2026 BATTLEXJOURNAL · Privacy-first trading journal — <a href="index.html" class="text-[#888888] hover:text-white transition-colors no-underline">Back to home</a>
         </p>
     </footer>
 
@@ -1143,23 +1143,7 @@
                         }
 
                         setTimeout(() => {
-                                                    const fullSession = Object.assign({}, oauthSession, { user: me.user });
-                        saveSession(fullSession);
-                        history.replaceState(null, '', location.pathname);
-
-                        try {
-                            const accRes = await fetch('/api/access/status', {
-                                headers: { Authorization: 'Bearer ' + oauthSession.token }
-                            }).then(r => r.json());
-
-                            if (accRes && accRes.isTester) {
-                                window.location.replace('dashboard.html');
-                            } else {
-                                window.location.replace('activate.html');
-                            }
-                        } catch (e) {
-                            window.location.replace('activate.html');
-                        }
+                            window.location.replace('dashboard.html');
                         }, 1200);
                     } catch (err) {
                         showActError(err.message || 'Invalid invite code. Please check the code and try again.');
