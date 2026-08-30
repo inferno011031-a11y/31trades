@@ -1886,6 +1886,177 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
 }
 
 /* ============================================================================
+   BATTLEXJOURNAL — MASTER DUAL-MODE RESPONSIVE ENGINE (PC & MOBILE 100% PERFECT)
+   ============================================================================ */
+
+/* Mobile Trigger Button (Default hidden on desktop) */
+.mobile-menu-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #ffffff;
+    cursor: pointer;
+    margin-right: 6px;
+    flex-shrink: 0;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.mobile-menu-btn:active {
+    background: rgba(255, 255, 255, 0.20);
+    transform: scale(0.95);
+}
+
+/* Mobile Close Button Inside Sidebar Header */
+.mobile-sidebar-close-btn {
+    display: none;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #94a3b8;
+    cursor: pointer;
+    margin-left: auto;
+    transition: all 0.15s ease;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+}
+.mobile-sidebar-close-btn:active {
+    color: #ffffff;
+    background: rgba(255, 255, 255, 0.20);
+}
+
+/* Mobile Topbar Logo */
+.mobile-topbar-logo {
+    display: none;
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    object-fit: contain;
+    background: #000000;
+    margin-right: 6px;
+    flex-shrink: 0;
+}
+
+/* Mobile Sidebar Backdrop */
+.mobile-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(0, 0, 0, 0.78);
+    -webkit-backdrop-filter: blur(8px);
+    backdrop-filter: blur(8px);
+    z-index: 99990 !important;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+body.mobile-sidebar-open .mobile-sidebar-backdrop {
+    display: block !important;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* Mobile Bottom Navigation Bar */
+.mobile-bottom-nav {
+    display: none;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 58px;
+    background: #0b0e14;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    z-index: 9000;
+    padding: 0 6px;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.7);
+    justify-content: space-around;
+    align-items: center;
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+}
+.mbn-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    color: #71717a;
+    font-size: 10.5px;
+    font-weight: 600;
+    text-decoration: none;
+    padding: 5px 8px;
+    border-radius: 8px;
+    transition: all 0.15s ease;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    flex: 1;
+    max-width: 75px;
+}
+.mbn-item svg { width: 18px; height: 18px; }
+.mbn-item.active { color: #ffffff !important; font-weight: 700 !important; }
+.mbn-item:active { transform: scale(0.92); }
+
+/* ============================================================================
+   1. DESKTOP SCREENS (> 1024px) — 100% PRESERVED BLOOMBERG PC EXPERIENCE
+   ============================================================================ */
+@media (min-width: 1025px) {
+    .sidebar {
+        position: relative !important;
+        width: 253px !important;
+        min-width: 253px !important;
+        max-width: 253px !important;
+        height: 100vh !important;
+        height: 100dvh !important;
+        display: flex !important;
+        flex-direction: column !important;
+        transform: none !important;
+        -webkit-transform: none !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+        pointer-events: auto !important;
+        z-index: 40 !important;
+        background: var(--tm-bg-elev) !important;
+        border-right: 1px solid var(--tm-border) !important;
+        flex-shrink: 0 !important;
+        box-shadow: none !important;
+    }
+    body.collapsed .sidebar {
+        width: 64px !important;
+        min-width: 64px !important;
+        max-width: 64px !important;
+    }
+    .mobile-menu-btn,
+    .mobile-sidebar-close-btn,
+    .mobile-topbar-logo,
+    .mobile-sidebar-backdrop,
+    .mobile-bottom-nav {
+        display: none !important;
+    }
+}
+
+/* ============================================================================
    2. MOBILE & TABLET SCREENS (<= 1024px)
    ============================================================================ */
 @media (max-width: 1024px) {
@@ -1896,7 +2067,7 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         position: relative !important;
     }
 
-    /* Full 100dvh Support */
+    /* 100dvh Support */
     .h-screen,
     .min-h-screen,
     div[class*="h-screen"] {
@@ -1904,7 +2075,7 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         min-height: 100dvh !important;
     }
 
-    /* Sidebar Drawer with Hardware Layering */
+    /* Off-Canvas Slide Drawer */
     body.collapsed .sidebar,
     body:not(.tm-landing) .sidebar,
     .sidebar {
@@ -1928,13 +2099,14 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         border-right: 1px solid rgba(255, 255, 255, 0.15) !important;
         display: flex !important;
         flex-direction: column !important;
-        overflow: hidden !important;
+        overflow-y: auto !important;
+        overflow-x: hidden !important;
         pointer-events: none !important;
         will-change: transform;
         -webkit-transform: translateZ(0);
     }
 
-    /* Keep all labels visible inside mobile drawer */
+    /* Ensure text labels inside mobile drawer are always visible */
     .sidebar .nav-label,
     .sidebar .logo-text,
     .sidebar .profile-text,
@@ -1991,15 +2163,15 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         display: inline-flex !important;
         padding: 5px 8px !important;
         font-size: 11.5px !important;
-        max-width: 130px !important;
+        max-width: 120px !important;
         overflow: hidden !important;
         text-overflow: ellipsis !important;
         white-space: nowrap !important;
     }
 
     /* Padding for bottom nav bar */
-    .app-main, main, .main-content, .flex-1.flex.flex-col {
-        padding-bottom: 74px !important;
+    .app-main, main, .main-content, .flex-1.flex.flex-col, .flex-1.overflow-y-auto {
+        padding-bottom: 76px !important;
         width: 100% !important;
         max-width: 100vw !important;
         box-sizing: border-box !important;
@@ -2066,50 +2238,4 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         gap: 6px !important;
     }
     #dash-h1 { font-size: 18px !important; }
-}
-
-
-/* ---- Strict Sidebar Alignment & Geometry ---- */
-.nav-item {
-    display: flex !important;
-    align-items: center !important;
-    font-size: 13.5px !important;
-    font-weight: 500 !important;
-    padding: 8px 12px !important;
-    gap: 12px !important;
-    color: var(--tm-muted) !important;
-    border-radius: 8px !important;
-    text-decoration: none !important;
-    transition: background 0.15s ease, color 0.15s ease !important;
-    width: 100% !important;
-    box-sizing: border-box !important;
-}
-.nav-item svg {
-    width: 18px !important;
-    height: 18px !important;
-    min-width: 18px !important;
-    max-width: 18px !important;
-    flex-shrink: 0 !important;
-    display: inline-block !important;
-}
-.nav-item .nav-label,
-.nav-item span:not(.sidebar-soon-badge) {
-    font-size: 13.5px !important;
-    font-weight: 500 !important;
-    line-height: 1.4 !important;
-    white-space: nowrap !important;
-    text-align: left !important;
-    flex: 1 !important;
-}
-.sidebar-section-header {
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    padding: 6px 12px !important;
-    font-size: 10.5px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.08em !important;
-    text-transform: uppercase !important;
-    color: var(--tm-dim) !important;
-    width: 100% !important;
 }
