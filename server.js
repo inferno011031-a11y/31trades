@@ -662,6 +662,19 @@ async function handleApi(req, res, url) {
             return json(res, err.code || 400, { error: err.message });
         }
     }
+    if (p === '/api/auth/oauth/start' && req.method === 'GET') {
+        const provider = q.get('provider') || 'google';
+        const redirectTo = q.get('redirectTo') || q.get('redirect_to');
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) {
+            return json(res, 200, { url: '/auth.html#access_token=local_dev_token&type=oauth' });
+        }
+        try {
+            const r = auth.oauthStart({ provider, redirectTo });
+            return json(res, 200, r);
+        } catch (err) {
+            return json(res, err.code || 500, { error: err.message });
+        }
+    }
     if (p === '/api/auth/forgot' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }

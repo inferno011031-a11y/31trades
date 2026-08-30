@@ -1207,7 +1207,7 @@
                 const btn = document.querySelector('.oauth-google');
                 if (btn) busy(btn, true);
                 try {
-                    const res = await fetch('/api/auth/oauth/start?provider=' + encodeURIComponent(provider)).then(r => r.json());
+                    const res = await fetch('/api/auth/oauth/start?provider=' + encodeURIComponent(provider) + '&redirectTo=' + encodeURIComponent(window.location.origin + '/auth.html')).then(r => r.json());
                     if (!res.url) throw new Error(res.error || 'Google sign-in is not configured yet.');
                     window.location.href = res.url;
                 } catch (err) {
