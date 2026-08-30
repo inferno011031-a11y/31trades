@@ -130,6 +130,9 @@
       menuBtn.setAttribute('aria-label', 'Open navigation menu');
       menuBtn.innerHTML = '<svg data-lucide="menu" class="w-5 h-5"></svg>';
       topbar.insertBefore(menuBtn, topbar.firstChild);
+      if (window.lucide && typeof window.lucide.createIcons === 'function') {
+        window.lucide.createIcons();
+      }
       
       menuBtn.addEventListener('click', (e) => {
         e.preventDefault();
