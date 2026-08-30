@@ -442,11 +442,9 @@
                                 <span class="tag tag-gray num" id="coach-period">—</span>
                             </div>
                             <div class="text-[20px] font-extrabold tracking-tight leading-snug" id="coach-msg">—</div>
-                            <div id="coach-evidence" class="flex flex-wrap items-center gap-2 mt-4"></div>
+                            
                             <div class="flex flex-wrap items-center gap-3 mt-5">
-                                <button id="coach-view-evidence" class="btn-primary !py-2.5 !px-5 hidden">
-                                    <svg data-lucide="eye" class="w-4 h-4"></svg> View evidence
-                                </button>
+                                
                                 <button id="coach-ask" class="btn-ghost !py-2.5 !px-5">
                                     <svg data-lucide="message-circle" class="w-4 h-4"></svg> Ask about this
                                 </button>
@@ -577,18 +575,7 @@
         </div>
     </div>
 
-    <!-- Evidence drawer -->
-    <div id="ev-overlay" class="drawer-overlay"></div>
-    <aside id="ev-drawer" class="drawer-panel glass-strong" aria-hidden="true">
-        <div class="flex items-center justify-between px-5 py-4 border-b border-[var(--hairline)] flex-shrink-0">
-            <div>
-                <div class="panel-title text-[15px]" id="ev-title">Evidence</div>
-                <div class="panel-sub mt-0.5" id="ev-sub">Why this was flagged</div>
-            </div>
-            <button id="ev-close" class="collapse-btn" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-5" id="ev-body"></div>
-    </aside>
+    
 
     <!-- Toast -->
     <div id="toast" class="toast"><span id="toast-msg"></span></div>
@@ -981,43 +968,14 @@
                 }
             }
 
-            // ---- Evidence drawer ----
-            function openEvidence(f) {
-                $('ev-title').textContent = f.title;
-                $('ev-sub').textContent = 'Why this was flagged — ' + (f.ev || []).length + ' evidence reference(s)';
-                const ids = f.ev || [];
-                let inner = '<div class="glass rounded-xl p-4 mb-4"><div class="label-xs mb-2">Why this was flagged</div><p class="text-[13px] text-[var(--tm-text)] leading-relaxed">' + esc(f.msg) + '</p></div>';
-                if (!ids.length) {
-                    inner += '<p class="text-[12.5px] text-[var(--tm-dim)]">No individual trade references on this finding.</p>';
-                } else {
-                    const rows = ids.map(id => {
-                        const t = core && core.Trades ? core.Trades.find(x => x.id === id) : null;
-                        if (t) {
-                            const d = new Date(t.ts);
-                            const ts = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-                            const res = t.pnl > 0 ? '<span class="tag tag-emerald !py-0.5 !px-2">Win</span>' : t.pnl < 0 ? '<span class="tag tag-red !py-0.5 !px-2">Loss</span>' : '<span class="tag tag-gray !py-0.5 !px-2">Scratch</span>';
-                            return '<a class="ev-trade-row" href="journal.html?trade=' + encodeURIComponent(id) + '">' +
-                                '<span class="tm-sym-badge">' + (window.TMAssets && window.TMAssets.badgeHtml ? window.TMAssets.badgeHtml(t.symbol) : (t.symbol || '—').slice(0, 2).toUpperCase()) + '</span>' +
-                                '<span class="flex-1 min-w-0"><span class="block text-[13px] font-bold text-[var(--tm-text)] truncate">' + esc(t.symbol) + ' · ' + esc(t.setup || '—') + '</span>' +
-                                '<span class="block text-[11px] text-[var(--tm-dim)]">' + ts + ' · ' + esc(t.session || '—') + ' · ' + (t.dir === 'long' ? 'Long' : 'Short') + '</span></span>' +
-                                res +
-                                '<span class="num text-[12px] ' + (t.r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + fmtR(t.r) + '</span></a>';
-                        }
-                        return '<div class="ev-trade-row"><span class="ev-chip num text-[11px]">' + esc(id) + '</span><span class="text-[12px] text-[var(--tm-dim)]">reference</span></div>';
-                    }).join('');
-                    inner += '<div class="label-xs mb-2">Evidence</div><div class="flex flex-col gap-2">' + rows + '</div>';
+            
+            // ---- Direct Ask Action ----
+            window.__openEvidence = function(id) {
+                if (typeof window.askCoachAboutFinding === 'function') {
+                    window.askCoachAboutFinding(id);
                 }
-                $('ev-body').innerHTML = inner;
-                $('ev-overlay').classList.add('open');
-                $('ev-drawer').classList.add('open');
-                $('ev-drawer').setAttribute('aria-hidden', 'false');
-                if (window.lucide) lucide.createIcons();
-            }
-            function closeEvidence() {
-                $('ev-overlay').classList.remove('open');
-                $('ev-drawer').classList.remove('open');
-                $('ev-drawer').setAttribute('aria-hidden', 'true');
-            }
+            };
+
             window.__openEvidence = function (id) {
                 const all = [].concat(bundle ? bundle.patterns : [], bundle ? bundle.psychology.findings : [], bundle ? bundle.risk.findings : [], bundle ? bundle.discipline.findings : [], bundle ? bundle.sessions.findings : [], bundle ? bundle.tilt : []);
                 const f = all.find(x => x.id === id);
@@ -1143,8 +1101,7 @@
                 else if (rest) restoreFinding(rest.dataset.restore);
                 else if (fol) sendChat(fol.dataset.follow);
             });
-            $('ev-close').addEventListener('click', closeEvidence);
-            $('ev-overlay').addEventListener('click', closeEvidence);
+            
             document.addEventListener('keydown', e => { if (e.key === 'Escape') closeEvidence(); });
             $('retry-btn').addEventListener('click', () => loadBundle(true));
             $('dismissed-toggle').addEventListener('click', () => {
