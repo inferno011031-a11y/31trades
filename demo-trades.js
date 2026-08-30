@@ -183,9 +183,12 @@
     const fmtR = n => (n >= 0 ? '+' : '') + Number(n).toFixed(2) + 'R';
     const pct = (a, b) => b ? Math.round((a / b) * 100) : 0;
 
-    window.DemoTrades = {
+    const DemoTrades = {
         day, ANCHOR, mulberry32, SETUPS, SYMBOLS, SESSIONS, EMOTIONS, ASSET_CLASS, TIMEFRAMES,
         genTrades, stats, confidence, groupBy,
         fmtMoney, fmtR, pct
     };
+
+    if (typeof window !== 'undefined') window.DemoTrades = DemoTrades;
+    if (typeof module !== 'undefined' && module.exports) module.exports = DemoTrades;
 })();

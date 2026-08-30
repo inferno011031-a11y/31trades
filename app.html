@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>31TRADES — App</title>
     <meta name="description" content="31TRADES — your trading workspace.">
     <meta name="robots" content="noindex, nofollow, noarchive">
@@ -23,7 +23,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS CDN & Lucide -->
     <style>
@@ -49,7 +49,7 @@
 
         /* App shell */
         .sidebar {
-            width: 224px;
+            width: 253px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             background: #0D0D0F;
             border-right: 1px solid #1C1C20;
@@ -123,40 +123,26 @@
 
         /* Buttons */
         .btn-primary {
-            background: #FFFFFF;
-            color: #0A0A0C;
-            font-weight: 700;
-            font-size: 13.5px;
-            padding: 9px 16px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: background 0.15s, transform 0.15s;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
+            background: #ffffff !important; color: #000000 !important; font-weight: 700 !important; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.10);
         }
 
-        .btn-primary:hover { background: #E8E8EC; }
+        .btn-primary:hover {
+            background: #e2e8f0 !important; color: #000000 !important; border-color: #e2e8f0 !important;
+            transform: translateY(-1px); box-shadow: 0 2px 10px rgba(255, 255, 255, 0.20);
+        }
 
         .btn-ghost {
-            background: transparent;
-            color: #B4B4BD;
-            font-weight: 600;
-            font-size: 13.5px;
-            padding: 9px 16px;
-            border-radius: 8px;
-            border: 1px solid #26262B;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.15s;
-            text-decoration: none;
-            cursor: pointer;
+            background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; font-weight: 600; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
         }
 
-        .btn-ghost:hover { border-color: #3A3A41; color: #FFFFFF; background: #16161A; }
+        .btn-ghost:hover {
+            border-color: rgba(255, 255, 255, 0.25) !important; color: #ffffff !important; background: rgba(255, 255, 255, 0.08) !important;
+        }
 
         .quick-action {
             display: flex;
@@ -433,6 +419,7 @@
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
+    <script src="assets/sidebar-nav.js"></script>
 </head>
 <body>
 
@@ -448,44 +435,106 @@
                 </button>
             </div>
 
-            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5" id="main-nav">
-                <button class="nav-item active" data-view="dashboard" data-icon="layout-dashboard">
-                    <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
-                </button>
-                <button class="nav-item" data-view="journal" data-icon="book-open">
-                    <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
-                </button>
-                <button class="nav-item" data-view="insights" data-icon="sparkles">
-                    <svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span>
-                    <span class="nav-label ml-auto text-[10px] font-bold text-[#10B981] bg-[rgba(16,185,129,0.1)] px-1.5 py-0.5 rounded">NEW</span>
-                </button>
-                <button class="nav-item" data-view="analytics" data-icon="bar-chart-3">
-                    <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
-                </button>
-                <button class="nav-item" data-view="backtesting" data-icon="flask-conical">
-                    <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
-                </button>
-                <button class="nav-item" data-view="strategy-lab" data-icon="beaker">
-                    <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
-                </button>
-                <button class="nav-item" data-view="replay" data-icon="history">
-                    <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
-                </button>
-                <button class="nav-item" data-view="risk" data-icon="shield-alert">
-                    <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
-                </button>
-                <button class="nav-item" data-view="discipline" data-icon="target">
-                    <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
-                </button>
-                <button class="nav-item" data-view="calendar" data-icon="calendar-days">
-                    <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
-                </button>
-                <button class="nav-item" data-view="community" data-icon="users">
-                    <svg data-lucide="users"></svg><span class="nav-label">Community</span>
-                </button>
-                <button class="nav-item" data-view="reports" data-icon="file-text">
-                    <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
-                </button>
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-1">
+                <!-- 1. CORE -->
+                <div class="sidebar-section" data-section="core">
+                    <button type="button" class="sidebar-section-header">
+                        <span>CORE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="dashboard.html" class="nav-item">
+                            <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
+                        </a>
+                        <a href="journal.html" class="nav-item">
+                            <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
+                        </a>
+                        <a href="notes.html" class="nav-item">
+                            <svg data-lucide="file-edit"></svg><span class="nav-label">Trade Notes</span>
+                        </a>
+                        <a href="imports.html" class="nav-item">
+                            <svg data-lucide="file-up"></svg><span class="nav-label">Import</span>
+                        </a>
+                        <a href="analytics.html" class="nav-item">
+                            <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
+                        </a>
+                        <a href="calendar.html" class="nav-item">
+                            <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 2. INTELLIGENCE -->
+                <div class="sidebar-section" data-section="intelligence">
+                    <button type="button" class="sidebar-section-header">
+                        <span>INTELLIGENCE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="ai.html" class="nav-item">
+                            <svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Coach</span>
+                        </a>
+                        <a href="patterns.html" class="nav-item">
+                            <svg data-lucide="sparkles"></svg><span class="nav-label">Patterns</span>
+                        </a>
+                        <a href="reports.html" class="nav-item">
+                            <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
+                        </a>
+                        <a href="improve.html" class="nav-item">
+                            <svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. STRATEGY & LAB -->
+                <div class="sidebar-section" data-section="strategy">
+                    <button type="button" class="sidebar-section-header">
+                        <span>STRATEGY & LAB</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="strategy-lab.html" class="nav-item">
+                            <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
+                        </a>
+                        <a href="replay.html" class="nav-item">
+                            <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4. PERFORMANCE & RISK -->
+                <div class="sidebar-section" data-section="risk">
+                    <button type="button" class="sidebar-section-header">
+                        <span>PERFORMANCE & RISK</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="risk.html" class="nav-item">
+                            <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
+                        </a>
+                        <a href="discipline.html" class="nav-item">
+                            <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 5. BATTLES & LABS (SEPARATE WITH LUXURY SOON BADGE) -->
+                <div class="sidebar-section" data-section="battles-lab">
+                    <button type="button" class="sidebar-section-header">
+                        <span>BATTLES & LABS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="battles.html" class="nav-item">
+                            <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                        <a href="backtesting.html" class="nav-item">
+                            <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                    </div>
+                </div>
             </nav>
 
             <div class="border-t border-[#1C1C20] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
@@ -520,7 +569,7 @@
                 </div>
 
                 <div class="flex items-center gap-3 ml-auto">
-                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    
                     <div class="session-chip hide-when-collapsed">
                         <svg data-lucide="clock" class="w-3.5 h-3.5 text-[#6E6E78]"></svg>
                         London · 09:42

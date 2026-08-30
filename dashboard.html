@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BATTLEXJOURNAL — Dashboard</title>
     <meta name="description" content="BATTLEXJOURNAL Dashboard — your trading workspace: recent trades, discipline, risk and performance at a glance.">
     <meta name="robots" content="noindex, nofollow, noarchive">
@@ -17,13 +17,14 @@
     <meta name="twitter:description" content="BATTLEXJOURNAL Dashboard — your trading workspace: recent trades, discipline, risk and performance at a glance.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/dashboard.html">
 
+    <link rel="stylesheet" href="assets/tokens.css">
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
     <script src="/assets/lucide.min.js"></script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS CDN & Lucide -->
     <script src="demo-trades.js"></script>
@@ -51,7 +52,7 @@
 
         /* App shell */
         .sidebar {
-            width: 224px;
+            width: 253px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             background: var(--tm-bg-elev);
             border-right: 1px solid var(--tm-border);
@@ -153,36 +154,24 @@
 
         /* Buttons */
         .btn-primary {
-            background: var(--tm-text);
-            color: var(--tm-bg);
-            font-weight: 700;
-            font-size: 13.5px;
-            padding: 9px 16px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: filter 0.15s, transform 0.15s;
-            text-decoration: none;
-            border: 1px solid var(--tm-text);
+            background: #ffffff !important; color: #000000 !important; font-weight: 700 !important; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.10);
         }
-        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-primary:hover {
+            background: #e2e8f0 !important; color: #000000 !important; border-color: #e2e8f0 !important;
+            transform: translateY(-1px); box-shadow: 0 2px 10px rgba(255, 255, 255, 0.20);
+        }
 
         .btn-ghost {
-            background: transparent;
-            color: var(--tm-muted);
-            font-weight: 600;
-            font-size: 13.5px;
-            padding: 9px 16px;
-            border-radius: 8px;
-            border: 1px solid var(--tm-border-2);
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.15s;
-            text-decoration: none;
+            background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; font-weight: 600; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-ghost:hover {
+            border-color: rgba(255, 255, 255, 0.25) !important; color: #ffffff !important; background: rgba(255, 255, 255, 0.08) !important;
+        }
 
         /* KPI / state cards */
         .kpi { position: relative; }
@@ -416,6 +405,7 @@
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
+    <script src="assets/sidebar-nav.js"></script>
 </head>
 <body>
 
@@ -425,6 +415,8 @@
     <div class="flex h-screen dash-layer">
 
         <!-- ============ LEFT SIDEBAR ============ -->
+                <!-- ============ SIDEBAR ============ -->
+                <!-- ============ LEFT SIDEBAR ============ -->
         <aside class="sidebar">
             <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
                 <div class="logo-badge">B</div>
@@ -434,74 +426,116 @@
                 </button>
             </div>
 
-            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
-                <a href="#" class="nav-item active">
-                    <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
-                </a>
-                <a href="journal.html" class="nav-item">
-                    <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
-                </a>
-                <a href="imports.html" class="nav-item">
-                    <svg data-lucide="file-up"></svg><span class="nav-label">Import</span>
-                </a>
-                <a href="review.html" class="nav-item">
-                    <svg data-lucide="clipboard-check"></svg><span class="nav-label">Review</span>
-                </a>
-                <a href="improve.html" class="nav-item">
-                    <svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span>
-                </a>
-                <a href="insights.html" class="nav-item">
-                    <svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span>
-                    <span class="nav-label ml-auto text-[10px] font-bold text-[var(--tm-green)] bg-[rgba(16,185,129,0.1)] px-1.5 py-0.5 rounded">NEW</span>
-                </a>
-                <a href="analytics.html" class="nav-item">
-                    <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
-                </a>
-                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
-                <a href="backtesting.html" class="nav-item">
-                    <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
-                </a>
-                <a href="strategy-lab.html" class="nav-item">
-                    <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
-                </a>
-                <a href="replay.html" class="nav-item">
-                    <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
-                </a>
-                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
-                <a href="risk.html" class="nav-item">
-                    <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
-                </a>
-                <a href="discipline.html" class="nav-item">
-                    <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
-                </a>
-                <a href="calendar.html" class="nav-item">
-                    <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
-                </a>
-                <a href="community.html" class="nav-item">
-                    <svg data-lucide="users"></svg><span class="nav-label">Community</span>
-                </a>
-                <a href="reports.html" class="nav-item">
-                    <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
-                </a>
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-1">
+                <!-- 1. CORE -->
+                <div class="sidebar-section" data-section="core">
+                    <button type="button" class="sidebar-section-header">
+                        <span>CORE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="dashboard.html" class="nav-item active">
+                            <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
+                        </a>
+                        <a href="journal.html" class="nav-item">
+                            <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
+                        </a>
+                        <a href="notes.html" class="nav-item">
+                            <svg data-lucide="file-edit"></svg><span class="nav-label">Trade Notes</span>
+                        </a>
+                        <a href="imports.html" class="nav-item">
+                            <svg data-lucide="file-up"></svg><span class="nav-label">Import</span>
+                        </a>
+                        <a href="analytics.html" class="nav-item">
+                            <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
+                        </a>
+                        <a href="calendar.html" class="nav-item">
+                            <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 2. INTELLIGENCE -->
+                <div class="sidebar-section" data-section="intelligence">
+                    <button type="button" class="sidebar-section-header">
+                        <span>INTELLIGENCE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="ai.html" class="nav-item">
+                            <svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Coach</span>
+                        </a>
+                        <a href="patterns.html" class="nav-item">
+                            <svg data-lucide="sparkles"></svg><span class="nav-label">Patterns</span>
+                        </a>
+                        <a href="reports.html" class="nav-item">
+                            <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
+                        </a>
+                        <a href="improve.html" class="nav-item">
+                            <svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. STRATEGY & LAB -->
+                <div class="sidebar-section" data-section="strategy">
+                    <button type="button" class="sidebar-section-header">
+                        <span>STRATEGY & LAB</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="strategy-lab.html" class="nav-item">
+                            <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
+                        </a>
+                        <a href="replay.html" class="nav-item">
+                            <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4. PERFORMANCE & RISK -->
+                <div class="sidebar-section" data-section="risk">
+                    <button type="button" class="sidebar-section-header">
+                        <span>PERFORMANCE & RISK</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="risk.html" class="nav-item">
+                            <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
+                        </a>
+                        <a href="discipline.html" class="nav-item">
+                            <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 5. BATTLES & LABS (SEPARATE WITH LUXURY SOON BADGE) -->
+                <div class="sidebar-section" data-section="battles-lab">
+                    <button type="button" class="sidebar-section-header">
+                        <span>BATTLES & LABS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="battles.html" class="nav-item">
+                            <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                        <a href="backtesting.html" class="nav-item">
+                            <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                    </div>
+                </div>
             </nav>
 
-            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
-                <a href="notifications.html" class="nav-item">
-                    <svg data-lucide="bell"></svg><span class="nav-label">Notifications</span>
-                </a>
-                <a href="help.html" class="nav-item">
-                    <svg data-lucide="help-circle"></svg><span class="nav-label">Help</span>
-                </a>
-                <a href="settings.html" class="nav-item">
-                    <svg data-lucide="settings"></svg><span class="nav-label">Settings</span>
-                </a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
-                    <div class="avatar" id="profile-avatar">TR</div>
+            <div class="border-t border-[var(--tm-border)] p-2.5 flex flex-col flex-shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--tm-hover)] transition-colors cursor-pointer" id="profile-chip" title="Account, Community, Settings & Help">
+                    <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
-                        <div class="text-[11px] text-[var(--tm-dim)]" id="profile-meta">Battlex Trader</div>
+                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)]" id="profile-meta">Battlex Pro</div>
                     </div>
-                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-up"></svg>
                 </div>
             </div>
         </aside>
@@ -517,20 +551,16 @@
                 </div>
 
                 <div class="flex items-center gap-3 ml-auto">
-                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
-                    <div class="session-chip hide-when-collapsed" id="session-chip">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
-                        <span id="session-chip-text">—</span>
-                    </div>
+                    
                     <div class="session-chip hide-when-collapsed">
-                        <span class="conn-dot"></span> Connected
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
-                    <button class="btn-primary !py-2 !px-3.5">
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
+                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </button>
+                    </a>
                     <button class="account-select hide-when-collapsed" id="acc-chip">
-                        <span class="num text-[12px]">—</span>
-                        <span class="text-[var(--tm-dim)]">·</span>
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
                         <span>No account</span>
                         <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
@@ -645,7 +675,7 @@
 
                             <!-- DAILY -->
                             <div class="eq-chart active" data-chart="daily">
-                                <svg viewBox="0 0 760 200" class="w-full" preserveAspectRatio="none">
+                                <svg viewBox="0 0 760 220" style="height: 220px;" class="w-full" preserveAspectRatio="none">
                                     <defs>
                                         <linearGradient id="eqfill-d" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="0%" stop-color="var(--tm-green)" stop-opacity="0.22"/>
@@ -657,7 +687,7 @@
 
                             <!-- WEEKLY -->
                             <div class="eq-chart" data-chart="weekly">
-                                <svg viewBox="0 0 760 200" class="w-full" preserveAspectRatio="none">
+                                <svg viewBox="0 0 760 220" style="height: 220px;" class="w-full" preserveAspectRatio="none">
                                     <defs>
                                         <linearGradient id="eqfill-w" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="0%" stop-color="var(--tm-green)" stop-opacity="0.22"/>
@@ -669,7 +699,7 @@
 
                             <!-- MONTHLY -->
                             <div class="eq-chart" data-chart="monthly">
-                                <svg viewBox="0 0 760 200" class="w-full" preserveAspectRatio="none">
+                                <svg viewBox="0 0 760 220" style="height: 220px;" class="w-full" preserveAspectRatio="none">
                                     <defs>
                                         <linearGradient id="eqfill-m" x1="0" y1="0" x2="0" y2="1">
                                             <stop offset="0%" stop-color="var(--tm-green)" stop-opacity="0.22"/>
@@ -1118,7 +1148,7 @@
                 var green = (css.getPropertyValue('--tm-green') || '#10B981').trim();
                 var grid = (css.getPropertyValue('--tm-border') || 'rgba(255,255,255,0.06)').trim();
                 var dotFill = (css.getPropertyValue('--tm-bg') || '#0A0A0C').trim();
-                var W = 760, T = 28, B = 195;
+                var W = 760, T = 20, B = 160;
                 var raw = window.__eqRaw;
                 if (!raw) return;
                 document.querySelectorAll('.eq-chart').forEach(function (host) {
@@ -1131,9 +1161,9 @@
                     var minV = Math.min.apply(null, series), maxV = Math.max.apply(null, series);
                     if (minV === maxV) { minV -= 1; maxV += 1; }
                     var y = function (v) { return B - ((v - minV) / (maxV - minV)) * (B - T); };
-                    var x = function (i) { return (i / (data.buckets.length - 1)) * W; };
+                    var x = function (i) { var margin = 20; return margin + (i / (data.buckets.length - 1)) * (W - margin * 2); };
                     var pts = series.map(function (v, i) { return x(i).toFixed(1) + ',' + y(v).toFixed(1); });
-                    var fill = 'M0 ' + y(series[0]).toFixed(1) + ' L' + pts.join(' L') + ' L' + W + ' 200 L0 200 Z';
+                    var fill = 'M' + x(0).toFixed(1) + ' ' + y(series[0]).toFixed(1) + ' L' + pts.join(' L') + ' L' + x(series.length - 1).toFixed(1) + ' 170 L' + x(0).toFixed(1) + ' 170 Z';
                     var gid = span === 'weekly' ? 'eqfill-w' : span === 'monthly' ? 'eqfill-m' : 'eqfill-d';
                     var circles = pts.map(function (p, i) {
                         var r = i === pts.length - 1 ? 5 : 4;
@@ -1141,7 +1171,7 @@
                         return '<circle cx="' + p.split(',')[0] + '" cy="' + p.split(',')[1] + '" r="' + r + '" fill="' + f + '" stroke="' + green + '" stroke-width="2"/>';
                     }).join('');
                     var labels = data.buckets.map(function (b, i) {
-                        return '<text x="' + x(i).toFixed(0) + '" y="198">' + b.label + '</text>';
+                        return '<text x="' + x(i).toFixed(0) + '" y="202" text-anchor="middle">' + b.label + '</text>';
                     }).join('');
                     svg.innerHTML = '<defs><linearGradient id="' + gid + '" x1="0" y1="0" x2="0" y2="1">' +
                         '<stop offset="0%" stop-color="' + green + '" stop-opacity="0.22"/><stop offset="100%" stop-color="' + green + '" stop-opacity="0"/></linearGradient></defs>' +

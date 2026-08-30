@@ -35,11 +35,11 @@ const BRAND_DESC = 'BattlexJournal — a trading journal, risk engine, disciplin
 const PUBLIC_PAGES = [
     {
         route: '/',
-        file: 'index.html',
-        title: 'Trading Journal & Performance Platform | BattlexJournal',
-        description: 'BattlexJournal is a private trading journal with risk management, discipline tracking and performance analytics — log trades, review decisions and improve your process.',
-        priority: '1.0', changefreq: 'weekly',
-        h1: 'Trading Journal & Performance Platform' // informational; the page owns its hero H1
+        file: 'dashboard.html',
+        title: 'Dashboard | BattlexJournal',
+        description: 'BattlexJournal is a private trading journal with risk management, discipline tracking and performance analytics.',
+        priority: '1.0', changefreq: 'daily',
+        h1: 'Dashboard'
     },
     {
         route: '/trading-journal',

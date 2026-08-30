@@ -38,64 +38,83 @@
         var st = document.createElement('style');
         st.id = STYLE_ID;
         st.textContent = [
-            '#account-switcher-pop { position: fixed; z-index: 999; width: min(360px, calc(100vw - 24px));',
-            '  background: var(--tm-card-2); border: 1px solid var(--tm-border-2);',
-            '  border-radius: 14px; box-shadow: 0 24px 60px rgba(0,0,0,0.55), inset 0 1px 0 rgba(255,255,255,0.06);',
-            '  overflow: hidden; font-family: var(--tm-sans); color: var(--tm-text);',
-            '  animation: as-in 0.14s ease-out; }',
+            '#account-switcher-pop { position: fixed; z-index: 999; width: min(370px, calc(100vw - 24px));',
+            '  background: #0d0e11; border: 1px solid rgba(255, 255, 255, 0.12);',
+            '  border-radius: 14px; box-shadow: 0 20px 50px -10px rgba(0,0,0,0.92), 0 0 1px 1px rgba(255,255,255,0.08);',
+            '  overflow: hidden; font-family: var(--tm-sans); color: #ffffff;',
+            '  animation: as-in 0.12s cubic-bezier(0.16, 1, 0.3, 1); }',
             '@keyframes as-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }',
-            '#account-switcher-pop .as-head { padding: 12px 14px 8px; font-size: 10.5px; font-weight: 700;',
-            '  letter-spacing: 0.1em; text-transform: uppercase; color: var(--tm-muted);',
-            '  border-bottom: 1px solid var(--tm-border); display: flex; align-items: center; justify-content: space-between; }',
-            '#account-switcher-pop .as-group { padding: 8px 6px; }',
-            '#account-switcher-pop .as-group-label { padding: 8px 10px 4px; font-size: 9.5px; font-weight: 700;',
-            '  letter-spacing: 0.1em; text-transform: uppercase; color: var(--tm-dim); }',
-            '#account-switcher-pop .as-row { display: flex; align-items: center; gap: 10px; width: 100%;',
-            '  padding: 9px 10px; border-radius: 9px; border: 1px solid transparent; background: transparent;',
-            '  color: var(--tm-text); cursor: pointer; text-align: left; font-family: inherit; transition: background 0.12s ease; }',
-            '#account-switcher-pop .as-row:hover { background: var(--tm-hover); }',
+            '#account-switcher-pop .as-head { padding: 12px 14px 10px; font-size: 11px; font-weight: 700;',
+            '  letter-spacing: 0.07em; text-transform: uppercase; color: #71717a;',
+            '  border-bottom: 1px solid rgba(255, 255, 255, 0.08); display: flex; align-items: center; justify-content: space-between; }',
+            '#account-switcher-pop .as-group { padding: 6px; }',
+            '#account-switcher-pop .as-group-label { padding: 8px 10px 4px; font-size: 10.5px; font-weight: 700;',
+            '  letter-spacing: 0.06em; text-transform: uppercase; color: #71717a; }',
+            '#account-switcher-pop .as-row { display: flex; align-items: center; gap: 11px; width: 100%;',
+            '  padding: 9px 10px; border-radius: 10px; border: 1px solid transparent; background: transparent;',
+            '  color: #a1a1aa; cursor: pointer; text-align: left; font-family: inherit; transition: all 0.14s ease; }',
+            '#account-switcher-pop .as-row:hover { background: rgba(255, 255, 255, 0.06); color: #ffffff; }',
             '#account-switcher-pop .as-row:focus-visible { outline: 2px solid var(--tm-accent); outline-offset: -2px; }',
-            '#account-switcher-pop .as-row.as-active { background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(52,211,153,0.08));',
-            '  border-color: rgba(129,140,248,0.30); box-shadow: inset 2px 0 0 var(--tm-accent); }',
-            '#account-switcher-pop .as-check { width: 18px; flex-shrink: 0; color: var(--tm-accent); display: flex; }',
-            '#account-switcher-pop .as-check svg { width: 16px; height: 16px; }',
+            '#account-switcher-pop .as-row.as-active { background: rgba(255, 255, 255, 0.07) !important;',
+            '  border: 1px solid rgba(255, 255, 255, 0.15) !important; color: #ffffff !important; box-shadow: none !important; }',
+            '#account-switcher-pop .as-avatar { width: 32px; height: 32px; border-radius: 8px;',
+            '  background: rgba(255, 255, 255, 0.06); border: 1px solid rgba(255, 255, 255, 0.10);',
+            '  display: flex; align-items: center; justify-content: center;',
+            '  font-size: 11.5px; font-weight: 800; color: #ffffff; flex-shrink: 0; }',
+            '#account-switcher-pop .as-row.as-active .as-avatar { background: linear-gradient(135deg, rgba(16,185,129,0.25), rgba(59,130,246,0.25)); border-color: rgba(16,185,129,0.5); color: #ffffff; }',
             '#account-switcher-pop .as-body { flex: 1; min-width: 0; }',
-            '#account-switcher-pop .as-name { font-size: 13px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
-            '#account-switcher-pop .as-meta { font-size: 11px; color: var(--tm-dim); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
-            '#account-switcher-pop .as-meta .as-eq { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; }',
-            '#account-switcher-pop .as-status { flex-shrink: 0; font-size: 10px; font-weight: 700; padding: 3px 8px;',
-            '  border-radius: 999px; display: inline-flex; align-items: center; gap: 5px; }',
-            '#account-switcher-pop .as-status.on { background: rgba(52,211,153,0.12); color: var(--tm-green); }',
-            '#account-switcher-pop .as-status.off { background: rgba(148,163,184,0.10); color: var(--tm-muted); }',
-            '#account-switcher-pop .as-status .as-dot { width: 6px; height: 6px; border-radius: 999px; background: currentColor; }',
-            '#account-switcher-pop .as-foot { border-top: 1px solid var(--tm-border); padding: 8px 6px; }',
-            '#account-switcher-pop .as-foot a { display: flex; align-items: center; gap: 9px; width: 100%; padding: 9px 10px;',
-            '  border-radius: 9px; font-size: 12.5px; font-weight: 600; color: var(--tm-text); text-decoration: none;',
-            '  transition: background 0.12s ease; }',
-            '#account-switcher-pop .as-foot a:hover { background: var(--tm-hover); }',
-            '#account-switcher-pop .as-foot a svg { width: 15px; height: 15px; color: var(--tm-accent); flex-shrink: 0; }',
-            '#account-switcher-pop .as-empty { padding: 18px 14px; text-align: center; color: var(--tm-dim); font-size: 12.5px; }',
-            '#account-switcher-pop .as-empty a { color: var(--tm-accent); font-weight: 700; text-decoration: none; }',
-            '@media (max-width: 640px) { #account-switcher-pop { width: calc(100vw - 24px); } }'
+            '#account-switcher-pop .as-name { font-size: 13.5px; font-weight: 700; color: #ffffff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
+            '#account-switcher-pop .as-meta { font-size: 11.5px; color: #71717a; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
+            '#account-switcher-pop .as-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; text-align: right; }',
+            '#account-switcher-pop .as-eq { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: var(--tm-mono, monospace); }',
+            '#account-switcher-pop .as-check { width: 18px; height: 18px; color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }',
+            '#account-switcher-pop .as-check svg { width: 16px; height: 16px; stroke-width: 2.8; }',
+            '#account-switcher-pop .as-check-placeholder { width: 18px; height: 18px; flex-shrink: 0; }',
+            '#account-switcher-pop .as-foot { border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 6px; background: rgba(0, 0, 0, 0.15); }',
+            '#account-switcher-pop .as-foot a { display: flex; align-items: center; gap: 8px; width: 100%; padding: 8px 10px;',
+            '  border-radius: 8px; font-size: 12.5px; font-weight: 600; color: #a1a1aa; text-decoration: none;',
+            '  transition: all 0.12s ease; }',
+            '#account-switcher-pop .as-foot a:hover { background: rgba(255, 255, 255, 0.06); color: #ffffff; }',
+            '#account-switcher-pop .as-foot a svg { width: 15px; height: 15px; color: #71717a; flex-shrink: 0; }',
+            '#account-switcher-pop .as-foot a:hover svg { color: #ffffff; }',
+            '#account-switcher-pop .as-empty { padding: 18px 14px; text-align: center; color: #71717a; font-size: 12.5px; }',
+            '#account-switcher-pop .as-empty a { color: #ffffff; font-weight: 600; text-decoration: underline; }',
+            '@media (max-width: 640px) { #account-switcher-pop { width: calc(100vw - 24px); } }',
+            'html[data-theme="light"] #account-switcher-pop { background: #ffffff !important; border-color: rgba(15,23,42,0.12) !important; box-shadow: 0 20px 60px rgba(15,23,42,0.15), 0 0 1px 1px rgba(15,23,42,0.06) !important; color: #09090b !important; }',
+            'html[data-theme="light"] #account-switcher-pop .as-head { color: #64748b !important; border-bottom-color: rgba(15,23,42,0.08) !important; }',
+            'html[data-theme="light"] #account-switcher-pop .as-group-label { color: #64748b !important; }',
+            'html[data-theme="light"] #account-switcher-pop .as-avatar { background: #f1f5f9; border-color: #e2e8f0; color: #09090b; }',
+            'html[data-theme="light"] #account-switcher-pop .as-row { color: #475569 !important; }',
+            'html[data-theme="light"] #account-switcher-pop .as-row:hover { background: #f1f5f9 !important; color: #09090b !important; }',
+            'html[data-theme="light"] #account-switcher-pop .as-row.as-active { background: #f8fafc !important; border-color: #09090b !important; color: #09090b !important; }',
+            'html[data-theme="light"] #account-switcher-pop .as-row.as-active .as-avatar { background: #09090b; border-color: #09090b; color: #ffffff; }',
+            'html[data-theme="light"] #account-switcher-pop .as-name { color: #09090b; }',
+            'html[data-theme="light"] #account-switcher-pop .as-foot { border-top-color: rgba(15,23,42,0.08) !important; background: #f8fafc; }',
+            'html[data-theme="light"] #account-switcher-pop .as-foot a { color: #475569 !important; }',
+            'html[data-theme="light"] #account-switcher-pop .as-foot a:hover { background: #e2e8f0 !important; color: #09090b !important; }',
+            'html[data-theme="light"] #account-switcher-pop .as-foot a:hover svg { color: #09090b !important; }'
         ].join('\n');
         document.head.appendChild(st);
     }
 
     /* ---- popover construction ----------------------------------------- */
-    function rowHtml(acc, selectedId, isOnly) {
+    function rowHtml(acc, selectedId) {
         var active = acc.id === selectedId;
-        var status = acc.status === 'Active'
-            ? '<span class="as-status on"><span class="as-dot"></span>Active</span>'
-            : '<span class="as-status off"><span class="as-dot"></span>' + esc(acc.status || 'Manual') + '</span>';
-        // Account model carries no broker linkage — honest manual label.
-        var meta = '<span>' + esc(acc.account_type || 'Account') + ' · <span class="as-eq">' + money(acc.current_equity) + '</span></span>';
-        if (!isOnly) meta += ' · <span class="as-manual" style="opacity:.75">Manual account</span>';
-        return '<button type="button" role="menuitemradio" class="as-row' + (active ? ' as-active' : '') + '" data-acc-id="' + esc(acc.id) + '"' +
-            ' aria-checked="' + active + '" tabindex="0">' +
-            '<span class="as-check">' + (active ? '<svg data-lucide="check" stroke-width="2.5"></svg>' : '') + '</span>' +
-            '<span class="as-body"><span class="as-name">' + esc(acc.name) + '</span>' +
-            '<span class="as-meta">' + meta + '</span></span>' +
-            status + '</button>';
+        var initials = (acc.name || 'AC').split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase() || 'AC';
+        var eqVal = acc.current_equity != null ? acc.current_equity : 0;
+        var eqCol = eqVal > 0 ? '#10b981' : (eqVal < 0 ? '#ef4444' : '#a1a1aa');
+
+        return '<button type="button" role="menuitemradio" class="as-row' + (active ? ' as-active' : '') + '" data-acc-id="' + esc(acc.id) + '" aria-checked="' + active + '" tabindex="0">' +
+            '<div class="as-avatar">' + esc(initials) + '</div>' +
+            '<div class="as-body">' +
+                '<div class="as-name">' + esc(acc.name) + '</div>' +
+                '<div class="as-meta">' + esc(acc.account_type || 'Account') + (acc.currency ? ' · ' + esc(acc.currency) : '') + '</div>' +
+            '</div>' +
+            '<div class="as-right">' +
+                '<div class="as-eq num" style="color:' + (active ? '#ffffff' : eqCol) + '">' + money(acc.current_equity) + '</div>' +
+                (active ? '<div class="as-check"><svg data-lucide="check" stroke-width="2.5"></svg></div>' : '<div class="as-check-placeholder"></div>') +
+            '</div>' +
+        '</button>';
     }
 
     function render() {
@@ -106,16 +125,16 @@
         var active = accounts.filter(function (a) { return a.id === selectedId; });
         var others = accounts.filter(function (a) { return a.id !== selectedId; });
         var html = '';
-        html += '<div class="as-head"><span>Account</span><span style="opacity:.55">' + accounts.length + '</span></div>';
+        html += '<div class="as-head"><span>Accounts</span><span style="opacity:.55">' + accounts.length + '</span></div>';
         if (!accounts.length) {
             html += '<div class="as-empty">No accounts yet.<br><a href="strategy-lab.html?tab=accounts&new=1">Create your first account</a></div>';
         } else {
             if (active.length) {
-                html += '<div class="as-group">' + active.map(function (a) { return rowHtml(a, selectedId, accounts.length === 1); }).join('') + '</div>';
+                html += '<div class="as-group">' + active.map(function (a) { return rowHtml(a, selectedId); }).join('') + '</div>';
             }
             if (others.length) {
                 html += '<div class="as-group"><div class="as-group-label">Other accounts</div>' +
-                    others.map(function (a) { return rowHtml(a, selectedId, false); }).join('') + '</div>';
+                    others.map(function (a) { return rowHtml(a, selectedId); }).join('') + '</div>';
             }
         }
         html += '<div class="as-foot">' +
@@ -130,7 +149,7 @@
         if (!chip || !pop) return;
         var r = chip.getBoundingClientRect();
         var popH = pop.offsetHeight || 320;
-        var w = pop.offsetWidth || 360;
+        var w = pop.offsetWidth || 370;
         var top = r.bottom + 8;
         var left = r.right - w;
         // Clamp inside the viewport; flip upward if there is no room below.

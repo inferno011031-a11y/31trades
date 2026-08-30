@@ -1655,11 +1655,23 @@
                 list: g
             };
         }).sort((a, b) => a.day - b.day);
+        const totalPnl = days.reduce((s, d) => s + d.pnl, 0);
+        const totalTrades = days.reduce((s, d) => s + d.trades, 0);
+        const winDays = days.filter(d => d.pnl > 0).length;
+        const lossDays = days.filter(d => d.pnl < 0).length;
+        const totalWins = days.reduce((s, d) => s + (d.wins || 0), 0);
+        const totalLosses = days.reduce((s, d) => s + (d.losses || 0), 0);
+        const totalViol = days.reduce((s, d) => s + (d.violations || 0), 0);
+        const totalR = days.reduce((s, d) => s + ((d.avgR || 0) * (d.trades || 0)), 0);
+        const avgR = totalTrades ? (totalR / totalTrades) : 0;
+        const winRate = (totalWins + totalLosses) ? (totalWins / (totalWins + totalLosses)) : 0;
+        const totals = {
+            trades: totalTrades, wins: totalWins, losses: totalLosses, pnl: totalPnl,
+            winRate, avgR, violations: totalViol, daysTraded: days.length, winDays, lossDays
+        };
         return {
             year, month, days,
-            totalPnl: days.reduce((s, d) => s + d.pnl, 0),
-            totalTrades: days.reduce((s, d) => s + d.trades, 0),
-            winDays: days.filter(d => d.pnl > 0).length, lossDays: days.filter(d => d.pnl < 0).length
+            totalPnl, totalTrades, winDays, lossDays, totals
         };
     }
 

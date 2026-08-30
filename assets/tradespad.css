@@ -1,0 +1,269 @@
+/* ============================================================================
+   TradesPad — Design System & Institutional Stylesheet
+   Matching exact PDF specification: pitch black surfaces, week calendar strip,
+   modern fintech metric cards, winrate donut, and high-impact news.
+   ============================================================================ */
+
+:root {
+  --bg-main: #000000;
+  --bg-sidebar: #09090c;
+  --bg-card: #0d0d11;
+  --bg-card-hover: #121217;
+  --bg-elevated: #14141a;
+  
+  --border-subtle: rgba(255, 255, 255, 0.07);
+  --border-medium: rgba(255, 255, 255, 0.12);
+  --border-bright: rgba(255, 255, 255, 0.20);
+  
+  --text-pure: #ffffff;
+  --text-muted: #8e8e99;
+  --text-dim: #5c5c66;
+  
+  --green-neon: #22c55e;
+  --green-bg: rgba(34, 197, 94, 0.12);
+  --green-border: rgba(34, 197, 94, 0.25);
+  
+  --red-neon: #ef4444;
+  --red-bg: rgba(239, 68, 68, 0.12);
+  
+  --radius-card: 12px;
+  --radius-pill: 9999px;
+  --radius-btn: 8px;
+}
+
+*, html, body {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+body {
+  background-color: var(--bg-main);
+  color: var(--text-pure);
+  -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Sidebar styling matching PDF */
+.tp-sidebar {
+  width: 250px;
+  background-color: var(--bg-sidebar);
+  border-right: 1px solid var(--border-subtle);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  flex-shrink: 0;
+}
+
+.tp-logo-box {
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.tp-logo-icon {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tp-logo-title {
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--text-pure);
+  letter-spacing: -0.01em;
+}
+.tp-logo-badge {
+  font-size: 11px;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin-top: -2px;
+}
+
+.tp-account-box {
+  margin: 0 16px 16px 16px;
+  padding: 10px 12px;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+.tp-account-box:hover {
+  border-color: var(--border-medium);
+}
+
+.tp-nav-group-title {
+  padding: 12px 20px 6px 20px;
+  font-size: 11px;
+  color: var(--text-dim);
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.tp-nav-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 9px 20px;
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  transition: all 0.15s ease;
+  position: relative;
+}
+.tp-nav-item:hover {
+  color: var(--text-pure);
+  background-color: rgba(255, 255, 255, 0.03);
+}
+.tp-nav-item.active {
+  color: var(--text-pure);
+  background-color: rgba(255, 255, 255, 0.06);
+}
+.tp-nav-item.active::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6px;
+  bottom: 6px;
+  width: 3px;
+  background-color: var(--text-pure);
+  border-radius: 0 2px 2px 0;
+}
+
+.tp-soon-badge {
+  margin-left: auto;
+  font-size: 10px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: var(--text-muted);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 600;
+}
+
+.tp-upgrade-card {
+  margin: auto 16px 14px 16px;
+  padding: 14px;
+  background: linear-gradient(180deg, #16161d 0%, #0d0d12 100%);
+  border: 1px solid var(--border-medium);
+  border-radius: 10px;
+  position: relative;
+}
+.tp-upgrade-btn {
+  display: block;
+  width: 100%;
+  padding: 8px 0;
+  background-color: #ffffff;
+  color: #000000;
+  font-weight: 700;
+  font-size: 13px;
+  border-radius: 6px;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 10px;
+  border: none;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+.tp-upgrade-btn:hover {
+  opacity: 0.9;
+}
+
+.tp-user-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--border-subtle);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+/* Card components matching PDF */
+.tp-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-card);
+  padding: 20px;
+  transition: border-color 0.2s ease;
+}
+.tp-card:hover {
+  border-color: var(--border-medium);
+}
+
+.tp-card-title {
+  font-size: 13px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.tp-card-val {
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--text-pure);
+  letter-spacing: -0.02em;
+  margin-top: 4px;
+}
+
+/* Week Calendar Strip */
+.tp-week-strip {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 10px;
+  margin-bottom: 20px;
+}
+
+.tp-day-card {
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.tp-day-card:hover {
+  border-color: var(--border-medium);
+}
+
+/* Circular Winrate Donut */
+.tp-donut-container {
+  width: 90px;
+  height: 90px;
+  position: relative;
+}
+.tp-donut-svg {
+  transform: rotate(-90deg);
+}
+
+/* Equalizer Bars for Profit Factor */
+.tp-eq-bars {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 28px;
+  margin: 12px 0;
+}
+.tp-eq-bar {
+  flex: 1;
+  border-radius: 2px;
+  min-height: 4px;
+}
+
+/* Badge styles */
+.tp-badge-green {
+  background-color: var(--green-bg);
+  color: var(--green-neon);
+  border: 1px solid var(--green-border);
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+}

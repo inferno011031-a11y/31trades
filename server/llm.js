@@ -23,10 +23,17 @@
 // ============================================================================
 
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com';
-const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-3.6-flash';
+const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
+
+const OPENAI_BASE = process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.openai.com/v1';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
 
 function apiKey() {
-    return process.env.GEMINI_API_KEY || '';
+    return process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || '';
+}
+
+function isGemini() {
+    return !!process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY && !process.env.OPENROUTER_API_KEY;
 }
 
 // The narration prompt — structured facts in, warm prose out, no invention.
@@ -66,16 +73,20 @@ function guardPassed(original, narrated) {
 }
 
 // Parse the Interactions API response: status completed + last model_output text.
-// NOTE: the real API's model_output steps carry NO `status` field (only type +
-// content/signature) — only the top-level status says 'completed'. So we treat
-// any model_output step with text as done; tests may include an explicit
-// status for realism, which we accept either way.
 function parseResponse(json) {
-    if (!json || json.status !== 'completed' || !Array.isArray(json.steps)) return null;
-    const outputs = json.steps
-        .filter(s => s.type === 'model_output' && Array.isArray(s.content) && (s.status === undefined || s.status === 'done'))
-        .map(s => s.content.map(c => c.text || '').join(''));
-    return outputs.length ? outputs[outputs.length - 1].trim() : null;
+    if (!json) return null;
+    // OpenAI / OpenRouter format
+    if (json.choices && Array.isArray(json.choices) && json.choices[0] && json.choices[0].message) {
+        return (json.choices[0].message.content || '').trim();
+    }
+    // Gemini Interactions API format
+    if (json.status === 'completed' && Array.isArray(json.steps)) {
+        const outputs = json.steps
+            .filter(s => s.type === 'model_output' && Array.isArray(s.content) && (s.status === undefined || s.status === 'done'))
+            .map(s => s.content.map(c => c.text || '').join(''));
+        return outputs.length ? outputs[outputs.length - 1].trim() : null;
+    }
+    return null;
 }
 
 // One-shot narration with timeout. fetchImpl injectable for tests.
@@ -91,16 +102,36 @@ async function narrate(role, facts, opts) {
         const ctl = new AbortController();
         const timer = setTimeout(() => ctl.abort(), timeoutMs);
         try {
-            res = await fetchImpl(GEMINI_BASE + '/v1beta/interactions', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
-                body: JSON.stringify({
-                    model: GEMINI_MODEL,
-                    input: narrationPrompt(role, facts),
-                    store: false
-                }),
-                signal: ctl.signal
-            });
+            if (isGemini()) {
+                res = await fetchImpl(GEMINI_BASE + '/v1beta/interactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+                    body: JSON.stringify({
+                        model: GEMINI_MODEL,
+                        input: narrationPrompt(role, facts),
+                        store: false
+                    }),
+                    signal: ctl.signal
+                });
+            } else {
+                // OpenAI / OpenRouter / Custom OpenAI-compatible endpoint
+                res = await fetchImpl(OPENAI_BASE.replace(/\/+$/, '') + '/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': 'Bearer ' + key
+                    },
+                    body: JSON.stringify({
+                        model: OPENAI_MODEL,
+                        messages: [
+                            { role: 'system', content: 'You are an AI trading coach inside a trading journal platform.' },
+                            { role: 'user', content: narrationPrompt(role, facts) }
+                        ],
+                        temperature: 0.3
+                    }),
+                    signal: ctl.signal
+                });
+            }
         } finally {
             clearTimeout(timer);
         }

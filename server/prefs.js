@@ -13,14 +13,14 @@ const fs = require('node:fs');
 const path = require('node:path');
 const db = require('./db.js');
 
-const THEMES = ['dark', 'light', 'system'];
+const THEMES = ['dark'];
 
 function fileFor(userId) {
     return path.join(process.env.TRADEMIND_PREFS_DATA_DIR || path.join(__dirname, '..', 'data'), 'prefs-' + userId + '.json');
 }
 
 function sanitizeTheme(v) {
-    return THEMES.includes(v) ? v : 'dark';
+    return 'dark';
 }
 
 async function get(userId) {

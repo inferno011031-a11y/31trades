@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BATTLEXJOURNAL — Journal</title>
     <meta name="description" content="BATTLEXJOURNAL Journal — log and review every trade with full decision context.">
     <meta name="robots" content="noindex, nofollow, noarchive">
@@ -17,19 +17,22 @@
     <meta name="twitter:description" content="BATTLEXJOURNAL Journal — log and review every trade with full decision context.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/journal.html">
 
+    <link rel="stylesheet" href="assets/tokens.css">
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
+    <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="/assets/lucide.min.js"></script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS CDN & Lucide -->
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
     <script src="assets/asset-meta.js"></script>
+    <script src="assets/sidebar-nav.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -46,13 +49,14 @@
 
         /* ---- App shell ---- */
         .sidebar {
-            width: 224px;
+            width: 253px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             background: var(--tm-bg-elev);
             border-right: 1px solid var(--tm-border);
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            flex-shrink: 0;
         }
         body.collapsed .sidebar { width: 64px; }
         body.collapsed .hide-when-collapsed { display: none !important; }
@@ -64,12 +68,12 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            font-size: 14.5px; font-weight: 500; color: var(--tm-muted);
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
         .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
-        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
+        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: inset 2px 0 0 0 #ffffff !important; }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
         .panel { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; }
@@ -78,18 +82,24 @@
         .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
 
         .btn-primary {
-            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
+            background: #ffffff !important; color: #000000 !important; font-weight: 700 !important; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.10);
         }
-        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-primary:hover {
+            background: #e2e8f0 !important; color: #000000 !important; border-color: #e2e8f0 !important;
+            transform: translateY(-1px); box-shadow: 0 2px 10px rgba(255, 255, 255, 0.20);
+        }
 
         .btn-ghost {
-            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
+            background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; font-weight: 600; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-ghost:hover {
+            border-color: rgba(255, 255, 255, 0.25) !important; color: #ffffff !important; background: rgba(255, 255, 255, 0.08) !important;
+        }
 
         .tag {
             display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
@@ -111,6 +121,7 @@
         .view-chip .count { color: var(--tm-dim); font-weight: 600; }
         .view-chip.active .count { color: inherit; opacity: 0.7; }
 
+        /* ---- Controls & Tables ---- */
         .ctrl {
             background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
             font-size: 13px; color: var(--tm-text); padding: 8px 12px; outline: none; transition: border-color 0.15s;
@@ -119,7 +130,6 @@
         select.ctrl option { background: var(--tm-card); color: var(--tm-text); }
         .ctrl::placeholder { color: var(--tm-dim); }
 
-        /* ---- Table ---- */
         .tbl th {
             text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
             color: var(--tm-muted); padding: 8px 12px; border-bottom: 1px solid var(--tm-border); white-space: nowrap;
@@ -131,21 +141,31 @@
         .tbl tbody tr.selected-row { background: rgba(16,185,129,0.05); }
         .tbl input[type="checkbox"] { accent-color: var(--tm-green); width: 14px; height: 14px; cursor: pointer; }
 
-        /* ---- Modal & drawer ---- */
-        .overlay { position: fixed; inset: 0; background: var(--modal-backdrop); backdrop-filter: blur(4px); z-index: 40; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        /* ---- Modal & Drawer ---- */
+        .overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+            z-index: 90; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
         .overlay.open { opacity: 1; pointer-events: auto; }
 
-        .modal { position: fixed; inset: 0; z-index: 50; display: flex; align-items: center; justify-content: center; padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+        .modal {
+            position: fixed; inset: 0; z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            padding: 16px; opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
         .modal.open { opacity: 1; pointer-events: auto; }
+
         .modal-box {
-            width: 100%; max-width: 640px; max-height: 92vh; overflow-y: auto;
-            background: var(--modal-bg); border: 1px solid var(--modal-border); border-radius: var(--modal-radius);
-            transform: translateY(10px) scale(0.98); transition: transform 0.25s cubic-bezier(0.16,1,0.3,1);
+            width: 100%; max-width: 860px; max-height: 88vh; overflow-y: auto;
+            background: #0e121b; border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 14px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.75);
+            transform: translateY(12px) scale(0.98); transition: transform 0.22s cubic-bezier(0.16,1,0.3,1);
         }
         .modal.open .modal-box { transform: none; }
 
         .drawer {
-            position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 94vw); z-index: 50;
+            position: fixed; top: 0; right: 0; bottom: 0; width: min(560px, 94vw); z-index: 100;
             background: var(--tm-bg-elev); border-left: 1px solid var(--tm-border-2);
             transform: translateX(100%); transition: transform 0.3s cubic-bezier(0.16,1,0.3,1);
             display: flex; flex-direction: column;
@@ -153,19 +173,23 @@
         .drawer.open { transform: none; }
 
         .entry-tab {
-            flex: 1; padding: 9px; border-radius: 7px; font-size: 13px; font-weight: 600; color: var(--tm-muted);
+            flex: 1; padding: 7px; border-radius: 7px; font-size: 12.5px; font-weight: 600; color: var(--tm-muted);
             text-align: center; border: none; background: transparent; transition: all 0.15s; cursor: pointer;
         }
-        .entry-tab.active { background: var(--tm-text); color: var(--tm-bg); }
+        .entry-tab.active { background: #ffffff !important; color: #0a0a0a !important; font-weight: 700 !important; }
 
-        .field-label { display: block; font-size: 12px; font-weight: 600; color: var(--tm-muted); margin-bottom: 6px; }
-        .field { width: 100%; background: var(--tm-bg); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 9px 12px; font-size: 13px; color: var(--tm-text); outline: none; transition: border-color 0.15s; }
+        .field-label { display: block; font-size: 11px; font-weight: 600; color: var(--tm-muted); margin-bottom: 4px; }
+        .field {
+            width: 100%; background: var(--tm-bg); border: 1px solid var(--tm-border-2);
+            border-radius: 7px; padding: 7px 11px; font-size: 12.5px; color: var(--tm-text);
+            outline: none; transition: border-color 0.15s;
+        }
         .field:focus { border-color: var(--tm-accent); }
         .field::placeholder { color: var(--tm-dim); }
         select.field option { background: var(--tm-card); color: var(--tm-text); }
 
         .chip-tag {
-            padding: 6px 12px; border-radius: 999px; font-size: 12.5px; font-weight: 600; color: var(--tm-muted);
+            padding: 5px 11px; border-radius: 999px; font-size: 12px; font-weight: 600; color: var(--tm-muted);
             background: var(--tm-card); border: 1px solid var(--tm-border-2); transition: all 0.15s; cursor: pointer;
         }
         .chip-tag.selected { background: rgba(16,185,129,0.12); border-color: rgba(16,185,129,0.5); color: var(--tm-green); }
@@ -174,7 +198,7 @@
         .toast {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
             background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
-            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
+            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 120; opacity: 0; pointer-events: none;
             transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
         }
         .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
@@ -221,8 +245,6 @@
             .hide-when-collapsed { display: none !important; }
         }
     </style>
-    <link rel="stylesheet" href="assets/trademind-theme.css">
-    <script src="assets/theme-toggle.js"></script>
 </head>
 <body>
 
@@ -238,37 +260,116 @@
                 </button>
             </div>
 
-            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
-                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
-                <a href="journal.html" class="nav-item active"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
-                <a href="imports.html" class="nav-item"><svg data-lucide="file-up"></svg><span class="nav-label">Import</span></a>
-                <a href="review.html" class="nav-item"><svg data-lucide="clipboard-check"></svg><span class="nav-label">Review</span></a>
-                <a href="improve.html" class="nav-item"><svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span></a>
-                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
-                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
-                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
-                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
-                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
-                <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
-                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
-                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
-                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
-                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
-                <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
-                <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-1">
+                <!-- 1. CORE -->
+                <div class="sidebar-section" data-section="core">
+                    <button type="button" class="sidebar-section-header">
+                        <span>CORE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="dashboard.html" class="nav-item">
+                            <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
+                        </a>
+                        <a href="journal.html" class="nav-item active">
+                            <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
+                        </a>
+                        <a href="notes.html" class="nav-item">
+                            <svg data-lucide="file-edit"></svg><span class="nav-label">Trade Notes</span>
+                        </a>
+                        <a href="imports.html" class="nav-item">
+                            <svg data-lucide="file-up"></svg><span class="nav-label">Import</span>
+                        </a>
+                        <a href="analytics.html" class="nav-item">
+                            <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
+                        </a>
+                        <a href="calendar.html" class="nav-item">
+                            <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 2. INTELLIGENCE -->
+                <div class="sidebar-section" data-section="intelligence">
+                    <button type="button" class="sidebar-section-header">
+                        <span>INTELLIGENCE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="ai.html" class="nav-item">
+                            <svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Coach</span>
+                        </a>
+                        <a href="patterns.html" class="nav-item">
+                            <svg data-lucide="sparkles"></svg><span class="nav-label">Patterns</span>
+                        </a>
+                        <a href="reports.html" class="nav-item">
+                            <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
+                        </a>
+                        <a href="improve.html" class="nav-item">
+                            <svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. STRATEGY & LAB -->
+                <div class="sidebar-section" data-section="strategy">
+                    <button type="button" class="sidebar-section-header">
+                        <span>STRATEGY & LAB</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="strategy-lab.html" class="nav-item">
+                            <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
+                        </a>
+                        <a href="replay.html" class="nav-item">
+                            <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4. PERFORMANCE & RISK -->
+                <div class="sidebar-section" data-section="risk">
+                    <button type="button" class="sidebar-section-header">
+                        <span>PERFORMANCE & RISK</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="risk.html" class="nav-item">
+                            <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
+                        </a>
+                        <a href="discipline.html" class="nav-item">
+                            <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 5. BATTLES & LABS (SEPARATE WITH LUXURY SOON BADGE) -->
+                <div class="sidebar-section" data-section="battles-lab">
+                    <button type="button" class="sidebar-section-header">
+                        <span>BATTLES & LABS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="battles.html" class="nav-item">
+                            <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                        <a href="backtesting.html" class="nav-item">
+                            <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                    </div>
+                </div>
             </nav>
 
-            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
-                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
-                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
-                <a href="settings.html" class="nav-item"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
-                    <div class="avatar" id="profile-avatar">TR</div>
+            <div class="border-t border-[var(--tm-border)] p-2.5 flex flex-col flex-shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--tm-hover)] transition-colors cursor-pointer" id="profile-chip" title="Account, Community, Settings & Help">
+                    <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
-                        <div class="text-[11px] text-[var(--tm-dim)]" id="profile-meta">Battlex Trader</div>
+                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)]" id="profile-meta">Battlex Pro</div>
                     </div>
-                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-up"></svg>
                 </div>
             </div>
         </aside>
@@ -283,12 +384,12 @@
                     <input id="global-search" type="text" class="search-input" placeholder="Search trades, symbols, strategies…">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
-                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    
                     <div class="session-chip hide-when-collapsed">
                         <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
-                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <button class="btn-primary !py-2 !px-3.5" onclick="openEntryModal()">
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
+                    <button class="btn-primary !py-2 !px-3.5" onclick="window.openEntryModal ? window.openEntryModal() : window.location.href='journal.html?log=1'">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </button>
                     <button class="account-select hide-when-collapsed" id="acc-chip">
@@ -421,7 +522,7 @@
                                             <input type="checkbox" id="check-all" onclick="toggleAll(event)">
                                         </th>
                                         <th>Time</th><th>Symbol</th><th>Dir</th><th>Setup</th><th>Session</th>
-                                        <th>Risk</th><th>Result</th><th>R</th><th>Rule adherence</th><th>Review</th>
+                                        <th>Risk</th><th>Result</th><th>R</th><th>Rule adherence</th><th>Notes &amp; Reflection</th><th>Review</th>
                                     </tr>
                                 </thead>
                                 <tbody id="tbody"></tbody>
@@ -658,6 +759,7 @@
             'use strict';
             // ============ HELPERS ============
             const $ = id => document.getElementById(id);
+            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
             const fmt = n => (n >= 0 ? '+' : '') + n.toFixed(2);
             const day = 864e5;
@@ -747,7 +849,7 @@
                 return core.Trades
                     .filter(t => !sel || t.account_id === sel)
                     .map(t => {
-                        const sm = core.StrategyMaster.find(m => m.id === t.strategy_id);
+                        const sm = (core && Array.isArray(core.StrategyMaster)) ? core.StrategyMaster.find(m => m.id === t.strategy_id) : null;
                         return {
                             ...t,
                             ts: new Date(t.ts),
@@ -971,7 +1073,7 @@
                 if (accChip && coreNow && coreNow.Accounts.length) {
                     const acc = coreNow.Accounts.find(a => a.id === coreNow.selectedAccountId()) || coreNow.Accounts[0];
                     accChip.innerHTML = '<span class="num text-[12px]">$' + Number(acc.current_equity).toLocaleString('en-US', { maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + acc.name + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
-                    if (window.lucide) lucide.createIcons();
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                 }
                 const pName = $('profile-name');
                 const pAvatar = $('profile-avatar');
@@ -1003,6 +1105,10 @@
                         '<td><div class="num font-bold ' + res.cls + '">' + fmtMoney(t.pnl) + '</div><div class="text-[10px] ' + res.cls + ' opacity-70">' + res.label + '</div></td>' +
                         '<td class="num font-bold ' + (t.r > 0 ? 'text-[var(--tm-green)]' : t.r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]') + '">' + (t.r > 0 ? '+' : '') + Number(t.r).toFixed(1) + 'R</td>' +
                         '<td><span class="tag ' + adh.cls + '"><svg data-lucide="' + adh.icon + '" class="w-3 h-3"></svg> ' + adh.label + '</span></td>' +
+                        '<td onclick="event.stopPropagation(); openDetail(\'' + t.id + '\', true);">' +
+                            (t.note ? '<div class="flex items-center gap-1.5 text-[12px] text-[var(--tm-text)] max-w-[200px] truncate cursor-pointer hover:text-white" title="' + esc(t.note) + '"><span class="text-amber-400 flex-shrink-0">📝</span> <span class="truncate text-[var(--tm-muted)]">' + esc(t.note) + '</span></div>'
+                                    : '<button class="btn-mini !py-0.5 !px-2 text-[11px] text-[var(--tm-dim)] hover:text-white"><svg data-lucide=\'plus\' class=\'w-3 h-3\'></svg> Note</button>') +
+                        '</td>' +
                         '<td><span class="tag ' + rev.cls + '">' + rev.label + '</span></td>';
                     tr.addEventListener('click', () => openDetail(t.id));
                     tbody.appendChild(tr);
@@ -1020,7 +1126,7 @@
                 $('f-count').textContent = list.length + ' of ' + trades.length + ' trades';
                 const hasFilters = Object.values(filters).some(v => v !== 'all' && v !== '' && v !== null);
                 $('f-clear').classList.toggle('hidden', !hasFilters && activeView === 'all');
-                if (window.lucide) lucide.createIcons();
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             }
 
             function renderBulk() {
@@ -1111,7 +1217,7 @@
                 $('entry-overlay').classList.add('open');
                 $('entry-modal').classList.add('open');
                 updateCalc();
-                if (window.lucide) lucide.createIcons();
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             };
 
             window.closeEntryModal = function() {
@@ -1285,7 +1391,7 @@
 
             // ============ TRADE DETAIL (evidence & accountability) ============
             function versionLabel(core, id, entityType) {
-                if (!core || !core.ConfigVersions || !id) return null;
+                if (!core || !Array.isArray(core.ConfigVersions) || !id) return null;
                 const cv = core.ConfigVersions.find(v => v.id === id);
                 if (!cv) return null;
                 return (cv.version || 'v?') + (entityType && cv.entity_type !== entityType ? '' : '');
@@ -1303,18 +1409,18 @@
                 const policyVersion = versionLabel(core, t.config_version_id, 'RiskPolicy');
                 let ruleSetName = null, ruleSetVersion = null;
                 let evals = [];
-                try { evals = (core && core.TradeService && core.TradeService.evaluationsFor) ? core.TradeService.evaluationsFor(t.id) : []; } catch (e) { evals = []; }
+                try { evals = (core && core.TradeService && typeof core.TradeService.evaluationsFor === 'function') ? core.TradeService.evaluationsFor(t.id) : []; } catch (e) { evals = []; }
                 const ev = evals[0];
-                if (ev && ev.ruleId && core) {
+                if (ev && ev.ruleId && core && Array.isArray(core.ConfigVersions)) {
                     const rs = core.ConfigVersions.find(v => v.id === ev.ruleId);
                     if (rs) { ruleSetName = 'Rule Set'; ruleSetVersion = rs.version; }
                 }
-                const stratMaster = core && core.StrategyMaster.find(m => m.id === t.strategy_id);
+                const stratMaster = (core && Array.isArray(core.StrategyMaster)) ? core.StrategyMaster.find(m => m.id === t.strategy_id) : null;
                 const strategyName = (stratMaster && stratMaster.name) || t.strategy || '—';
 
                 // D · VIOLATIONS
                 let viols = [];
-                try { viols = (core && core.Violations) ? core.Violations.filter(v => v.tradeId === t.id) : []; } catch (e) { viols = []; }
+                try { viols = (core && Array.isArray(core.Violations)) ? core.Violations.filter(v => v.tradeId === t.id) : []; } catch (e) { viols = []; }
                 const hardFails = evals.filter(e => e.state === 'FAIL' && e.severity === 'Hard');
                 const softFails = evals.filter(e => e.state === 'FAIL' && e.severity !== 'Hard');
                 const hasViolations = viols.length > 0 || hardFails.length > 0;
@@ -1323,7 +1429,7 @@
                 // trades themselves carry no attached files in the ledger.
                 const declaredEvidence = (stratMaster && stratMaster.evidence) || [];
                 const expectedEvidence = evals.length ? [] : [];
-                const stratVersionObj = core && core.ConfigVersions.find(v => v.id === t.strategy_version_id);
+                const stratVersionObj = (core && Array.isArray(core.ConfigVersions)) ? core.ConfigVersions.find(v => v.id === t.strategy_version_id) : null;
                 const stratEvidence = (stratVersionObj && stratVersionObj.values && stratVersionObj.values.evidence) || declaredEvidence;
 
                 // G · AUTOPSY (filled async below)
@@ -1416,15 +1522,76 @@
                         '<span class="text-[13px] font-semibold text-[var(--tm-green)]">All evaluated rules followed.</span>' +
                       '</div>';
 
-                // ---- E · BEHAVIOR / EMOTION ----
-                const behaviorRows = [];
-                if (t.emotion) behaviorRows.push(row('Recorded emotion', t.emotion));
-                if (t.adherence) behaviorRows.push(row('Adherence', ADHERENCE_LABEL[t.adherence] || t.adherence, t.adherence === 'followed' ? 'text-[var(--tm-green)]' : 'text-[var(--tm-amber)]'));
-                if (t.postLoss != null) behaviorRows.push(row('Context', t.postLoss ? 'Entered after a loss' : 'Not after a loss'));
-                if (t.delayMin != null) behaviorRows.push(row('Delay since prior trade', t.delayMin + ' min'));
-                const sectionE = sec('E · Behavior / Emotion',
-                    (behaviorRows.length ? behaviorRows.join('') : '<p class="text-[12.5px] text-[var(--tm-dim)]">No behavioral fields recorded for this trade.</p>') +
-                    (t.note ? '<div class="mt-2 pt-2 border-t border-[var(--tm-border)]"><div class="text-[11px] text-[var(--tm-dim)] mb-1">Notes</div><p class="text-[12.5px] text-[var(--tm-text)] leading-relaxed">' + t.note + '</p></div>' : ''));
+                // ---- E · TRADE NARRATIVE & REFLECTION (INTERACTIVE NOTES) ----
+                const quickTags = ['Waited for setup ✅', 'Respected hard stop 🛑', 'High R:R execution 🎯', 'Early exit ✂️', 'FOMO impulse 🔥', 'Revenge trade 😡', 'Moved stop loss 🛡️', 'Oversized risk ⚖️', 'Hesitated on entry ⏳'];
+                const emotions = ['Calm', 'Confident', 'FOMO', 'Revenge', 'Anxious', 'Greed', 'Bored'];
+                const adherences = [
+                    { v: 'followed', l: 'Followed plan ✅' },
+                    { v: 'early exit', l: 'Early exit ✂️' },
+                    { v: 'moving stop', l: 'Moving stop 🛡️' },
+                    { v: 'no-plan', l: 'No plan ❓' },
+                    { v: 'oversized', l: 'Oversized ⚖️' },
+                    { v: 'chased', l: 'Chased entry 🏃' }
+                ];
+
+                const sectionNotes = '<div class="rounded-xl border border-white/10 bg-[#0e121b] p-4 flex flex-col gap-3.5">' +
+                    '<div class="flex items-center justify-between">' +
+                        '<div class="flex items-center gap-2">' +
+                            '<svg data-lucide="file-text" class="w-4 h-4 text-purple-400"></svg>' +
+                            '<span class="panel-title text-[var(--tm-text)]">Trade Narrative &amp; Journal Notes</span>' +
+                        '</div>' +
+                        '<span class="tag tag-purple text-[10px] font-bold">Auto-Sync</span>' +
+                    '</div>' +
+                    '<p class="text-[12px] text-[var(--tm-dim)] leading-relaxed">Record how this trade unfolded, what went right or wrong, and key lessons for future setups.</p>' +
+                    
+                    '<div>' +
+                        '<div class="flex items-center justify-between mb-1.5">' +
+                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)]">Trade Story &amp; Thesis</label>' +
+                            '<span id="note-save-status" class="text-[11px] text-[var(--tm-dim)]">Auto-saves on edit</span>' +
+                        '</div>' +
+                        '<textarea id="detail-note-input" class="ctrl w-full min-h-[100px] text-[13px] leading-relaxed p-3" placeholder="What was your entry thesis? Did you follow your rules? What would you do differently next time?">' + esc(t.note || '') + '</textarea>' +
+                    '</div>' +
+
+                    '<div>' +
+                        '<div class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1.5">Quick Reflection Tags</div>' +
+                        '<div class="flex flex-wrap gap-1.5">' +
+                            quickTags.map(tag =>
+                                '<button type="button" class="btn-mini !py-1 !px-2.5 text-[11px]" onclick="appendNoteTag(\'' + tag.replace(/'/g, "\\'") + '\')">' + tag + '</button>'
+                            ).join('') +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="grid grid-cols-2 gap-3 pt-2 border-t border-white/5">' +
+                        '<div>' +
+                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Emotion State</label>' +
+                            '<select id="detail-emotion-select" class="ctrl w-full text-[12px]">' +
+                                '<option value="">— Select emotion —</option>' +
+                                emotions.map(em => '<option value="' + em + '"' + (t.emotion === em ? ' selected' : '') + '>' + em + '</option>').join('') +
+                            '</select>' +
+                        '</div>' +
+                        '<div>' +
+                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Plan Adherence</label>' +
+                            '<select id="detail-adherence-select" class="ctrl w-full text-[12px]">' +
+                                adherences.map(adh => '<option value="' + adh.v + '"' + (t.adherence === adh.v ? ' selected' : '') + '>' + adh.l + '</option>').join('') +
+                            '</select>' +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="pt-2 border-t border-white/5">' +
+                        '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Chart / Screenshot URL</label>' +
+                        '<div class="flex items-center gap-2">' +
+                            '<input type="url" id="detail-chart-input" class="ctrl flex-1 text-[12px]" placeholder="https://www.tradingview.com/x/... or chart URL" value="' + esc(t.chart_url || '') + '">' +
+                            (t.chart_url ? '<a href="' + esc(t.chart_url) + '" target="_blank" class="btn-ghost !py-1.5 !px-3 text-[12px]"><svg data-lucide="external-link" class="w-3.5 h-3.5"></svg> View</a>' : '') +
+                        '</div>' +
+                    '</div>' +
+
+                    '<div class="flex items-center justify-between pt-2 border-t border-white/5">' +
+                        '<button type="button" class="btn-ghost !py-1.5 !px-3 text-[12px]" onclick="clearTradeNotes(\'' + t.id + '\')">Clear</button>' +
+                        '<button type="button" class="btn-primary !py-1.5 !px-4 text-[12.5px]" onclick="saveTradeNotes(\'' + t.id + '\')">' +
+                            '<svg data-lucide="save" class="w-3.5 h-3.5"></svg> Save Notes &amp; Reflection' +
+                        '</button>' +
+                    '</div>' +
+                '</div>';
 
                 // ---- F · EVIDENCE ----
                 const sectionF = sec('F · Evidence',
@@ -1469,7 +1636,7 @@
                         sectionB +
                         sectionC +
                         sectionD +
-                        sectionE +
+                        sectionNotes +
                         sectionF +
                         sectionG +
                         sectionRelated +
@@ -1485,16 +1652,85 @@
                 );
             }
 
-            window.openDetail = function(id) {
-                currentDetailId = id;
+            window.saveTradeNotes = function(id) {
                 const t = trades.find(x => x.id === id);
                 if (!t) return;
-                $('detail-body').innerHTML = buildDetailBody(t);
-                $('detail-overlay').classList.add('open');
-                $('detail-drawer').classList.add('open');
-                if (window.lucide) lucide.createIcons();
-                renderReviewBar();
-                loadAutopsy(id);
+                const noteEl = $('detail-note-input');
+                const emEl = $('detail-emotion-select');
+                const adhEl = $('detail-adherence-select');
+                const chartEl = $('detail-chart-input');
+
+                const note = noteEl ? noteEl.value.trim() : (t.note || '');
+                const emotion = emEl ? emEl.value : (t.emotion || '');
+                const adherence = adhEl ? adhEl.value : (t.adherence || 'followed');
+                const chart_url = chartEl ? chartEl.value.trim() : (t.chart_url || '');
+
+                t.note = note;
+                t.emotion = emotion;
+                t.adherence = adherence;
+                t.chart_url = chart_url;
+
+                const core = window.TradeMindCore;
+                if (core && core.TradeService) {
+                    try {
+                        core.TradeService.update(id, { note, emotion, adherence, chart_url });
+                    } catch (e) {
+                        console.warn('TradeService update fallback:', e);
+                    }
+                }
+
+                const statusEl = $('note-save-status');
+                if (statusEl) statusEl.textContent = '✓ Saved just now';
+                showToast('Trade notes & reflection saved! 📝');
+                renderTable();
+            };
+
+            window.appendNoteTag = function(tag) {
+                const noteEl = $('detail-note-input');
+                if (!noteEl) return;
+                const cur = noteEl.value.trim();
+                if (cur.includes(tag)) return;
+                noteEl.value = cur ? cur + '\n• ' + tag : '• ' + tag;
+                noteEl.focus();
+                if (currentDetailId) {
+                    window.saveTradeNotes(currentDetailId);
+                }
+            };
+
+            window.clearTradeNotes = function(id) {
+                const noteEl = $('detail-note-input');
+                if (noteEl) noteEl.value = '';
+                window.saveTradeNotes(id);
+            };
+
+            window.openDetail = function(id, focusNotes) {
+                currentDetailId = id;
+                const t = trades.find(x => x.id === id);
+                if (!t) {
+                    console.warn('Trade not found:', id);
+                    return;
+                }
+                try {
+                    $('detail-body').innerHTML = buildDetailBody(t);
+                    $('detail-overlay').classList.add('open');
+                    $('detail-drawer').classList.add('open');
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                    renderReviewBar();
+                    loadAutopsy(id);
+
+                    if (focusNotes) {
+                        setTimeout(() => {
+                            const ni = $('detail-note-input');
+                            if (ni) {
+                                ni.focus();
+                                ni.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                            }
+                        }, 150);
+                    }
+                } catch (err) {
+                    console.error('Error opening trade detail:', err);
+                    showToast('Failed to open trade detail: ' + err.message);
+                }
             };
 
             window.closeDetail = function() {
@@ -1551,7 +1787,7 @@
                 // keep the detail open on the same trade, now showing Reviewed
                 if (currentDetailId === id && t) {
                     $('detail-body').innerHTML = buildDetailBody(t);
-                    if (window.lucide) lucide.createIcons();
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                     loadAutopsy(id);
                 }
             };
@@ -1585,7 +1821,7 @@
                     }
                     const stratSel = $('e-strategy');
                     if (stratSel && core.StrategyMaster && core.StrategyMaster.length) {
-                        const active = core.StrategyMaster.filter(s => s.status !== 'inactive');
+                        const active = (core && Array.isArray(core.StrategyMaster)) ? core.StrategyMaster.filter(s => s.status !== 'inactive') : [];
                         stratSel.innerHTML = '<option value="">— strategy —</option>' + active.map(s =>
                             '<option value="' + s.id + '">' + s.name + '</option>').join('');
                     }
@@ -1681,7 +1917,7 @@
             // ============ INIT ============
             $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
             renderAll();
-            if (window.lucide) lucide.createIcons();
+            if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             loadEco();
             setInterval(loadEco, 5 * 60 * 1000);
 

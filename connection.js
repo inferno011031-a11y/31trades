@@ -11,23 +11,42 @@
 (function () {
     'use strict';
 
+    function updateSessionClock() {
+        const chip = document.getElementById('session-chip-text');
+        if (chip) {
+            const d = new Date();
+            const h = d.getHours();
+            const session = (h >= 7 && h < 12) ? 'London' : (h >= 12 && h < 18) ? 'New York' : 'Asia';
+            chip.textContent = session + ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        }
+    }
+
     function init() {
-        const chips = Array.from(document.querySelectorAll('.session-chip'));
-        if (!chips.length) return false;
+        updateSessionClock();
+        setInterval(updateSessionClock, 1000);
+
+        const dots = Array.from(document.querySelectorAll('.conn-dot'));
+        if (!dots.length) return false;
         const core = window.TradeMindCore;
 
         function render(online) {
-            chips.forEach(chip => {
-                const dot = chip.querySelector('.conn-dot');
-                if (dot) {
-                    dot.style.background = online ? '#10B981' : '#F59E0B';
-                    dot.style.boxShadow = online ? '0 0 0 3px rgba(16,185,129,0.15)' : '0 0 0 3px rgba(245,158,11,0.15)';
+            dots.forEach(dot => {
+                dot.style.background = online ? '#10B981' : '#F59E0B';
+                dot.style.boxShadow = online ? '0 0 0 2px rgba(16,185,129,0.2)' : '0 0 0 2px rgba(245,158,11,0.2)';
+                const chip = dot.closest('.session-chip') || dot.parentElement;
+                if (chip) {
+                    let label = chip.querySelector('.conn-label');
+                    if (!label) {
+                        // Clean out loose text nodes in the connection chip
+                        Array.from(chip.childNodes).forEach(n => {
+                            if (n.nodeType === 3) n.remove();
+                        });
+                        label = document.createElement('span');
+                        label.className = 'conn-label';
+                        chip.appendChild(label);
+                    }
+                    label.textContent = online ? 'Connected' : 'Local only';
                 }
-                // Replace the trailing text node ("Connected") without touching icons.
-                let textNode = Array.from(chip.childNodes).find(n => n.nodeType === 3);
-                const label = ' ' + (online ? 'Connected' : 'Local only');
-                if (textNode) textNode.textContent = label;
-                else chip.insertAdjacentText('beforeend', label);
             });
         }
 

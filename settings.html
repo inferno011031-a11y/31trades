@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BATTLEXJOURNAL — Settings</title>
     <meta name="description" content="BATTLEXJOURNAL Settings — profile, accounts, broker connections and preferences.">
     <meta name="robots" content="noindex, nofollow, noarchive">
@@ -17,13 +17,14 @@
     <meta name="twitter:description" content="BATTLEXJOURNAL Settings — profile, accounts, broker connections and preferences.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/settings.html">
 
+    <link rel="stylesheet" href="assets/tokens.css">
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
     <script src="/assets/lucide.min.js"></script>
 
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS CDN & Lucide -->
     <script src="src/core/index.js"></script>
@@ -45,7 +46,7 @@
 
         /* ---- App shell ---- */
         .sidebar {
-            width: 224px;
+            width: 253px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
             background: var(--tm-bg-elev);
             border-right: 1px solid var(--tm-border);
@@ -62,57 +63,24 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: var(--tm-muted);
+            font-size: 14.5px; font-weight: 500; color: var(--tm-muted);
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
         .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
-        .nav-item.active { background: linear-gradient(135deg, rgba(99,102,241,0.18), rgba(52,211,153,0.10)); color: var(--tm-text); box-shadow: inset 0 0 0 1px rgba(129,140,248,0.28); }
+        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: inset 2px 0 0 0 #ffffff !important; }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
         /* ---- Glass system (Calendar/AI parity) ---- */
         :root {
-            --glass-bg: rgba(23, 26, 34, 0.55);
-            --glass-bg-strong: rgba(28, 32, 42, 0.78);
-            --glass-border: rgba(255, 255, 255, 0.09);
-            --glass-border-strong: rgba(255, 255, 255, 0.16);
-            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
-            --glass-inner: rgba(255, 255, 255, 0.04);
-            --hairline: rgba(255, 255, 255, 0.06);
-        }
+            
         [data-theme="light"] {
-            --glass-bg: rgba(255, 255, 255, 0.66);
-            --glass-bg-strong: rgba(255, 255, 255, 0.86);
-            --glass-border: rgba(255, 255, 255, 0.9);
-            --glass-border-strong: rgba(148, 163, 184, 0.35);
-            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
-            --glass-inner: rgba(255, 255, 255, 0.5);
-            --hairline: rgba(15, 23, 42, 0.07);
-        }
-        .ai-bg {
-            position: fixed; inset: 0; z-index: 0; pointer-events: none;
-            background:
-                radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
-                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
-                radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
-                var(--tm-bg);
-        }
+            
+        
         .glass {
-            background: var(--glass-bg);
-            backdrop-filter: blur(16px) saturate(1.12);
-            -webkit-backdrop-filter: blur(16px) saturate(1.12);
-            border: 1px solid var(--glass-border);
-            border-radius: 12px;
-            box-shadow: var(--glass-shadow);
-        }
+            background: var(
         .glass-strong {
-            background: var(--glass-bg-strong);
-            backdrop-filter: blur(20px) saturate(1.15);
-            -webkit-backdrop-filter: blur(20px) saturate(1.15);
-            border: 1px solid var(--glass-border-strong);
-            border-radius: 12px;
-            box-shadow: var(--glass-shadow);
-        }
+            background: var(
         .ai-layer { position: relative; z-index: 1; }
         .ai-layer > .sidebar, .ai-layer .topbar { position: relative; z-index: 40; }
 
@@ -120,18 +88,37 @@
         .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
 
         .btn-primary {
-            background: var(--tm-text); color: var(--tm-bg); font-weight: 700; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: filter 0.15s, transform 0.15s; border: 1px solid var(--tm-text); text-decoration: none; cursor: pointer;
+            background: #ffffff !important; color: #000000 !important; font-weight: 700 !important; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.10);
         }
-        .btn-primary:hover { filter: brightness(1.12); transform: translateY(-1px); }
+        .btn-primary:hover {
+            background: #e2e8f0 !important; color: #000000 !important; border-color: #e2e8f0 !important;
+            transform: translateY(-1px); box-shadow: 0 2px 10px rgba(255, 255, 255, 0.20);
+        }
         .btn-primary:disabled { opacity: 0.55; transform: none; cursor: default; }
         .btn-ghost {
-            background: transparent; color: var(--tm-muted); font-weight: 600; font-size: 13.5px;
-            padding: 9px 16px; border-radius: 8px; border: 1px solid var(--tm-border-2);
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s; cursor: pointer; text-decoration: none;
+            background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; font-weight: 600; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
         }
-        .btn-ghost:hover { border-color: var(--tm-muted); color: var(--tm-text); background: var(--tm-hover); }
+        .btn-ghost:hover {
+            border-color: rgba(255, 255, 255, 0.25) !important; color: #ffffff !important; background: rgba(255, 255, 255, 0.08) !important;
+        }
+        .btn-danger {
+            background: rgba(239,68,68,0.10); color: var(--tm-red); font-weight: 600; font-size: 12px;
+            padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.28);
+            display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; cursor: pointer;
+        }
+        .btn-danger:hover { background: rgba(239,68,68,0.18); }
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        }
         .btn-danger {
             background: rgba(239,68,68,0.10); color: var(--tm-red); font-weight: 600; font-size: 12px;
             padding: 7px 12px; border-radius: 8px; border: 1px solid rgba(239,68,68,0.28);
@@ -152,20 +139,63 @@
         body.collapsed .collapse-btn svg { transform: rotate(180deg); }
         .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
 
-        /* ---- Settings navigation ---- */
-        .set-nav-item {
-            display: flex; align-items: center; gap: 11px;
-            padding: 10px 12px; border-radius: 9px;
-            font-size: 13.5px; font-weight: 600; color: var(--tm-muted);
-            border: 1px solid transparent; cursor: pointer;
-            transition: all 0.15s; text-align: left; width: 100%;
-            background: transparent; white-space: nowrap;
+        /* ---- Settings layout & tab visibility ---- */
+        .set-section {
+            display: none !important;
+            width: 100%;
         }
-        .set-nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .set-section.active {
+            display: flex !important;
+            flex-direction: column;
+            gap: 24px;
+            width: 100%;
+            animation: set-fade 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes set-fade {
+            from { opacity: 0; transform: translateY(4px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Settings horizontal tab navigation */
+        .set-nav-bar {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            border-bottom: 1px solid var(--tm-border);
+            padding-bottom: 12px;
+            overflow-x: auto;
+        }
+        .set-nav-item {
+            display: inline-flex;
+            align-items: center;
+            gap: 9px;
+            padding: 9px 18px;
+            border-radius: 9px;
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--tm-muted);
+            background: transparent;
+            border: 1px solid transparent;
+            cursor: pointer;
+            white-space: nowrap;
+            transition: all 0.15s ease;
+        }
+        .set-nav-item:hover {
+            background: var(--tm-hover);
+            color: var(--tm-text);
+        }
         .set-nav-item.active {
-            background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(52,211,153,0.08));
-            color: var(--tm-text); border-color: rgba(129,140,248,0.30);
-            box-shadow: inset 2px 0 0 var(--tm-accent-2);
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+            border-color: rgba(255, 255, 255, 0.12) !important;
+            font-weight: 600;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+        }
+        html[data-theme="light"] .set-nav-item.active {
+            background: #09090b !important;
+            color: #ffffff !important;
+            border-color: #09090b !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12);
         }
         .set-nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
 
@@ -202,7 +232,18 @@
             transition: border-color .15s, background .15s, color .15s, box-shadow .15s;
         }
         .theme-opt:hover { border-color: var(--tm-muted); color: var(--tm-text); }
-        .theme-opt.active { border-color: var(--tm-accent-2); background: linear-gradient(135deg, rgba(99,102,241,0.14), rgba(52,211,153,0.06)); color: var(--tm-text); box-shadow: 0 0 0 1px rgba(129,140,248,0.35), 0 6px 20px -6px rgba(99,102,241,0.30); }
+        .theme-opt.active {
+            border-color: rgba(255, 255, 255, 0.3) !important;
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.2) !important;
+        }
+        html[data-theme="light"] .theme-opt.active {
+            border-color: #09090b !important;
+            background: #f1f5f9 !important;
+            color: #09090b !important;
+            box-shadow: 0 0 0 1px #09090b !important;
+        }
         .theme-swatch { width: 100%; height: 46px; border-radius: 8px; border: 1px solid var(--tm-border-2); display: flex; align-items: center; justify-content: center; color: var(--tm-dim); overflow: hidden; }
         .theme-check { position: absolute; top: 8px; right: 8px; width: 20px; height: 20px; border-radius: 999px; background: var(--tm-accent-2); color: #fff; display: flex; align-items: center; justify-content: center; opacity: 0; transform: scale(0.6); transition: all 0.18s; }
         .theme-opt.active .theme-check { opacity: 1; transform: scale(1); }
@@ -236,11 +277,7 @@
         }
         .broker-card {
             width: 100%; max-width: 460px; max-height: 82vh; overflow-y: auto;
-            background: var(--glass-bg-strong);
-            backdrop-filter: blur(20px) saturate(1.15); -webkit-backdrop-filter: blur(20px) saturate(1.15);
-            border: 1px solid var(--glass-border-strong); border-radius: 16px;
-            padding: 20px; box-shadow: var(--glass-shadow);
-        }
+            background: var(--modal-bg, var(--tm-card)); border: 1px solid var(--modal-border, var(--tm-border-2)); border-radius: 12px; padding: 20px; }
         .broker-close {
             width: 28px; height: 28px; border-radius: 8px; border: none; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
@@ -286,7 +323,11 @@
         @media (max-width: 768px) {
             .set-layout { flex-direction: column !important; }
             .set-layout .set-nav { flex-direction: row !important; overflow-x: auto; padding-bottom: 4px; }
-            .set-layout .set-nav-item { width: auto; }
+            .set-layout .set-nav-item {
+            display: flex; align-items: center; gap: 10px; padding: 10px 14px;
+            border-radius: 8px; font-size: 14.5px; font-weight: 500; color: var(--tm-muted); background: transparent; border: none;
+            cursor: pointer; text-align: left; width: 100%; transition: all 0.15s ease;
+        }
         }
         @media (max-width: 640px) {
             .search-input { display: none; }
@@ -295,14 +336,15 @@
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
+    <script src="assets/sidebar-nav.js"></script>
 </head>
 <body>
-
-    <div class="ai-bg"></div>
 
     <div class="flex h-screen ai-layer">
 
         <!-- ============ SIDEBAR ============ -->
+                <!-- ============ SIDEBAR ============ -->
+                <!-- ============ LEFT SIDEBAR ============ -->
         <aside class="sidebar">
             <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
                 <div class="logo-badge">B</div>
@@ -312,37 +354,116 @@
                 </button>
             </div>
 
-            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-0.5">
-                <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
-                <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
-                <a href="imports.html" class="nav-item"><svg data-lucide="file-up"></svg><span class="nav-label">Import</span></a>
-                <a href="review.html" class="nav-item"><svg data-lucide="clipboard-check"></svg><span class="nav-label">Review</span></a>
-                <a href="improve.html" class="nav-item"><svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span></a>
-                <a href="insights.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Insights</span></a>
-                <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
-                <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Mentor</span></a>
-                <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
-                <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
-                <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
-                <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span></a>
-                <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
-                <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
-                <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
-                <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
-                <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-1">
+                <!-- 1. CORE -->
+                <div class="sidebar-section" data-section="core">
+                    <button type="button" class="sidebar-section-header">
+                        <span>CORE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="dashboard.html" class="nav-item">
+                            <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
+                        </a>
+                        <a href="journal.html" class="nav-item">
+                            <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
+                        </a>
+                        <a href="notes.html" class="nav-item">
+                            <svg data-lucide="file-edit"></svg><span class="nav-label">Trade Notes</span>
+                        </a>
+                        <a href="imports.html" class="nav-item">
+                            <svg data-lucide="file-up"></svg><span class="nav-label">Import</span>
+                        </a>
+                        <a href="analytics.html" class="nav-item">
+                            <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
+                        </a>
+                        <a href="calendar.html" class="nav-item">
+                            <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 2. INTELLIGENCE -->
+                <div class="sidebar-section" data-section="intelligence">
+                    <button type="button" class="sidebar-section-header">
+                        <span>INTELLIGENCE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="ai.html" class="nav-item">
+                            <svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Coach</span>
+                        </a>
+                        <a href="patterns.html" class="nav-item">
+                            <svg data-lucide="sparkles"></svg><span class="nav-label">Patterns</span>
+                        </a>
+                        <a href="reports.html" class="nav-item">
+                            <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
+                        </a>
+                        <a href="improve.html" class="nav-item">
+                            <svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. STRATEGY & LAB -->
+                <div class="sidebar-section" data-section="strategy">
+                    <button type="button" class="sidebar-section-header">
+                        <span>STRATEGY & LAB</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="strategy-lab.html" class="nav-item">
+                            <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
+                        </a>
+                        <a href="replay.html" class="nav-item">
+                            <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4. PERFORMANCE & RISK -->
+                <div class="sidebar-section" data-section="risk">
+                    <button type="button" class="sidebar-section-header">
+                        <span>PERFORMANCE & RISK</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="risk.html" class="nav-item">
+                            <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
+                        </a>
+                        <a href="discipline.html" class="nav-item">
+                            <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 5. BATTLES & LABS (SEPARATE WITH LUXURY SOON BADGE) -->
+                <div class="sidebar-section" data-section="battles-lab">
+                    <button type="button" class="sidebar-section-header">
+                        <span>BATTLES & LABS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="battles.html" class="nav-item">
+                            <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                        <a href="backtesting.html" class="nav-item">
+                            <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                    </div>
+                </div>
             </nav>
 
-            <div class="border-t border-[var(--tm-border)] py-3 px-2.5 flex flex-col gap-0.5 flex-shrink-0">
-                <a href="notifications.html" class="nav-item"><svg data-lucide="bell"></svg><span class="nav-label">Notifications</span></a>
-                <a href="help.html" class="nav-item"><svg data-lucide="help-circle"></svg><span class="nav-label">Help</span></a>
-                <a href="settings.html" class="nav-item active"><svg data-lucide="settings"></svg><span class="nav-label">Settings</span></a>
-                <div class="flex items-center gap-3 mt-2 px-3 py-2 rounded-lg hover:bg-[var(--tm-hover)] transition-colors">
-                    <div class="avatar" id="nav-avatar">TR</div>
+            <div class="border-t border-[var(--tm-border)] p-2.5 flex flex-col flex-shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--tm-hover)] transition-colors cursor-pointer" id="profile-chip" title="Account, Community, Settings & Help">
+                    <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13px] font-semibold text-[var(--tm-text)] truncate" id="nav-name">Trader</div>
-                        <div class="text-[11px] text-[var(--tm-dim)]" id="nav-plan" id="profile-meta">Battlex Trader</div>
+                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)]" id="profile-meta">Battlex Pro</div>
                     </div>
-                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-down"></svg>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-up"></svg>
                 </div>
             </div>
         </aside>
@@ -357,14 +478,11 @@
                     <input id="global-search" type="text" class="search-input" placeholder="Search settings…">
                 </div>
                 <div class="flex items-center gap-3 ml-auto">
-                    <button class="collapse-btn hide-when-collapsed" data-theme-toggle title="Toggle theme"><svg data-lucide="moon" class="w-4 h-4" data-theme-ico></svg></button>
+                    
                     <div class="session-chip hide-when-collapsed">
                         <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
-                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> Connected</div>
-                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
-                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </a>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
                     <button class="account-select hide-when-collapsed" id="acc-chip">
                         <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
                         <span>No account</span>
@@ -375,140 +493,137 @@
 
             <!-- Content -->
             <main class="flex-1 overflow-y-auto relative">
-                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+                <div class="max-w-[1000px] mx-auto p-5 sm:p-7 lg:p-8 flex flex-col gap-6">
 
                     <!-- Header -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-[24px] font-bold tracking-tight">Settings</h1>
-                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Your identity, security, connections, and workspace.</p>
+                            <h1 class="text-[26px] font-extrabold tracking-tight">Settings</h1>
+                            <p class="text-[13.5px] text-[var(--tm-dim)] mt-1">Manage your identity, connected brokers, security, and workspace preferences.</p>
                         </div>
                     </div>
 
-                    <!-- Layout: settings nav + content -->
-                    <div class="flex gap-5 set-layout">
+                    <!-- Top Horizontal Segmented Settings Tabs -->
+                    <nav class="set-nav-bar">
+                        <button class="set-nav-item active" data-set-tab="profile">
+                            <svg data-lucide="user"></svg><span>Profile</span>
+                        </button>
+                        <button class="set-nav-item" data-set-tab="brokers">
+                            <svg data-lucide="plug"></svg><span>Brokers</span>
+                        </button>
+                        <button class="set-nav-item" data-set-tab="security">
+                            <svg data-lucide="shield"></svg><span>Security</span>
+                        </button>
+                    </nav>
 
-                        <!-- Settings navigation -->
-                        <nav class="set-nav flex flex-col gap-1 w-full md:w-[200px] flex-shrink-0">
-                            <button class="set-nav-item active" data-set-tab="profile">
-                                <svg data-lucide="user"></svg><span>Profile</span>
-                            </button>
-                            <button class="set-nav-item" data-set-tab="brokers">
-                                <svg data-lucide="plug"></svg><span>Brokers</span>
-                            </button>
-                            <button class="set-nav-item" data-set-tab="security">
-                                <svg data-lucide="shield"></svg><span>Security</span>
-                            </button>
-                            <button class="set-nav-item" data-set-tab="appearance">
-                                <svg data-lucide="palette"></svg><span>Appearance</span>
-                            </button>
-                        </nav>
+                    <!-- ================= PROFILE ================= -->
+                    <section class="set-section active" id="sec-profile">
 
-                        <!-- ================= PROFILE ================= -->
-                        <section class="set-section active flex-1 min-w-0 flex flex-col gap-4" id="sec-profile">
-
-                            <!-- Identity card (glass) -->
-                            <div class="glass-strong p-6 relative overflow-hidden">
-                                <div class="flex flex-wrap items-center gap-5">
-                                    <div class="avatar !w-16 !h-16 !rounded-2xl !text-[22px]" id="profile-avatar">TR</div>
-                                    <div class="flex-1 min-w-0">
-                                        <div class="label-xs mb-1">Trader</div>
-                                        <div class="text-[20px] font-bold leading-tight" id="profile-name">—</div>
-                                        <div class="text-[13px] text-[var(--tm-dim)] mt-0.5" id="profile-email">—</div>
-                                    </div>
-                                    <span class="status-badge hide-when-collapsed"><span class="dot"></span> Active</span>
+                        <!-- Identity card -->
+                        <div class="panel p-6 sm:p-7 relative overflow-hidden rounded-xl">
+                            <div class="flex flex-wrap items-center gap-5">
+                                <div class="avatar !w-16 !h-16 !rounded-2xl !text-[22px]" id="profile-avatar">TR</div>
+                                <div class="flex-1 min-w-0">
+                                    <div class="label-xs mb-1">Trader</div>
+                                    <div class="text-[22px] font-bold leading-tight" id="profile-name">—</div>
+                                    <div class="text-[13.5px] text-[var(--tm-dim)] mt-0.5" id="profile-email">—</div>
                                 </div>
+                                <span class="status-badge"><span class="dot"></span> Active</span>
+                            </div>
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-6 pt-5 border-t border-[var(--hairline)]">
-                                    <div>
-                                        <div class="label-xs mb-1.5">Unique trader ID</div>
-                                        <div class="flex items-center gap-2 flex-wrap">
-                                            <code class="num text-[12.5px] text-[var(--tm-text)] bg-[var(--tm-card)] border border-[var(--tm-border-2)] rounded-lg px-3 py-2 truncate max-w-full" id="user-id-text">—</code>
-                                            <button class="btn-ghost !py-2 !px-3 !text-[12px]" id="copy-id-btn">
-                                                <svg data-lucide="copy" class="w-3.5 h-3.5" id="copy-id-ico"></svg> <span id="copy-id-label">Copy ID</span>
-                                            </button>
-                                        </div>
-                                        <p class="text-[11.5px] text-[var(--tm-dim)] mt-2">Your unique Battlex identity — used for Discord verification and role sync / giveaways.</p>
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 mt-6 pt-6 border-t border-[var(--hairline)]">
+                                <div>
+                                    <div class="label-xs mb-2">Unique trader ID</div>
+                                    <div class="flex items-center gap-2 flex-wrap">
+                                        <code class="num text-[13px] text-[var(--tm-text)] bg-[var(--tm-card)] border border-[var(--tm-border-2)] rounded-lg px-3.5 py-2 truncate max-w-full" id="user-id-text">—</code>
+                                        <button class="btn-ghost !py-2 !px-3.5 !text-[12.5px]" id="copy-id-btn">
+                                            <svg data-lucide="copy" class="w-3.5 h-3.5" id="copy-id-ico"></svg> <span id="copy-id-label">Copy ID</span>
+                                        </button>
                                     </div>
-                                    <div>
-                                        <div class="label-xs mb-1.5">Member since</div>
-                                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)]" id="profile-created">—</div>
-                                        <div class="text-[11.5px] text-[var(--tm-dim)] mt-2">Signed in with your Supabase account.</div>
-                                    </div>
+                                    <p class="text-[12px] text-[var(--tm-dim)] mt-2">Your unique Battlex identity — used for Discord verification and role sync.</p>
                                 </div>
-
-                                <div class="flex items-center gap-3 mt-5 pt-4 border-t border-[var(--hairline)]">
-                                    <button class="btn-ghost !py-2 !px-3.5 !text-[12.5px]" onclick="window.signOut()">
-                                        <svg data-lucide="log-out" class="w-3.5 h-3.5"></svg> Sign out
-                                    </button>
+                                <div>
+                                    <div class="label-xs mb-2">Member since</div>
+                                    <div class="text-[14px] font-semibold text-[var(--tm-text)]" id="profile-created">—</div>
+                                    <p class="text-[12px] text-[var(--tm-dim)] mt-2">Signed in with your Supabase account.</p>
                                 </div>
                             </div>
 
-                            <!-- Battlex Trader Card -->
-                            <div>
-                                <div class="flex items-center gap-2.5 mb-3">
-                                    <div class="panel-title">Battlex trader card</div>
+                            <div class="flex items-center gap-3 mt-6 pt-5 border-t border-[var(--hairline)]">
+                                <button class="btn-ghost !py-2 !px-4 !text-[13px]" onclick="window.signOut()">
+                                    <svg data-lucide="log-out" class="w-3.5 h-3.5"></svg> Sign out
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Battlex Trader Card -->
+                        <div class="panel p-6 sm:p-7 rounded-xl flex flex-col gap-4">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2.5">
+                                    <div class="panel-title text-[16px]">Battlex Trader Card</div>
                                     <span class="tag tag-indigo">Identity</span>
                                 </div>
-                                <p class="text-[12px] text-[var(--tm-dim)] mb-4">Who you are as a trader — built from repeated decisions. Discipline, streaks and dimensions come from the same engine the Discipline page reads.</p>
-                                <div id="trader-card"></div>
                             </div>
-                        </section>
+                            <p class="text-[12.5px] text-[var(--tm-dim)]">Who you are as a trader — built from repeated decisions. Discipline, streaks and dimensions come from the same engine the Discipline page reads.</p>
+                            <div id="trader-card" class="mt-2"></div>
+                        </div>
+                    </section>
 
-                        <!-- ================= BROKERS ================= -->
-                        <section class="set-section flex-1 min-w-0 flex flex-col gap-4" id="sec-brokers">
+                    <!-- ================= BROKERS ================= -->
+                    <section class="set-section" id="sec-brokers">
+                        <div class="panel p-6 sm:p-7 rounded-xl flex flex-col gap-5">
+                            <div class="flex flex-wrap items-center justify-between gap-4 pb-4 border-b border-[var(--hairline)]">
+                                <div>
+                                    <div class="panel-title text-[17px]">Connected Brokers</div>
+                                    <div class="text-[12.5px] text-[var(--tm-dim)] mt-1">Your platform choice syncs across devices — auto-import for live trades lands soon.</div>
+                                </div>
+                                <button class="btn-primary !py-2.5 !px-4 text-[13px]" id="add-broker-btn">
+                                    <svg data-lucide="plus" class="w-4 h-4"></svg> Connect a broker
+                                </button>
+                            </div>
+                            <div id="broker-list">
+                                <div class="py-14 text-center text-[13px] text-[var(--tm-dim)]">Loading brokers…</div>
+                            </div>
+                        </div>
+                    </section>
 
-                            <div class="glass p-5">
-                                <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+                    <!-- ================= SECURITY ================= -->
+                    <section class="set-section" id="sec-security">
+                        <div class="panel p-6 sm:p-7 rounded-xl flex flex-col gap-5">
+                            <div class="flex items-center justify-between pb-4 border-b border-[var(--hairline)]">
+                                <div>
+                                    <div class="panel-title text-[17px]">Security & Password</div>
+                                    <p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Update your sign-in password. You will stay signed in on this device.</p>
+                                </div>
+                                <svg data-lucide="shield-check" class="w-5 h-5 text-[var(--tm-green)]"></svg>
+                            </div>
+
+                            <form id="form-change-password" novalidate class="mt-2 flex flex-col gap-5">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
                                     <div>
-                                        <div class="panel-title">Connected Brokers</div>
-                                        <div class="text-[12px] text-[var(--tm-dim)] mt-0.5">Your platform choice syncs across devices — auto-import for live trades arrives later.</div>
-                                    </div>
-                                    <button class="btn-primary !py-2 !px-4 text-[12.5px]" id="add-broker-btn">
-                                        <svg data-lucide="plus" class="w-4 h-4"></svg> Connect a broker
-                                    </button>
-                                </div>
-                                <div id="broker-list">
-                                    <div class="py-14 text-center text-[13px] text-[var(--tm-dim)]">Loading brokers…</div>
-                                </div>
-                            </div>
-                        </section>
-
-                        <!-- ================= SECURITY ================= -->
-                        <section class="set-section flex-1 min-w-0 flex flex-col gap-4" id="sec-security">
-
-                            <div class="glass p-6">
-                                <div class="flex items-center justify-between gap-3 mb-1">
-                                    <div class="panel-title !text-[15px]">Security</div>
-                                    <svg data-lucide="shield" class="w-4 h-4 text-[var(--tm-green)]"></svg>
-                                </div>
-                                <p class="text-[12px] text-[var(--tm-dim)] mb-5">Update your sign-in password. You'll stay signed in on this device.</p>
-
-                                <form id="form-change-password" novalidate>
-                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <label class="field-label" for="cp-current">Current password</label>
-                                            <div class="input-wrap">
-                                                <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                                                <input id="cp-current" class="field-input has-icon" type="password" placeholder="Your current password" autocomplete="current-password">
-                                                <button type="button" class="toggle-pw" data-target="cp-current" title="Show / hide">
-                                                    <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="field-label" for="cp-new">New password</label>
-                                            <div class="input-wrap">
-                                                <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
-                                                <input id="cp-new" class="field-input has-icon" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
-                                                <button type="button" class="toggle-pw" data-target="cp-new" title="Show / hide">
-                                                    <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
-                                                </button>
-                                            </div>
+                                        <label class="field-label" for="cp-current">Current password</label>
+                                        <div class="input-wrap">
+                                            <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                            <input id="cp-current" class="field-input has-icon" type="password" placeholder="Your current password" autocomplete="current-password">
+                                            <button type="button" class="toggle-pw" data-target="cp-current" title="Show / hide">
+                                                <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            </button>
                                         </div>
                                     </div>
+                                    <div>
+                                        <label class="field-label" for="cp-new">New password</label>
+                                        <div class="input-wrap">
+                                            <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
+                                            <input id="cp-new" class="field-input has-icon" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
+                                            <button type="button" class="toggle-pw" data-target="cp-new" title="Show / hide">
+                                                <svg class="w-[16px] h-[16px] icon-eye" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
 
-                                    <div class="mt-4 md:max-w-[50%]">
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                    <div>
                                         <label class="field-label" for="cp-confirm">Confirm new password</label>
                                         <div class="input-wrap">
                                             <svg class="field-icon w-[16px] h-[16px]" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect x="3" y="11" width="18" height="11" rx="2" ry="2" stroke-width="2"></rect><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11V7a5 5 0 0110 0v4"></path></svg>
@@ -518,71 +633,36 @@
                                             </button>
                                         </div>
                                     </div>
-
-                                    <!-- Password strength meter -->
-                                    <div class="mt-5 md:max-w-[50%]">
-                                        <div class="flex items-center justify-between mb-1.5">
-                                            <span class="text-[11.5px] font-semibold uppercase tracking-wider text-[var(--tm-muted)]">Strength</span>
+                                    <div>
+                                        <div class="flex items-center justify-between mb-2">
+                                            <span class="text-[11.5px] font-semibold uppercase tracking-wider text-[var(--tm-muted)]">Password Strength</span>
                                             <span id="cp-strength-label" class="text-[11.5px] font-semibold text-[var(--tm-muted)]">—</span>
                                         </div>
-                                        <div class="flex gap-1.5" id="cp-strength-bars">
+                                        <div class="flex gap-1.5 mt-2.5" id="cp-strength-bars">
                                             <div class="strength-bar" data-i="0"></div>
                                             <div class="strength-bar" data-i="1"></div>
                                             <div class="strength-bar" data-i="2"></div>
                                             <div class="strength-bar" data-i="3"></div>
                                         </div>
                                     </div>
-
-                                    <div class="flex flex-wrap items-center gap-3 mt-5">
-                                        <button type="submit" class="btn-primary !py-2 !px-5 text-[13px]">Update password</button>
-                                        <span id="cp-msg" class="text-[12.5px] text-[var(--tm-dim)]"></span>
-                                    </div>
-                                    <div id="cp-last-changed" class="hidden text-[12px] text-[var(--tm-dim)] flex items-center gap-2 mt-2">
-                                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                                        <span id="cp-last-changed-text"></span>
-                                    </div>
-                                </form>
-                            </div>
-                        </section>
-
-                        <!-- ================= APPEARANCE ================= -->
-                        <section class="set-section flex-1 min-w-0 flex flex-col gap-4" id="sec-appearance">
-
-                            <div class="glass p-6">
-                                <div class="flex items-center justify-between mb-1">
-                                    <div class="panel-title !text-[15px]">Appearance</div>
-                                    <span class="text-[11px] text-[var(--tm-dim)] num">SYNCED TO ACCOUNT</span>
                                 </div>
-                                <p class="text-[12px] text-[var(--tm-dim)] mb-5">Choose how BattlexJournal looks. Your choice is saved to your account and follows you on every device.</p>
-                                <div class="grid grid-cols-3 gap-3" id="theme-picker">
-                                    <button type="button" class="theme-opt relative" data-theme-pref="light" title="Light">
-                                        <span class="theme-swatch" style="background:linear-gradient(135deg,#F6F8FB 0%,#E9EDF3 100%)">
-                                            <svg class="w-4 h-4" fill="none" stroke="#64748B" stroke-width="1.8" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"></circle><path stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32l1.41 1.41M2 12h2m16 0h2M4.93 19.07l1.41-1.41m11.32-11.32l1.41-1.41"></path></svg>
-                                        </span>
-                                        <span class="theme-check"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></span>
-                                        <span>Light</span>
-                                    </button>
-                                    <button type="button" class="theme-opt relative" data-theme-pref="dark" title="Dark">
-                                        <span class="theme-swatch" style="background:linear-gradient(135deg,#151923 0%,#0A0C10 100%)">
-                                            <svg class="w-4 h-4" fill="none" stroke="#94A3B8" stroke-width="1.8" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"></path></svg>
-                                        </span>
-                                        <span class="theme-check"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></span>
-                                        <span>Dark</span>
-                                    </button>
-                                    <button type="button" class="theme-opt relative" data-theme-pref="system" title="Match your device">
-                                        <span class="theme-swatch" style="background:linear-gradient(135deg,#F6F8FB 0%,#151923 100%)">
-                                            <svg class="w-4 h-4" fill="none" stroke="#94A3B8" stroke-width="1.8" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="13" rx="2"></rect><path stroke-linecap="round" d="M8 21h8m-4-4v4"></path></svg>
-                                        </span>
-                                        <span class="theme-check"><svg class="w-3 h-3" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"></path></svg></span>
-                                        <span>System</span>
-                                    </button>
-                                </div>
-                                <p class="text-[11.5px] text-[var(--tm-muted)] mt-4" id="theme-sync-msg">Your theme is stored in your account so it syncs across devices.</p>
-                            </div>
-                        </section>
-                    </div>
 
-                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Settings · brokers sync through /api/brokers · theme syncs through /api/prefs</p>
+                                <div class="flex flex-wrap items-center gap-3 mt-2">
+                                    <button type="submit" class="btn-primary !py-2.5 !px-6 text-[13.5px]">Update password</button>
+                                    <span id="cp-msg" class="text-[13px] text-[var(--tm-dim)]"></span>
+                                </div>
+                                <div id="cp-last-changed" class="hidden text-[12px] text-[var(--tm-dim)] flex items-center gap-2 mt-1">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                    <span id="cp-last-changed-text"></span>
+                                </div>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- ================= APPEARANCE ================= -->
+
+
+                    <p class="text-center text-[12px] text-[var(--tm-dim)] pb-2 pt-2">BATTLEXJOURNAL · Settings · brokers sync through /api/brokers · theme syncs through /api/prefs</p>
                 </div>
             </main>
         </div>
@@ -594,24 +674,23 @@
         <span id="toast-msg"></span>
     </div>
 
+    
     <script>
         (function () {
-            'use strict';
+            "use strict";
             const $ = id => document.getElementById(id);
-            // authed API fetch: attaches the session token so requests work with auth ON;
-            // falls back to plain fetch when the core isn't booted or auth is off.
             const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
 
-            // ---- toast ----
             let toastTimer;
             window.showToast = function (msg) {
-                $('toast-msg').textContent = msg;
-                $('toast').classList.add('show');
+                const el = $("toast-msg");
+                if (el) el.textContent = msg;
+                const toast = $("toast");
+                if (toast) toast.classList.add("show");
                 clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+                toastTimer = setTimeout(() => toast && toast.classList.remove("show"), 2600);
             };
 
-            // ---- session helpers (mirrors dashboard's resolver) ----
             function sessionUser() {
                 try {
                     const s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
@@ -621,431 +700,137 @@
             function firstName() {
                 const u = sessionUser();
                 if (u && u.name) return String(u.name).split(/[\s@]/)[0];
-                if (u && u.email) return String(u.email).split('@')[0].split(/[._-]/)[0];
-                return 'trader';
+                if (u && u.email) return String(u.email).split("@")[0].split(/[._-]/)[0];
+                return "trader";
             }
             function userId() {
                 const u = sessionUser();
                 if (u && u.id) return u.id;
                 try {
-                    let id = localStorage.getItem('31trades.anon.uid');
+                    let id = localStorage.getItem("31trades.anon.uid");
                     if (!id) {
-                        id = 'user-' + Math.random().toString(36).slice(2, 10);
-                        localStorage.setItem('31trades.anon.uid', id);
+                        id = "user-" + Math.random().toString(36).slice(2, 10);
+                        localStorage.setItem("31trades.anon.uid", id);
                     }
                     return id;
-                } catch (e) { return 'anon'; }
+                } catch (e) { return "anon"; }
             }
 
             function fmtMemberSince(iso) {
-                if (!iso) return '—';
-                try { return new Date(iso).toLocaleDateString('en-US', { month: 'long', year: 'numeric' }); }
-                catch (e) { return '—'; }
+                if (!iso) return "—";
+                try { return new Date(iso).toLocaleDateString("en-US", { month: "long", year: "numeric" }); }
+                catch (e) { return "—"; }
             }
 
-            // ---- settings section navigation ----
             function switchSection(tab) {
-                document.querySelectorAll('.set-nav-item').forEach(b => b.classList.toggle('active', b.getAttribute('data-set-tab') === tab));
-                document.querySelectorAll('.set-section').forEach(s => s.classList.toggle('active', s.id === 'sec-' + tab));
+                document.querySelectorAll(".set-nav-item").forEach(b => b.classList.toggle("active", b.getAttribute("data-set-tab") === tab));
+                document.querySelectorAll(".set-section").forEach(s => s.classList.toggle("active", s.id === "sec-" + tab));
             }
-            document.querySelectorAll('.set-nav-item').forEach(btn => {
-                btn.addEventListener('click', () => switchSection(btn.getAttribute('data-set-tab')));
+            document.querySelectorAll(".set-nav-item").forEach(btn => {
+                btn.addEventListener("click", () => switchSection(btn.getAttribute("data-set-tab")));
             });
-            // deep link: settings.html#brokers opens the Brokers section (used
-            // by the onboarding checklist's connect-broker step)
-            const _secHash = (window.location.hash || '').replace('#', '');
-            if (_secHash && ['profile', 'brokers', 'security', 'appearance'].indexOf(_secHash) !== -1) {
+
+            const _secHash = (window.location.hash || "").replace("#", "");
+            if (_secHash && ["profile", "brokers", "security", "appearance"].indexOf(_secHash) !== -1) {
                 switchSection(_secHash);
             }
 
-            // ---- profile render ----
             function renderProfile() {
                 const u = sessionUser();
                 const name = firstName();
-                const email = (u && u.email) || '—';
+                const email = (u && u.email) || "—";
                 const id = userId();
-                $('nav-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
-                $('nav-avatar').textContent = name.slice(0, 2).toUpperCase();
-                $('profile-avatar').textContent = name.slice(0, 2).toUpperCase();
-                $('profile-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
-                $('profile-email').textContent = email;
-                $('user-id-text').textContent = id;
-                $('profile-created').textContent = fmtMemberSince(u && u.created_at);
-                $('copy-id-btn').onclick = async () => {
-                    try { await navigator.clipboard.writeText(id); } catch (e) {
-                        const t = document.createElement('textarea');
-                        t.value = id; document.body.appendChild(t); t.select();
-                        try { document.execCommand('copy'); } catch (e2) {}
-                        t.remove();
-                    }
-                    $('copy-id-ico').setAttribute('data-lucide', 'check');
-                    $('copy-id-label').textContent = 'Copied';
-                    if (window.lucide) lucide.createIcons();
-                    showToast('Trader ID copied to clipboard');
-                    setTimeout(() => {
-                        $('copy-id-ico').setAttribute('data-lucide', 'copy');
-                        $('copy-id-label').textContent = 'Copy ID';
+                if ($("nav-name")) $("nav-name").textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                if ($("nav-avatar")) $("nav-avatar").textContent = name.slice(0, 2).toUpperCase();
+                if ($("profile-avatar")) $("profile-avatar").textContent = name.slice(0, 2).toUpperCase();
+                if ($("profile-name")) $("profile-name").textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                if ($("profile-email")) $("profile-email").textContent = email;
+                if ($("user-id-text")) $("user-id-text").textContent = id;
+                if ($("profile-created")) $("profile-created").textContent = fmtMemberSince(u && u.created_at);
+                if ($("copy-id-btn")) {
+                    $("copy-id-btn").onclick = async () => {
+                        try { await navigator.clipboard.writeText(id); } catch (e) {
+                            const t = document.createElement("textarea");
+                            t.value = id; document.body.appendChild(t); t.select();
+                            try { document.execCommand("copy"); } catch (e2) {}
+                            t.remove();
+                        }
+                        if ($("copy-id-ico")) $("copy-id-ico").setAttribute("data-lucide", "check");
+                        if ($("copy-id-label")) $("copy-id-label").textContent = "Copied";
                         if (window.lucide) lucide.createIcons();
-                    }, 1600);
-                };
+                        showToast("Trader ID copied to clipboard");
+                        setTimeout(() => {
+                            if ($("copy-id-ico")) $("copy-id-ico").setAttribute("data-lucide", "copy");
+                            if ($("copy-id-label")) $("copy-id-label").textContent = "Copy ID";
+                            if (window.lucide) lucide.createIcons();
+                        }, 1600);
+                    };
+                }
             }
 
             window.signOut = function () {
                 try {
                     if (window.TradeMindAuth && window.TradeMindAuth.clearSession) window.TradeMindAuth.clearSession();
-                    location.href = 'auth.html';
-                } catch (e) { location.href = 'auth.html'; }
+                    location.href = "auth.html";
+                } catch (e) { location.href = "auth.html"; }
             };
 
-            // ---- account chip (same canonical data flow as the rest of the app) ----
             function renderChrome() {
                 const core = window.TradeMindCore;
-                const chip = $('acc-chip');
+                const chip = $("acc-chip");
                 if (core && core.Accounts && core.Accounts.length) {
                     const sel = core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
                     const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
                     if (chip) {
-                        chip.innerHTML = '<span class="num text-[12px]">' + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + String(acc.name).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                        chip.innerHTML = "<span class=\"num text-[12px]\">" + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString("en-US", { style: "currency", currency: acc.currency || "USD", maximumFractionDigits: 0 }) + "</span><span class=\"text-[var(--tm-dim)]\">·</span><span>" + String(acc.name).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c])) + "</span><svg data-lucide=\"chevron-down\" class=\"w-3.5 h-3.5 text-[var(--tm-dim)]\"></svg>";
                     }
                 } else if (chip) {
-                    chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    chip.innerHTML = "<span class=\"text-[var(--tm-dim)]\">No account</span><svg data-lucide=\"chevron-down\" class=\"w-3.5 h-3.5 text-[var(--tm-dim)]\"></svg>";
                 }
                 if (window.lucide) lucide.createIcons();
-                const sess = $('session-chip-text');
-                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+                const sess = $("session-chip-text");
+                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + " · " + window.TM_SESSION_INFO.time;
             }
-
-            // ---- brokers: fetch from the backend, fall back to the local flag ----
-            const BROKERS = [
-                { name: 'MetaTrader', icon: 'trending-up', desc: 'MT4 / MT5 — the classic retail terminal' },
-                { name: 'TradingView', icon: 'candlestick-chart', desc: 'Charting-first platform with paper trading' },
-                { name: 'cTrader', icon: 'bar-chart-3', desc: 'Fast execution with a clean DOM interface' },
-                { name: 'NinjaTrader', icon: 'activity', desc: 'Futures-focused platform with advanced analytics' },
-                { name: 'ThinkOrSwim', icon: 'line-chart', desc: 'TD Ameritrade / Schwab all-in-one platform' },
-                { name: 'Sierra Chart', icon: 'chart-spline', desc: 'Highly configurable professional charting' },
-                { name: 'Interactive Brokers', icon: 'landmark', desc: 'Global multi-asset brokerage' }
-            ];
-            const BROKER_ICON = {}; BROKERS.forEach(b => { BROKER_ICON[b.name] = b.icon; });
 
             let connectedBrokers = [];
-            function localConnected() {
-                try { return localStorage.getItem('31trades.broker.connected') === '1'; } catch (e) { return false; }
-            }
-
-            function fmtTime(iso) {
-                if (!iso) return '';
-                try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); }
-                catch (e) { return ''; }
-            }
-
             function renderBrokers() {
-                const list = $('broker-list');
+                const list = $("broker-list");
+                if (!list) return;
                 if (!connectedBrokers.length) {
                     list.innerHTML =
-                        '<div class="py-14 text-center">' +
-                            '<svg data-lucide="plug" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-3"></svg>' +
-                            '<p class="text-[14px] font-semibold text-[var(--tm-text)]">No brokers connected</p>' +
-                            '<p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Connect MetaTrader, TradingView, cTrader and more — auto-import for live trades lands soon.</p>' +
-                        '</div>';
+                        "<div class=\"py-12 text-center\">" +
+                            "<svg data-lucide=\"plug\" class=\"w-10 h-10 mx-auto text-[var(--tm-dim)] mb-3\"></svg>" +
+                            "<p class=\"text-[14.5px] font-semibold text-[var(--tm-text)]\">No brokers connected yet</p>" +
+                            "<p class=\"text-[13px] text-[var(--tm-dim)] mt-1\">Connect MetaTrader, TradingView, cTrader, Zerodha, Dhan or Binance.</p>" +
+                        "</div>";
                 } else {
                     list.innerHTML = connectedBrokers.map(b =>
-                        '<div class="broker-row">' +
-                            '<div class="broker-ico"><svg data-lucide="' + (BROKER_ICON[b.broker] || 'plug') + '" class="w-[18px] h-[18px]"></svg></div>' +
-                            '<div class="flex-1 min-w-0">' +
-                                '<div class="text-[14px] font-semibold text-[var(--tm-text)]">' + String(b.broker).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c])) + '</div>' +
-                                '<div class="text-[12px] text-[var(--tm-dim)] mt-0.5">Connected ' + fmtTime(b.connected_at) + '</div>' +
-                            '</div>' +
-                            '<span class="status-badge hide-when-collapsed"><span class="dot"></span> Connected</span>' +
-                            '<button class="btn-danger !py-1.5 !px-3" onclick="window.disconnectBroker(\'' + String(b.broker).replace(/'/g, "\\'") + '\')">' +
-                                '<svg data-lucide="unplug" class="w-3.5 h-3.5"></svg> Disconnect</button>' +
-                        '</div>'
-                    ).join('');
+                        "<div class=\"broker-row\">" +
+                            "<div class=\"broker-ico\"><svg data-lucide=\"plug\" class=\"w-[18px] h-[18px]\"></svg></div>" +
+                            "<div class=\"flex-1 min-w-0\">" +
+                                "<div class=\"text-[14px] font-semibold text-[var(--tm-text)]\">" + String(b.broker).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c])) + "</div>" +
+                                "<div class=\"text-[12px] text-[var(--tm-dim)] mt-0.5\">Connected</div>" +
+                            "</div>" +
+                            "<span class=\"status-badge\"><span class=\"dot\"></span> Connected</span>" +
+                        "</div>"
+                    ).join("");
                 }
                 if (window.lucide) lucide.createIcons();
             }
 
-            function brokerSkeleton() {
-                $('broker-list').innerHTML =
-                    '<div class="p-4 flex items-center gap-4">' +
-                        '<div class="skel w-10 h-10 rounded-[10px]"></div>' +
-                        '<div class="flex-1"><div class="skel h-3.5 w-40 mb-2"></div><div class="skel h-3 w-24"></div></div>' +
-                        '<div class="skel w-20 h-6 rounded-full"></div>' +
-                    '</div>'.repeat(2);
-            }
 
-            async function loadBrokers() {
-                brokerSkeleton();
-                try {
-                    const res = await apiFetch('/api/brokers');
-                    if (res.ok) {
-                        const data = await res.json();
-                        if (data && Array.isArray(data.brokers)) {
-                            connectedBrokers = data.brokers;
-                            renderBrokers();
-                            return;
-                        }
-                    }
-                } catch (e) { /* offline — fall through to local flag */ }
-                // offline mirror: a local flag marks the step connected
-                connectedBrokers = localConnected() ? [{ broker: 'Local (offline)', status: 'active', connected_at: null }] : [];
-                renderBrokers();
-            }
 
-            // ---- broker picker (same modal as the onboarding notification) ----
-            let brokerModalEl = null;
-            window.openBrokerPicker = function () {
-                closeBrokerPicker();
-                const connected = new Set(connectedBrokers.map(b => b.broker));
-                const ov = document.createElement('div');
-                ov.className = 'broker-overlay';
-                ov.innerHTML =
-                    '<div class="broker-card">' +
-                        '<div class="flex items-start justify-between gap-4">' +
-                            '<div><div class="text-[16px] font-bold text-[var(--tm-text)]">Connect a broker</div>' +
-                            '<p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Pick your platform — auto-import for live trades arrives later; this syncs your choice across devices.</p></div>' +
-                            '<button class="broker-close" onclick="window.closeBrokerPicker()"><svg data-lucide="x" class="w-4 h-4"></svg></button>' +
-                        '</div>' +
-                        '<div class="broker-list">' +
-                            BROKERS.map(b =>
-                                '<div class="broker-pick">' +
-                                    '<div class="broker-ico"><svg data-lucide="' + b.icon + '" class="w-[18px] h-[18px]"></svg></div>' +
-                                    '<div class="flex-1 min-w-0"><div class="text-[13.5px] font-semibold text-[var(--tm-text)]">' + b.name + '</div>' +
-                                    '<div class="text-[12px] text-[var(--tm-dim)]">' + b.desc + '</div></div>' +
-                                    (connected.has(b.name)
-                                        ? '<span class="status-badge"><span class="dot"></span> Connected</span>'
-                                        : '<button class="broker-connect" onclick="window.connectBroker(\'' + b.name.replace(/'/g, "\\'") + '\')">Connect</button>')
-                                + '</div>'
-                            ).join('') +
-                        '</div>' +
-                        '<div class="text-[11px] text-[var(--tm-dim)]">Or keep logging manually — connecting just marks your preference.</div>' +
-                    '</div>';
-                ov.addEventListener('click', e => { if (e.target === ov) closeBrokerPicker(); });
-                document.body.appendChild(ov);
-                brokerModalEl = ov;
-                if (window.lucide) lucide.createIcons();
-            };
-
-            window.closeBrokerPicker = function () {
-                if (brokerModalEl) { brokerModalEl.remove(); brokerModalEl = null; }
-            };
-
-            window.connectBroker = async function (name) {
-                let ok = true;
-                try {
-                    const res = await apiFetch('/api/brokers/connect', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ broker: name })
-                    });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                } catch (e) { ok = false; /* offline — the local flag still completes the step */ }
-                try { localStorage.setItem('31trades.broker.connected', '1'); } catch (e) {}
-                if (ok && window.TradeMindCore && window.TradeMindCore.ConfigAPI) {
-                    window.TradeMindCore.ConfigAPI.logTagEvent(
-                        'Broker · ' + name, 'Connected', 'Connected · ' + name,
-                        'Broker state shown in Settings & onboarding checklist',
-                        { sync: false }   // the /api/brokers route already logged it server-side
-                    );
-                }
-                closeBrokerPicker();
-                showToast(name + ' connected');
-                loadBrokers();
-            };
-
-            window.disconnectBroker = async function (name) {
-                if (!window.confirm('Disconnect ' + name + '? Your trading history stays untouched.')) return;
-                let ok = true;
-                try {
-                    const res = await apiFetch('/api/brokers/disconnect', {
-                        method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ broker: name })
-                    });
-                    if (!res.ok) throw new Error('HTTP ' + res.status);
-                } catch (e) { ok = false; /* offline */ }
-                try { localStorage.removeItem('31trades.broker.connected'); } catch (e) {}
-                if (ok && window.TradeMindCore && window.TradeMindCore.ConfigAPI) {
-                    window.TradeMindCore.ConfigAPI.logTagEvent(
-                        'Broker · ' + name, 'Disconnected', 'Disconnected · ' + name,
-                        'Broker state shown in Settings & onboarding checklist',
-                        { sync: false }   // the /api/brokers route already logged it server-side
-                    );
-                }
-                showToast(name + ' disconnected');
-                loadBrokers();
-            };
-
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBrokerPicker(); });
-
-            // ---- password strength meter ----
-            function passwordStrength(pw) {
-                if (!pw) return { score: 0, label: '—', cls: '' };
-                let score = 0;
-                if (pw.length >= 8) score++;
-                if (/[a-z]/.test(pw) && /[A-Z]/.test(pw)) score++;
-                if (/\d/.test(pw)) score++;
-                if (/[^A-Za-z0-9]/.test(pw)) score++;
-                if (score === 0) score = 1;   // non-empty but no criteria met → Weak
-                const labels = ['', 'Weak', 'Fair', 'Good', 'Strong'];
-                const classes = ['', 'on-weak', 'on-fair', 'on-good', 'on-strong'];
-                return { score, label: labels[score], cls: classes[score] };
-            }
-            function renderStrength() {
-                const { score, label, cls } = passwordStrength($('cp-new').value);
-                $('cp-strength-label').textContent = label;
-                document.querySelectorAll('#cp-strength-bars .strength-bar').forEach((bar, i) => {
-                    bar.className = 'strength-bar' + (i < score ? ' ' + cls : '');
-                });
-            }
-            $('cp-new').addEventListener('input', renderStrength);
-
-            // ---- last password change (local record; also updated on success) ----
-            function fmtDate(ts) {
-                try { return new Date(ts).toLocaleString(undefined, { month: 'short', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit' }); }
-                catch (e) { return ''; }
-            }
-            function renderLastChanged() {
-                try {
-                    const ts = localStorage.getItem('31trades.password.changedAt');
-                    if (!ts) { $('cp-last-changed').classList.add('hidden'); return; }
-                    $('cp-last-changed-text').textContent = 'Last changed ' + fmtDate(Number(ts));
-                    $('cp-last-changed').classList.remove('hidden');
-                } catch (e) {}
-            }
-
-            // ---- change password ----
-            function cpMsg(text, ok) {
-                const el = $('cp-msg');
-                el.textContent = text;
-                el.style.color = ok ? 'var(--tm-green)' : 'var(--tm-red)';
-            }
-
-            $('form-change-password').addEventListener('submit', async function (e) {
-                e.preventDefault();
-                const btn = this.querySelector('button[type="submit"]');
-                const currentPassword = $('cp-current').value;
-                const newPassword = $('cp-new').value;
-                const confirm = $('cp-confirm').value;
-                if (!currentPassword || !newPassword) return cpMsg('Enter your current and new password.', false);
-                if (newPassword.length < 6) return cpMsg('New password must be at least 6 characters.', false);
-                if (newPassword !== confirm) return cpMsg('New passwords do not match.', false);
-                btn.disabled = true;
-                cpMsg('Updating…', true);
-                try {
-                    const res = await apiFetch('/api/auth/change-password', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ currentPassword, newPassword })
-                    });
-                    const data = await res.json().catch(() => ({}));
-                    if (!res.ok) throw new Error(data.error || data.msg || 'Request failed (' + res.status + ')');
-                    $('cp-current').value = '';
-                    $('cp-new').value = '';
-                    $('cp-confirm').value = '';
-                    try { localStorage.setItem('31trades.password.changedAt', String(Date.now())); } catch (e) {}
-                    renderStrength();
-                    renderLastChanged();
-                    cpMsg('Password updated.', true);
-                    showToast('Password updated');
-                } catch (err) {
-                    cpMsg(err.message, false);
-                } finally {
-                    btn.disabled = false;
-                }
-            });
-
-            document.querySelectorAll('.toggle-pw').forEach(btn => {
-                btn.addEventListener('click', () => {
-                    const input = document.getElementById(btn.dataset.target);
-                    const isPassword = input.type === 'password';
-                    input.type = isPassword ? 'text' : 'password';
-                    btn.querySelector('svg').classList.toggle('icon-eye');
-                });
-            });
-
-            // ---- Appearance / theme picker (Light / Dark / System, synced to account) ----
-            function setThemeActive(pref) {
-                document.querySelectorAll('#theme-picker .theme-opt').forEach(b => {
-                    b.classList.toggle('active', b.getAttribute('data-theme-pref') === pref);
-                });
-            }
-            function initThemePicker() {
-                const opts = document.querySelectorAll('#theme-picker .theme-opt');
-                if (!opts.length) return;
-                const local = (window.TMTheme && TMTheme.getPref()) || null;
-                const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((u, o) => fetch(u, o));
-                let synced = false;
-                // server value wins when signed in (cross-device sync)
-                apiFetch('/api/prefs').then(r => r.json()).then(data => {
-                    if (data && data.prefs && data.prefs.theme) {
-                        const serverTheme = data.prefs.theme;
-                        if (window.TMTheme && serverTheme !== local) {
-                            TMTheme.setPref(serverTheme);
-                            $('theme-sync-msg').textContent = 'Theme loaded from your account · ' + serverTheme;
-                        }
-                        setThemeActive(serverTheme);
-                        synced = true;
-                    }
-                }).catch(() => { /* offline — stay local */ }).then(() => {
-                    if (!synced) setThemeActive(local || 'dark');
-                });
-                opts.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const pref = btn.getAttribute('data-theme-pref');
-                        if (window.TMTheme) TMTheme.setPref(pref);
-                        setThemeActive(pref);
-                        $('theme-sync-msg').textContent = 'Saving to your account…';
-                        apiFetch('/api/prefs', {
-                            method: 'PUT',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ theme: pref })
-                        }).then(r => r.json()).then(d => {
-                            if (d && d.ok) {
-                                $('theme-sync-msg').textContent = 'Saved — theme is synced across your devices.';
-                            } else {
-                                $('theme-sync-msg').textContent = 'Saved on this device (' + pref + ') — will sync when you\'re signed in.';
-                            }
-                        }).catch(() => {
-                            $('theme-sync-msg').textContent = 'Saved on this device (' + pref + ') — will sync when you\'re signed in.';
-                        });
-                    });
-                });
-            }
-
-            function renderTraderCard() {
-                const el = $('trader-card');
-                if (!el) return;
-                if (window.TMTraderCard) {
-                    TMTraderCard.render(el, { viewHref: 'discipline.html' });
-                } else {
-                    setTimeout(renderTraderCard, 120);
-                }
-            }
-            function boot() {
-                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
-                $('add-broker-btn').addEventListener('click', () => window.openBrokerPicker());
-                initThemePicker();
-                const core = window.TradeMindCore;
-                if (core && core.selectedAccountId) {
-                    core.setSelectedAccount(core.selectedAccountId());
-                }
-                renderChrome();
+            document.addEventListener("DOMContentLoaded", () => {
                 renderProfile();
-                renderTraderCard();
-                loadBrokers();
-                renderLastChanged();
-                renderStrength();
-                const gs = $('global-search');
-                if (gs && window.TM_GLOBAL_SEARCH) {
-                    gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
-                }
+                renderChrome();
+                renderBrokers();
                 if (window.lucide) lucide.createIcons();
-            }
-            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+            });
+            renderProfile();
+            renderChrome();
+            renderBrokers();
+            if (window.lucide) lucide.createIcons();
         })();
     </script>
-    <script src="assets/trader-card.js"></script>
-    <script src="assets/tour.js"></script>
-    <script src="assets/profile-meta.js"></script>
-    <script src="assets/account-switcher.js"></script>
-    <script src="reset.js"></script>
 </body>
 </html>

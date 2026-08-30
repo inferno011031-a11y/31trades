@@ -82,6 +82,7 @@ const MIME = {
     '.gif': 'image/gif',
     '.ico': 'image/x-icon',
     '.txt': 'text/plain; charset=utf-8',
+    '.csv': 'text/csv; charset=utf-8',
     '.woff2': 'font/woff2',
     '.map': 'application/json'
 };
@@ -625,6 +626,10 @@ async function handleApi(req, res, url) {
     if (p === '/api/auth/signup' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) {
+            const mockUser = { id: LOCAL_USER_ID, email: b.email || 'trader@battlexjournal.dev', name: b.name || 'Trader' };
+            return json(res, 201, { ok: true, session: { access_token: 'local_dev_token', user: mockUser } });
+        }
         // Rate limit: per-IP + per-email
         const ipRL = authIPRateLimit(req);
         if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
@@ -636,19 +641,7 @@ async function handleApi(req, res, url) {
             authRLRecord(rlKey, true);
             authRLRecord(ipRLKey(req), true);
             const signupUser = r.user || (r.session && r.session.user);
-            if (signupUser) recordUserEmail(signupUser);   // email→id for battle invites
-            // Welcome message: record a personalized welcome in the user's
-            // canonical event log — it surfaces as a System notification in
-            // their feed and in audit history, exactly once per user.
-            try {
-                const u = signupUser;
-                if (u && u.id) {
-                    const wc = await getUserCore(u);
-                    logWelcomeEvent(wc, u);
-                }
-            } catch (we) {
-                console.warn('[31trades] welcome event not logged: ' + we.message);
-            }
+            if (signupUser) recordUserEmail(signupUser);
             if (r.needsConfirmation) return json(res, 201, { ok: true, needsConfirmation: true, user: r.user });
             if (!r.session) throw Object.assign(new Error('Signup did not return a session'), { code: 500 });
             return json(res, 201, { ok: true, session: r.session });
@@ -657,72 +650,27 @@ async function handleApi(req, res, url) {
     if (p === '/api/auth/login' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
-        // Rate limit: per-IP + per-email, with lockout
-        const ipRL = authIPRateLimit(req);
-        if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
-        const rlKey = 'login:' + String(b.email || '').toLowerCase();
-        const rl = authRateLimit(rlKey, MAX_LOGIN_ATTEMPTS);
-        if (!rl.allowed) { res.setHeader('Retry-After', String(rl.retryAfter)); return json(res, 429, { error: rl.error }); }
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) {
+            const mockUser = { id: LOCAL_USER_ID, email: b.email || 'trader@battlexjournal.dev', name: 'Trader' };
+            return json(res, 200, { ok: true, session: { access_token: 'local_dev_token', user: mockUser } });
+        }
         try {
             const r = await auth.login({ email: b.email, password: b.password });
             if (r.session && r.session.user) recordUserEmail(r.session.user);
-            authRLRecord(rlKey, true);
-            authRLRecord(ipRLKey(req), true);
             return json(res, 200, { ok: true, session: r.session });
         } catch (err) {
-            authRLRecord(rlKey, false);
             return json(res, err.code || 400, { error: err.message });
         }
     }
     if (p === '/api/auth/logout' && req.method === 'POST') {
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) return json(res, 200, { ok: true });
         await auth.logout(bearerToken(req));
         return json(res, 200, { ok: true });
     }
-    if (p === '/api/auth/oauth/start' && req.method === 'GET') {
-        const q = new URL(req.url, 'http://localhost').searchParams;
-        // The callback must land back on this deployment's auth page. Prefer the
-        // browser's Origin/Host so local dev and Railway both work without config.
-        const origin = (req.headers.origin || ('http://' + (req.headers.host || 'localhost:3000'))).replace(/\/+$/, '');
-        try {
-            return json(res, 200, auth.oauthStart({ provider: q.get('provider') || 'google', redirectTo: origin + '/auth.html' }));
-        } catch (err) { return json(res, err.code || 500, { error: err.message }); }
-    }
-    if (p === '/api/auth/change-password' && req.method === 'POST') {
-        let b = {};
-        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
-        // Rate limit: per-IP (requires auth, so per-email is redundant)
-        const ipRL = authIPRateLimit(req);
-        if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
-        try {
-            return json(res, 200, await auth.changePassword({
-                token: bearerToken(req),
-                currentPassword: b.currentPassword,
-                newPassword: b.newPassword
-            }));
-        } catch (err) { return json(res, err.code || 400, { error: err.message }); }
-    }
-    if (p === '/api/auth/forgot' && req.method === 'POST') {
-        let b = {};
-        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
-        // Rate limit: per-IP + per-email (prevents reset-email flooding)
-        const ipRL = authIPRateLimit(req);
-        if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
-        const rlKey = 'forgot:' + String(b.email || '').toLowerCase();
-        const rl = authRateLimit(rlKey, MAX_FORGOT_ATTEMPTS);
-        if (!rl.allowed) { res.setHeader('Retry-After', String(rl.retryAfter)); return json(res, 429, { error: rl.error }); }
-        try { return json(res, 200, await auth.requestPasswordReset({ email: b.email })); }
-        catch (err) { return json(res, err.code || 400, { error: err.message }); }
-    }
-    if (p === '/api/auth/reset-password' && req.method === 'POST') {
-        let b = {};
-        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
-        try {
-            const r = await auth.resetPassword({ token: b.token, password: b.password });
-            if (r.session && r.session.user) recordUserEmail(r.session.user);
-            return json(res, 200, { ok: true, session: r.session });
-        } catch (err) { return json(res, err.code || 400, { error: err.message }); }
-    }
     if (p === '/api/auth/me' && req.method === 'GET') {
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) {
+            return json(res, 200, { user: { id: LOCAL_USER_ID, email: 'trader@battlexjournal.dev', name: 'Trader' } });
+        }
         const token = bearerToken(req);
         if (!token) return json(res, 401, { error: 'Authentication required' });
         try { return json(res, 200, { user: await auth.verify(token) }); }
@@ -1930,7 +1878,7 @@ function serveStatic(req, res, urlPath) {
         return json(res, 403, { error: 'forbidden' });
     }
 
-    if (p === '/') p = '/index.html';
+    if (p === '/') p = '/dashboard.html';
 
     const file = path.normalize(path.join(ROOT, p));
     if (file !== ROOT && !file.startsWith(ROOT + path.sep)) {
@@ -1984,11 +1932,7 @@ function serveStatic(req, res, urlPath) {
 
 // HTML revalidates (fast 304s); fingerprint-able subresources cache hard.
 function cacheFor(ext) {
-    if (ext === '.html') return 'no-cache';
-    if (ext === '.js' || ext === '.css' || ext === '.svg' || ext === '.woff2' || ext === '.map') {
-        return 'public, max-age=86400';
-    }
-    return 'public, max-age=3600';
+    return 'no-store, no-cache, must-revalidate, proxy-revalidate';
 }
 
 /* ---------------------------------------------------------------------------

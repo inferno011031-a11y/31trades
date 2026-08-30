@@ -9,10 +9,22 @@
     'use strict';
 
     // ---- category order + pills (All + these) ----
-    const CATEGORIES = ['Forex', 'Metals', 'Energy', 'Agriculture', 'Futures', 'Indices', 'Crypto', 'Stocks'];
+    const CATEGORIES = ['Forex', 'Metals', 'Energy', 'Futures', 'Indices', 'Crypto', 'Stocks'];
 
-    // Futures = the exchange-traded contracts (metals + energy + agriculture)
-    const FUTURES_GROUP = ['Metals', 'Energy', 'Agriculture'];
+    // TradingView style category SVG icons
+    const CAT_ICONS = {
+        All: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="7" height="7" x="3" y="3" rx="1"/><rect width="7" height="7" x="14" y="3" rx="1"/><rect width="7" height="7" x="14" y="14" rx="1"/><rect width="7" height="7" x="3" y="14" rx="1"/></svg>',
+        Forex: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m16 3 4 4-4 4"/><path d="M20 7H4"/><path d="m8 21-4-4 4-4"/><path d="M4 17h16"/></svg>',
+        Metals: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 4-5h10l4 5-9 11L3 9z"/><path d="M3 9h18"/><path d="m10 4 2 5 2-5"/></svg>',
+        Energy: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>',
+        Futures: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19h16"/><path d="M7 15V9"/><path d="M7 6V3"/><path d="M7 18v-1"/><path d="M17 12V7"/><path d="M17 3v2"/><path d="M17 18v-4"/><rect x="5" y="6" width="4" height="6" rx="1"/><rect x="15" y="7" width="4" height="5" rx="1"/></svg>',
+        Indices: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 3 0 18 18 0"/><path d="m19 9-5 5-4-4-3 3"/><path d="M19 5v4h-4"/></svg>',
+        Crypto: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9.5 8h4a2.5 2.5 0 0 1 0 5H9.5"/><path d="M9.5 13h4.5a2.5 2.5 0 0 1 0 5H9.5"/><path d="M12 6v2"/><path d="M12 18v2"/><path d="M9.5 6v14"/></svg>',
+        Stocks: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21h18"/><path d="M5 21V7l8-4v18"/><path d="M19 21V11l-6-4"/><path d="M9 9v.01"/><path d="M9 13v.01"/><path d="M9 17v.01"/></svg>'
+    };
+
+    // Futures = the exchange-traded contracts (metals + energy)
+    const FUTURES_GROUP = ['Metals', 'Energy'];
 
     // ---- flag map: base-currency → country flag ----
     const CCY_FLAG = {
@@ -27,13 +39,23 @@
         NIKKEI: '🇯🇵', AUS200: '🇦🇺', EU50: '🇪🇺', FRA40: '🇫🇷', HK50: '🇭🇰'
     };
 
-    // ---- commodity / crypto glyphs (emoji or ticker monogram) ----
+    // ---- commodity / energy SVGs (TradingView vector style, no emojis) ----
     const COMMODITY_ICON = {
-        XAUUSD: '🥇', XAGUSD: '🥈', XPTUSD: '⚪', XPDUSD: '⚪',
-        USOIL: '🛢️', UKOIL: '🛢️', XTIUSD: '🛢️', XBRUSD: '🛢️', BRENT: '🛢️', CL: '🛢️', WTI: '🛢️', OIL: '🛢️',
-        NATGAS: '🔥', XNGUSD: '🔥', NG: '🔥',
-        COFFEE: '☕', SUGAR: '🍬', COCOA: '🍫', COTTON: '🌾', WHEAT: '🌾',
-        CORN: '🌽', SOYBEAN: '🌱', OATS: '🌾', RICE: '🍚', KC: '☕', SB: '🍬', CC: '🍫'
+        XAUUSD: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#eab308" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 4-5h10l4 5-9 11L3 9z"/><path d="M3 9h18"/><path d="m10 4 2 5 2-5"/></svg>',
+        XAGUSD: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 4-5h10l4 5-9 11L3 9z"/><path d="M3 9h18"/><path d="m10 4 2 5 2-5"/></svg>',
+        XPTUSD: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#38bdf8" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 4-5h10l4 5-9 11L3 9z"/><path d="M3 9h18"/><path d="m10 4 2 5 2-5"/></svg>',
+        XPDUSD: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#a78bfa" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m3 9 4-5h10l4 5-9 11L3 9z"/><path d="M3 9h18"/><path d="m10 4 2 5 2-5"/></svg>',
+        USOIL: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 4.24 4.24"/><path d="M2 18h20"/><path d="M20 10a8 8 0 1 1-16 0c0-3.3 4-8 8-8s8 4.7 8 8Z"/></svg>',
+        UKOIL: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 4.24 4.24"/><path d="M2 18h20"/><path d="M20 10a8 8 0 1 1-16 0c0-3.3 4-8 8-8s8 4.7 8 8Z"/></svg>',
+        XTIUSD: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 4.24 4.24"/><path d="M2 18h20"/><path d="M20 10a8 8 0 1 1-16 0c0-3.3 4-8 8-8s8 4.7 8 8Z"/></svg>',
+        XBRUSD: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 4.24 4.24"/><path d="M2 18h20"/><path d="M20 10a8 8 0 1 1-16 0c0-3.3 4-8 8-8s8 4.7 8 8Z"/></svg>',
+        BRENT: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 4.24 4.24"/><path d="M2 18h20"/><path d="M20 10a8 8 0 1 1-16 0c0-3.3 4-8 8-8s8 4.7 8 8Z"/></svg>',
+        CL: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 4.24 4.24"/><path d="M2 18h20"/><path d="M20 10a8 8 0 1 1-16 0c0-3.3 4-8 8-8s8 4.7 8 8Z"/></svg>',
+        WTI: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 4.24 4.24"/><path d="M2 18h20"/><path d="M20 10a8 8 0 1 1-16 0c0-3.3 4-8 8-8s8 4.7 8 8Z"/></svg>',
+        OIL: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#f97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v6"/><path d="m4.93 10.93 4.24 4.24"/><path d="M2 18h20"/><path d="M20 10a8 8 0 1 1-16 0c0-3.3 4-8 8-8s8 4.7 8 8Z"/></svg>',
+        NATGAS: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>',
+        XNGUSD: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>',
+        NG: '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#3b82f6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 3z"/></svg>'
     };
 
     // ---- real internet logos (favicon CDN for stocks, CoinGecko for crypto),
@@ -113,19 +135,6 @@
         { sym: 'NATGAS', cat: 'Energy', name: 'Natural Gas' },
         { sym: 'XNGUSD', cat: 'Energy', name: 'Nat Gas / US Dollar' },
         { sym: 'NG', cat: 'Energy', name: 'NYMEX Nat Gas' },
-        // AGRICULTURE
-        { sym: 'COFFEE', cat: 'Agriculture', name: 'Coffee (Arabica)' },
-        { sym: 'SUGAR', cat: 'Agriculture', name: 'Sugar No. 11' },
-        { sym: 'COCOA', cat: 'Agriculture', name: 'Cocoa' },
-        { sym: 'COTTON', cat: 'Agriculture', name: 'Cotton' },
-        { sym: 'WHEAT', cat: 'Agriculture', name: 'Wheat (CBOT)' },
-        { sym: 'CORN', cat: 'Agriculture', name: 'Corn' },
-        { sym: 'SOYBEAN', cat: 'Agriculture', name: 'Soybeans' },
-        { sym: 'OATS', cat: 'Agriculture', name: 'Oats' },
-        { sym: 'RICE', cat: 'Agriculture', name: 'Rough Rice' },
-        { sym: 'KC', cat: 'Agriculture', name: 'Coffee C' },
-        { sym: 'SB', cat: 'Agriculture', name: 'Sugar' },
-        { sym: 'CC', cat: 'Agriculture', name: 'Cocoa C' },
         // INDICES
         { sym: 'NAS100', cat: 'Indices', name: 'Nasdaq 100' },
         { sym: 'US100', cat: 'Indices', name: 'US Tech 100' },
@@ -260,7 +269,10 @@
         let query = '';
 
         const pillHtml = ['All'].concat(CATEGORIES).map(c =>
-            '<button type="button" class="tm-cat-pill' + (c === 'All' ? ' active' : '') + '" data-cat="' + c + '">' + c + '</button>'
+            '<button type="button" class="tm-cat-pill' + (c === 'All' ? ' active' : '') + '" data-cat="' + c + '">' +
+                (CAT_ICONS[c] || '') +
+                '<span>' + c + '</span>' +
+            '</button>'
         ).join('');
 
         root.innerHTML =

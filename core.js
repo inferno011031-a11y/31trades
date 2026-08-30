@@ -103,24 +103,39 @@
             .catch(err => console.warn('[31trades] backend sync failed: ' + err.message));
     }
 
-    // Push the full canonical state so the server adopts the local store.
-    // Resolves to true when the server accepted it.
-    function adoptState() {
-        return fetch(API_ROOT + '/api/state', {
-            method: 'POST',
-            headers: authHeaders(),
-            body: JSON.stringify(core.serializeState())
-        })
-            .then(r => {
-                if (r.status === 401 && currentSession()) sessionExpired();
-                if (!r.ok) throw new Error('adopt → HTTP ' + r.status);
-                console.log('[31trades] backend adopted local state (' + core.Trades.length + ' trades, ' + core.Accounts.length + ' accounts)');
-                return true;
-            })
-            .catch(err => {
-                console.warn('[31trades] backend adopt failed: ' + err.message);
-                return false;
+    // Two-way reconciliation: if server has state, adopt server state; else push local state.
+    async function adoptState() {
+        try {
+            const stateRes = await fetch(API_ROOT + '/api/state', {
+                method: 'GET',
+                headers: authHeaders({ Accept: 'application/json' })
             });
+            if (stateRes.ok) {
+                const serverState = await stateRes.json();
+                if (serverState && Array.isArray(serverState.Trades) && serverState.Trades.length > (core.Trades ? core.Trades.length : 0)) {
+                    core.hydrate(serverState);
+                    if (repo && typeof repo.save === 'function') repo.save(core.serializeState());
+                    core.TradeMindBus.publish('state.hydrated', core.serializeState());
+                    core.TradeMindBus.publish('config.changed', { hydrated: true });
+                    console.log('[31trades] client hydrated ' + core.Trades.length + ' trades from backend server');
+                    return true;
+                }
+            }
+
+            // Otherwise push local state if local has trades or server is empty
+            const r = await fetch(API_ROOT + '/api/state', {
+                method: 'POST',
+                headers: authHeaders(),
+                body: JSON.stringify(core.serializeState())
+            });
+            if (r.status === 401 && currentSession()) sessionExpired();
+            if (!r.ok) throw new Error('adopt → HTTP ' + r.status);
+            console.log('[31trades] backend adopted local state (' + core.Trades.length + ' trades, ' + core.Accounts.length + ' accounts)');
+            return true;
+        } catch (err) {
+            console.warn('[31trades] backend sync/adopt failed: ' + err.message);
+            return false;
+        }
     }
 
     function publishConnectivity() {
