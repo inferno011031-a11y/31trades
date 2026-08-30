@@ -662,6 +662,41 @@ async function handleApi(req, res, url) {
             return json(res, err.code || 400, { error: err.message });
         }
     }
+    if (p === '/api/auth/forgot' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) return json(res, 200, { ok: true });
+        try {
+            await auth.requestPasswordReset({ email: b.email });
+            return json(res, 200, { ok: true });
+        } catch (err) {
+            return json(res, err.code || 400, { error: err.message });
+        }
+    }
+    if (p === '/api/auth/reset-password' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) return json(res, 200, { ok: true });
+        try {
+            await auth.resetPassword({ token: b.token, password: b.password });
+            return json(res, 200, { ok: true });
+        } catch (err) {
+            return json(res, err.code || 400, { error: err.message });
+        }
+    }
+    if (p === '/api/auth/change-password' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) return json(res, 200, { ok: true });
+        const token = bearerToken(req);
+        if (!token) return json(res, 401, { error: 'Authentication required — sign in at /auth.html' });
+        try {
+            await auth.changePassword({ token, currentPassword: b.currentPassword, newPassword: b.newPassword });
+            return json(res, 200, { ok: true });
+        } catch (err) {
+            return json(res, err.code || 400, { error: err.message });
+        }
+    }
     if (p === '/api/auth/logout' && req.method === 'POST') {
         if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) return json(res, 200, { ok: true });
         await auth.logout(bearerToken(req));
