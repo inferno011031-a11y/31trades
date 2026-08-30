@@ -667,7 +667,7 @@ async function handleApi(req, res, url) {
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
         if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) return json(res, 200, { ok: true });
         try {
-            await auth.requestPasswordReset({ email: b.email });
+            await auth.requestPasswordReset({ email: b.email, redirectTo: b.redirectTo });
             return json(res, 200, { ok: true });
         } catch (err) {
             return json(res, err.code || 400, { error: err.message });

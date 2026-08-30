@@ -1176,7 +1176,7 @@
                 busy(btn, true);
                 hideAuthError();
                 try {
-                    await api('/api/auth/forgot', { email });
+                    await api('/api/auth/forgot', { email, redirectTo: window.location.origin + '/auth.html' });
                     document.getElementById('fp-sent-email').textContent = email;
                     showPanel('forgotSent');
                 } catch (err) {

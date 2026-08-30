@@ -134,11 +134,11 @@ function oauthStart({ provider, redirectTo }) {
 //   resetPassword(token, pass)   → verifies the recovery token (OTP grant) and
 //                                  sets the new password via PUT /auth/v1/user
 
-async function requestPasswordReset({ email }) {
+async function requestPasswordReset({ email, redirectTo }) {
     if (!email) throw Object.assign(new Error('Email is required'), { code: 400 });
-    // GoTrue answers 200 with an empty body when the mail is queued (it never
-    // reveals whether the account exists — good for privacy).
-    await gotrue('/auth/v1/recover', {
+    const redirect = redirectTo || process.env.APP_URL || process.env.RENDER_EXTERNAL_URL;
+    const qs = redirect ? '?redirect_to=' + encodeURIComponent(redirect.replace(/\/+$/, '') + (redirect.endsWith('/auth.html') ? '' : '/auth.html')) : '';
+    await gotrue('/auth/v1/recover' + qs, {
         method: 'POST',
         body: { email }
     });
