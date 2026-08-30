@@ -25,6 +25,7 @@ function supabaseBase() {
     if (!u) return null;
     if (!/^https?:\/\//i.test(u)) u = 'https://' + u;
     if (!u.includes('.')) u += '.supabase.co';
+    u = u.replace(/\/(auth|rest)?(\/v[0-9]+)?\/?$/i, '');
     return u.replace(/\/+$/, '');
 }
 
