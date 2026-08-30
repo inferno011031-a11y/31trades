@@ -1,558 +1,527 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BattleXJournal — Trade with Proof, Not Memory</title>
-    <meta name="description" content="BattleXJournal is the all-in-one private trading journal, market replay simulator, strategy lab, risk management engine, and AI trading coach.">
+    <title>BattleXJournal — The Trading Journal with Market Replay & AI Coaching</title>
+    <meta name="description" content="Journaling, market replay & strategy backtesting in a single private workspace. The trading software we wish we had, so we built it for you.">
     
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
 
-    <link rel="stylesheet" href="assets/tokens.css">
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
-    <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="/assets/lucide.min.js"></script>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts (Inter & JetBrains Mono) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-          --accent: #10B981;
-          --accent-glow: rgba(16, 185, 129, 0.2);
-          --accent-dim: rgba(16, 185, 129, 0.08);
-          --danger: #ef4444;
-          --purple: #8B5CF6;
+            --bg-base: #000000;
+            --card-bg: #0C0D0E;
+            --card-border: rgba(255, 255, 255, 0.08);
+            --accent-green: #10B981;
+            --accent-red: #EF4444;
+            --accent-purple: #8B5CF6;
         }
 
         html, body {
             width: 100%; min-height: 100vh;
-            background: #090A0D !important;
+            background: #000000 !important;
             color: #FFFFFF !important;
-            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             overflow-x: hidden;
+            letter-spacing: -0.015em;
         }
 
-        /* Ambient Glows & Grid Pattern */
-        .grid-bg {
-            background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
-                              linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
-            background-size: 44px 44px;
-            mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 50%, transparent 100%);
-            -webkit-mask-image: radial-gradient(ellipse 70% 60% at 50% 30%, #000 50%, transparent 100%);
-        }
-
-        /* Glassmorphism Classes */
-        .glass-panel {
-            background: #121317;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        /* Pure Obsidian Glass Cards */
+        .card-obsidian {
+            background: #090A0C;
+            border: 1px solid rgba(255, 255, 255, 0.07);
             border-radius: 20px;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-            transition: all 0.25s cubic-bezier(0.2, 0, 0, 1);
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
         }
-        .glass-panel:hover {
+        .card-obsidian:hover {
             border-color: rgba(255, 255, 255, 0.16);
             transform: translateY(-2px);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
         }
 
-        /* Buttons */
-        .btn-glow {
-            background: #FFFFFF !important; color: #000000 !important; font-weight: 700 !important; font-size: 14px;
-            padding: 12px 26px; border-radius: 12px; display: inline-flex; align-items: center; gap: 8px;
-            transition: all 0.18s ease; text-decoration: none; cursor: pointer;
-            box-shadow: 0 0 24px rgba(255, 255, 255, 0.15);
+        /* Buttons matching the uploaded image */
+        .btn-white-pill {
+            background: #FFFFFF !important;
+            color: #000000 !important;
+            font-weight: 700;
+            font-size: 13.5px;
+            padding: 8px 18px;
+            border-radius: 9999px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid #FFFFFF;
         }
-        .btn-glow:hover {
-            background: #F3F4F6 !important; transform: translateY(-1px);
-            box-shadow: 0 0 35px rgba(255, 255, 255, 0.3);
+        .btn-white-pill:hover {
+            background: #E5E7EB !important;
+            border-color: #E5E7EB;
+            transform: translateY(-1px);
         }
 
-        .btn-outline {
-            background: rgba(255, 255, 255, 0.04); color: #FFFFFF; font-weight: 600; font-size: 14px;
-            padding: 12px 24px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.12);
-            text-decoration: none; display: inline-flex; align-items: center; justify-content: center; gap: 8px;
-            transition: all 0.18s ease; cursor: pointer;
+        .btn-glass-pill {
+            background: rgba(255, 255, 255, 0.06);
+            color: #FFFFFF;
+            font-weight: 600;
+            font-size: 13.5px;
+            padding: 8px 18px;
+            border-radius: 9999px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            transition: all 0.15s ease;
+            cursor: pointer;
         }
-        .btn-outline:hover {
-            background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.25);
+        .btn-glass-pill:hover {
+            background: rgba(255, 255, 255, 0.12);
+            border-color: rgba(255, 255, 255, 0.25);
         }
 
-        /* Marquee Animation */
+        /* Laptop Mockup Bezel */
+        .laptop-frame {
+            position: relative;
+            width: 100%;
+            max-width: 1080px;
+            margin: 0 auto;
+            border-radius: 20px 20px 0 0;
+            background: #141517;
+            padding: 12px 12px 0;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            box-shadow: 0 -10px 40px rgba(0,0,0,0.8), 0 30px 100px rgba(0,0,0,0.9);
+        }
+        .laptop-camera-bar {
+            position: absolute;
+            top: 4px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 120px;
+            height: 12px;
+            background: #000;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            z-index: 30;
+        }
+        .laptop-camera-dot {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: #1E293B;
+        }
+        .laptop-screen {
+            border-radius: 12px 12px 0 0;
+            overflow: hidden;
+            background: #08080A;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            position: relative;
+        }
+
+        /* Infinite Marquee */
         @keyframes infinite-scroll {
             from { transform: translateX(0); }
             to { transform: translateX(-50%); }
         }
         .animate-infinite-scroll {
-            animation: infinite-scroll 24s linear infinite;
-        }
-
-        /* Laser Flow / Data Stream */
-        @keyframes laser-flow {
-            0% { stroke-dashoffset: 40; }
-            100% { stroke-dashoffset: 0; }
-        }
-        .laser-beam {
-            stroke-dasharray: 8 16;
-            animation: laser-flow 1.2s linear infinite;
-        }
-
-        /* Tag Badges */
-        .tag-emerald { background: rgba(16, 185, 129, 0.1); color: #34D399; border: 1px solid rgba(16, 185, 129, 0.2); }
-        .tag-purple { background: rgba(139, 92, 246, 0.1); color: #A78BFA; border: 1px solid rgba(139, 92, 246, 0.2); }
-        .tag-amber { background: rgba(245, 158, 11, 0.1); color: #FBBF24; border: 1px solid rgba(245, 158, 11, 0.2); }
-        .tag-blue { background: rgba(59, 130, 246, 0.1); color: #60A5FA; border: 1px solid rgba(59, 130, 246, 0.2); }
-
-        /* Stage Showcase Animations */
-        .showcase-stage {
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            animation: infinite-scroll 28s linear infinite;
         }
     </style>
 </head>
-<body class="tm-landing">
+<body class="bg-black text-white antialiased">
 
-    <!-- Background Grid -->
-    <div class="fixed inset-0 grid-bg pointer-events-none z-0"></div>
-
-    <!-- Ambient Gradient Orbs -->
-    <div class="fixed top-12 left-1/4 w-[500px] h-[500px] bg-emerald-500/5 rounded-full blur-[140px] pointer-events-none mix-blend-screen z-0"></div>
-    <div class="fixed top-1/3 right-1/4 w-[600px] h-[600px] bg-purple-500/5 rounded-full blur-[160px] pointer-events-none mix-blend-screen z-0"></div>
-
-    <!-- ==================== HEADER NAVIGATION ==================== -->
-    <header class="sticky top-0 z-50 w-full h-20 bg-[#090A0D]/85 backdrop-blur-xl border-b border-white/[0.08] flex items-center justify-center">
-        <div class="w-full max-w-[1280px] px-6 flex items-center justify-between">
-            <!-- Brand Logo -->
-            <a href="index.html" class="flex items-center gap-3 text-white no-underline font-extrabold tracking-tight text-lg">
-                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-8 h-8 rounded-lg border border-white/20 bg-black shadow-lg">
-                <div class="flex items-center gap-2">
-                    <span class="font-extrabold tracking-wider">BATTLEXJOURNAL</span>
-                    <span class="tag-emerald text-[9px] font-mono px-2 py-0.5 rounded font-bold uppercase tracking-widest hidden sm:inline-block">2026 EDITION</span>
-                </div>
+    <!-- ==================== HEADER (SVELTE UI STYLE) ==================== -->
+    <header class="sticky top-0 z-50 w-full h-16 bg-black/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-center px-4 sm:px-8">
+        <div class="w-full max-w-[1280px] flex items-center justify-between">
+            
+            <!-- Left: Logo -->
+            <a href="index.html" class="flex items-center gap-2.5 text-white no-underline font-extrabold text-base tracking-tight">
+                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-7 h-7 rounded-lg border border-white/20 bg-black shadow-md">
+                <span class="font-extrabold tracking-tight">BattleXJournal</span>
             </a>
 
-            <!-- Navigation Links -->
-            <nav class="hidden md:flex items-center gap-1 bg-white/[0.03] border border-white/[0.08] px-3 py-1.5 rounded-full backdrop-blur-md">
-                <a href="#features" class="px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white rounded-full transition-colors">Features</a>
-                <a href="#replay" class="px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white rounded-full transition-colors">Market Replay</a>
-                <a href="#strategy" class="px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white rounded-full transition-colors">Strategy Lab</a>
-                <a href="#risk-discipline" class="px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white rounded-full transition-colors">Risk & Discipline</a>
-                <a href="#ai-mentor" class="px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white rounded-full transition-colors">AI Mentor</a>
-                <a href="#battles" class="px-4 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white rounded-full transition-colors">Battles</a>
+            <!-- Center: Nav Dropdowns -->
+            <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-zinc-400">
+                <a href="#features" class="hover:text-white transition-colors flex items-center gap-1">
+                    Features <svg data-lucide="chevron-down" class="w-3 h-3 opacity-60"></svg>
+                </a>
+                <a href="#replay" class="hover:text-white transition-colors">Market Replay</a>
+                <a href="#integrations" class="hover:text-white transition-colors">Integrations</a>
+                <a href="#tester-program" class="hover:text-white transition-colors flex items-center gap-1">
+                    Early Access <span class="bg-amber-500/20 text-amber-300 text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">1-YEAR</span>
+                </a>
             </nav>
 
-            <!-- Auth CTAs -->
+            <!-- Right: Action Buttons -->
             <div class="flex items-center gap-3">
-                <a href="auth.html" class="text-xs font-semibold text-zinc-300 hover:text-white px-3 py-2 transition-colors">Sign in</a>
-                <a href="auth.html" class="btn-glow !py-2 !px-4 !text-xs">
-                    <span>Start for Free</span>
-                    <svg data-lucide="arrow-right" class="w-3.5 h-3.5"></svg>
+                <div class="w-7 h-7 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer hidden sm:flex">
+                    <svg data-lucide="globe" class="w-3.5 h-3.5"></svg>
+                </div>
+                <a href="auth.html" class="btn-glass-pill !py-1.5 !px-4 !text-xs">
+                    Sign In
+                </a>
+                <a href="auth.html" class="btn-white-pill !py-1.5 !px-4 !text-xs">
+                    Get Started
                 </a>
             </div>
+
         </div>
     </header>
 
-    <!-- ==================== 1. HERO SECTION ==================== -->
-    <section class="relative z-10 w-full min-h-[calc(100vh-80px)] flex flex-col items-center justify-center text-center px-4 pt-12 pb-20">
-        <div class="max-w-[860px] mx-auto flex flex-col items-center">
-            
-            <!-- Hero Pill Badge -->
-            <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/[0.04] border border-white/[0.12] text-xs font-semibold text-zinc-200 mb-8 backdrop-blur-md">
-                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                <span>The Unified Trading Command Center</span>
-                <span class="text-zinc-500">•</span>
-                <span class="text-emerald-400 font-mono">100% Private & Encrypted</span>
-            </div>
+    <!-- ==================== HERO SECTION (EXACT IMAGE LAYOUT) ==================== -->
+    <section class="relative w-full pt-20 sm:pt-28 pb-12 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+        
+        <!-- Subtle Center Gradient Glow -->
+        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none mix-blend-screen"></div>
 
+        <div class="relative z-10 max-w-[840px] mx-auto flex flex-col items-center">
+            
             <!-- Headline -->
             <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08] mb-6">
-                Trade with proof, <br class="hidden sm:inline">
-                <span class="bg-gradient-to-r from-white via-zinc-200 to-zinc-400 bg-clip-text text-transparent">not memory.</span>
+                The Trading Journal with<br>
+                <span class="text-white">Free Market Replay & AI Coaching</span>
             </h1>
 
             <!-- Subheading -->
-            <p class="text-base sm:text-xl text-zinc-400 max-w-[640px] mb-10 leading-relaxed font-normal">
-                Eliminate spreadsheet chaos. BattleXJournal connects structured trade logging, tick-by-tick market replay, strategy backtesting, risk limits, discipline tracking, and AI coaching in one private workspace.
+            <p class="text-sm sm:text-lg text-zinc-400 max-w-[580px] mb-8 font-normal leading-relaxed">
+                Journaling, replay & backtesting in a single place.<br class="hidden sm:inline">
+                The software we wish we had, so we built it for you.
             </p>
 
-            <!-- CTA Group -->
-            <div class="flex flex-col sm:flex-row items-center gap-4 w-full sm:w-auto mb-14">
-                <a href="auth.html" class="btn-glow !py-3.5 !px-8 !text-base w-full sm:w-auto justify-center">
-                    <span>Launch Trading App</span>
-                    <svg data-lucide="arrow-right" class="w-4 h-4"></svg>
+            <!-- Buttons matching image -->
+            <div class="flex items-center justify-center gap-3 mb-16">
+                <a href="auth.html" class="btn-glass-pill !py-2.5 !px-6 !text-sm">
+                    Sign In
                 </a>
-                <a href="#showcase" class="btn-outline !py-3.5 !px-7 !text-base w-full sm:w-auto justify-center">
-                    <svg data-lucide="play-circle" class="w-4 h-4 text-emerald-400"></svg>
-                    <span>Explore Features</span>
+                <a href="auth.html" class="btn-white-pill !py-2.5 !px-6 !text-sm">
+                    Get Started
                 </a>
             </div>
 
-            <!-- Value Bullets Strip -->
-            <div class="flex flex-wrap items-center justify-center gap-6 sm:gap-10 text-xs font-medium text-zinc-400">
-                <div class="flex items-center gap-2">
-                    <svg data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></svg>
-                    <span>No credit card required</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <svg data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></svg>
-                    <span>CSV & Broker sync</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <svg data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></svg>
-                    <span>50 Lifetime AI requests</span>
-                </div>
-                <div class="flex items-center gap-2">
-                    <svg data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></svg>
-                    <span>60-Member Tester Program</span>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- ==================== 2. BROKER & PLATFORM SYNC MARQUEE ==================== -->
-    <section class="w-full max-w-[1180px] mx-auto px-4 mb-24 relative z-10">
-        <p class="text-[11px] font-bold tracking-[0.2em] text-zinc-500 uppercase mb-5 text-center">
-            Compatible with your trading platforms & broker exports
-        </p>
-
-        <div class="w-full relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#121317]/60 backdrop-blur-xl py-6">
-            <div class="absolute inset-y-0 left-0 w-24 bg-gradient-to-r from-[#090A0D] to-transparent z-10 pointer-events-none"></div>
-            <div class="absolute inset-y-0 right-0 w-24 bg-gradient-to-l from-[#090A0D] to-transparent z-10 pointer-events-none"></div>
-
-            <div class="flex w-max animate-infinite-scroll items-center gap-16 pl-16">
-                <!-- Group 1 -->
-                <div class="flex items-center gap-16 font-mono font-bold text-sm tracking-wider text-zinc-300">
-                    <span class="flex items-center gap-2"><svg data-lucide="line-chart" class="w-4 h-4 text-blue-400"></svg> TradingView</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 5</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 4</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="activity" class="w-4 h-4 text-amber-400"></svg> cTrader</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="file-spreadsheet" class="w-4 h-4 text-indigo-400"></svg> CSV / Excel Export</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="trending-up" class="w-4 h-4 text-purple-400"></svg> Tradovate</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="shield-check" class="w-4 h-4 text-red-400"></svg> Interactive Brokers</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="zap" class="w-4 h-4 text-yellow-400"></svg> Binance & Crypto</span>
-                </div>
-
-                <!-- Group 2 (Duplicate for smooth infinite marquee) -->
-                <div class="flex items-center gap-16 font-mono font-bold text-sm tracking-wider text-zinc-300">
-                    <span class="flex items-center gap-2"><svg data-lucide="line-chart" class="w-4 h-4 text-blue-400"></svg> TradingView</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 5</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 4</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="activity" class="w-4 h-4 text-amber-400"></svg> cTrader</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="file-spreadsheet" class="w-4 h-4 text-indigo-400"></svg> CSV / Excel Export</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="trending-up" class="w-4 h-4 text-purple-400"></svg> Tradovate</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="shield-check" class="w-4 h-4 text-red-400"></svg> Interactive Brokers</span>
-                    <span class="flex items-center gap-2"><svg data-lucide="zap" class="w-4 h-4 text-yellow-400"></svg> Binance & Crypto</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== 3. WHAT IS BATTLEXJOURNAL & CORE FEATURES ==================== -->
-    <section id="features" class="w-full max-w-[1280px] mx-auto px-6 mb-28 relative z-10">
-        
-        <!-- Section Header -->
-        <div class="text-center max-w-[680px] mx-auto mb-16">
-            <span class="tag-emerald text-xs font-bold font-mono px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">ENGINEERED FOR EDGES</span>
-            <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
-                Every tool connected.<br>Zero disconnected steps.
-            </h2>
-            <p class="text-zinc-400 text-sm sm:text-base">
-                Stop jumping between 6 different subscriptions. BattleXJournal builds your trading history into an analytical feedback loop.
-            </p>
         </div>
 
-        <!-- 6 Core Feature Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            
-            <!-- Card 1: Trading Journal -->
-            <div class="glass-panel p-6 flex flex-col justify-between">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-5">
-                        <svg data-lucide="book-open" class="w-6 h-6"></svg>
-                    </div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-lg font-bold text-white">Structured Trading Journal</h3>
-                        <span class="tag-emerald text-[10px] font-mono font-bold px-2 py-0.5 rounded">R-MULTIPLE</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                        Log every execution with exact Entry, Exit, Stop Loss, Position Size, Session (London, NY, Asian), and Setup Tags (MSS, FVG, Breakout). Automatic R-Multiple & P&L calculation.
-                    </p>
-                </div>
-                <div class="p-3 bg-black/40 rounded-xl border border-white/[0.06] text-xs font-mono flex items-center justify-between text-zinc-300">
-                    <span>EURUSD • Long</span>
-                    <span class="text-emerald-400 font-bold">+2.40R ($240.00)</span>
-                </div>
-            </div>
-
-            <!-- Card 2: Market Replay Simulator -->
-            <div class="glass-panel p-6 flex flex-col justify-between" id="replay">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-5">
-                        <svg data-lucide="play" class="w-6 h-6"></svg>
-                    </div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-lg font-bold text-white">Market Replay Simulator</h3>
-                        <span class="tag-blue text-[10px] font-mono font-bold px-2 py-0.5 rounded">TICK-BY-TICK</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                        Replay historical price action candle-by-candle with adjustable playback speeds (1x, 2x, 5x, 10x). Practice your strategy on real market conditions without risking live capital.
-                    </p>
-                </div>
-                <div class="p-3 bg-black/40 rounded-xl border border-white/[0.06] text-xs font-mono flex items-center justify-between text-zinc-300">
-                    <span>Speed: 5x • 5m Timeframe</span>
-                    <span class="text-blue-400 font-bold flex items-center gap-1"><span class="w-2 h-2 rounded-full bg-blue-400 animate-ping"></span> REPLAYING</span>
-                </div>
-            </div>
-
-            <!-- Card 3: Strategy Lab -->
-            <div class="glass-panel p-6 flex flex-col justify-between" id="strategy">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-5">
-                        <svg data-lucide="flask-conical" class="w-6 h-6"></svg>
-                    </div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-lg font-bold text-white">Strategy Lab & Backtesting</h3>
-                        <span class="tag-purple text-[10px] font-mono font-bold px-2 py-0.5 rounded">SIMULATION</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                        Build and validate custom trading playbooks. Define strict entry/exit checklists, track setup win rates, and simulate long-term mathematical expectancy across sample batches.
-                    </p>
-                </div>
-                <div class="p-3 bg-black/40 rounded-xl border border-white/[0.06] text-xs font-mono flex items-center justify-between text-zinc-300">
-                    <span>Setup: MSS + FVG</span>
-                    <span class="text-purple-400 font-bold">68.4% Win Rate (2.18 PF)</span>
-                </div>
-            </div>
-
-            <!-- Card 4: Risk Engine & Daily Circuit Breaker -->
-            <div class="glass-panel p-6 flex flex-col justify-between" id="risk-discipline">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mb-5">
-                        <svg data-lucide="shield-alert" class="w-6 h-6"></svg>
-                    </div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-lg font-bold text-white">Risk Engine & Circuit Breaker</h3>
-                        <span class="tag tag-red text-[10px] font-mono font-bold px-2 py-0.5 rounded">PROTECTION</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                        Protect your capital with hard daily loss limits, automated max drawdown trackers, and per-trade position sizing calculator based on custom account risk parameters.
-                    </p>
-                </div>
-                <div class="p-3 bg-black/40 rounded-xl border border-white/[0.06] text-xs font-mono flex items-center justify-between text-zinc-300">
-                    <span>Daily Budget: $2,500</span>
-                    <span class="text-emerald-400 font-bold">$1,800 Safe Remaining</span>
-                </div>
-            </div>
-
-            <!-- Card 5: Discipline & Leak Detector -->
-            <div class="glass-panel p-6 flex flex-col justify-between">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-5">
-                        <svg data-lucide="target" class="w-6 h-6"></svg>
-                    </div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-lg font-bold text-white">Discipline & Leak Detector</h3>
-                        <span class="tag-amber text-[10px] font-mono font-bold px-2 py-0.5 rounded">BEHAVIOR</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                        Pinpoint psychological mistakes before they compound. Detect FOMO entries, revenge trading patterns, and rule violation leaks with transparent execution scoring.
-                    </p>
-                </div>
-                <div class="p-3 bg-black/40 rounded-xl border border-white/[0.06] text-xs font-mono flex items-center justify-between text-zinc-300">
-                    <span>Adherence Score</span>
-                    <span class="text-emerald-400 font-bold">92% Rules Followed ✓</span>
-                </div>
-            </div>
-
-            <!-- Card 6: AI Trade Mentor & Coach -->
-            <div class="glass-panel p-6 flex flex-col justify-between" id="ai-mentor">
-                <div>
-                    <div class="w-12 h-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-5">
-                        <svg data-lucide="brain-circuit" class="w-6 h-6"></svg>
-                    </div>
-                    <div class="flex items-center justify-between mb-2">
-                        <h3 class="text-lg font-bold text-white">AI Trade Mentor & Coach</h3>
-                        <span class="tag tag-purple text-[10px] font-mono font-bold px-2 py-0.5 rounded">GEMINI 2.5 FLASH</span>
-                    </div>
-                    <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                        Receive objective AI critiques on your trade setups, risk management consistency, and execution discipline. 50 free lifetime requests for all users, with 100/mo for 1-year testers.
-                    </p>
-                </div>
-                <div class="p-3 bg-black/40 rounded-xl border border-white/[0.06] text-xs font-mono flex items-center justify-between text-zinc-300">
-                    <span>AI Status</span>
-                    <span class="text-indigo-400 font-bold">Active & Grounded</span>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- ==================== 4. LIVE REAL-TIME BATTLES ==================== -->
-    <section id="battles" class="w-full max-w-[1280px] mx-auto px-6 mb-28 relative z-10">
-        <div class="glass-panel p-8 sm:p-12 relative overflow-hidden bg-gradient-to-r from-[#121317] via-[#141519] to-[#121317]">
-            <div class="flex flex-col lg:flex-row items-center justify-between gap-8">
-                <div class="max-w-[560px]">
-                    <span class="tag-amber text-xs font-bold font-mono px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">⚔️ HEAD-TO-HEAD PVP</span>
-                    <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-4">
-                        BattleX Head-to-Head Trader Arenas
-                    </h2>
-                    <p class="text-zinc-400 text-sm leading-relaxed mb-6">
-                        Compete in real-time trading battle rooms powered by ultra-low latency WebSockets. Challenge fellow traders, test strategies under pressure, and climb the live battle leaderboard.
-                    </p>
-                    <div class="flex flex-wrap gap-4 text-xs font-medium text-zinc-300">
-                        <div class="flex items-center gap-2"><svg data-lucide="users" class="w-4 h-4 text-amber-400"></svg> Real-time 2-Seat Battles</div>
-                        <div class="flex items-center gap-2"><svg data-lucide="zap" class="w-4 h-4 text-amber-400"></svg> Live WebSocket Feed</div>
-                        <div class="flex items-center gap-2"><svg data-lucide="trophy" class="w-4 h-4 text-amber-400"></svg> Global Leaderboard</div>
-                    </div>
+        <!-- ==================== LAPTOP MOCKUP (WITH REAL BATTLEXJOURNAL SCREEN) ==================== -->
+        <div class="w-full max-w-[1120px] px-2 sm:px-4 relative z-10">
+            <div class="laptop-frame">
+                <div class="laptop-camera-bar">
+                    <div class="laptop-camera-dot"></div>
                 </div>
 
-                <div class="w-full lg:w-[420px] bg-black/60 border border-white/[0.08] rounded-2xl p-5 font-mono text-xs">
-                    <div class="flex items-center justify-between pb-3 border-b border-white/[0.08] mb-4 text-zinc-400">
-                        <span>ARENA #8204 — EURUSD</span>
-                        <span class="text-amber-400 font-bold flex items-center gap-1.5"><span class="w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span> IN PROGRESS</span>
-                    </div>
-                    <div class="flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-lg bg-emerald-500/20 text-emerald-400 font-bold flex items-center justify-center">T1</div>
-                            <span class="text-white font-semibold">Trader Alpha</span>
+                <div class="laptop-screen">
+                    <!-- Top Window Bar -->
+                    <div class="bg-[#0D0E10] px-4 py-2.5 border-b border-white/[0.06] flex items-center justify-between">
+                        <div class="flex items-center gap-1.5">
+                            <div class="w-2.5 h-2.5 rounded-full bg-red-500/80"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-yellow-500/80"></div>
+                            <div class="w-2.5 h-2.5 rounded-full bg-green-500/80"></div>
                         </div>
-                        <span class="text-emerald-400 font-bold">+3.40R</span>
-                    </div>
-                    <div class="flex items-center justify-between mb-4">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-lg bg-blue-500/20 text-blue-400 font-bold flex items-center justify-center">T2</div>
-                            <span class="text-white font-semibold">Trader Bravo</span>
+                        <div class="text-[11px] font-mono text-zinc-500 flex items-center gap-2">
+                            <span>BattleX · Journal Workspace</span>
                         </div>
-                        <span class="text-blue-400 font-bold">+1.20R</span>
+                        <div class="flex items-center gap-2">
+                            <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                            <span class="text-[10px] font-mono text-emerald-400 font-semibold">Live Feed</span>
+                        </div>
                     </div>
-                    <a href="auth.html" class="btn-outline !py-2 !w-full justify-center text-xs font-bold">
-                        Enter Battle Arena →
-                    </a>
+
+                    <!-- Inner App UI View -->
+                    <div class="p-4 sm:p-6 bg-[#070809] text-left font-sans">
+                        
+                        <!-- Account Selector & Top Breadcrumb -->
+                        <div class="flex flex-wrap items-center justify-between gap-3 mb-6 pb-4 border-b border-white/[0.06]">
+                            <div class="flex items-center gap-3">
+                                <!-- Account Dropdown simulation -->
+                                <div class="bg-[#121316] border border-white/[0.1] px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs font-semibold text-white">
+                                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                                    <span>Funded Account 1 (FTMO)</span>
+                                    <span class="text-[10px] font-mono text-zinc-400 ml-1">$104,850.00</span>
+                                    <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-zinc-400"></svg>
+                                </div>
+
+                                <div class="flex items-center gap-1 bg-[#121316] border border-white/[0.08] p-1 rounded-lg text-xs text-zinc-400">
+                                    <button class="px-2.5 py-1 rounded bg-white/10 text-white font-medium">Journal</button>
+                                    <button class="px-2.5 py-1 rounded hover:text-white">Economic Calendar</button>
+                                </div>
+                            </div>
+
+                            <!-- Date Range Selector -->
+                            <div class="text-xs font-mono text-zinc-400 bg-[#121316] border border-white/[0.08] px-3 py-1.5 rounded-xl flex items-center gap-2">
+                                <svg data-lucide="calendar" class="w-3.5 h-3.5 text-zinc-400"></svg>
+                                <span>September 2026</span>
+                            </div>
+                        </div>
+
+                        <!-- 5 Main Metric Cards -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mb-6">
+                            <div class="bg-[#0E0F12] border border-white/[0.06] rounded-xl p-3">
+                                <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Trading Days</p>
+                                <p class="text-lg font-extrabold font-mono text-white">18</p>
+                                <p class="text-[10px] text-emerald-400 mt-0.5">82% Positive Days</p>
+                            </div>
+                            <div class="bg-[#0E0F12] border border-white/[0.06] rounded-xl p-3">
+                                <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Avg Realized RR</p>
+                                <p class="text-lg font-extrabold font-mono text-emerald-400">2.45R</p>
+                                <p class="text-[10px] text-zinc-400 mt-0.5">Per Trade</p>
+                            </div>
+                            <div class="bg-[#0E0F12] border border-white/[0.06] rounded-xl p-3">
+                                <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Most Traded Asset</p>
+                                <p class="text-lg font-extrabold font-mono text-white">EURUSD</p>
+                                <p class="text-[10px] text-zinc-400 mt-0.5">64% Total Volume</p>
+                            </div>
+                            <div class="bg-[#0E0F12] border border-white/[0.06] rounded-xl p-3">
+                                <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Trade Win Rate</p>
+                                <p class="text-lg font-extrabold font-mono text-white">68.4%</p>
+                                <div class="w-full bg-zinc-800 h-1.5 rounded-full mt-1.5 overflow-hidden">
+                                    <div class="bg-emerald-400 h-full w-[68.4%]"></div>
+                                </div>
+                            </div>
+                            <div class="bg-[#0E0F12] border border-white/[0.06] rounded-xl p-3">
+                                <p class="text-[10px] text-zinc-500 uppercase tracking-wider mb-1">Month's Net P&L</p>
+                                <p class="text-lg font-extrabold font-mono text-emerald-400">+$4,850.00</p>
+                                <p class="text-[10px] text-emerald-400 mt-0.5">+4.85% Gain</p>
+                            </div>
+                        </div>
+
+                        <!-- Mini Calendar Heatmap Grid Mockup (Exact like screenshot) -->
+                        <div class="bg-[#0E0F12] border border-white/[0.06] rounded-xl p-4">
+                            <div class="grid grid-cols-7 gap-2 text-center text-[10px] font-mono text-zinc-500 mb-2">
+                                <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                            </div>
+                            <div class="grid grid-cols-7 gap-2 text-center font-mono text-xs">
+                                <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">+1.80%<span class="block text-[9px] font-normal text-zinc-400">2 trades</span></div>
+                                <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">+0.95%<span class="block text-[9px] font-normal text-zinc-400">1 trade</span></div>
+                                <div class="p-2.5 rounded-lg bg-red-500/10 border border-red-500/20 text-red-400 font-bold">-0.50%<span class="block text-[9px] font-normal text-zinc-400">1 trade</span></div>
+                                <div class="p-2.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 font-bold">+2.40%<span class="block text-[9px] font-normal text-zinc-400">3 trades</span></div>
+                                <div class="p-2.5 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold">+1.15%<span class="block text-[9px] font-normal text-zinc-400">2 trades</span></div>
+                                <div class="p-2.5 rounded-lg bg-zinc-900/40 text-zinc-600 font-bold">—<span class="block text-[9px] font-normal text-zinc-700">Weekend</span></div>
+                                <div class="p-2.5 rounded-lg bg-zinc-900/40 text-zinc-600 font-bold">—<span class="block text-[9px] font-normal text-zinc-700">Weekend</span></div>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
         </div>
+
     </section>
 
-    <!-- ==================== 5. HOW IT WORKS (4 REAL STEPS) ==================== -->
-    <section class="w-full max-w-[1280px] mx-auto px-6 mb-28 relative z-10">
-        <div class="text-center max-w-[600px] mx-auto mb-16">
-            <span class="tag-purple text-xs font-bold font-mono px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">SIMPLE WORKFLOW</span>
-            <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
-                How BattleXJournal Works
+    <!-- ==================== 3. PLATFORM INTEGRATIONS & SYNC ==================== -->
+    <section id="integrations" class="w-full max-w-[1180px] mx-auto px-6 py-20">
+        <div class="text-center max-w-[560px] mx-auto mb-12">
+            <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+                Seamlessly Syncs with Everything
             </h2>
-            <p class="text-zinc-400 text-sm">Four practical steps from trade execution to systematic profitability.</p>
+            <p class="text-xs sm:text-sm text-zinc-400">
+                Import from your broker or favorite charting platform in seconds. No manual math or manual entry required.
+            </p>
         </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            <!-- Step 1 -->
-            <div class="glass-panel p-6 relative">
-                <div class="text-2xl font-extrabold font-mono text-zinc-700 mb-3">01</div>
-                <h3 class="text-base font-bold text-white mb-2">Log or Import</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed">
-                    Record trades manually with full setup context or import thousands of historical executions via CSV/Excel in one click.
-                </p>
-            </div>
-
-            <!-- Step 2 -->
-            <div class="glass-panel p-6 relative">
-                <div class="text-2xl font-extrabold font-mono text-zinc-700 mb-3">02</div>
-                <h3 class="text-base font-bold text-white mb-2">Replay & Review</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed">
-                    Step through the market bar-by-bar on the replay simulator to review execution accuracy away from live market emotion.
-                </p>
-            </div>
-
-            <!-- Step 3 -->
-            <div class="glass-panel p-6 relative">
-                <div class="text-2xl font-extrabold font-mono text-zinc-700 mb-3">03</div>
-                <h3 class="text-base font-bold text-white mb-2">Enforce Risk Limits</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed">
-                    Set daily loss thresholds and discipline checklists. The system calculates position size and warns on breach.
-                </p>
-            </div>
-
-            <!-- Step 4 -->
-            <div class="glass-panel p-6 relative">
-                <div class="text-2xl font-extrabold font-mono text-zinc-700 mb-3">04</div>
-                <h3 class="text-base font-bold text-white mb-2">AI Critique & Scale</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed">
-                    Uncover high-conviction setups, eliminate recurring mistake leaks, and consult the AI Mentor to refine your edge.
-                </p>
+        <div class="w-full relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0A0B0D] py-6">
+            <div class="flex w-max animate-infinite-scroll items-center gap-14 pl-14 font-mono font-semibold text-xs text-zinc-300">
+                <span class="flex items-center gap-2"><svg data-lucide="line-chart" class="w-4 h-4 text-blue-400"></svg> TradingView</span>
+                <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 5</span>
+                <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 4</span>
+                <span class="flex items-center gap-2"><svg data-lucide="activity" class="w-4 h-4 text-amber-400"></svg> cTrader</span>
+                <span class="flex items-center gap-2"><svg data-lucide="file-spreadsheet" class="w-4 h-4 text-indigo-400"></svg> CSV & Excel</span>
+                <span class="flex items-center gap-2"><svg data-lucide="trending-up" class="w-4 h-4 text-purple-400"></svg> Tradovate</span>
+                <span class="flex items-center gap-2"><svg data-lucide="shield-check" class="w-4 h-4 text-red-400"></svg> Interactive Brokers</span>
+                
+                <!-- Repeat for smooth scroll -->
+                <span class="flex items-center gap-2"><svg data-lucide="line-chart" class="w-4 h-4 text-blue-400"></svg> TradingView</span>
+                <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 5</span>
+                <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 4</span>
+                <span class="flex items-center gap-2"><svg data-lucide="activity" class="w-4 h-4 text-amber-400"></svg> cTrader</span>
+                <span class="flex items-center gap-2"><svg data-lucide="file-spreadsheet" class="w-4 h-4 text-indigo-400"></svg> CSV & Excel</span>
             </div>
         </div>
     </section>
 
-    <!-- ==================== 6. 60-TESTER 1-YEAR ACCESS SYSTEM ==================== -->
-    <section class="w-full max-w-[1280px] mx-auto px-6 mb-28 relative z-10">
-        <div class="glass-panel p-8 sm:p-12 border-amber-500/20 bg-gradient-to-b from-[#161411] to-[#121317] relative overflow-hidden">
-            <div class="flex flex-col md:flex-row items-center justify-between gap-8">
-                <div>
-                    <span class="tag-amber text-xs font-bold font-mono px-3 py-1 rounded-full uppercase tracking-widest mb-4 inline-block">🎟️ EARLY ACCESS BETA</span>
-                    <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-                        60-Seat 1-Year Tester Program
-                    </h2>
-                    <p class="text-xs sm:text-sm text-zinc-400 max-w-[580px] leading-relaxed">
-                        The first 60 users to redeem one of the official invitation codes (<code class="text-amber-400 font-mono font-bold">BXJ-2026-A</code> or <code class="text-amber-400 font-mono font-bold">BXJ-2026-B</code>) unlock a full 1-year entitlement with 100 AI requests/month. All other Google-authenticated users receive 50 lifetime AI requests.
-                    </p>
-                </div>
-                <div class="flex flex-col gap-3 shrink-0 w-full sm:w-auto">
-                    <a href="auth.html" class="btn-glow !py-3.5 !px-8 text-center justify-center">
-                        Redeem Invite Code →
-                    </a>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== 7. FINAL HIGH-CONVERSION CTA ==================== -->
-    <section class="w-full max-w-[1280px] mx-auto px-6 mb-24 relative z-10">
-        <div class="glass-panel p-10 sm:p-16 text-center bg-gradient-to-b from-[#141519] to-[#0D0E12] border-white/[0.12] shadow-2xl">
-            <div class="w-14 h-14 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mx-auto mb-6 shadow-inner">
-                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-9 h-9 rounded-xl">
-            </div>
-
-            <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
-                Ready to trade with total clarity?
+    <!-- ==================== 4. 6 CORE FEATURES BENTO ==================== -->
+    <section id="features" class="w-full max-w-[1200px] mx-auto px-6 py-16">
+        <div class="text-center max-w-[560px] mx-auto mb-16">
+            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
+                Built for Precision & Edge
             </h2>
-            <p class="text-zinc-400 text-sm sm:text-base max-w-[540px] mx-auto mb-8">
-                Join BattleXJournal today. Set up your trading journal in under a minute with zero friction.
+            <p class="text-xs sm:text-sm text-zinc-400">
+                Everything you need to analyze, replay, manage risk, and scale your trading consistency.
+            </p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            <!-- 1. Journal -->
+            <div class="card-obsidian p-6">
+                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
+                    <svg data-lucide="book-open" class="w-5 h-5"></svg>
+                </div>
+                <h3 class="text-base font-bold text-white mb-2">Automated Trade Journal</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
+                    Detailed logging with Entry, Exit, Stop Loss, Position Size, Session Tags, and instant R-multiple calculation.
+                </p>
+                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-zinc-400">
+                    Auto-calculated R:R & commissions
+                </div>
+            </div>
+
+            <!-- 2. Replay -->
+            <div class="card-obsidian p-6" id="replay">
+                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
+                    <svg data-lucide="play" class="w-5 h-5"></svg>
+                </div>
+                <h3 class="text-base font-bold text-white mb-2">Market Replay Simulator</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
+                    Step through historical market candles bar-by-bar (1x to 10x speeds) to refine execution under real conditions.
+                </p>
+                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-blue-400 font-semibold">
+                    1x • 2x • 5x • 10x playback speed
+                </div>
+            </div>
+
+            <!-- 3. Strategy Lab -->
+            <div class="card-obsidian p-6">
+                <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-4">
+                    <svg data-lucide="flask-conical" class="w-5 h-5"></svg>
+                </div>
+                <h3 class="text-base font-bold text-white mb-2">Strategy Lab & Backtesting</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
+                    Define entry/exit rules, run rule compliance audits, and simulate mathematical win-rate expectancy.
+                </p>
+                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-purple-400 font-semibold">
+                    Rules checklist & setup attribution
+                </div>
+            </div>
+
+            <!-- 4. Risk Engine -->
+            <div class="card-obsidian p-6">
+                <div class="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mb-4">
+                    <svg data-lucide="shield-alert" class="w-5 h-5"></svg>
+                </div>
+                <h3 class="text-base font-bold text-white mb-2">Risk Engine & Limits</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
+                    Daily loss circuit breakers, max drawdown limit warnings, and dynamic position size calculator.
+                </p>
+                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-red-400 font-semibold">
+                    Hard stop loss & loss budget alerts
+                </div>
+            </div>
+
+            <!-- 5. Discipline Tracker -->
+            <div class="card-obsidian p-6">
+                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
+                    <svg data-lucide="target" class="w-5 h-5"></svg>
+                </div>
+                <h3 class="text-base font-bold text-white mb-2">Discipline & Leak Detector</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
+                    Identify FOMO entries, revenge trading patterns, and emotional execution mistakes with transparent scoring.
+                </p>
+                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-amber-400 font-semibold">
+                    Discipline Score (0–100%)
+                </div>
+            </div>
+
+            <!-- 6. AI Mentor -->
+            <div class="card-obsidian p-6">
+                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-4">
+                    <svg data-lucide="brain-circuit" class="w-5 h-5"></svg>
+                </div>
+                <h3 class="text-base font-bold text-white mb-2">AI Trade Mentor</h3>
+                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
+                    Get objective AI critique on trade quality, risk sizing, and setup discipline powered by Gemini 2.5 Flash.
+                </p>
+                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-indigo-400 font-semibold">
+                    50 Free Lifetime / 100 mo. for Testers
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 5. 60-TESTER 1-YEAR EARLY ACCESS CARD ==================== -->
+    <section id="tester-program" class="w-full max-w-[1200px] mx-auto px-6 py-16">
+        <div class="card-obsidian p-8 sm:p-12 border-amber-500/20 bg-gradient-to-b from-[#110E09] to-[#090A0C] flex flex-col md:flex-row items-center justify-between gap-8">
+            <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono font-bold uppercase mb-4">
+                    🎟️ EXCLUSIVE BETA ACCESS
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
+                    60-Member 1-Year Tester Program
+                </h2>
+                <p class="text-xs sm:text-sm text-zinc-400 max-w-[560px] leading-relaxed">
+                    Redeem one of the two official invitation codes (<code class="text-amber-300 font-mono font-bold">BXJ-2026-A</code> or <code class="text-amber-300 font-mono font-bold">BXJ-2026-B</code>) to claim 1 year of full BattleXJournal access with 100 AI requests/month. All regular Google sign-ins receive 50 lifetime AI requests.
+                </p>
+            </div>
+
+            <div class="flex flex-col gap-3 shrink-0 w-full sm:w-auto">
+                <a href="auth.html" class="btn-white-pill !py-3 !px-7 text-center">
+                    Redeem Access Code →
+                </a>
+            </div>
+        </div>
+    </section>
+
+    <!-- ==================== 6. FINAL BOTTOM CTA ==================== -->
+    <section class="w-full max-w-[1200px] mx-auto px-6 py-20 text-center">
+        <div class="card-obsidian p-10 sm:p-16 border-white/[0.1]">
+            <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
+                Ready to trade with proof?
+            </h2>
+            <p class="text-xs sm:text-sm text-zinc-400 max-w-[480px] mx-auto mb-8 leading-relaxed">
+                Set up your trading journal in under a minute. No credit card required.
             </p>
 
-            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
-                <a href="auth.html" class="btn-glow !py-4 !px-9 !text-base w-full sm:w-auto justify-center">
-                    <span>Create Free Account</span>
-                    <svg data-lucide="arrow-right" class="w-4 h-4"></svg>
+            <div class="flex items-center justify-center gap-3">
+                <a href="auth.html" class="btn-glass-pill !py-3 !px-7 text-sm">
+                    Sign In
                 </a>
-                <a href="auth.html" class="btn-outline !py-4 !px-8 !text-base w-full sm:w-auto justify-center">
-                    <span>Sign In</span>
+                <a href="auth.html" class="btn-white-pill !py-3 !px-7 text-sm">
+                    Get Started Free
                 </a>
             </div>
         </div>
     </section>
 
-    <!-- ==================== 8. FOOTER ==================== -->
-    <footer class="w-full border-t border-white/[0.08] bg-[#07080A] py-12 px-6 relative z-10 text-xs text-zinc-500">
-        <div class="max-w-[1280px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-6">
-            <div class="flex items-center gap-3">
-                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-6 h-6 rounded border border-white/10 bg-black">
-                <span class="font-extrabold tracking-wider text-zinc-300">BATTLEXJOURNAL</span>
-                <span>• © 2026 All rights reserved.</span>
-            </div>
+    <!-- ==================== COOKIE / PRIVACY FOOTER BANNER (AS IN SCREENSHOT) ==================== -->
+    <div class="w-full bg-[#0A0B0D] border-t border-white/[0.06] py-3.5 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400">
+        <div>
+            We use essential local storage to enhance your experience. Your data remains 100% private. <a href="auth.html" class="text-white underline ml-1">Manage preferences</a>.
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+            <button onclick="this.parentElement.parentElement.style.display='none'" class="px-3 py-1 rounded text-xs text-zinc-400 hover:text-white">Reject non-essential</button>
+            <button onclick="this.parentElement.parentElement.style.display='none'" class="btn-white-pill !py-1 !px-3 !text-xs">Accept all</button>
+        </div>
+    </div>
 
-            <div class="flex items-center gap-6">
-                <a href="auth.html" class="hover:text-zinc-300 transition-colors">Sign in</a>
-                <a href="activate.html" class="hover:text-zinc-300 transition-colors">Redeem Code</a>
-                <a href="admin.html" class="hover:text-zinc-300 transition-colors">Admin Console</a>
+    <!-- Main Footer -->
+    <footer class="w-full bg-black py-8 px-6 text-center text-xs text-zinc-600 border-t border-white/[0.04]">
+        <div class="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-2">
+                <img src="assets/battlex-logo.png" alt="BattleX" class="w-5 h-5 rounded border border-white/10 bg-black">
+                <span class="font-bold text-zinc-400">BattleXJournal</span>
+                <span>© 2026</span>
+            </div>
+            <div class="flex items-center gap-6 text-zinc-500">
+                <a href="auth.html" class="hover:text-zinc-300">Sign in</a>
+                <a href="activate.html" class="hover:text-zinc-300">Redeem Code</a>
+                <a href="admin.html" class="hover:text-zinc-300">Admin</a>
             </div>
         </div>
     </footer>
 
-    <!-- Initialize Lucide Icons -->
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) {
