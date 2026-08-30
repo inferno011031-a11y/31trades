@@ -666,7 +666,27 @@
             }
 
             // ============ RENDER ============
+            // ============ AI QUOTA TRACKING ============
+            async function refreshAiQuota() {
+                try {
+                    const r = await apiFetch('/api/access/status');
+                    if (!r.ok) return;
+                    const st = await r.json();
+                    const badge = $('chat-quota-badge');
+                    if (!badge || !st || !st.aiUsage) return;
+                    badge.classList.remove('hidden');
+                    if (st.isTester) {
+                        badge.className = 'tag tag-purple font-mono !py-1 !px-2.5 !text-[11px]';
+                        badge.textContent = 'Tester · ' + st.aiUsage.remaining + '/' + st.aiUsage.limit + ' left this mo';
+                    } else {
+                        badge.className = 'tag tag-blue font-mono !py-1 !px-2.5 !text-[11px]';
+                        badge.textContent = 'Standard · ' + st.aiUsage.remaining + '/' + st.aiUsage.limit + ' lifetime left';
+                    }
+                } catch (e) {}
+            }
+
             function renderAll() {
+                refreshAiQuota();
                 renderChrome();
                 renderCoach();
                 renderContext();
