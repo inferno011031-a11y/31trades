@@ -164,7 +164,24 @@
     // without one — they're redirected first). Idempotent: second call returns
     // the already-booted core.
     function bootCore() {
-        if (core) return core;
+        if (core) // ---- Check active 1-year access entitlement ----
+        if (!BYPASS && !/auth\.html/.test(window.location.pathname)) {
+            const curSess = getSession();
+            if (curSess && curSess.token) {
+                fetch(API_ROOT + '/api/access/status', {
+                    headers: { 'Authorization': 'Bearer ' + curSess.token }
+                })
+                .then(r => r.json())
+                .then(st => {
+                    if (st && st.ok && st.hasAccess === false) {
+                        window.location.replace('auth.html?activate=1');
+                    }
+                })
+                .catch(() => {});
+            }
+        }
+
+        return core;
         // BYPASS (tests) boots the anonymous partition without a session.
         const session = BYPASS ? { anonymous: true } : currentSession();
         if (!session) return null;

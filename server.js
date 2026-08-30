@@ -37,6 +37,7 @@ const path = require('node:path');
 const { loadEnv } = require('./server/env.js');
 const db = require('./server/db.js');
 const auth = require('./server/auth.js');
+const Access = require('./server/access.js');
 const AI = require('./server/ai-mentor.js');
 const Bot = require('./server/ai-bot.js');
 const EcoCal = require('./server/ecocal.js');
@@ -724,6 +725,60 @@ async function handleApi(req, res, url) {
         try { return json(res, 200, { user: await auth.verify(token) }); }
         catch (err) { return json(res, 401, { error: err.message }); }
     }
+    // ---------- 60-Member 1-Year Invite Access System ----------
+    if (p === '/api/access/status' && req.method === 'GET') {
+        if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) {
+            return json(res, 200, {
+                ok: true,
+                hasAccess: true,
+                plan: 'yearly_invite',
+                expiresAt: new Date(Date.now() + 365 * 86400000).toISOString(),
+                activatedAt: new Date().toISOString(),
+                aiUsage: { used: 0, limit: 100, remaining: 100, month: new Date().toISOString().slice(0, 7) }
+            });
+        }
+        const token = bearerToken(req);
+        if (!token) return json(res, 401, { error: 'Authentication required' });
+        try {
+            const user = await auth.verify(token);
+            const status = await Access.getAccessStatus(user.id);
+            return json(res, 200, Object.assign({ ok: true }, status));
+        } catch (err) {
+            return json(res, err.code || 401, { error: err.message });
+        }
+    }
+
+    if (p === '/api/access/redeem' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        const token = bearerToken(req);
+        let userId = LOCAL_USER_ID;
+        if (AUTH_REQUIRED && process.env.SUPABASE_URL) {
+            if (!token) return json(res, 401, { error: 'Authentication required — sign in first.' });
+            try {
+                const user = await auth.verify(token);
+                userId = user.id;
+            } catch (err) {
+                return json(res, 401, { error: err.message });
+            }
+        }
+        try {
+            const result = await Access.redeemInviteCode({ userId, code: b.code });
+            return json(res, 200, result);
+        } catch (err) {
+            return json(res, err.code || 400, { ok: false, error: err.message });
+        }
+    }
+
+    if (p === '/api/admin/invite-stats' && req.method === 'GET') {
+        try {
+            const stats = await Access.getInviteStats();
+            return json(res, 200, Object.assign({ ok: true }, stats));
+        } catch (err) {
+            return json(res, 500, { error: err.message });
+        }
+    }
+
     if (p === '/api/health') {
         return json(res, 200, {
             ok: true, service: '31trades-backend', time: new Date().toISOString(),
@@ -1498,6 +1553,13 @@ async function handleApi(req, res, url) {
 
         // ---- AI Mentor personal bot (grounded Q&A over the ledger) ----
         if (p === '/api/ai/ask') {
+            if (AUTH_REQUIRED && process.env.SUPABASE_URL) {
+                try {
+                    await Access.enforceAiQuota(uc.userId);
+                } catch (err) {
+                    return json(res, err.code || 403, { ok: false, error: err.message });
+                }
+            }
             if (!body.question || !String(body.question).trim()) return json(res, 400, { error: 'question required' });
             const accountId = body.accountId || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
             if (!accountId) return json(res, 200, { ok: true, answer: 'No account yet — create one in Strategy Lab and log trades; then I can coach you on your real data.', kpis: [], evidence: [], followUps: [] });

@@ -1047,6 +1047,7 @@
                 forgotSent: document.getElementById('panel-forgot-sent'),
                 reset: document.getElementById('panel-reset'),
                 resetDone: document.getElementById('panel-reset-done'),
+                activate: document.getElementById('panel-activate'),
                 signinSuccess: document.getElementById('panel-signin-success'),
                 onboarding: document.getElementById('panel-onboarding'),
                 onboardDone: document.getElementById('panel-onboard-done')
@@ -1084,6 +1085,81 @@
                     btn.querySelector('svg').classList.toggle('icon-eye');
                 });
             });
+
+            // ============ ACTIVATE INVITE CODE FORM ============
+            const formActivate = document.getElementById('form-activate');
+            const actError = document.getElementById('act-error');
+            const actSuccess = document.getElementById('act-success');
+
+            function showActError(msg) {
+                if (actSuccess) actSuccess.classList.add('hidden');
+                if (actError) {
+                    actError.textContent = msg;
+                    actError.classList.remove('hidden');
+                }
+            }
+            function showActSuccess(msg) {
+                if (actError) actError.classList.add('hidden');
+                if (actSuccess) {
+                    actSuccess.textContent = msg;
+                    actSuccess.classList.remove('hidden');
+                }
+            }
+
+            if (formActivate) {
+                formActivate.addEventListener('submit', async function (e) {
+                    e.preventDefault();
+                    const btn = document.getElementById('btn-activate');
+                    const codeInput = document.getElementById('act-code');
+                    const code = codeInput ? codeInput.value.trim() : '';
+                    if (!code) return showActError('Please enter an invite code.');
+
+                    const session = getSavedSession();
+                    if (!session || !session.token) {
+                        return showActError('Authentication required — please sign in first.');
+                    }
+
+                    busy(btn, true);
+                    if (actError) actError.classList.add('hidden');
+                    if (actSuccess) actSuccess.classList.add('hidden');
+
+                    try {
+                        const res = await fetch('/api/access/redeem', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer ' + session.token
+                            },
+                            body: JSON.stringify({ code })
+                        });
+                        const j = await res.json();
+                        if (!res.ok || !j.ok) {
+                            throw new Error(j.error || 'Failed to activate access.');
+                        }
+
+                        showActSuccess(j.message || 'Access activated. Your 1-year BattleXJournal access is now active.');
+                        
+                        // Update session object
+                        if (session.user) {
+                            session.user.access_plan = j.plan;
+                            session.user.access_expires_at = j.expires_at;
+                            saveSession(session);
+                        }
+
+                        setTimeout(() => {
+                            window.location.replace('dashboard.html');
+                        }, 1200);
+                    } catch (err) {
+                        showActError(err.message || 'Invalid invite code. Please check the code and try again.');
+                        busy(btn, false);
+                    }
+                });
+            }
+
+            // Check URL param ?activate=1 or #activate
+            if (location.search.includes('activate=1') || location.hash === '#activate') {
+                showPanel('activate');
+            }
 
             // ----- REAL form submits → the backend's Supabase GoTrue proxy -----
             function busy(btn, on) {
