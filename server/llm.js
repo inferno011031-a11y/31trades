@@ -25,15 +25,18 @@
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
-const OPENAI_BASE = process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.openai.com/v1';
-const OPENAI_MODEL = process.env.OPENAI_MODEL || 'openai/gpt-oss-120b';
+const OPENAI_BASE = process.env.AICREDITS_API_KEY
+    ? (process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.aicredits.in/v1')
+    : (process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.openai.com/v1');
+
+const OPENAI_MODEL = process.env.OPENAI_MODEL || process.env.LLM_MODEL || 'gpt-4o-mini';
 
 function apiKey() {
-    return process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || '';
+    return process.env.AICREDITS_API_KEY || process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || '';
 }
 
 function isGemini() {
-    return !!process.env.GEMINI_API_KEY && !process.env.OPENAI_API_KEY && !process.env.OPENROUTER_API_KEY;
+    return !!process.env.GEMINI_API_KEY && !process.env.AICREDITS_API_KEY && !process.env.OPENAI_API_KEY && !process.env.OPENROUTER_API_KEY;
 }
 
 // The narration prompt — structured facts in, warm prose out, no invention.
