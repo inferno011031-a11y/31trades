@@ -1041,52 +1041,19 @@
             function applyEmptyState() {
                 var core = window.TradeMindCore;
                 var wrapper = document.getElementById('dash-content');
-                if (!wrapper) return true;
+                if (!wrapper) return false;
                 renderWelcomeHero(wrapper);
                 var empty = document.getElementById('dash-empty');
-                var hasAccount = !!(core && core.Accounts && core.Accounts.length);
-                var hasTrades = !!(core && core.Trades && core.Trades.length);
-                if (hasAccount && hasTrades) {
-                    if (empty) empty.classList.add('hidden');
-                    var kids = wrapper.children;
-                    for (var i = 0; i < kids.length; i++) if (kids[i].id !== 'dash-empty' && kids[i].id !== 'dash-hero') kids[i].style.display = '';
-                    return false;
-                }
-                var heroVisible = !!document.getElementById('dash-hero');
-                if (!empty) {
-                    empty = document.createElement('div');
-                    empty.id = 'dash-empty';
-                    empty.className = 'py-24 text-center';
-                    if (heroVisible) {
-                        empty.innerHTML =
-                            '<p class="text-[13.5px] text-[var(--tm-dim)] max-w-md mx-auto">' +
-                            (hasAccount
-                                ? 'No trades yet — everything below fills in as you journal.'
-                                : 'Your workspace is ready — complete the steps above and log your first trade.') +
-                            '</p>';
-                    } else if (hasAccount) {
-                        empty.innerHTML =
-                            '<svg data-lucide="line-chart" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>' +
-                            '<h2 class="text-[20px] font-bold">No trades yet</h2>' +
-                            '<p class="text-[13.5px] text-[var(--tm-muted)] mt-2 max-w-md mx-auto">Your trading intelligence starts with your first trade. Create a strategy, then log a trade — every screen updates from the same local dataset.</p>' +
-                            '<div class="flex items-center justify-center gap-3 mt-6">' +
-                                '<a href="strategy-lab.html" class="btn-ghost !py-2.5 !px-5 text-[13px]"><svg data-lucide="flask-conical" class="w-4 h-4"></svg> Create First Strategy</a>' +
-                                '<a href="journal.html" class="btn-primary !py-2.5 !px-5 text-[13px]"><svg data-lucide="plus" class="w-4 h-4"></svg> Log First Trade</a>' +
-                            '</div>';
-                    } else {
-                        empty.innerHTML =
-                            '<svg data-lucide="user-plus" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>' +
-                            '<h2 class="text-[20px] font-bold">Welcome to BattlexJournal</h2>' +
-                            '<p class="text-[13.5px] text-[var(--tm-muted)] mt-2 max-w-md mx-auto">Set up your first account (name, size, risk limits), then create a strategy and log your first trade.</p>' +
-                            '<a href="strategy-lab.html" class="btn-primary mt-6 !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2"><svg data-lucide="settings" class="w-4 h-4"></svg> Set up account</a>';
+                if (empty) empty.remove();
+                
+                // Always ensure all dashboard sections are 100% visible on both PC and mobile!
+                var kids = wrapper.children;
+                for (var i = 0; i < kids.length; i++) {
+                    if (kids[i].id !== 'dash-empty') {
+                        kids[i].style.display = '';
                     }
-                    wrapper.prepend(empty);
-                    if (window.lucide) lucide.createIcons();
                 }
-                empty.classList.remove('hidden');
-                var kids2 = wrapper.children;
-                for (var j = 0; j < kids2.length; j++) if (kids2[j].id !== 'dash-empty' && kids2[j].id !== 'dash-hero') kids2[j].style.display = 'none';
-                return true;
+                return false;
             }
 
             // ====================================================================
