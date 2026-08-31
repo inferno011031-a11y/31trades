@@ -281,6 +281,29 @@ function streakAnswer(b, core, accountId) {
     return { text: parts.join(' '), kpis: [], evidence: [] };
 }
 
+function memoryAnswer(b, prev) {
+    const summaries = (prev && prev.summaries) || [];
+    const history   = (prev && prev.history) || [];
+    const parts = [];
+
+    if (summaries.length > 0) {
+        parts.push("Here is a summary of our past discussions:\n" + summaries.map(s => '· ' + s).join('\n'));
+    } else if (history.length > 0) {
+        const questions = history.filter(h => h.role === 'user').map(h => `'${h.text}'`);
+        parts.push("We haven't archived any old discussions yet, but recently we discussed: " + questions.join(', ') + ".");
+    } else {
+        parts.push("We haven't discussed anything yet in this chat session. Ask me about your risk, tilt, streak, or performance to get started!");
+    }
+
+    return {
+        text: parts.join(' '),
+        kpis: [
+            { label: 'Chat age', value: summaries.length > 0 ? `${summaries.length} turns` : 'Recent', cls: 'text-white' }
+        ],
+        evidence: []
+    };
+}
+
 function periodAnswer(q, core, accountId) {
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const wStart = new Date(today); wStart.setDate(today.getDate() - today.getDay());
@@ -321,6 +344,7 @@ const INTENTS = [
     { id: 'setup', re: /\b(setup|strategy|entry model|which strategy|pattern)\b/ },
     { id: 'winloss', re: /\b(win|loss|lose|losing|winner|profit factor|made money|bleed)\b/ },
     { id: 'focus', re: /\b(focus|improve|work on|do better|fix|next step|what should i|advice|suggest)\b/ },
+    { id: 'memory', re: /\b(remember|discuss\w*|talk\w* about|conversation|chat|last time|previously|memory)\b/ },
     { id: 'overall', re: /\b(overall|how am i doing|status|summary|health|score|good|review)\b/ }
 ];
 
@@ -418,13 +442,13 @@ function askBot(core, accountId, question, opts) {
     const s = statsOf(tradesIn(core, accountId, sinceMs));
     const intent = rq.intent;
 
-    if (!s.n && intent !== 'tilt' && intent !== 'news') {
+    if (!s.n && intent !== 'tilt' && intent !== 'news' && intent !== 'memory') {
         const scope = rq.window ? ' in the ' + rq.window + ' range' : ' in the current ' + period + ' range';
         return {
             question: q, intent, period,
             answer: 'No trades' + scope + ' yet — log a few and I will start coaching from real evidence. (You have ' + b.context.totalTrades + ' total on this account.)',
             kpis: [], evidence: [], followUps: ['How am I doing overall?', 'Which session is my best?'],
-            memory: { intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q, history: pushHistory(prev, q, null) }
+            memory: Object.assign({ intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q }, pushHistory(prev, q, null, intent))
         };
     }
 
@@ -436,6 +460,7 @@ function askBot(core, accountId, question, opts) {
         case 'discipline': r = disciplineAnswer(b); break;
         case 'streak': r = streakAnswer(b, core, accountId); break;
         case 'risk': r = riskAnswer(b, s); break;
+        case 'memory': r = memoryAnswer(b, prev); break;
         case 'session': {
             if (rq.subject && rq.subjKind === 'session') r = subjectRowAnswer('session', rq.subject, b, s, rq.window);
             else r = sessionAnswer(b);
@@ -483,7 +508,7 @@ function askBot(core, accountId, question, opts) {
     }
     return Object.assign({ question: q, intent, period, window: rq.window }, r, {
         followUps: r.followUps || ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?', events && events.length ? 'Any news today?' : null].filter(Boolean),
-        memory: { intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q, history: pushHistory(prev, q, r.answer) }
+        memory: Object.assign({ intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q }, pushHistory(prev, q, r.answer, intent))
     });
 }
 
@@ -542,11 +567,30 @@ function subjectRowAnswer(kind, subject, b, s, window) {
 
 // Keep a rolling window of the last N exchanges (longer memory — survives
 // reloads server-side and is mirrored in the client transcript).
-function pushHistory(prev, q, answer) {
+function pushHistory(prev, q, answer, intent) {
     const h = (prev && prev.history) ? prev.history.slice() : [];
-    h.push({ role: 'user', text: q, ts: Date.now() });
+    const s = (prev && prev.summaries) ? prev.summaries.slice() : [];
+
+    h.push({ role: 'user', text: q, ts: Date.now(), intent });
     if (answer != null) h.push({ role: 'bot', answer, ts: Date.now() });
-    return h.slice(-30);   // keep the last 15 exchanges
+
+    // Roll over older exchanges if history exceeds 10 turns (20 entries)
+    while (h.length > 20) {
+        const u = h.shift();
+        const b = h.shift();
+        if (u && u.role === 'user') {
+            const d = new Date(u.ts).toISOString().split('T')[0];
+            const cleanQ = String(u.text).replace(/\n/g, ' ').slice(0, 50);
+            const intentLabel = u.intent || 'general';
+            s.push(`On ${d}: Discussed ${intentLabel} (Question: '${cleanQ}')`);
+        }
+    }
+
+    if (s.length > 50) {
+        s.splice(0, s.length - 50);
+    }
+
+    return { history: h, summaries: s };
 }
 
 module.exports = { askBot, detectIntent, resolveAsk, windowSinceMs, statsOf, rankBy, tradesIn, loadMemory, saveMemory, subjectRowAnswer };

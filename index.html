@@ -3,8 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BattleXJournal — The Trading Journal with Market Replay & AI Coaching</title>
-    <meta name="description" content="Journaling, market replay & strategy backtesting in a single private workspace. The trading software we wish we had, so we built it for you.">
+    <title>BattleXJournal — Trade with proof, not memory.</title>
+    <meta name="description" content="All-in-one trading operating system with journaling, backtesting, AI behavioral diagnosis, and battles.">
     
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -12,786 +12,358 @@
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
     <script src="/assets/lucide.min.js"></script>
 
-    <!-- Google Fonts (Inter & JetBrains Mono) -->
+    <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         
         :root {
-            --bg-base: #000000;
-            --card-bg: #0C0D0E;
-            --card-border: rgba(255, 255, 255, 0.08);
-            --accent-green: #10B981;
-            --accent-red: #EF4444;
-            --accent-purple: #8B5CF6;
+            --tm-bg: #07080a;
+            --tm-border: rgba(255, 255, 255, 0.08);
+            --accent-cyan: #00f2fe;
+            --accent-purple: #a855f7;
+            --profit-emerald: #10b981;
         }
 
         html, body {
-            width: 100%; min-height: 100vh;
-            background: #000000 !important;
+            width: 100%;
+            height: 100%;
+            background: var(--tm-bg) !important;
             color: #FFFFFF !important;
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: 'Plus Jakarta Sans', sans-serif;
             overflow-x: hidden;
-            letter-spacing: -0.015em;
         }
 
-        /* Pure Obsidian Glass Cards */
-        .card-obsidian {
-            background: #090A0C;
-            border: 1px solid rgba(255, 255, 255, 0.07);
-            border-radius: 20px;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        .card-obsidian:hover {
-            border-color: rgba(255, 255, 255, 0.16);
-            transform: translateY(-2px);
+        /* Ambient Glow Behind Hero */
+        .hero-glow {
+            position: absolute;
+            top: 35%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 800px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(0, 242, 254, 0.12) 0%, rgba(168, 85, 247, 0.08) 50%, rgba(0, 0, 0, 0) 70%);
+            filter: blur(95px);
+            pointer-events: none;
+            z-index: 0;
         }
 
-        /* Buttons matching the uploaded image */
-        .btn-white-pill {
-            background: #FFFFFF !important;
-            color: #000000 !important;
-            font-weight: 700;
-            font-size: 13.5px;
-            padding: 8px 18px;
-            border-radius: 9999px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.15s ease;
-            text-decoration: none;
-            cursor: pointer;
-            border: 1px solid #FFFFFF;
+        /* Animated Grid Overlay */
+        .grid-overlay {
+            position: absolute;
+            inset: 0;
+            background-image: linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px), linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+            background-size: 40px 40px;
+            background-position: center center;
+            mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, #000 65%, transparent 100%);
+            pointer-events: none;
         }
-        .btn-white-pill:hover {
-            background: #E5E7EB !important;
-            border-color: #E5E7EB;
+
+        /* Floating Luxury Glass Navbar */
+        .glass-navbar {
+            background: rgba(12, 13, 16, 0.75) !important;
+            backdrop-filter: blur(28px) saturate(190%) !important;
+            -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+            border: 1px solid var(--tm-border);
+            box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            transition: max-width 0.5s cubic-bezier(0.16, 1, 0.3, 1), padding 0.5s cubic-bezier(0.16, 1, 0.3, 1), background 0.4s ease, border-color 0.4s ease;
+        }
+        .nav-dock-top {
+            max-width: 780px;
+        }
+        .nav-dock-scrolled {
+            max-width: 1300px;
+            background: rgba(8, 9, 12, 0.9) !important;
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Master Hero Title */
+        .hero-title {
+            font-family: 'Inter', sans-serif;
+            font-weight: 900;
+            font-size: clamp(2.3rem, 5.5vw, 4.4rem);
+            letter-spacing: -0.04em;
+            line-height: 1.08;
+            color: #FFFFFF;
+            text-align: center;
+        }
+
+        .gradient-span {
+            background: linear-gradient(135deg, #ffffff 40%, var(--accent-cyan) 80%, var(--accent-purple) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .btn-glow-cyan {
+            box-shadow: 0 0 25px rgba(0, 242, 254, 0.22);
+            transition: all 0.3s ease;
+        }
+        .btn-glow-cyan:hover {
+            box-shadow: 0 0 35px rgba(0, 242, 254, 0.4);
             transform: translateY(-1px);
         }
 
-        .btn-glass-pill {
-            background: rgba(255, 255, 255, 0.06);
-            color: #FFFFFF;
-            font-weight: 600;
-            font-size: 13.5px;
-            padding: 8px 18px;
-            border-radius: 9999px;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            text-decoration: none;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            transition: all 0.15s ease;
-            cursor: pointer;
-        }
-        .btn-glass-pill:hover {
-            background: rgba(255, 255, 255, 0.12);
-            border-color: rgba(255, 255, 255, 0.25);
-        }
-
-        /* Laptop Mockup Bezel */
-        .laptop-frame {
-            position: relative;
+        /* Hardware Tablet Chassis */
+        .chassis-wrapper {
+            perspective: 1500px;
             width: 100%;
-            max-width: 1080px;
-            margin: 0 auto;
-            border-radius: 20px 20px 0 0;
-            background: #141517;
-            padding: 12px 12px 0;
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            box-shadow: 0 -10px 40px rgba(0,0,0,0.8), 0 30px 100px rgba(0,0,0,0.9);
         }
-        .laptop-camera-bar {
-            position: absolute;
-            top: 4px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 120px;
-            height: 12px;
-            background: #000;
-            border-radius: 0 0 8px 8px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
-            z-index: 30;
-        }
-        .laptop-camera-dot {
-            width: 4px;
-            height: 4px;
-            border-radius: 50%;
-            background: #1E293B;
-        }
-        .laptop-screen {
-            border-radius: 12px 12px 0 0;
-            overflow: hidden;
-            background: #08080A;
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            position: relative;
-        }
-
-        
-        /* Interactive 3D Showcase & Spotlight */
-        .showcase-perspective-container {
-            perspective: 1200px;
-        }
-        .showcase-3d-card {
-            transition: transform 0.15s ease-out, box-shadow 0.3s ease;
-            transform-style: preserve-3d;
+        .chassis-card {
+            transform: rotateX(8deg) scale(0.97);
+            transform-origin: top center;
+            transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.6s ease;
+            box-shadow: 0 30px 100px rgba(0, 0, 0, 0.95), 0 0 80px rgba(0, 242, 254, 0.08);
             will-change: transform;
         }
-        .showcase-spotlight {
-            background: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(16, 185, 129, 0.12), transparent 45%);
-        }
-        .tab-btn-active {
-            background: rgba(255, 255, 255, 0.12) !important;
-            color: #FFFFFF !important;
-            border-color: rgba(255, 255, 255, 0.25) !important;
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.1);
-        }
-        .tab-btn-inactive {
-            background: rgba(255, 255, 255, 0.03) !important;
-            color: #888888 !important;
-            border-color: rgba(255, 255, 255, 0.06) !important;
-        }
-        .tab-btn-inactive:hover {
-            color: #FFFFFF !important;
-            background: rgba(255, 255, 255, 0.07) !important;
+        .chassis-wrapper:hover .chassis-card {
+            transform: rotateX(0deg) scale(1);
+            box-shadow: 0 40px 120px rgba(0, 0, 0, 0.95), 0 0 90px rgba(168, 85, 247, 0.12);
         }
 
-        /* Infinite Marquee */
-        @keyframes infinite-scroll {
-            from { transform: translateX(0); }
-            to { transform: translateX(-50%); }
+        /* Conic Shimmer Border */
+        @keyframes shimmer-spin {
+            from { transform: translate(-50%, -50%) rotate(0deg); }
+            to { transform: translate(-50%, -50%) rotate(360deg); }
         }
-        .animate-infinite-scroll {
-            animation: infinite-scroll 28s linear infinite;
+        .shimmer-border {
+            position: relative;
+            padding: 1.5px;
+            border-radius: 24px;
+            overflow: hidden;
         }
+        .shimmer-laser {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 250%;
+            height: 250%;
+            background: conic-gradient(from 0deg at 50% 50%, transparent 0deg, transparent 270deg, var(--accent-cyan) 310deg, var(--accent-purple) 345deg, #ffffff 360deg);
+            animation: shimmer-spin 7s linear infinite;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            z-index: 0;
+            will-change: transform;
+        }
+
+        /* Staggered Word Slide Up */
+        @keyframes slideUpWord {
+            0% { opacity: 0; transform: translateY(115%); filter: blur(6px); }
+            100% { opacity: 1; transform: translateY(0); filter: blur(0px); }
+        }
+        .slide-up-wrapper { display: inline-block; overflow: hidden; vertical-align: bottom; padding-bottom: 2px; margin-right: 0.2em; }
+        .slide-up-wrapper:last-child { margin-right: 0; }
+        .slide-up-word { display: inline-block; opacity: 0; animation: slideUpWord 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
     </style>
 </head>
-<body class="bg-black text-white antialiased">
+<body class="bg-black text-white antialiased flex flex-col min-h-screen">
 
-    <!-- ==================== HEADER (SVELTE UI STYLE) ==================== -->
-    <header class="sticky top-0 z-50 w-full h-16 bg-black/80 backdrop-blur-xl border-b border-white/[0.06] flex items-center justify-center px-4 sm:px-8">
-        <div class="w-full max-w-[1280px] flex items-center justify-between">
+    <!-- Ambient Glowing lights & grids -->
+    <div class="relative w-full overflow-visible pointer-events-none z-0">
+        <div class="hero-glow"></div>
+        <div class="grid-overlay"></div>
+    </div>
+
+    <!-- ==================== 1. FLOATING NAVIGATION DOCK ==================== -->
+    <header class="fixed top-0 left-0 right-0 z-50 w-full flex items-center justify-center pt-3 sm:pt-4 px-4 pointer-events-none">
+        <div id="nav-container" class="glass-navbar nav-dock-top w-full h-[54px] rounded-full px-4 sm:px-6 flex items-center justify-between pointer-events-auto">
             
-            <!-- Left: Logo -->
-            <a href="index.html" class="flex items-center gap-2.5 text-white no-underline font-extrabold text-base tracking-tight">
-                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-7 h-7 rounded-lg border border-white/20 bg-black shadow-md">
-                <span class="font-extrabold tracking-tight">BattleXJournal</span>
+            <!-- Logo & Brand -->
+            <a href="index.html" class="flex items-center gap-2.5 text-white no-underline shrink-0 group">
+                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-7 h-7 rounded-lg border border-white/20 bg-black/80 shadow-md group-hover:scale-105 transition-transform">
+                <span class="font-bold tracking-tight text-sm text-white group-hover:text-cyan-400 transition-colors">BattleX</span>
+                <span class="hidden sm:inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-[10px] font-mono text-emerald-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span> 4,280 ONLINE
+                </span>
             </a>
 
-            <!-- Center: Nav Dropdowns -->
-            <nav class="hidden md:flex items-center gap-6 text-xs font-medium text-zinc-400">
-                <a href="#features" class="hover:text-white transition-colors flex items-center gap-1">
-                    Features <svg data-lucide="chevron-down" class="w-3 h-3 opacity-60"></svg>
-                </a>
-                <a href="#replay" class="hover:text-white transition-colors">Market Replay</a>
-                <a href="#integrations" class="hover:text-white transition-colors">Integrations</a>
-                <a href="#tester-program" class="hover:text-white transition-colors flex items-center gap-1">
-                    Early Access <span class="bg-amber-500/20 text-amber-300 text-[10px] px-1.5 py-0.2 rounded font-mono font-bold">1-YEAR</span>
-                </a>
+            <!-- Central Links (Clean borderless) -->
+            <nav class="hidden md:flex items-center gap-6 text-xs font-semibold text-zinc-400">
+                <a href="auth.html" class="hover:text-white transition-colors">Dashboard</a>
+                <a href="auth.html" class="hover:text-white transition-colors">Journal</a>
+                <a href="auth.html" class="hover:text-white transition-colors">Backtesting</a>
+                <a href="auth.html" class="hover:text-white transition-colors">Battles</a>
+                <a href="auth.html" class="hover:text-white transition-colors">AI Coach</a>
             </nav>
 
-            <!-- Right: Action Buttons -->
-            <div class="flex items-center gap-3">
-                <div class="w-7 h-7 rounded-full bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-zinc-400 hover:text-white cursor-pointer hidden sm:flex">
-                    <svg data-lucide="globe" class="w-3.5 h-3.5"></svg>
-                </div>
-                <a href="auth.html" class="btn-glass-pill !py-1.5 !px-4 !text-xs">
-                    Sign In
-                </a>
-                <a href="auth.html" class="btn-white-pill !py-1.5 !px-4 !text-xs">
-                    Get Started
-                </a>
+            <!-- Actions -->
+            <div class="flex items-center gap-2.5 shrink-0">
+                <a href="auth.html" class="px-3.5 py-1.5 text-xs font-semibold text-zinc-300 hover:text-white transition-colors rounded-lg hover:bg-white/[0.06]">Sign In</a>
+                <a href="auth.html" class="px-3.5 py-1.5 text-xs font-semibold text-black bg-white hover:bg-zinc-200 transition-all rounded-lg shadow-md font-medium">Get Started</a>
             </div>
-
         </div>
     </header>
 
-    <!-- ==================== HERO SECTION (EXACT IMAGE LAYOUT) ==================== -->
-    <section class="relative w-full pt-20 sm:pt-28 pb-12 flex flex-col items-center justify-center text-center px-4 overflow-hidden">
+    <!-- ==================== 2. HERO HEADER SECTION ==================== -->
+    <section class="relative z-10 flex flex-col items-center justify-start overflow-visible mx-auto w-full max-w-[1400px] px-6" style="padding-top: 170px;">
         
-        <!-- Subtle Center Gradient Glow -->
-        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[350px] bg-blue-600/10 rounded-full blur-[140px] pointer-events-none mix-blend-screen"></div>
+        <!-- Live Announcement Badge -->
+        <a href="auth.html" class="mb-6 inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-950/20 px-3.5 py-1 text-xs transition-all hover:bg-cyan-950/40">
+            <span class="flex h-2 w-2 rounded-full bg-cyan-400 animate-ping"></span>
+            <span class="font-semibold text-cyan-400">BattleX Engine Live</span>
+            <span class="text-zinc-400">|</span>
+            <span class="text-zinc-300">Instant Broker Sync &amp; Replay Lab</span>
+            <svg data-lucide="chevron-right" class="w-3.5 h-3.5 text-cyan-400"></svg>
+        </a>
 
-        <div class="relative z-10 max-w-[840px] mx-auto flex flex-col items-center">
-            
-            <!-- Headline -->
-            <h1 class="text-4xl sm:text-6xl md:text-7xl font-extrabold tracking-tight text-white leading-[1.08] mb-6">
-                The Trading Journal with<br>
-                <span class="text-white">Free Market Replay & AI Coaching</span>
-            </h1>
+        <!-- Master Headline -->
+        <h1 class="hero-title">
+            <span class="slide-up-wrapper"><span class="slide-up-word" style="animation-delay: 0.1s;">Trade</span></span>
+            <span class="slide-up-wrapper"><span class="slide-up-word" style="animation-delay: 0.2s;">with</span></span>
+            <span class="slide-up-wrapper"><span class="slide-up-word gradient-span" style="animation-delay: 0.3s;">proof,</span></span>
+            <span class="slide-up-wrapper"><span class="slide-up-word" style="animation-delay: 0.4s;">not</span></span>
+            <span class="slide-up-wrapper"><span class="slide-up-word" style="animation-delay: 0.5s;">memory.</span></span>
+        </h1>
 
-            <!-- Subheading -->
-            <p class="text-sm sm:text-lg text-zinc-400 max-w-[580px] mb-8 font-normal leading-relaxed">
-                Journaling, replay & backtesting in a single place.<br class="hidden sm:inline">
-                The software we wish we had, so we built it for you.
-            </p>
+        <!-- Subtitle -->
+        <p class="hero-subtitle text-zinc-400 max-w-[620px] text-center text-sm sm:text-base mt-5 leading-relaxed">
+            All-in-one quantitative trading operating system with automatic journaling, TradingView bar replay, AI behavioral diagnosis, and live PVP trading battles.
+        </p>
 
-            <!-- Buttons matching image -->
-            <div class="flex items-center justify-center gap-3 mb-16">
-                <a href="auth.html" class="btn-glass-pill !py-2.5 !px-6 !text-sm">
-                    Sign In
-                </a>
-                <a href="auth.html" class="btn-white-pill !py-2.5 !px-6 !text-sm">
-                    Get Started
-                </a>
-            </div>
-
+        <!-- CTA Buttons -->
+        <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-2 mb-16 w-full max-w-sm">
+            <a href="auth.html" class="btn-glow-cyan w-full sm:w-auto px-8 py-3.5 rounded-full bg-cyan-400 text-black font-bold text-sm flex items-center justify-center gap-2">
+                <span>Enter Terminal</span>
+                <svg data-lucide="arrow-right" class="w-4 h-4"></svg>
+            </a>
+            <a href="auth.html" class="w-full sm:w-auto px-8 py-3.5 rounded-full bg-zinc-900/90 border border-white/10 text-white font-semibold text-sm hover:bg-zinc-800 transition-all flex items-center justify-center gap-2">
+                <span>Sign Up Free</span>
+            </a>
         </div>
+    </section>
 
-        <!-- ==================== INTERACTIVE 3D HERO SHOWCASE WITH TABS & PARALLAX ==================== -->
-        <div class="w-full max-w-[1288px] mx-auto px-4 sm:px-6 relative z-10 showcase-perspective-container">
-            
-            <!-- Interactive Switcher Tabs Pill Bar -->
-            <div class="flex items-center justify-center gap-1.5 sm:gap-2 mb-8 flex-wrap">
-                <button onclick="switchView('dashboard')" id="tab-dashboard" class="tab-btn-active px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                    <span>Dashboard & Calendar</span>
-                </button>
-                <button onclick="switchView('replay')" id="tab-replay" class="tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-blue-400"></span>
-                    <span>Market Replay (5x)</span>
-                </button>
-                <button onclick="switchView('analytics')" id="tab-analytics" class="tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-purple-400"></span>
-                    <span>Trade Analytics</span>
-                </button>
-                <button onclick="switchView('risk')" id="tab-risk" class="tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-red-400"></span>
-                    <span>Risk Circuit Breaker</span>
-                </button>
-                <button onclick="switchView('ai')" id="tab-ai" class="tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5">
-                    <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
-                    <span>AI Mentor</span>
-                </button>
-            </div>
-
-            <!-- 3D Parallax Card Container -->
-            <div id="interactive-hero-card" class="showcase-3d-card relative w-full min-w-0 shrink-0 overflow-hidden rounded-tl-[13px] rounded-bl-none border-[10px] border-black bg-black md:rounded-[calc(2.25rem-6px)] md:border-[14px] shadow-[0_30px_100px_rgba(0,0,0,0.9),0_0_60px_rgba(16,185,129,0.1)] group">
+    <!-- ==================== 3. DOCK MOCKUP VIEWPORT ==================== -->
+    <section class="relative z-10 w-full max-w-[1200px] mx-auto px-4 sm:px-6 mb-32 flex flex-col items-center justify-center">
+        
+        <div class="chassis-wrapper">
+            <div class="shimmer-border chassis-card">
+                <div class="shimmer-laser"></div>
                 
-                <!-- Dynamic Cursor Spotlight Overlay -->
-                <div id="showcase-spotlight-layer" class="showcase-spotlight absolute inset-0 pointer-events-none z-30 transition-opacity duration-300 opacity-0 group-hover:opacity-100"></div>
-
-                <!-- MacBook Top Notch Bar -->
-                <div class="pointer-events-none absolute left-1/2 -top-px z-40 hidden h-6 w-44 -translate-x-1/2 items-start justify-center rounded-b-md bg-black pt-px md:flex md:rounded-b-lg" aria-hidden="true">
-                    <span class="w-2 h-2 rounded-full bg-[#121212] ring-1 ring-[#080808]"></span>
-                </div>
-
-                <!-- Inner Screen Frame -->
-                <div class="relative overflow-hidden rounded-tl-md rounded-bl-none bg-black md:rounded-[1rem]">
+                <!-- Main Screen Workspace Container -->
+                <div class="relative w-full rounded-[22px] overflow-hidden bg-[#0a0b0e] border border-white/10 aspect-[16/9.8] flex flex-col z-10">
                     
-                    <!-- View 1: Main High-Res Dashboard & Calendar -->
-                    <div id="view-dashboard" class="relative block transition-opacity duration-300">
-                        <img 
-                            alt="BattleXJournal app display" 
-                            width="1288" 
-                            height="681" 
-                            decoding="async" 
-                            class="block h-auto w-full object-cover object-left max-md:scale-100 md:scale-[1.00] md:object-center" 
-                            src="assets/dashboard-mockup-1288x681.jpg"
-                        />
-
-                        <!-- Floating Live Badges on the screen -->
-                        <div class="absolute top-4 sm:top-8 right-4 sm:right-8 z-20 bg-black/85 backdrop-blur-xl border border-emerald-500/30 px-3.5 py-1.5 rounded-full flex items-center gap-2 shadow-2xl animate-pulse">
-                            <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
-                            <span class="text-[11px] font-mono font-bold text-emerald-400">+2.45R Realized Profit</span>
+                    <!-- App Mockup Titlebar -->
+                    <div class="w-full h-10 border-b border-white/5 bg-[#0e1014] px-4 flex items-center justify-between text-xs text-zinc-500 font-mono">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-500/80"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-amber-500/80"></span>
+                            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500/80"></span>
+                            <span class="ml-2 text-zinc-400 font-semibold tracking-wide">BATTLEX COCKPIT v2.4</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="px-2.5 py-0.5 rounded bg-zinc-800 text-[10px] text-emerald-400 font-bold">SYSTEM ACTIVE</span>
                         </div>
                     </div>
 
-                    <!-- View 2: Live Canvas Market Replay -->
-                    <div id="view-replay" class="relative hidden bg-[#0A0B0E] p-6 sm:p-10 min-h-[420px] sm:min-h-[580px] text-left transition-opacity duration-300">
-                        <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center font-bold">
-                                    <svg data-lucide="play" class="w-4 h-4"></svg>
+                    <!-- App Mockup Inner Viewport -->
+                    <div class="flex-1 w-full relative overflow-hidden p-6 font-sans">
+                        <div class="w-full h-full flex flex-col gap-6">
+                            
+                            <!-- KPI Metrics Grid -->
+                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <div class="p-4 rounded-xl bg-zinc-900/60 border border-white/5">
+                                    <span class="text-[10px] uppercase font-semibold text-zinc-500 tracking-wider font-mono">Win Rate</span>
+                                    <div class="text-2xl font-bold text-emerald-400 font-mono mt-1">68.4%</div>
                                 </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-white font-mono">EURUSD • 5-Minute Session Replay</h4>
-                                    <p class="text-[11px] text-zinc-400">Tick-by-tick simulation without risking live capital</p>
+                                <div class="p-4 rounded-xl bg-zinc-900/60 border border-white/5">
+                                    <span class="text-[10px] uppercase font-semibold text-zinc-500 tracking-wider font-mono">Profit Factor</span>
+                                    <div class="text-2xl font-bold text-white font-mono mt-1">2.41</div>
                                 </div>
-                            </div>
-                            <div class="flex items-center gap-2 font-mono text-xs">
-                                <span class="px-2.5 py-1 rounded bg-blue-500/20 text-blue-400 font-bold">Speed: 5x</span>
-                                <span class="px-2.5 py-1 rounded bg-emerald-500/20 text-emerald-400 font-bold">In Trade (+1.80R)</span>
-                            </div>
-                        </div>
-
-                        <!-- Candlestick Canvas -->
-                        <div class="w-full h-64 sm:h-96 rounded-xl bg-black/60 border border-white/[0.06] relative overflow-hidden flex items-center justify-center">
-                            <canvas id="live-replay-canvas" class="w-full h-full"></canvas>
-                        </div>
-                    </div>
-
-                    <!-- View 3: Trade Analytics & Metrics -->
-                    <div id="view-analytics" class="relative hidden bg-[#090A0D] p-6 sm:p-10 min-h-[420px] sm:min-h-[580px] text-left transition-opacity duration-300">
-                        <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
-                            <div>
-                                <h4 class="text-sm font-bold text-white font-mono">Trade Expectancy & Strategy Attribution</h4>
-                                <p class="text-[11px] text-zinc-400">Mathematical breakdown across 124 executed trades</p>
-                            </div>
-                            <span class="px-3 py-1 rounded-full bg-purple-500/20 text-purple-400 text-xs font-mono font-bold">Profit Factor: 2.34</span>
-                        </div>
-
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6 font-mono">
-                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
-                                <span class="text-[10px] text-zinc-500 uppercase">Win Rate</span>
-                                <p class="text-xl font-bold text-white">68.4%</p>
-                                <span class="text-[10px] text-emerald-400">+4.2% this month</span>
-                            </div>
-                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
-                                <span class="text-[10px] text-zinc-500 uppercase">Total Net P&L</span>
-                                <p class="text-xl font-bold text-emerald-400">+$12,480.00</p>
-                                <span class="text-[10px] text-zinc-400">124 trades logged</span>
-                            </div>
-                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
-                                <span class="text-[10px] text-zinc-500 uppercase">Avg Realized RR</span>
-                                <p class="text-xl font-bold text-white">2.45R</p>
-                                <span class="text-[10px] text-emerald-400">Above 2R target</span>
-                            </div>
-                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
-                                <span class="text-[10px] text-zinc-500 uppercase">Max Drawdown</span>
-                                <p class="text-xl font-bold text-red-400">-1.85%</p>
-                                <span class="text-[10px] text-emerald-400">Safe ($750 limit)</span>
-                            </div>
-                        </div>
-
-                        <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06] font-mono text-xs text-zinc-300">
-                            <div class="flex items-center justify-between mb-2">
-                                <span class="font-bold text-white">Top Performing Setup: MSS + FVG</span>
-                                <span class="text-emerald-400 font-bold">78% Win Rate (2.85 Avg R)</span>
-                            </div>
-                            <p class="text-[11px] text-zinc-400">Consistently delivers highest expectancy during New York AM Session (09:30 - 11:30 EST).</p>
-                        </div>
-                    </div>
-
-                    <!-- View 4: Risk Circuit Breaker -->
-                    <div id="view-risk" class="relative hidden bg-[#090A0D] p-6 sm:p-10 min-h-[420px] sm:min-h-[580px] text-left transition-opacity duration-300 font-mono">
-                        <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
-                            <div>
-                                <h4 class="text-sm font-bold text-white">Capital Protection Engine</h4>
-                                <p class="text-[11px] text-zinc-400">Automated daily loss limits & position sizing checks</p>
-                            </div>
-                            <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-bold">Status: SAFE</span>
-                        </div>
-
-                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-                            <div class="p-4 rounded-xl bg-[#121316] border border-emerald-500/20">
-                                <span class="text-[10px] text-zinc-500 uppercase">Daily Risk Budget</span>
-                                <p class="text-2xl font-bold text-white mt-1">$1,000</p>
-                                <span class="text-[11px] text-emerald-400">$1,000 buffer remaining</span>
-                            </div>
-                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
-                                <span class="text-[10px] text-zinc-500 uppercase">Max Account Drawdown</span>
-                                <p class="text-2xl font-bold text-white mt-1">$0</p>
-                                <span class="text-[11px] text-zinc-400">Limit: $750.00</span>
-                            </div>
-                            <div class="p-4 rounded-xl bg-[#121316] border border-white/[0.06]">
-                                <span class="text-[10px] text-zinc-500 uppercase">Position Sizing Calculator</span>
-                                <p class="text-2xl font-bold text-purple-400 mt-1">1.25 Lots</p>
-                                <span class="text-[11px] text-zinc-400">1.0% ($250 risk) per trade</span>
-                            </div>
-                        </div>
-
-                        <div class="p-4 rounded-xl bg-black/60 border border-white/[0.08] text-xs text-zinc-300">
-                            <span class="text-emerald-400 font-bold block mb-1">🛡️ Circuit Breaker Active:</span>
-                            Trading will automatically lock if daily loss exceeds $1,000 to prevent revenge trading spirals.
-                        </div>
-                    </div>
-
-                    <!-- View 5: AI Mentor -->
-                    <div id="view-ai" class="relative hidden bg-[#090A0D] p-6 sm:p-10 min-h-[420px] sm:min-h-[580px] text-left transition-opacity duration-300 font-sans">
-                        <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-6">
-                            <div class="flex items-center gap-3">
-                                <div class="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center font-bold">
-                                    <svg data-lucide="brain-circuit" class="w-4 h-4"></svg>
+                                <div class="p-4 rounded-xl bg-zinc-900/60 border border-white/5">
+                                    <span class="text-[10px] uppercase font-semibold text-zinc-500 tracking-wider font-mono">Discipline Score</span>
+                                    <div class="text-2xl font-bold text-cyan-400 font-mono mt-1">98/100</div>
                                 </div>
-                                <div>
-                                    <h4 class="text-sm font-bold text-white">Gemini 2.5 Flash Trade Critique</h4>
-                                    <p class="text-[11px] text-zinc-400">AI analysis of trade setup, risk sizing & execution discipline</p>
+                                <div class="p-4 rounded-xl bg-zinc-900/60 border border-white/5">
+                                    <span class="text-[10px] uppercase font-semibold text-zinc-500 tracking-wider font-mono">Avg R-Multiple</span>
+                                    <div class="text-2xl font-bold text-purple-400 font-mono mt-1">+2.1 R</div>
                                 </div>
                             </div>
-                            <span class="px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-400 text-xs font-mono font-bold">AI Coach Ready</span>
-                        </div>
-
-                        <div class="p-5 rounded-2xl bg-[#121316] border border-white/[0.08] mb-4">
-                            <div class="flex items-center gap-2 mb-2 font-mono text-xs text-zinc-400">
-                                <span class="text-indigo-400 font-bold">BattleX AI Mentor:</span>
-                                <span>Analysis for EURUSD Long (+2.45R)</span>
+                            
+                            <!-- Equity Graph Visual -->
+                            <div class="flex-1 min-h-0 grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="md:col-span-2 p-5 rounded-xl bg-zinc-900/60 border border-white/5 flex flex-col justify-between">
+                                    <div class="flex justify-between items-center mb-2">
+                                        <span class="text-xs font-semibold text-zinc-400 font-mono">Net Profit Curve (Last 30 Days)</span>
+                                        <span class="text-xs text-emerald-400 font-mono font-bold">+$12,480.00</span>
+                                    </div>
+                                    <div class="flex-1 h-36 flex items-end gap-2 pt-4">
+                                        <div class="bg-emerald-500/20 border-t-2 border-emerald-400 flex-1" style="height: 10%;"></div>
+                                        <div class="bg-emerald-500/20 border-t-2 border-emerald-400 flex-1" style="height: 25%;"></div>
+                                        <div class="bg-rose-500/20 border-t-2 border-rose-400 flex-1" style="height: 15%;"></div>
+                                        <div class="bg-emerald-500/20 border-t-2 border-emerald-400 flex-1" style="height: 45%;"></div>
+                                        <div class="bg-emerald-500/20 border-t-2 border-emerald-400 flex-1" style="height: 70%;"></div>
+                                        <div class="bg-emerald-500/20 border-t-2 border-emerald-400 flex-1" style="height: 95%;"></div>
+                                    </div>
+                                </div>
+                                <div class="p-5 rounded-xl bg-zinc-900/60 border border-white/5 flex flex-col justify-between font-mono text-xs">
+                                    <span class="font-semibold text-zinc-400 uppercase tracking-wider mb-3">Session Edge</span>
+                                    <div class="space-y-3">
+                                        <div class="flex justify-between">
+                                            <span class="text-zinc-500">London Session</span>
+                                            <span class="text-emerald-400 font-bold">78% Win</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-zinc-500">NY Open Session</span>
+                                            <span class="text-emerald-400 font-bold">62% Win</span>
+                                        </div>
+                                        <div class="flex justify-between">
+                                            <span class="text-zinc-500">NY Close Session</span>
+                                            <span class="text-rose-400 font-bold">18% Win</span>
+                                        </div>
+                                    </div>
+                                    <div class="p-2.5 rounded bg-rose-500/10 border border-rose-500/20 text-rose-400 text-[10px] leading-relaxed mt-4">
+                                        ⚠️ AI Diagnosis: Restrict trading after NY Close to protect equity.
+                                    </div>
+                                </div>
                             </div>
-                            <p class="text-xs text-zinc-300 leading-relaxed mb-3">
-                                "Excellent patience waiting for the 5-minute Market Structure Shift (MSS) confirmation before entering on the Fair Value Gap (FVG) discount. Your 12-pip stop loss respected the swing low properly. Execution score is 95/100."
-                            </p>
-                            <div class="flex items-center gap-3 text-[11px] font-mono text-emerald-400">
-                                <span>✓ Proper Risk Sizing (1.0%)</span>
-                                <span>✓ Followed Trade Plan</span>
-                                <span>✓ Target Met (2.45R)</span>
-                            </div>
-                        </div>
 
-                        <div class="text-center">
-                            <a href="auth.html" class="btn-white-pill !py-2 !px-5 !text-xs">
-                                Try AI Mentor on Your Trades →
-                            </a>
                         </div>
                     </div>
-
                 </div>
-
             </div>
-
         </div>
 
     </section>
 
-    <!-- ==================== 3. PLATFORM INTEGRATIONS & SYNC ==================== -->
-
-    <!-- ==================== 3. PLATFORM INTEGRATIONS & SYNC ==================== -->
-
-    <!-- ==================== 3. PLATFORM INTEGRATIONS & SYNC ==================== -->
-
-    <!-- ==================== 3. PLATFORM INTEGRATIONS & SYNC ==================== -->
-    <section id="integrations" class="w-full max-w-[1180px] mx-auto px-6 py-20">
-        <div class="text-center max-w-[560px] mx-auto mb-12">
-            <h2 class="text-2xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-                Seamlessly Syncs with Everything
-            </h2>
-            <p class="text-xs sm:text-sm text-zinc-400">
-                Import from your broker or favorite charting platform in seconds. No manual math or manual entry required.
-            </p>
-        </div>
-
-        <div class="w-full relative overflow-hidden rounded-2xl border border-white/[0.08] bg-[#0A0B0D] py-6">
-            <div class="flex w-max animate-infinite-scroll items-center gap-14 pl-14 font-mono font-semibold text-xs text-zinc-300">
-                <span class="flex items-center gap-2"><svg data-lucide="line-chart" class="w-4 h-4 text-blue-400"></svg> TradingView</span>
-                <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 5</span>
-                <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 4</span>
-                <span class="flex items-center gap-2"><svg data-lucide="activity" class="w-4 h-4 text-amber-400"></svg> cTrader</span>
-                <span class="flex items-center gap-2"><svg data-lucide="file-spreadsheet" class="w-4 h-4 text-indigo-400"></svg> CSV & Excel</span>
-                <span class="flex items-center gap-2"><svg data-lucide="trending-up" class="w-4 h-4 text-purple-400"></svg> Tradovate</span>
-                <span class="flex items-center gap-2"><svg data-lucide="shield-check" class="w-4 h-4 text-red-400"></svg> Interactive Brokers</span>
-                
-                <!-- Repeat for smooth scroll -->
-                <span class="flex items-center gap-2"><svg data-lucide="line-chart" class="w-4 h-4 text-blue-400"></svg> TradingView</span>
-                <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 5</span>
-                <span class="flex items-center gap-2"><svg data-lucide="terminal" class="w-4 h-4 text-emerald-400"></svg> MetaTrader 4</span>
-                <span class="flex items-center gap-2"><svg data-lucide="activity" class="w-4 h-4 text-amber-400"></svg> cTrader</span>
-                <span class="flex items-center gap-2"><svg data-lucide="file-spreadsheet" class="w-4 h-4 text-indigo-400"></svg> CSV & Excel</span>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== 4. 6 CORE FEATURES BENTO ==================== -->
-    <section id="features" class="w-full max-w-[1200px] mx-auto px-6 py-16">
-        <div class="text-center max-w-[560px] mx-auto mb-16">
-            <h2 class="text-3xl sm:text-4xl font-extrabold tracking-tight text-white mb-3">
-                Built for Precision & Edge
-            </h2>
-            <p class="text-xs sm:text-sm text-zinc-400">
-                Everything you need to analyze, replay, manage risk, and scale your trading consistency.
-            </p>
-        </div>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            <!-- 1. Journal -->
-            <div class="card-obsidian p-6">
-                <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
-                    <svg data-lucide="book-open" class="w-5 h-5"></svg>
-                </div>
-                <h3 class="text-base font-bold text-white mb-2">Automated Trade Journal</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                    Detailed logging with Entry, Exit, Stop Loss, Position Size, Session Tags, and instant R-multiple calculation.
-                </p>
-                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-zinc-400">
-                    Auto-calculated R:R & commissions
-                </div>
-            </div>
-
-            <!-- 2. Replay -->
-            <div class="card-obsidian p-6" id="replay">
-                <div class="w-10 h-10 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center mb-4">
-                    <svg data-lucide="play" class="w-5 h-5"></svg>
-                </div>
-                <h3 class="text-base font-bold text-white mb-2">Market Replay Simulator</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                    Step through historical market candles bar-by-bar (1x to 10x speeds) to refine execution under real conditions.
-                </p>
-                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-blue-400 font-semibold">
-                    1x • 2x • 5x • 10x playback speed
-                </div>
-            </div>
-
-            <!-- 3. Strategy Lab -->
-            <div class="card-obsidian p-6">
-                <div class="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center mb-4">
-                    <svg data-lucide="flask-conical" class="w-5 h-5"></svg>
-                </div>
-                <h3 class="text-base font-bold text-white mb-2">Strategy Lab & Backtesting</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                    Define entry/exit rules, run rule compliance audits, and simulate mathematical win-rate expectancy.
-                </p>
-                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-purple-400 font-semibold">
-                    Rules checklist & setup attribution
-                </div>
-            </div>
-
-            <!-- 4. Risk Engine -->
-            <div class="card-obsidian p-6">
-                <div class="w-10 h-10 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 flex items-center justify-center mb-4">
-                    <svg data-lucide="shield-alert" class="w-5 h-5"></svg>
-                </div>
-                <h3 class="text-base font-bold text-white mb-2">Risk Engine & Limits</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                    Daily loss circuit breakers, max drawdown limit warnings, and dynamic position size calculator.
-                </p>
-                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-red-400 font-semibold">
-                    Hard stop loss & loss budget alerts
-                </div>
-            </div>
-
-            <!-- 5. Discipline Tracker -->
-            <div class="card-obsidian p-6">
-                <div class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center mb-4">
-                    <svg data-lucide="target" class="w-5 h-5"></svg>
-                </div>
-                <h3 class="text-base font-bold text-white mb-2">Discipline & Leak Detector</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                    Identify FOMO entries, revenge trading patterns, and emotional execution mistakes with transparent scoring.
-                </p>
-                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-amber-400 font-semibold">
-                    Discipline Score (0–100%)
-                </div>
-            </div>
-
-            <!-- 6. AI Mentor -->
-            <div class="card-obsidian p-6">
-                <div class="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center mb-4">
-                    <svg data-lucide="brain-circuit" class="w-5 h-5"></svg>
-                </div>
-                <h3 class="text-base font-bold text-white mb-2">AI Trade Mentor</h3>
-                <p class="text-xs text-zinc-400 leading-relaxed mb-4">
-                    Get objective AI critique on trade quality, risk sizing, and setup discipline powered by Gemini 2.5 Flash.
-                </p>
-                <div class="p-2.5 rounded-lg bg-black/40 border border-white/[0.04] text-[11px] font-mono text-indigo-400 font-semibold">
-                    50 Free Lifetime / 100 mo. for Testers
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== 5. 60-TESTER 1-YEAR EARLY ACCESS CARD ==================== -->
-    <section id="tester-program" class="w-full max-w-[1200px] mx-auto px-6 py-16">
-        <div class="card-obsidian p-8 sm:p-12 border-amber-500/20 bg-gradient-to-b from-[#110E09] to-[#090A0C] flex flex-col md:flex-row items-center justify-between gap-8">
-            <div>
-                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-mono font-bold uppercase mb-4">
-                    🎟️ EXCLUSIVE BETA ACCESS
-                </div>
-                <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3">
-                    60-Member 1-Year Tester Program
-                </h2>
-                <p class="text-xs sm:text-sm text-zinc-400 max-w-[560px] leading-relaxed">
-                    Redeem one of the two official invitation codes (<code class="text-amber-300 font-mono font-bold">BXJ-2026-A</code> or <code class="text-amber-300 font-mono font-bold">BXJ-2026-B</code>) to claim 1 year of full BattleXJournal access with 100 AI requests/month. All regular Google sign-ins receive 50 lifetime AI requests.
-                </p>
-            </div>
-
-            <div class="flex flex-col gap-3 shrink-0 w-full sm:w-auto">
-                <a href="auth.html" class="btn-white-pill !py-3 !px-7 text-center">
-                    Redeem Access Code →
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== 6. FINAL BOTTOM CTA ==================== -->
-    <section class="w-full max-w-[1200px] mx-auto px-6 py-20 text-center">
-        <div class="card-obsidian p-10 sm:p-16 border-white/[0.1]">
-            <h2 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white mb-4">
-                Ready to trade with proof?
-            </h2>
-            <p class="text-xs sm:text-sm text-zinc-400 max-w-[480px] mx-auto mb-8 leading-relaxed">
-                Set up your trading journal in under a minute. No credit card required.
-            </p>
-
-            <div class="flex items-center justify-center gap-3">
-                <a href="auth.html" class="btn-glass-pill !py-3 !px-7 text-sm">
-                    Sign In
-                </a>
-                <a href="auth.html" class="btn-white-pill !py-3 !px-7 text-sm">
-                    Get Started Free
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- ==================== COOKIE / PRIVACY FOOTER BANNER (AS IN SCREENSHOT) ==================== -->
-    <div class="w-full bg-[#0A0B0D] border-t border-white/[0.06] py-3.5 px-6 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-zinc-400">
-        <div>
-            We use essential local storage to enhance your experience. Your data remains 100% private. <a href="auth.html" class="text-white underline ml-1">Manage preferences</a>.
-        </div>
-        <div class="flex items-center gap-3 shrink-0">
-            <button onclick="this.parentElement.parentElement.style.display='none'" class="px-3 py-1 rounded text-xs text-zinc-400 hover:text-white">Reject non-essential</button>
-            <button onclick="this.parentElement.parentElement.style.display='none'" class="btn-white-pill !py-1 !px-3 !text-xs">Accept all</button>
-        </div>
-    </div>
-
-    <!-- Main Footer -->
-    <footer class="w-full bg-black py-8 px-6 text-center text-xs text-zinc-600 border-t border-white/[0.04]">
+    <!-- ==================== 4. MINIMAL FOOTER ==================== -->
+    <footer class="w-full bg-black py-10 px-6 text-[11px] text-zinc-600 border-t border-white/[0.08] mt-auto">
         <div class="max-w-[1200px] mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <div class="flex items-center gap-2">
                 <img src="assets/battlex-logo.png" alt="BattleX" class="w-5 h-5 rounded border border-white/10 bg-black">
                 <span class="font-bold text-zinc-400">BattleXJournal</span>
                 <span>© 2026</span>
             </div>
-            <div class="flex items-center gap-6 text-zinc-500">
+            <div class="flex gap-6 text-zinc-500">
                 <a href="auth.html" class="hover:text-zinc-300">Sign in</a>
                 <a href="activate.html" class="hover:text-zinc-300">Redeem Code</a>
-                <a href="admin.html" class="hover:text-zinc-300">Admin</a>
+                <a href="admin.html" class="hover:text-zinc-300">Admin Portal</a>
             </div>
         </div>
     </footer>
 
     <script>
+        // 1. Dynamic Morphing Navbar Scroll Handler
+        const navContainer = document.getElementById('nav-container');
+        window.addEventListener('scroll', () => {
+            const scrollY = window.scrollY || window.pageYOffset;
+            if (navContainer) {
+                if (scrollY > 30) {
+                    navContainer.classList.remove('nav-dock-top');
+                    navContainer.classList.add('nav-dock-scrolled');
+                } else {
+                    navContainer.classList.remove('nav-dock-scrolled');
+                    navContainer.classList.add('nav-dock-top');
+                }
+            }
+        }, { passive: true });
+
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) {
                 lucide.createIcons();
             }
         });
     </script>
-
-    <!-- Interactive 3D Showcase Controller -->
-    <script>
-        // 1. Tab Switcher Controller
-        const views = ['dashboard', 'replay', 'analytics', 'risk', 'ai'];
-        function switchView(target) {
-            views.forEach(v => {
-                const el = document.getElementById('view-' + v);
-                const tab = document.getElementById('tab-' + v);
-                if (el) {
-                    if (v === target) {
-                        el.classList.remove('hidden');
-                        el.classList.add('block');
-                    } else {
-                        el.classList.remove('block');
-                        el.classList.add('hidden');
-                    }
-                }
-                if (tab) {
-                    if (v === target) {
-                        tab.className = 'tab-btn-active px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5';
-                    } else {
-                        tab.className = 'tab-btn-inactive px-3.5 sm:px-4 py-1.5 rounded-full text-xs font-semibold border transition-all cursor-pointer flex items-center gap-1.5';
-                    }
-                }
-            });
-
-            if (target === 'replay') {
-                setTimeout(drawInteractiveCandles, 50);
-            }
-        }
-
-        // 2. 3D Mouse Parallax & Dynamic Spotlight Tracker
-        (function() {
-            const card = document.getElementById('interactive-hero-card');
-            const spotlight = document.getElementById('showcase-spotlight-layer');
-            if (!card) return;
-
-            card.addEventListener('mousemove', (e) => {
-                const rect = card.getBoundingClientRect();
-                const x = e.clientX - rect.left;
-                const y = e.clientY - rect.top;
-                
-                const centerX = rect.width / 2;
-                const centerY = rect.height / 2;
-
-                const rotateX = ((y - centerY) / centerY) * -4.5;
-                const rotateY = ((x - centerX) / centerX) * 4.5;
-
-                card.style.transform = `perspective(1000px) rotateX(${rotateX.toFixed(2)}deg) rotateY(${rotateY.toFixed(2)}deg) scale3d(1.008, 1.008, 1.008)`;
-                
-                if (spotlight) {
-                    spotlight.style.setProperty('--mouse-x', `${x}px`);
-                    spotlight.style.setProperty('--mouse-y', `${y}px`);
-                }
-            });
-
-            card.addEventListener('mouseleave', () => {
-                card.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg) scale3d(1, 1, 1)';
-            });
-        })();
-
-        // 3. HTML5 Live Replay Candlestick Canvas
-        function drawInteractiveCandles() {
-            const canvas = document.getElementById('live-replay-canvas');
-            if (!canvas || !canvas.parentElement) return;
-
-            canvas.width = canvas.parentElement.clientWidth;
-            canvas.height = canvas.parentElement.clientHeight;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return;
-
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Draw grid
-            ctx.strokeStyle = 'rgba(255, 255, 255, 0.04)';
-            ctx.lineWidth = 1;
-            for (let y = 30; y < canvas.height; y += 40) {
-                ctx.beginPath();
-                ctx.moveTo(0, y);
-                ctx.lineTo(canvas.width, y);
-                ctx.stroke();
-            }
-
-            // Draw 24 simulated candles
-            const total = 24;
-            const candleWidth = Math.max(6, (canvas.width - 60) / total - 6);
-            let price = 1.0850;
-
-            for (let i = 0; i < total; i++) {
-                const isBull = Math.random() > 0.42;
-                const change = (Math.random() * 0.0004) * (isBull ? 1 : -1);
-                const open = price;
-                const close = open + change;
-                const high = Math.max(open, close) + Math.random() * 0.0002;
-                const low = Math.min(open, close) - Math.random() * 0.0002;
-                price = close;
-
-                const x = 30 + i * (candleWidth + 6);
-                const minP = 1.0830;
-                const maxP = 1.0890;
-                const range = maxP - minP;
-
-                const openY = canvas.height - ((open - minP) / range) * canvas.height;
-                const closeY = canvas.height - ((close - minP) / range) * canvas.height;
-                const highY = canvas.height - ((high - minP) / range) * canvas.height;
-                const lowY = canvas.height - ((low - minP) / range) * canvas.height;
-
-                const color = isBull ? '#10B981' : '#EF4444';
-
-                // Wick
-                ctx.strokeStyle = color;
-                ctx.lineWidth = 1.5;
-                ctx.beginPath();
-                ctx.moveTo(x + candleWidth / 2, highY);
-                ctx.lineTo(x + candleWidth / 2, lowY);
-                ctx.stroke();
-
-                // Body
-                ctx.fillStyle = color;
-                ctx.fillRect(x, Math.min(openY, closeY), candleWidth, Math.max(3, Math.abs(closeY - openY)));
-            }
-        }
-        window.addEventListener('resize', () => {
-            if (document.getElementById('view-replay') && !document.getElementById('view-replay').classList.contains('hidden')) {
-                drawInteractiveCandles();
-            }
-        });
-    </script>
-
 </body>
 </html>
