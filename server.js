@@ -906,6 +906,12 @@ async function handleApi(req, res, url) {
     try { uc = await coreFor(req); } catch (err) { return json(res, err.code || 401, { error: err.message }); }
     const Core = uc.core;
 
+    // ---------- RAG Knowledge Base APIs ----------
+    if (p.startsWith('/api/ai/rag/')) {
+        const ragApi = require('./server/rag-api.js');
+        return ragApi.handleRagApi(req, res, url, uc);
+    }
+
     // ---------- read-only endpoints ----------
     if (req.method === 'GET') {
         try {
@@ -1659,7 +1665,14 @@ async function handleApi(req, res, url) {
                 const cal = await EcoCal.getCalendar();
                 events = cal.ok ? EcoCal.upcomingHighImpact(cal, 12) : null;
             } catch (e) { /* calendar offline — the bot answers without news */ }
-            const r = Bot.askBot(Core, accountId, body.question, { period: body.period || '30d', memory: mem, events });
+            let ragContext = null;
+            try {
+                const rag = require('./server/rag-engine.js');
+                ragContext = await rag.retrieveContext(body.question, uc.userId);
+            } catch (err) {
+                console.error('[RAG] Retrieval during ask failed: ' + err.message);
+            }
+            const r = Bot.askBot(Core, accountId, body.question, { period: body.period || '30d', memory: mem, events, ragContext });
             if (r.memory) await Bot.saveMemory(uc.userId, accountId, r.memory);
             // AI narration: Gemini rephrases the grounded answer when a key is
             // configured; the grounding guard discards it if any number is

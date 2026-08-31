@@ -442,7 +442,8 @@ function askBot(core, accountId, question, opts) {
     const s = statsOf(tradesIn(core, accountId, sinceMs));
     const intent = rq.intent;
 
-    if (!s.n && intent !== 'tilt' && intent !== 'news' && intent !== 'memory') {
+    const hasRag = !!(opts && opts.ragContext && opts.ragContext.hasRelevantContext);
+    if (!s.n && intent !== 'tilt' && intent !== 'news' && intent !== 'memory' && !hasRag) {
         const scope = rq.window ? ' in the ' + rq.window + ' range' : ' in the current ' + period + ' range';
         return {
             question: q, intent, period,
@@ -506,7 +507,14 @@ function askBot(core, accountId, question, opts) {
         r.answer += ' ' + newsWarn;
         r.news = newsWarn;
     }
-    return Object.assign({ question: q, intent, period, window: rq.window }, r, {
+    
+    const key = process.env.AICREDITS_API_KEY || process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || '';
+    const ragContext = (opts && opts.ragContext) || null;
+    if (!key && ragContext && ragContext.hasRelevantContext) {
+        const docQuotes = ragContext.results.map(res => `[Source: ${res.title}] "${res.text}"`).join('\n\n');
+        r.answer += '\n\nEducational Reference:\n' + docQuotes;
+    }
+    return Object.assign({ question: q, intent, period, window: rq.window, ragContext }, r, {
         followUps: r.followUps || ['Am I tilting?', 'What should I focus on?', 'How is my risk sizing?', events && events.length ? 'Any news today?' : null].filter(Boolean),
         memory: Object.assign({ intent, subject: rq.subject, subjKind: rq.subjKind, window: rq.window, question: q }, pushHistory(prev, q, r.answer, intent))
     });

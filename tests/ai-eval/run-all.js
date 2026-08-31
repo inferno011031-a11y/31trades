@@ -36,7 +36,10 @@ const MODULES = [
     { label: 'ask-scripted',         file: './chat/ask-scripted.test.js' },
     { label: 'long-memory',          file: './chat/long-memory.test.js' },
     // ---- Narration -----------------------------------------------------------
-    { label: 'grounding-guard',      file: './narration/grounding-guard.test.js' }
+    { label: 'grounding-guard',      file: './narration/grounding-guard.test.js' },
+    // ---- RAG & Knowledge Base ------------------------------------------------
+    { label: 'rag-engine',           file: './rag/rag.test.js' },
+    { label: 'ai-rag-integration',   file: './rag/ai-rag-integration.test.js' }
 ];
 
 const W  = process.stdout.columns || 80;
@@ -46,7 +49,7 @@ let totalPass = 0;
 let totalFail = 0;
 const failedModules = [];
 
-function runModule(mod) {
+async function runModule(mod) {
     console.log('\n' + HR);
     console.log('  ▶  ' + mod.label);
     console.log(HR);
@@ -54,6 +57,9 @@ function runModule(mod) {
     let results;
     try {
         results = require(mod.file);
+        if (results instanceof Promise) {
+            results = await results;
+        }
     } catch (e) {
         console.log('  CRASH  ' + mod.label + ' — ' + e.message);
         totalFail++;
@@ -81,27 +87,34 @@ function runModule(mod) {
     console.log('  ' + pass + ' passed, ' + fail + ' failed');
 }
 
-// ---- Run synchronous modules ------------------------------------------------
-for (const mod of MODULES) {
-    runModule(mod);
+// ---- Run all modules sequentially -------------------------------------------
+async function main() {
+    for (const mod of MODULES) {
+        await runModule(mod);
+    }
+
+    // ---- Final summary ----------------------------------------------------------
+    console.log('\n' + '═'.repeat(Math.min(W, 72)));
+    console.log('  AI-EVAL RESULTS');
+    console.log('═'.repeat(Math.min(W, 72)));
+    console.log('  Total passed : ' + totalPass);
+    console.log('  Total failed : ' + totalFail);
+    if (failedModules.length > 0) {
+        console.log('\n  Failed modules:');
+        failedModules.forEach(m => console.log('    ✗ ' + m));
+    }
+    console.log('═'.repeat(Math.min(W, 72)));
+
+    if (totalFail > 0) {
+        console.log('\n  ✗ FAILED — ' + totalFail + ' check(s) did not pass\n');
+        process.exit(1);
+    } else {
+        console.log('\n  ✓ ALL CHECKS PASSED\n');
+        process.exit(0);
+    }
 }
 
-// ---- Final summary ----------------------------------------------------------
-console.log('\n' + '═'.repeat(Math.min(W, 72)));
-console.log('  AI-EVAL RESULTS');
-console.log('═'.repeat(Math.min(W, 72)));
-console.log('  Total passed : ' + totalPass);
-console.log('  Total failed : ' + totalFail);
-if (failedModules.length > 0) {
-    console.log('\n  Failed modules:');
-    failedModules.forEach(m => console.log('    ✗ ' + m));
-}
-console.log('═'.repeat(Math.min(W, 72)));
-
-if (totalFail > 0) {
-    console.log('\n  ✗ FAILED — ' + totalFail + ' check(s) did not pass\n');
+main().catch(err => {
+    console.error('Fatal test runner crash: ', err);
     process.exit(1);
-} else {
-    console.log('\n  ✓ ALL CHECKS PASSED\n');
-    process.exit(0);
-}
+});
