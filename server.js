@@ -1643,7 +1643,7 @@ async function handleApi(req, res, url) {
             if (AUTH_REQUIRED && process.env.SUPABASE_URL) {
                 try {
                     await Access.enforceAiQuota(uc.userId);
-                    Admin.logActivity(uc.userId, 'ai_request', { question: (b && b.question ? String(b.question).slice(0, 60) : '') });
+                    Admin.logActivity(uc.userId, 'ai_request', { question: (body && body.question ? String(body.question).slice(0, 60) : '') });
                 } catch (err) {
                     return json(res, err.code || 403, { ok: false, error: err.message });
                 }
@@ -1677,7 +1677,7 @@ async function handleApi(req, res, url) {
             // AI narration: Gemini rephrases the grounded answer when a key is
             // configured; the grounding guard discards it if any number is
             // altered, and the deterministic answer always remains.
-            if (process.env.GEMINI_API_KEY) {
+            if (process.env.GEMINI_API_KEY || process.env.AICREDITS_API_KEY || process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY) {
                 const narrated = await LLM.narrateBotAnswer(r);
                 if (narrated) { r.answer = narrated; r.ai = 'gemini'; }
             }
