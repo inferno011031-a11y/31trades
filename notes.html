@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BATTLEXJOURNAL — Trade Notes &amp; Reflections</title>
-    <meta name="description" content="BATTLEXJOURNAL Trade Notes — Write detailed narratives, reflections, lessons and attach chart snapshots for every trade.">
+    <meta name="description" content="BATTLEXJOURNAL Trade Notes — Document trade narratives, technical execution, and psychological reflections.">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <meta name="theme-color" content="#0a0a0b">
+    <meta name="theme-color" content="#080a0f">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="31TRADES">
     <meta property="og:title" content="BATTLEXJOURNAL — Trade Notes">
-    <meta property="og:description" content="BATTLEXJOURNAL Trade Notes — Write detailed narratives, reflections, lessons and attach chart snapshots for every trade.">
+    <meta property="og:description" content="BATTLEXJOURNAL Trade Notes — Document trade narratives, technical execution, and psychological reflections.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/notes.html">
 
     <link rel="stylesheet" href="assets/tokens.css">
@@ -38,12 +38,12 @@
             height: 100%;
             background: #080a0f;
             color: #ffffff;
-            font-family: var(--tm-sans);
+            font-family: var(--tm-sans, 'Plus Jakarta Sans', 'Inter', -apple-system, sans-serif);
             overflow: hidden;
             color-scheme: dark;
         }
 
-        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .num { font-family: var(--tm-mono, 'JetBrains Mono', monospace); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
         /* ---- App shell ---- */
         .sidebar {
@@ -106,7 +106,7 @@
 
         .btn-mini {
             background: rgba(255, 255, 255, 0.04); border: 1px solid rgba(255, 255, 255, 0.12); border-radius: 7px; color: #94a3b8;
-            padding: 5px 10px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s;
+            padding: 5px 10px; font-size: 11.5px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s;
         }
         .btn-mini:hover { color: #ffffff; border-color: rgba(255, 255, 255, 0.3); background: rgba(255, 255, 255, 0.08); }
 
@@ -128,14 +128,14 @@
             border-color: rgba(255, 255, 255, 0.22); background: #111520; transform: translateY(-1px);
         }
         .trade-feed-item.active {
-            border-color: #ffffff !important; background: #131826 !important; box-shadow: 0 0 16px rgba(255, 255, 255, 0.06);
+            border-color: rgba(255, 255, 255, 0.4) !important; background: #131826 !important; box-shadow: 0 0 16px rgba(255, 255, 255, 0.06);
         }
 
         /* Filter Chips */
         .filter-chip {
-            padding: 5px 12px; border-radius: 999px; font-size: 11.5px; font-weight: 600;
+            padding: 4px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 500;
             color: #94a3b8; background: #111520; border: 1px solid rgba(255, 255, 255, 0.12);
-            transition: all 0.15s; cursor: pointer; white-space: nowrap;
+            transition: all 0.15s; cursor: pointer; white-space: nowrap; display: inline-flex; align-items: center; gap: 5px;
         }
         .filter-chip:hover { color: #ffffff; border-color: rgba(255, 255, 255, 0.25); }
         .filter-chip.active { background: #ffffff !important; color: #000000 !important; font-weight: 700; border-color: #ffffff; }
@@ -159,9 +159,9 @@
 
         /* Interactive Selectable Pills */
         .selectable-pill {
-            padding: 5px 11px; border-radius: 7px; font-size: 11.5px; font-weight: 600;
+            padding: 5px 11px; border-radius: 7px; font-size: 11.5px; font-weight: 500;
             color: #94a3b8; background: #111520; border: 1px solid rgba(255, 255, 255, 0.12);
-            cursor: pointer; transition: all 0.15s ease; user-select: none; display: inline-flex; align-items: center; gap: 5px;
+            cursor: pointer; transition: all 0.15s ease; user-select: none; display: inline-flex; align-items: center; gap: 6px;
         }
         .selectable-pill:hover {
             color: #ffffff; border-color: rgba(255, 255, 255, 0.3); background: #161b29;
@@ -348,13 +348,21 @@
                             <span class="tag tag-gray text-[11px] font-mono" id="feed-stats">0 Trades</span>
                         </div>
 
-                        <!-- Filter Chips -->
+                        <!-- Filter Chips (Clean, No Emojis) -->
                         <div class="flex flex-wrap items-center gap-1.5" id="feed-filters">
                             <button class="filter-chip active" data-filter="all">All</button>
-                            <button class="filter-chip" data-filter="annotated">With Notes 📝</button>
-                            <button class="filter-chip" data-filter="empty">Needs Notes ✍️</button>
-                            <button class="filter-chip" data-filter="winners">Wins 🟢</button>
-                            <button class="filter-chip" data-filter="losers">Losses 🔴</button>
+                            <button class="filter-chip" data-filter="annotated">
+                                <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span> With Notes
+                            </button>
+                            <button class="filter-chip" data-filter="empty">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Needs Notes
+                            </button>
+                            <button class="filter-chip" data-filter="winners">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Wins
+                            </button>
+                            <button class="filter-chip" data-filter="losers">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Losses
+                            </button>
                         </div>
                     </div>
 
@@ -423,7 +431,7 @@
                     if (activeFilter === 'losers' && t.pnl >= 0) return false;
 
                     if (searchQuery) {
-                        const hay = (t.symbol + ' ' + t.setup + ' ' + t.note + ' ' + t.emotion + ' ' + t.session).toLowerCase();
+                        const hay = (t.symbol + ' ' + (t.setup || '') + ' ' + (t.note || '') + ' ' + (t.emotion || '') + ' ' + (t.session || '')).toLowerCase();
                         if (!hay.includes(searchQuery.toLowerCase())) return false;
                     }
                     return true;
@@ -449,7 +457,7 @@
                     return '<div class="trade-feed-item ' + (isActive ? 'active' : '') + '" data-trade-id="' + t.id + '">' +
                         '<div class="flex items-center justify-between gap-2">' +
                             '<div class="flex items-center gap-2">' +
-                                '<span class="font-bold text-[13.5px] text-white">' + t.symbol + '</span>' +
+                                '<span class="font-bold text-[13.5px] text-white">' + esc(t.symbol) + '</span>' +
                                 dirTag +
                             '</div>' +
                             '<div class="text-right">' +
@@ -459,14 +467,14 @@
                         '</div>' +
                         '<div class="flex items-center justify-between text-[11px] text-[#94a3b8] mt-1.5">' +
                             '<span>' + new Date(t.ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }) + '</span>' +
-                            '<span>' + (t.setup || '—') + ' · ' + (t.session || '—') + '</span>' +
+                            '<span>' + (esc(t.setup) || '—') + ' · ' + (esc(t.session) || '—') + '</span>' +
                         '</div>' +
                         '<div class="mt-2.5 pt-2 border-t border-white/5 flex items-center justify-between text-[11.5px]">' +
-                            '<div class="flex items-center gap-1 text-[#94a3b8] truncate max-w-[240px]">' +
-                                '<span>' + (t.note ? '📝' : '✍️') + '</span>' +
-                                '<span class="truncate italic">' + (t.note ? esc(t.note) : 'Click to write reflection…') + '</span>' +
+                            '<div class="flex items-center gap-1.5 text-[#94a3b8] truncate max-w-[240px]">' +
+                                '<span class="w-1.5 h-1.5 rounded-full ' + (t.note ? 'bg-sky-400' : 'bg-zinc-600') + '"></span>' +
+                                '<span class="truncate ' + (t.note ? 'text-zinc-300' : 'italic text-zinc-500') + '">' + (t.note ? esc(t.note) : 'Add reflection…') + '</span>' +
                             '</div>' +
-                            '<span class="tag tag-gray !py-0 !px-1.5 text-[10px]">' + (t.emotion || 'No emotion') + '</span>' +
+                            (t.emotion ? '<span class="tag tag-gray !py-0 !px-1.5 text-[10px]">● ' + esc(t.emotion) + '</span>' : '') +
                         '</div>' +
                     '</div>';
                 }).join('');
@@ -494,8 +502,8 @@
                 }
 
                 const statusEl = $('save-status');
-                if (statusEl) statusEl.textContent = '✓ Saved just now';
-                showToast('Trade reflection saved! 📝');
+                if (statusEl) statusEl.textContent = 'Saved just now';
+                showToast('Trade reflection saved');
                 renderFeed();
             }
 
@@ -543,44 +551,50 @@
 
                 if (!t) {
                     container.innerHTML = '<div class="py-24 text-center text-[#64748b] flex flex-col items-center">' +
-                        '<svg data-lucide="book-open-check" class="w-14 h-14 mb-3 text-white/20"></svg>' +
-                        '<h3 class="text-[17px] font-bold text-white">Select a Trade to View Notes</h3>' +
-                        '<p class="text-[13px] mt-1 max-w-sm">Choose any trade from the left feed to document your thesis, execution decisions, and chart snapshots.</p>' +
+                        '<svg data-lucide="book-open" class="w-12 h-12 mb-3 text-white/20"></svg>' +
+                        '<h3 class="text-[16px] font-bold text-white">Select a Trade</h3>' +
+                        '<p class="text-[13px] mt-1 max-w-sm text-[#94a3b8]">Choose a trade from the ledger to document your thesis, execution decisions, and chart evidence.</p>' +
                     '</div>';
                     if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                     return;
                 }
 
                 const pnlCls = t.pnl >= 0 ? 'text-[#34d399]' : 'text-[#f87171]';
+                
+                // Professional execution tags without emojis
                 const quickTags = [
-                    'Waited for setup ✅', 'Respected hard stop 🛑', 'High R:R execution 🎯', 'Let runner hit TP 🚀',
-                    'Early exit ✂️', 'FOMO impulse 🔥', 'Revenge trade 😡', 'Moved stop loss 🛡️', 'Oversized risk ⚖️', 'Hesitated on entry ⏳'
+                    'Waited for setup', 'Respected stop loss', 'High R:R execution', 'Target hit',
+                    'Early exit', 'FOMO impulse', 'Revenge trade', 'Moved stop loss', 'Oversized risk', 'Hesitated on entry'
                 ];
+
+                // Emotions without emojis, using clean dots
                 const emotions = [
-                    { id: 'Calm', label: '🧘 Calm' },
-                    { id: 'Confident', label: '⚡ Confident' },
-                    { id: 'FOMO', label: '🔥 FOMO' },
-                    { id: 'Revenge', label: '😡 Revenge' },
-                    { id: 'Anxious', label: '😰 Anxious' },
-                    { id: 'Greed', label: '🤑 Greed' },
-                    { id: 'Bored', label: '🥱 Bored' }
+                    { id: 'Calm', label: 'Calm', dot: 'bg-emerald-400' },
+                    { id: 'Confident', label: 'Confident', dot: 'bg-sky-400' },
+                    { id: 'FOMO', label: 'FOMO', dot: 'bg-amber-400' },
+                    { id: 'Revenge', label: 'Revenge', dot: 'bg-rose-400' },
+                    { id: 'Anxious', label: 'Anxious', dot: 'bg-yellow-400' },
+                    { id: 'Greed', label: 'Greed', dot: 'bg-purple-400' },
+                    { id: 'Bored', label: 'Bored', dot: 'bg-zinc-400' }
                 ];
+
+                // Adherences without emojis
                 const adherences = [
-                    { v: 'followed', l: '✅ Followed plan' },
-                    { v: 'early exit', l: '✂️ Early exit' },
-                    { v: 'moving stop', l: '🛡️ Moving stop' },
-                    { v: 'no-plan', l: '❓ No plan' },
-                    { v: 'oversized', l: '⚖️ Oversized' },
-                    { v: 'chased', l: '🏃 Chased entry' }
+                    { v: 'followed', l: 'Followed plan' },
+                    { v: 'early exit', l: 'Early exit' },
+                    { v: 'moving stop', l: 'Moved stop loss' },
+                    { v: 'no-plan', l: 'No predefined plan' },
+                    { v: 'oversized', l: 'Oversized risk' },
+                    { v: 'chased', l: 'Chased entry' }
                 ];
 
                 const tagButtons = quickTags.map(tag => {
-                    return '<button type="button" class="btn-mini !py-1 !px-2.5 text-[11.5px] tag-pill-btn" data-tag="' + esc(tag) + '">' + tag + '</button>';
+                    return '<button type="button" class="btn-mini !py-1 !px-2.5 text-[11.5px] tag-pill-btn" data-tag="' + esc(tag) + '"><span class="w-1 h-1 rounded-full bg-zinc-400"></span> ' + esc(tag) + '</button>';
                 }).join('');
 
                 const emotionPills = emotions.map(em => {
                     const isSel = (t.emotion === em.id);
-                    return '<button type="button" class="selectable-pill ' + (isSel ? 'active' : '') + '" onclick="selectEmotion(\'' + em.id + '\')">' + em.label + '</button>';
+                    return '<button type="button" class="selectable-pill ' + (isSel ? 'active' : '') + '" onclick="selectEmotion(\'' + em.id + '\')"><span class="w-1.5 h-1.5 rounded-full ' + em.dot + '"></span> ' + em.label + '</button>';
                 }).join('');
 
                 const adherencePills = adherences.map(adh => {
@@ -592,16 +606,16 @@
                     '<div class="p-5 bg-[#0e121b] border border-white/10 rounded-2xl flex flex-wrap items-center justify-between gap-4">' +
                         '<div class="flex items-center gap-3.5">' +
                             '<div class="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center font-extrabold text-[16px]">' +
-                                t.symbol.slice(0, 3) +
+                                esc(t.symbol.slice(0, 3)) +
                             '</div>' +
                             '<div>' +
                                 '<div class="flex items-center gap-2">' +
-                                    '<h2 class="text-[18px] font-bold text-white">' + t.symbol + '</h2>' +
-                                    '<span class="tag ' + (t.dir === 'Long' ? 'tag-emerald' : 'tag-red') + '">' + t.dir + '</span>' +
-                                    '<span class="tag tag-gray text-[11px]">' + (t.setup || 'Breakout') + '</span>' +
+                                    '<h2 class="text-[18px] font-bold text-white">' + esc(t.symbol) + '</h2>' +
+                                    '<span class="tag ' + (t.dir === 'Long' ? 'tag-emerald' : 'tag-red') + '">' + esc(t.dir) + '</span>' +
+                                    '<span class="tag tag-gray text-[11px]">' + (esc(t.setup) || 'Breakout') + '</span>' +
                                 '</div>' +
                                 '<div class="text-[12px] text-[#94a3b8] mt-0.5">' +
-                                    new Date(t.ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' · ' + (t.session || 'London') + ' Session' +
+                                    new Date(t.ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' }) + ' · ' + (esc(t.session) || 'London') + ' Session' +
                                 '</div>' +
                             '</div>' +
                         '</div>' +
@@ -622,12 +636,12 @@
                         '</div>' +
 
                         '<div>' +
-                            '<label class="text-[11.5px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-1.5 block">Trade Story &amp; Thesis</label>' +
-                            '<textarea id="studio-notes" class="dark-ctrl w-full min-h-[160px] text-[13.5px] leading-relaxed p-3.5 font-normal" placeholder="Why did you take this trade? What did market structure look like? What emotions occurred during hold? What is the main lesson?">' + esc(t.note || '') + '</textarea>' +
+                            '<label class="text-[11.5px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-1.5 block">Trade Thesis &amp; Management</label>' +
+                            '<textarea id="studio-notes" class="dark-ctrl w-full min-h-[160px] text-[13.5px] leading-relaxed p-3.5 font-normal" placeholder="Document setup thesis, market structure, execution triggers, and trade management reflections…">' + esc(t.note || '') + '</textarea>' +
                         '</div>' +
 
                         '<div>' +
-                            '<div class="text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-2">1-Click Execution Tags (Click to append)</div>' +
+                            '<div class="text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-2">Execution Tags (Click to append)</div>' +
                             '<div class="flex flex-wrap gap-1.5">' + tagButtons + '</div>' +
                         '</div>' +
 
@@ -643,7 +657,7 @@
                         '</div>' +
 
                         '<div class="pt-3 border-t border-white/5">' +
-                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-1.5 block">Chart Screenshot / TradingView Snapshot URL</label>' +
+                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[#94a3b8] mb-1.5 block">Chart Snapshot URL</label>' +
                             '<div class="flex items-center gap-2">' +
                                 '<input type="url" id="studio-chart" class="dark-ctrl flex-1 text-[13px] px-3 py-2" placeholder="https://www.tradingview.com/x/... or chart link" value="' + esc(t.chart_url || '') + '">' +
                                 (t.chart_url ? '<a href="' + esc(t.chart_url) + '" target="_blank" class="btn-ghost !py-2 !px-3 text-[12.5px]"><svg data-lucide="external-link" class="w-4 h-4"></svg> View Chart</a>' : '') +
