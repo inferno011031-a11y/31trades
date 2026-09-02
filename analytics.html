@@ -376,11 +376,13 @@
                     <div id="zero-state" class="hidden panel p-12 text-center"></div>
 
                     <!-- Empty state (no account) -->
-                    <div id="empty-state" class="hidden panel p-12 text-center">
-                        <svg data-lucide="bar-chart-3" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
-                        <h3 class="text-[18px] font-bold">No account yet</h3>
-                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">Analytics measures where your edge is real using your logged trades. Create an account and log your first trades to start.</p>
-                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5">
+                    <div id="empty-state" class="hidden panel p-14 text-center">
+                        <div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4 text-zinc-300 shadow-sm">
+                            <svg data-lucide="bar-chart-3" class="w-6 h-6 text-white/75"></svg>
+                        </div>
+                        <h3 class="text-[17px] font-bold text-white tracking-tight">No account configured</h3>
+                        <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed">Analytics measures where your edge is real using your logged trades. Create an account and log your first trades to start.</p>
+                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5 text-[13px]">
                             <svg data-lucide="settings" class="w-4 h-4"></svg> Set up account
                         </a>
                     </div>
@@ -725,17 +727,19 @@
                 body.classList.add('hidden');
                 zero.classList.remove('hidden');
                 zero.innerHTML =
-                    '<svg data-lucide="' + (filtered ? 'filter' : (mode === 'BACKTEST' ? 'flask-conical' : 'bar-chart-3')) + '" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>' +
-                    '<h3 class="text-[18px] font-bold">' + (filtered ? 'No trades match these filters.' : (mode === 'BACKTEST' ? 'No practice trades yet.' : 'Not enough trading data yet.')) + '</h3>' +
-                    '<p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">' +
-                        (filtered ? 'Adjust or clear the filters to see analytics again.' : (mode === 'BACKTEST' ? 'Run a backtest session on the Backtesting page — practice analytics builds from those simulated trades and never mixes with live P&amp;L.' : 'Your first trade becomes the first data point of your edge.')) +
+                    '<div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4 text-zinc-300 shadow-sm">' +
+                        '<svg data-lucide="' + (filtered ? 'search-x' : (mode === 'BACKTEST' ? 'flask-conical' : 'bar-chart-3')) + '" class="w-6 h-6 text-white/75"></svg>' +
+                    '</div>' +
+                    '<h3 class="text-[17px] font-bold text-white tracking-tight">' + (filtered ? 'No trades match these filters' : (mode === 'BACKTEST' ? 'No practice trades yet' : 'Not enough trading data yet')) + '</h3>' +
+                    '<p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed">' +
+                        (filtered ? 'Adjust or clear your active filters to see analytics again.' : (mode === 'BACKTEST' ? 'Run a backtest session on the Backtesting page — practice analytics builds from simulated trades without live P&amp;L risk.' : 'Log trades in your journal to start analyzing win rate, profit factor, and session edge.')) +
                     '</p>' +
                     '<div class="flex items-center justify-center gap-3 mt-6">' +
                         (filtered
-                            ? '<button class="btn-primary !py-2.5 !px-5" onclick="window.__clearAnFilters()"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg> Clear filters</button>'
+                            ? '<button class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2" onclick="window.__clearAnFilters()"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg> Clear filters</button>'
                             : mode === 'BACKTEST'
-                                ? '<a href="backtesting.html" class="btn-primary !py-2.5 !px-5"><svg data-lucide="flask-conical" class="w-4 h-4"></svg> Open Backtesting</a>'
-                                : '<a href="journal.html?log=1" class="btn-primary !py-2.5 !px-5"><svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade</a>') +
+                                ? '<a href="backtesting.html" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2"><svg data-lucide="flask-conical" class="w-4 h-4"></svg> Open Backtesting</a>'
+                                : '<a href="journal.html?log=1" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2"><svg data-lucide="plus" class="w-4 h-4"></svg> Log First Trade</a>') +
                     '</div>';
                 window.__clearAnFilters = clearFilters;
                 if (window.lucide) lucide.createIcons();

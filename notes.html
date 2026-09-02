@@ -444,8 +444,35 @@
                 const annotatedCount = trades.filter(t => !!t.note).length;
                 $('feed-stats').textContent = annotatedCount + ' / ' + trades.length + ' Annotated';
 
+                if (!trades.length) {
+                    container.innerHTML = 
+                        '<div class="py-14 px-4 text-center flex flex-col items-center">' +
+                            '<div class="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-3.5 text-zinc-400 shadow-sm">' +
+                                '<svg data-lucide="notebook-pen" class="w-5 h-5 text-white/70"></svg>' +
+                            '</div>' +
+                            '<div class="text-[14px] font-bold text-white">No trades yet</div>' +
+                            '<p class="text-[12px] text-zinc-400 mt-1 max-w-[220px] leading-relaxed">Log your first trade to write notes, tag rules, and attach chart evidence.</p>' +
+                            '<a href="journal.html?log=1" class="btn-primary mt-4 !py-1.5 !px-3.5 text-[12px]">' +
+                                '<svg data-lucide="plus" class="w-3.5 h-3.5"></svg> Log Trade' +
+                            '</a>' +
+                        '</div>';
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                    return;
+                }
+
                 if (!list.length) {
-                    container.innerHTML = '<div class="py-12 text-center text-[#64748b] text-[13px]">No trades match your search or filter.</div>';
+                    container.innerHTML = 
+                        '<div class="py-12 px-4 text-center flex flex-col items-center">' +
+                            '<div class="w-11 h-11 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-3 text-zinc-400 shadow-sm">' +
+                                '<svg data-lucide="search-x" class="w-5 h-5 text-zinc-400"></svg>' +
+                            '</div>' +
+                            '<div class="text-[13.5px] font-bold text-white">No matching trades</div>' +
+                            '<p class="text-[11.5px] text-zinc-400 mt-1 max-w-[200px] leading-relaxed">No trades match your filter or search query.</p>' +
+                            '<button type="button" class="btn-ghost mt-3.5 !py-1.5 !px-3 text-[11.5px]" onclick="window.resetNotesFilters()">' +
+                                'Reset Filters' +
+                            '</button>' +
+                        '</div>';
+                    if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                     return;
                 }
 
@@ -550,11 +577,19 @@
                 const container = $('studio-content');
 
                 if (!t) {
-                    container.innerHTML = '<div class="py-24 text-center text-[#64748b] flex flex-col items-center">' +
-                        '<svg data-lucide="book-open" class="w-12 h-12 mb-3 text-white/20"></svg>' +
-                        '<h3 class="text-[16px] font-bold text-white">Select a Trade</h3>' +
-                        '<p class="text-[13px] mt-1 max-w-sm text-[#94a3b8]">Choose a trade from the ledger to document your thesis, execution decisions, and chart evidence.</p>' +
-                    '</div>';
+                    container.innerHTML = 
+                        '<div class="py-24 text-center flex flex-col items-center max-w-md mx-auto">' +
+                            '<div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-4 text-zinc-300 shadow-sm">' +
+                                '<svg data-lucide="file-edit" class="w-6 h-6 text-white/70"></svg>' +
+                            '</div>' +
+                            '<h3 class="text-[17px] font-bold text-white tracking-tight">Trade Studio</h3>' +
+                            '<p class="text-[13px] text-zinc-400 mt-1.5 max-w-sm leading-relaxed">Select a trade from the ledger on the left to document setup thesis, execution rules, emotional state, and chart snapshots.</p>' +
+                            '<div class="flex items-center gap-2 mt-5 text-[11.5px] text-zinc-500">' +
+                                '<span class="px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] font-mono text-[11px] text-zinc-300">Click</span> to select trade' +
+                                '<span>·</span>' +
+                                '<span class="px-2 py-0.5 rounded bg-white/[0.04] border border-white/[0.08] font-mono text-[11px] text-zinc-300">Auto-saves</span> on typing' +
+                            '</div>' +
+                        '</div>';
                     if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                     return;
                 }

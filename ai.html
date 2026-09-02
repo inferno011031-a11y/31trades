@@ -412,22 +412,26 @@
                     </div>
 
                     <!-- Empty state (no account) -->
-                    <div id="empty-state" class="hidden glass p-12 text-center">
-                        <svg data-lucide="brain-circuit" class="w-12 h-12 mx-auto text-[var(--tm-dim)] mb-4"></svg>
-                        <h3 class="text-[18px] font-bold">No account yet</h3>
-                        <p class="text-[13.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">The Mentor analyzes your actual trading data — patterns, psychology, risk, discipline. Create an account and log trades to start.</p>
-                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5">
+                    <div id="empty-state" class="hidden glass p-14 text-center">
+                        <div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4 text-zinc-300 shadow-sm">
+                            <svg data-lucide="brain-circuit" class="w-6 h-6 text-white/75"></svg>
+                        </div>
+                        <h3 class="text-[17px] font-bold text-white tracking-tight">No account configured</h3>
+                        <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed">The AI Coach analyzes your actual trading data — patterns, psychology, risk limits, and discipline. Set up an account and log trades to begin.</p>
+                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5 text-[13px]">
                             <svg data-lucide="settings" class="w-4 h-4"></svg> Set up account
                         </a>
                     </div>
 
                     <!-- Backend-unavailable state -->
-                    <div id="offline-state" class="hidden glass p-12 text-center">
-                        <svg data-lucide="wifi-off" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-4"></svg>
-                        <h3 class="text-[16px] font-bold">Mentor unavailable</h3>
-                        <p class="text-[13px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">The mentor API did not respond. Connect to the backend and retry — the mentor never guesses, it only reads your real data.</p>
-                        <button id="retry-btn" class="btn-primary mt-5 inline-flex !py-2.5 !px-5">
-                            <svg data-lucide="refresh-cw" class="w-4 h-4"></svg> Retry
+                    <div id="offline-state" class="hidden glass p-14 text-center">
+                        <div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4 text-zinc-300 shadow-sm">
+                            <svg data-lucide="wifi-off" class="w-6 h-6 text-amber-400/80"></svg>
+                        </div>
+                        <h3 class="text-[17px] font-bold text-white tracking-tight">AI Coach offline</h3>
+                        <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed">The AI Coach answers only from your real journal data and the local backend is offline. Start the server (npm start) and retry.</p>
+                        <button id="retry-btn" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5 text-[13px]">
+                            <svg data-lucide="refresh-cw" class="w-4 h-4"></svg> Retry Connection
                         </button>
                     </div>
 

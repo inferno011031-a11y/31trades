@@ -520,12 +520,23 @@
                                 </thead>
                                 <tbody id="tbody"></tbody>
                             </table>
-                            <div id="empty-state" class="hidden py-16 text-center">
-                                <svg data-lucide="search-x" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-3"></svg>
-                                <p class="text-[14px] font-semibold text-[var(--tm-text)]">No trades match these filters</p>
-                                <p class="text-[12.5px] text-[var(--tm-dim)] mt-1">Try clearing filters or logging a new trade.</p>
-                                <button id="empty-clear" class="btn-ghost mt-5 !py-2.5 !px-5">Clear filters</button>
-                                <button id="empty-log" class="btn-primary mt-5 !py-2.5 !px-5 hidden" onclick="openEntryModal()">Log your first trade</button>
+                            <div id="empty-state" class="hidden py-16 text-center flex flex-col items-center">
+                                <div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4 text-zinc-300 shadow-sm" id="empty-icon-wrap">
+                                    <svg data-lucide="book-open" class="w-6 h-6 text-white/75" id="empty-icon"></svg>
+                                </div>
+                                <p class="text-[16px] font-bold text-[var(--tm-text)]" id="empty-title">Your journal is ready</p>
+                                <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed" id="empty-sub">Start logging your executions to unlock automated metrics, discipline audits, and AI behavioral analysis.</p>
+                                <div class="flex flex-wrap items-center justify-center gap-3 mt-6">
+                                    <button id="empty-log" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2" onclick="openEntryModal()">
+                                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log First Trade
+                                    </button>
+                                    <a id="empty-import" href="imports.html" class="btn-ghost !py-2.5 !px-4 text-[13px] inline-flex items-center gap-2">
+                                        <svg data-lucide="file-up" class="w-4 h-4"></svg> Import CSV
+                                    </a>
+                                    <button id="empty-clear" class="btn-ghost !py-2.5 !px-5 text-[13px] hidden inline-flex items-center gap-2">
+                                        <svg data-lucide="rotate-ccw" class="w-4 h-4"></svg> Clear filters
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1045,20 +1056,28 @@
                 empty.classList.toggle('hidden', list.length > 0);
 
                 // empty state copy per spec
-                const ps = empty.querySelectorAll('p');
+                const emptyTitle = $('empty-title');
+                const emptySub = $('empty-sub');
                 const btnLog = $('empty-log');
+                const btnImport = $('empty-import');
                 const btnClear = $('empty-clear');
+                const iconWrap = $('empty-icon-wrap');
                 if (hasNoTrades) {
-                    if (ps[0]) ps[0].textContent = 'Your journal is empty.';
-                    if (ps[1]) ps[1].textContent = 'Your first trade becomes the first piece of evidence.';
+                    if (emptyTitle) emptyTitle.textContent = 'Your journal is ready';
+                    if (emptySub) emptySub.textContent = 'Start logging your executions to unlock automated metrics, discipline audits, and AI behavioral analysis.';
                     if (btnLog) btnLog.classList.remove('hidden');
+                    if (btnImport) btnImport.classList.remove('hidden');
                     if (btnClear) btnClear.classList.add('hidden');
+                    if (iconWrap) iconWrap.innerHTML = '<svg data-lucide="book-open" class="w-6 h-6 text-white/75"></svg>';
                 } else if (!list.length) {
-                    if (ps[0]) ps[0].textContent = 'No trades match these filters';
-                    if (ps[1]) ps[1].textContent = 'Try clearing filters or logging a new trade.';
+                    if (emptyTitle) emptyTitle.textContent = 'No trades match these filters';
+                    if (emptySub) emptySub.textContent = 'Try adjusting or clearing your date range, setup, or session filters.';
                     if (btnLog) btnLog.classList.add('hidden');
+                    if (btnImport) btnImport.classList.add('hidden');
                     if (btnClear) btnClear.classList.remove('hidden');
+                    if (iconWrap) iconWrap.innerHTML = '<svg data-lucide="search-x" class="w-6 h-6 text-zinc-400"></svg>';
                 }
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
 
                 // account chip + profile (live from the canonical store)
                 const coreNow = window.TradeMindCore;
