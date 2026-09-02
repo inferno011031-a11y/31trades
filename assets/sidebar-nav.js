@@ -347,6 +347,45 @@
     e.preventDefault();
     return false;
   }, { capture: true });
+  // ---- Speculative Instant Navigation & Prefetching ----
+  const prefetchedLinks = new Set();
+  function prefetchTarget(href) {
+    if (!href || href.startsWith('#') || href.startsWith('javascript:') || prefetchedLinks.has(href)) return;
+    prefetchedLinks.add(href);
+    if ('fetch' in window) {
+      fetch(href, { priority: 'low' }).catch(() => {});
+    } else {
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = href;
+      link.as = 'document';
+      document.head.appendChild(link);
+    }
+  }
+
+  function attachPrefetchListeners() {
+    document.querySelectorAll('a[href]').forEach(a => {
+      const h = a.getAttribute('href');
+      if (h && (h.endsWith('.html') || (!h.includes('.') && !h.startsWith('http')))) {
+        a.addEventListener('mouseenter', () => prefetchTarget(h), { passive: true });
+        a.addEventListener('touchstart', () => prefetchTarget(h), { passive: true });
+      }
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', attachPrefetchListeners);
+  } else {
+    attachPrefetchListeners();
+  }
+
+  // Register High-Performance Service Worker for instant offline/caching
+  if ('serviceWorker' in navigator && window.location.protocol.startsWith('http')) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('/sw.js').catch(() => {});
+    });
+  }
+
 
   // 2. Disable Keyboard Shortcuts (Ctrl+U, F12, Ctrl+Shift+I, etc.)
   document.addEventListener('keydown', function(e) {

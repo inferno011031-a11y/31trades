@@ -2308,3 +2308,28 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
     }
     #dash-h1 { font-size: 18px !important; }
 }
+
+/* ==== ULTRA-LOW LATENCY RENDERING & GPU COMPOSITING ==== */
+/* Hardware-accelerated fixed composite layers */
+.sidebar,
+.topbar,
+.modal-overlay,
+.drawer,
+.toast {
+    transform: translateZ(0);
+    backface-visibility: hidden;
+}
+
+/* Skip layout calculation for offscreen table rows and cards */
+.trade-feed-item,
+.tbl tbody tr,
+table tbody tr,
+.cal-cell {
+    content-visibility: auto;
+    contain-intrinsic-size: 0 52px;
+}
+
+/* Ensure font swap avoids FOIT on mobile/cellular */
+@font-face {
+    font-display: swap;
+}

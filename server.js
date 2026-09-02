@@ -101,7 +101,8 @@ const MIME = {
 const zlib = require('zlib');
 
 const COMPRESSIBLE = { '.html': 1, '.js': 1, '.css': 1, '.json': 1, '.svg': 1, '.txt': 1, '.map': 1, '.md': 1 };
-const compCache = new Map();          // `${path}|${mtimeMs}|br|${len}` -> Buffer
+const compCache = new Map();
+const memoryFileCache = new Map();          // `${path}|${mtimeMs}|br|${len}` -> Buffer
 const COMP_CACHE_MAX = 60;            // bounded memory (a few MB)
 
 function pickEncoding(req) {
@@ -2092,54 +2093,66 @@ function serveStatic(req, res, urlPath) {
         return json(res, 403, { error: 'forbidden' });
     }
 
-    fs.stat(file, (serr, st) => {
-        if (serr) return serveNotFound(req, res, p);
-        const ext = path.extname(file).toLowerCase();
-        const etag = `"${st.mtimeMs.toString(16)}-${st.size.toString(16)}"`;
+    // Ultra-low latency memory cache: avoids disk I/O on repeated requests
+    let cached = memoryFileCache.get(file);
+    const ext = path.extname(file).toLowerCase();
 
-        // Revalidation: if the browser already has this exact version, send 304.
+    const serveFromBuffer = (st, data, etag, logoType) => {
         if (req.headers['if-none-match'] === etag) {
             res.writeHead(304, { 'ETag': etag, 'Cache-Control': cacheFor(ext) });
             return res.end();
         }
+        let outData = data;
+        const headers = {
+            'Content-Type': logoType || (MIME[ext] || 'application/octet-stream'),
+            'Cache-Control': cacheFor(ext),
+            'ETag': etag,
+            'Vary': 'Accept-Encoding'
+        };
+        if (privatePath && ext === '.html') {
+            headers['X-Robots-Tag'] = NOINDEX_DIRECTIVE;
+            outData = Buffer.from(rewriteRobotsMeta(outData.toString('utf8')), 'utf8');
+        }
+        const enc = COMPRESSIBLE[ext] && !logoType ? pickEncoding(req) : null;
+        if (enc) {
+            const { buf } = compressedVariant(file, outData, enc);
+            headers['Content-Encoding'] = enc;
+            res.writeHead(200, headers);
+            return res.end(buf);
+        }
+        res.writeHead(200, headers);
+        res.end(outData);
+    };
+
+    fs.stat(file, (serr, st) => {
+        if (serr) return serveNotFound(req, res, p);
+        const etag = `"${st.mtimeMs.toString(16)}-${st.size.toString(16)}"`;
+
+        if (cached && cached.mtimeMs === st.mtimeMs) {
+            return serveFromBuffer(st, cached.data, etag, cached.logoType);
+        }
 
         fs.readFile(file, (err, data) => {
             if (err) return serveNotFound(req, res, p);
-            // assets/logo.svg is a binary image (PNG/JPEG — the logo asset is
-            // dropped in under a .svg name); sniff the real type so the header
-            // <img> and the favicon render instead of failing an SVG parse, and
-            // skip brotli/gzip (binary images are already compressed).
             let logoType = null;
             if (p === '/assets/logo.svg' && ext === '.svg' && data.length > 3) {
                 if (data[0] === 0x89 && data[1] === 0x50 && data[2] === 0x4E && data[3] === 0x47) logoType = 'image/png';
                 else if (data[0] === 0xFF && data[1] === 0xD8 && data[2] === 0xFF) logoType = 'image/jpeg';
             }
-            const enc = COMPRESSIBLE[ext] && !logoType ? pickEncoding(req) : null;
-            const headers = {
-                'Content-Type': logoType || (MIME[ext] || 'application/octet-stream'),
-                'Cache-Control': cacheFor(ext),
-                'ETag': etag,
-                'Vary': 'Accept-Encoding'
-            };
-            if (privatePath && ext === '.html') {
-                headers['X-Robots-Tag'] = NOINDEX_DIRECTIVE;
-                data = Buffer.from(rewriteRobotsMeta(data.toString('utf8')), 'utf8');
+            if (memoryFileCache.size < 150) {
+                memoryFileCache.set(file, { mtimeMs: st.mtimeMs, data, etag, logoType });
             }
-            if (enc) {
-                const { buf } = compressedVariant(file, data, enc);
-                headers['Content-Encoding'] = enc;
-                res.writeHead(200, headers);
-                return res.end(buf);
-            }
-            res.writeHead(200, headers);
-            res.end(data);
+            serveFromBuffer(st, data, etag, logoType);
         });
     });
 }
 
-// HTML revalidates (fast 304s); fingerprint-able subresources cache hard.
+// High-performance HTTP caching: static assets cache hard; HTML revalidates with fast 304s.
 function cacheFor(ext) {
-    return 'no-store, no-cache, must-revalidate, proxy-revalidate';
+    if (ext === '.css' || ext === '.js' || ext === '.woff2' || ext === '.woff' || ext === '.ttf' || ext === '.png' || ext === '.jpg' || ext === '.jpeg' || ext === '.svg' || ext === '.ico') {
+        return 'public, max-age=86400, stale-while-revalidate=604800';
+    }
+    return 'public, max-age=0, must-revalidate';
 }
 
 /* ---------------------------------------------------------------------------
