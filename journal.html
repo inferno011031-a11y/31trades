@@ -427,31 +427,32 @@
 
     
         /* ======================================================= */
-        /* EXACT 1:1 TRADESPAD ADD TRADE MODAL (media_1788467043368.png) */
+        /* PERFECT TRADESPAD ADD TRADE MODAL (SaaS Fintech Desk)  */
         /* ======================================================= */
         .add-trade-window {
             background: #0c0e14 !important;
             border: 1px solid #1a1d26 !important;
             border-radius: 16px !important;
             width: 100% !important;
-            max-width: 790px !important;
-            padding: 24px 28px !important;
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.98) !important;
+            max-width: 800px !important;
+            padding: 26px 30px !important;
+            box-shadow: 0 35px 90px rgba(0, 0, 0, 0.98) !important;
             max-height: 90vh !important;
             overflow-y: auto !important;
             color: #ffffff !important;
+            box-sizing: border-box !important;
         }
 
         .at-header {
             display: flex !important;
             align-items: flex-start !important;
             justify-content: space-between !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 22px !important;
             border: none !important;
             padding: 0 !important;
         }
         .at-title {
-            font-size: 18px !important;
+            font-size: 19px !important;
             font-weight: 700 !important;
             color: #ffffff !important;
             letter-spacing: -0.02em !important;
@@ -460,11 +461,11 @@
         .at-sub {
             font-size: 12.5px !important;
             color: #828b99 !important;
-            margin-top: 3px !important;
+            margin-top: 4px !important;
         }
 
         .at-field-group {
-            margin-bottom: 14px !important;
+            margin-bottom: 16px !important;
         }
         .at-field-label {
             font-size: 12.5px !important;
@@ -479,6 +480,7 @@
             margin-top: 5px !important;
         }
 
+        /* Eliminate Browser Default Dropdown Arrows & Set Dark Scheme */
         .at-input-box {
             width: 100% !important;
             background: #181a20 !important;
@@ -488,15 +490,30 @@
             font-size: 13px !important;
             color: #ffffff !important;
             outline: none !important;
-            transition: border-color 0.15s ease !important;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
             box-sizing: border-box !important;
             font-family: inherit !important;
+            color-scheme: dark !important;
+            -webkit-appearance: none !important;
+            -moz-appearance: none !important;
+            appearance: none !important;
         }
         .at-input-box:focus {
             border-color: #3b4252 !important;
+            box-shadow: 0 0 0 1px #3b4252 !important;
         }
         .at-input-box::placeholder {
             color: #505a69 !important;
+        }
+
+        /* Calendar Picker dark styling */
+        .at-input-box[type="datetime-local"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.8) brightness(1.2) !important;
+            cursor: pointer !important;
+            opacity: 0.8 !important;
+        }
+        .at-input-box[type="datetime-local"]::-webkit-calendar-picker-indicator:hover {
+            opacity: 1 !important;
         }
 
         /* Segmented Side (Buy / Sell) */
@@ -509,23 +526,29 @@
             gap: 2px !important;
         }
         .at-side-btn {
-            padding: 6px 16px !important;
+            padding: 6px 18px !important;
             border-radius: 7px !important;
             font-size: 12.5px !important;
             font-weight: 600 !important;
             color: #828b99 !important;
             background: transparent !important;
-            border: none !important;
+            border: 1px solid transparent !important;
             cursor: pointer !important;
             transition: all 0.15s ease !important;
+            user-select: none !important;
         }
         .at-side-btn:hover {
             color: #ffffff !important;
         }
-        .at-side-btn.active {
+        .at-side-btn.active-buy {
             background: #1c1f28 !important;
-            color: #ffffff !important;
-            border: 1px solid #2a2f3d !important;
+            color: #22c55e !important;
+            border-color: #2a2f3d !important;
+        }
+        .at-side-btn.active-sell {
+            background: #1c1f28 !important;
+            color: #ef4444 !important;
+            border-color: #2a2f3d !important;
         }
 
         /* P&L Row */
@@ -535,29 +558,43 @@
             gap: 8px !important;
         }
         .at-pnl-prefix {
-            font-size: 13.5px !important;
+            font-size: 14px !important;
             font-weight: 700 !important;
             color: #828b99 !important;
-            width: 12px !important;
+            width: 14px !important;
             text-align: center !important;
             flex-shrink: 0 !important;
         }
 
-        /* Risk/Reward ratio Dynamic Split Bar */
+        /* Risk/Reward Editable Row with Interactive Dynamic Bar */
         .at-rr-row {
             display: flex !important;
             align-items: center !important;
-            gap: 10px !important;
+            gap: 12px !important;
         }
         .at-rr-pill {
             background: #181a20 !important;
             border: 1px solid #232733 !important;
             color: #828b99 !important;
-            font-size: 12px !important;
+            font-size: 12.5px !important;
             font-weight: 700 !important;
             padding: 5px 12px !important;
-            border-radius: 7px !important;
+            border-radius: 8px !important;
             flex-shrink: 0 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 4px !important;
+        }
+        .at-rr-input {
+            width: 36px !important;
+            background: transparent !important;
+            border: none !important;
+            color: #ffffff !important;
+            font-size: 12.5px !important;
+            font-weight: 700 !important;
+            outline: none !important;
+            padding: 0 !important;
+            font-family: inherit !important;
         }
         .at-rr-track {
             flex: 1 !important;
@@ -566,61 +603,85 @@
             display: flex !important;
             overflow: hidden !important;
             background: #181a20 !important;
+            cursor: pointer !important;
+            position: relative !important;
         }
         .at-rr-red {
             background: #ef4444 !important;
             height: 100% !important;
-            width: 45% !important;
+            width: 33.3% !important;
             border-top-left-radius: 9999px !important;
             border-bottom-left-radius: 9999px !important;
-            transition: width 0.2s ease !important;
+            transition: width 0.15s ease !important;
         }
         .at-rr-green {
             background: #22c55e !important;
             height: 100% !important;
-            width: 55% !important;
+            width: 66.7% !important;
             border-top-right-radius: 9999px !important;
             border-bottom-right-radius: 9999px !important;
-            transition: width 0.2s ease !important;
+            transition: width 0.15s ease !important;
         }
 
-        /* Rating Row */
+        /* Rating Row with Custom Smooth Slider */
         .at-rating-row {
             display: flex !important;
             align-items: center !important;
-            gap: 10px !important;
+            gap: 12px !important;
         }
         .at-rating-num {
-            font-size: 13px !important;
-            font-weight: 600 !important;
-            color: #828b99 !important;
-            width: 12px !important;
-            text-align: center !important;
+            font-size: 13.5px !important;
+            font-weight: 700 !important;
+            color: #ffffff !important;
+            width: 24px !important;
+            text-align: left !important;
             flex-shrink: 0 !important;
         }
-        .at-rating-track-wrap {
+        .at-rating-slider-wrap {
             flex: 1 !important;
-            height: 10px !important;
-            background: #181a20 !important;
-            border-radius: 9999px !important;
             position: relative !important;
+            height: 10px !important;
             display: flex !important;
             align-items: center !important;
         }
-        .at-rating-range {
-            width: 100% !important;
-            height: 100% !important;
-            opacity: 0 !important;
-            cursor: pointer !important;
+        .at-rating-track-bg {
             position: absolute !important;
-            z-index: 2 !important;
+            left: 0 !important;
+            top: 0 !important;
+            width: 100% !important;
+            height: 10px !important;
+            background: #181a20 !important;
+            border-radius: 9999px !important;
+            overflow: hidden !important;
         }
         .at-rating-fill {
             height: 100% !important;
-            background: #232834 !important;
+            background: #2e3547 !important;
             border-radius: 9999px !important;
             width: 50% !important;
-            pointer-events: none !important;
+            transition: width 0.1s ease !important;
+        }
+        .at-rating-native-slider {
+            position: absolute !important;
+            left: 0 !important;
+            top: -5px !important;
+            width: 100% !important;
+            height: 20px !important;
+            opacity: 0 !important;
+            cursor: pointer !important;
+            z-index: 5 !important;
+        }
+
+        /* Collapsible Advanced Options */
+        .at-adv-drawer {
+            max-height: 0 !important;
+            overflow: hidden !important;
+            opacity: 0 !important;
+            transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease !important;
+        }
+        .at-adv-drawer.open {
+            max-height: 600px !important;
+            opacity: 1 !important;
         }
 
         /* Right Column Cards */
@@ -643,6 +704,10 @@
             border-color: #2b3140 !important;
             background: #141720 !important;
         }
+        .at-card-dropzone.drag-over {
+            background: rgba(34, 197, 94, 0.05) !important;
+            border: 1px dashed #22c55e !important;
+        }
 
         .at-card-textarea {
             background: #111319 !important;
@@ -653,7 +718,7 @@
             color: #ffffff !important;
             outline: none !important;
             width: 100% !important;
-            height: 90px !important;
+            height: 95px !important;
             resize: none !important;
             box-sizing: border-box !important;
             font-family: inherit !important;
@@ -666,7 +731,7 @@
             color: #505a69 !important;
         }
 
-        /* Footer Buttons */
+        /* Footer */
         .at-footer {
             display: flex !important;
             align-items: center !important;
@@ -682,7 +747,7 @@
             color: #ffffff !important;
             font-size: 13px !important;
             font-weight: 600 !important;
-            padding: 7px 18px !important;
+            padding: 8px 18px !important;
             border-radius: 8px !important;
             cursor: pointer !important;
             transition: all 0.15s ease !important;
@@ -696,7 +761,7 @@
             color: #000000 !important;
             font-size: 13px !important;
             font-weight: 700 !important;
-            padding: 7px 22px !important;
+            padding: 8px 24px !important;
             border-radius: 8px !important;
             cursor: pointer !important;
             transition: all 0.15s ease !important;
@@ -1030,19 +1095,20 @@
     </div>
 
     
+    
     <!-- ======================================================= -->
-    <!-- EXACT 1:1 TRADESPAD ADD TRADE MODAL (media_1788467043368.png) -->
+    <!-- PERFECT TRADESPAD ADD TRADE MODAL (SaaS Fintech Desk)  -->
     <!-- ======================================================= -->
     <div class="overlay" id="entry-overlay" onclick="closeEntryModal()"></div>
     <div class="modal" id="entry-modal">
         <div class="add-trade-window">
-            <!-- Modal Header (No lines, clean obsidian) -->
+            <!-- Modal Header -->
             <div class="at-header">
                 <div>
                     <h2 class="at-title">Add Trade</h2>
                     <div class="at-sub">Enter the details of your trade.</div>
                 </div>
-                <button type="button" class="text-[#828b99] hover:text-white transition-colors p-1" onclick="closeEntryModal()" title="Close">
+                <button type="button" class="text-[#828b99] hover:text-white transition-colors p-1 cursor-pointer" onclick="closeEntryModal()" title="Close">
                     <svg data-lucide="x" class="w-4 h-4"></svg>
                 </button>
             </div>
@@ -1056,7 +1122,7 @@
                     <div class="at-field-group">
                         <label class="at-field-label">Symbol *</label>
                         <div class="relative">
-                            <select id="e-symbol-select" class="at-input-box appearance-none pr-8 cursor-pointer font-semibold">
+                            <select id="e-symbol-select" class="at-input-box pr-9 cursor-pointer font-semibold">
                                 <option value="NAS100" selected>NAS100</option>
                                 <option value="XAUUSD">XAUUSD</option>
                                 <option value="EURUSD">EURUSD</option>
@@ -1073,25 +1139,31 @@
                         </div>
                         <input id="e-symbol" type="hidden" value="NAS100">
                         <div class="at-field-sub">
-                            Can't find a symbol? <button type="button" class="underline font-bold text-white hover:text-emerald-400" id="btn-create-symbol">Create it</button>
+                            Can't find a symbol? <button type="button" class="underline font-bold text-white hover:text-emerald-400 cursor-pointer" id="btn-toggle-create-sym">Create it</button>
+                        </div>
+                        <!-- Inline Symbol Creator Drawer -->
+                        <div id="inline-create-sym-box" class="hidden mt-2 p-2.5 rounded-lg bg-[#12141a] border border-[#1f2430]">
+                            <div class="text-[11px] font-semibold text-[#828b99] mb-1.5">Add Custom Asset / Symbol</div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="inline-new-sym-input" class="at-input-box uppercase !py-1 !px-2.5 !text-[12px] font-bold" placeholder="e.g. SOLUSDT">
+                                <button type="button" class="px-3 py-1 rounded-md bg-[#22c55e] text-black text-[11.5px] font-bold hover:bg-[#16a34a] cursor-pointer" id="btn-confirm-inline-sym">Add</button>
+                                <button type="button" class="px-2 py-1 text-[#828b99] hover:text-white text-[11.5px] cursor-pointer" id="btn-cancel-inline-sym">✕</button>
+                            </div>
                         </div>
                     </div>
 
-                    <!-- Entry date -->
+                    <!-- Entry Date -->
                     <div class="at-field-group">
                         <label class="at-field-label">Entry date *</label>
-                        <div class="relative">
-                            <input id="e-date" type="datetime-local" class="at-input-box num pr-9">
-                            <svg data-lucide="calendar" class="w-4 h-4 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
-                        </div>
+                        <input id="e-date" type="datetime-local" class="at-input-box num">
                     </div>
 
-                    <!-- Side -->
+                    <!-- Side (Buy / Sell) -->
                     <div class="at-field-group">
                         <label class="at-field-label">Side *</label>
                         <div class="at-side-wrap">
-                            <button type="button" class="at-side-btn active" id="btn-side-buy" onclick="window.setTradeSide('Long')">Buy ↑</button>
-                            <button type="button" class="at-side-btn" id="btn-side-sell" onclick="window.setTradeSide('Short')">Sell ↓</button>
+                            <button type="button" class="at-side-btn active-buy" id="btn-side-buy">Buy ↑</button>
+                            <button type="button" class="at-side-btn" id="btn-side-sell">Sell ↓</button>
                         </div>
                         <input id="e-dir" type="hidden" value="Long">
                     </div>
@@ -1101,35 +1173,40 @@
                         <label class="at-field-label">P&amp;L *</label>
                         <div class="at-pnl-row">
                             <span class="at-pnl-prefix">$</span>
-                            <input id="e-pnl-manual" type="number" step="any" class="at-input-box num flex-1" placeholder="Enter your P&amp;L" oninput="window.handleManualPnlInput()">
+                            <input id="e-pnl-manual" type="number" step="any" class="at-input-box num flex-1" placeholder="Enter your P&amp;L">
                         </div>
                     </div>
 
-                    <!-- Risk/Reward ratio -->
+                    <!-- Risk/Reward Ratio (Fully Editable + Interactive Bar) -->
                     <div class="at-field-group">
                         <label class="at-field-label">Risk/Reward ratio</label>
                         <div class="at-rr-row">
-                            <div class="at-rr-pill" id="rr-badge-label">1:2</div>
-                            <div class="at-rr-track">
-                                <div class="at-rr-red" id="rr-bar-red"></div>
-                                <div class="at-rr-green" id="rr-bar-green"></div>
+                            <div class="at-rr-pill">
+                                <span>1:</span>
+                                <input type="number" step="0.1" min="0.1" max="20" id="at-rr-input" value="2.0" class="at-rr-input" title="Type to change ratio">
+                            </div>
+                            <div class="at-rr-track" id="at-rr-clickable-track" title="Click anywhere to set Risk:Reward ratio">
+                                <div class="at-rr-red" id="rr-bar-red" style="width: 33.3%;"></div>
+                                <div class="at-rr-green" id="rr-bar-green" style="width: 66.7%;"></div>
                             </div>
                         </div>
                     </div>
 
-                    <!-- Rating -->
+                    <!-- Rating (Smooth animated fill) -->
                     <div class="at-field-group">
                         <label class="at-field-label">Rating</label>
                         <div class="at-rating-row">
                             <span class="at-rating-num" id="rating-val-label">-</span>
-                            <div class="at-rating-track-wrap">
-                                <input type="range" min="1" max="10" step="0.5" value="5" id="e-rating-slider" class="at-rating-range" oninput="window.handleRatingSlider(this.value)">
-                                <div class="at-rating-fill" id="rating-fill-bar"></div>
+                            <div class="at-rating-slider-wrap">
+                                <div class="at-rating-track-bg">
+                                    <div class="at-rating-fill" id="rating-fill-bar" style="width: 0%;"></div>
+                                </div>
+                                <input type="range" min="0" max="10" step="0.5" value="0" id="e-rating-slider" class="at-rating-native-slider">
                             </div>
                         </div>
                     </div>
 
-                    <!-- Advanced Options Trigger -->
+                    <!-- Advanced Options (Collapsible) -->
                     <div class="pt-1">
                         <button type="button" class="flex items-center gap-1.5 text-[12.5px] font-semibold text-[#cbd5e1] hover:text-white transition-colors cursor-pointer" id="btn-toggle-adv-options">
                             <svg data-lucide="chevron-right" class="w-3.5 h-3.5 transition-transform text-[#828b99]" id="adv-options-chevron"></svg>
@@ -1137,8 +1214,8 @@
                         </button>
 
                         <div class="at-adv-drawer" id="adv-options-drawer">
-                            <div class="at-adv-inner pt-3 flex flex-col gap-2.5">
-                                <div class="grid grid-cols-2 gap-2">
+                            <div class="pt-3 flex flex-col gap-2.5">
+                                <div class="grid grid-cols-2 gap-2.5">
                                     <div>
                                         <label class="at-field-label !text-[11px]">Account</label>
                                         <select id="e-account" class="at-input-box !text-[12px] !py-1.5"></select>
@@ -1155,29 +1232,29 @@
                                 <div class="grid grid-cols-3 gap-2">
                                     <div>
                                         <label class="at-field-label !text-[11px]">Entry price</label>
-                                        <input id="e-entry" type="number" step="any" class="at-input-box num !text-[12px] !py-1.5" placeholder="100.00" oninput="window.calcTradePrices()">
+                                        <input id="e-entry" type="number" step="any" class="at-input-box num !text-[12px] !py-1.5" placeholder="100.00">
                                     </div>
                                     <div>
                                         <label class="at-field-label !text-[11px]">Exit price</label>
-                                        <input id="e-exit" type="number" step="any" class="at-input-box num !text-[12px] !py-1.5" placeholder="102.50" oninput="window.calcTradePrices()">
+                                        <input id="e-exit" type="number" step="any" class="at-input-box num !text-[12px] !py-1.5" placeholder="102.50">
                                     </div>
                                     <div>
                                         <label class="at-field-label !text-[11px]">Size (lots)</label>
-                                        <input id="e-size" type="number" step="0.01" class="at-input-box num !text-[12px] !py-1.5" value="1.00" oninput="window.calcTradePrices()">
+                                        <input id="e-size" type="number" step="0.01" class="at-input-box num !text-[12px] !py-1.5" value="1.00">
                                     </div>
                                 </div>
                                 <div class="grid grid-cols-3 gap-2">
                                     <div>
                                         <label class="at-field-label !text-[11px]">Stop loss</label>
-                                        <input id="e-sl" type="number" step="any" class="at-input-box num !text-[12px] !py-1.5" placeholder="98.00" oninput="window.calcTradePrices()">
+                                        <input id="e-sl" type="number" step="any" class="at-input-box num !text-[12px] !py-1.5" placeholder="98.00">
                                     </div>
                                     <div>
                                         <label class="at-field-label !text-[11px]">Take profit</label>
-                                        <input id="e-tp" type="number" step="any" class="at-input-box num !text-[12px] !py-1.5" placeholder="105.00" oninput="window.calcTradePrices()">
+                                        <input id="e-tp" type="number" step="any" class="at-input-box num !text-[12px] !py-1.5" placeholder="105.00">
                                     </div>
                                     <div>
                                         <label class="at-field-label !text-[11px]">Risk ($)</label>
-                                        <input id="e-risk" type="number" step="5" class="at-input-box num !text-[12px] !py-1.5" placeholder="100" oninput="window.calcTradePrices()">
+                                        <input id="e-risk" type="number" step="5" class="at-input-box num !text-[12px] !py-1.5" placeholder="100">
                                     </div>
                                 </div>
                                 <select id="e-setup" class="hidden"><option value="Breakout">Breakout</option></select>
@@ -1205,7 +1282,7 @@
                             </div>
                             <div id="at-dropzone-preview" class="hidden relative w-full h-full flex items-center justify-center">
                                 <img src="" id="at-dropzone-img" class="max-h-[125px] max-w-full rounded-lg object-contain border border-white/10" alt="Trade Screenshot">
-                                <button type="button" id="at-btn-remove-shot" class="absolute top-0 right-0 p-1 bg-red-600/80 hover:bg-red-600 text-white rounded-full transition-colors" title="Remove Screenshot">
+                                <button type="button" id="at-btn-remove-shot" class="absolute top-0 right-0 p-1 bg-red-600/80 hover:bg-red-600 text-white rounded-full transition-colors cursor-pointer" title="Remove Screenshot">
                                     <svg data-lucide="x" class="w-3.5 h-3.5"></svg>
                                 </button>
                             </div>
@@ -1218,34 +1295,42 @@
                         <textarea id="at-notes-textarea" class="at-card-textarea" placeholder="Enter your trade notes"></textarea>
                     </div>
 
-                    <!-- Strategy -->
+                    <!-- Strategy (Dynamic: No mock items, only user-defined strategies) -->
                     <div class="at-field-group">
-                        <label class="at-field-label">Strategy</label>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <label class="at-field-label !mb-0">Strategy</label>
+                            <button type="button" class="text-[11px] text-emerald-400 hover:underline cursor-pointer" id="btn-add-new-strategy">+ Add Strategy</button>
+                        </div>
                         <div class="relative">
-                            <select id="e-strategy" class="at-input-box appearance-none pr-8 cursor-pointer font-medium">
+                            <select id="e-strategy" class="at-input-box pr-9 cursor-pointer font-medium">
                                 <option value="None" selected>None</option>
-                                <option value="Breakout & Retest">Breakout &amp; Retest</option>
-                                <option value="ICT Silver Bullet">ICT Silver Bullet</option>
-                                <option value="Order Block / FVG">Order Block / FVG</option>
-                                <option value="Trend Continuation">Trend Continuation</option>
-                                <option value="London MSS + FVG">London MSS + FVG</option>
                             </select>
                             <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
                         </div>
                         <div class="at-field-sub">Select a strategy to set confluences.</div>
+
+                        <!-- Inline New Strategy Box -->
+                        <div id="inline-strategy-create-box" class="hidden mt-2 p-2.5 rounded-lg bg-[#12141a] border border-[#1f2430]">
+                            <div class="text-[11px] font-semibold text-[#828b99] mb-1.5">Create New Strategy</div>
+                            <div class="flex items-center gap-2">
+                                <input type="text" id="inline-strat-name-input" class="at-input-box !py-1 !px-2.5 !text-[12px] font-medium" placeholder="Strategy Name">
+                                <button type="button" class="px-3 py-1 rounded-md bg-[#22c55e] text-black text-[11.5px] font-bold hover:bg-[#16a34a] cursor-pointer" id="btn-save-inline-strat">Save</button>
+                                <button type="button" class="px-2 py-1 text-[#828b99] hover:text-white text-[11.5px] cursor-pointer" id="btn-cancel-inline-strat">✕</button>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
             </div>
 
-            <!-- Footer (No lines, clean buttons) -->
+            <!-- Footer -->
             <div class="at-footer">
                 <button type="button" class="at-btn-cancel" onclick="closeEntryModal()">Cancel</button>
                 <button type="button" id="save-trade" class="at-btn-save" onclick="saveTrade()">Save</button>
             </div>
         </div>
     </div>
-    
+
     <!-- ============ TRADE DETAIL DRAWER ============ -->
     <div class="overlay" id="detail-overlay" onclick="closeDetail()"></div>
     <div class="drawer" id="detail-drawer">
@@ -2100,7 +2185,7 @@
                         const stratSel = $('e-strategy');
                         const fields = {
                             symbol, dir, entry, exit, size, risk, pnl,
-                            r: risk > 0 ? Math.round((pnl / risk) * 100) / 100 : 0,
+                            r: calculatedR,
                             strategy: stratSel && stratSel.selectedOptions[0] ? stratSel.selectedOptions[0].textContent : '—',
                             strategy_id: stratSel && stratSel.value ? stratSel.value : undefined,
                             note: $('at-notes-textarea') ? $('at-notes-textarea').value : '', chart_url: currentAttachedScreenshot || undefined, rating: parseFloat($('e-rating-slider').value) || 8.5
@@ -2122,7 +2207,7 @@
                             account_id: accountId,
                             ts: new Date(),
                             symbol, dir, entry, exit, size, risk,
-                            pnl, r: risk > 0 ? Math.round((pnl / risk) * 100) / 100 : 0,
+                            pnl, r: calculatedR,
                             setup: $('e-setup').value || '—',
                             strategy: stratSel && stratSel.selectedOptions[0] ? stratSel.selectedOptions[0].textContent : '—',
                             strategy_id: stratSel && stratSel.value ? stratSel.value : undefined,
