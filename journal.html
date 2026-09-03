@@ -575,6 +575,7 @@
                 <div class="flex bg-[var(--tm-bg)] border border-[var(--tm-border)] rounded-lg p-1 mb-5">
                     <button type="button" id="tab-fast" class="entry-tab active" onclick="switchEntryMode('fast')">Fast entry</button>
                     <button type="button" id="tab-detailed" class="entry-tab" onclick="switchEntryMode('detailed')">Detailed entry</button>
+                    <button type="button" id="tab-options" class="entry-tab" onclick="switchEntryMode('options')">Options Multi-Leg</button>
                 </div>
             </div>
 
@@ -621,8 +622,8 @@
                     </div>
                 </div>
 
-                <!-- SECTION 3 · EXECUTION PRICES & RISK -->
-                <div class="tm-sec">
+                <!-- SECTION 3 · SINGLE EXECUTION PRICES & RISK -->
+                <div class="tm-sec" id="single-execution-fields">
                     <div class="tm-sec-head"><span class="tm-sec-num">03</span>Execution Prices &amp; Risk</div>
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <div>
@@ -649,6 +650,66 @@
                         <div>
                             <label class="field-label">Risk ($)</label>
                             <input id="e-risk" type="number" step="5" min="0" class="field num" placeholder="100">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- SECTION 3B · OPTIONS MULTI-LEG BUILDER -->
+                <div class="tm-sec hidden" id="options-multi-fields">
+                    <div class="tm-sec-head flex items-center justify-between">
+                        <div><span class="tm-sec-num">03</span>Options Strategy &amp; Legs</div>
+                        <span class="tag tag-purple text-[10px] font-bold">Multi-Leg Engine</span>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
+                        <div class="sm:col-span-2">
+                            <label class="field-label">Strategy Preset</label>
+                            <select id="opt-preset" class="field" onchange="window.applyOptionPreset(this.value)">
+                                <option value="BULL_CALL_SPREAD">Bull Call Spread (2 Legs)</option>
+                                <option value="BEAR_PUT_SPREAD">Bear Put Spread (2 Legs)</option>
+                                <option value="STRADDLE">Long Straddle (2 Legs)</option>
+                                <option value="STRANGLE">Long Strangle (2 Legs)</option>
+                                <option value="IRON_CONDOR">Iron Condor (4 Legs)</option>
+                                <option value="COVERED_CALL">Covered Call (2 Legs)</option>
+                                <option value="CUSTOM">Custom Multi-Leg (1-4 Legs)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="field-label">Lot Multiplier</label>
+                            <input id="opt-multiplier" type="number" class="field num" value="100" min="1" oninput="window.updateOptionsCalc()">
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Legs Table -->
+                    <div class="rounded-xl border border-white/10 bg-[#0c0d12] p-3.5 mb-3">
+                        <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-white/5">
+                            <span class="text-[12px] font-bold text-white tracking-wide">STRATEGY LEGS</span>
+                            <button type="button" class="btn-mini !py-1 !px-2.5 text-[11px] text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 inline-flex items-center gap-1" onclick="window.addOptionLeg()">
+                                <svg data-lucide="plus" class="w-3 h-3"></svg> Add Leg
+                            </button>
+                        </div>
+                        <div id="options-legs-rows" class="flex flex-col gap-2.5">
+                            <!-- Injected dynamically by JS -->
+                        </div>
+                    </div>
+
+                    <!-- Live Net Metrics Summary -->
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl border border-white/5 bg-white/[0.02]">
+                        <div>
+                            <div class="text-[10.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Net Entry</div>
+                            <div id="opt-readout-entry" class="text-[14px] font-bold font-mono text-white mt-0.5">—</div>
+                        </div>
+                        <div>
+                            <div class="text-[10.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Net Exit</div>
+                            <div id="opt-readout-exit" class="text-[14px] font-bold font-mono text-white mt-0.5">—</div>
+                        </div>
+                        <div>
+                            <div class="text-[10.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Total P&amp;L</div>
+                            <div id="opt-readout-pnl" class="text-[14px] font-bold font-mono text-emerald-400 mt-0.5">—</div>
+                        </div>
+                        <div>
+                            <div class="text-[10.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Max Risk</div>
+                            <div id="opt-readout-risk" class="text-[14px] font-bold font-mono text-amber-400 mt-0.5">—</div>
                         </div>
                     </div>
                 </div>
@@ -1109,7 +1170,8 @@
                         '<td class="tm-sym-cell">' + (window.TMAssets && TMAssets.badgeHtml
                             ? '<span class="tm-sym-badge">' + TMAssets.badgeHtml(t.symbol) + '</span>'
                             : '') + '<span class="tm-sym-name">' + t.symbol + '</span>' +
-                        (t.source === 'IMPORT' ? ' <span class="tag tag-gray !py-0.5 !px-1.5 text-[10px] align-middle">Imported</span>' : '') + '</td>' +
+                        (t.source === 'IMPORT' ? ' <span class="tag tag-gray !py-0.5 !px-1.5 text-[10px] align-middle">Imported</span>' : '') +
+                        (t.strategyType ? ' <span class="tag tag-purple !py-0.5 !px-1.5 text-[10px] align-middle font-bold">' + t.strategyType.replace(/_/g, ' ') + (t.legs ? ' · ' + t.legs.length + 'L' : '') + '</span>' : '') + '</td>' +
                         '<td>' + (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</td>' +
                         '<td class="text-[var(--tm-text)]">' + (t.setup || '—') + '</td>' +
                         '<td class="text-[var(--tm-dim)]">' + (t.session || '—') + '</td>' +
@@ -1241,7 +1303,19 @@
                 entryMode = mode;
                 $('tab-fast').classList.toggle('active', mode === 'fast');
                 $('tab-detailed').classList.toggle('active', mode === 'detailed');
-                $('detailed-fields').classList.toggle('hidden', mode === 'fast');
+                $('tab-options').classList.toggle('active', mode === 'options');
+                $('detailed-fields').classList.toggle('hidden', mode !== 'detailed');
+                $('single-execution-fields').classList.toggle('hidden', mode === 'options');
+                $('options-multi-fields').classList.toggle('hidden', mode !== 'options');
+                if (mode === 'options') {
+                    if (!window.optionLegs || window.optionLegs.length === 0) {
+                        window.applyOptionPreset($('opt-preset') ? $('opt-preset').value : 'BULL_CALL_SPREAD');
+                    } else {
+                        window.renderOptionLegs();
+                    }
+                } else {
+                    updateCalc();
+                }
             };
 
             document.querySelectorAll('[data-emotion]').forEach(b => {
@@ -1311,24 +1385,241 @@
                 }
             }
 
+            
+            // ============ OPTIONS MULTI-LEG LOGIC ============
+            window.optionLegs = [];
+
+            const PRESET_TEMPLATES = {
+                BULL_CALL_SPREAD: [
+                    { action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 4.20, exitPrice: 6.80, contracts: 1 },
+                    { action: 'SELL', optionType: 'CALL', strike: 5025, expiry: '', entryPrice: 1.80, exitPrice: 0.90, contracts: 1 }
+                ],
+                BEAR_PUT_SPREAD: [
+                    { action: 'BUY', optionType: 'PUT', strike: 5000, expiry: '', entryPrice: 4.50, exitPrice: 7.20, contracts: 1 },
+                    { action: 'SELL', optionType: 'PUT', strike: 4975, expiry: '', entryPrice: 2.10, exitPrice: 0.80, contracts: 1 }
+                ],
+                STRADDLE: [
+                    { action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 3.20, exitPrice: 5.50, contracts: 1 },
+                    { action: 'BUY', optionType: 'PUT', strike: 5000, expiry: '', entryPrice: 3.10, exitPrice: 0.60, contracts: 1 }
+                ],
+                STRANGLE: [
+                    { action: 'BUY', optionType: 'CALL', strike: 5030, expiry: '', entryPrice: 2.10, exitPrice: 4.80, contracts: 1 },
+                    { action: 'BUY', optionType: 'PUT', strike: 4970, expiry: '', entryPrice: 2.00, exitPrice: 0.50, contracts: 1 }
+                ],
+                IRON_CONDOR: [
+                    { action: 'BUY', optionType: 'PUT', strike: 4940, expiry: '', entryPrice: 0.80, exitPrice: 0.10, contracts: 1 },
+                    { action: 'SELL', optionType: 'PUT', strike: 4960, expiry: '', entryPrice: 1.90, exitPrice: 0.30, contracts: 1 },
+                    { action: 'SELL', optionType: 'CALL', strike: 5040, expiry: '', entryPrice: 1.80, exitPrice: 0.25, contracts: 1 },
+                    { action: 'BUY', optionType: 'CALL', strike: 5060, expiry: '', entryPrice: 0.70, exitPrice: 0.05, contracts: 1 }
+                ],
+                COVERED_CALL: [
+                    { action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 5000, exitPrice: 5050, contracts: 1 },
+                    { action: 'SELL', optionType: 'CALL', strike: 5080, expiry: '', entryPrice: 2.40, exitPrice: 0.50, contracts: 1 }
+                ],
+                CUSTOM: [
+                    { action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 2.50, exitPrice: 4.00, contracts: 1 }
+                ]
+            };
+
+            window.applyOptionPreset = function(presetKey) {
+                const tpl = PRESET_TEMPLATES[presetKey] || PRESET_TEMPLATES.BULL_CALL_SPREAD;
+                window.optionLegs = JSON.parse(JSON.stringify(tpl));
+                window.renderOptionLegs();
+            };
+
+            window.addOptionLeg = function() {
+                if (window.optionLegs.length >= 4) {
+                    showToast('Maximum 4 legs supported per options position');
+                    return;
+                }
+                window.optionLegs.push({ action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 1.00, exitPrice: 1.50, contracts: 1 });
+                window.renderOptionLegs();
+            };
+
+            window.removeOptionLeg = function(index) {
+                if (window.optionLegs.length <= 1) {
+                    showToast('At least 1 leg required');
+                    return;
+                }
+                window.optionLegs.splice(index, 1);
+                window.renderOptionLegs();
+            };
+
+            window.updateOptionLegField = function(index, field, value) {
+                if (!window.optionLegs[index]) return;
+                if (field === 'strike' || field === 'entryPrice' || field === 'exitPrice' || field === 'contracts') {
+                    window.optionLegs[index][field] = parseFloat(value) || 0;
+                } else {
+                    window.optionLegs[index][field] = value;
+                }
+                window.updateOptionsCalc();
+            };
+
+            window.renderOptionLegs = function() {
+                const host = $('options-legs-rows');
+                if (!host) return;
+                host.innerHTML = '';
+
+                window.optionLegs.forEach((leg, idx) => {
+                    const row = document.createElement('div');
+                    row.className = 'grid grid-cols-2 sm:grid-cols-7 gap-2 items-center bg-white/[0.03] p-2.5 rounded-lg border border-white/5';
+                    row.innerHTML =
+                        '<div>' +
+                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Action</label>' +
+                            '<select class="field !py-1.5 !px-2 text-[12px] font-bold ' + (leg.action === 'BUY' ? 'text-emerald-400' : 'text-rose-400') + '" onchange="window.updateOptionLegField(' + idx + ', \'action\', this.value); window.renderOptionLegs();">' +
+                                '<option value="BUY"' + (leg.action === 'BUY' ? ' selected' : '') + '>BUY (Long)</option>' +
+                                '<option value="SELL"' + (leg.action === 'SELL' ? ' selected' : '') + '>SELL (Short)</option>' +
+                            '</select>' +
+                        '</div>' +
+                        '<div>' +
+                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Type</label>' +
+                            '<select class="field !py-1.5 !px-2 text-[12px] font-bold" onchange="window.updateOptionLegField(' + idx + ', \'optionType\', this.value)">' +
+                                '<option value="CALL"' + (leg.optionType === 'CALL' ? ' selected' : '') + '>CALL</option>' +
+                                '<option value="PUT"' + (leg.optionType === 'PUT' ? ' selected' : '') + '>PUT</option>' +
+                            '</select>' +
+                        '</div>' +
+                        '<div>' +
+                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Strike</label>' +
+                            '<input type="number" step="1" class="field num !py-1.5 !px-2 text-[12px]" value="' + leg.strike + '" oninput="window.updateOptionLegField(' + idx + ', \'strike\', this.value)">' +
+                        '</div>' +
+                        '<div>' +
+                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Entry Prem</label>' +
+                            '<input type="number" step="0.01" class="field num !py-1.5 !px-2 text-[12px]" value="' + leg.entryPrice + '" oninput="window.updateOptionLegField(' + idx + ', \'entryPrice\', this.value)">' +
+                        '</div>' +
+                        '<div>' +
+                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Exit Prem</label>' +
+                            '<input type="number" step="0.01" class="field num !py-1.5 !px-2 text-[12px]" value="' + leg.exitPrice + '" oninput="window.updateOptionLegField(' + idx + ', \'exitPrice\', this.value)">' +
+                        '</div>' +
+                        '<div>' +
+                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Contracts</label>' +
+                            '<input type="number" step="1" min="1" class="field num !py-1.5 !px-2 text-[12px]" value="' + leg.contracts + '" oninput="window.updateOptionLegField(' + idx + ', \'contracts\', this.value)">' +
+                        '</div>' +
+                        '<div class="flex items-center justify-between sm:justify-end gap-2 pt-3 sm:pt-0">' +
+                            '<span id="leg-pnl-' + idx + '" class="num font-bold text-[12.5px]"></span>' +
+                            '<button type="button" class="btn-ghost !p-1.5 text-zinc-400 hover:text-rose-400" onclick="window.removeOptionLeg(' + idx + ')" title="Remove leg">' +
+                                '<svg data-lucide="x" class="w-3.5 h-3.5"></svg>' +
+                            '</button>' +
+                        '</div>';
+                    host.appendChild(row);
+                });
+                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
+                window.updateOptionsCalc();
+            };
+
+            window.updateOptionsCalc = function() {
+                const mult = parseFloat($('opt-multiplier') ? $('opt-multiplier').value : 100) || 100;
+                let netEntryPrem = 0;
+                let netExitPrem = 0;
+                let totalPnl = 0;
+
+                window.optionLegs.forEach((leg, idx) => {
+                    const isBuy = leg.action === 'BUY';
+                    const legPnl = (isBuy ? (leg.exitPrice - leg.entryPrice) : (leg.entryPrice - leg.exitPrice)) * (leg.contracts || 1) * mult;
+                    leg.pnl = Math.round(legPnl * 100) / 100;
+                    totalPnl += leg.pnl;
+
+                    const entryContrib = (isBuy ? leg.entryPrice : -leg.entryPrice) * (leg.contracts || 1);
+                    const exitContrib = (isBuy ? leg.exitPrice : -leg.exitPrice) * (leg.contracts || 1);
+                    netEntryPrem += entryContrib;
+                    netExitPrem += exitContrib;
+
+                    const elPnl = $('leg-pnl-' + idx);
+                    if (elPnl) {
+                        elPnl.className = 'num font-bold text-[12px] ' + (leg.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400');
+                        elPnl.textContent = (leg.pnl >= 0 ? '+' : '-') + '$' + Math.abs(leg.pnl).toFixed(1);
+                    }
+                });
+
+                totalPnl = Math.round(totalPnl * 100) / 100;
+                const isDebit = netEntryPrem >= 0;
+                const maxRisk = Math.round(Math.abs(isDebit ? netEntryPrem * mult : Math.max(100, (Math.abs(netEntryPrem) * mult) * 1.5)));
+
+                const elEntry = $('opt-readout-entry');
+                const elExit = $('opt-readout-exit');
+                const elPnl = $('opt-readout-pnl');
+                const elRisk = $('opt-readout-risk');
+
+                if (elEntry) elEntry.textContent = (isDebit ? 'Debit $' : 'Credit $') + Math.abs(netEntryPrem).toFixed(2);
+                if (elExit) elExit.textContent = (netExitPrem >= 0 ? 'Recv $' : 'Cost $') + Math.abs(netExitPrem).toFixed(2);
+                if (elPnl) {
+                    elPnl.className = 'text-[14px] font-bold font-mono ' + (totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400');
+                    elPnl.textContent = (totalPnl >= 0 ? '+' : '-') + '$' + Math.abs(totalPnl).toFixed(2);
+                }
+                if (elRisk) elRisk.textContent = '$' + maxRisk;
+
+                // Sync with canonical readouts
+                const pnlEl = $('calc-pnl');
+                const rEl = $('calc-r');
+                if (pnlEl) {
+                    pnlEl.textContent = (totalPnl >= 0 ? '+' : '-') + '$' + Math.abs(totalPnl).toFixed(2);
+                    pnlEl.className = 'num text-[16px] font-bold ' + (totalPnl >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]');
+                }
+                if (rEl) {
+                    const r = maxRisk > 0 ? (totalPnl / maxRisk) : 0;
+                    rEl.textContent = (r >= 0 ? '+' : '') + r.toFixed(2) + 'R';
+                    rEl.className = 'num text-[16px] font-bold ' + (r >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]');
+                }
+            };
+
             window.saveTrade = function() {
                 const accountId = $('e-account').value;
                 if (!accountId) {
                     showToast('Create an account first — Strategy Lab → Accounts → Add account');
                     return;
                 }
-                const symbol = $('e-symbol').value;
-                const dir = $('e-dir').value;
-                const entry = parseFloat($('e-entry').value);
-                const exit = parseFloat($('e-exit').value);
-                const size = parseFloat($('e-size').value);
-                const risk = parseFloat($('e-risk').value) || 0;
-                const sl = parseFloat($('e-sl').value), tp = parseFloat($('e-tp').value);
-                if (isNaN(entry) || isNaN(exit) || !size || size <= 0) {
-                    showToast('Enter symbol, direction, entry, exit and size');
-                    return;
+                const isOptions = entryMode === 'options';
+                let symbol = $('e-symbol').value;
+                let dir = $('e-dir').value;
+                let entry, exit, size, risk, pnl, sl, tp;
+                let strategyType = undefined;
+                let legs = undefined;
+
+                if (isOptions) {
+                    if (!window.optionLegs || window.optionLegs.length === 0) {
+                        showToast('Please configure at least one option leg');
+                        return;
+                    }
+                    const presetKey = $('opt-preset') ? $('opt-preset').value : 'BULL_CALL_SPREAD';
+                    strategyType = presetKey;
+                    legs = JSON.parse(JSON.stringify(window.optionLegs));
+                    const mult = parseFloat($('opt-multiplier') ? $('opt-multiplier').value : 100) || 100;
+
+                    let totalPnl = 0;
+                    let netEntryPrem = 0;
+                    let netExitPrem = 0;
+                    let totalContracts = 0;
+
+                    legs.forEach(l => {
+                        const isBuy = l.action === 'BUY';
+                        const legPnl = (isBuy ? (l.exitPrice - l.entryPrice) : (l.entryPrice - l.exitPrice)) * (l.contracts || 1) * mult;
+                        l.pnl = Math.round(legPnl * 100) / 100;
+                        totalPnl += l.pnl;
+                        netEntryPrem += (isBuy ? l.entryPrice : -l.entryPrice) * (l.contracts || 1);
+                        netExitPrem += (isBuy ? l.exitPrice : -l.exitPrice) * (l.contracts || 1);
+                        totalContracts += (l.contracts || 1);
+                    });
+
+                    entry = Math.round(Math.abs(netEntryPrem) * 100) / 100;
+                    exit = Math.round(Math.abs(netExitPrem) * 100) / 100;
+                    size = totalContracts;
+                    pnl = Math.round(totalPnl * 100) / 100;
+                    risk = Math.round(Math.abs(netEntryPrem >= 0 ? netEntryPrem * mult : Math.max(100, Math.abs(netEntryPrem) * mult * 1.5)));
+                    dir = totalPnl >= 0 ? 'Long' : 'Short';
+                    sl = undefined;
+                    tp = undefined;
+                } else {
+                    entry = parseFloat($('e-entry').value);
+                    exit = parseFloat($('e-exit').value);
+                    size = parseFloat($('e-size').value);
+                    risk = parseFloat($('e-risk').value) || 0;
+                    sl = parseFloat($('e-sl').value);
+                    tp = parseFloat($('e-tp').value);
+                    if (isNaN(entry) || isNaN(exit) || !size || size <= 0) {
+                        showToast('Enter symbol, direction, entry, exit and size');
+                        return;
+                    }
+                    pnl = Math.round(calcPnl(symbol, dir, entry, exit, size) * 100) / 100;
                 }
-                const pnl = Math.round(calcPnl(symbol, dir, entry, exit, size) * 100) / 100;
                 const core = window.TradeMindCore;
                 try {
                     if (editingId) {
@@ -1370,7 +1661,10 @@
                             adherence: 'followed',
                             reviewed: false,
                             note: $('e-thesis') ? $('e-thesis').value : '',
-                            emotion
+                            emotion,
+                            strategyType,
+                            legs,
+                            assetType: isOptions ? 'OPTIONS' : undefined
                         });
                     }
                     closeEntryModal();
@@ -1479,6 +1773,32 @@
                         row('Stop loss', t.stop != null ? fmtPrice(t.symbol, t.stop) : '—') + row('Take profit', t.tp != null ? fmtPrice(t.symbol, t.tp) : '—') +
                         row('Size', t.size + ' ' + sizeLabel.toLowerCase()) + row('Risk', '$' + (t.risk || 0)) +
                     '</div>');
+
+                // ---- OPTIONS LEGS BREAKDOWN (if multi-leg) ----
+                const sectionOptionsLegs = (t.legs && t.legs.length > 0) ? sec('Options Strategy · ' + (t.strategyType ? t.strategyType.replace(/_/g, ' ') : 'Multi-Leg'),
+                    '<div class="overflow-x-auto rounded-xl border border-white/10 bg-[#0c0d12] p-2.5 mb-3">' +
+                        '<table class="w-full text-[12px] text-left">' +
+                            '<thead class="text-[10px] uppercase text-[var(--tm-dim)] border-b border-white/5">' +
+                                '<tr><th class="p-2">Action</th><th class="p-2">Type</th><th class="p-2">Strike</th><th class="p-2">Entry</th><th class="p-2">Exit</th><th class="p-2 text-right">Leg P&L</th></tr>' +
+                            '</thead>' +
+                            '<tbody class="divide-y divide-white/5">' +
+                                t.legs.map(l =>
+                                    '<tr>' +
+                                        '<td class="p-2 font-bold ' + (l.action === 'BUY' ? 'text-emerald-400' : 'text-rose-400') + '">' + l.action + '</td>' +
+                                        '<td class="p-2 font-semibold text-white">' + l.optionType + '</td>' +
+                                        '<td class="p-2 num">' + l.strike + '</td>' +
+                                        '<td class="p-2 num">$' + l.entryPrice + '</td>' +
+                                        '<td class="p-2 num">$' + l.exitPrice + '</td>' +
+                                        '<td class="p-2 text-right num font-bold ' + (l.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') + '">' + (l.pnl >= 0 ? '+$' : '-$') + Math.abs(l.pnl).toFixed(2) + '</td>' +
+                                    '</tr>'
+                                ).join('') +
+                            '</tbody>' +
+                        '</table>' +
+                    '</div>' +
+                    '<div class="flex items-center justify-between text-[11.5px] text-[var(--tm-dim)] px-1">' +
+                        '<span>Strategy: <strong>' + (t.strategyType ? t.strategyType.replace(/_/g, ' ') : 'Multi-Leg') + '</strong></span>' +
+                        '<span>Total P&L: <strong class="' + (t.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') + '">' + fmtMoney(t.pnl) + '</strong></span>' +
+                    '</div>') : '';
 
                 // ---- B · YOUR PLAN ----
                 const sectionB = sec('B · Your Plan',
@@ -1645,6 +1965,7 @@
                     '<div class="flex-1 overflow-y-auto px-6 py-5 flex flex-col gap-4">' +
                         sequence +
                         sectionA +
+                        sectionOptionsLegs +
                         sectionB +
                         sectionC +
                         sectionD +
