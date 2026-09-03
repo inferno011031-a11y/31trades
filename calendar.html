@@ -133,6 +133,21 @@
         }
         .fab-btn:hover { background: #16a34a; transform: scale(1.08) translateY(-2px); }
 
+        
+        /* Grid templates with rock-solid CSS (avoids uncompiled Tailwind bracket classes) */
+        .yearly-grid-matrix {
+            display: grid !important;
+            grid-template-columns: 80px repeat(12, minmax(0, 1fr)) 100px !important;
+            gap: 8px !important;
+            align-items: center !important;
+        }
+        .monthly-grid-matrix {
+            display: grid !important;
+            grid-template-columns: repeat(7, minmax(0, 1fr)) 100px !important;
+            gap: 10px !important;
+            align-items: stretch !important;
+        }
+
         /* Yearly Grid Cells */
         .year-cell {
             border-radius: 10px; background: #0c0e14; border: 1px solid #171a23;
@@ -387,14 +402,14 @@
 
                             <!-- 13-Column Grid for Months + YTD -->
                             <div class="w-full overflow-x-auto">
-                                <div class="min-w-[920px] grid grid-cols-[80px_repeat(12,1fr)_100px] gap-2 items-center text-center text-[12px] font-bold text-[#64748b] mb-2">
+                                <div class="min-w-[920px] yearly-grid-matrix text-center text-[12px] font-bold text-[#64748b] mb-2">
                                     <div></div>
                                     <div>Jan</div><div>Feb</div><div>Mar</div><div>Apr</div><div>May</div><div>Jun</div>
                                     <div>Jul</div><div>Aug</div><div>Sep</div><div>Oct</div><div>Nov</div><div>Dec</div>
                                     <div class="text-white">YTD</div>
                                 </div>
 
-                                <div class="min-w-[920px] grid grid-cols-[80px_repeat(12,1fr)_100px] gap-2 items-center" id="yearly-matrix-row">
+                                <div class="min-w-[920px] yearly-grid-matrix" id="yearly-matrix-row">
                                     <!-- Populated dynamically -->
                                 </div>
                             </div>
@@ -481,7 +496,7 @@
                         <!-- 8-Column Calendar Grid (7 Days + Week) -->
                         <div class="tp-card !p-4">
                             <!-- Day Headers -->
-                            <div class="grid grid-cols-[repeat(7,1fr)_100px] gap-2.5 text-center text-[12px] font-bold text-[#64748b] mb-2.5">
+                            <div class="monthly-grid-matrix text-center text-[12px] font-bold text-[#64748b] mb-2.5">
                                 <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
                                 <div class="text-white">Week</div>
                             </div>
@@ -821,7 +836,7 @@
                 let weekIdx = 0;
 
                 while (curDay <= daysInMonth) {
-                    let weekHtml = '<div class="grid grid-cols-[repeat(7,1fr)_100px] gap-2.5 items-stretch">';
+                    let weekHtml = '<div class="monthly-grid-matrix">';
                     let weekPnl = 0;
                     let weekTrades = 0;
 
