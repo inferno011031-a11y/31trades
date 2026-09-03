@@ -134,7 +134,7 @@
         .fab-btn:hover { background: #16a34a; transform: scale(1.08) translateY(-2px); }
 
         
-        /* Grid templates with rock-solid CSS (avoids uncompiled Tailwind bracket classes) */
+        /* Grid templates with rock-solid CSS (avoids uncompiled Tailwind arbitrary classes) */
         .yearly-grid-matrix {
             display: grid !important;
             grid-template-columns: 80px repeat(12, minmax(0, 1fr)) 100px !important;
@@ -146,6 +146,32 @@
             grid-template-columns: repeat(7, minmax(0, 1fr)) 100px !important;
             gap: 10px !important;
             align-items: stretch !important;
+        }
+        .monthly-stats-grid {
+            display: grid !important;
+            grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
+            gap: 12px !important;
+        }
+        @media (max-width: 1024px) {
+            .monthly-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+        }
+        @media (max-width: 640px) {
+            .monthly-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+        }
+
+        /* Modal 5-stat tiles grid */
+        .modal-stats-grid {
+            display: grid !important;
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+        }
+
+        /* Modal trade table grid (6 columns) */
+        .modal-trade-grid {
+            display: grid !important;
+            grid-template-columns: 140px 110px 80px 100px 90px 1fr !important;
+            gap: 8px !important;
+            align-items: center !important;
         }
 
         /* Yearly Grid Cells */
@@ -463,7 +489,7 @@
                         </div>
 
                         <!-- 6-Metric Cards Strip -->
-                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                        <div class="monthly-stats-grid">
                             <div class="tp-card !p-4">
                                 <div class="text-[11.5px] font-semibold text-[#64748b]">Total trades</div>
                                 <div class="num text-[22px] font-bold text-white mt-1" id="m-stat-trades">1</div>
@@ -539,7 +565,7 @@
             </div>
 
             <!-- Top 5 Stat Tiles Inside Modal -->
-            <div class="grid grid-cols-5 gap-2.5 mb-4">
+            <div class="modal-stats-grid mb-4">
                 <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
                     <div class="text-[10px] font-semibold text-[#64748b]">Total trades</div>
                     <div class="num text-[17px] font-bold text-white mt-0.5" id="dm-trades">1</div>
@@ -569,7 +595,7 @@
 
             <!-- Trade Log Table Inside Modal -->
             <div class="rounded-xl border border-[#171a23] bg-[#090b10] overflow-hidden mb-4">
-                <div class="px-3.5 py-2.5 bg-white/[0.015] border-b border-[#141720] grid grid-cols-[130px_110px_80px_100px_90px_1fr] text-[11px] font-semibold text-[#64748b]">
+                <div class="px-3.5 py-2.5 bg-white/[0.015] border-b border-[#141720] modal-trade-grid text-[11px] font-semibold text-[#64748b]">
                     <div>Entry date</div>
                     <div>Symbol</div>
                     <div>Side</div>
@@ -943,7 +969,7 @@
                     const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '8.5R';
                     const pnlText = (t.pnl >= 0 ? '▲ ' : '▼ ') + fmtVal(t.pnl);
 
-                    return '<div class="px-3.5 py-3 border-b border-[#141720] grid grid-cols-[130px_110px_80px_100px_90px_1fr] items-center text-[12px] last:border-none">' +
+                    return '<div class="px-3.5 py-3 border-b border-[#141720] modal-trade-grid text-[12px] last:border-none">' +
                         '<div class="num text-[#cbd5e1] font-medium">' + dateStr + '</div>' +
                         '<div class="font-bold text-white">' + esc(t.symbol) + '</div>' +
                         '<div>' + sideHtml + '</div>' +
