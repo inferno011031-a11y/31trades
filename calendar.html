@@ -918,7 +918,7 @@
                     <!-- ======================================================= -->
                     <!-- VIEW 1: YEARLY PERFORMANCE & MACRO CURVE (Matches Image 1) -->
                     <!-- ======================================================= -->
-                    <div id="view-yearly" class="flex flex-col gap-4">
+                    <div id="view-yearly" class="hidden flex flex-col gap-4">
 
                         <!-- Card 1: Yearly Performance Matrix -->
                         <div class="tp-card">
@@ -968,13 +968,17 @@
                     <!-- ======================================================= -->
                     <!-- VIEW 2: MONTHLY CALENDAR VIEW (Matches Image 2) -->
                     <!-- ======================================================= -->
-                    <div id="view-monthly" class="hidden flex flex-col gap-4">
+                    <div id="view-monthly" class="flex flex-col gap-4">
 
                         <!-- Subnav Tab: Journal / Economic Calendar -->
-                        <div class="flex items-center justify-center">
+                        <div class="flex items-center justify-between mb-1">
                             <div class="flex items-center gap-1 p-1 rounded-lg bg-[#0c0e14] border border-[#171a23]">
-                                <button class="subnav-tab active">Journal</button>
-                                <button class="subnav-tab">Economic Calendar</button>
+                                <button type="button" class="subnav-tab active" id="tab-switch-monthly">Monthly Calendar</button>
+                                <button type="button" class="subnav-tab" id="tab-switch-yearly">Yearly Matrix</button>
+                            </div>
+                            <div class="flex items-center gap-1 p-1 rounded-lg bg-[#0c0e14] border border-[#171a23]">
+                                <a href="journal.html" class="subnav-tab">Trade Log</a>
+                                <button type="button" class="subnav-tab active">Calendar</button>
                             </div>
                         </div>
 
@@ -2520,10 +2524,40 @@
             const collapseBtn = $('collapse-btn');
             if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
 
-            // Initial load
+            function renderAll() {
+                trades = loadTrades();
+                renderChrome();
+                renderYearlyView();
+                renderMonthlyCalendar();
+            }
+            window.renderAll = renderAll;
+
+            // View switchers
+            const tabMonthly = $('tab-switch-monthly');
+            const tabYearly = $('tab-switch-yearly');
+
+            if (tabMonthly && tabYearly) {
+                tabMonthly.addEventListener('click', () => {
+                    tabMonthly.classList.add('active');
+                    tabYearly.classList.remove('active');
+                    $('view-monthly').classList.remove('hidden');
+                    $('view-yearly').classList.add('hidden');
+                    renderMonthlyCalendar();
+                });
+                tabYearly.addEventListener('click', () => {
+                    tabYearly.classList.add('active');
+                    tabMonthly.classList.remove('active');
+                    $('view-yearly').classList.remove('hidden');
+                    $('view-monthly').classList.add('hidden');
+                    renderYearlyView();
+                });
+            }
+
+            // Initial load: Default to Monthly Performance Calendar!
             trades = loadTrades();
             renderChrome();
             renderYearlyView();
+            openMonthlyView(selectedMonth);
 
             if (window.lucide) lucide.createIcons();
         })();
