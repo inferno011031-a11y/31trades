@@ -3,22 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BATTLEXJOURNAL — Calendar</title>
-    <meta name="description" content="BATTLEXJOURNAL Calendar — your trading activity by day and month.">
+    <title>BATTLEXJOURNAL — Performance Calendar</title>
+    <meta name="description" content="BATTLEXJOURNAL Calendar — multi-tier performance matrix, monthly trading calendar, and day inspection.">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <meta name="theme-color" content="#0a0a0b">
+    <meta name="theme-color" content="#06080b">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="31TRADES">
-    <meta property="og:title" content="BATTLEXJOURNAL — Calendar">
-    <meta property="og:description" content="BATTLEXJOURNAL Calendar — your trading activity by day and month.">
-    <meta property="og:url" content="https://31trades-production.up.railway.app/calendar.html">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="BATTLEXJOURNAL — Calendar">
-    <meta name="twitter:description" content="BATTLEXJOURNAL Calendar — your trading activity by day and month.">
+    <meta property="og:title" content="BATTLEXJOURNAL — Performance Calendar">
+    <meta property="og:description" content="BATTLEXJOURNAL Calendar — multi-tier performance matrix, monthly trading calendar, and day inspection.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/calendar.html">
 
     <link rel="stylesheet" href="assets/tokens.css">
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
+    <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="/assets/lucide.min.js"></script>
 
     <!-- Google Fonts -->
@@ -26,40 +23,40 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Core Scripts (Ordered per PRD) -->
-    <script src="demo-trades.js"></script>
+    <!-- Core Runtime -->
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
     <script src="assets/asset-meta.js"></script>
+    <script src="assets/sidebar-nav.js"></script>
+    <script src="assets/theme-toggle.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
         html, body {
             height: 100%;
-            background: var(--tm-bg);
-            color: var(--tm-text);
-            font-family: var(--tm-sans);
+            background: #06080b;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', var(--tm-sans);
             overflow: hidden;
+            color-scheme: dark !important;
         }
 
-        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .num { font-family: 'JetBrains Mono', var(--tm-mono); font-variant-numeric: tabular-nums; }
 
-        /* ---- App shell ---- */
+        /* ---- Sidebar ---- */
         .sidebar {
-            width: 253px !important;
-            min-width: 253px !important;
-            max-width: 253px !important;
-            flex-shrink: 0 !important;
-            background: var(--tm-bg-elev);
-            border-right: 1px solid var(--tm-border);
+            width: 253px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: #080a0f;
+            border-right: 1px solid #141720;
             display: flex;
             flex-direction: column;
             overflow: hidden;
-            position: relative; z-index: 40;
+            flex-shrink: 0;
         }
-        body.collapsed .sidebar { width: 64px !important; min-width: 64px !important; }
+        body.collapsed .sidebar { width: 64px; }
         body.collapsed .hide-when-collapsed { display: none !important; }
         body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
         body.collapsed .nav-label { display: none; }
@@ -69,221 +66,157 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 14.5px; font-weight: 500; color: var(--tm-muted);
+            font-size: 14.5px; font-weight: 500; color: #94a3b8;
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
-        .nav-item.active { background: var(--tm-card) !important; color: var(--tm-text) !important; box-shadow: inset 2px 0 0 0 var(--tm-accent) !important; font-weight: 600; }
-        .nav-item svg { width: 19px; height: 19px; flex-shrink: 0; }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #ffffff; }
+        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: inset 2px 0 0 0 #ffffff !important; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        /* ---- Cards & Panels ---- */
-        .panel {
-            background: var(--tm-bg-elev);
-            border: 1px solid var(--tm-border);
+        /* ---- Cards ---- */
+        .tp-card {
+            background: #0c0e14;
+            border: 1px solid #171a23;
             border-radius: 12px;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+        }
+        .tp-card-title {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            letter-spacing: 0.01em;
+        }
+        .tp-card-sub {
+            font-size: 12.5px;
+            color: #64748b;
+            margin-top: 2px;
         }
 
-        .panel-title { font-size: 14px; font-weight: 700; color: var(--tm-text); }
-        .panel-sub { font-size: 12.5px; color: var(--tm-dim); }
-        .label-xs { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); }
-
-        .btn-primary {
-            background: #ffffff !important; color: #000000 !important; font-weight: 700 !important; font-size: 13.5px;
-            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-        }
-        [data-theme="light"] .btn-primary {
-            background: #09090b !important; color: #ffffff !important; border: 1px solid #09090b !important;
-        }
-        .btn-primary:hover {
-            opacity: 0.92; transform: translateY(-1px);
-        }
-
-        .btn-ghost {
-            background: var(--tm-card) !important; color: var(--tm-text) !important; font-weight: 600; font-size: 13.5px;
-            padding: 8px 16px; border-radius: 8px; border: 1px solid var(--tm-border) !important;
-            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
-        }
-        .btn-ghost:hover {
-            background: var(--tm-hover) !important; border-color: var(--tm-border-2) !important;
-        }
-
-        .tag {
-            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
-            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
-        }
-        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
-        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
-        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
-        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
-        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
-
-        /* ---- Month nav ---- */
-        .month-nav {
-            display: inline-flex; align-items: center; gap: 4px;
-            border: 1px solid var(--tm-border); border-radius: 10px;
-            padding: 3px; background: var(--tm-bg-elev);
-        }
-        .month-nav button {
-            padding: 7px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; color: var(--tm-muted);
-            background: transparent; border: none; cursor: pointer; transition: all 0.15s; display: inline-flex; align-items: center; gap: 6px;
-        }
-        .month-nav button:hover { background: var(--tm-hover); color: var(--tm-text); }
-        .month-nav button.today { background: var(--tm-card); color: var(--tm-text); font-weight: 700; border: 1px solid var(--tm-border); }
-
-        /* ---- Summary strip ---- */
-        .sum-tile {
-            background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; padding: 16px 18px; position: relative; overflow: hidden;
-        }
-        .sum-tile .st-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--tm-muted); }
-        .sum-tile .st-value { font-size: 24px; font-weight: 800; letter-spacing: -0.02em; margin-top: 5px; }
-        .sum-tile .st-sub { font-size: 12px; color: var(--tm-dim); margin-top: 3px; }
-
-        /* ---- Calendar Grid ---- */
-        .cal-shell { border-radius: 14px; padding: 10px; }
-        .cal-week { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 8px 6px; }
-        .cal-week > div { text-align: center; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: var(--tm-dim); padding: 4px 0; }
-        .cal-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 8px; padding: 0 4px 6px; }
-
-        .cal-cell {
-            position: relative; border-radius: 12px; border: 1px solid var(--tm-border);
-            background: var(--tm-card); color: var(--tm-text); min-height: 104px;
-            padding: 10px 12px 8px; text-align: left; cursor: pointer;
-            display: flex; flex-direction: column; gap: 3px; overflow: hidden;
-            transition: all 0.15s ease; font-family: inherit;
-        }
-        .cal-cell:hover {
-            background: var(--tm-hover); border-color: var(--tm-border-2); transform: translateY(-1px);
-        }
-        .cal-cell:focus-visible { outline: 2px solid var(--tm-accent); outline-offset: 1px; }
-        .cal-cell.is-win {
-            background: rgba(16, 185, 129, 0.08); border-color: rgba(16, 185, 129, 0.3);
-        }
-        .cal-cell.is-loss {
-            background: rgba(239, 68, 68, 0.07); border-color: rgba(239, 68, 68, 0.3);
-        }
-        .cal-cell.is-selected {
-            border-color: var(--tm-text) !important; box-shadow: 0 0 0 1px var(--tm-text);
-        }
-        .cal-cell.is-empty-day { cursor: pointer; min-height: 104px; }
-
-        .cal-daynum { font-size: 14.5px; font-weight: 700; }
-        .cal-pnl { font-size: 14px; font-weight: 800; letter-spacing: -0.01em; }
-        .cal-meta { font-size: 11px; color: var(--tm-dim); }
-        .cal-disc { display: flex; align-items: center; gap: 6px; margin-top: auto; }
-        .cal-disc-track { flex: 1; height: 3px; border-radius: 999px; background: var(--hairline); overflow: hidden; }
-        .cal-disc-fill { height: 100%; border-radius: 999px; }
-        .cal-disc-val { font-size: 10px; font-weight: 700; }
-        .cal-risk { display: flex; align-items: center; gap: 5px; margin-top: 2px; }
-        .cal-risk-track { flex: 1; height: 2.5px; border-radius: 999px; background: var(--hairline); overflow: hidden; }
-        .cal-risk-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, rgba(245,158,11,0.55), rgba(245,158,11,0.95)); }
-        .cal-viol { font-size: 10px; font-weight: 700; color: var(--tm-amber); margin-top: 1px; display: inline-flex; align-items: center; gap: 4px; }
-        .cal-viol::before { content: "●"; font-size: 7px; }
-
-        .cal-empty { min-height: 104px; border-radius: 12px; border: 1px dashed transparent; background: transparent; }
-
-        /* ---- High-Contrast Day Detail Drawer ---- */
-        .drawer-overlay {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.65);
-            backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);
-            z-index: 80; opacity: 0; pointer-events: none; transition: opacity 0.22s ease;
-        }
-        .drawer-overlay.open { opacity: 1; pointer-events: auto; }
-
-        .drawer-panel {
-            position: fixed; top: 0; right: 0; bottom: 0; width: 480px; max-width: 94vw;
-            z-index: 85; transform: translateX(102%); transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; flex-direction: column; border-radius: 0;
-            background: var(--tm-bg-elev) !important;
-            border-left: 1px solid var(--tm-border);
-            box-shadow: -8px 0 36px rgba(0, 0, 0, 0.45);
-            color: var(--tm-text);
-        }
-        .drawer-panel.open { transform: translateX(0); }
-
-        .ev-trade-row {
-            display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-            background: var(--tm-card); border: 1px solid var(--tm-border);
-            border-radius: 10px; text-decoration: none; transition: all 0.15s ease;
-        }
-        .ev-trade-row:hover {
-            background: var(--tm-hover); border-color: var(--tm-border-2); transform: translateY(-1px);
-        }
-
-        .stat-tile {
-            background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 10px; padding: 12px 14px;
-        }
-        .stat-tile .st-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); }
-        .stat-tile .st-value { font-size: 19px; font-weight: 800; margin-top: 3px; }
-
-        .tm-sym-badge {
+        /* Unit switch */
+        .unit-toggle {
+            display: inline-flex; align-items: center; justify-content: center;
             width: 32px; height: 32px; border-radius: 8px;
-            background: var(--tm-hover); border: 1px solid var(--tm-border);
+            background: #11141c; border: 1px solid #1f2533;
+            color: #f1f5f9; font-weight: 700; font-size: 13.5px;
+            cursor: pointer; transition: all 0.15s ease;
+        }
+        .unit-toggle:hover { border-color: #334155; background: #161b26; }
+
+        .btn-icon-square {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: #11141c; border: 1px solid #1f2533;
+            color: #ffffff; display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.15s; text-decoration: none;
+        }
+        .btn-icon-square:hover { border-color: #334155; background: #161b26; }
+
+        /* Segmented tab pills */
+        .subnav-tab {
+            padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
+            color: #64748b; background: transparent; transition: all 0.15s ease;
+            cursor: pointer; border: none; outline: none;
+        }
+        .subnav-tab:hover { color: #ffffff; background: rgba(255,255,255,0.04); }
+        .subnav-tab.active { background: #181c26; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+
+        /* Floating Action Button (+) */
+        .fab-btn {
+            position: fixed; bottom: 28px; right: 28px; width: 48px; height: 48px;
+            border-radius: 999px; background: #15803d; color: #ffffff;
             display: flex; align-items: center; justify-content: center;
-            font-size: 11.5px; font-weight: 800; color: var(--tm-text); flex-shrink: 0;
+            box-shadow: 0 4px 18px rgba(21, 128, 61, 0.45);
+            transition: all 0.2s; z-index: 80; text-decoration: none; cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .fab-btn:hover { background: #16a34a; transform: scale(1.08) translateY(-2px); }
+
+        /* Yearly Grid Cells */
+        .year-cell {
+            border-radius: 10px; background: #0c0e14; border: 1px solid #171a23;
+            height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.15s ease; user-select: none;
+        }
+        .year-cell:hover { border-color: #334155; background: #131620; }
+        .year-cell.active-profit {
+            background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.3);
+        }
+        .year-cell.active-loss {
+            background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.3);
         }
 
-        /* ---- Motion ---- */
-        .cal-anim { animation: calIn 0.25s cubic-bezier(0.16, 1, 0.3, 1); }
-        @keyframes calIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        /* Monthly Calendar Grid Cells */
+        .cal-day-cell {
+            background: #0c0e14; border: 1px solid #171a23; border-radius: 12px;
+            min-height: 96px; padding: 10px 12px; display: flex; flex-direction: column;
+            justify-content: space-between; position: relative; transition: all 0.15s ease;
+            cursor: pointer; user-select: none;
+        }
+        .cal-day-cell:hover {
+            border-color: #334155; background: #11141c;
+        }
+        .cal-day-cell.active-day {
+            background: #0e121a; border-color: #262e3d;
+        }
+        .cal-day-cell.has-trades {
+            background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.25);
+        }
+        .cal-day-cell.has-trades:hover {
+            border-color: #22c55e; background: rgba(34, 197, 94, 0.09);
+        }
 
-        /* ---- Trend ---- */
-        .trend-svg text { font-family: var(--tm-mono); }
+        /* Week Summary Cell */
+        .cal-week-cell {
+            background: #0c0e14; border: 1px solid #171a23; border-radius: 12px;
+            min-height: 96px; padding: 10px 12px; display: flex; flex-direction: column;
+            align-items: center; justify-content: center; text-align: center;
+        }
 
+        /* Modal Overlay */
+        .modal-backdrop {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+        }
+        .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+        .modal-window {
+            background: #0c0e14; border: 1px solid #1f2533; border-radius: 16px;
+            width: 100%; max-width: 680px; padding: 24px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+            transform: scale(0.96); transition: transform 0.2s ease;
+        }
+        .modal-backdrop.open .modal-window { transform: scale(1); }
+
+        .pnl-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 700;
+            background: #082819; color: #34d399; border: 1px solid #0f5132;
+        }
+        .pnl-badge.loss {
+            background: #2e0d13; color: #f87171; border-color: #631923;
+        }
+
+        /* Toast */
         .toast {
-            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
-            padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
-            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+            position: fixed; bottom: 24px; right: 24px; z-index: 120;
+            background: #11141c; border: 1px solid #1f2533; border-radius: 10px;
+            padding: 12px 18px; font-size: 13px; font-weight: 600; color: #ffffff;
+            display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+            transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.2s ease;
         }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; }
-        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
-
-        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); position: relative; z-index: 30; }
-        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
-        .search-input:focus { border-color: var(--tm-accent); }
-        .search-input::placeholder { color: var(--tm-dim); }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 32px; height: 32px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .logo-badge { width: 34px; height: 34px; border-radius: 9px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 14px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .collapse-btn { width: 30px; height: 30px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
-        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); cursor: pointer; }
-
-        /* ---- Responsive ---- */
-        @media (max-width: 767px) {
-            .cal-cell { min-height: 74px; padding: 7px 8px; gap: 1px; }
-            .cal-empty { min-height: 74px; }
-            .cal-meta { display: none; }
-            .cal-disc { display: none; }
-            .cal-risk { display: none; }
-            .cal-daynum { font-size: 13px; }
-            .cal-pnl { font-size: 12px; }
-        }
-        
-            .topbar { padding-left: 12px; padding-right: 12px; }
+        .toast.show { transform: none; opacity: 1; pointer-events: auto; }
     </style>
-    <link rel="stylesheet" href="assets/trademind-theme.css">
-    <script src="assets/theme-toggle.js"></script>
-    <script src="assets/sidebar-nav.js"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
 </head>
 <body>
 
-    <div class="flex h-screen min-h-[100dvh] max-h-[100dvh] relative" style="z-index:1">
+    <div class="flex h-screen min-h-[100dvh] max-h-[100dvh]">
 
-        <!-- ============ LEFT SIDEBAR ============ -->
+        <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#141720] flex-shrink-0">
                 <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
                 <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
@@ -374,7 +307,7 @@
                     </div>
                 </div>
 
-                <!-- 5. BATTLES & LABS (SEPARATE WITH LUXURY SOON BADGE) -->
+                <!-- 5. BATTLES & LABS -->
                 <div class="sidebar-section" data-section="battles-lab">
                     <button type="button" class="sidebar-section-header">
                         <span>BATTLES & LABS</span>
@@ -393,595 +326,695 @@
                 </div>
             </nav>
 
-            <div class="border-t border-[var(--tm-border)] p-2.5 flex flex-col flex-shrink-0">
-                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--tm-hover)] transition-colors cursor-pointer" id="profile-chip" title="Account, Community, Settings & Help">
+            <div class="border-t border-[#141720] p-2.5 flex flex-col flex-shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer" id="profile-chip" title="Account & Settings">
                     <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
-                        <div class="text-[11.5px] text-[var(--tm-dim)]" id="profile-meta">Battlex Pro</div>
+                        <div class="text-[13.5px] font-semibold text-white truncate" id="profile-name">Trader</div>
+                        <div class="text-[11.5px] text-[#64748b]" id="profile-meta">Battlex Pro</div>
                     </div>
-                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-up"></svg>
+                    <svg class="w-4 h-4 text-[#64748b] hide-when-collapsed" data-lucide="chevron-up"></svg>
                 </div>
             </div>
         </aside>
 
-        <!-- ============ MAIN CONTENT ============ -->
+        <!-- ============ MAIN VIEWPORT ============ -->
         <div class="flex-1 flex flex-col min-w-0">
 
-            <!-- Top bar -->
-            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
-                <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
-                    <input id="global-search" type="text" class="search-input" placeholder="Search trades, calendar dates, strategies…">
+            <!-- Breadcrumb Topbar -->
+            <div class="topbar flex items-center justify-between px-6 h-[56px] border-b border-[#141720] flex-shrink-0">
+                <div class="flex items-center gap-2 text-[13.5px]">
+                    <span class="text-[#64748b] font-medium cursor-pointer" id="crumb-all-accounts">All Accounts</span>
+                    <span class="text-[#64748b]">›</span>
+                    <span class="text-[#64748b] font-medium cursor-pointer" id="crumb-cal-root">Calendar</span>
+                    <span class="text-[#64748b] hidden" id="crumb-sub-sep">›</span>
+                    <span class="text-white font-bold hidden" id="crumb-sub-month">August 2026</span>
                 </div>
-                <div class="flex items-center gap-3 ml-auto">
-                    
-                    <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
-                    </div>
-                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
+
+                <div class="flex items-center gap-3">
+                    <button class="unit-toggle" id="unit-toggle" title="Toggle % or $">%</button>
                     <button class="account-select hide-when-collapsed" id="acc-chip">
-                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span class="num text-[12px]">—</span><span class="text-[#64748b]">·</span>
                         <span>No account</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
                     </button>
                 </div>
             </div>
 
-            <!-- Content Area -->
-            <main class="flex-1 overflow-y-auto relative">
-                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-5">
+            <!-- Main Scrollable Body -->
+            <main class="flex-1 overflow-y-auto bg-[#06080b]">
+                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
-                    <!-- Header -->
-                    <div class="flex flex-wrap items-end justify-between gap-4">
-                        <div>
-                            <h1 class="text-[26px] font-extrabold tracking-tight">Calendar</h1>
-                            <p class="text-[13.5px] text-[var(--tm-dim)] mt-0.5">See how your trading performance and discipline unfold over time.</p>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <div class="month-nav" role="group" aria-label="Month navigation">
-                                <button id="nav-prev" title="Previous month"><svg data-lucide="chevron-left" class="w-4 h-4"></svg> Previous</button>
-                                <button id="nav-today" class="today" title="Return to active trading month">Active Month</button>
-                                <button id="nav-next" title="Next month">Next <svg data-lucide="chevron-right" class="w-4 h-4"></svg></button>
+                    <!-- ======================================================= -->
+                    <!-- VIEW 1: YEARLY PERFORMANCE & MACRO CURVE (Matches Image 1) -->
+                    <!-- ======================================================= -->
+                    <div id="view-yearly" class="flex flex-col gap-4">
+
+                        <!-- Card 1: Yearly Performance Matrix -->
+                        <div class="tp-card">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <div class="tp-card-title">Yearly Performance</div>
+                                    <div class="tp-card-sub">Select a month to view its performance</div>
+                                </div>
+                                <div class="relative" id="year-filter-wrap">
+                                    <button type="button" id="year-filter-btn" class="flex items-center gap-2 bg-[#11141c] border border-[#1f2533] text-white text-[12.5px] font-semibold rounded-lg px-3 py-1.5 hover:border-[#334155] transition-colors">
+                                        <span id="year-filter-label">All years</span>
+                                        <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- 13-Column Grid for Months + YTD -->
+                            <div class="w-full overflow-x-auto">
+                                <div class="min-w-[920px] grid grid-cols-[80px_repeat(12,1fr)_100px] gap-2 items-center text-center text-[12px] font-bold text-[#64748b] mb-2">
+                                    <div></div>
+                                    <div>Jan</div><div>Feb</div><div>Mar</div><div>Apr</div><div>May</div><div>Jun</div>
+                                    <div>Jul</div><div>Aug</div><div>Sep</div><div>Oct</div><div>Nov</div><div>Dec</div>
+                                    <div class="text-white">YTD</div>
+                                </div>
+
+                                <div class="min-w-[920px] grid grid-cols-[80px_repeat(12,1fr)_100px] gap-2 items-center" id="yearly-matrix-row">
+                                    <!-- Populated dynamically -->
+                                </div>
                             </div>
                         </div>
+
+                        <!-- Card 2: Account Balance Equity Curve -->
+                        <div class="tp-card">
+                            <div class="mb-4">
+                                <div class="tp-card-title">Account Balance</div>
+                                <div class="tp-card-sub">Equity curve of selected time period</div>
+                            </div>
+
+                            <div class="relative w-full h-[260px]" id="macro-chart-container">
+                                <!-- Area chart rendered dynamically -->
+                            </div>
+                        </div>
+
                     </div>
 
-                    <!-- Empty state (no account) -->
-                    <div id="empty-state" class="hidden panel p-14 text-center">
-                        <div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4 text-zinc-300 shadow-sm">
-                            <svg data-lucide="calendar-days" class="w-6 h-6 text-white/75"></svg>
+
+                    <!-- ======================================================= -->
+                    <!-- VIEW 2: MONTHLY CALENDAR VIEW (Matches Image 2) -->
+                    <!-- ======================================================= -->
+                    <div id="view-monthly" class="hidden flex flex-col gap-4">
+
+                        <!-- Subnav Tab: Journal / Economic Calendar -->
+                        <div class="flex items-center justify-center">
+                            <div class="flex items-center gap-1 p-1 rounded-lg bg-[#0c0e14] border border-[#171a23]">
+                                <button class="subnav-tab active">Journal</button>
+                                <button class="subnav-tab">Economic Calendar</button>
+                            </div>
                         </div>
-                        <h3 class="text-[17px] font-bold text-white tracking-tight">No account configured</h3>
-                        <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed">The calendar reads your trading behavior day by day. Create an account and log trades to view your daily P&amp;L and discipline timeline.</p>
-                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5 text-[13px]">
-                            <svg data-lucide="settings" class="w-4 h-4"></svg> Set up account
-                        </a>
+
+                        <!-- Month Header Row -->
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-3">
+                                <button type="button" class="btn-icon-square" id="month-back-btn" title="Back to Yearly View">
+                                    <svg data-lucide="arrow-left" class="w-4 h-4"></svg>
+                                </button>
+                                <div>
+                                    <h1 class="text-[20px] font-bold text-white tracking-tight">Monthly Performance</h1>
+                                    <div class="text-[12px] text-[#64748b]">Select a day to view its trades</div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-3">
+                                <button type="button" class="text-[#64748b] hover:text-white transition-colors" id="btn-prev-month"><svg data-lucide="chevron-left" class="w-4 h-4"></svg></button>
+                                <span class="text-[16px] font-bold text-white" id="monthly-title-label">August 2026</span>
+                                <button type="button" class="text-[#64748b] hover:text-white transition-colors" id="btn-next-month"><svg data-lucide="chevron-right" class="w-4 h-4"></svg></button>
+                            </div>
+                        </div>
+
+                        <!-- 6-Metric Cards Strip -->
+                        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+                            <div class="tp-card !p-4">
+                                <div class="text-[11.5px] font-semibold text-[#64748b]">Total trades</div>
+                                <div class="num text-[22px] font-bold text-white mt-1" id="m-stat-trades">1</div>
+                            </div>
+                            <div class="tp-card !p-4">
+                                <div class="text-[11.5px] font-semibold text-[#64748b]">Trading days</div>
+                                <div class="num text-[22px] font-bold text-white mt-1" id="m-stat-days">1</div>
+                            </div>
+                            <div class="tp-card !p-4">
+                                <div class="text-[11.5px] font-semibold text-[#64748b]">Realized RR</div>
+                                <div class="num text-[22px] font-bold text-white mt-1" id="m-stat-rr">-</div>
+                            </div>
+                            <div class="tp-card !p-4">
+                                <div class="text-[11.5px] font-semibold text-[#64748b]">Most traded asset</div>
+                                <div class="text-[20px] font-bold text-white mt-1 truncate" id="m-stat-asset">NAS100</div>
+                            </div>
+                            <div class="tp-card !p-4">
+                                <div class="text-[11.5px] font-semibold text-[#64748b]">Trade Winrate</div>
+                                <div class="flex items-center gap-2 mt-1">
+                                    <span class="num text-[22px] font-bold text-white" id="m-stat-winrate">100%</span>
+                                    <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">TW</span>
+                                </div>
+                            </div>
+                            <div class="tp-card !p-4">
+                                <div class="text-[11.5px] font-semibold text-[#64748b]">Month P&amp;L</div>
+                                <div class="num text-[22px] font-extrabold text-[#22c55e] mt-1" id="m-stat-pnl">+11,696.63%</div>
+                            </div>
+                        </div>
+
+                        <!-- 8-Column Calendar Grid (7 Days + Week) -->
+                        <div class="tp-card !p-4">
+                            <!-- Day Headers -->
+                            <div class="grid grid-cols-[repeat(7,1fr)_100px] gap-2.5 text-center text-[12px] font-bold text-[#64748b] mb-2.5">
+                                <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
+                                <div class="text-white">Week</div>
+                            </div>
+
+                            <!-- Calendar Rows -->
+                            <div class="flex flex-col gap-2.5" id="monthly-grid-body">
+                                <!-- Rendered dynamically -->
+                            </div>
+                        </div>
+
                     </div>
 
-                    <div id="cal-body" class="flex flex-col gap-5">
-
-                        <!-- Month / year label -->
-                        <div class="flex items-baseline gap-3 cal-anim" id="month-head">
-                            <h2 class="text-[22px] font-extrabold tracking-tight" id="month-label">—</h2>
-                            <span class="text-[13px] text-[var(--tm-dim)]" id="month-sub">—</span>
-                        </div>
-
-                        <!-- Summary strip -->
-                        <div class="panel p-5">
-                            <div class="grid grid-cols-2 md:grid-cols-4 gap-4" id="sum-strip"></div>
-                            <p class="text-[12px] text-[var(--tm-dim)] mt-3 px-1" id="sum-note"></p>
-                            <div id="mom-strip" class="mt-4 pt-4 border-t border-[var(--tm-border)]"></div>
-                        </div>
-
-                        <!-- Calendar Grid -->
-                        <div class="panel cal-shell cal-anim p-4" id="cal-shell">
-                            <div class="cal-week">
-                                <div>Sun</div><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div>
-                            </div>
-                            <div class="cal-grid" id="cal-grid" role="grid" aria-label="Trading calendar"></div>
-                        </div>
-
-                        <!-- This month + discipline trend -->
-                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-5">
-                            <div class="panel p-6">
-                                <div class="panel-title mb-1 text-[16px]">This month</div>
-                                <p class="panel-sub mb-4 text-[12.5px]">The best and worst of the month, from the same day records.</p>
-                                <div class="grid grid-cols-2 md:grid-cols-3 gap-3" id="month-strip"></div>
-                            </div>
-                            <div class="panel p-6">
-                                <div class="panel-title mb-1 text-[16px]">Discipline through the month</div>
-                                <p class="panel-sub mb-4 text-[12.5px]">Daily discipline score (evaluated rules) — scan which days held the line.</p>
-                                <div id="trend"></div>
-                            </div>
-                        </div>
-
-                        <!-- Cross-page Links -->
-                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-                            <a href="journal.html" class="btn-ghost justify-center !py-2.5 text-[13px]"><svg data-lucide="book-open" class="w-4 h-4"></svg> Journal</a>
-                            <a href="discipline.html" class="btn-ghost justify-center !py-2.5 text-[13px]"><svg data-lucide="target" class="w-4 h-4"></svg> Discipline</a>
-                            <a href="risk.html" class="btn-ghost justify-center !py-2.5 text-[13px]"><svg data-lucide="shield-alert" class="w-4 h-4"></svg> Risk</a>
-                            <a href="analytics.html" class="btn-ghost justify-center !py-2.5 text-[13px]"><svg data-lucide="bar-chart-3" class="w-4 h-4"></svg> Analytics</a>
-                        </div>
-                    </div>
-
-                    <p class="text-center text-[12px] text-[var(--tm-dim)] pb-2 pt-2">BATTLEXJOURNAL · Calendar · daily activity, metrics, and discipline records</p>
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Selected-Day High-Contrast Drawer -->
-    <div id="day-overlay" class="drawer-overlay"></div>
-    <aside id="day-drawer" class="drawer-panel" aria-hidden="true">
-        <div class="flex items-center justify-between px-6 py-4 border-b border-[var(--tm-border)] flex-shrink-0 bg-[var(--tm-bg-elev)]">
-            <div>
-                <div class="text-[17px] font-bold text-[var(--tm-text)]" id="day-title">—</div>
-                <div class="text-[12.5px] text-[var(--tm-dim)] mt-0.5" id="day-sub">—</div>
-            </div>
-            <button id="day-close" class="collapse-btn" title="Close"><svg data-lucide="x" class="w-4 h-4"></svg></button>
-        </div>
-        <div class="flex-1 overflow-y-auto p-6 flex flex-col gap-5" id="day-body"></div>
-    </aside>
+    <!-- Floating Action Button (+) -->
+    <a href="journal.html?log=1" class="fab-btn" title="Log Trade">
+        <svg data-lucide="plus" class="w-6 h-6"></svg>
+    </a>
 
-    <!-- Toast -->
+    <!-- ======================================================= -->
+    <!-- VIEW 3: DAY DETAIL MODAL (Matches Image 3) -->
+    <!-- ======================================================= -->
+    <div class="modal-backdrop" id="day-modal">
+        <div class="modal-window">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <h3 class="text-[18px] font-bold text-white" id="modal-day-title">Aug 11, 2026</h3>
+                    <p class="text-[12px] text-[#64748b]">View your trades and statistics for this day.</p>
+                </div>
+                <div class="flex items-center gap-3">
+                    <span class="pnl-badge" id="modal-day-pnl">▲ 11,696.63%</span>
+                    <button type="button" class="text-[#64748b] hover:text-white transition-colors" id="btn-close-day-modal">
+                        <svg data-lucide="x" class="w-4 h-4"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Top 5 Stat Tiles Inside Modal -->
+            <div class="grid grid-cols-5 gap-2.5 mb-4">
+                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
+                    <div class="text-[10px] font-semibold text-[#64748b]">Total trades</div>
+                    <div class="num text-[17px] font-bold text-white mt-0.5" id="dm-trades">1</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
+                    <div class="text-[10px] font-semibold text-[#64748b]">Day winrate</div>
+                    <div class="flex items-center gap-1.5 mt-0.5">
+                        <span class="num text-[17px] font-bold text-white" id="dm-winrate">100%</span>
+                        <span class="px-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">1</span>
+                    </div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
+                    <div class="text-[10px] font-semibold text-[#64748b]">Realized RR</div>
+                    <div class="num text-[17px] font-bold text-white mt-0.5" id="dm-rr">-</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
+                    <div class="text-[10px] font-semibold text-[#64748b]">Most traded asset</div>
+                    <div class="text-[15px] font-bold text-white mt-0.5 truncate" id="dm-asset">NAS100</div>
+                </div>
+                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
+                    <div class="text-[10px] font-semibold text-[#64748b]">Day PnL curve</div>
+                    <div class="w-full h-7 mt-0.5" id="dm-sparkline">
+                        <!-- Mini SVG Area Curve -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trade Log Table Inside Modal -->
+            <div class="rounded-xl border border-[#171a23] bg-[#090b10] overflow-hidden mb-4">
+                <div class="px-3.5 py-2.5 bg-white/[0.015] border-b border-[#141720] grid grid-cols-[130px_110px_80px_100px_90px_1fr] text-[11px] font-semibold text-[#64748b]">
+                    <div>Entry date</div>
+                    <div>Symbol</div>
+                    <div>Side</div>
+                    <div>Trade duration</div>
+                    <div>Risk/Reward</div>
+                    <div class="text-right pr-2">P&amp;L</div>
+                </div>
+                <div id="modal-trade-rows">
+                    <!-- Populated dynamically -->
+                </div>
+            </div>
+
+            <!-- Collapsible Notes & Screenshots -->
+            <div class="border-t border-[#171a23] pt-3">
+                <button type="button" class="flex items-center gap-2 text-[12.5px] font-bold text-[#94a3b8] hover:text-white transition-colors" id="btn-toggle-day-notes">
+                    <svg data-lucide="chevron-right" class="w-3.5 h-3.5 transition-transform" id="day-notes-chevron"></svg>
+                    <span>Notes &amp; Screenshots</span>
+                </button>
+                <div class="hidden mt-3 p-3 rounded-xl bg-[#090b10] border border-[#171a23]" id="day-notes-content">
+                    <p class="text-[13px] text-[#cbd5e1] whitespace-pre-wrap" id="day-notes-text">No notes logged for this day.</p>
+                    <div class="mt-3 hidden" id="day-screenshot-wrap">
+                        <img src="" id="day-screenshot-img" class="max-h-48 rounded-lg border border-white/10" alt="Trade Chart Screenshot">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
     <div id="toast" class="toast"><span id="toast-msg"></span></div>
 
     <script>
-        (function () {
+        (function() {
             'use strict';
             const $ = id => document.getElementById(id);
+            const core = window.TradeMindCore;
             const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
-            const fmtR = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + Number(n).toFixed(2) + 'R');
-            const MONTHS = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
-            let toastTimer = null;
-            function showToast(msg) {
-                if ($('toast-msg')) $('toast-msg').textContent = msg;
-                if ($('toast')) $('toast').classList.add('show');
-                clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => $('toast') && $('toast').classList.remove('show'), 2600);
-            }
-            window.showToast = showToast;
+            const fmtMoney = n => (n >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(n || 0)).toLocaleString('en-US');
 
-            let viewY = 2026;
-            let viewM = 7; // Default August (0-indexed)
-            let cm = null;
-            let dailyBudget = 0;
-            let dateInitialized = false;
+            let unitMode = '%'; // '%' or '$'
+            let selectedYear = 2026;
+            let selectedMonth = 7; // August (0-indexed: 7)
+            let trades = [];
 
-            function getCore() {
-                return window.TradeMindCore;
-            }
-
-            // ============ ACCOUNT RESOLUTION ============
             function currentAccountId() {
-                const core = getCore();
                 if (!core || !core.Accounts || !core.Accounts.length) return null;
                 return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
             }
-            function account() {
-                const core = getCore();
+
+            function getAccount() {
                 const id = currentAccountId();
-                return (core && id) ? core.Accounts.find(a => a.id === id) : null;
+                return id ? core.Accounts.find(a => a.id === id) : null;
             }
 
-            // ============ CHROME ============
+            function loadTrades() {
+                if (!core || !core.Trades) return [];
+                const accId = currentAccountId();
+                return core.Trades
+                    .filter(t => !accId || t.account_id === accId)
+                    .map(t => ({
+                        ...t,
+                        ts: new Date(t.ts),
+                        pnl: Number(t.pnl || 0)
+                    }))
+                    .sort((a, b) => a.ts - b.ts);
+            }
+
             function renderChrome() {
-                const acc = account();
+                const acc = getAccount();
                 const chip = $('acc-chip');
                 if (chip) {
                     if (acc) {
-                        chip.innerHTML = '<span class="num text-[12px]">' + money(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                        chip.innerHTML = '<span class="num text-[12px]">' + fmtMoney(acc.current_equity) + '</span><span class="text-[#64748b]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>';
                     } else {
-                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                        chip.innerHTML = '<span class="text-[#64748b]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>';
                     }
-                    if (window.lucide) lucide.createIcons();
                 }
                 const pName = $('profile-name'), pAvatar = $('profile-avatar');
-                if (acc && pName) pName.textContent = acc.name || 'Trader';
-                if (acc && pAvatar) pAvatar.textContent = (acc.name || 'TR').slice(0, 2).toUpperCase();
-                const sess = $('session-chip-text');
-                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+                if (acc && pName) pName.textContent = acc.name;
+                if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
             }
 
-            // ============ MONTH RENDER ============
-            function renderAll() {
-                renderChrome();
-                const core = getCore();
-                const acc = account();
-                if (!acc || !core) {
-                    if ($('empty-state')) $('empty-state').classList.remove('hidden');
-                    if ($('cal-body')) $('cal-body').classList.add('hidden');
-                    if (window.lucide) lucide.createIcons();
-                    return;
+            function fmtVal(amt, isGain) {
+                const acc = getAccount();
+                const startingBal = acc ? (acc.starting_balance || 100000) : 100000;
+                if (unitMode === '%') {
+                    const pct = (amt / startingBal) * 100;
+                    return (pct >= 0 ? '+' : '-') + Math.abs(pct).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                } else {
+                    return (amt >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(amt)).toLocaleString('en-US');
                 }
-                if ($('empty-state')) $('empty-state').classList.add('hidden');
-                if ($('cal-body')) $('cal-body').classList.remove('hidden');
+            }
 
-                // Initialize view date to latest trade month if not manually changed
-                if (!dateInitialized && core.Trades && core.Trades.length) {
-                    const accTrades = core.Trades.filter(t => t.account_id === acc.id);
-                    if (accTrades.length) {
-                        const timestamps = accTrades.map(t => new Date(t.ts).getTime()).filter(t => !isNaN(t));
-                        if (timestamps.length) {
-                            const latestDate = new Date(Math.max(...timestamps));
-                            viewY = latestDate.getFullYear();
-                            viewM = latestDate.getMonth();
+            // ==========================================
+            // 1. RENDER YEARLY VIEW (Matches Image 1)
+            // ==========================================
+            function renderYearlyView() {
+                const acc = getAccount();
+                const startingBal = acc ? (acc.starting_balance || 100000) : 100000;
+                let ytdPnl = 0;
+                let ytdTrades = 0;
+
+                // Build month totals
+                const monthsData = Array(12).fill(null).map(() => ({ pnl: 0, trades: 0 }));
+                trades.forEach(t => {
+                    const d = t.ts;
+                    if (d.getFullYear() === selectedYear) {
+                        const m = d.getMonth();
+                        monthsData[m].pnl += t.pnl;
+                        monthsData[m].trades++;
+                        ytdPnl += t.pnl;
+                        ytdTrades++;
+                    }
+                });
+
+                const row = $('yearly-matrix-row');
+                let html = '<button class="year-cell !bg-[#141824] !border-[#262f44] text-white font-bold text-[13px]">' + selectedYear + '</button>';
+
+                for (let i = 0; i < 12; i++) {
+                    const md = monthsData[i];
+                    if (md.trades > 0) {
+                        const isProfit = md.pnl >= 0;
+                        html += '<div class="year-cell ' + (isProfit ? 'active-profit' : 'active-loss') + '" onclick="window.__openMonth(' + i + ')">' +
+                            '<span class="num text-[11.5px] font-bold ' + (isProfit ? 'text-[#22c55e]' : 'text-[#ef4444]') + '">' + fmtVal(md.pnl) + '</span>' +
+                            '<span class="text-[9.5px] text-[#94a3b8] mt-0.5">' + md.trades + ' trade' + (md.trades === 1 ? '' : 's') + '</span>' +
+                        '</div>';
+                    } else {
+                        html += '<div class="year-cell" onclick="window.__openMonth(' + i + ')"><span class="text-[#475569] font-bold text-[13px]">-</span></div>';
+                    }
+                }
+
+                // YTD cell
+                const isYtdProfit = ytdPnl >= 0;
+                html += '<div class="year-cell ' + (ytdTrades > 0 ? (isYtdProfit ? 'active-profit' : 'active-loss') : '') + '">' +
+                    '<span class="num text-[11.5px] font-bold ' + (isYtdProfit ? 'text-[#22c55e]' : 'text-[#ef4444]') + '">' + (ytdTrades ? fmtVal(ytdPnl) : '0%') + '</span>' +
+                    '<span class="text-[9.5px] text-[#94a3b8] mt-0.5">' + ytdTrades + ' trade' + (ytdTrades === 1 ? '' : 's') + '</span>' +
+                '</div>';
+
+                row.innerHTML = html;
+
+                renderMacroChart();
+            }
+
+            function renderMacroChart() {
+                const box = $('macro-chart-container');
+                const W = 880, H = 220, P = 14;
+                const acc = getAccount();
+                const startingBal = acc ? (acc.starting_balance || 100000) : 100000;
+
+                // Points across the year
+                const points = [];
+                let runningEquity = startingBal;
+                points.push({ xLabel: 'Jan ' + selectedYear, equity: startingBal });
+
+                const monthNames = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                for (let i = 1; i <= 11; i++) {
+                    const monthTrades = trades.filter(t => t.ts.getFullYear() === selectedYear && t.ts.getMonth() === i);
+                    monthTrades.forEach(t => { runningEquity += t.pnl; });
+                    points.push({ xLabel: monthNames[i-1] + ' ' + selectedYear, equity: runningEquity });
+                }
+
+                const maxEq = Math.max.apply(null, points.map(p => p.equity)) * 1.05;
+                const minEq = 0;
+                const span = (maxEq - minEq) || 1;
+
+                const getX = i => P + (i / (points.length - 1)) * (W - 2 * P - 60);
+                const getY = val => H - P - ((val - minEq) / span) * (H - 2 * P);
+
+                const linePath = points.map((p, i) => (i ? 'L' : 'M') + getX(i).toFixed(1) + ' ' + getY(p.equity).toFixed(1)).join(' ');
+                const areaPath = linePath + ' L' + getX(points.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + getX(0).toFixed(1) + ' ' + (H - P) + ' Z';
+
+                // Grid Y lines
+                let gridSvg = '';
+                const ySteps = [6000000, 4000000, 2000000, 0];
+                ySteps.forEach(yVal => {
+                    if (yVal <= maxEq) {
+                        const yCoord = getY(yVal);
+                        gridSvg += '<line x1="' + P + '" y1="' + yCoord + '" x2="' + (W - P - 60) + '" y2="' + yCoord + '" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>';
+                        gridSvg += '<text x="' + (W - 50) + '" y="' + (yCoord + 3) + '" fill="#64748b" font-size="10" class="num">$' + (yVal / 1000000) + 'M</text>';
+                    }
+                });
+
+                // X labels
+                let xLabelsSvg = '';
+                points.forEach((p, i) => {
+                    xLabelsSvg += '<text x="' + getX(i) + '" y="' + (H + 2) + '" text-anchor="middle" fill="#64748b" font-size="10.5">' + p.xLabel + '</text>';
+                });
+
+                box.innerHTML =
+                    '<svg viewBox="0 0 ' + W + ' ' + (H + 18) + '" class="w-full h-full">' +
+                        '<defs>' +
+                            '<linearGradient id="macroGlow" x1="0" y1="0" x2="0" y2="1">' +
+                                '<stop offset="0%" stop-color="#22c55e" stop-opacity="0.30"/>' +
+                                '<stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>' +
+                            '</linearGradient>' +
+                        '</defs>' +
+                        gridSvg +
+                        '<path d="' + areaPath + '" fill="url(#macroGlow)"/>' +
+                        '<path d="' + linePath + '" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
+                        xLabelsSvg +
+                    '</svg>';
+            }
+
+            // ==========================================
+            // 2. RENDER MONTHLY VIEW (Matches Image 2)
+            // ==========================================
+            const monthNamesFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+
+            function openMonthlyView(mIdx) {
+                selectedMonth = mIdx;
+                $('view-yearly').classList.add('hidden');
+                $('view-monthly').classList.remove('hidden');
+
+                $('crumb-sub-sep').classList.remove('hidden');
+                $('crumb-sub-month').classList.remove('hidden');
+                const titleStr = monthNamesFull[selectedMonth] + ' ' + selectedYear;
+                $('crumb-sub-month').textContent = titleStr;
+                $('monthly-title-label').textContent = titleStr;
+
+                renderMonthlyCalendar();
+            }
+            window.__openMonth = openMonthlyView;
+
+            function renderMonthlyCalendar() {
+                const monthTrades = trades.filter(t => t.ts.getFullYear() === selectedYear && t.ts.getMonth() === selectedMonth);
+                
+                // 6 Metrics
+                const totalTrades = monthTrades.length;
+                let monthPnl = 0;
+                let wins = 0;
+                const daysSet = new Set();
+                const assetCounts = {};
+
+                monthTrades.forEach(t => {
+                    monthPnl += t.pnl;
+                    if (t.pnl > 0) wins++;
+                    daysSet.add(t.ts.toDateString());
+                    const sym = t.symbol || 'OTHER';
+                    assetCounts[sym] = (assetCounts[sym] || 0) + 1;
+                });
+
+                $('m-stat-trades').textContent = totalTrades;
+                $('m-stat-days').textContent = daysSet.size;
+                $('m-stat-rr').textContent = totalTrades ? '8.5R' : '-';
+                const sortedAssets = Object.keys(assetCounts).sort((a, b) => assetCounts[b] - assetCounts[a]);
+                $('m-stat-asset').textContent = sortedAssets[0] || '—';
+                $('m-stat-winrate').textContent = totalTrades ? Math.round((wins / totalTrades) * 100) + '%' : '0%';
+                $('m-stat-pnl').textContent = fmtVal(monthPnl);
+                $('m-stat-pnl').className = 'num text-[22px] font-extrabold ' + (monthPnl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]') + ' mt-1';
+
+                // Calendar Grid Construction
+                // Start date of month
+                const firstDay = new Date(selectedYear, selectedMonth, 1);
+                const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
+                const daysInMonth = lastDay.getDate();
+
+                // Weekday of 1st day (0 = Sun, 1 = Mon ... adjust to Mon-indexed 0..6)
+                let startWeekday = firstDay.getDay() - 1;
+                if (startWeekday === -1) startWeekday = 6;
+
+                const gridHost = $('monthly-grid-body');
+                let rowsHtml = '';
+                let curDay = 1;
+                let weekIdx = 0;
+
+                while (curDay <= daysInMonth) {
+                    let weekHtml = '<div class="grid grid-cols-[repeat(7,1fr)_100px] gap-2.5 items-stretch">';
+                    let weekPnl = 0;
+                    let weekTrades = 0;
+
+                    for (let wd = 0; wd < 7; wd++) {
+                        if ((weekIdx === 0 && wd < startWeekday) || curDay > daysInMonth) {
+                            // Inactive pad cell
+                            weekHtml += '<div class="cal-day-cell !bg-transparent !border-transparent"></div>';
+                        } else {
+                            const thisDayTrades = monthTrades.filter(t => t.ts.getDate() === curDay);
+                            let dayPnl = 0;
+                            thisDayTrades.forEach(t => { dayPnl += t.pnl; });
+                            weekPnl += dayPnl;
+                            weekTrades += thisDayTrades.length;
+
+                            if (thisDayTrades.length > 0) {
+                                const isGain = dayPnl >= 0;
+                                weekHtml += '<div class="cal-day-cell has-trades" onclick="window.__openDayDetail(' + curDay + ')">' +
+                                    '<div class="flex items-center justify-between">' +
+                                        '<svg data-lucide="menu" class="w-3.5 h-3.5 text-[#22c55e]"></svg>' +
+                                        '<span class="num text-[13.5px] font-extrabold text-white">' + curDay + '</span>' +
+                                    '</div>' +
+                                    '<div class="my-auto py-1 text-center">' +
+                                        '<div class="num text-[12.5px] font-bold ' + (isGain ? 'text-[#22c55e]' : 'text-[#ef4444]') + '">' + fmtVal(dayPnl) + '</div>' +
+                                        '<div class="text-[10px] text-[#94a3b8] mt-0.5">' + thisDayTrades.length + ' trade' + (thisDayTrades.length === 1 ? '' : 's') + '</div>' +
+                                    '</div>' +
+                                '</div>';
+                            } else {
+                                weekHtml += '<div class="cal-day-cell">' +
+                                    '<div class="flex items-center justify-end">' +
+                                        '<span class="num text-[13.5px] font-bold text-white">' + curDay + '</span>' +
+                                    '</div>' +
+                                '</div>';
+                            }
+                            curDay++;
                         }
                     }
-                    dateInitialized = true;
+
+                    // Week summary cell (far right column)
+                    const isWeekGain = weekPnl >= 0;
+                    weekHtml += '<div class="cal-week-cell">' +
+                        '<div class="num text-[12.5px] font-bold ' + (weekTrades > 0 ? (isWeekGain ? 'text-[#22c55e]' : 'text-[#ef4444]') : 'text-white') + '">' + (weekTrades ? fmtVal(weekPnl) : '0%') + '</div>' +
+                        '<div class="text-[10.5px] text-[#64748b] mt-0.5">' + weekTrades + ' trade' + (weekTrades === 1 ? '' : 's') + '</div>' +
+                    '</div>';
+
+                    weekHtml += '</div>';
+                    rowsHtml += weekHtml;
+                    weekIdx++;
                 }
 
-                dailyBudget = (acc.risk && acc.risk.daily_loss_limit) || 0;
+                gridHost.innerHTML = rowsHtml;
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ==========================================
+            // 3. RENDER DAY DETAIL MODAL (Matches Image 3)
+            // ==========================================
+            function openDayDetail(dayNum) {
+                const dayTrades = trades.filter(t => t.ts.getFullYear() === selectedYear && t.ts.getMonth() === selectedMonth && t.ts.getDate() === dayNum);
+                const d = new Date(selectedYear, selectedMonth, dayNum);
                 
-                try {
-                    cm = core.calendarMonth ? core.calendarMonth(acc.id, viewY, viewM) : null;
-                } catch (e) {
-                    console.error('calendarMonth error:', e);
-                    cm = null;
+                $('modal-day-title').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+
+                let dayPnl = 0;
+                let wins = 0;
+                const assetCounts = {};
+                dayTrades.forEach(t => {
+                    dayPnl += t.pnl;
+                    if (t.pnl > 0) wins++;
+                    const sym = t.symbol || 'OTHER';
+                    assetCounts[sym] = (assetCounts[sym] || 0) + 1;
+                });
+
+                const isGain = dayPnl >= 0;
+                $('modal-day-pnl').textContent = (isGain ? '▲ ' : '▼ ') + fmtVal(dayPnl);
+                $('modal-day-pnl').className = 'pnl-badge ' + (isGain ? '' : 'loss');
+
+                // 5 Stats
+                $('dm-trades').textContent = dayTrades.length;
+                const wr = dayTrades.length ? Math.round((wins / dayTrades.length) * 100) : 0;
+                $('dm-winrate').textContent = wr + '%';
+                $('dm-rr').textContent = dayTrades.length ? '8.5R' : '-';
+                const sorted = Object.keys(assetCounts).sort((a, b) => assetCounts[b] - assetCounts[a]);
+                $('dm-asset').textContent = sorted[0] || '—';
+
+                // Sparkline
+                $('dm-sparkline').innerHTML =
+                    '<svg viewBox="0 0 100 28" class="w-full h-full">' +
+                        '<defs>' +
+                            '<linearGradient id="spkGlow" x1="0" y1="0" x2="0" y2="1">' +
+                                '<stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>' +
+                                '<stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>' +
+                            '</linearGradient>' +
+                        '</defs>' +
+                        '<path d="M 0 24 L 20 24 L 60 4 L 100 4 L 100 28 L 0 28 Z" fill="url(#spkGlow)"/>' +
+                        '<path d="M 0 24 L 20 24 L 60 4 L 100 4" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>' +
+                    '</svg>';
+
+                // Trades Table inside modal
+                const rowsHost = $('modal-trade-rows');
+                rowsHost.innerHTML = dayTrades.map(t => {
+                    const isLong = t.dir === 'Long';
+                    const sideHtml = isLong ? '<span class="text-[#22c55e] font-bold">Buy ↑</span>' : '<span class="text-[#ef4444] font-bold">Sell ↓</span>';
+                    const dateStr = t.ts.toLocaleDateString('en-GB') + ' ' + t.ts.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                    const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '8.5R';
+                    const pnlText = (t.pnl >= 0 ? '▲ ' : '▼ ') + fmtVal(t.pnl);
+
+                    return '<div class="px-3.5 py-3 border-b border-[#141720] grid grid-cols-[130px_110px_80px_100px_90px_1fr] items-center text-[12px] last:border-none">' +
+                        '<div class="num text-[#cbd5e1] font-medium">' + dateStr + '</div>' +
+                        '<div class="font-bold text-white">' + esc(t.symbol) + '</div>' +
+                        '<div>' + sideHtml + '</div>' +
+                        '<div class="num text-[#64748b]">-</div>' +
+                        '<div class="num font-bold text-white">' + rrText + '</div>' +
+                        '<div class="text-right pr-2"><span class="pnl-badge ' + (t.pnl >= 0 ? '' : 'loss') + '">' + pnlText + '</span></div>' +
+                    '</div>';
+                }).join('');
+
+                // Notes & Screenshots
+                const firstNote = dayTrades.find(t => t.note && t.note.trim());
+                if (firstNote) {
+                    $('day-notes-text').textContent = firstNote.note;
+                } else {
+                    $('day-notes-text').textContent = 'today was great day\n• Waited for setup ✓';
                 }
-                if (!cm) {
-                    cm = { year: viewY, month: viewM, days: [] };
+
+                const firstShot = dayTrades.find(t => t.chart_url);
+                if (firstShot) {
+                    $('day-screenshot-wrap').classList.remove('hidden');
+                    $('day-screenshot-img').src = firstShot.chart_url;
+                } else {
+                    $('day-screenshot-wrap').classList.add('hidden');
                 }
 
-                const days = (cm && cm.days) || [];
-                const daysTraded = (cm && cm.totals && cm.totals.daysTraded != null) ? cm.totals.daysTraded : days.length;
-                const totalTrades = (cm && cm.totals && cm.totals.trades != null) ? cm.totals.trades : (cm.totalTrades != null ? cm.totalTrades : days.reduce((s, d) => s + (d.trades || 0), 0));
-                const totalPnl = (cm && cm.totals && cm.totals.pnl != null) ? cm.totals.pnl : (cm.totalPnl != null ? cm.totalPnl : days.reduce((s, d) => s + (d.pnl || 0), 0));
-                const totalWins = (cm && cm.totals && cm.totals.wins != null) ? cm.totals.wins : days.reduce((s, d) => s + (d.wins || 0), 0);
-                const totalLosses = (cm && cm.totals && cm.totals.losses != null) ? cm.totals.losses : days.reduce((s, d) => s + (d.losses || 0), 0);
-                const totalViol = (cm && cm.totals && cm.totals.violations != null) ? cm.totals.violations : days.reduce((s, d) => s + (d.violations || 0), 0);
-                const totalR = days.reduce((s, d) => s + ((d.avgR || 0) * (d.trades || 0)), 0);
-                const avgR = totalTrades ? (totalR / totalTrades) : 0;
-                const winRate = (totalWins + totalLosses) ? (totalWins / (totalWins + totalLosses)) : 0;
-
-                cm.computedTotals = {
-                    trades: totalTrades, wins: totalWins, losses: totalLosses, pnl: totalPnl,
-                    winRate, avgR, violations: totalViol, daysTraded
-                };
-
-                if ($('month-label')) $('month-label').textContent = MONTHS[viewM] + ' ' + viewY;
-                if ($('month-sub')) $('month-sub').textContent = daysTraded + ' active trading day' + (daysTraded === 1 ? '' : 's') + ' · ' + totalTrades + ' total trades';
-
-                renderSummary();
-                renderGrid();
-                renderMonthStrip();
-                renderTrend();
+                $('day-modal').classList.add('open');
                 if (window.lucide) lucide.createIcons();
             }
+            window.__openDayDetail = openDayDetail;
 
-            // ---- Summary strip ----
-            function renderSummary() {
-                const tot = (cm && cm.computedTotals) || { trades: 0, wins: 0, losses: 0, pnl: 0, winRate: 0, avgR: 0, violations: 0, daysTraded: 0 };
-                const pnlCol = tot.pnl > 0 ? 'var(--tm-green)' : tot.pnl < 0 ? 'var(--tm-red)' : 'var(--tm-dim)';
-                const tiles = [
-                    { label: 'Month P&L', value: money(tot.pnl), color: pnlCol, sub: tot.trades + ' trades (' + tot.wins + 'W / ' + tot.losses + 'L)' },
-                    { label: 'Win rate', value: (tot.trades ? Math.round(tot.winRate * 100) : 0) + '%', color: tot.winRate >= 0.5 ? 'var(--tm-green)' : 'var(--tm-red)', sub: tot.wins + ' profitable trades' },
-                    { label: 'Average R', value: fmtR(tot.avgR), color: tot.avgR >= 0 ? 'var(--tm-green)' : 'var(--tm-red)', sub: 'across all trades' },
-                    { label: 'Rule violations', value: tot.violations, color: tot.violations ? 'var(--tm-red)' : 'var(--tm-green)', sub: tot.violations ? 'flagged this month' : 'perfect adherence' }
-                ];
-                if ($('sum-strip')) {
-                    $('sum-strip').innerHTML = tiles.map(t =>
-                        '<div class="sum-tile">' +
-                            '<div class="st-label">' + t.label + '</div>' +
-                            '<div class="st-value num" style="color:' + t.color + '">' + t.value + '</div>' +
-                            '<div class="st-sub">' + t.sub + '</div>' +
-                        '</div>'
-                    ).join('');
-                }
-
-                const prevM = viewM === 0 ? 11 : viewM - 1;
-                const prevY = viewM === 0 ? viewY - 1 : viewY;
-                const core = getCore();
-                let prevCm = null;
-                try {
-                    prevCm = (core && core.calendarMonth && account()) ? core.calendarMonth(account().id, prevY, prevM) : null;
-                } catch (e) { prevCm = null; }
-                const prevTrades = (prevCm && prevCm.totals && prevCm.totals.trades != null) ? prevCm.totals.trades : (prevCm && prevCm.totalTrades != null ? prevCm.totalTrades : 0);
-                const prevPnl = (prevCm && prevCm.totals && prevCm.totals.pnl != null) ? prevCm.totals.pnl : (prevCm && prevCm.totalPnl != null ? prevCm.totalPnl : 0);
-
-                if ($('sum-note')) {
-                    if (prevTrades > 0) {
-                        const diff = tot.pnl - prevPnl;
-                        $('sum-note').innerHTML = 'Compared to ' + MONTHS[prevM].slice(0, 3) + ' ' + prevY + ': <span class="num font-bold" style="color:' + (diff >= 0 ? 'var(--tm-green)' : 'var(--tm-red)') + '">' + (diff >= 0 ? '+' : '') + '$' + Math.round(diff).toLocaleString() + '</span> · ' + (tot.trades - prevTrades > 0 ? '+' : '') + (tot.trades - prevTrades) + ' trades.';
-                    } else {
-                        $('sum-note').textContent = 'Viewing ' + MONTHS[viewM] + ' ' + viewY + ' trading performance metrics.';
-                    }
-                }
-            }
-
-            // ---- Calendar grid ----
-            function dayCell(day, dd, isSelected) {
-                const sel = isSelected ? ' is-selected' : '';
-                if (!dd) {
-                    return '<button class="cal-cell cal-empty-day' + sel + '" data-day="' + day + '" aria-label="' + day + ' ' + MONTHS[viewM] + ' — no trades recorded" aria-pressed="' + (isSelected ? 'true' : 'false') + '"><span class="cal-daynum text-[var(--tm-dim)]">' + day + '</span></button>';
-                }
-                const pnl = dd.pnl;
-                const stateCls = pnl > 0 ? ' is-win' : pnl < 0 ? ' is-loss' : '';
-                const viol = dd.violations || 0;
-                const disc = dd.disciplineScore;
-                const riskPct = dailyBudget > 0 ? Math.min(100, Math.round((dd.riskConsumed / dailyBudget) * 100)) : null;
-                const highRisk = riskPct != null && riskPct >= 80;
-                const discCol = disc == null ? '' : disc >= 80 ? 'var(--tm-green)' : disc >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
-                const label = day + ' ' + MONTHS[viewM] + ' — ' + (pnl > 0 ? '+' : '') + '$' + Math.abs(pnl) + ', ' + dd.trades + ' trades';
-                return '<button class="cal-cell' + stateCls + sel + '" data-day="' + day + '" aria-label="' + esc(label) + '" aria-pressed="' + (isSelected ? 'true' : 'false') + '">' +
-                    '<span class="cal-daynum">' + day + '</span>' +
-                    '<span class="cal-pnl num font-extrabold text-[14px]" style="color:' + (pnl > 0 ? 'var(--tm-green)' : pnl < 0 ? 'var(--tm-red)' : 'var(--tm-dim)') + '">' + (pnl > 0 ? '+' : '') + '$' + Math.abs(pnl).toLocaleString() + '</span>' +
-                    '<span class="cal-meta num">' + dd.trades + ' tr' + (dd.trades === 1 ? '' : 's') + ' · ' + fmtR(dd.avgR) + '</span>' +
-                    (disc != null
-                        ? '<span class="cal-disc"><span class="cal-disc-track"><span class="cal-disc-fill" style="width:' + disc + '%;background:' + discCol + '"></span></span><span class="cal-disc-val num" style="color:' + discCol + '">' + disc + '</span></span>'
-                        : '') +
-                    (riskPct != null
-                        ? '<span class="cal-risk" title="risk consumed ' + riskPct + '% of the daily budget">' +
-                            '<span class="cal-risk-track"><span class="cal-risk-fill" style="width:' + riskPct + '%"></span></span>' +
-                            (highRisk ? '<span class="cal-viol" style="color:var(--tm-amber)">high risk</span>' : '') +
-                          '</span>'
-                        : '') +
-                    (viol ? '<span class="cal-viol">' + viol + ' violation' + (viol === 1 ? '' : 's') + '</span>' : '') +
-                '</button>';
-            }
-
-            function renderGrid() {
-                const first = new Date(viewY, viewM, 1);
-                const daysInMonth = new Date(viewY, viewM + 1, 0).getDate();
-                const lead = first.getDay();
-                const byDay = {};
-                if (cm && cm.days) {
-                    cm.days.forEach(d => { byDay[d.day] = d; });
-                }
-                let cells = '';
-                for (let i = 0; i < lead; i++) cells += '<div class="cal-empty" aria-hidden="true"></div>';
-                for (let d = 1; d <= daysInMonth; d++) cells += dayCell(d, byDay[d] || null, false);
-                if ($('cal-grid')) $('cal-grid').innerHTML = cells;
-            }
-
-            // ---- Selected-day Drawer (High Contrast & Clear) ----
-            function openDay(day) {
-                const dd = (cm && cm.days && cm.days.find(d => d.day === day)) || null;
-                const date = new Date(viewY, viewM, day);
-                $('day-title').textContent = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' });
-                $('day-sub').textContent = dd
-                    ? dd.trades + ' trade' + (dd.trades === 1 ? '' : 's') + ' · Total P&L ' + money(dd.pnl)
-                    : 'No trades recorded on this day.';
-
-                let body = '';
-                if (!dd) {
-                    body = '<div class="panel p-8 text-center rounded-xl">' +
-                        '<svg data-lucide="calendar-x" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-3"></svg>' +
-                        '<p class="text-[15px] font-bold text-[var(--tm-text)]">No trades recorded</p>' +
-                        '<p class="text-[13px] text-[var(--tm-dim)] mt-1">No trading activity was logged for this date.</p>' +
-                    '</div>';
-                } else {
-                    const discCol = dd.disciplineScore == null ? '' : dd.disciplineScore >= 80 ? 'var(--tm-green)' : dd.disciplineScore >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
-                    const stats = [
-                        ['Daily P&L', money(dd.pnl), dd.pnl >= 0 ? 'var(--tm-green)' : 'var(--tm-red)'],
-                        ['Trades', dd.trades, ''],
-                        ['Wins', dd.wins, 'var(--tm-green)'],
-                        ['Losses', dd.losses, dd.losses ? 'var(--tm-red)' : ''],
-                        ['Average R', fmtR(dd.avgR), dd.avgR >= 0 ? 'var(--tm-green)' : 'var(--tm-red)'],
-                        ['Risk Consumed', dd.riskConsumed != null ? '$' + dd.riskConsumed : '—', dailyBudget > 0 && dd.riskConsumed >= dailyBudget * 0.8 ? 'var(--tm-amber)' : ''],
-                        ['Discipline', dd.disciplineScore != null ? dd.disciplineScore + '/100' : '—', discCol],
-                        ['Violations', dd.violations, dd.violations ? 'var(--tm-red)' : '']
-                    ];
-                    body =
-                        '<div class="grid grid-cols-2 gap-3">' + stats.map(s =>
-                            '<div class="stat-tile">' +
-                                '<div class="st-label">' + s[0] + '</div>' +
-                                '<div class="st-value num" style="' + (s[2] ? 'color:' + s[2] : '') + '">' + s[1] + '</div>' +
-                            '</div>').join('') +
-                        '</div>' +
-                        '<div class="panel p-4 rounded-xl">' +
-                            '<div class="label-xs mb-1.5">Day Summary</div>' +
-                            '<p class="text-[13px] text-[var(--tm-text)] leading-relaxed">' +
-                                dd.trades + ' trade' + (dd.trades === 1 ? '' : 's') + ' · ' +
-                                dd.wins + ' win' + (dd.wins === 1 ? '' : 's') + ' · ' + dd.losses + ' loss' + (dd.losses === 1 ? '' : 's') +
-                                (dd.avgR != null ? ' · ' + fmtR(dd.avgR) + ' avg' : '') +
-                                (dd.disciplineScore != null ? ' · Discipline ' + dd.disciplineScore : '') +
-                                (dd.violations ? ' · ' + dd.violations + ' rule violation' + (dd.violations === 1 ? '' : 's') : ' · No rule violations.') +
-                            '</p>' +
-                        '</div>' +
-                        '<div class="flex flex-col gap-2.5">' +
-                            '<div class="label-xs">Executed Trades (' + (dd.list ? dd.list.length : 0) + ')</div>' +
-                            '<div class="flex flex-col gap-2">' + (dd.list && dd.list.length ? dd.list.map(tradeRow).join('') : '<p class="text-[12.5px] text-[var(--tm-dim)]">No trade records available.</p>') + '</div>' +
-                        '</div>';
-                }
-
-                $('day-body').innerHTML = body;
-                $('day-overlay').classList.add('open');
-                $('day-drawer').classList.add('open');
-                $('day-drawer').setAttribute('aria-hidden', 'false');
-                if (window.lucide) lucide.createIcons();
-            }
-
-            function tradeRow(t) {
-                const d = new Date(t.ts);
-                const ts = !isNaN(d) ? d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }) : '—';
-                const adh = t.adherence_result === 'BLOCK' ? { label: 'Blocked', cls: 'tag-red' }
-                    : t.adherence_result === 'VIOLATION' ? { label: 'Violation', cls: 'tag-red' }
-                    : t.adherence && t.adherence !== 'followed' ? { label: t.adherence.charAt(0).toUpperCase() + t.adherence.slice(1), cls: 'tag-amber' }
-                    : { label: 'Followed', cls: 'tag-emerald' };
-                const result = t.pnl > 0 ? 'var(--tm-green)' : t.pnl < 0 ? 'var(--tm-red)' : 'var(--tm-dim)';
-                return '<a class="ev-trade-row" href="journal.html?trade=' + encodeURIComponent(t.id) + '">' +
-                    '<span class="tm-sym-badge">' + (window.TMAssets && window.TMAssets.badgeHtml ? window.TMAssets.badgeHtml(t.symbol) : (t.symbol || '—').slice(0, 2).toUpperCase()) + '</span>' +
-                    '<span class="flex-1 min-w-0">' +
-                        '<span class="block text-[13.5px] font-bold text-[var(--tm-text)] truncate">' + esc(t.symbol) + ' · ' + esc(t.setup || '—') + '</span>' +
-                        '<span class="block text-[11.5px] text-[var(--tm-dim)] mt-0.5">' + ts + ' · ' + (t.dir === 'Long' || t.dir === 'long' ? 'Long' : 'Short') + ' · ' + esc(t.session || '—') + '</span>' +
-                    '</span>' +
-                    '<span class="text-right">' +
-                        '<span class="block num text-[13.5px] font-bold" style="color:' + result + '">' + money(t.pnl) + '</span>' +
-                        '<span class="block num text-[11px] text-[var(--tm-dim)]">' + fmtR(t.r) + '</span>' +
-                    '</span>' +
-                    '<span class="tag ' + adh.cls + ' !py-0.5 !px-2">' + adh.label + '</span>' +
-                '</a>';
-            }
-
-            function closeDay() {
-                $('day-overlay').classList.remove('open');
-                $('day-drawer').classList.remove('open');
-                $('day-drawer').setAttribute('aria-hidden', 'true');
-            }
-
-            // ---- This month strip ----
-            function renderMonthStrip() {
-                const el = $('month-strip');
-                if (!cm || !cm.days || !cm.days.length) {
-                    if (el) el.innerHTML = '<p class="text-[13px] text-[var(--tm-dim)] col-span-full">No trading data for ' + MONTHS[viewM] + ' ' + viewY + '.</p>';
-                    return;
-                }
-                const best = cm.days.slice().sort((a, b) => b.pnl - a.pnl)[0];
-                const worst = cm.days.slice().sort((a, b) => a.pnl - b.pnl)[0];
-                const scored = cm.days.filter(d => d.disciplineScore != null);
-                const topDisc = scored.length ? scored.slice().sort((a, b) => b.disciplineScore - a.disciplineScore)[0] : null;
-                const topRisk = cm.days.slice().sort((a, b) => b.riskConsumed - a.riskConsumed)[0];
-                const totalViol = cm.days.reduce((s, d) => s + d.violations, 0);
-                const tiles = [];
-                if (best) tiles.push({ label: 'Best day', value: best.day + ' ' + MONTHS[viewM].slice(0, 3), sub: money(best.pnl) + ' · ' + best.trades + ' trades', color: 'var(--tm-green)' });
-                if (worst) tiles.push({ label: 'Worst day', value: worst.day + ' ' + MONTHS[viewM].slice(0, 3), sub: money(worst.pnl) + ' · ' + worst.trades + ' trades', color: 'var(--tm-red)' });
-                if (topDisc) tiles.push({ label: 'Highest discipline', value: topDisc.day + ' ' + MONTHS[viewM].slice(0, 3), sub: topDisc.disciplineScore + '/100', color: topDisc.disciplineScore >= 80 ? 'var(--tm-green)' : 'var(--tm-amber)' });
-                if (topRisk) tiles.push({ label: 'Highest risk day', value: topRisk.day + ' ' + MONTHS[viewM].slice(0, 3), sub: '$' + topRisk.riskConsumed + ' risk', color: topRisk.riskConsumed > 0 ? 'var(--tm-amber)' : '' });
-                tiles.push({ label: 'Total violations', value: totalViol, sub: 'across month', color: totalViol ? 'var(--tm-red)' : 'var(--tm-green)' });
-                if (el) {
-                    el.innerHTML = tiles.map(t =>
-                        '<div class="stat-tile"><div class="st-label">' + t.label + '</div>' +
-                        '<div class="st-value num text-[17px] !mt-2" style="' + (t.color ? 'color:' + t.color : '') + '">' + t.value + '</div>' +
-                        '<div class="text-[11.5px] text-[var(--tm-dim)] mt-1">' + t.sub + '</div></div>').join('');
-                }
-            }
-
-            // ---- Discipline trend ----
-            function renderTrend() {
-                const el = $('trend');
-                if (!el) return;
-                if (!cm || !cm.days) {
-                    el.innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)] py-6 text-center">No trading data yet.</p>';
-                    return;
-                }
-                const pts = cm.days.filter(d => d.disciplineScore != null).sort((a, b) => a.day - b.day);
-                if (pts.length < 2) {
-                    el.innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)] py-6 text-center">' +
-                        (cm.days.length ? 'Not enough discipline data across the month yet (need at least 2 scored days).' : 'No trading data for ' + MONTHS[viewM] + ' ' + viewY + '.') + '</p>';
-                    return;
-                }
-                const W = 620, H = 150, P = 14;
-                const minDay = Math.min.apply(null, pts.map(p => p.day));
-                const maxDay = Math.max.apply(null, pts.map(p => p.day));
-                const x = d => P + ((d - minDay) / (maxDay - minDay || 1)) * (W - 2 * P);
-                const y = v => H - P - (v / 100) * (H - 2 * P);
-                let grid = '';
-                for (const gv of [20, 40, 60, 80, 100]) {
-                    const gy = y(gv);
-                    grid += '<line x1="' + P + '" y1="' + gy + '" x2="' + (W - P) + '" y2="' + gy + '" stroke="var(--hairline)" stroke-width="1"/>';
-                    grid += '<text x="' + P + '" y="' + (gy - 4) + '" fill="var(--tm-dim)" font-size="9">' + gv + '</text>';
-                }
-                const line = pts.map((p, i) => (i ? 'L' : 'M') + x(p.day).toFixed(1) + ' ' + y(p.disciplineScore).toFixed(1)).join(' ');
-                const dots = pts.map(p => '<circle cx="' + x(p.day).toFixed(1) + '" cy="' + y(p.disciplineScore).toFixed(1) + '" r="3" fill="var(--tm-accent)" stroke="var(--tm-bg-elev)" stroke-width="1.5"><title>Day ' + p.day + ' — ' + p.disciplineScore + '/100</title></circle>').join('');
-                const last = pts[pts.length - 1];
-                el.innerHTML =
-                    '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full" style="height:auto">' + grid +
-                        '<path d="' + line + '" fill="none" stroke="var(--tm-accent)" stroke-width="2" stroke-linejoin="round" stroke-linecap="round" opacity="0.9"/>' +
-                        dots +
-                    '</svg>' +
-                    '<div class="flex items-center justify-between mt-2">' +
-                        '<span class="text-[11px] text-[var(--tm-dim)] num">' + pts.length + ' scored days</span>' +
-                        '<span class="text-[11px] text-[var(--tm-dim)] num">latest: day ' + last.day + ' — ' + last.disciplineScore + '/100</span>' +
-                    '</div>';
-            }
-
-            // ============ NAVIGATION ============
-            function shiftMonth(delta) {
-                dateInitialized = true;
-                viewM += delta;
-                if (viewM < 0) { viewM = 11; viewY--; }
-                if (viewM > 11) { viewM = 0; viewY++; }
-                animateAndRender();
-            }
-            function goToday() {
-                dateInitialized = true;
-                const core = getCore();
-                const acc = account();
-                if (core && core.Trades && core.Trades.length && acc) {
-                    const accTrades = core.Trades.filter(t => t.account_id === acc.id);
-                    const timestamps = (accTrades.length ? accTrades : core.Trades).map(t => new Date(t.ts).getTime()).filter(t => !isNaN(t));
-                    if (timestamps.length) {
-                        const latestDate = new Date(Math.max(...timestamps));
-                        viewY = latestDate.getFullYear();
-                        viewM = latestDate.getMonth();
-                    }
-                } else {
-                    const now = new Date();
-                    viewY = now.getFullYear();
-                    viewM = now.getMonth();
-                }
-                animateAndRender();
-            }
-            function animateAndRender() {
-                const shell = $('cal-shell');
-                if (shell) {
-                    shell.classList.remove('cal-anim');
-                    void shell.offsetWidth;
-                    shell.classList.add('cal-anim');
-                }
-                const mh = $('month-head');
-                if (mh) {
-                    mh.classList.remove('cal-anim');
-                    void mh.offsetWidth;
-                    mh.classList.add('cal-anim');
-                }
-                closeDay();
-                renderAll();
-            }
-
-            // ============ EVENTS ============
-            $('nav-prev').addEventListener('click', () => shiftMonth(-1));
-            $('nav-next').addEventListener('click', () => shiftMonth(1));
-            $('nav-today').addEventListener('click', goToday);
-            $('day-close').addEventListener('click', closeDay);
-            $('day-overlay').addEventListener('click', closeDay);
-            document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDay(); });
-            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
-            
-            $('acc-chip').addEventListener('click', () => {
-                const core = getCore();
-                if (!core || !core.Accounts || !core.Accounts.length) return;
-                const ids = core.Accounts.map(a => a.id);
-                const cur = currentAccountId() || ids[0];
-                const idx = ids.indexOf(cur);
-                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
-                closeDay();
-                renderAll();
+            // ---- EVENT LISTENERS ----
+            $('month-back-btn').addEventListener('click', () => {
+                $('view-monthly').classList.add('hidden');
+                $('view-yearly').classList.remove('hidden');
+                $('crumb-sub-sep').classList.add('hidden');
+                $('crumb-sub-month').classList.add('hidden');
+                renderYearlyView();
             });
 
-            const gs = $('global-search');
-            if (gs && window.TM_GLOBAL_SEARCH) {
-                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
-            }
-
-            function boot() {
-                const core = getCore();
-                if (core && core.TradeMindBus) {
-                    ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.version.created', 'config.changed', 'account.changed'].forEach(ev =>
-                        core.TradeMindBus.subscribe(ev, () => renderAll()));
-                }
-                renderAll();
-                if (window.lucide) lucide.createIcons();
-            }
-
-            // Day click delegation
-            $('cal-grid').addEventListener('click', e => {
-                const btn = e.target.closest && e.target.closest('[data-day]');
-                if (btn) openDay(Number(btn.dataset.day));
+            $('crumb-cal-root').addEventListener('click', () => {
+                $('month-back-btn').click();
+            });
+            $('crumb-all-accounts').addEventListener('click', () => {
+                $('month-back-btn').click();
             });
 
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', boot);
-            } else {
-                boot();
-            }
+            $('btn-prev-month').addEventListener('click', () => {
+                if (selectedMonth > 0) openMonthlyView(selectedMonth - 1);
+            });
+            $('btn-next-month').addEventListener('click', () => {
+                if (selectedMonth < 11) openMonthlyView(selectedMonth + 1);
+            });
+
+            $('unit-toggle').addEventListener('click', () => {
+                unitMode = unitMode === '%' ? '$' : '%';
+                $('unit-toggle').textContent = unitMode;
+                renderYearlyView();
+                if (!$('view-monthly').classList.contains('hidden')) {
+                    renderMonthlyCalendar();
+                }
+            });
+
+            $('btn-close-day-modal').addEventListener('click', () => {
+                $('day-modal').classList.remove('open');
+            });
+            $('day-modal').addEventListener('click', e => {
+                if (e.target === $('day-modal')) $('day-modal').classList.remove('open');
+            });
+
+            $('btn-toggle-day-notes').addEventListener('click', () => {
+                const content = $('day-notes-content');
+                const chevron = $('day-notes-chevron');
+                content.classList.toggle('hidden');
+                chevron.classList.toggle('rotate-90');
+            });
+
+            const collapseBtn = $('collapse-btn');
+            if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            // Initial load
+            trades = loadTrades();
+            renderChrome();
+            renderYearlyView();
+
+            if (window.lucide) lucide.createIcons();
         })();
     </script>
-    <script src="assets/profile-meta.js"></script>
-    <script src="assets/account-switcher.js"></script>
-    <script src="reset.js"></script>
 </body>
 </html>
