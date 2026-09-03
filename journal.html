@@ -235,6 +235,79 @@
 
         
             .topbar { padding-left: 12px; padding-right: 12px; }
+
+        /* === OPTIONS DESK HIGH-DENSITY STYLING === */
+        .opt-pill {
+            padding: 5px 11px;
+            font-size: 11.5px;
+            font-weight: 600;
+            border-radius: 7px;
+            border: 1px solid var(--tm-border);
+            background: rgba(255, 255, 255, 0.02);
+            color: var(--tm-muted);
+            white-space: nowrap;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            user-select: none;
+        }
+        .opt-pill:hover {
+            border-color: #a855f7;
+            color: #fff;
+            background: rgba(168, 85, 247, 0.08);
+        }
+        .opt-pill.active {
+            border-color: #a855f7;
+            background: rgba(168, 85, 247, 0.18);
+            color: #e9d5ff;
+            box-shadow: 0 0 10px rgba(168, 85, 247, 0.2);
+        }
+        .opt-toggle-btn {
+            padding: 3px 8px;
+            font-size: 11px;
+            font-weight: 700;
+            letter-spacing: 0.03em;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.12s ease;
+            user-select: none;
+        }
+        .opt-toggle-buy {
+            background: rgba(16, 185, 129, 0.15);
+            border: 1px solid rgba(16, 185, 129, 0.4);
+            color: #34d399;
+        }
+        .opt-toggle-buy:hover {
+            background: rgba(16, 185, 129, 0.25);
+            border-color: #34d399;
+        }
+        .opt-toggle-sell {
+            background: rgba(244, 63, 94, 0.15);
+            border: 1px solid rgba(244, 63, 94, 0.4);
+            color: #fb7185;
+        }
+        .opt-toggle-sell:hover {
+            background: rgba(244, 63, 94, 0.25);
+            border-color: #fb7185;
+        }
+        .opt-toggle-call {
+            background: rgba(168, 85, 247, 0.15);
+            border: 1px solid rgba(168, 85, 247, 0.4);
+            color: #c084fc;
+        }
+        .opt-toggle-call:hover {
+            background: rgba(168, 85, 247, 0.25);
+            border-color: #c084fc;
+        }
+        .opt-toggle-put {
+            background: rgba(245, 158, 11, 0.15);
+            border: 1px solid rgba(245, 158, 11, 0.4);
+            color: #fbbf24;
+        }
+        .opt-toggle-put:hover {
+            background: rgba(245, 158, 11, 0.25);
+            border-color: #fbbf24;
+        }
+
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -656,59 +729,95 @@
 
                 <!-- SECTION 3B · OPTIONS MULTI-LEG BUILDER -->
                 <div class="tm-sec hidden" id="options-multi-fields">
-                    <div class="tm-sec-head flex items-center justify-between">
-                        <div><span class="tm-sec-num">03</span>Options Strategy &amp; Legs</div>
-                        <span class="tag tag-purple text-[10px] font-bold">Multi-Leg Engine</span>
+                    <div class="tm-sec-head flex items-center justify-between mb-3">
+                        <div class="flex items-center gap-2">
+                            <span class="tm-sec-num">03</span>
+                            <span class="font-bold text-[14px]">Options Strategy Matrix</span>
+                        </div>
+                        <span class="tag tag-purple text-[10px] font-bold tracking-wider uppercase">Fintech Desk</span>
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4">
-                        <div class="sm:col-span-2">
-                            <label class="field-label">Strategy Preset</label>
-                            <select id="opt-preset" class="field" onchange="window.applyOptionPreset(this.value)">
-                                <option value="BULL_CALL_SPREAD">Bull Call Spread (2 Legs)</option>
-                                <option value="BEAR_PUT_SPREAD">Bear Put Spread (2 Legs)</option>
-                                <option value="STRADDLE">Long Straddle (2 Legs)</option>
-                                <option value="STRANGLE">Long Strangle (2 Legs)</option>
-                                <option value="IRON_CONDOR">Iron Condor (4 Legs)</option>
-                                <option value="COVERED_CALL">Covered Call (2 Legs)</option>
-                                <option value="CUSTOM">Custom Multi-Leg (1-4 Legs)</option>
-                            </select>
+                    <!-- Strategy Quick Pills -->
+                    <div class="mb-3.5">
+                        <div class="text-[11px] font-semibold text-[var(--tm-dim)] uppercase tracking-wider mb-1.5">Strategy Preset</div>
+                        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none" id="opt-preset-pills">
+                            <button type="button" class="opt-pill active" onclick="window.selectOptionPreset('BULL_CALL_SPREAD')">Bull Call Spread</button>
+                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('BEAR_PUT_SPREAD')">Bear Put Spread</button>
+                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('IRON_CONDOR')">Iron Condor</button>
+                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('STRADDLE')">Straddle</button>
+                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('STRANGLE')">Strangle</button>
+                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('COVERED_CALL')">Covered Call</button>
+                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('CUSTOM')">+ Custom</button>
                         </div>
-                        <div>
-                            <label class="field-label">Lot Multiplier</label>
-                            <input id="opt-multiplier" type="number" class="field num" value="100" min="1" oninput="window.updateOptionsCalc()">
+                        <select id="opt-preset" class="hidden" onchange="window.applyOptionPreset(this.value)">
+                            <option value="BULL_CALL_SPREAD">Bull Call Spread</option>
+                            <option value="BEAR_PUT_SPREAD">Bear Put Spread</option>
+                            <option value="IRON_CONDOR">Iron Condor</option>
+                            <option value="STRADDLE">Straddle</option>
+                            <option value="STRANGLE">Strangle</option>
+                            <option value="COVERED_CALL">Covered Call</option>
+                            <option value="CUSTOM">Custom</option>
+                        </select>
+                    </div>
+
+                    <!-- Options Legs Matrix Card -->
+                    <div class="rounded-xl border border-white/10 bg-[#090b10] overflow-hidden mb-3">
+                        <!-- Toolbar -->
+                        <div class="flex items-center justify-between px-3 py-2 bg-white/[0.02] border-b border-white/5">
+                            <div class="flex items-center gap-2">
+                                <span id="opt-active-name" class="text-[12px] font-bold text-white tracking-wide">Bull Call Spread</span>
+                                <span id="opt-legs-count-badge" class="tag tag-purple !py-0.5 !px-1.5 text-[10px] font-mono font-bold">2 Legs</span>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1.5 text-[11px] text-[var(--tm-dim)]">
+                                    <span>Lot Multiplier:</span>
+                                    <input id="opt-multiplier" type="number" class="field num !py-0.5 !px-1.5 text-[11.5px] w-14 h-6 bg-white/5 text-center font-bold text-white border-white/10" value="100" min="1" oninput="window.updateOptionsCalc()">
+                                </div>
+                                <button type="button" class="btn-mini !py-1 !px-2 text-[11px] text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 inline-flex items-center gap-1" onclick="window.addOptionLeg()">
+                                    <svg data-lucide="plus" class="w-3 h-3"></svg> Add Leg
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- High-Density Legs Table -->
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-[12px] border-collapse min-w-[580px]">
+                                <thead>
+                                    <tr class="border-b border-white/5 bg-white/[0.015] text-[10px] uppercase font-semibold text-[var(--tm-dim)] tracking-wider">
+                                        <th class="py-2 px-2.5 w-8 text-center">#</th>
+                                        <th class="py-2 px-2.5 w-20">Action</th>
+                                        <th class="py-2 px-2.5 w-20">Type</th>
+                                        <th class="py-2 px-2.5">Strike</th>
+                                        <th class="py-2 px-2.5">Entry Prem ($)</th>
+                                        <th class="py-2 px-2.5">Exit Prem ($)</th>
+                                        <th class="py-2 px-2.5 w-16 text-center">Lots</th>
+                                        <th class="py-2 px-2.5 text-right w-24">Leg P&amp;L</th>
+                                        <th class="py-2 px-1 w-8 text-center"></th>
+                                    </tr>
+                                </thead>
+                                <tbody id="options-legs-rows" class="divide-y divide-white/[0.03]">
+                                    <!-- Dynamic Rows -->
+                                </tbody>
+                            </table>
                         </div>
                     </div>
 
-                    <!-- Dynamic Legs Table -->
-                    <div class="rounded-xl border border-white/10 bg-[#0c0d12] p-3.5 mb-3">
-                        <div class="flex items-center justify-between mb-2.5 pb-2 border-b border-white/5">
-                            <span class="text-[12px] font-bold text-white tracking-wide">STRATEGY LEGS</span>
-                            <button type="button" class="btn-mini !py-1 !px-2.5 text-[11px] text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 inline-flex items-center gap-1" onclick="window.addOptionLeg()">
-                                <svg data-lucide="plus" class="w-3 h-3"></svg> Add Leg
-                            </button>
-                        </div>
-                        <div id="options-legs-rows" class="flex flex-col gap-2.5">
-                            <!-- Injected dynamically by JS -->
-                        </div>
-                    </div>
-
-                    <!-- Live Net Metrics Summary -->
+                    <!-- Live High-Density KPI Strip -->
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl border border-white/5 bg-white/[0.02]">
-                        <div>
-                            <div class="text-[10.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Net Entry</div>
+                        <div class="bg-black/20 p-2 rounded-lg border border-white/5">
+                            <div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Net Strategy Cost</div>
                             <div id="opt-readout-entry" class="text-[14px] font-bold font-mono text-white mt-0.5">—</div>
                         </div>
-                        <div>
-                            <div class="text-[10.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Net Exit</div>
+                        <div class="bg-black/20 p-2 rounded-lg border border-white/5">
+                            <div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Closing Return</div>
                             <div id="opt-readout-exit" class="text-[14px] font-bold font-mono text-white mt-0.5">—</div>
                         </div>
-                        <div>
-                            <div class="text-[10.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Total P&amp;L</div>
+                        <div class="bg-black/20 p-2 rounded-lg border border-white/5">
+                            <div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Net P&amp;L</div>
                             <div id="opt-readout-pnl" class="text-[14px] font-bold font-mono text-emerald-400 mt-0.5">—</div>
                         </div>
-                        <div>
-                            <div class="text-[10.5px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Max Risk</div>
+                        <div class="bg-black/20 p-2 rounded-lg border border-white/5">
+                            <div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Max Risk</div>
                             <div id="opt-readout-risk" class="text-[14px] font-bold font-mono text-amber-400 mt-0.5">—</div>
                         </div>
                     </div>
@@ -1265,12 +1374,16 @@
             }
 
             window.openEntryModal = function(prefill) {
-                entryMode = 'fast';
-                $('tab-fast').classList.add('active');
-                $('tab-detailed').classList.remove('active');
-                $('detailed-fields').classList.add('hidden');
                 emotion = '';
                 editingId = prefill && prefill.id ? prefill.id : null;
+                if (prefill && (prefill.strategyType || (prefill.legs && prefill.legs.length > 0))) {
+                    window.switchEntryMode('options');
+                    if (prefill.legs) window.optionLegs = JSON.parse(JSON.stringify(prefill.legs));
+                    window.selectOptionPreset(prefill.strategyType || 'CUSTOM');
+                } else {
+                    window.switchEntryMode('fast');
+                }
+
                 if (prefill) {
                     $('e-symbol').value = prefill.symbol;
                     if (assetPicker) assetPicker.syncFromSelect();
@@ -1290,7 +1403,11 @@
                 }
                 $('entry-overlay').classList.add('open');
                 $('entry-modal').classList.add('open');
-                updateCalc();
+                if (entryMode === 'options') {
+                    window.updateOptionsCalc();
+                } else {
+                    updateCalc();
+                }
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             };
 
@@ -1455,52 +1572,77 @@
                 window.updateOptionsCalc();
             };
 
+            window.selectOptionPreset = function(presetKey) {
+                const sel = $('opt-preset');
+                if (sel) sel.value = presetKey;
+                document.querySelectorAll('.opt-pill').forEach(pill => {
+                    const fnAttr = pill.getAttribute('onclick') || '';
+                    pill.classList.toggle('active', fnAttr.includes(presetKey));
+                });
+                window.applyOptionPreset(presetKey);
+            };
+
+            window.toggleLegAction = function(idx) {
+                if (!window.optionLegs[idx]) return;
+                window.optionLegs[idx].action = window.optionLegs[idx].action === 'BUY' ? 'SELL' : 'BUY';
+                window.renderOptionLegs();
+            };
+
+            window.toggleLegType = function(idx) {
+                if (!window.optionLegs[idx]) return;
+                window.optionLegs[idx].optionType = window.optionLegs[idx].optionType === 'CALL' ? 'PUT' : 'CALL';
+                window.renderOptionLegs();
+            };
+
             window.renderOptionLegs = function() {
                 const host = $('options-legs-rows');
                 if (!host) return;
                 host.innerHTML = '';
 
+                // Update toolbar labels
+                const presetKey = $('opt-preset') ? $('opt-preset').value : 'BULL_CALL_SPREAD';
+                const readableName = presetKey.replace(/_/g, ' ');
+                const elTitle = $('opt-active-name');
+                const elBadge = $('opt-legs-count-badge');
+                if (elTitle) elTitle.textContent = readableName;
+                if (elBadge) elBadge.textContent = window.optionLegs.length + ' Leg' + (window.optionLegs.length > 1 ? 's' : '');
+
                 window.optionLegs.forEach((leg, idx) => {
-                    const row = document.createElement('div');
-                    row.className = 'grid grid-cols-2 sm:grid-cols-7 gap-2 items-center bg-white/[0.03] p-2.5 rounded-lg border border-white/5';
-                    row.innerHTML =
-                        '<div>' +
-                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Action</label>' +
-                            '<select class="field !py-1.5 !px-2 text-[12px] font-bold ' + (leg.action === 'BUY' ? 'text-emerald-400' : 'text-rose-400') + '" onchange="window.updateOptionLegField(' + idx + ', \'action\', this.value); window.renderOptionLegs();">' +
-                                '<option value="BUY"' + (leg.action === 'BUY' ? ' selected' : '') + '>BUY (Long)</option>' +
-                                '<option value="SELL"' + (leg.action === 'SELL' ? ' selected' : '') + '>SELL (Short)</option>' +
-                            '</select>' +
-                        '</div>' +
-                        '<div>' +
-                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Type</label>' +
-                            '<select class="field !py-1.5 !px-2 text-[12px] font-bold" onchange="window.updateOptionLegField(' + idx + ', \'optionType\', this.value)">' +
-                                '<option value="CALL"' + (leg.optionType === 'CALL' ? ' selected' : '') + '>CALL</option>' +
-                                '<option value="PUT"' + (leg.optionType === 'PUT' ? ' selected' : '') + '>PUT</option>' +
-                            '</select>' +
-                        '</div>' +
-                        '<div>' +
-                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Strike</label>' +
-                            '<input type="number" step="1" class="field num !py-1.5 !px-2 text-[12px]" value="' + leg.strike + '" oninput="window.updateOptionLegField(' + idx + ', \'strike\', this.value)">' +
-                        '</div>' +
-                        '<div>' +
-                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Entry Prem</label>' +
-                            '<input type="number" step="0.01" class="field num !py-1.5 !px-2 text-[12px]" value="' + leg.entryPrice + '" oninput="window.updateOptionLegField(' + idx + ', \'entryPrice\', this.value)">' +
-                        '</div>' +
-                        '<div>' +
-                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Exit Prem</label>' +
-                            '<input type="number" step="0.01" class="field num !py-1.5 !px-2 text-[12px]" value="' + leg.exitPrice + '" oninput="window.updateOptionLegField(' + idx + ', \'exitPrice\', this.value)">' +
-                        '</div>' +
-                        '<div>' +
-                            '<label class="text-[10px] text-[var(--tm-dim)] font-semibold uppercase block mb-1">Contracts</label>' +
-                            '<input type="number" step="1" min="1" class="field num !py-1.5 !px-2 text-[12px]" value="' + leg.contracts + '" oninput="window.updateOptionLegField(' + idx + ', \'contracts\', this.value)">' +
-                        '</div>' +
-                        '<div class="flex items-center justify-between sm:justify-end gap-2 pt-3 sm:pt-0">' +
-                            '<span id="leg-pnl-' + idx + '" class="num font-bold text-[12.5px]"></span>' +
-                            '<button type="button" class="btn-ghost !p-1.5 text-zinc-400 hover:text-rose-400" onclick="window.removeOptionLeg(' + idx + ')" title="Remove leg">' +
-                                '<svg data-lucide="x" class="w-3.5 h-3.5"></svg>' +
+                    const tr = document.createElement('tr');
+                    tr.className = 'hover:bg-white/[0.02] transition-colors';
+                    tr.innerHTML =
+                        '<td class="py-2 px-2.5 text-center font-mono text-[11px] text-[var(--tm-dim)] font-bold">L' + (idx + 1) + '</td>' +
+                        '<td class="py-2 px-2.5">' +
+                            '<button type="button" class="opt-toggle-btn ' + (leg.action === 'BUY' ? 'opt-toggle-buy' : 'opt-toggle-sell') + '" onclick="window.toggleLegAction(' + idx + ')">' +
+                                leg.action +
                             '</button>' +
-                        '</div>';
-                    host.appendChild(row);
+                        '</td>' +
+                        '<td class="py-2 px-2.5">' +
+                            '<button type="button" class="opt-toggle-btn ' + (leg.optionType === 'CALL' ? 'opt-toggle-call' : 'opt-toggle-put') + '" onclick="window.toggleLegType(' + idx + ')">' +
+                                leg.optionType +
+                            '</button>' +
+                        '</td>' +
+                        '<td class="py-2 px-2.5">' +
+                            '<input type="number" step="1" class="field num !py-1 !px-2 text-[12px] h-7 bg-white/[0.04] text-white border-white/10 w-24" value="' + leg.strike + '" oninput="window.updateOptionLegField(' + idx + ', \'strike\', this.value)">' +
+                        '</td>' +
+                        '<td class="py-2 px-2.5">' +
+                            '<input type="number" step="0.01" class="field num !py-1 !px-2 text-[12px] h-7 bg-white/[0.04] text-white border-white/10 w-24" value="' + leg.entryPrice + '" oninput="window.updateOptionLegField(' + idx + ', \'entryPrice\', this.value)">' +
+                        '</td>' +
+                        '<td class="py-2 px-2.5">' +
+                            '<input type="number" step="0.01" class="field num !py-1 !px-2 text-[12px] h-7 bg-white/[0.04] text-white border-white/10 w-24" value="' + leg.exitPrice + '" oninput="window.updateOptionLegField(' + idx + ', \'exitPrice\', this.value)">' +
+                        '</td>' +
+                        '<td class="py-2 px-2.5 text-center">' +
+                            '<input type="number" step="1" min="1" class="field num !py-1 !px-1.5 text-[12px] h-7 bg-white/[0.04] text-white border-white/10 w-14 text-center font-bold" value="' + leg.contracts + '" oninput="window.updateOptionLegField(' + idx + ', \'contracts\', this.value)">' +
+                        '</td>' +
+                        '<td class="py-2 px-2.5 text-right">' +
+                            '<span id="leg-pnl-' + idx + '" class="num font-bold text-[12px]"></span>' +
+                        '</td>' +
+                        '<td class="py-2 px-1 text-center">' +
+                            '<button type="button" class="btn-ghost !p-1 text-zinc-500 hover:text-rose-400 rounded transition-colors" onclick="window.removeOptionLeg(' + idx + ')" title="Remove leg">' +
+                                '<svg data-lucide="trash-2" class="w-3.5 h-3.5"></svg>' +
+                            '</button>' +
+                        '</td>';
+                    host.appendChild(tr);
                 });
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
                 window.updateOptionsCalc();
