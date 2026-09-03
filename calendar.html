@@ -159,19 +159,84 @@
             .monthly-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
         }
 
-        /* Modal 5-stat tiles grid */
+        /* Modal Exact TradesPad Styles (Matches media_1788464810812.png) */
+        .modal-window {
+            background: #0d1017 !important;
+            border: 1px solid #1c2230 !important;
+            border-radius: 16px !important;
+            width: 100% !important;
+            max-width: 760px !important;
+            padding: 24px !important;
+            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.95) !important;
+        }
+
         .modal-stats-grid {
             display: grid !important;
             grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-            gap: 10px !important;
+            gap: 12px !important;
+            margin-bottom: 20px !important;
+        }
+
+        .modal-stat-card {
+            background: #141721 !important;
+            border: 1px solid #1e2434 !important;
+            border-radius: 12px !important;
+            padding: 14px 16px !important;
+            height: 84px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: space-between !important;
+        }
+
+        .modal-stat-label {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            color: #717e91 !important;
+            letter-spacing: 0.01em !important;
+        }
+
+        .modal-stat-val {
+            font-size: 24px !important;
+            font-weight: 700 !important;
+            color: #ffffff !important;
+            line-height: 1 !important;
+            font-family: 'JetBrains Mono', var(--tm-mono) !important;
         }
 
         /* Modal trade table grid (6 columns) */
-        .modal-trade-grid {
+        .modal-table-shell {
+            background: #10131c !important;
+            border: 1px solid #1c2230 !important;
+            border-radius: 12px !important;
+            overflow: hidden !important;
+            margin-bottom: 18px !important;
+        }
+
+        .modal-table-header {
             display: grid !important;
-            grid-template-columns: 140px 110px 80px 100px 90px 1fr !important;
-            gap: 8px !important;
+            grid-template-columns: 140px 110px 90px 110px 90px 1fr !important;
+            padding: 12px 18px !important;
+            background: #0a0c12 !important;
+            border-bottom: 1px solid #181d28 !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            color: #717e91 !important;
+        }
+
+        .modal-table-row {
+            display: grid !important;
+            grid-template-columns: 140px 110px 90px 110px 90px 1fr !important;
+            padding: 13px 18px !important;
+            border-bottom: 1px solid #161a24 !important;
             align-items: center !important;
+            font-size: 12.5px !important;
+            transition: background 0.15s ease !important;
+        }
+        .modal-table-row:last-child {
+            border-bottom: none !important;
+        }
+        .modal-table-row:hover {
+            background: rgba(255, 255, 255, 0.02) !important;
         }
 
         /* Yearly Grid Cells */
@@ -546,56 +611,56 @@
     </a>
 
     <!-- ======================================================= -->
-    <!-- VIEW 3: DAY DETAIL MODAL (Matches Image 3) -->
+    <!-- VIEW 3: DAY DETAIL MODAL (Matches media_1788464810812.png) -->
     <!-- ======================================================= -->
     <div class="modal-backdrop" id="day-modal">
         <div class="modal-window">
             <!-- Modal Header -->
-            <div class="flex items-center justify-between mb-4">
+            <div class="flex items-center justify-between mb-5">
                 <div>
-                    <h3 class="text-[18px] font-bold text-white" id="modal-day-title">Aug 11, 2026</h3>
-                    <p class="text-[12px] text-[#64748b]">View your trades and statistics for this day.</p>
+                    <h3 class="text-[19px] font-bold text-white tracking-tight" id="modal-day-title">Aug 11, 2026</h3>
+                    <p class="text-[12.5px] text-[#717e91] mt-0.5">View your trades and statistics for this day.</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="pnl-badge" id="modal-day-pnl">▲ 11,696.63%</span>
-                    <button type="button" class="text-[#64748b] hover:text-white transition-colors" id="btn-close-day-modal">
+                    <button type="button" class="text-[#64748b] hover:text-white transition-colors p-1" id="btn-close-day-modal">
                         <svg data-lucide="x" class="w-4 h-4"></svg>
                     </button>
                 </div>
             </div>
 
-            <!-- Top 5 Stat Tiles Inside Modal -->
-            <div class="modal-stats-grid mb-4">
-                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
-                    <div class="text-[10px] font-semibold text-[#64748b]">Total trades</div>
-                    <div class="num text-[17px] font-bold text-white mt-0.5" id="dm-trades">1</div>
+            <!-- Top 5 Stat Tiles (Matching Reference Screenshot) -->
+            <div class="modal-stats-grid">
+                <div class="modal-stat-card">
+                    <div class="modal-stat-label">Total trades</div>
+                    <div class="modal-stat-val" id="dm-trades">1</div>
                 </div>
-                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
-                    <div class="text-[10px] font-semibold text-[#64748b]">Day winrate</div>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="num text-[17px] font-bold text-white" id="dm-winrate">100%</span>
-                        <span class="px-1 rounded bg-emerald-500/20 text-emerald-400 text-[9px] font-bold">1</span>
+                <div class="modal-stat-card">
+                    <div class="modal-stat-label">Day winrate</div>
+                    <div class="flex items-center gap-2">
+                        <span class="modal-stat-val" id="dm-winrate">100%</span>
+                        <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold" id="dm-win-badge">1</span>
                     </div>
                 </div>
-                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
-                    <div class="text-[10px] font-semibold text-[#64748b]">Realized RR</div>
-                    <div class="num text-[17px] font-bold text-white mt-0.5" id="dm-rr">-</div>
+                <div class="modal-stat-card">
+                    <div class="modal-stat-label">Realized RR</div>
+                    <div class="modal-stat-val" id="dm-rr">-</div>
                 </div>
-                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
-                    <div class="text-[10px] font-semibold text-[#64748b]">Most traded asset</div>
-                    <div class="text-[15px] font-bold text-white mt-0.5 truncate" id="dm-asset">NAS100</div>
+                <div class="modal-stat-card">
+                    <div class="modal-stat-label">Most traded asset</div>
+                    <div class="modal-stat-val truncate text-[18px]" id="dm-asset">NAS100</div>
                 </div>
-                <div class="p-2.5 rounded-xl bg-[#090b10] border border-[#171a23]">
-                    <div class="text-[10px] font-semibold text-[#64748b]">Day PnL curve</div>
-                    <div class="w-full h-7 mt-0.5" id="dm-sparkline">
+                <div class="modal-stat-card">
+                    <div class="modal-stat-label">Day PnL curve</div>
+                    <div class="w-full h-8" id="dm-sparkline">
                         <!-- Mini SVG Area Curve -->
                     </div>
                 </div>
             </div>
 
             <!-- Trade Log Table Inside Modal -->
-            <div class="rounded-xl border border-[#171a23] bg-[#090b10] overflow-hidden mb-4">
-                <div class="px-3.5 py-2.5 bg-white/[0.015] border-b border-[#141720] modal-trade-grid text-[11px] font-semibold text-[#64748b]">
+            <div class="modal-table-shell">
+                <div class="modal-table-header">
                     <div>Entry date</div>
                     <div>Symbol</div>
                     <div>Side</div>
@@ -609,15 +674,15 @@
             </div>
 
             <!-- Collapsible Notes & Screenshots -->
-            <div class="border-t border-[#171a23] pt-3">
-                <button type="button" class="flex items-center gap-2 text-[12.5px] font-bold text-[#94a3b8] hover:text-white transition-colors" id="btn-toggle-day-notes">
+            <div class="border-t border-[#181d28] pt-3.5">
+                <button type="button" class="flex items-center gap-2 text-[12.5px] font-semibold text-[#8e9ba7] hover:text-white transition-colors" id="btn-toggle-day-notes">
                     <svg data-lucide="chevron-right" class="w-3.5 h-3.5 transition-transform" id="day-notes-chevron"></svg>
                     <span>Notes &amp; Screenshots</span>
                 </button>
-                <div class="hidden mt-3 p-3 rounded-xl bg-[#090b10] border border-[#171a23]" id="day-notes-content">
-                    <p class="text-[13px] text-[#cbd5e1] whitespace-pre-wrap" id="day-notes-text">No notes logged for this day.</p>
+                <div class="hidden mt-3 p-3.5 rounded-xl bg-[#141721] border border-[#1e2434]" id="day-notes-content">
+                    <p class="text-[13px] text-[#cbd5e1] whitespace-pre-wrap leading-relaxed" id="day-notes-text">No notes logged for this day.</p>
                     <div class="mt-3 hidden" id="day-screenshot-wrap">
-                        <img src="" id="day-screenshot-img" class="max-h-48 rounded-lg border border-white/10" alt="Trade Chart Screenshot">
+                        <img src="" id="day-screenshot-img" class="max-h-56 rounded-lg border border-white/10" alt="Trade Chart Screenshot">
                     </div>
                 </div>
             </div>
@@ -956,8 +1021,8 @@
                                 '<stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>' +
                             '</linearGradient>' +
                         '</defs>' +
-                        '<path d="M 0 24 L 20 24 L 60 4 L 100 4 L 100 28 L 0 28 Z" fill="url(#spkGlow)"/>' +
-                        '<path d="M 0 24 L 20 24 L 60 4 L 100 4" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>' +
+                        '<path d="M 0 26 L 30 26 L 70 4 L 100 4 L 100 32 L 0 32 Z" fill="url(#spkGlow)"/>' +
+                        '<path d="M 0 26 L 30 26 L 70 4 L 100 4" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>' +
                     '</svg>';
 
                 // Trades Table inside modal
@@ -969,7 +1034,7 @@
                     const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '8.5R';
                     const pnlText = (t.pnl >= 0 ? '▲ ' : '▼ ') + fmtVal(t.pnl);
 
-                    return '<div class="px-3.5 py-3 border-b border-[#141720] modal-trade-grid text-[12px] last:border-none">' +
+                    return '<div class="modal-table-row">' +
                         '<div class="num text-[#cbd5e1] font-medium">' + dateStr + '</div>' +
                         '<div class="font-bold text-white">' + esc(t.symbol) + '</div>' +
                         '<div>' + sideHtml + '</div>' +
