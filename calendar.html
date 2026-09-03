@@ -159,54 +159,81 @@
             .monthly-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
         }
 
-        /* Modal Exact TradesPad Styles (Matches media_1788464810812.png) */
+        /* Modal Exact TradesPad Styles (Matches media_1788465263599.png) */
+        .modal-backdrop {
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(0, 0, 0, 0.85) !important;
+            backdrop-filter: blur(6px) !important;
+            z-index: 100 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .modal-backdrop.open {
+            opacity: 1 !important;
+            pointer-events: auto !important;
+        }
+
         .modal-window {
-            background: #0d1017 !important;
-            border: 1px solid #1c2230 !important;
+            background: #0a0b0e !important;
+            border: 1px solid #16181f !important;
             border-radius: 16px !important;
             width: 100% !important;
-            max-width: 760px !important;
-            padding: 24px !important;
-            box-shadow: 0 30px 70px rgba(0, 0, 0, 0.95) !important;
+            max-width: 820px !important;
+            padding: 26px 28px !important;
+            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+            transform: scale(0.97) !important;
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .modal-backdrop.open .modal-window {
+            transform: scale(1) !important;
         }
 
         .modal-stats-grid {
             display: grid !important;
             grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
             gap: 12px !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 22px !important;
         }
 
         .modal-stat-card {
-            background: #141721 !important;
-            border: 1px solid #1e2434 !important;
+            background: #111318 !important;
+            border: 1px solid #1a1d25 !important;
             border-radius: 12px !important;
-            padding: 14px 16px !important;
-            height: 84px !important;
+            padding: 16px 18px !important;
+            height: 90px !important;
             display: flex !important;
             flex-direction: column !important;
             justify-content: space-between !important;
         }
 
         .modal-stat-label {
-            font-size: 12px !important;
+            font-size: 11.5px !important;
             font-weight: 500 !important;
-            color: #717e91 !important;
+            color: #828b99 !important;
             letter-spacing: 0.01em !important;
+            white-space: nowrap !important;
+            text-overflow: ellipsis !important;
+            overflow: hidden !important;
         }
 
         .modal-stat-val {
-            font-size: 24px !important;
+            font-size: 26px !important;
             font-weight: 700 !important;
             color: #ffffff !important;
             line-height: 1 !important;
-            font-family: 'JetBrains Mono', var(--tm-mono) !important;
+            letter-spacing: -0.02em !important;
+            font-family: 'Plus Jakarta Sans', var(--tm-sans) !important;
         }
 
         /* Modal trade table grid (6 columns) */
         .modal-table-shell {
-            background: #10131c !important;
-            border: 1px solid #1c2230 !important;
+            background: #0e1015 !important;
+            border: 1px solid #181b22 !important;
             border-radius: 12px !important;
             overflow: hidden !important;
             margin-bottom: 18px !important;
@@ -214,22 +241,22 @@
 
         .modal-table-header {
             display: grid !important;
-            grid-template-columns: 140px 110px 90px 110px 90px 1fr !important;
-            padding: 12px 18px !important;
-            background: #0a0c12 !important;
-            border-bottom: 1px solid #181d28 !important;
+            grid-template-columns: 160px 120px 90px 120px 90px 1fr !important;
+            padding: 12px 20px !important;
+            background: #090b0e !important;
+            border-bottom: 1px solid #16181f !important;
             font-size: 12px !important;
             font-weight: 600 !important;
-            color: #717e91 !important;
+            color: #828b99 !important;
         }
 
         .modal-table-row {
             display: grid !important;
-            grid-template-columns: 140px 110px 90px 110px 90px 1fr !important;
-            padding: 13px 18px !important;
-            border-bottom: 1px solid #161a24 !important;
+            grid-template-columns: 160px 120px 90px 120px 90px 1fr !important;
+            padding: 14px 20px !important;
+            border-bottom: 1px solid #14161d !important;
             align-items: center !important;
-            font-size: 12.5px !important;
+            font-size: 13px !important;
             transition: background 0.15s ease !important;
         }
         .modal-table-row:last-child {
@@ -295,9 +322,9 @@
         .modal-backdrop.open .modal-window { transform: scale(1); }
 
         .pnl-badge {
-            display: inline-flex; align-items: center; gap: 4px;
-            padding: 3px 9px; border-radius: 6px; font-size: 11.5px; font-weight: 700;
-            background: #082819; color: #34d399; border: 1px solid #0f5132;
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;
+            background: #072416; color: #22c55e; border: 1px solid #0d4a2b;
         }
         .pnl-badge.loss {
             background: #2e0d13; color: #f87171; border-color: #631923;
@@ -611,7 +638,7 @@
     </a>
 
     <!-- ======================================================= -->
-    <!-- VIEW 3: DAY DETAIL MODAL (Matches media_1788464810812.png) -->
+    <!-- VIEW 3: DAY DETAIL MODAL (Matches media_1788465263599.png) -->
     <!-- ======================================================= -->
     <div class="modal-backdrop" id="day-modal">
         <div class="modal-window">
@@ -619,11 +646,11 @@
             <div class="flex items-center justify-between mb-5">
                 <div>
                     <h3 class="text-[19px] font-bold text-white tracking-tight" id="modal-day-title">Aug 11, 2026</h3>
-                    <p class="text-[12.5px] text-[#717e91] mt-0.5">View your trades and statistics for this day.</p>
+                    <p class="text-[12px] text-[#828b99] mt-0.5">View your trades and statistics for this day.</p>
                 </div>
                 <div class="flex items-center gap-3">
                     <span class="pnl-badge" id="modal-day-pnl">▲ 11,696.63%</span>
-                    <button type="button" class="text-[#64748b] hover:text-white transition-colors p-1" id="btn-close-day-modal">
+                    <button type="button" class="text-[#828b99] hover:text-white transition-colors p-1" id="btn-close-day-modal" title="Close">
                         <svg data-lucide="x" class="w-4 h-4"></svg>
                     </button>
                 </div>
@@ -639,7 +666,7 @@
                     <div class="modal-stat-label">Day winrate</div>
                     <div class="flex items-center gap-2">
                         <span class="modal-stat-val" id="dm-winrate">100%</span>
-                        <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold" id="dm-win-badge">1</span>
+                        <span class="px-1.5 py-0.5 rounded bg-[#072416] text-[#22c55e] border border-[#0d4a2b] text-[10px] font-bold" id="dm-win-badge">1</span>
                     </div>
                 </div>
                 <div class="modal-stat-card">
@@ -648,7 +675,7 @@
                 </div>
                 <div class="modal-stat-card">
                     <div class="modal-stat-label">Most traded asset</div>
-                    <div class="modal-stat-val truncate text-[18px]" id="dm-asset">NAS100</div>
+                    <div class="modal-stat-val truncate" id="dm-asset">NAS100</div>
                 </div>
                 <div class="modal-stat-card">
                     <div class="modal-stat-label">Day PnL curve</div>
@@ -674,12 +701,12 @@
             </div>
 
             <!-- Collapsible Notes & Screenshots -->
-            <div class="border-t border-[#181d28] pt-3.5">
-                <button type="button" class="flex items-center gap-2 text-[12.5px] font-semibold text-[#8e9ba7] hover:text-white transition-colors" id="btn-toggle-day-notes">
-                    <svg data-lucide="chevron-right" class="w-3.5 h-3.5 transition-transform" id="day-notes-chevron"></svg>
+            <div class="pt-2">
+                <button type="button" class="flex items-center gap-2 text-[12px] font-medium text-[#828b99] hover:text-white transition-colors" id="btn-toggle-day-notes">
+                    <svg data-lucide="chevron-right" class="w-3.5 h-3.5 transition-transform text-[#828b99]" id="day-notes-chevron"></svg>
                     <span>Notes &amp; Screenshots</span>
                 </button>
-                <div class="hidden mt-3 p-3.5 rounded-xl bg-[#141721] border border-[#1e2434]" id="day-notes-content">
+                <div class="hidden mt-3 p-3.5 rounded-xl bg-[#111318] border border-[#1a1d25]" id="day-notes-content">
                     <p class="text-[13px] text-[#cbd5e1] whitespace-pre-wrap leading-relaxed" id="day-notes-text">No notes logged for this day.</p>
                     <div class="mt-3 hidden" id="day-screenshot-wrap">
                         <img src="" id="day-screenshot-img" class="max-h-56 rounded-lg border border-white/10" alt="Trade Chart Screenshot">
@@ -1021,8 +1048,8 @@
                                 '<stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>' +
                             '</linearGradient>' +
                         '</defs>' +
-                        '<path d="M 0 26 L 30 26 L 70 4 L 100 4 L 100 32 L 0 32 Z" fill="url(#spkGlow)"/>' +
-                        '<path d="M 0 26 L 30 26 L 70 4 L 100 4" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round"/>' +
+                        '<path d="M 0 26 L 25 26 L 65 5 L 100 5 L 100 30 L 0 30 Z" fill="url(#spkGlow)"/>' +
+                        '<path d="M 0 26 L 25 26 L 65 5 L 100 5" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
                     '</svg>';
 
                 // Trades Table inside modal
@@ -1035,11 +1062,11 @@
                     const pnlText = (t.pnl >= 0 ? '▲ ' : '▼ ') + fmtVal(t.pnl);
 
                     return '<div class="modal-table-row">' +
-                        '<div class="num text-[#cbd5e1] font-medium">' + dateStr + '</div>' +
-                        '<div class="font-bold text-white">' + esc(t.symbol) + '</div>' +
+                        '<div class="text-[#cbd5e1] font-medium font-mono text-[12.5px]">' + dateStr + '</div>' +
+                        '<div class="font-bold text-white text-[13.5px]">' + esc(t.symbol) + '</div>' +
                         '<div>' + sideHtml + '</div>' +
-                        '<div class="num text-[#64748b]">-</div>' +
-                        '<div class="num font-bold text-white">' + rrText + '</div>' +
+                        '<div class="text-[#717e91] font-mono">-</div>' +
+                        '<div class="font-bold text-white font-mono">' + rrText + '</div>' +
                         '<div class="text-right pr-2"><span class="pnl-badge ' + (t.pnl >= 0 ? '' : 'loss') + '">' + pnlText + '</span></div>' +
                     '</div>';
                 }).join('');
