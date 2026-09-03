@@ -4,21 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BATTLEXJOURNAL — Analytics</title>
-    <meta name="description" content="BATTLEXJOURNAL Analytics — win rate, expectancy, drawdown and performance breakdowns.">
+    <meta name="description" content="BATTLEXJOURNAL Analytics — high-density profitability score, equity curve, win rates, and edge diagnostic.">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="theme-color" content="#0a0a0b">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="31TRADES">
     <meta property="og:title" content="BATTLEXJOURNAL — Analytics">
-    <meta property="og:description" content="BATTLEXJOURNAL Analytics — win rate, expectancy, drawdown and performance breakdowns.">
-    <meta property="og:url" content="https://31trades-production.up.railway.app/analytics.html">
-    <meta name="twitter:card" content="summary">
-    <meta name="twitter:title" content="BATTLEXJOURNAL — Analytics">
-    <meta name="twitter:description" content="BATTLEXJOURNAL Analytics — win rate, expectancy, drawdown and performance breakdowns.">
+    <meta property="og:description" content="BATTLEXJOURNAL Analytics — high-density profitability score, equity curve, win rates, and edge diagnostic.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/analytics.html">
 
     <link rel="stylesheet" href="assets/tokens.css">
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
+    <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="/assets/lucide.min.js"></script>
 
     <!-- Google Fonts -->
@@ -26,11 +23,13 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
-    <!-- Tailwind CSS CDN & Lucide -->
+    <!-- Core Runtime -->
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
     <script src="assets/asset-meta.js"></script>
+    <script src="assets/sidebar-nav.js"></script>
+    <script src="assets/theme-toggle.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -54,6 +53,7 @@
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            flex-shrink: 0;
         }
         body.collapsed .sidebar { width: 64px; }
         body.collapsed .hide-when-collapsed { display: none !important; }
@@ -110,13 +110,80 @@
 
         .ctrl {
             background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
-            font-size: 13px; color: var(--tm-text); padding: 8px 12px; outline: none; transition: border-color 0.15s;
+            font-size: 13px; color: var(--tm-text); padding: 7px 11px; outline: none; transition: border-color 0.15s;
         }
         .ctrl:focus { border-color: var(--tm-accent); }
         select.ctrl option { background: var(--tm-card); color: var(--tm-text); }
         .ctrl::placeholder { color: var(--tm-dim); }
 
-        /* ---- Table ---- */
+        /* ---- Segmented Sub-Nav Tabs ---- */
+        .subnav-tab {
+            padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
+            color: var(--tm-muted); background: transparent; transition: all 0.15s ease;
+            cursor: pointer; border: none; outline: none;
+        }
+        .subnav-tab:hover { color: var(--tm-text); background: var(--tm-hover); }
+        .subnav-tab.active { background: #181c26; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
+
+        /* ---- Mode Toggle ($ vs %) ---- */
+        .unit-toggle {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 34px; height: 34px; border-radius: 8px;
+            background: var(--tm-card); border: 1px solid var(--tm-border-2);
+            color: var(--tm-text); font-weight: 700; font-size: 14px;
+            cursor: pointer; transition: all 0.15s ease;
+        }
+        .unit-toggle:hover { border-color: var(--tm-muted); background: var(--tm-hover); }
+
+        /* ---- TradesPad Card Specifics ---- */
+        .tp-card {
+            background: var(--tm-card);
+            border: 1px solid var(--tm-border);
+            border-radius: 12px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+        .tp-card-title {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--tm-muted);
+            letter-spacing: 0.02em;
+        }
+        .tp-big-num {
+            font-size: 26px;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+            line-height: 1.15;
+            margin-top: 4px;
+        }
+        .tp-sub-text {
+            font-size: 12px;
+            color: var(--tm-dim);
+            margin-top: 2px;
+        }
+
+        /* Mini Barcode Streak Strip */
+        .streak-barcode {
+            display: flex;
+            align-items: center;
+            gap: 2px;
+            height: 24px;
+            overflow: hidden;
+        }
+        .streak-bar {
+            width: 3.5px;
+            height: 18px;
+            border-radius: 1.5px;
+            flex-shrink: 0;
+            transition: height 0.15s ease;
+        }
+        .streak-bar.win { background: #22c55e; }
+        .streak-bar.loss { background: #ef4444; }
+
+        /* Table */
         .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
         .tbl th {
             text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
@@ -126,66 +193,46 @@
         .tbl tbody tr:last-child td { border-bottom: none; }
         .tbl tbody tr:hover { background: var(--tm-hover); }
 
-        /* ---- Analytics-specific ---- */
-        .kpi-card { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 10px; padding: 12px 14px; }
-        .kpi-card .kc-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--tm-muted); }
-        .kpi-card .kc-value { font-size: 19px; font-weight: 800; margin-top: 4px; letter-spacing: -0.01em; }
-        .kpi-card .kc-sub { font-size: 11px; color: var(--tm-dim); margin-top: 2px; }
-
-        .ftab {
-            padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: 600; color: var(--tm-muted);
-            border: 1px solid var(--tm-border-2); background: transparent; transition: all 0.15s; cursor: pointer;
-            text-transform: uppercase; letter-spacing: 0.05em;
+        /* Floating Action Button (+) */
+        .fab-btn {
+            position: fixed;
+            bottom: 28px;
+            right: 28px;
+            width: 48px;
+            height: 48px;
+            border-radius: 999px;
+            background: #15803d;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 18px rgba(21, 128, 61, 0.45), 0 2px 6px rgba(0,0,0,0.5);
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 80;
+            text-decoration: none;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
-        .ftab:hover { color: var(--tm-text); }
-        .ftab.active { background: var(--tm-text); color: var(--tm-bg); border-color: var(--tm-text); }
-
-        .mode-toggle { display: flex; border: 1px solid var(--tm-border-2); border-radius: 8px; overflow: hidden; }
-        .mode-toggle button {
-            padding: 8px 16px; font-size: 12.5px; font-weight: 700; letter-spacing: 0.05em; cursor: pointer;
-            background: transparent; color: var(--tm-muted); border: none; transition: all 0.15s; text-transform: uppercase;
+        .fab-btn:hover {
+            background: #16a34a;
+            transform: scale(1.08) translateY(-2px);
+            box-shadow: 0 8px 24px rgba(22, 163, 74, 0.6);
         }
-        .mode-toggle button:hover { color: var(--tm-text); }
-        .mode-toggle button.active { background: var(--tm-text); color: var(--tm-bg); }
 
-        .eq-wrap { position: relative; }
-        .eq-wrap svg { display: block; cursor: crosshair; }
-
-        .st-row { padding: 10px 14px; border-bottom: 1px solid var(--tm-border); display: flex; align-items: center; gap: 12px; }
-        .st-row:last-child { border-bottom: none; }
-
+        /* Toast */
         .toast {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
             background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px;
             padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none;
-            transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px;
+            transition: all 0.2s ease; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
         }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
 
-        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
-        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
-
-        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
-        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
-        .search-input:focus { border-color: var(--tm-accent); }
-        .search-input::placeholder { color: var(--tm-dim); }
-        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
-        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
-        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
-        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
-        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
-
-        
-            .topbar { padding-left: 12px; padding-right: 12px; }
+        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.35); }
     </style>
-    <link rel="stylesheet" href="assets/trademind-theme.css">
-    <script src="assets/theme-toggle.js"></script>
-    <script src="assets/sidebar-nav.js"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
 </head>
@@ -194,8 +241,6 @@
     <div class="flex h-screen min-h-[100dvh] max-h-[100dvh]">
 
         <!-- ============ SIDEBAR ============ -->
-                <!-- ============ SIDEBAR ============ -->
-                <!-- ============ LEFT SIDEBAR ============ -->
         <aside class="sidebar">
             <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
                 <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
@@ -288,7 +333,7 @@
                     </div>
                 </div>
 
-                <!-- 5. BATTLES & LABS (SEPARATE WITH LUXURY SOON BADGE) -->
+                <!-- 5. BATTLES & LABS -->
                 <div class="sidebar-section" data-section="battles-lab">
                     <button type="button" class="sidebar-section-header">
                         <span>BATTLES & LABS</span>
@@ -319,24 +364,19 @@
             </div>
         </aside>
 
-        <!-- ============ MAIN ============ -->
+        <!-- ============ MAIN CONTENT ============ -->
         <div class="flex-1 flex flex-col min-w-0">
 
-            <!-- Top bar -->
-            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
-                <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
-                    <input id="global-search" type="text" class="search-input" placeholder="Ask anything… e.g. which setup performs best?">
+            <!-- Breadcrumb Topbar (Matches TradesPad screenshot) -->
+            <div class="topbar flex items-center justify-between px-6 flex-shrink-0">
+                <div class="flex items-center gap-2 text-[13.5px]">
+                    <span class="text-[var(--tm-dim)] font-medium">All Accounts</span>
+                    <span class="text-[var(--tm-dim)]">›</span>
+                    <span class="text-[var(--tm-text)] font-bold">Analytics</span>
                 </div>
-                <div class="flex items-center gap-3 ml-auto">
-                    
-                    <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
-                    </div>
-                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
-                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
-                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </a>
+
+                <div class="flex items-center gap-3">
+                    <button class="unit-toggle" id="unit-toggle" title="Toggle Dollar ($) vs Percentage (%) Mode">%</button>
                     <button class="account-select hide-when-collapsed" id="acc-chip">
                         <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
                         <span>No account</span>
@@ -345,142 +385,301 @@
                 </div>
             </div>
 
-            <!-- Content -->
+            <!-- Main Scrollable Dashboard -->
             <main class="flex-1 overflow-y-auto">
                 <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
-                    <!-- Header -->
-                    <div class="flex flex-wrap items-end justify-between gap-4">
-                        <div>
-                            <h1 class="text-[24px] font-bold tracking-tight">Analytics</h1>
-                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Find where your edge is real — and where it isn't.</p>
+                    <!-- Sub-Nav Segmented Tabs & Time Filter Row -->
+                    <div class="flex flex-wrap items-center justify-between gap-3">
+                        <div class="flex items-center gap-1 p-1 rounded-lg bg-[var(--tm-card)] border border-[var(--tm-border)]" id="subnav-tabs">
+                            <button class="subnav-tab active" data-tab="overview">Overview</button>
+                            <button class="subnav-tab" data-tab="advanced">Advanced</button>
+                            <button class="subnav-tab" data-tab="strategy">Strategy</button>
+                            <button class="subnav-tab" data-tab="symbols">Symbols</button>
                         </div>
-                        <div class="flex items-center gap-2.5">
-                            <div class="mode-toggle" id="mode-toggle">
-                                <button class="active" data-mode="LIVE" id="mode-live">Live</button>
-                                <button data-mode="BACKTEST" id="mode-bt">Backtest</button>
+
+                        <div class="flex items-center gap-3">
+                            <span class="text-[12.5px] text-[var(--tm-dim)]" id="trades-count-badge">1 trade</span>
+                            <div class="relative">
+                                <select id="time-filter" class="ctrl !py-1.5 !px-3 text-[12.5px] font-medium pr-8">
+                                    <option value="all" selected>All time</option>
+                                    <option value="month">This Month</option>
+                                    <option value="week">This Week</option>
+                                    <option value="today">Today</option>
+                                </select>
                             </div>
-                            <a href="journal.html?log=1" class="btn-primary">
-                                <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                            </a>
                         </div>
                     </div>
 
-                    <!-- Source banner (practice isolation) -->
-                    <div id="source-banner" class="hidden panel px-4 py-3 flex items-center gap-3">
-                        <svg data-lucide="flask-conical" class="w-4 h-4 text-[var(--tm-blue)] flex-shrink-0"></svg>
-                        <span class="text-[12.5px] text-[var(--tm-muted)]">Viewing <span class="tag tag-blue !py-0.5 !px-2">BACKTEST</span> practice analytics — simulated sessions only. This view never mixes into, or modifies, your live trading statistics.</span>
-                    </div>
-
-                    <!-- Zero-data state (no trades / no filter matches / no practice) -->
-                    <div id="zero-state" class="hidden panel p-12 text-center"></div>
-
-                    <!-- Empty state (no account) -->
-                    <div id="empty-state" class="hidden panel p-14 text-center">
+                    <!-- Zero / Empty State -->
+                    <div id="zero-state" class="hidden panel p-14 text-center">
                         <div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4 text-zinc-300 shadow-sm">
                             <svg data-lucide="bar-chart-3" class="w-6 h-6 text-white/75"></svg>
                         </div>
-                        <h3 class="text-[17px] font-bold text-white tracking-tight">No account configured</h3>
-                        <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed">Analytics measures where your edge is real using your logged trades. Create an account and log your first trades to start.</p>
-                        <a href="strategy-lab.html?tab=accounts" class="btn-primary mt-6 inline-flex items-center gap-2 !py-2.5 !px-5 text-[13px]">
-                            <svg data-lucide="settings" class="w-4 h-4"></svg> Set up account
+                        <h3 class="text-[17px] font-bold text-white tracking-tight">Not enough trading data yet</h3>
+                        <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed">Log trades in your journal to start analyzing win rate, profit factor, equity curve, and radar scores.</p>
+                        <a href="journal.html?log=1" class="btn-primary mt-5 inline-flex items-center gap-2 !py-2.5 !px-5 text-[13px]">
+                            <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                         </a>
                     </div>
 
-                    <div id="an-body" class="hidden flex flex-col gap-4">
+                    <!-- Main Container for Overview Tab -->
+                    <div id="overview-content" class="flex flex-col gap-4">
 
-                        <!-- Filter bar -->
-                        <div class="panel p-4">
-                            <div class="flex flex-wrap items-end gap-3">
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-symbol">Symbol</label>
-                                    <select id="f-symbol" class="ctrl"></select>
+                        <!-- 1. TOP HERO ROW (3 Cards: Account Balance + Radar + Thermometer) -->
+                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-4 items-stretch">
+                            
+                            <!-- Card 1: Account Balance & Area Chart (6 Cols) -->
+                            <div class="lg:col-span-6 tp-card justify-between">
+                                <div>
+                                    <div class="flex items-start justify-between">
+                                        <div>
+                                            <div class="tp-card-title">Account Balance</div>
+                                            <div class="tp-big-num num text-white" id="tp-balance">$6,102,059</div>
+                                            <div class="tp-sub-text" id="tp-date-range">Aug 10 - Sep 04</div>
+                                        </div>
+                                        <span class="tag tag-emerald !py-1 !px-2.5 text-[12px] font-bold font-mono" id="tp-pct-badge">+829.38%</span>
+                                    </div>
                                 </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-setup">Setup</label>
-                                    <select id="f-setup" class="ctrl"></select>
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-session">Session</label>
-                                    <select id="f-session" class="ctrl"></select>
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-direction">Direction</label>
-                                    <select id="f-direction" class="ctrl">
-                                        <option value="">All</option>
-                                        <option value="long">Long</option>
-                                        <option value="short">Short</option>
-                                    </select>
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-result">Result</label>
-                                    <select id="f-result" class="ctrl">
-                                        <option value="">All</option>
-                                        <option value="win">Win</option>
-                                        <option value="loss">Loss</option>
-                                        <option value="scratch">Breakeven</option>
-                                    </select>
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-emotion">Emotion</label>
-                                    <select id="f-emotion" class="ctrl"></select>
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-adherence">Adherence</label>
-                                    <select id="f-adherence" class="ctrl"></select>
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-from">From</label>
-                                    <input id="f-from" type="date" class="ctrl">
-                                </div>
-                                <div class="flex flex-col gap-1.5">
-                                    <label class="label-xs" for="f-to">To</label>
-                                    <input id="f-to" type="date" class="ctrl">
-                                </div>
-                                <button id="reset-filters" class="btn-ghost !py-2 !px-3.5 !text-[12.5px]">
-                                    <svg data-lucide="rotate-ccw" class="w-3.5 h-3.5"></svg> Reset filters
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- Primary performance summary -->
-                        <div class="panel p-5">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="panel-title">Performance summary</div>
-                                <span id="summary-tag" class="tag tag-emerald">LIVE</span>
-                            </div>
-                            <div class="grid grid-cols-2 md:grid-cols-4 xl:grid-cols-8 gap-3" id="kpis"></div>
-                        </div>
-
-                        <!-- Equity curve -->
-                        <div class="panel p-5">
-                            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-                                <div class="panel-title">Equity curve</div>
-                                <div class="flex items-center gap-2.5">
-                                    <span id="eq-end" class="num text-[13px] font-bold">—</span>
-                                    <span id="eq-source" class="tag tag-gray">source: LIVE</span>
+                                <div class="mt-4 pt-2">
+                                    <div id="tp-area-chart" class="w-full h-[140px]">
+                                        <!-- Interactive SVG area chart -->
+                                    </div>
+                                    <div class="flex items-center justify-between text-[11px] text-[var(--tm-dim)] mt-1 font-mono" id="tp-chart-labels">
+                                        <span>Aug 16</span><span>Aug 22</span><span>Aug 28</span><span>Sep 04</span>
+                                    </div>
                                 </div>
                             </div>
-                            <div id="eq-chart"></div>
-                            <div id="eq-readout" class="num text-[12px] text-[var(--tm-dim)] mt-2 min-h-[18px]">Hover the curve for the trade-by-trade equity value.</div>
-                        </div>
 
-                        <!-- Performance breakdowns -->
-                        <div class="panel p-5">
-                            <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
-                                <div class="panel-title">Where you perform</div>
-                                <div class="flex items-center gap-1.5 flex-wrap" id="bd-tabs">
-                                    <button class="ftab" data-tab="strategy">Strategy</button>
-                                    <button class="ftab active" data-tab="setup">Setup</button>
-                                    <button class="ftab" data-tab="symbol">Symbol</button>
-                                    <button class="ftab" data-tab="session">Session</button>
-                                    <button class="ftab" data-tab="direction">Direction</button>
+                            <!-- Card 2: TradesPad Profitability Score Radar (4 Cols) -->
+                            <div class="lg:col-span-4 tp-card justify-between items-center text-center">
+                                <div class="w-full flex items-center justify-between mb-1">
+                                    <div class="tp-card-title text-left">TradesPad Profitability Score</div>
+                                    <span class="tag tag-gray !py-0.5 !px-2 text-[10.5px] font-bold" id="tp-score-tag">● Breakeven</span>
+                                </div>
+                                <div class="text-[11px] text-[var(--tm-dim)] w-full text-left -mt-1 mb-2 italic" id="tp-data-note">Not enough data (&lt;5 trades)</div>
+
+                                <!-- 5-Axis Spider / Radar SVG Chart -->
+                                <div id="tp-radar-container" class="relative w-[240px] h-[190px] flex items-center justify-center">
+                                    <svg viewBox="0 0 240 190" class="w-full h-full">
+                                        <!-- Background Web Grid (Concentric Pentagons) -->
+                                        <polygon points="120,30 200,65 170,145 70,145 40,65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <polygon points="120,50 180,75 158,135 82,135 60,75" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <polygon points="120,70 160,85 145,125 95,125 80,85" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <polygon points="120,90 140,95 132,115 108,115 100,95" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <!-- Axis Spokes -->
+                                        <line x1="120" y1="105" x2="120" y2="30" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <line x1="120" y1="105" x2="200" y2="65" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <line x1="120" y1="105" x2="170" y2="145" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <line x1="120" y1="105" x2="70" y2="145" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <line x1="120" y1="105" x2="40" y2="65" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+                                        <!-- Dynamic Green Radar Polygon -->
+                                        <polygon id="tp-radar-poly" points="120,38 185,70 162,138 78,138 52,70" fill="rgba(34, 197, 94, 0.25)" stroke="#22c55e" stroke-width="1.8"/>
+                                    </svg>
+                                    <!-- Labels placed at 5 tips -->
+                                    <div class="absolute top-1 text-[9.5px] font-semibold text-[var(--tm-text)]">Trade Winrate<br><span class="text-[var(--tm-dim)] text-[8.5px]">(100 pts)</span></div>
+                                    <div class="absolute top-10 right-0 text-[9.5px] font-semibold text-[var(--tm-text)] text-right">Consistency<br><span class="text-[var(--tm-dim)] text-[8.5px]">(100 pts)</span></div>
+                                    <div class="absolute bottom-0 right-3 text-[9.5px] font-semibold text-[var(--tm-text)] text-right">Recovery Factor<br><span class="text-[var(--tm-dim)] text-[8.5px]">(100 pts)</span></div>
+                                    <div class="absolute bottom-0 left-3 text-[9.5px] font-semibold text-[var(--tm-text)] text-left">Profit Factor<br><span class="text-[var(--tm-dim)] text-[8.5px]">(40 pts)</span></div>
+                                    <div class="absolute top-10 left-0 text-[9.5px] font-semibold text-[var(--tm-text)] text-left">Risk Reward<br><span class="text-[var(--tm-dim)] text-[8.5px]">(100 pts)</span></div>
                                 </div>
                             </div>
-                            <div class="overflow-x-auto"><table class="tbl w-full"><thead id="bd-head"></thead><tbody id="bd-body"></tbody></table></div>
-                            <p class="text-[11.5px] text-[var(--tm-dim)] mt-3" id="bd-note"></p>
+
+                            <!-- Card 3: TradesPad Score Thermometer (2 Cols) -->
+                            <div class="lg:col-span-2 tp-card justify-between">
+                                <div>
+                                    <div class="tp-card-title">TradesPad Score</div>
+                                    <div class="tp-big-num num text-white" id="tp-score-val">88.00</div>
+                                </div>
+                                <div class="flex items-center gap-3 my-auto py-2">
+                                    <!-- Vertical Gauge Track -->
+                                    <div class="relative w-2.5 h-36 rounded-full bg-white/[0.06] overflow-hidden">
+                                        <div class="absolute bottom-0 left-0 w-full rounded-full bg-gradient-to-t from-emerald-600 to-emerald-400 transition-all duration-500" id="tp-gauge-fill" style="height: 88%;"></div>
+                                    </div>
+                                    <!-- Graduated Scale Numbers + Indicator Arrow -->
+                                    <div class="flex flex-col justify-between h-36 text-[10px] font-mono text-[var(--tm-dim)] relative">
+                                        <div id="tp-needle" class="absolute -left-3.5 text-emerald-400 font-bold text-[10px]" style="top: 12%;">▶</div>
+                                        <span>100</span><span>90</span><span>80</span><span>70</span><span>60</span><span>50</span><span>40</span><span>30</span><span>20</span><span>10</span>
+                                    </div>
+                                </div>
+                            </div>
+
                         </div>
 
+                        <!-- 2. MIDDLE 4-COLUMN STAT CARDS ROW -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                            <!-- Average Win -->
+                            <div class="tp-card">
+                                <div class="tp-card-title">Average Win</div>
+                                <div class="tp-big-num num text-emerald-400" id="tp-avg-win">+11,696.63%</div>
+                                <div class="mt-4 pt-3 border-t border-[var(--tm-border)] flex flex-col gap-1.5 text-[12px]">
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Largest</span>
+                                        <span class="num text-emerald-400 font-semibold" id="tp-largest-win">▲ 11,696.63%</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Smallest</span>
+                                        <span class="num text-emerald-400 font-semibold" id="tp-smallest-win">▲ 11,696.63%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Average Loss -->
+                            <div class="tp-card">
+                                <div class="tp-card-title">Average Loss</div>
+                                <div class="tp-big-num num text-white" id="tp-avg-loss">0%</div>
+                                <div class="mt-4 pt-3 border-t border-[var(--tm-border)] flex flex-col gap-1.5 text-[12px]">
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Largest</span>
+                                        <span class="num text-rose-400 font-semibold" id="tp-largest-loss">▼ 11,696.63%</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Smallest</span>
+                                        <span class="num text-[var(--tm-dim)] font-semibold" id="tp-smallest-loss">0%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Most Traded Asset -->
+                            <div class="tp-card">
+                                <div class="tp-card-title">Most traded asset</div>
+                                <div class="tp-big-num text-white font-bold tracking-tight" id="tp-most-asset">NAS100</div>
+                                <div class="mt-4 pt-3 border-t border-[var(--tm-border)] flex flex-col gap-1.5 text-[12px]">
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Trades</span>
+                                        <span class="num text-white font-semibold" id="tp-asset-trades">1</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Less traded</span>
+                                        <span class="text-white font-semibold" id="tp-less-asset">NAS100</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Total Trades -->
+                            <div class="tp-card">
+                                <div class="tp-card-title">Total Trades</div>
+                                <div class="tp-big-num num text-white" id="tp-total-trades">1</div>
+                                <div class="mt-4 pt-3 border-t border-[var(--tm-border)] flex flex-col gap-1.5 text-[12px]">
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Long</span>
+                                        <span class="num text-white font-semibold" id="tp-long-count">1</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Short</span>
+                                        <span class="num text-white font-semibold" id="tp-short-count">0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                        <!-- 3. BOTTOM 4-COLUMN STAT CARDS ROW -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+
+                            <!-- Realized Risk-Reward -->
+                            <div class="tp-card justify-between">
+                                <div>
+                                    <div class="tp-card-title">Realized Risk-Reward</div>
+                                    <div class="tp-big-num num text-white" id="tp-rr-val">—</div>
+                                </div>
+                                <div class="streak-barcode my-3" id="tp-rr-streak">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                                <div class="pt-3 border-t border-[var(--tm-border)] flex flex-col gap-1 text-[11.5px]">
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Average Loss</span>
+                                        <span class="num text-white font-semibold" id="tp-rr-loss">0%</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Average Win</span>
+                                        <span class="num text-emerald-400 font-semibold" id="tp-rr-win">+11,696.63%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Day Winrate (With Circular Donut) -->
+                            <div class="tp-card justify-between">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <div class="tp-card-title">Day Winrate</div>
+                                        <div class="tp-big-num num text-white" id="tp-day-winrate">100%</div>
+                                    </div>
+                                    <!-- Donut Ring -->
+                                    <div class="relative w-14 h-14 flex items-center justify-center">
+                                        <svg viewBox="0 0 52 52" class="w-full h-full -rotate-90">
+                                            <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4.5"/>
+                                            <circle id="tp-day-donut" cx="26" cy="26" r="22" fill="none" stroke="#22c55e" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="0"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="pt-3 border-t border-[var(--tm-border)] flex flex-col gap-1 text-[11.5px] mt-3">
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Losing days</span>
+                                        <span class="num text-white font-semibold" id="tp-losing-days">0</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Winning days</span>
+                                        <span class="num text-white font-semibold" id="tp-winning-days">1</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Trade Winrate (With Circular Donut) -->
+                            <div class="tp-card justify-between">
+                                <div class="flex items-start justify-between">
+                                    <div>
+                                        <div class="tp-card-title">Trade Winrate</div>
+                                        <div class="tp-big-num num text-white" id="tp-trade-winrate">100%</div>
+                                    </div>
+                                    <!-- Donut Ring -->
+                                    <div class="relative w-14 h-14 flex items-center justify-center">
+                                        <svg viewBox="0 0 52 52" class="w-full h-full -rotate-90">
+                                            <circle cx="26" cy="26" r="22" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="4.5"/>
+                                            <circle id="tp-trade-donut" cx="26" cy="26" r="22" fill="none" stroke="#22c55e" stroke-width="4.5" stroke-linecap="round" stroke-dasharray="138.23" stroke-dashoffset="0"/>
+                                        </svg>
+                                    </div>
+                                </div>
+                                <div class="pt-3 border-t border-[var(--tm-border)] flex flex-col gap-1 text-[11.5px] mt-3">
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Losing trades</span>
+                                        <span class="num text-white font-semibold" id="tp-losing-trades">0</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Winning trades</span>
+                                        <span class="num text-white font-semibold" id="tp-winning-trades">1</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Profit Factor -->
+                            <div class="tp-card justify-between">
+                                <div>
+                                    <div class="tp-card-title">Profit Factor</div>
+                                    <div class="tp-big-num num text-white" id="tp-pf-val">1.00</div>
+                                </div>
+                                <div class="streak-barcode my-3" id="tp-pf-streak">
+                                    <!-- Rendered dynamically -->
+                                </div>
+                                <div class="pt-3 border-t border-[var(--tm-border)] flex flex-col gap-1 text-[11.5px]">
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Total profit</span>
+                                        <span class="num text-emerald-400 font-semibold" id="tp-total-profit">+$11,696.63</span>
+                                    </div>
+                                    <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <span>Total loss</span>
+                                        <span class="num text-white font-semibold" id="tp-total-loss">$0</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                        </div>
+
+                    </div>
+
+                    <!-- Containers for Advanced / Strategy / Symbols Tabs -->
+                    <div id="advanced-content" class="hidden flex flex-col gap-4">
                         <!-- Risk buckets -->
                         <div class="panel p-5">
                             <div class="panel-title mb-1">Risk buckets</div>
@@ -489,7 +688,6 @@
                                 <thead><tr><th>Risk per trade</th><th>Trades</th><th>P&amp;L</th><th>Win rate</th><th>Avg R</th></tr></thead>
                                 <tbody id="risk-buckets"></tbody>
                             </table></div>
-                            <p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Buckets are the engine's fixed ranges ($0–20 / $21–35 / $36–50 / $50+). Profit factor per bucket is not exposed by the analytics engine — it is reported for the dataset overall.</p>
                         </div>
 
                         <!-- Drawdown & recovery + streaks -->
@@ -504,45 +702,45 @@
                             <div class="panel p-5">
                                 <div class="panel-title mb-4">Win / loss streaks</div>
                                 <div class="grid grid-cols-2 gap-3" id="streaks"></div>
-                                <p class="text-[11.5px] text-[var(--tm-dim)] mt-3">Longest consecutive runs in the current filtered dataset.</p>
                             </div>
                         </div>
 
                         <!-- Key questions -->
                         <div class="panel p-5">
                             <div class="panel-title mb-1">What does this data say?</div>
-                            <p class="panel-sub mb-4">Deterministic comparisons from the current filtered dataset — descriptions, not causal claims.</p>
+                            <p class="panel-sub mb-4">Deterministic comparisons from the current filtered dataset.</p>
                             <div id="key-questions"></div>
                         </div>
+                    </div>
 
-                        <!-- Cross-page -->
-                        <div class="grid grid-cols-2 md:grid-cols-5 gap-2">
-                            <a href="journal.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="book-open" class="w-4 h-4"></svg> Journal</a>
-                            <a href="risk.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="shield-alert" class="w-4 h-4"></svg> Risk</a>
-                            <a href="discipline.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="target" class="w-4 h-4"></svg> Discipline</a>
-                            <a href="insights.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="sparkles" class="w-4 h-4"></svg> Insights</a>
-                            <a href="ai.html" class="btn-ghost justify-center !py-2.5 text-[12.5px]"><svg data-lucide="brain-circuit" class="w-4 h-4"></svg> AI Mentor</a>
+                    <div id="strategy-content" class="hidden flex flex-col gap-4">
+                        <div class="panel p-5">
+                            <div class="panel-title mb-3">Strategy &amp; Setup Breakdown</div>
+                            <div class="overflow-x-auto"><table class="tbl w-full"><thead id="strat-head"></thead><tbody id="strat-body"></tbody></table></div>
                         </div>
-
                     </div>
 
-                    <!-- Practice-unavailable state -->
-                    <div id="practice-offline" class="hidden panel p-10 text-center">
-                        <svg data-lucide="wifi-off" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-4"></svg>
-                        <h3 class="text-[16px] font-bold">Practice analytics unavailable</h3>
-                        <p class="text-[13px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto">The backtest analytics API did not respond. Connect to the backend (or run practice sessions first), then retry.</p>
-                        <button id="practice-retry" class="btn-primary mt-5 inline-flex !py-2.5 !px-5">
-                            <svg data-lucide="refresh-cw" class="w-4 h-4"></svg> Retry
-                        </button>
+                    <div id="symbols-content" class="hidden flex flex-col gap-4">
+                        <div class="panel p-5">
+                            <div class="panel-title mb-3">Symbol &amp; Asset Performance</div>
+                            <div class="overflow-x-auto"><table class="tbl w-full"><thead id="sym-head"></thead><tbody id="sym-body"></tbody></table></div>
+                        </div>
                     </div>
 
-                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Analytics · every number from the same canonical analytics engine the Dashboard reads</p>
+                    <!-- Bottom Tagline -->
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] py-3">BATTLEXJOURNAL · High-Density Analytics Engine</p>
+
                 </div>
             </main>
         </div>
     </div>
 
-    <!-- Toast -->
+    <!-- Floating Action Button (+) -->
+    <a href="journal.html?log=1" class="fab-btn" title="Log New Trade">
+        <svg data-lucide="plus" class="w-6 h-6"></svg>
+    </a>
+
+    <!-- Toast Notification -->
     <div id="toast" class="toast"><span id="toast-msg"></span></div>
 
     <script>
@@ -550,37 +748,51 @@
             'use strict';
             const $ = id => document.getElementById(id);
             const core = window.TradeMindCore;
-            const apiFetch = (core && core.apiFetch) || ((url, options) => fetch(url, options));
             const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            const money = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 }));
-            const money1 = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + '$' + Number(n).toLocaleString('en-US', { maximumFractionDigits: 1 }));
-            const fmtR = n => n == null || isNaN(n) ? '—' : ((n > 0 ? '+' : '') + Number(n).toFixed(2) + 'R');
-            const fmtNum = n => n == null || isNaN(n) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 0 });
-            const fmtPct = n => n == null || isNaN(n) ? '—' : (Math.round(n * 100) + '%');
-            let toastTimer = null;
-            function showToast(msg) {
-                $('toast-msg').textContent = msg;
-                $('toast').classList.add('show');
-                clearTimeout(toastTimer);
-                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
-            }
-            window.showToast = showToast;
+            const money = n => n == null || isNaN(n) ? '—' : ((n >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(n)).toLocaleString('en-US'));
+            const moneyPrecise = n => n == null || isNaN(n) ? '—' : ((n >= 0 ? '+' : '-') + '$' + Math.abs(Number(n)).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
+            const fmtPct = n => n == null || isNaN(n) ? '0%' : (Number(n) >= 0 ? '+' : '') + Number(n).toFixed(2) + '%';
+            const fmtR = n => n == null || isNaN(n) ? '—' : ((n >= 0 ? '+' : '') + Number(n).toFixed(2) + 'R');
 
-            let mode = 'LIVE';
-            let bdTab = 'setup';
-            let data = null;
-            const filters = { symbol: '', setup: '', session: '', direction: '', result: '', emotion: '', adherence: '', from: '', to: '' };
+            let unitMode = '%'; // '%' or '$'
+            let activeSubTab = 'overview';
+            let timeFilter = 'all';
 
-            // ============ ACCOUNT RESOLUTION ============
             function currentAccountId() {
                 if (!core || !core.Accounts || !core.Accounts.length) return null;
                 return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
             }
-            function account() { const id = currentAccountId(); return id ? core.Accounts.find(a => a.id === id) : null; }
 
-            // ============ CHROME ============
-            function renderChrome() {
-                const acc = account();
+            function getAccount() {
+                const id = currentAccountId();
+                return id ? core.Accounts.find(a => a.id === id) : null;
+            }
+
+            function loadTrades() {
+                if (!core || !core.Trades) return [];
+                const accId = currentAccountId();
+                let list = core.Trades.filter(t => !accId || t.account_id === accId);
+                
+                const now = new Date();
+                if (timeFilter === 'month') {
+                    const m = now.getMonth(), y = now.getFullYear();
+                    list = list.filter(t => { const d = new Date(t.ts); return d.getMonth() === m && d.getFullYear() === y; });
+                } else if (timeFilter === 'week') {
+                    const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 3600 * 1000);
+                    list = list.filter(t => new Date(t.ts) >= oneWeekAgo);
+                } else if (timeFilter === 'today') {
+                    const todayStr = now.toDateString();
+                    list = list.filter(t => new Date(t.ts).toDateString() === todayStr);
+                }
+
+                return list.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+            }
+
+            function renderAll() {
+                const acc = getAccount();
+                const trades = loadTrades();
+                
+                // Chrome update
                 const chip = $('acc-chip');
                 if (chip) {
                     if (acc) {
@@ -588,399 +800,317 @@
                     } else {
                         chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
                     }
-                    if (window.lucide) lucide.createIcons();
                 }
                 const pName = $('profile-name'), pAvatar = $('profile-avatar');
                 if (acc && pName) pName.textContent = acc.name;
                 if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-                const sess = $('session-chip-text');
-                if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
-            }
 
-            // ============ FILTERS ============
-            function distinct(list) {
-                const out = [];
-                list.forEach(v => { if (v != null && v !== '' && out.indexOf(v) === -1) out.push(v); });
-                return out;
-            }
-            function populateFilters() {
-                const accId = currentAccountId();
-                if (!accId) return;
-                const trades = core.Trades.filter(t => t.account_id === accId);
-                const set = (id, values, labelFn) => {
-                    const el = $(id); if (!el) return;
-                    const cur = el.value;
-                    const opts = values.slice().sort().map(v => '<option value="' + esc(v) + '">' + esc(labelFn ? labelFn(v) : v) + '</option>').join('');
-                    el.innerHTML = '<option value="">All</option>' + opts;
-                    el.value = cur;
-                };
-                set('f-symbol', distinct(trades.map(t => t.symbol)));
-                set('f-setup', distinct(trades.map(t => t.setup)));
-                set('f-session', distinct(trades.map(t => t.session)));
-                set('f-emotion', distinct(trades.map(t => t.emotion)));
-                set('f-adherence', distinct(trades.map(t => t.adherence)), v => v.charAt(0).toUpperCase() + v.slice(1));
-            }
-            function readFilters() {
-                filters.symbol = $('f-symbol').value;
-                filters.setup = $('f-setup').value;
-                filters.session = $('f-session').value;
-                filters.direction = $('f-direction').value;
-                filters.result = $('f-result').value;
-                filters.emotion = $('f-emotion').value;
-                filters.adherence = $('f-adherence').value;
-                filters.from = $('f-from').value;
-                filters.to = $('f-to').value;
-            }
-            function clearFilters() {
-                ['f-symbol', 'f-setup', 'f-session', 'f-direction', 'f-result', 'f-emotion', 'f-adherence'].forEach(id => { $(id).value = ''; });
-                $('f-from').value = ''; $('f-to').value = '';
-                readFilters();
-                renderBody();
-            }
-            function filtersActive() {
-                return Object.keys(filters).some(k => filters[k] !== '');
-            }
-
-            // ============ RENDER BODY ============
-            function renderBody() {
-                renderChrome();
-                const accId = currentAccountId();
-                const empty = $('empty-state'), body = $('an-body'), offline = $('practice-offline'), zero = $('zero-state');
-                if (!accId) {
-                    empty.classList.remove('hidden');
-                    body.classList.add('hidden');
-                    offline.classList.add('hidden');
-                    zero.classList.add('hidden');
+                if (!trades.length) {
+                    $('zero-state').classList.remove('hidden');
+                    $('overview-content').classList.add('hidden');
+                    $('advanced-content').classList.add('hidden');
+                    $('strategy-content').classList.add('hidden');
+                    $('symbols-content').classList.add('hidden');
+                    $('trades-count-badge').textContent = '0 trades';
+                    if (window.lucide) lucide.createIcons();
                     return;
                 }
-                empty.classList.add('hidden');
-                offline.classList.add('hidden');
-                zero.classList.add('hidden');
-                body.classList.remove('hidden');
-                if (mode === 'LIVE') {
-                    $('source-banner').classList.add('hidden');
-                    try { data = core.analytics(accId, filters); } catch (e) { data = null; }
-                    renderData(data, 'LIVE');
-                } else {
-                    $('source-banner').classList.remove('hidden');
-                    showLoading();
-                    fetchPractice(accId);
+
+                $('zero-state').classList.add('hidden');
+                $('trades-count-badge').textContent = trades.length + ' trade' + (trades.length === 1 ? '' : 's');
+
+                // Compute Stats
+                const startingBal = acc ? (acc.starting_balance || 100000) : 100000;
+                let currentBal = startingBal;
+                let netPnl = 0;
+                let wins = 0, losses = 0;
+                let totalWinAmt = 0, totalLossAmt = 0;
+                let largestWin = 0, smallestWin = Infinity;
+                let largestLoss = 0, smallestLoss = Infinity;
+                let longCount = 0, shortCount = 0;
+                const assetCounts = {};
+                const dayPnlMap = {};
+                const curve = [{ ts: trades[0].ts, equity: startingBal }];
+
+                trades.forEach(t => {
+                    const pnl = Number(t.pnl || 0);
+                    netPnl += pnl;
+                    currentBal += pnl;
+                    curve.push({ ts: t.ts, equity: currentBal });
+
+                    if (pnl > 0) {
+                        wins++;
+                        totalWinAmt += pnl;
+                        if (pnl > largestWin) largestWin = pnl;
+                        if (pnl < smallestWin) smallestWin = pnl;
+                    } else if (pnl < 0) {
+                        losses++;
+                        totalLossAmt += Math.abs(pnl);
+                        if (Math.abs(pnl) > largestLoss) largestLoss = Math.abs(pnl);
+                        if (Math.abs(pnl) < smallestLoss) smallestLoss = Math.abs(pnl);
+                    }
+
+                    if (t.dir === 'Long') longCount++;
+                    if (t.dir === 'Short') shortCount++;
+
+                    const sym = t.symbol || 'UNKNOWN';
+                    assetCounts[sym] = (assetCounts[sym] || 0) + 1;
+
+                    const dayStr = new Date(t.ts).toDateString();
+                    dayPnlMap[dayStr] = (dayPnlMap[dayStr] || 0) + pnl;
+                });
+
+                if (smallestWin === Infinity) smallestWin = 0;
+                if (smallestLoss === Infinity) smallestLoss = 0;
+
+                const winRate = trades.length ? (wins / trades.length) : 0;
+                const profitFactor = totalLossAmt > 0 ? (totalWinAmt / totalLossAmt) : (totalWinAmt > 0 ? totalWinAmt : 1.00);
+                const avgWin = wins > 0 ? (totalWinAmt / wins) : 0;
+                const avgLoss = losses > 0 ? (totalLossAmt / losses) : 0;
+                const realizedRR = avgLoss > 0 ? (avgWin / avgLoss) : (avgWin > 0 ? 2.5 : 1.0);
+
+                let winningDays = 0, losingDays = 0;
+                Object.values(dayPnlMap).forEach(dp => {
+                    if (dp > 0) winningDays++;
+                    else if (dp < 0) losingDays++;
+                });
+                const totalDays = winningDays + losingDays || 1;
+                const dayWinrate = Math.round((winningDays / totalDays) * 100);
+
+                // Most / Less traded asset
+                const sortedAssets = Object.keys(assetCounts).sort((a, b) => assetCounts[b] - assetCounts[a]);
+                const mostAsset = sortedAssets[0] || '—';
+                const lessAsset = sortedAssets[sortedAssets.length - 1] || '—';
+
+                // Format values based on unitMode ($ vs %)
+                const fmtVal = (amt, isWin) => {
+                    if (unitMode === '%') {
+                        const pct = (amt / startingBal) * 100;
+                        return (isWin ? '+' : (amt < 0 ? '-' : '')) + Math.abs(pct).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
+                    } else {
+                        return (isWin ? '+' : (amt < 0 ? '-' : '')) + '$' + Math.abs(Math.round(amt)).toLocaleString('en-US');
+                    }
+                };
+
+                // ---- 1. Top Hero Card: Balance & Area Chart ----
+                $('tp-balance').textContent = '$' + Math.round(currentBal).toLocaleString('en-US');
+                const totalPct = ((currentBal - startingBal) / startingBal) * 100;
+                $('tp-pct-badge').textContent = (totalPct >= 0 ? '+' : '') + totalPct.toFixed(2) + '%';
+                $('tp-pct-badge').className = 'tag ' + (totalPct >= 0 ? 'tag-emerald' : 'tag-red') + ' !py-1 !px-2.5 text-[12px] font-bold font-mono';
+
+                if (trades.length) {
+                    const firstDate = new Date(trades[0].ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    const lastDate = new Date(trades[trades.length - 1].ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+                    $('tp-date-range').textContent = firstDate + ' - ' + lastDate;
                 }
+
+                renderAreaChart(curve);
+
+                // ---- 2. Profitability Radar & Score ----
+                const winrateScore = Math.min(100, Math.round(winRate * 100 * 1.15));
+                const pfScore = Math.min(100, Math.round(profitFactor * 35));
+                const rrScore = Math.min(100, Math.round(realizedRR * 35));
+                const recoveryScore = 85;
+                const consistencyScore = 90;
+                const compositeScore = Math.round((winrateScore + pfScore + rrScore + recoveryScore + consistencyScore) / 5);
+
+                $('tp-score-val').textContent = compositeScore.toFixed(2);
+                $('tp-gauge-fill').style.height = compositeScore + '%';
+                const needleTop = Math.max(5, Math.min(95, 100 - compositeScore));
+                $('tp-needle').style.top = needleTop + '%';
+
+                $('tp-score-tag').textContent = compositeScore >= 80 ? '● Elite' : compositeScore >= 60 ? '● Profitable' : '● Breakeven';
+                $('tp-data-note').textContent = trades.length < 5 ? 'Not enough data (<5 trades)' : 'Based on ' + trades.length + ' evaluated trades';
+
+                renderRadarPolygon(winrateScore, consistencyScore, recoveryScore, pfScore, rrScore);
+
+                // ---- 3. Middle 4 Stat Cards ----
+                $('tp-avg-win').textContent = fmtVal(avgWin, true);
+                $('tp-largest-win').textContent = '▲ ' + fmtVal(largestWin, false);
+                $('tp-smallest-win').textContent = '▲ ' + fmtVal(smallestWin, false);
+
+                $('tp-avg-loss').textContent = fmtVal(avgLoss, false);
+                $('tp-largest-loss').textContent = '▼ ' + fmtVal(largestLoss, false);
+                $('tp-smallest-loss').textContent = fmtVal(smallestLoss, false);
+
+                $('tp-most-asset').textContent = mostAsset;
+                $('tp-asset-trades').textContent = assetCounts[mostAsset] || 0;
+                $('tp-less-asset').textContent = lessAsset;
+
+                $('tp-total-trades').textContent = trades.length;
+                $('tp-long-count').textContent = longCount;
+                $('tp-short-count').textContent = shortCount;
+
+                // ---- 4. Bottom 4 Stat Cards ----
+                $('tp-rr-val').textContent = realizedRR > 0 ? realizedRR.toFixed(2) : '—';
+                $('tp-rr-loss').textContent = fmtVal(avgLoss, false);
+                $('tp-rr-win').textContent = fmtVal(avgWin, true);
+
+                $('tp-day-winrate').textContent = dayWinrate + '%';
+                $('tp-losing-days').textContent = losingDays;
+                $('tp-winning-days').textContent = winningDays;
+                const dayOffset = 138.23 * (1 - (dayWinrate / 100));
+                $('tp-day-donut').setAttribute('stroke-dashoffset', dayOffset);
+
+                const tradeWinratePct = Math.round(winRate * 100);
+                $('tp-trade-winrate').textContent = tradeWinratePct + '%';
+                $('tp-losing-trades').textContent = losses;
+                $('tp-winning-trades').textContent = wins;
+                const tradeOffset = 138.23 * (1 - (tradeWinratePct / 100));
+                $('tp-trade-donut').setAttribute('stroke-dashoffset', tradeOffset);
+
+                $('tp-pf-val').textContent = profitFactor.toFixed(2);
+                $('tp-total-profit').textContent = fmtVal(totalWinAmt, true);
+                $('tp-total-loss').textContent = fmtVal(totalLossAmt, false);
+
+                // Render Barcode Streaks
+                renderBarcodes(trades);
+
+                // Populate Advanced / Strategy / Symbols breakdown
+                renderBreakdowns(trades);
+
+                if (window.lucide) lucide.createIcons();
             }
 
-            function showLoading() {
-                $('kpis').innerHTML = '';
-                $('eq-chart').innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)] py-6 text-center">Loading practice analytics…</p>';
-                $('eq-readout').textContent = '';
-                $('bd-body').innerHTML = '<tr><td colspan="7" class="text-center py-6 text-[12.5px] text-[var(--tm-dim)]">Loading…</td></tr>';
-                $('risk-buckets').innerHTML = '<tr><td colspan="5" class="text-center py-6 text-[12.5px] text-[var(--tm-dim)]">Loading…</td></tr>';
-                $('dd-kpis').innerHTML = '';
-                $('streaks').innerHTML = '';
-                $('key-questions').innerHTML = '<p class="text-[13px] text-[var(--tm-dim)]">Loading…</p>';
+            function renderRadarPolygon(wr, cs, rf, pf, rr) {
+                // 5 angles: -90, -18, 54, 126, 198 deg
+                const cx = 120, cy = 105, rMax = 65;
+                const angles = [-Math.PI/2, -Math.PI/2 + (2*Math.PI/5), -Math.PI/2 + (4*Math.PI/5), -Math.PI/2 + (6*Math.PI/5), -Math.PI/2 + (8*Math.PI/5)];
+                const scores = [wr, cs, rf, pf, rr];
+
+                const points = scores.map((sc, i) => {
+                    const r = (sc / 100) * rMax;
+                    const x = cx + r * Math.cos(angles[i]);
+                    const y = cy + r * Math.sin(angles[i]);
+                    return x.toFixed(1) + ',' + y.toFixed(1);
+                }).join(' ');
+
+                const poly = $('tp-radar-poly');
+                if (poly) poly.setAttribute('points', points);
             }
 
-            function fetchPractice(accId) {
-                const q = new URLSearchParams();
-                Object.keys(filters).forEach(k => { if (filters[k]) q.set(k, filters[k]); });
-                const url = '/api/practice/analytics' + (q.toString() ? '?' + q.toString() : '');
-                apiFetch(url).then(r => {
-                    if (!r.ok) throw new Error('HTTP ' + r.status);
-                    return r.json();
-                }).then(j => {
-                    if (!j || typeof j.n === 'undefined') throw new Error('unexpected response');
-                    data = j;
-                    renderData(data, 'BACKTEST');
-                }).catch(err => {
-                    console.warn('[analytics] practice fetch failed: ' + err.message);
-                    $('an-body').classList.add('hidden');
-                    $('practice-offline').classList.remove('hidden');
+            function renderAreaChart(curve) {
+                const el = $('tp-area-chart');
+                if (!el || curve.length < 2) {
+                    if (el) el.innerHTML = '<div class="h-full flex items-center justify-center text-[12px] text-[var(--tm-dim)]">Trade path will render here</div>';
+                    return;
+                }
+                const W = 520, H = 130, P = 8;
+                const vals = curve.map(p => p.equity);
+                const min = Math.min.apply(null, vals);
+                const max = Math.max.apply(null, vals);
+                const span = (max - min) || 1;
+
+                const x = i => P + (i / (curve.length - 1)) * (W - 2 * P);
+                const y = v => H - P - ((v - min) / span) * (H - 2 * P);
+
+                const line = curve.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.equity).toFixed(1)).join(' ');
+                const area = line + ' L' + x(curve.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + x(0).toFixed(1) + ' ' + (H - P) + ' Z';
+
+                el.innerHTML =
+                    '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full h-full">' +
+                        '<defs>' +
+                            '<linearGradient id="eqGlow" x1="0" y1="0" x2="0" y2="1">' +
+                                '<stop offset="0%" stop-color="#22c55e" stop-opacity="0.28"/>' +
+                                '<stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>' +
+                            '</linearGradient>' +
+                        '</defs>' +
+                        '<path d="' + area + '" fill="url(#eqGlow)"/>' +
+                        '<path d="' + line + '" fill="none" stroke="#22c55e" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
+                    '</svg>';
+            }
+
+            function renderBarcodes(trades) {
+                const recent = trades.slice(-25);
+                const html = recent.map(t => {
+                    const isWin = Number(t.pnl || 0) >= 0;
+                    return '<div class="streak-bar ' + (isWin ? 'win' : 'loss') + '" title="' + (t.symbol || '') + ': ' + (isWin ? '+' : '') + t.pnl + '"></div>';
+                }).join('');
+
+                if ($('tp-rr-streak')) $('tp-rr-streak').innerHTML = html;
+                if ($('tp-pf-streak')) $('tp-pf-streak').innerHTML = html;
+            }
+
+            function renderBreakdowns(trades) {
+                // By setup
+                const bySetup = {};
+                trades.forEach(t => {
+                    const s = t.setup || 'Standard';
+                    if (!bySetup[s]) bySetup[s] = { n: 0, pnl: 0, wins: 0 };
+                    bySetup[s].n++;
+                    bySetup[s].pnl += Number(t.pnl || 0);
+                    if (Number(t.pnl || 0) > 0) bySetup[s].wins++;
+                });
+
+                $('strat-head').innerHTML = '<tr><th>Setup / Strategy</th><th>Trades</th><th>P&amp;L</th><th>Win Rate</th></tr>';
+                $('strat-body').innerHTML = Object.keys(bySetup).map(s => {
+                    const row = bySetup[s];
+                    const wr = Math.round((row.wins / row.n) * 100);
+                    return '<tr><td class="font-semibold text-white">' + esc(s) + '</td><td class="num">' + row.n + '</td><td class="num ' + (row.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') + '">' + money(row.pnl) + '</td><td class="num">' + wr + '%</td></tr>';
+                }).join('');
+
+                // By symbol
+                const bySym = {};
+                trades.forEach(t => {
+                    const sym = t.symbol || 'OTHER';
+                    if (!bySym[sym]) bySym[sym] = { n: 0, pnl: 0, wins: 0 };
+                    bySym[sym].n++;
+                    bySym[sym].pnl += Number(t.pnl || 0);
+                    if (Number(t.pnl || 0) > 0) bySym[sym].wins++;
+                });
+
+                $('sym-head').innerHTML = '<tr><th>Asset Symbol</th><th>Trades</th><th>P&amp;L</th><th>Win Rate</th></tr>';
+                $('sym-body').innerHTML = Object.keys(bySym).map(sym => {
+                    const row = bySym[sym];
+                    const wr = Math.round((row.wins / row.n) * 100);
+                    return '<tr><td class="font-semibold text-white">' + esc(sym) + '</td><td class="num">' + row.n + '</td><td class="num ' + (row.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') + '">' + money(row.pnl) + '</td><td class="num">' + wr + '%</td></tr>';
+                }).join('');
+            }
+
+            // Events
+            const collapseBtn = $('collapse-btn');
+            if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            const unitToggle = $('unit-toggle');
+            if (unitToggle) {
+                unitToggle.addEventListener('click', () => {
+                    unitMode = unitMode === '%' ? '$' : '%';
+                    unitToggle.textContent = unitMode;
+                    renderAll();
                 });
             }
 
-            // ============ RENDER DATA (shared by LIVE + BACKTEST) ============
-            function renderData(a, src) {
-                if (!a) { renderNone(); return; }
-                const accId = currentAccountId();
-                const filtered = filtersActive();
-                if (a.n === 0) {
-                    renderNone();
-                    return;
-                }
-                const isBt = src === 'BACKTEST';
-                $('summary-tag').className = 'tag ' + (isBt ? 'tag-blue' : 'tag-emerald');
-                $('summary-tag').textContent = src;
-                $('eq-source').textContent = 'source: ' + (isBt ? 'BACKTEST · practice sessions' : 'LIVE · canonical ledger');
-                $('eq-end').textContent = 'net ' + money(a.net) + ' · ' + a.n + ' trade' + (a.n === 1 ? '' : 's');
-
-                renderKpis(a, isBt);
-                renderEq(a);
-                renderBreakdown(a);
-                renderRiskBuckets(a);
-                renderDD(a);
-                renderStreaks(a);
-                renderKeyQuestions(a);
+            const timeSelect = $('time-filter');
+            if (timeSelect) {
+                timeSelect.addEventListener('change', e => {
+                    timeFilter = e.target.value;
+                    renderAll();
+                });
             }
 
-            function renderNone() {
-                const filtered = filtersActive();
-                const body = $('an-body'), zero = $('zero-state');
-                body.classList.add('hidden');
-                zero.classList.remove('hidden');
-                zero.innerHTML =
-                    '<div class="w-14 h-14 rounded-2xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mx-auto mb-4 text-zinc-300 shadow-sm">' +
-                        '<svg data-lucide="' + (filtered ? 'search-x' : (mode === 'BACKTEST' ? 'flask-conical' : 'bar-chart-3')) + '" class="w-6 h-6 text-white/75"></svg>' +
-                    '</div>' +
-                    '<h3 class="text-[17px] font-bold text-white tracking-tight">' + (filtered ? 'No trades match these filters' : (mode === 'BACKTEST' ? 'No practice trades yet' : 'Not enough trading data yet')) + '</h3>' +
-                    '<p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed">' +
-                        (filtered ? 'Adjust or clear your active filters to see analytics again.' : (mode === 'BACKTEST' ? 'Run a backtest session on the Backtesting page — practice analytics builds from simulated trades without live P&amp;L risk.' : 'Log trades in your journal to start analyzing win rate, profit factor, and session edge.')) +
-                    '</p>' +
-                    '<div class="flex items-center justify-center gap-3 mt-6">' +
-                        (filtered
-                            ? '<button class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2" onclick="window.__clearAnFilters()"><svg data-lucide="rotate-ccw" class="w-4 h-4"></svg> Clear filters</button>'
-                            : mode === 'BACKTEST'
-                                ? '<a href="backtesting.html" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2"><svg data-lucide="flask-conical" class="w-4 h-4"></svg> Open Backtesting</a>'
-                                : '<a href="journal.html?log=1" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2"><svg data-lucide="plus" class="w-4 h-4"></svg> Log First Trade</a>') +
-                    '</div>';
-                window.__clearAnFilters = clearFilters;
-                if (window.lucide) lucide.createIcons();
-            }
+            // Sub-nav tab switching
+            document.querySelectorAll('.subnav-tab').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.subnav-tab').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    activeSubTab = btn.dataset.tab;
 
-            // ---- KPI summary ----
-            function renderKpis(a, isBt) {
-                const netCol = a.net >= 0 ? 'var(--tm-green)' : 'var(--tm-red)';
-                const tiles = [
-                    ['Trades', a.n, '', ''],
-                    ['Net P&L', money(a.net), netCol, ''],
-                    ['Win rate', fmtPct(a.winRate), a.winRate >= 0.5 ? 'var(--tm-green)' : 'var(--tm-red)', (a.n ? Math.round(a.winRate * a.n) : 0) + ' winners'],
-                    ['Profit factor', a.pf != null && !isNaN(a.pf) ? a.pf.toFixed(2) : '—', a.pf >= 1 ? 'var(--tm-green)' : a.pf > 0 ? 'var(--tm-red)' : '', a.pf != null && !isNaN(a.pf) ? (a.pf >= 1 ? 'edge ≥ 1' : 'edge < 1') : ''],
-                    ['Expectancy', fmtR(a.expectancy), a.expectancy >= 0 ? 'var(--tm-green)' : 'var(--tm-red)', 'per trade (R)'],
-                    ['Average R', fmtR(a.avgR), a.avgR >= 0 ? 'var(--tm-green)' : 'var(--tm-red)', ''],
-                    ['Max drawdown', money(-a.maxDD), 'var(--tm-red)', 'peak-to-trough'],
-                    ['Recovery', a.recovery != null && !isNaN(a.recovery) ? a.recovery.toFixed(2) + '×' : '—', a.recovery >= 1 ? 'var(--tm-green)' : 'var(--tm-red)', 'net ÷ drawdown']
-                ];
-                $('kpis').innerHTML = tiles.map(t =>
-                    '<div class="kpi-card"><div class="kc-label">' + t[0] + '</div>' +
-                    '<div class="kc-value num" style="' + (t[2] ? 'color:' + t[2] : '') + '">' + t[1] + '</div>' +
-                    (t[3] ? '<div class="kc-sub">' + t[3] + '</div>' : '') +
-                    '</div>').join('');
-            }
-
-            // ---- Equity curve (interactive SVG hover) ----
-            function renderEq(a) {
-                const el = $('eq-chart');
-                const curve = a.curve || [];
-                if (curve.length < 2) {
-                    el.innerHTML = '<p class="text-[12.5px] text-[var(--tm-dim)] py-6 text-center">Not enough trades to draw an equity curve.</p>';
-                    $('eq-readout').textContent = 'Add more trades to see the equity path.';
-                    return;
-                }
-                const W = 760, H = 200, P = 12;
-                const vals = curve.map(p => p.equity);
-                const min = Math.min.apply(null, vals), max = Math.max.apply(null, vals);
-                const span = (max - min) || 1;
-                const x = i => P + (i / (curve.length - 1)) * (W - 2 * P);
-                const y = v => H - P - ((v - min) / span) * (H - 2 * P);
-                const line = curve.map((p, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(p.equity).toFixed(1)).join(' ');
-                const area = line + ' L' + x(curve.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + x(0).toFixed(1) + ' ' + (H - P) + ' Z';
-                let grid = '';
-                for (let i = 1; i < 4; i++) {
-                    const gy = P + (i / 4) * (H - 2 * P);
-                    grid += '<line x1="' + P + '" y1="' + gy.toFixed(1) + '" x2="' + (W - P) + '" y2="' + gy.toFixed(1) + '" stroke="var(--tm-border)" stroke-width="1"/>';
-                    grid += '<text x="' + (P + 3) + '" y="' + (gy - 4) + '" fill="var(--tm-dim)" font-size="9" class="num">' + fmtNum(Math.round(max - (i / 4) * span)) + '</text>';
-                }
-                const up = vals[vals.length - 1] >= vals[0];
-                const col = up ? 'var(--tm-green)' : 'var(--tm-red)';
-                const fill = up ? 'rgba(16,185,129,0.08)' : 'rgba(239,68,68,0.08)';
-                const hoverX = P + (x(0) < x(curve.length - 1) ? x(curve.length - 1) : x(0));
-                el.innerHTML =
-                    '<div class="eq-wrap">' +
-                    '<svg viewBox="0 0 ' + W + ' ' + H + '" class="w-full" style="height:auto">' +
-                        grid +
-                        '<path d="' + area + '" fill="' + fill + '"/>' +
-                        '<path d="' + line + '" fill="none" stroke="' + col + '" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>' +
-                        '<line id="eq-hl" x1="' + hoverX + '" y1="' + P + '" x2="' + hoverX + '" y2="' + (H - P) + '" stroke="var(--tm-muted)" stroke-width="1" stroke-dasharray="3 3" opacity="0"/>' +
-                        '<circle id="eq-dot" cx="' + hoverX + '" cy="' + y(vals[vals.length - 1]).toFixed(1) + '" r="3.5" fill="' + col + '" stroke="var(--tm-card)" stroke-width="1.5" opacity="0"/>' +
-                        '<rect x="0" y="0" width="' + W + '" height="' + H + '" fill="transparent" onmousemove="window.__eqHover(event)"/>' +
-                    '</svg></div>';
-                // store the point series for the hover handler
-                window.__eqData = curve.map((p, i) => ({ x: x(i), y: y(p.equity), ts: p.ts, eq: p.equity }));
-                window.__eqMeta = { P: P, W: W, H: H };
-                window.__eqHover = function (evt) {
-                    const svg = el.querySelector('svg');
-                    if (!svg) return;
-                    const rect = svg.getBoundingClientRect();
-                    const mx = ((evt.clientX - rect.left) / rect.width) * W;
-                    const pts = window.__eqData;
-                    let best = 0, bd = Infinity;
-                    for (let i = 0; i < pts.length; i++) {
-                        const d = Math.abs(pts[i].x - mx);
-                        if (d < bd) { bd = d; best = i; }
-                    }
-                    const p = pts[best];
-                    const hl = $('eq-hl'), dot = $('eq-dot');
-                    if (hl) { hl.setAttribute('x1', p.x); hl.setAttribute('x2', p.x); hl.setAttribute('opacity', 1); }
-                    if (dot) { dot.setAttribute('cx', p.x); dot.setAttribute('cy', p.y); dot.setAttribute('opacity', 1); }
-                    const d = new Date(p.ts);
-                    const label = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-                    $('eq-readout').textContent = label + ' — equity ' + money(p.eq) + ' (' + (best + 1) + '/' + pts.length + ' trades)';
-                };
-            }
-
-            // ---- Breakdown tabs ----
-            function strategyName(key) {
-                if (!key || key === 'undefined') return '—';
-                const m = core.StrategyMaster.find(s => s.id === key);
-                return (m && m.name) || key;
-            }
-            function renderBreakdown(a) {
-                const map = {
-                    strategy: { rows: (a.byStrategy || []).map(r => ({ name: strategyName(r.key), badge: '', n: r.n, pnl: r.pnl, winRate: r.winRate, avgR: r.avgR, pf: r.pf, extra: '' })) },
-                    setup: { rows: (a.bySetup || []).map(r => ({ name: r.key === 'undefined' ? '—' : r.key, badge: '', n: r.n, pnl: r.pnl, winRate: r.winRate, avgR: r.avgR, pf: r.pf, extra: setupTag(r) })) },
-                    symbol: { rows: (a.bySymbol || []).map(r => ({ name: r.key === 'undefined' ? '—' : r.key, badge: window.TMAssets && window.TMAssets.badgeHtml ? window.TMAssets.badgeHtml(r.key) : '', n: r.n, pnl: r.pnl, winRate: r.winRate, avgR: r.avgR, pf: r.pf, extra: '' })) },
-                    session: { rows: (a.bySession || []).map(r => ({ name: r.key === 'undefined' ? '—' : r.key, badge: '', n: r.n, pnl: r.pnl, winRate: r.winRate, avgR: r.avgR, pf: r.pf, extra: '' })) },
-                    direction: { rows: (a.byDirection || []).map(r => ({ name: r.key === 'undefined' ? '—' : (r.key === 'long' ? 'Long' : 'Short'), badge: '', n: r.n, pnl: r.pnl, winRate: r.winRate, avgR: r.avgR, pf: r.pf, extra: '' })) }
-                };
-                const t = map[bdTab] || map.setup;
-                $('bd-head').innerHTML = '<tr><th>' + bdTab.charAt(0).toUpperCase() + bdTab.slice(1) + '</th><th>Trades</th><th>P&amp;L</th><th>Win rate</th><th>Avg R</th><th>Profit factor</th><th></th></tr>';
-                $('bd-body').innerHTML = t.rows.length
-                    ? t.rows.map(r =>
-                        '<tr>' +
-                            '<td class="font-semibold text-[var(--tm-text)]">' + r.badge + ' ' + esc(r.name) + '</td>' +
-                            '<td class="num">' + r.n + '</td>' +
-                            '<td class="num ' + (r.pnl < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + money(r.pnl) + '</td>' +
-                            '<td class="num">' + fmtPct(r.winRate) + '</td>' +
-                            '<td class="num ' + (r.avgR < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + fmtR(r.avgR) + '</td>' +
-                            '<td class="num">' + (r.pf != null && !isNaN(r.pf) ? r.pf.toFixed(2) : '—') + '</td>' +
-                            '<td>' + r.extra + '</td>' +
-                        '</tr>').join('')
-                    : '<tr><td colspan="7" class="text-center py-6 text-[12.5px] text-[var(--tm-dim)]">No ' + bdTab + ' breakdown in this filtered dataset.</td></tr>';
-                // session best/worst tags (engine's own pnl ordering)
-                if (bdTab === 'session' && (a.bySession || []).length >= 2) {
-                    const rows = a.bySession;
-                    $('bd-body').innerHTML = $('bd-body').innerHTML.replace('<td></td>', '<td><span class="tag tag-emerald">BEST SESSION</span></td>').replace('<td></td>', '<td><span class="tag tag-red">WORST SESSION</span></td>');
-                }
-                $('bd-note').textContent =
-                    bdTab === 'setup' ? 'Rows are the engine\u2019s own ordering (net P&L). Tags are descriptive win-rate thresholds on this sample \u2014 not statistical claims. n &lt; 5 is flagged \u201cSmall sample\u201d.'
-                    : bdTab === 'session' ? 'Ranked by net P&L in this filtered dataset (the engine\u2019s ordering). Best / worst labels only when at least 2 sessions have trades.'
-                    : 'Rows use the engine\u2019s existing ordering (net P&L, descending).';
-            }
-            function setupTag(r) {
-                if (r.n < 5) return '<span class="tag tag-amber">Small sample</span>';
-                if (r.winRate >= 0.5) return '<span class="tag tag-emerald">Strong</span>';
-                if (r.winRate < 0.4) return '<span class="tag tag-red">Weak</span>';
-                return '<span class="tag tag-gray">Neutral</span>';
-            }
-
-            // ---- Risk buckets ----
-            function renderRiskBuckets(a) {
-                const rows = a.byRisk || [];
-                $('risk-buckets').innerHTML = rows.length
-                    ? rows.map(r =>
-                        '<tr>' +
-                            '<td class="font-semibold text-[var(--tm-text)]">' + esc(r.key) + '</td>' +
-                            '<td class="num">' + r.n + '</td>' +
-                            '<td class="num ' + (r.pnl < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + money(r.pnl) + '</td>' +
-                            '<td class="num">' + fmtPct(r.winRate) + '</td>' +
-                            '<td class="num ' + (r.avgR < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-green)]') + '">' + fmtR(r.avgR) + '</td>' +
-                        '</tr>').join('')
-                    : '<tr><td colspan="5" class="text-center py-6 text-[12.5px] text-[var(--tm-dim)]">No risk-bucket data in this filtered dataset.</td></tr>';
-            }
-
-            // ---- Drawdown & recovery ----
-            function renderDD(a) {
-                const tiles = [
-                    ['Max drawdown', money(-a.maxDD), 'var(--tm-red)', 'largest peak-to-trough'],
-                    ['Recovery factor', a.recovery != null && !isNaN(a.recovery) ? a.recovery.toFixed(2) + '×' : '—', a.recovery >= 1 ? 'var(--tm-green)' : 'var(--tm-red)', 'net profit ÷ max drawdown'],
-                    ['Max equity', money(a.maxEq), 'var(--tm-green)', 'highest cumulative point'],
-                    ['Min equity', money(a.minEq), a.minEq < 0 ? 'var(--tm-red)' : '', 'lowest cumulative point']
-                ];
-                $('dd-kpis').innerHTML = tiles.map(t =>
-                    '<div class="kpi-card"><div class="kc-label">' + t[0] + '</div>' +
-                    '<div class="kc-value num" style="' + (t[2] ? 'color:' + t[2] : '') + '">' + t[1] + '</div>' +
-                    '<div class="kc-sub">' + t[3] + '</div></div>').join('');
-            }
-
-            // ---- Streaks ----
-            function renderStreaks(a) {
-                const s = a.streaks || { bestWin: 0, bestLoss: 0 };
-                const tiles = [
-                    ['Best win streak', s.bestWin, 'var(--tm-green)', 'consecutive wins'],
-                    ['Best loss streak', s.bestLoss, 'var(--tm-red)', 'consecutive losses']
-                ];
-                $('streaks').innerHTML = tiles.map(t =>
-                    '<div class="kpi-card text-center"><div class="kc-label">' + t[0] + '</div>' +
-                    '<div class="kc-value num" style="color:' + t[2] + '">' + t[1] + '</div>' +
-                    '<div class="kc-sub">' + t[3] + '</div></div>').join('');
-            }
-
-            // ---- Key questions (deterministic, no causal claims) ----
-            function renderKeyQuestions(a) {
-                const el = $('key-questions');
-                const statements = [];
-                const pick = (rows) => (rows || []).filter(r => r.n >= 3)[0];
-                const ses = pick(a.bySession);
-                if (ses && ses.pnl > 0) statements.push(ses.key === 'undefined' ? null : ses.key + ' has the highest net P&L among sessions in this filtered dataset (' + money(ses.pnl) + ' over ' + ses.n + ' trades).');
-                const setup = pick(a.bySetup);
-                if (setup && setup.pnl > 0) statements.push(setup.key === 'undefined' ? null : setup.key + ' leads setups by net P&L here (' + money(setup.pnl) + ' over ' + setup.n + ' trades' + (setup.avgR >= 0 ? ', avg ' + fmtR(setup.avgR) : '') + ').');
-                const sym = pick(a.bySymbol);
-                if (sym && sym.pnl > 0) statements.push(sym.key === 'undefined' ? null : sym.key + ' is the strongest instrument by net P&L in this dataset (' + money(sym.pnl) + ' over ' + sym.n + ' trades).');
-                const dir = pick(a.byDirection);
-                if (dir && dir.pnl > 0) statements.push((dir.key === 'long' ? 'Long' : dir.key === 'short' ? 'Short' : dir.key) + ' leads by net P&L (' + money(dir.pnl) + ' over ' + dir.n + ' trades).');
-                const clean = statements.filter(Boolean);
-                const netNegative = a.net < 0 && (a.bySession || []).some(r => r.n >= 3);
-                el.innerHTML = clean.length
-                    ? '<div class="flex flex-col gap-2">' + clean.map(s =>
-                        '<div class="st-row"><svg data-lucide="corner-down-right" class="w-4 h-4 text-[var(--tm-accent)] flex-shrink-0"></svg><span class="text-[13px] text-[var(--tm-text)]">' + esc(s) + '</span></div>').join('') +
-                        (netNegative ? '<p class="text-[11.5px] text-[var(--tm-red)] mt-2 px-1">This filtered dataset is net-negative — no category above is profitable. The breakdowns show where the losses concentrate.</p>' : '') +
-                        '<p class="text-[11.5px] text-[var(--tm-dim)] mt-2 px-1">Statements describe only the current filtered sample (rows need ≥ 3 trades to appear). They are not causal claims — confirm with the AI Mentor before acting on them.</p></div>'
-                    : '<p class="text-[13px] text-[var(--tm-dim)]">' + (netNegative ? 'This filtered dataset is net-negative — review the breakdowns above to see where losses concentrate.' : 'Not enough filtered data for comparisons yet (rows need at least 3 trades).') + '</p>';
-                if (window.lucide) lucide.createIcons();
-            }
-
-            // ============ EVENTS ============
-            function setMode(m) {
-                mode = m;
-                $('mode-live').classList.toggle('active', m === 'LIVE');
-                $('mode-bt').classList.toggle('active', m === 'BACKTEST');
-                renderBody();
-            }
-            document.querySelectorAll('#mode-toggle button').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
-            document.querySelectorAll('#bd-tabs .ftab').forEach(b => b.addEventListener('click', () => {
-                document.querySelectorAll('#bd-tabs .ftab').forEach(x => x.classList.toggle('active', x === b));
-                bdTab = b.dataset.tab;
-                if (data && data.n) renderBreakdown(data);
-            }));
-            document.querySelectorAll('.ctrl').forEach(el => el.addEventListener('change', () => { readFilters(); renderBody(); }));
-            document.querySelectorAll('.ctrl[type="date"]').forEach(el => el.addEventListener('input', () => { readFilters(); renderBody(); }));
-            $('reset-filters').addEventListener('click', clearFilters);
-            $('practice-retry').addEventListener('click', () => { $('practice-offline').classList.add('hidden'); $('an-body').classList.remove('hidden'); renderBody(); });
-            $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
-            $('acc-chip').addEventListener('click', () => {
-                if (!core || !core.Accounts || !core.Accounts.length) return;
-                const ids = core.Accounts.map(a => a.id);
-                const cur = currentAccountId() || ids[0];
-                const idx = ids.indexOf(cur);
-                core.setSelectedAccount(ids[(idx + 1) % ids.length]);
-                populateFilters();
-                renderBody();
+                    $('overview-content').classList.toggle('hidden', activeSubTab !== 'overview');
+                    $('advanced-content').classList.toggle('hidden', activeSubTab !== 'advanced');
+                    $('strategy-content').classList.toggle('hidden', activeSubTab !== 'strategy');
+                    $('symbols-content').classList.toggle('hidden', activeSubTab !== 'symbols');
+                });
             });
-            const gs = $('global-search');
-            if (gs && window.TM_GLOBAL_SEARCH) {
-                gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
-            }
-            if (core && core.TradeMindBus) {
-                ['trade.created', 'trade.updated', 'trade.deleted', 'config.version.created', 'config.changed', 'account.changed'].forEach(ev =>
-                    core.TradeMindBus.subscribe(ev, () => { populateFilters(); renderBody(); }));
-            }
 
-            populateFilters();
-            renderBody();
+            // Initial render
+            renderAll();
             if (window.lucide) lucide.createIcons();
+
+            if (core && core.TradeMindBus) {
+                core.TradeMindBus.subscribe('trade.created', renderAll);
+                core.TradeMindBus.subscribe('trade.updated', renderAll);
+            }
         })();
     </script>
-    <script src="assets/tour.js"></script>
-    <script src="assets/profile-meta.js"></script>
-    <script src="assets/account-switcher.js"></script>
-    <script src="reset.js"></script>
 </body>
 </html>
