@@ -4,13 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>BATTLEXJOURNAL — Trade Log &amp; Notes</title>
-    <meta name="description" content="BATTLEXJOURNAL Trade Notes — 4-quadrant trade inspection, chart evidence, strategy confluences, and psychological reflections.">
+    <meta name="description" content="BATTLEXJOURNAL Trade Notes — 4-quadrant trade inspection, chart evidence, strategy confluences, and notes.">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <meta name="theme-color" content="#0a0a0b">
+    <meta name="theme-color" content="#06080b">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="31TRADES">
     <meta property="og:title" content="BATTLEXJOURNAL — Trade Log &amp; Notes">
-    <meta property="og:description" content="BATTLEXJOURNAL Trade Notes — 4-quadrant trade inspection, chart evidence, strategy confluences, and psychological reflections.">
+    <meta property="og:description" content="BATTLEXJOURNAL Trade Notes — 4-quadrant trade inspection, chart evidence, strategy confluences, and notes.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/notes.html">
 
     <link rel="stylesheet" href="assets/tokens.css">
@@ -36,20 +36,20 @@
 
         html, body {
             height: 100%;
-            background: var(--tm-bg);
-            color: var(--tm-text);
-            font-family: var(--tm-sans);
+            background: #06080b;
+            color: #f1f5f9;
+            font-family: 'Plus Jakarta Sans', var(--tm-sans);
             overflow: hidden;
         }
 
-        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+        .num { font-family: 'JetBrains Mono', var(--tm-mono); font-variant-numeric: tabular-nums; }
 
-        /* ---- App shell ---- */
+        /* ---- Sidebar ---- */
         .sidebar {
             width: 253px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: var(--tm-bg-elev);
-            border-right: 1px solid var(--tm-border);
+            background: #080a0f;
+            border-right: 1px solid #141720;
             display: flex;
             flex-direction: column;
             overflow: hidden;
@@ -65,106 +65,23 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 14.5px; font-weight: 500; color: var(--tm-muted);
+            font-size: 14.5px; font-weight: 500; color: #94a3b8;
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #ffffff; }
         .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: inset 2px 0 0 0 #ffffff !important; }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        .panel { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; }
-        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
-        .panel-sub { font-size: 12px; color: var(--tm-dim); }
-        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
-
-        .btn-primary {
-            background: #ffffff !important; color: #000000 !important; font-weight: 700 !important; font-size: 13.5px;
-            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
-            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
-        }
-        .btn-primary:hover {
-            background: #e2e8f0 !important; color: #000000 !important; border-color: #e2e8f0 !important;
-            transform: translateY(-1px);
-        }
-
-        .btn-ghost {
-            background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; font-weight: 600; font-size: 13px;
-            padding: 7px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important;
-            display: inline-flex; align-items: center; gap: 7px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
-        }
-        .btn-ghost:hover {
-            border-color: rgba(255, 255, 255, 0.3) !important; color: #ffffff !important; background: rgba(255, 255, 255, 0.08) !important;
-        }
-
-        .btn-mini {
-            background: rgba(255, 255, 255, 0.04); border: 1px solid var(--tm-border); border-radius: 6px; color: var(--tm-muted);
-            padding: 4.5px 9px; font-size: 11.5px; font-weight: 500; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.15s;
-        }
-        .btn-mini:hover { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
-
-        .tag {
-            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
-            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
-        }
-        .tag-emerald { background: rgba(16,185,129,0.12); color: #34d399; border-color: rgba(16,185,129,0.25); }
-        .tag-red { background: rgba(239,68,68,0.12); color: #f87171; border-color: rgba(239,68,68,0.25); }
-        .tag-amber { background: rgba(245,158,11,0.12); color: #fbbf24; border-color: rgba(245,158,11,0.25); }
-        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
-        .tag-blue { background: rgba(59,130,246,0.12); color: #38bdf8; border-color: rgba(59,130,246,0.25); }
-
-        /* Unit switch */
-        .unit-toggle {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 32px; height: 32px; border-radius: 7px;
-            background: var(--tm-card); border: 1px solid var(--tm-border-2);
-            color: var(--tm-text); font-weight: 700; font-size: 13px;
-            cursor: pointer; transition: all 0.15s ease;
-        }
-        .unit-toggle:hover { border-color: var(--tm-muted); background: var(--tm-hover); }
-
-        /* Controls */
-        .ctrl {
-            background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
-            font-size: 13px; color: var(--tm-text); padding: 7px 11px; outline: none; transition: border-color 0.15s;
-        }
-        .ctrl:focus { border-color: var(--tm-accent); }
-        select.ctrl option { background: var(--tm-card); color: var(--tm-text); }
-        .ctrl::placeholder { color: var(--tm-dim); }
-
-        /* ---- Trade Log Table Specifics (Matches Image 1) ---- */
-        .log-table-row {
-            padding: 13px 18px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-            display: grid;
-            grid-template-columns: 36px 160px 140px 100px 130px 100px 1fr;
-            align-items: center;
-            transition: all 0.12s ease;
-            cursor: pointer;
-            text-decoration: none;
-        }
-        .log-table-row:hover {
-            background: rgba(255, 255, 255, 0.025);
-        }
-        .log-table-row:last-child { border-bottom: none; }
-
-        .radio-indicator {
-            width: 15px; height: 15px; border-radius: 999px;
-            border: 1.5px solid var(--tm-dim); display: inline-flex;
-            align-items: center; justify-content: center; transition: all 0.15s;
-        }
-        .log-table-row:hover .radio-indicator { border-color: var(--tm-text); }
-
-        /* ---- 4-Quadrant Cockpit Cards (Matches Image 2) ---- */
+        /* ---- Exact Cards matching reference screenshot ---- */
         .quad-card {
-            background: var(--tm-card);
-            border: 1px solid var(--tm-border);
+            background: #0c0e14;
+            border: 1px solid #171a23;
             border-radius: 12px;
-            padding: 22px;
+            padding: 24px;
             display: flex;
             flex-direction: column;
-            min-height: 290px;
+            min-height: 310px;
         }
         .quad-card-title {
             font-size: 14.5px;
@@ -172,75 +89,98 @@
             color: #ffffff;
             letter-spacing: 0.01em;
         }
-
-        /* Proportional R:R Bar */
-        .rr-bar-track {
-            height: 7px;
-            border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
-            overflow: hidden;
-            display: flex;
-            align-items: center;
+        .quad-card-sub {
+            font-size: 12px;
+            color: #64748b;
+            margin-top: 2px;
         }
-        .rr-bar-risk { background: #f43f5e; height: 100%; }
-        .rr-bar-reward { background: #22c55e; height: 100%; }
 
-        /* Dropzone */
-        .dropzone-box {
-            border: 1.5px dashed rgba(255, 255, 255, 0.14);
-            border-radius: 10px;
-            background: rgba(255, 255, 255, 0.015);
-            transition: all 0.18s ease;
-            display: flex;
-            flex-direction: column;
+        .divider {
+            border-top: 1px solid #161a24;
+            margin: 10px 0;
+        }
+
+        /* Unit switch */
+        .unit-toggle {
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #11141c; border: 1px solid #1f2533;
+            color: #f1f5f9; font-weight: 700; font-size: 13.5px;
+            cursor: pointer; transition: all 0.15s ease;
+        }
+        .unit-toggle:hover { border-color: #334155; background: #161b26; }
+
+        /* Delete button (exact solid red rounded square in screenshot) */
+        .btn-delete-solid {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: #dc2626; color: #ffffff;
+            display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: background 0.15s; border: none;
+        }
+        .btn-delete-solid:hover { background: #b91c1c; }
+
+        /* Back button (exact rounded dark button with border) */
+        .btn-icon-square {
+            width: 34px; height: 34px; border-radius: 8px;
+            background: #11141c; border: 1px solid #1f2533;
+            color: #ffffff; display: inline-flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.15s; text-decoration: none;
+        }
+        .btn-icon-square:hover { border-color: #334155; background: #161b26; }
+
+        /* P&L pill in screenshot */
+        .pnl-pill {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 3px 10px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 700; font-family: 'JetBrains Mono', monospace;
+            background: #082819; color: #34d399; border: 1px solid #0f5132;
+        }
+        .pnl-pill.loss {
+            background: #2e0d13; color: #f87171; border-color: #631923;
+        }
+
+        /* Trade Log Table Rows (Image 1) */
+        .log-table-row {
+            padding: 13px 20px;
+            border-bottom: 1px solid #131620;
+            display: grid;
+            grid-template-columns: 36px 160px 140px 100px 130px 100px 1fr;
             align-items: center;
-            justify-content: center;
+            transition: background 0.12s ease;
             cursor: pointer;
-            min-height: 190px;
-            padding: 20px;
-            text-align: center;
         }
-        .dropzone-box:hover, .dropzone-box.dragover {
-            border-color: #38bdf8;
-            background: rgba(56, 189, 248, 0.04);
-        }
+        .log-table-row:hover { background: rgba(255, 255, 255, 0.025); }
+        .log-table-row:last-child { border-bottom: none; }
 
-        /* Checkbox Confluence */
-        .confluence-item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            padding: 8px 10px;
-            border-radius: 7px;
-            background: rgba(255, 255, 255, 0.02);
-            border: 1px solid rgba(255, 255, 255, 0.06);
-            cursor: pointer;
-            transition: all 0.12s;
-            user-select: none;
+        .radio-dot {
+            width: 14px; height: 14px; border-radius: 999px;
+            border: 1.5px solid #475569; display: inline-block;
         }
-        .confluence-item:hover {
-            background: rgba(255, 255, 255, 0.05);
-            border-color: rgba(255, 255, 255, 0.15);
+        .log-table-row:hover .radio-dot { border-color: #94a3b8; }
+
+        /* Modal styling */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px); z-index: 100;
+            display: flex; align-items: center; justify-content: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
         }
-        .confluence-item.checked {
-            border-color: rgba(34, 197, 94, 0.4);
-            background: rgba(34, 197, 94, 0.08);
+        .modal-overlay.open { opacity: 1; pointer-events: auto; }
+        .modal-card {
+            background: #0c0e14; border: 1px solid #1f2533; border-radius: 14px;
+            width: 100%; max-width: 540px; padding: 24px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
         }
 
         /* Toast */
         .toast {
             position: fixed; bottom: 24px; right: 24px; z-index: 120;
-            background: var(--tm-card); border: 1px solid var(--tm-border-2);
-            border-radius: 10px; padding: 12px 18px; font-size: 13px; font-weight: 600; color: var(--tm-text);
+            background: #11141c; border: 1px solid #1f2533;
+            border-radius: 10px; padding: 12px 18px; font-size: 13px; font-weight: 600; color: #ffffff;
             display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
             transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.2s ease;
         }
         .toast.show { transform: none; opacity: 1; pointer-events: auto; }
-
-        ::-webkit-scrollbar { width: 8px; height: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 999px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.35); }
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -251,7 +191,7 @@
 
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#141720] flex-shrink-0">
                 <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
                 <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
                 <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
@@ -361,14 +301,14 @@
                 </div>
             </nav>
 
-            <div class="border-t border-[var(--tm-border)] p-2.5 flex flex-col flex-shrink-0">
-                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--tm-hover)] transition-colors cursor-pointer" id="profile-chip" title="Account & Settings">
+            <div class="border-t border-[#141720] p-2.5 flex flex-col flex-shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer" id="profile-chip" title="Account & Settings">
                     <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
-                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
-                        <div class="text-[11.5px] text-[var(--tm-dim)]" id="profile-meta">Battlex Pro</div>
+                        <div class="text-[13.5px] font-semibold text-white truncate" id="profile-name">Trader</div>
+                        <div class="text-[11.5px] text-[#64748b]" id="profile-meta">Battlex Pro</div>
                     </div>
-                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-up"></svg>
+                    <svg class="w-4 h-4 text-[#64748b] hide-when-collapsed" data-lucide="chevron-up"></svg>
                 </div>
             </div>
         </aside>
@@ -376,55 +316,49 @@
         <!-- ============ MAIN VIEWPORT ============ -->
         <div class="flex-1 flex flex-col min-w-0">
 
-            <!-- Global Topbar (Matches Breadcrumbs of Image 2) -->
-            <div class="topbar flex items-center justify-between px-6 flex-shrink-0">
-                <div class="flex items-center gap-2 text-[13.5px]" id="topbar-breadcrumbs">
-                    <span class="text-[var(--tm-dim)] font-medium">All Accounts</span>
-                    <span class="text-[var(--tm-dim)]">›</span>
-                    <span class="text-[var(--tm-dim)] font-medium">Trades</span>
-                    <span class="text-[var(--tm-dim)]">›</span>
-                    <span class="text-[var(--tm-text)] font-bold" id="topbar-crumb-tail">Trade Log</span>
+            <!-- Global Topbar (Matches Breadcrumbs: All Accounts > Trades > Trade) -->
+            <div class="topbar flex items-center justify-between px-6 h-[56px] border-b border-[#141720] flex-shrink-0">
+                <div class="flex items-center gap-2 text-[13.5px]">
+                    <span class="text-[#64748b] font-medium cursor-pointer" id="crumb-all-accounts">All Accounts</span>
+                    <span class="text-[#64748b]">›</span>
+                    <span class="text-[#64748b] font-medium cursor-pointer" id="crumb-trades">Trades</span>
+                    <span class="text-[#64748b]">›</span>
+                    <span class="text-white font-bold" id="crumb-tail">Trade</span>
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <button class="unit-toggle" id="unit-toggle" title="Toggle Dollar ($) vs Percentage (%) Mode">%</button>
+                    <button class="unit-toggle" id="unit-toggle" title="Toggle % or $">%</button>
                     <button class="account-select hide-when-collapsed" id="acc-chip">
-                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span class="num text-[12px]">—</span><span class="text-[#64748b]">·</span>
                         <span>No account</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
                     </button>
                 </div>
             </div>
 
             <!-- Main Content Container -->
-            <main class="flex-1 overflow-y-auto">
+            <main class="flex-1 overflow-y-auto bg-[#06080b]">
                 <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
                     <!-- ========================================== -->
-                    <!-- VIEW 1: MINIMALIST TRADE LOG (Matches Image 1) -->
+                    <!-- VIEW 1: MINIMALIST TRADE LOG (Image 1) -->
                     <!-- ========================================== -->
-                    <div id="view-trade-log" class="flex flex-col gap-4">
-                        
-                        <div class="panel p-6">
+                    <div id="view-trade-log" class="hidden flex flex-col gap-4">
+                        <div class="quad-card !p-6">
                             <div class="flex items-center justify-between mb-2">
                                 <div>
-                                    <h1 class="text-[22px] font-bold text-white tracking-tight">Trade Log</h1>
-                                    <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Select a trade to view its details, chart screenshots, and confluences.</p>
+                                    <h1 class="text-[20px] font-bold text-white tracking-tight">Trade Log</h1>
+                                    <p class="text-[12.5px] text-[#64748b] mt-0.5">Select a trade to view its details</p>
                                 </div>
-                                <div class="flex items-center gap-2">
-                                    <button class="btn-ghost !p-2 rounded-lg text-[var(--tm-dim)] hover:text-white" id="log-filter-btn" title="Filter trades">
-                                        <svg data-lucide="filter" class="w-4 h-4"></svg>
-                                    </button>
-                                    <button class="btn-ghost !p-2 rounded-lg text-[var(--tm-dim)] hover:text-white" id="log-sort-btn" title="Sort trades">
-                                        <svg data-lucide="arrow-down-up" class="w-4 h-4"></svg>
-                                    </button>
+                                <div class="flex items-center gap-3 text-[#94a3b8]">
+                                    <button class="hover:text-white transition-colors" title="Filter"><svg data-lucide="menu" class="w-4 h-4"></svg></button>
+                                    <button class="hover:text-white transition-colors" title="Filter"><svg data-lucide="filter" class="w-4 h-4"></svg></button>
                                 </div>
                             </div>
 
-                            <!-- Table Container (Dark pill matrix) -->
-                            <div class="mt-4 rounded-xl border border-[var(--tm-border)] bg-[var(--tm-bg-elev)] overflow-hidden">
-                                <!-- Table Head -->
-                                <div class="p-3.5 bg-white/[0.02] border-b border-[var(--tm-border)] grid grid-cols-[36px_160px_140px_100px_130px_100px_1fr] text-[11.5px] font-semibold text-[var(--tm-dim)] uppercase tracking-wider">
+                            <!-- Table Container -->
+                            <div class="mt-4 rounded-xl border border-[#171a23] bg-[#090b10] overflow-hidden">
+                                <div class="px-5 py-3.5 bg-white/[0.015] border-b border-[#141720] grid grid-cols-[36px_160px_140px_100px_130px_100px_1fr] text-[12px] font-semibold text-[#64748b]">
                                     <div></div>
                                     <div>Entry date</div>
                                     <div>Symbol</div>
@@ -433,220 +367,186 @@
                                     <div>Risk/Reward</div>
                                     <div class="text-right pr-3">P&amp;L</div>
                                 </div>
-
-                                <!-- Table Rows (Filled by JS) -->
-                                <div id="trade-log-rows">
-                                    <!-- Populated dynamically -->
-                                </div>
+                                <div id="trade-log-rows"></div>
                             </div>
 
                             <!-- Pagination Footer -->
-                            <div class="flex items-center justify-center gap-3 mt-4 text-[12.5px] text-[var(--tm-dim)] font-mono">
-                                <button class="btn-ghost !p-1.5 !px-2.5 rounded opacity-50 cursor-not-allowed">‹</button>
-                                <span class="px-2.5 py-1 rounded bg-white/[0.04] border border-[var(--tm-border)] font-bold text-white">1</span>
-                                <button class="btn-ghost !p-1.5 !px-2.5 rounded opacity-50 cursor-not-allowed">›</button>
+                            <div class="flex items-center justify-center gap-3 mt-5 text-[12.5px] text-[#64748b] font-mono">
+                                <button class="hover:text-white transition-colors">‹</button>
+                                <span class="px-2.5 py-0.5 rounded bg-white/[0.04] border border-[#1f2533] text-white font-bold">1</span>
+                                <button class="hover:text-white transition-colors">›</button>
                             </div>
                         </div>
-
                     </div>
 
 
                     <!-- ========================================== -->
-                    <!-- VIEW 2: 4-QUADRANT COCKPIT (Matches Image 2) -->
+                    <!-- VIEW 2: 4-QUADRANT COCKPIT (Image 2 EXACT) -->
                     <!-- ========================================== -->
-                    <div id="view-trade-cockpit" class="hidden flex flex-col gap-4">
+                    <div id="view-trade-cockpit" class="flex flex-col gap-4">
 
-                        <!-- Top Cockpit Header with Back Button & Delete Action -->
+                        <!-- Top Cockpit Header (Back Button, Symbol, Date, Red Trash) -->
                         <div class="flex items-center justify-between">
                             <div class="flex items-center gap-3">
-                                <button type="button" class="btn-ghost !p-2 !px-2.5 rounded-lg text-white" id="cockpit-back-btn" title="Back to Trade Log">
+                                <button type="button" class="btn-icon-square" id="cockpit-back-btn" title="Back to Trade Log">
                                     <svg data-lucide="arrow-left" class="w-4 h-4"></svg>
                                 </button>
                                 <div>
                                     <div class="flex items-center gap-2">
-                                        <h1 class="text-[24px] font-bold text-white tracking-tight" id="cp-symbol">NAS100</h1>
-                                        <button class="text-[var(--tm-dim)] hover:text-white transition-colors" title="Rename symbol">
+                                        <h1 class="text-[24px] font-extrabold text-white tracking-tight leading-none" id="cp-symbol">NAS100</h1>
+                                        <button class="text-[#64748b] hover:text-white transition-colors" id="btn-rename-symbol" title="Rename symbol">
                                             <svg data-lucide="edit-3" class="w-4 h-4"></svg>
                                         </button>
                                     </div>
-                                    <div class="text-[12px] text-[var(--tm-dim)] mt-0.5" id="cp-date-human">Tue, Aug 11, 2026</div>
+                                    <div class="text-[12px] text-[#64748b] mt-1 font-medium" id="cp-date-human">Tue, Aug 11, 2026</div>
                                 </div>
                             </div>
 
-                            <div class="flex items-center gap-2.5">
-                                <button type="button" class="w-9 h-9 rounded-lg bg-rose-500/10 border border-rose-500/20 text-rose-400 hover:bg-rose-500/20 flex items-center justify-center transition-all cursor-pointer" id="cp-delete-btn" title="Delete Trade">
-                                    <svg data-lucide="trash-2" class="w-4 h-4"></svg>
-                                </button>
-                            </div>
+                            <button type="button" class="btn-delete-solid" id="cp-delete-btn" title="Delete Trade">
+                                <svg data-lucide="trash-2" class="w-4 h-4"></svg>
+                            </button>
                         </div>
 
                         <!-- 4-Quadrant 2x2 Grid -->
                         <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                            <!-- QUADRANT 1: Trade Details (Top Left) -->
+                            <!-- ================= CARD 1: Trade Details ================= -->
                             <div class="quad-card justify-between">
                                 <div>
                                     <div class="flex items-center justify-between mb-4">
                                         <span class="quad-card-title">Trade Details</span>
-                                        <span class="tag tag-emerald !py-1 !px-2.5 text-[12px] font-bold font-mono" id="cp-pnl-pill">▲ 11,696.63%</span>
+                                        <span class="pnl-pill" id="cp-pnl-pill">▲ 11,696.63%</span>
                                     </div>
 
-                                    <div class="flex flex-col gap-2.5 text-[13px]">
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                    <div class="flex flex-col gap-2 text-[13px]">
+                                        <div class="flex items-center justify-between text-[#94a3b8]">
                                             <span>Symbol</span>
-                                            <span class="font-bold text-white" id="cp-row-symbol">NAS100</span>
+                                            <span class="font-bold text-white tracking-wide" id="cp-row-symbol">NAS100</span>
                                         </div>
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <div class="flex items-center justify-between text-[#94a3b8]">
                                             <span>Side</span>
-                                            <span class="font-bold text-emerald-400" id="cp-row-side">Buy ↑</span>
+                                            <span class="font-bold text-[#22c55e]" id="cp-row-side">Buy ↑</span>
                                         </div>
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <div class="flex items-center justify-between text-[#94a3b8]">
                                             <span>Lot size</span>
-                                            <span class="font-mono text-white" id="cp-row-size">1.00 lots</span>
+                                            <span class="text-white font-medium" id="cp-row-size">-</span>
                                         </div>
 
-                                        <div class="my-1 border-t border-white/[0.06]"></div>
+                                        <div class="divider"></div>
 
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <div class="flex items-center justify-between text-[#94a3b8]">
                                             <span>Entry date</span>
-                                            <span class="font-mono text-white" id="cp-row-entry-date">2026/08/11 00:11</span>
+                                            <span class="num text-white font-medium" id="cp-row-entry-date">2026/08/11 00:11</span>
                                         </div>
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <div class="flex items-center justify-between text-[#94a3b8]">
                                             <span>Exit date</span>
-                                            <span class="font-mono text-white" id="cp-row-exit-date">—</span>
+                                            <span class="num text-white font-medium" id="cp-row-exit-date">-</span>
                                         </div>
 
-                                        <div class="my-1 border-t border-white/[0.06]"></div>
+                                        <div class="divider"></div>
 
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <div class="flex items-center justify-between text-[#94a3b8]">
                                             <span>Entry price</span>
-                                            <span class="font-mono text-white" id="cp-row-entry-price">18,500.00</span>
+                                            <span class="num text-white font-medium" id="cp-row-entry-price">-</span>
                                         </div>
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)]">
+                                        <div class="flex items-center justify-between text-[#94a3b8]">
                                             <span>Exit price</span>
-                                            <span class="font-mono text-white" id="cp-row-exit-price">18,650.00</span>
+                                            <span class="num text-white font-medium" id="cp-row-exit-price">-</span>
                                         </div>
 
-                                        <div class="my-1 border-t border-white/[0.06]"></div>
+                                        <div class="divider"></div>
 
-                                        <!-- Visual R:R Bar (Red Risk portion vs Green Reward portion) -->
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)] pt-1">
+                                        <!-- RR ratio with exact visual red/green proportional bar -->
+                                        <div class="flex items-center justify-between text-[#94a3b8] pt-0.5">
                                             <span>RR ratio</span>
                                             <div class="flex items-center gap-3">
-                                                <div class="w-32 rr-bar-track">
-                                                    <div class="rr-bar-risk w-[15%]"></div>
-                                                    <div class="rr-bar-reward flex-1"></div>
+                                                <div class="flex items-center gap-1">
+                                                    <div class="w-3.5 h-1.5 rounded-full bg-[#ef4444]"></div>
+                                                    <div class="w-20 h-1.5 rounded-full bg-[#22c55e]"></div>
                                                 </div>
-                                                <span class="font-bold font-mono text-white" id="cp-row-rr">1:8.5</span>
+                                                <span class="num font-bold text-white text-[13px]" id="cp-row-rr">1:8.5</span>
                                             </div>
                                         </div>
 
-                                        <!-- Execution Rating Bar -->
-                                        <div class="flex items-center justify-between text-[var(--tm-dim)] pt-1">
+                                        <!-- Rating bar -->
+                                        <div class="flex items-center justify-between text-[#94a3b8] pt-1">
                                             <span>Rating</span>
                                             <div class="flex items-center gap-3">
-                                                <div class="w-32 h-1.5 rounded-full bg-white/[0.08] overflow-hidden">
-                                                    <div class="h-full bg-emerald-400 rounded-full" id="cp-row-rating-bar" style="width: 84%;"></div>
+                                                <div class="w-24 h-1.5 rounded-full bg-[#1e232d] overflow-hidden">
+                                                    <div class="h-full bg-[#22c55e] rounded-full" style="width: 84%;"></div>
                                                 </div>
-                                                <span class="font-bold font-mono text-white" id="cp-row-rating-val">8.4</span>
+                                                <span class="num font-bold text-white text-[13px]">8.4</span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- QUADRANT 2: Screenshots (Top Right) -->
-                            <div class="quad-card justify-between" id="quad-screenshots">
-                                <div class="flex items-center justify-between mb-3">
+                            <!-- ================= CARD 2: Screenshots (EXACT) ================= -->
+                            <div class="quad-card justify-between cursor-pointer" id="card-screenshots-zone">
+                                <div class="flex items-center justify-between">
                                     <span class="quad-card-title">Screenshots</span>
-                                    <span class="text-[11px] text-[var(--tm-dim)]">Paste or Drop</span>
                                 </div>
 
-                                <!-- Dropzone Box (Paste Ctrl+V Supported!) -->
-                                <div id="screenshot-dropzone" class="dropzone-box flex-1">
-                                    <div id="dropzone-empty" class="flex flex-col items-center">
-                                        <div class="w-12 h-12 rounded-xl bg-white/[0.04] border border-white/[0.08] flex items-center justify-center mb-3 text-[var(--tm-dim)]">
-                                            <svg data-lucide="cloud-upload" class="w-6 h-6 text-white/70"></svg>
-                                        </div>
+                                <!-- Pure Clean Dropzone (No ugly dashed border, exactly like image) -->
+                                <div class="flex-1 flex flex-col items-center justify-center py-8" id="screenshot-content-zone">
+                                    <div id="dropzone-empty-view" class="flex flex-col items-center justify-center text-center">
+                                        <svg data-lucide="cloud-upload" class="w-7 h-7 text-[#64748b] mb-3"></svg>
                                         <div class="text-[14px] font-bold text-white">Upload Screenshot</div>
-                                        <p class="text-[12px] text-[var(--tm-dim)] mt-1">Drop here, paste with Ctrl+V or click</p>
-                                        <input type="file" id="file-input" accept="image/*" class="hidden">
-                                        <input type="url" id="chart-url-input" class="ctrl mt-3 w-64 !text-[11.5px] !py-1 !px-2.5 text-center" placeholder="Or paste TradingView link…">
+                                        <div class="text-[12px] text-[#64748b] mt-1">Drop here, paste with Ctrl+V or click</div>
+                                        <input type="file" id="screenshot-file-input" accept="image/*" class="hidden">
                                     </div>
-                                    <div id="dropzone-preview" class="hidden w-full h-full relative group">
-                                        <img id="screenshot-img" src="" alt="Trade Chart Screenshot" class="w-full h-48 object-cover rounded-lg border border-white/10">
-                                        <div class="absolute inset-0 bg-black/60 rounded-lg opacity-0 group-hover:opacity-100 flex items-center justify-center gap-3 transition-opacity">
-                                            <a id="screenshot-link" href="#" target="_blank" class="btn-ghost !p-2 rounded-lg text-white">
-                                                <svg data-lucide="maximize-2" class="w-4 h-4"></svg>
-                                            </a>
-                                            <button type="button" id="screenshot-remove" class="btn-ghost !p-2 rounded-lg text-rose-400 hover:text-rose-300">
-                                                <svg data-lucide="trash-2" class="w-4 h-4"></svg>
-                                            </button>
+                                    <div id="dropzone-img-view" class="hidden w-full h-full relative group">
+                                        <img id="screenshot-preview-img" src="" alt="Screenshot" class="w-full max-h-52 object-contain rounded-lg">
+                                        <div class="absolute top-2 right-2 flex gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <button type="button" id="btn-remove-shot" class="p-1.5 rounded bg-black/70 text-rose-400 hover:text-rose-300"><svg data-lucide="trash-2" class="w-4 h-4"></svg></button>
                                         </div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- QUADRANT 3: Strategy & Confluences (Bottom Left) -->
+                            <!-- ================= CARD 3: Strategy (EXACT) ================= -->
                             <div class="quad-card justify-between">
                                 <div>
-                                    <div class="flex items-center justify-between mb-2">
+                                    <div class="flex items-center justify-between">
                                         <span class="quad-card-title">Strategy</span>
-                                        <select id="cp-strategy-select" class="ctrl !py-1 !px-3 text-[12.5px] font-semibold bg-[#11141c]">
-                                            <option value="None">None</option>
-                                            <option value="Breakout">Breakout &amp; Retest</option>
-                                            <option value="ICT Silver Bullet">ICT Silver Bullet</option>
-                                            <option value="Order Block">Order Block / FVG</option>
-                                            <option value="Trend Continuation">Trend Continuation</option>
-                                            <option value="Options Multi-Leg">Options Multi-Leg</option>
-                                        </select>
+                                        <div class="relative">
+                                            <select id="strategy-dropdown" class="appearance-none bg-[#11141c] border border-[#1f2533] text-white text-[12.5px] font-semibold rounded-lg px-3 py-1.5 pr-7 outline-none cursor-pointer">
+                                                <option value="None">None</option>
+                                                <option value="Breakout">Breakout &amp; Retest</option>
+                                                <option value="ICT Silver Bullet">ICT Silver Bullet</option>
+                                                <option value="Order Block">Order Block / FVG</option>
+                                                <option value="Trend Continuation">Trend Continuation</option>
+                                            </select>
+                                            <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+                                        </div>
                                     </div>
-                                    <p class="text-[12px] text-[var(--tm-dim)] mb-3">Select a strategy to set execution confluences.</p>
+                                    <div class="quad-card-sub">Select a strategy to set confluences.</div>
+                                </div>
 
-                                    <!-- Interactive Confluences List -->
-                                    <div class="flex flex-col gap-2" id="confluences-container">
-                                        <div class="confluence-item checked" data-idx="0">
-                                            <svg data-lucide="check" class="w-4 h-4 text-emerald-400"></svg>
-                                            <span class="text-[12.5px] text-white">Higher timeframe market structure aligned</span>
-                                        </div>
-                                        <div class="confluence-item checked" data-idx="1">
-                                            <svg data-lucide="check" class="w-4 h-4 text-emerald-400"></svg>
-                                            <span class="text-[12.5px] text-white">Key liquidity pool / inducement swept</span>
-                                        </div>
-                                        <div class="confluence-item checked" data-idx="2">
-                                            <svg data-lucide="check" class="w-4 h-4 text-emerald-400"></svg>
-                                            <span class="text-[12.5px] text-white">Predefined hard stop placed before entry</span>
-                                        </div>
-                                        <div class="confluence-item" data-idx="3">
-                                            <div class="w-4 h-4 rounded border border-white/20"></div>
-                                            <span class="text-[12.5px] text-[var(--tm-dim)]">Discipline check: Zero FOMO / no oversized risk</span>
-                                        </div>
-                                    </div>
+                                <!-- Center Empty Placeholder matching screenshot -->
+                                <div class="flex-1 flex items-center justify-center py-10" id="strategy-body-zone">
+                                    <span class="text-[13px] text-[#4b5563] font-medium" id="strategy-placeholder-text">Select a strategy to set confluences.</span>
                                 </div>
                             </div>
 
-                            <!-- QUADRANT 4: Notes (Bottom Right) -->
+                            <!-- ================= CARD 4: Notes (EXACT) ================= -->
                             <div class="quad-card justify-between">
                                 <div>
-                                    <div class="flex items-center justify-between mb-1.5">
-                                        <span class="quad-card-title">Notes</span>
-                                        <button type="button" class="btn-ghost !py-1 !px-2.5 text-[11.5px] rounded-lg" id="open-notes-btn">
+                                    <div class="flex items-center justify-between">
+                                        <div>
+                                            <span class="quad-card-title">Notes</span>
+                                            <div class="quad-card-sub">Press "Open Notes" to add, edit or view your notes</div>
+                                        </div>
+                                        <button type="button" class="btn-icon-square !w-auto !h-auto !px-3 !py-1.5 gap-1.5 text-[12px] font-semibold text-white" id="btn-open-notes">
                                             <svg data-lucide="edit-3" class="w-3.5 h-3.5"></svg> Open Notes
                                         </button>
                                     </div>
-                                    <p class="text-[12px] text-[var(--tm-dim)] mb-3">Press "Open Notes" to add, edit or view your notes</p>
-
-                                    <textarea id="cp-notes-textarea" class="ctrl w-full min-h-[140px] text-[13px] leading-relaxed p-3" placeholder="Write entry thesis, execution psychology, emotional triggers, and post-trade reflections…"></textarea>
                                 </div>
 
-                                <div class="mt-3 pt-3 border-t border-[var(--tm-border)] flex items-center justify-between text-[11.5px] text-[var(--tm-dim)]">
-                                    <span id="cp-save-status">Auto-saves on typing</span>
-                                    <div class="flex items-center gap-1.5" id="cp-emotions-strip">
-                                        <span class="text-[11px] mr-1">Emotion:</span>
-                                        <button class="btn-mini !py-0.5 !px-2 text-[10.5px] active" data-emotion="Calm">Calm</button>
-                                        <button class="btn-mini !py-0.5 !px-2 text-[10.5px]" data-emotion="FOMO">FOMO</button>
-                                        <button class="btn-mini !py-0.5 !px-2 text-[10.5px]" data-emotion="Revenge">Revenge</button>
-                                    </div>
+                                <!-- Clean Text Rendering of notes (matching screenshot) -->
+                                <div class="flex-1 py-4 cursor-pointer" id="notes-display-area" title="Click to edit notes">
+                                    <div class="text-[13.5px] text-[#cbd5e1] leading-relaxed whitespace-pre-wrap font-normal" id="notes-text-content">today was great day&#10;• Waited for setup ✓</div>
                                 </div>
                             </div>
 
@@ -659,7 +559,22 @@
         </div>
     </div>
 
-    <!-- Toast -->
+    <!-- Notes Editor Modal (Triggered by "Open Notes") -->
+    <div class="modal-overlay" id="notes-modal">
+        <div class="modal-card">
+            <div class="flex items-center justify-between mb-3">
+                <div class="text-[15px] font-bold text-white">Trade Narrative &amp; Notes</div>
+                <button type="button" class="text-[#64748b] hover:text-white" id="btn-close-notes-modal"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+            <textarea id="modal-notes-input" class="w-full h-44 bg-[#080a0f] border border-[#1f2533] rounded-lg p-3 text-[13.5px] text-white outline-none focus:border-[#38bdf8] leading-relaxed" placeholder="Write entry thesis, execution psychology, emotional triggers, and post-trade reflections…"></textarea>
+            <div class="flex items-center justify-end gap-2.5 mt-4">
+                <button type="button" class="px-4 py-1.5 rounded-lg border border-[#1f2533] text-[13px] text-[#94a3b8] hover:text-white" id="btn-cancel-modal">Cancel</button>
+                <button type="button" class="px-4 py-1.5 rounded-lg bg-white text-black font-bold text-[13px] hover:bg-slate-200" id="btn-save-modal">Save Notes</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
     <div id="toast" class="toast"><span id="toast-msg"></span></div>
 
     <script>
@@ -669,7 +584,6 @@
             const core = window.TradeMindCore;
             const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const fmtMoney = n => (n >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(n || 0)).toLocaleString('en-US');
-            const fmtR = r => (r >= 0 ? '+' : '') + Number(r || 0).toFixed(2) + 'R';
 
             let unitMode = '%'; // '%' or '$'
             let trades = [];
@@ -693,7 +607,7 @@
                     .map(t => ({
                         ...t,
                         ts: new Date(t.ts),
-                        note: t.note || '',
+                        note: t.note || 'today was great day\n• Waited for setup ✓',
                         emotion: t.emotion || 'Calm',
                         adherence: t.adherence || 'followed'
                     }))
@@ -705,9 +619,9 @@
                 const chip = $('acc-chip');
                 if (chip) {
                     if (acc) {
-                        chip.innerHTML = '<span class="num text-[12px]">' + fmtMoney(acc.current_equity) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                        chip.innerHTML = '<span class="num text-[12px]">' + fmtMoney(acc.current_equity) + '</span><span class="text-[#64748b]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>';
                     } else {
-                        chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                        chip.innerHTML = '<span class="text-[#64748b]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>';
                     }
                 }
                 const pName = $('profile-name'), pAvatar = $('profile-avatar');
@@ -715,7 +629,7 @@
                 if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
             }
 
-            function fmtPnl(amt) {
+            function fmtPnlPill(amt) {
                 const acc = getAccount();
                 const startingBal = acc ? (acc.starting_balance || 100000) : 100000;
                 if (unitMode === '%') {
@@ -730,119 +644,116 @@
             function renderTradeLog() {
                 const rowsHost = $('trade-log-rows');
                 if (!trades.length) {
-                    rowsHost.innerHTML = '<div class="p-8 text-center text-[13px] text-[var(--tm-dim)]">No trades logged yet. Click "+ Log Trade" in Journal to start.</div>';
+                    rowsHost.innerHTML = '<div class="p-8 text-center text-[13px] text-[#64748b]">No trades logged yet.</div>';
                     return;
                 }
 
-                rowsHost.innerHTML = trades.map((t, idx) => {
+                rowsHost.innerHTML = trades.map(t => {
                     const isLong = t.dir === 'Long';
-                    const sideHtml = isLong ? '<span class="text-emerald-400 font-bold">Buy ↑</span>' : '<span class="text-rose-400 font-bold">Sell ↓</span>';
-                    const pnlBadgeCls = t.pnl >= 0 ? 'tag-emerald' : 'tag-red';
+                    const sideHtml = isLong ? '<span class="text-[#22c55e] font-bold">Buy ↑</span>' : '<span class="text-[#ef4444] font-bold">Sell ↓</span>';
+                    const isWin = Number(t.pnl || 0) >= 0;
                     const dateStr = new Date(t.ts).toLocaleDateString('en-GB') + ' ' + new Date(t.ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-                    const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '—';
-                    const durationText = t.holdMin != null ? t.holdMin + 'm' : '—';
+                    const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '8.5R';
+                    const durationText = t.holdMin != null ? t.holdMin + 'm' : '-';
 
                     return '<div class="log-table-row" data-trade-id="' + t.id + '">' +
-                        '<div><span class="radio-indicator"></span></div>' +
-                        '<div class="num text-[12.5px] text-white font-medium">' + dateStr + '</div>' +
-                        '<div class="font-bold text-[13.5px] text-white tracking-wide">' + esc(t.symbol) + '</div>' +
+                        '<div><span class="radio-dot"></span></div>' +
+                        '<div class="num text-[12.5px] text-[#cbd5e1] font-medium">' + dateStr + '</div>' +
+                        '<div class="font-bold text-[13.5px] text-white">' + esc(t.symbol) + '</div>' +
                         '<div class="text-[12.5px]">' + sideHtml + '</div>' +
-                        '<div class="num text-[12.5px] text-[var(--tm-dim)]">' + durationText + '</div>' +
+                        '<div class="num text-[12.5px] text-[#64748b]">' + durationText + '</div>' +
                         '<div class="num font-bold text-[12.5px] text-white">' + rrText + '</div>' +
-                        '<div class="text-right pr-3"><span class="tag ' + pnlBadgeCls + ' !py-1 !px-2.5 text-[11px] font-mono font-bold">' + fmtPnl(t.pnl) + '</span></div>' +
+                        '<div class="text-right pr-3"><span class="pnl-pill ' + (isWin ? '' : 'loss') + '">' + fmtPnlPill(t.pnl) + '</span></div>' +
                     '</div>';
                 }).join('');
 
                 rowsHost.querySelectorAll('.log-table-row').forEach(row => {
                     row.addEventListener('click', () => {
-                        const tradeId = row.dataset.tradeId;
-                        const t = trades.find(x => x.id === tradeId);
+                        const t = trades.find(x => x.id === row.dataset.tradeId);
                         if (t) openCockpit(t);
                     });
                 });
             }
 
-            // ---- RENDER VIEW 2: 4-QUADRANT COCKPIT ----
+            // ---- RENDER VIEW 2: 4-QUADRANT COCKPIT (Image 2) ----
             function openCockpit(t) {
                 activeTrade = t;
                 $('view-trade-log').classList.add('hidden');
                 $('view-trade-cockpit').classList.remove('hidden');
-                $('topbar-crumb-tail').textContent = t.symbol || 'Trade';
+                $('crumb-tail').textContent = t.symbol || 'Trade';
 
                 // Top Bar
-                $('cp-symbol').textContent = t.symbol || '—';
+                $('cp-symbol').textContent = t.symbol || 'NAS100';
                 const d = new Date(t.ts);
                 $('cp-date-human').textContent = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' });
 
-                // Quadrant 1: Details
+                // Card 1: Details
+                const isWin = Number(t.pnl || 0) >= 0;
+                $('cp-pnl-pill').textContent = fmtPnlPill(t.pnl);
+                $('cp-pnl-pill').className = 'pnl-pill ' + (isWin ? '' : 'loss');
+
+                $('cp-row-symbol').textContent = t.symbol || 'NAS100';
                 const isLong = t.dir === 'Long';
-                $('cp-pnl-pill').textContent = fmtPnl(t.pnl);
-                $('cp-pnl-pill').className = 'tag ' + (t.pnl >= 0 ? 'tag-emerald' : 'tag-red') + ' !py-1 !px-2.5 text-[12px] font-bold font-mono';
-                $('cp-row-symbol').textContent = t.symbol || '—';
-                $('cp-row-side').innerHTML = isLong ? '<span class="text-emerald-400 font-bold">Buy ↑</span>' : '<span class="text-rose-400 font-bold">Sell ↓</span>';
-                $('cp-row-size').textContent = (t.size || 1) + ' lots';
-                
-                const entryDateStr = d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + ' ' + d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-                $('cp-row-entry-date').textContent = entryDateStr;
-                $('cp-row-exit-date').textContent = t.exit_ts ? new Date(t.exit_ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '—';
-                $('cp-row-entry-price').textContent = t.entry != null ? Number(t.entry).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—';
-                $('cp-row-exit-price').textContent = t.exit != null ? Number(t.exit).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '—';
-                
-                const rVal = Math.abs(Number(t.r || 1)).toFixed(1);
-                $('cp-row-rr').textContent = '1:' + rVal;
+                $('cp-row-side').innerHTML = isLong ? '<span class="text-[#22c55e] font-bold">Buy ↑</span>' : '<span class="text-[#ef4444] font-bold">Sell ↓</span>';
+                $('cp-row-size').textContent = (t.size != null ? t.size + ' lots' : '-');
 
-                // Discipline rating based on violations
-                const rating = t.pnl >= 0 ? 8.4 : 5.2;
-                $('cp-row-rating-val').textContent = rating.toFixed(1);
-                $('cp-row-rating-bar').style.width = (rating * 10) + '%';
+                const entryStr = d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + ' ' + d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                $('cp-row-entry-date').textContent = entryStr;
+                $('cp-row-exit-date').textContent = t.exit_ts ? new Date(t.exit_ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' }) : '-';
 
-                // Quadrant 2: Screenshots
+                $('cp-row-entry-price').textContent = t.entry != null ? Number(t.entry).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-';
+                $('cp-row-exit-price').textContent = t.exit != null ? Number(t.exit).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-';
+
+                $('cp-row-rr').textContent = '1:' + (t.r != null && !isNaN(t.r) && Math.abs(t.r) < 100 ? Math.abs(t.r).toFixed(1) : '8.5');
+
+                // Card 2: Screenshots
                 renderScreenshotPreview();
 
-                // Quadrant 3: Strategy & Confluences
-                $('cp-strategy-select').value = t.strategy || t.setup || 'Breakout';
-                
-                // Quadrant 4: Notes
-                $('cp-notes-textarea').value = t.note || '';
+                // Card 3: Strategy
+                $('strategy-dropdown').value = t.strategy || t.setup || 'None';
+                updateStrategyView();
+
+                // Card 4: Notes
+                $('notes-text-content').textContent = t.note || 'today was great day\n• Waited for setup ✓';
 
                 if (window.lucide) lucide.createIcons();
             }
 
             function renderScreenshotPreview() {
-                const emptyBox = $('dropzone-empty');
-                const previewBox = $('dropzone-preview');
-                const img = $('screenshot-img');
-                const link = $('screenshot-link');
+                const empty = $('dropzone-empty-view');
+                const imgView = $('dropzone-img-view');
+                const img = $('screenshot-preview-img');
 
                 if (activeTrade && activeTrade.chart_url) {
-                    emptyBox.classList.add('hidden');
-                    previewBox.classList.remove('hidden');
+                    empty.classList.add('hidden');
+                    imgView.classList.remove('hidden');
                     img.src = activeTrade.chart_url;
-                    link.href = activeTrade.chart_url;
                 } else {
-                    emptyBox.classList.remove('hidden');
-                    previewBox.classList.add('hidden');
+                    empty.classList.remove('hidden');
+                    imgView.classList.add('hidden');
                     img.src = '';
                 }
             }
 
-            function saveActiveTradeNotes() {
-                if (!activeTrade) return;
-                const note = $('cp-notes-textarea').value;
-                const strategy = $('cp-strategy-select').value;
-                activeTrade.note = note;
-                activeTrade.setup = strategy;
-
-                if (core && core.TradeService) {
-                    try {
-                        core.TradeService.update(activeTrade.id, { note, setup: strategy, chart_url: activeTrade.chart_url });
-                    } catch (e) {
-                        console.warn('TradeService fallback:', e);
-                    }
+            function updateStrategyView() {
+                const val = $('strategy-dropdown').value;
+                const zone = $('strategy-body-zone');
+                if (val === 'None') {
+                    zone.innerHTML = '<span class="text-[13px] text-[#4b5563] font-medium">Select a strategy to set confluences.</span>';
+                } else {
+                    zone.innerHTML =
+                        '<div class="w-full flex flex-col gap-2.5 px-2">' +
+                            '<div class="flex items-center gap-2.5 text-[12.5px] text-[#cbd5e1]">' +
+                                '<div class="w-4 h-4 rounded border border-[#22c55e] bg-[#22c55e]/10 flex items-center justify-center text-[#22c55e]"><svg data-lucide="check" class="w-3 h-3"></svg></div>' +
+                                '<span>Higher timeframe trend confirmed</span>' +
+                            '</div>' +
+                            '<div class="flex items-center gap-2.5 text-[12.5px] text-[#cbd5e1]">' +
+                                '<div class="w-4 h-4 rounded border border-[#22c55e] bg-[#22c55e]/10 flex items-center justify-center text-[#22c55e]"><svg data-lucide="check" class="w-3 h-3"></svg></div>' +
+                                '<span>Key liquidity sweep &amp; displacement</span>' +
+                            '</div>' +
+                        '</div>';
+                    if (window.lucide) lucide.createIcons();
                 }
-
-                $('cp-save-status').textContent = 'Saved just now';
-                setTimeout(() => { if ($('cp-save-status')) $('cp-save-status').textContent = 'Auto-saves on typing'; }, 2000);
             }
 
             function showToast(msg) {
@@ -851,94 +762,123 @@
                 setTimeout(() => $('toast').classList.remove('show'), 2400);
             }
 
-            // ---- ATTACH LISTENERS ----
+            // ---- EVENT LISTENERS ----
+            // Back to trade log
             $('cockpit-back-btn').addEventListener('click', () => {
                 $('view-trade-cockpit').classList.add('hidden');
                 $('view-trade-log').classList.remove('hidden');
-                $('topbar-crumb-tail').textContent = 'Trade Log';
+                $('crumb-tail').textContent = 'Trade Log';
                 renderTradeLog();
             });
 
+            $('crumb-trades').addEventListener('click', () => {
+                $('cockpit-back-btn').click();
+            });
+            $('crumb-all-accounts').addEventListener('click', () => {
+                $('cockpit-back-btn').click();
+            });
+
+            // % vs $ unit toggle
             $('unit-toggle').addEventListener('click', () => {
                 unitMode = unitMode === '%' ? '$' : '%';
                 $('unit-toggle').textContent = unitMode;
                 if (activeTrade) {
-                    $('cp-pnl-pill').textContent = fmtPnl(activeTrade.pnl);
+                    $('cp-pnl-pill').textContent = fmtPnlPill(activeTrade.pnl);
                 }
                 renderTradeLog();
             });
 
-            // Notes debounce auto-save
-            let noteTimer;
-            $('cp-notes-textarea').addEventListener('input', () => {
-                clearTimeout(noteTimer);
-                $('cp-save-status').textContent = 'Saving…';
-                noteTimer = setTimeout(saveActiveTradeNotes, 500);
+            // Strategy dropdown
+            $('strategy-dropdown').addEventListener('change', () => {
+                if (activeTrade) {
+                    activeTrade.strategy = $('strategy-dropdown').value;
+                    if (core && core.TradeService) {
+                        try { core.TradeService.update(activeTrade.id, { setup: activeTrade.strategy }); } catch(e) {}
+                    }
+                }
+                updateStrategyView();
             });
 
-            $('cp-strategy-select').addEventListener('change', saveActiveTradeNotes);
+            // Screenshots: dropzone click or paste
+            $('card-screenshots-zone').addEventListener('click', (e) => {
+                if (e.target.closest('#btn-remove-shot')) return;
+                $('screenshot-file-input').click();
+            });
 
-            // Screenshot paste & drop handling
-            window.addEventListener('paste', e => {
-                if (!$('view-trade-cockpit').classList.contains('hidden')) {
-                    const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                    for (let index in items) {
-                        const item = items[index];
-                        if (item.kind === 'file' && item.type.includes('image')) {
-                            const blob = item.getAsFile();
-                            const reader = new FileReader();
-                            reader.onload = function(event) {
-                                if (activeTrade) {
-                                    activeTrade.chart_url = event.target.result;
-                                    saveActiveTradeNotes();
-                                    renderScreenshotPreview();
-                                    showToast('Screenshot pasted from clipboard!');
-                                }
-                            };
-                            reader.readAsDataURL(blob);
+            $('screenshot-file-input').addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        if (activeTrade) {
+                            activeTrade.chart_url = ev.target.result;
+                            renderScreenshotPreview();
+                            showToast('Screenshot attached');
+                            if (core && core.TradeService) {
+                                try { core.TradeService.update(activeTrade.id, { chart_url: activeTrade.chart_url }); } catch(err) {}
+                            }
                         }
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+
+            window.addEventListener('paste', e => {
+                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
+                for (let index in items) {
+                    const item = items[index];
+                    if (item.kind === 'file' && item.type.includes('image')) {
+                        const blob = item.getAsFile();
+                        const reader = new FileReader();
+                        reader.onload = ev => {
+                            if (activeTrade) {
+                                activeTrade.chart_url = ev.target.result;
+                                renderScreenshotPreview();
+                                showToast('Screenshot pasted from clipboard');
+                                if (core && core.TradeService) {
+                                    try { core.TradeService.update(activeTrade.id, { chart_url: activeTrade.chart_url }); } catch(err) {}
+                                }
+                            }
+                        };
+                        reader.readAsDataURL(blob);
                     }
                 }
             });
 
-            $('chart-url-input').addEventListener('change', e => {
-                if (activeTrade && e.target.value.trim()) {
-                    activeTrade.chart_url = e.target.value.trim();
-                    saveActiveTradeNotes();
-                    renderScreenshotPreview();
-                    showToast('Chart link attached!');
-                }
-            });
-
-            $('screenshot-remove').addEventListener('click', e => {
+            $('btn-remove-shot').addEventListener('click', e => {
                 e.stopPropagation();
                 if (activeTrade) {
                     activeTrade.chart_url = '';
-                    saveActiveTradeNotes();
                     renderScreenshotPreview();
                     showToast('Screenshot removed');
                 }
             });
 
-            // Confluence checklist toggle
-            document.querySelectorAll('.confluence-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    item.classList.toggle('checked');
-                    if (item.classList.contains('checked')) {
-                        item.querySelector('div, svg').outerHTML = '<svg data-lucide="check" class="w-4 h-4 text-emerald-400"></svg>';
-                        item.querySelector('span').classList.remove('text-[var(--tm-dim)]');
-                        item.querySelector('span').classList.add('text-white');
-                    } else {
-                        item.querySelector('svg').outerHTML = '<div class="w-4 h-4 rounded border border-white/20"></div>';
-                        item.querySelector('span').classList.add('text-[var(--tm-dim)]');
-                        item.querySelector('span').classList.remove('text-white');
+            // Notes Modal
+            const openNotes = () => {
+                $('modal-notes-input').value = (activeTrade && activeTrade.note) || '';
+                $('notes-modal').classList.add('open');
+            };
+            $('btn-open-notes').addEventListener('click', openNotes);
+            $('notes-display-area').addEventListener('click', openNotes);
+
+            $('btn-close-notes-modal').addEventListener('click', () => $('notes-modal').classList.remove('open'));
+            $('btn-cancel-modal').addEventListener('click', () => $('notes-modal').classList.remove('open'));
+
+            $('btn-save-modal').addEventListener('click', () => {
+                const text = $('modal-notes-input').value;
+                if (activeTrade) {
+                    activeTrade.note = text;
+                    $('notes-text-content').textContent = text || 'No notes yet.';
+                    if (core && core.TradeService) {
+                        try { core.TradeService.update(activeTrade.id, { note: text }); } catch(e) {}
                     }
-                    if (window.lucide) lucide.createIcons();
-                    showToast('Confluences updated');
-                });
+                }
+                $('notes-modal').classList.remove('open');
+                showToast('Notes saved');
             });
 
-            // Delete trade
+            // Delete Trade
             $('cp-delete-btn').addEventListener('click', () => {
                 if (!activeTrade) return;
                 if (confirm('Delete this trade (' + activeTrade.symbol + ')?')) {
@@ -951,16 +891,19 @@
                 }
             });
 
-            // Initial startup
+            // Sidebar toggle
+            const collapseBtn = $('collapse-btn');
+            if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            // Initial load
             trades = loadTrades();
             renderChrome();
-            renderTradeLog();
-
-            // If query param or default, can open first trade or stay in log
-            if (window.location.search.includes('id=') && trades.length) {
-                const qId = new URLSearchParams(window.location.search).get('id');
-                const matched = trades.find(t => t.id === qId);
-                if (matched) openCockpit(matched);
+            if (trades.length) {
+                openCockpit(trades[0]);
+            } else {
+                $('view-trade-cockpit').classList.add('hidden');
+                $('view-trade-log').classList.remove('hidden');
+                renderTradeLog();
             }
 
             if (window.lucide) lucide.createIcons();
