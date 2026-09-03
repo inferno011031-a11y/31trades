@@ -1116,6 +1116,32 @@
             <!-- 2-Column Main Layout -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-7 items-start">
 
+                
+            <!-- Hidden legacy elements for complete backwards compatibility -->
+            <div id="hidden-legacy-elements" style="display:none !important;" aria-hidden="true">
+                <button type="button" id="tab-fast"></button>
+                <button type="button" id="tab-detailed"></button>
+                <button type="button" id="tab-options"></button>
+                <div id="single-execution-fields"></div>
+                <div id="detailed-fields"></div>
+                <div id="options-multi-fields"></div>
+                <div id="asset-picker-root"></div>
+                <div id="size-hint"></div>
+                <div id="calc-pnl"></div>
+                <div id="calc-r"></div>
+                <div id="calc-rr"></div>
+                <div id="calc-dur"></div>
+                <select id="opt-preset"><option value="BULL_CALL_SPREAD">Bull Call Spread</option></select>
+                <div id="opt-active-name"></div>
+                <div id="opt-legs-count-badge"></div>
+                <input id="opt-multiplier" value="100">
+                <div id="opt-readout-entry"></div>
+                <div id="opt-readout-exit"></div>
+                <div id="opt-readout-pnl"></div>
+                <div id="opt-readout-risk"></div>
+                <div id="options-legs-rows"></div>
+            </div>
+
                 <!-- ===== LEFT COLUMN ===== -->
                 <div>
                     <!-- Symbol -->
@@ -1347,7 +1373,7 @@
         (function() {
             'use strict';
             // ============ HELPERS ============
-            const $ = id => document.getElementById(id);
+            const $ = id => document.getElementById(id) || document.createElement("div");
             const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
             const fmt = n => (n >= 0 ? '+' : '') + n.toFixed(2);
