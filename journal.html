@@ -2008,64 +2008,53 @@
                     { v: 'chased', l: 'Chased entry 🏃' }
                 ];
 
-                const sectionNotes = '<div class="rounded-xl border border-[#161c28] bg-[#080b11] p-4 flex flex-col gap-3.5">' +
-                    '<div class="flex items-center justify-between">' +
-                        '<div class="flex items-center gap-2">' +
-                            '<svg data-lucide="file-text" class="w-4 h-4 text-sky-400"></svg>' +
-                            '<span class="panel-title text-[var(--tm-text)]">Trade Narrative &amp; Journal Notes</span>' +
-                        '</div>' +
-                        '<span class="tag tag-gray text-[10px] font-bold">Auto-Sync</span>' +
-                    '</div>' +
-                    '<p class="text-[12px] text-[var(--tm-dim)] leading-relaxed">Record how this trade unfolded, what went right or wrong, and key lessons for future setups.</p>' +
-                    
-                    '<div>' +
-                        '<div class="flex items-center justify-between mb-1.5">' +
-                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)]">Trade Story &amp; Thesis</label>' +
-                            '<span id="note-save-status" class="text-[11px] text-[var(--tm-dim)]">Auto-saves on edit</span>' +
-                        '</div>' +
-                        '<textarea id="detail-note-input" class="ctrl w-full min-h-[100px] text-[13px] leading-relaxed p-3" placeholder="What was your entry thesis? Did you follow your rules? What would you do differently next time?">' + esc(t.note || '') + '</textarea>' +
-                    '</div>' +
-
-                    '<div>' +
-                        '<div class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1.5">Quick Reflection Tags</div>' +
-                        '<div class="flex flex-wrap gap-1.5">' +
-                            quickTags.map(tag =>
-                                '<button type="button" class="btn-mini !py-1 !px-2.5 text-[11px]" onclick="appendNoteTag(\'' + tag.replace(/'/g, "\\'") + '\')">' + tag + '</button>'
-                            ).join('') +
-                        '</div>' +
-                    '</div>' +
-
-                    '<div class="grid grid-cols-2 gap-3 pt-2 border-t border-[#141a26]">' +
+                const sectionNotes = sec('E · Trade Narrative &amp; Notes',
+                    '<div class="flex flex-col gap-3">' +
+                        '<p class="text-[12px] text-[var(--tm-dim)] leading-relaxed -mt-1">Record how this trade unfolded, entry thesis, execution discipline, and key takeaways.</p>' +
                         '<div>' +
-                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Emotion State</label>' +
-                            '<select id="detail-emotion-select" class="ctrl w-full text-[12px]">' +
-                                '<option value="">— Select emotion —</option>' +
-                                emotions.map(em => '<option value="' + em + '"' + (t.emotion === em ? ' selected' : '') + '>' + em + '</option>').join('') +
-                            '</select>' +
+                            '<div class="flex items-center justify-between mb-1.5">' +
+                                '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)]">Trade Story &amp; Thesis</label>' +
+                                '<span id="note-save-status" class="text-[11px] text-[var(--tm-dim)]">Auto-saves on edit</span>' +
+                            '</div>' +
+                            '<textarea id="detail-note-input" class="ctrl w-full min-h-[90px] text-[13px] leading-relaxed p-2.5" placeholder="What was your entry thesis? Did you follow your rules? What would you do differently next time?">' + esc(t.note || '') + '</textarea>' +
                         '</div>' +
                         '<div>' +
-                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Plan Adherence</label>' +
-                            '<select id="detail-adherence-select" class="ctrl w-full text-[12px]">' +
-                                adherences.map(adh => '<option value="' + adh.v + '"' + (t.adherence === adh.v ? ' selected' : '') + '>' + adh.l + '</option>').join('') +
-                            '</select>' +
+                            '<div class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1.5">Quick Reflection Tags</div>' +
+                            '<div class="flex flex-wrap gap-1.5">' +
+                                quickTags.map(tag =>
+                                    '<button type="button" class="btn-mini !py-1 !px-2.5 text-[11px]" onclick="appendNoteTag(\'' + tag.replace(/'/g, "\\'") + '\')">' + tag + '</button>'
+                                ).join('') +
+                            '</div>' +
                         '</div>' +
-                    '</div>' +
-
-                    '<div class="pt-2 border-t border-[#141a26]">' +
-                        '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Chart / Screenshot URL</label>' +
-                        '<div class="flex items-center gap-2">' +
-                            '<input type="url" id="detail-chart-input" class="ctrl flex-1 text-[12px]" placeholder="https://www.tradingview.com/x/... or chart URL" value="' + esc(t.chart_url || '') + '">' +
-                            (t.chart_url ? '<a href="' + esc(t.chart_url) + '" target="_blank" class="btn-ghost !py-1.5 !px-3 text-[12px]"><svg data-lucide="external-link" class="w-3.5 h-3.5"></svg> View</a>' : '') +
+                        '<div class="grid grid-cols-2 gap-3 pt-2 border-t border-[var(--tm-border)]">' +
+                            '<div>' +
+                                '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Emotion State</label>' +
+                                '<select id="detail-emotion-select" class="ctrl w-full text-[12px]">' +
+                                    '<option value="">— Select emotion —</option>' +
+                                    emotions.map(em => '<option value="' + em + '"' + (t.emotion === em ? ' selected' : '') + '>' + em + '</option>').join('') +
+                                '</select>' +
+                            '</div>' +
+                            '<div>' +
+                                '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Plan Adherence</label>' +
+                                '<select id="detail-adherence-select" class="ctrl w-full text-[12px]">' +
+                                    adherences.map(adh => '<option value="' + adh.v + '"' + (t.adherence === adh.v ? ' selected' : '') + '>' + adh.l + '</option>').join('') +
+                                '</select>' +
+                            '</div>' +
                         '</div>' +
-                    '</div>' +
-
-                    '<div class="flex items-center justify-between pt-2 border-t border-[#141a26]">' +
-                        '<button type="button" class="btn-ghost !py-1.5 !px-3 text-[12px]" onclick="clearTradeNotes(\'' + t.id + '\')">Clear</button>' +
-                        '<button type="button" class="btn-primary !py-1.5 !px-4 text-[12.5px]" onclick="saveTradeNotes(\'' + t.id + '\')">' +
-                            '<svg data-lucide="save" class="w-3.5 h-3.5"></svg> Save Notes &amp; Reflection' +
-                        '</button>' +
-                    '</div>' +
-                '</div>';
+                        '<div class="pt-2 border-t border-[var(--tm-border)]">' +
+                            '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Chart / Screenshot URL</label>' +
+                            '<div class="flex items-center gap-2">' +
+                                '<input type="url" id="detail-chart-input" class="ctrl flex-1 text-[12px]" placeholder="https://www.tradingview.com/x/... or chart URL" value="' + esc(t.chart_url || '') + '">' +
+                                (t.chart_url ? '<a href="' + esc(t.chart_url) + '" target="_blank" class="btn-ghost !py-1.5 !px-3 text-[12px]"><svg data-lucide="external-link" class="w-3.5 h-3.5"></svg> View</a>' : '') +
+                            '</div>' +
+                        '</div>' +
+                        '<div class="flex items-center justify-between pt-2 border-t border-[var(--tm-border)]">' +
+                            '<button type="button" class="btn-ghost !py-1.5 !px-3 text-[12px]" onclick="clearTradeNotes(\'' + t.id + '\')">Clear</button>' +
+                            '<button type="button" class="btn-primary !py-1.5 !px-4 text-[12.5px]" onclick="saveTradeNotes(\'' + t.id + '\')">' +
+                                '<svg data-lucide="save" class="w-3.5 h-3.5"></svg> Save Notes' +
+                            '</button>' +
+                        '</div>' +
+                    '</div>');
 
                 // ---- F · EVIDENCE ----
                 const sectionF = sec('F · Evidence',
