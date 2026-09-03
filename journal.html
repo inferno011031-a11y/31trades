@@ -308,6 +308,123 @@
             border-color: #fbbf24;
         }
 
+    
+        /* ---- TradesPad-Style Add Trade Modal (Matches media_1788466567313.png) ---- */
+        .add-trade-window {
+            background: #0a0b0e !important;
+            border: 1px solid #16181f !important;
+            border-radius: 16px !important;
+            width: 100% !important;
+            max-width: 820px !important;
+            padding: 24px 28px !important;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+        }
+
+        .at-field-label {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #ffffff !important;
+            margin-bottom: 6px !important;
+            display: block !important;
+        }
+        .at-field-sub {
+            font-size: 11.5px !important;
+            color: #717886 !important;
+            margin-top: 4px !important;
+        }
+
+        .at-input {
+            width: 100% !important;
+            background: #111318 !important;
+            border: 1px solid #1a1d25 !important;
+            border-radius: 10px !important;
+            padding: 9px 12px !important;
+            font-size: 13px !important;
+            color: #ffffff !important;
+            outline: none !important;
+            transition: border-color 0.15s ease !important;
+        }
+        .at-input:focus {
+            border-color: #334155 !important;
+        }
+        .at-input::placeholder {
+            color: #505a69 !important;
+        }
+
+        /* Segmented Side Buttons */
+        .at-side-btn {
+            padding: 7px 18px !important;
+            border-radius: 8px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #717886 !important;
+            background: transparent !important;
+            border: none !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+        }
+        .at-side-btn:hover {
+            color: #ffffff !important;
+        }
+        .at-side-btn.active-buy {
+            background: #181b24 !important;
+            color: #ffffff !important;
+            border: 1px solid #232734 !important;
+        }
+        .at-side-btn.active-sell {
+            background: #181b24 !important;
+            color: #ffffff !important;
+            border: 1px solid #232734 !important;
+        }
+
+        /* Collapsible Advanced Options */
+        .at-adv-drawer {
+            display: grid !important;
+            grid-template-rows: 0fr !important;
+            transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .at-adv-drawer.open {
+            grid-template-rows: 1fr !important;
+        }
+        .at-adv-inner {
+            overflow: hidden !important;
+            min-height: 0 !important;
+            opacity: 0 !important;
+            transform: translateY(-6px) !important;
+            transition: opacity 0.25s ease, transform 0.25s ease !important;
+        }
+        .at-adv-drawer.open .at-adv-inner {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        /* Dropzone in Right Column */
+        .at-dropzone {
+            background: #0e1015 !important;
+            border: 1px solid #181b22 !important;
+            border-radius: 12px !important;
+            height: 155px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 16px !important;
+            text-align: center !important;
+            cursor: pointer !important;
+            position: relative !important;
+            transition: all 0.15s ease !important;
+        }
+        .at-dropzone:hover {
+            border-color: #262c3a !important;
+            background: #111319 !important;
+        }
+        .at-dropzone.drag-over {
+            background: rgba(34, 197, 94, 0.06) !important;
+            border: 1px dashed rgba(34, 197, 94, 0.4) !important;
+        }
+
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -632,286 +749,240 @@
         </div>
     </div>
 
-    <!-- ============ TRADE ENTRY MODAL ============ -->
+    <!-- ============ TRADE ENTRY MODAL (Matches media_1788466567313.png) ============ -->
     <div class="overlay" id="entry-overlay" onclick="closeEntryModal()"></div>
     <div class="modal" id="entry-modal">
-        <div class="modal-box">
-            <div class="flex items-center justify-between px-6 pt-6 pb-4 border-b border-[var(--tm-border)]">
+        <div class="add-trade-window">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 mb-4 border-b border-[#16181f]">
                 <div>
-                    <h2 class="text-[17px] font-bold">Log Trade</h2>
-                    <p class="text-[12.5px] text-[var(--tm-dim)] mt-0.5">P&amp;L and R are calculated automatically</p>
+                    <h2 class="text-[18px] font-bold text-white tracking-tight" id="at-modal-title">Add Trade</h2>
+                    <p class="text-[12px] text-[#828b99] mt-0.5">Enter the details of your trade.</p>
                 </div>
-                <button class="collapse-btn" onclick="closeEntryModal()"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+                <button type="button" class="text-[#828b99] hover:text-white transition-colors p-1" onclick="closeEntryModal()" title="Close">
+                    <svg data-lucide="x" class="w-4 h-4"></svg>
+                </button>
             </div>
 
-            <div class="px-6 pt-4">
-                <div class="flex bg-[var(--tm-bg)] border border-[var(--tm-border)] rounded-lg p-1 mb-5">
-                    <button type="button" id="tab-fast" class="entry-tab active" onclick="switchEntryMode('fast')">Fast entry</button>
-                    <button type="button" id="tab-detailed" class="entry-tab" onclick="switchEntryMode('detailed')">Detailed entry</button>
-                    <button type="button" id="tab-options" class="entry-tab" onclick="switchEntryMode('options')">Options Multi-Leg</button>
-                </div>
-            </div>
+            <!-- 2-Column Main Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
 
-            <div class="px-6 pb-6">
-                <!-- SECTION 1 · ACCOUNT & SETUP -->
-                <div class="tm-sec">
-                    <div class="tm-sec-head"><span class="tm-sec-num">01</span>Account &amp; Setup</div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <div>
-                            <label class="field-label">Account</label>
-                            <select id="e-account" class="field"></select>
-                        </div>
-                        <div>
-                            <label class="field-label">Strategy</label>
-                            <select id="e-strategy" class="field">
-                                <option>London MSS + FVG</option><option>ICT / SMC</option><option>Price Action</option><option>Breakout</option>
+                <!-- ===== LEFT COLUMN: Core Parameters ===== -->
+                <div class="flex flex-col gap-3.5">
+                    <!-- Symbol -->
+                    <div>
+                        <label class="at-field-label">Symbol *</label>
+                        <div class="relative" id="at-symbol-wrap">
+                            <select id="e-symbol-select" class="at-input appearance-none pr-8 cursor-pointer font-semibold">
+                                <option value="NAS100" selected>NAS100</option>
+                                <option value="XAUUSD">XAUUSD</option>
+                                <option value="EURUSD">EURUSD</option>
+                                <option value="BTCUSD">BTCUSD</option>
+                                <option value="US30">US30</option>
+                                <option value="SPX500">SPX500</option>
+                                <option value="GBPUSD">GBPUSD</option>
+                                <option value="USDJPY">USDJPY</option>
+                                <option value="NVDA">NVDA</option>
+                                <option value="TSLA">TSLA</option>
+                                <option value="AAPL">AAPL</option>
                             </select>
+                            <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
                         </div>
-                        <div>
-                            <label class="field-label">Session</label>
-                            <select id="e-session" class="field">
-                                <option>London</option><option>New York</option><option>Asia</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- SECTION 2 · ASSET & DIRECTION -->
-                <div class="tm-sec">
-                    <div class="tm-sec-head"><span class="tm-sec-num">02</span>Asset &amp; Direction</div>
-                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div class="sm:col-span-2">
-                            <label class="field-label">Symbol</label>
-                            <div id="asset-picker-root"></div>
-                            <select id="e-symbol" class="hidden" aria-hidden="true"></select>
-                            <div id="asset-chip" class="flex items-center gap-1.5 mt-1.5"></div>
-                        </div>
-                        <div>
-                            <label class="field-label">Direction</label>
-                            <select id="e-dir" class="field">
-                                <option>Long</option><option>Short</option>
-                            </select>
+                        <input id="e-symbol" type="hidden" value="NAS100">
+                        <div class="at-field-sub">
+                            Can't find a symbol? <button type="button" class="underline font-bold text-white hover:text-emerald-400" id="btn-create-symbol">Create it</button>
                         </div>
                     </div>
-                </div>
 
-                <!-- SECTION 3 · SINGLE EXECUTION PRICES & RISK -->
-                <div class="tm-sec" id="single-execution-fields">
-                    <div class="tm-sec-head"><span class="tm-sec-num">03</span>Execution Prices &amp; Risk</div>
-                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                        <div>
-                            <label class="field-label">Entry price</label>
-                            <input id="e-entry" type="number" step="0.00001" class="field num" placeholder="1.08845">
-                        </div>
-                        <div>
-                            <label class="field-label">Exit price</label>
-                            <input id="e-exit" type="number" step="0.00001" class="field num" placeholder="1.09085">
-                        </div>
-                        <div>
-                            <label class="field-label" id="e-size-label">Size (lots)</label>
-                            <input id="e-size" type="number" step="0.01" min="0" class="field num" placeholder="1.00">
-                            <div id="size-hint" class="text-[10.5px] text-[var(--tm-dim)] mt-1"></div>
-                        </div>
-                        <div>
-                            <label class="field-label">Stop loss</label>
-                            <input id="e-sl" type="number" step="0.00001" class="field num" placeholder="1.08620">
-                        </div>
-                        <div>
-                            <label class="field-label">Take profit</label>
-                            <input id="e-tp" type="number" step="0.00001" class="field num" placeholder="1.09300">
-                        </div>
-                        <div>
-                            <label class="field-label">Risk ($)</label>
-                            <input id="e-risk" type="number" step="5" min="0" class="field num" placeholder="100">
+                    <!-- Entry Date -->
+                    <div>
+                        <label class="at-field-label">Entry date *</label>
+                        <div class="relative">
+                            <input id="e-date" type="datetime-local" class="at-input num pr-9">
+                            <svg data-lucide="calendar" class="w-4 h-4 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
                         </div>
                     </div>
-                </div>
 
-                <!-- SECTION 3B · OPTIONS MULTI-LEG BUILDER -->
-                <div class="tm-sec hidden" id="options-multi-fields">
-                    <div class="tm-sec-head flex items-center justify-between mb-3">
-                        <div class="flex items-center gap-2">
-                            <span class="tm-sec-num">03</span>
-                            <span class="font-bold text-[14px]">Options Strategy Matrix</span>
+                    <!-- Side (Segmented Buy / Sell) -->
+                    <div>
+                        <label class="at-field-label">Side *</label>
+                        <div class="flex items-center gap-1 p-1 bg-[#111318] border border-[#1a1d25] rounded-xl w-fit">
+                            <button type="button" class="at-side-btn active-buy" id="btn-side-buy" onclick="window.setTradeSide('Long')">Buy ↑</button>
+                            <button type="button" class="at-side-btn" id="btn-side-sell" onclick="window.setTradeSide('Short')">Sell ↓</button>
                         </div>
-                        <span class="tag tag-blue text-[10px] font-bold tracking-wider uppercase">Fintech Desk</span>
+                        <input id="e-dir" type="hidden" value="Long">
                     </div>
 
-                    <!-- Strategy Quick Pills -->
-                    <div class="mb-3.5">
-                        <div class="text-[11px] font-semibold text-[var(--tm-dim)] uppercase tracking-wider mb-1.5">Strategy Preset</div>
-                        <div class="flex items-center gap-1.5 overflow-x-auto pb-1 scrollbar-none" id="opt-preset-pills">
-                            <button type="button" class="opt-pill active" onclick="window.selectOptionPreset('BULL_CALL_SPREAD')">Bull Call Spread</button>
-                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('BEAR_PUT_SPREAD')">Bear Put Spread</button>
-                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('IRON_CONDOR')">Iron Condor</button>
-                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('STRADDLE')">Straddle</button>
-                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('STRANGLE')">Strangle</button>
-                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('COVERED_CALL')">Covered Call</button>
-                            <button type="button" class="opt-pill" onclick="window.selectOptionPreset('CUSTOM')">+ Custom</button>
+                    <!-- P&L -->
+                    <div>
+                        <label class="at-field-label">P&amp;L *</label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[#828b99]">$</span>
+                            <input id="e-pnl-manual" type="number" step="any" class="at-input num !pl-8" placeholder="Enter your P&L" oninput="window.handleManualPnlInput()">
                         </div>
-                        <select id="opt-preset" class="hidden" onchange="window.applyOptionPreset(this.value)">
-                            <option value="BULL_CALL_SPREAD">Bull Call Spread</option>
-                            <option value="BEAR_PUT_SPREAD">Bear Put Spread</option>
-                            <option value="IRON_CONDOR">Iron Condor</option>
-                            <option value="STRADDLE">Straddle</option>
-                            <option value="STRANGLE">Strangle</option>
-                            <option value="COVERED_CALL">Covered Call</option>
-                            <option value="CUSTOM">Custom</option>
-                        </select>
                     </div>
 
-                    <!-- Options Legs Matrix Card -->
-                    <div class="rounded-xl border border-[#161c28] bg-[#080b11] overflow-hidden mb-3">
-                        <!-- Toolbar -->
-                        <div class="flex items-center justify-between px-3 py-2 bg-white/[0.02] border-b border-white/5">
-                            <div class="flex items-center gap-2">
-                                <span id="opt-active-name" class="text-[12px] font-bold text-white tracking-wide">Bull Call Spread</span>
-                                <span id="opt-legs-count-badge" class="tag tag-blue !py-0.5 !px-1.5 text-[10px] font-mono font-bold">2 Legs</span>
+                    <!-- Risk/Reward Ratio with Visual Bar -->
+                    <div>
+                        <label class="at-field-label">Risk/Reward ratio</label>
+                        <div class="flex items-center gap-3">
+                            <div class="px-2.5 py-1 rounded-lg bg-[#111318] border border-[#1a1d25] num text-[12px] font-bold text-[#828b99]" id="rr-badge-label">1:2</div>
+                            <div class="flex-1 h-3 rounded-full overflow-hidden bg-[#111318] flex" id="rr-bar-container">
+                                <div class="bg-[#ef4444] h-full" id="rr-bar-red" style="width: 33%;"></div>
+                                <div class="bg-[#22c55e] h-full" id="rr-bar-green" style="width: 67%;"></div>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <div class="flex items-center gap-1.5 text-[11px] text-[var(--tm-dim)]">
-                                    <span>Lot Multiplier:</span>
-                                    <input id="opt-multiplier" type="number" class="field num !py-0.5 !px-1.5 text-[11.5px] w-14 h-6 bg-white/5 text-center font-bold text-white border-white/10" value="100" min="1" oninput="window.updateOptionsCalc()">
+                        </div>
+                    </div>
+
+                    <!-- Rating Slider -->
+                    <div>
+                        <label class="at-field-label">Rating</label>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[13px] font-bold text-white w-6" id="rating-val-label">-</span>
+                            <input type="range" min="1" max="10" step="0.5" value="5" id="e-rating-slider" class="flex-1 accent-[#22c55e] h-1.5 bg-[#181b24] rounded-lg cursor-pointer" oninput="window.handleRatingSlider(this.value)">
+                        </div>
+                    </div>
+
+                    <!-- Collapsible Trigger: Advanced Options -->
+                    <div class="pt-1">
+                        <button type="button" class="flex items-center gap-1.5 text-[12.5px] font-semibold text-[#cbd5e1] hover:text-white transition-colors cursor-pointer" id="btn-toggle-adv-options">
+                            <svg data-lucide="chevron-right" class="w-3.5 h-3.5 transition-transform text-[#828b99]" id="adv-options-chevron"></svg>
+                            <span>Advanced options</span>
+                        </button>
+
+                        <!-- Collapsible Drawer -->
+                        <div class="at-adv-drawer" id="adv-options-drawer">
+                            <div class="at-adv-inner pt-3 flex flex-col gap-3">
+                                <!-- Account & Session -->
+                                <div class="grid grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label class="at-field-label !text-[11.5px]">Account</label>
+                                        <select id="e-account" class="at-input !text-[12px]"></select>
+                                    </div>
+                                    <div>
+                                        <label class="at-field-label !text-[11.5px]">Session</label>
+                                        <select id="e-session" class="at-input !text-[12px]">
+                                            <option value="London">London</option>
+                                            <option value="New York" selected>New York</option>
+                                            <option value="Asia">Asia</option>
+                                        </select>
+                                    </div>
                                 </div>
-                                <button type="button" class="btn-mini !py-1 !px-2 text-[11px] text-emerald-400 border border-emerald-500/30 hover:bg-emerald-500/10 inline-flex items-center gap-1" onclick="window.addOptionLeg()">
-                                    <svg data-lucide="plus" class="w-3 h-3"></svg> Add Leg
+
+                                <!-- Execution Prices & Stop / TP -->
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="at-field-label !text-[11px]">Entry price</label>
+                                        <input id="e-entry" type="number" step="any" class="at-input num !text-[12px] !p-2" placeholder="1.08845" oninput="window.calcTradePrices()">
+                                    </div>
+                                    <div>
+                                        <label class="at-field-label !text-[11px]">Exit price</label>
+                                        <input id="e-exit" type="number" step="any" class="at-input num !text-[12px] !p-2" placeholder="1.09085" oninput="window.calcTradePrices()">
+                                    </div>
+                                    <div>
+                                        <label class="at-field-label !text-[11px]" id="e-size-label">Size (lots)</label>
+                                        <input id="e-size" type="number" step="0.01" class="at-input num !text-[12px] !p-2" value="1.00" oninput="window.calcTradePrices()">
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="at-field-label !text-[11px]">Stop loss</label>
+                                        <input id="e-sl" type="number" step="any" class="at-input num !text-[12px] !p-2" placeholder="1.08620" oninput="window.calcTradePrices()">
+                                    </div>
+                                    <div>
+                                        <label class="at-field-label !text-[11px]">Take profit</label>
+                                        <input id="e-tp" type="number" step="any" class="at-input num !text-[12px] !p-2" placeholder="1.09300" oninput="window.calcTradePrices()">
+                                    </div>
+                                    <div>
+                                        <label class="at-field-label !text-[11px]">Risk ($)</label>
+                                        <input id="e-risk" type="number" step="5" class="at-input num !text-[12px] !p-2" placeholder="100" oninput="window.calcTradePrices()">
+                                    </div>
+                                </div>
+
+                                <!-- Hidden legacy/advanced fields kept for data integrity -->
+                                <select id="e-setup" class="hidden"><option value="Breakout">Breakout</option></select>
+                                <select id="e-tf" class="hidden"><option value="5m">5m</option></select>
+                                <input id="e-time-in" type="hidden" value="09:30">
+                                <input id="e-time-out" type="hidden" value="10:15">
+                                <input id="e-thesis" type="hidden" value="">
+                                <span id="calc-pnl" class="hidden">—</span>
+                                <span id="calc-r" class="hidden">—</span>
+                                <span id="calc-rr" class="hidden">—</span>
+                                <span id="calc-dur" class="hidden">—</span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+
+                <!-- ===== RIGHT COLUMN: Evidence & Strategy ===== -->
+                <div class="flex flex-col gap-3.5">
+                    <!-- Screenshots Dropzone -->
+                    <div>
+                        <label class="at-field-label">Screenshots</label>
+                        <div class="at-dropzone" id="at-dropzone-box">
+                            <input type="file" id="at-screenshot-file-input" accept="image/*" class="hidden">
+                            <div id="at-dropzone-empty" class="flex flex-col items-center justify-center gap-1.5">
+                                <svg data-lucide="cloud" class="w-8 h-8 text-[#505a69] stroke-[1.5]"></svg>
+                                <div class="text-[13px] font-semibold text-white mt-1">Upload Screenshot</div>
+                                <div class="text-[11px] text-[#505a69]">Drop here, paste with Ctrl+V or click</div>
+                            </div>
+                            <div id="at-dropzone-preview" class="hidden relative w-full h-full flex items-center justify-center">
+                                <img src="" id="at-dropzone-img" class="max-h-[125px] max-w-full rounded-lg object-contain border border-white/10" alt="Trade Screenshot">
+                                <button type="button" id="at-btn-remove-shot" class="absolute top-0 right-0 p-1 bg-red-600/80 hover:bg-red-600 text-white rounded-full transition-colors" title="Remove Screenshot">
+                                    <svg data-lucide="x" class="w-3.5 h-3.5"></svg>
                                 </button>
                             </div>
                         </div>
-
-                        <!-- High-Density Legs Table -->
-                        <div class="overflow-x-auto">
-                            <table class="w-full text-left text-[12px] border-collapse min-w-[580px]">
-                                <thead>
-                                    <tr class="border-b border-white/5 bg-white/[0.015] text-[10px] uppercase font-semibold text-[var(--tm-dim)] tracking-wider">
-                                        <th class="py-2 px-2.5 w-8 text-center">#</th>
-                                        <th class="py-2 px-2.5 w-20">Action</th>
-                                        <th class="py-2 px-2.5 w-20">Type</th>
-                                        <th class="py-2 px-2.5">Strike</th>
-                                        <th class="py-2 px-2.5">Entry Prem ($)</th>
-                                        <th class="py-2 px-2.5">Exit Prem ($)</th>
-                                        <th class="py-2 px-2.5 w-16 text-center">Lots</th>
-                                        <th class="py-2 px-2.5 text-right w-24">Leg P&amp;L</th>
-                                        <th class="py-2 px-1 w-8 text-center"></th>
-                                    </tr>
-                                </thead>
-                                <tbody id="options-legs-rows" class="divide-y divide-white/[0.03]">
-                                    <!-- Dynamic Rows -->
-                                </tbody>
-                            </table>
-                        </div>
                     </div>
 
-                    <!-- Live High-Density KPI Strip -->
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 p-3 rounded-xl border border-[#141a26] bg-[#0c1017]">
-                        <div class="bg-[#080b11] p-2 rounded-lg border border-[#141a26]">
-                            <div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Net Strategy Cost</div>
-                            <div id="opt-readout-entry" class="text-[14px] font-bold font-mono text-white mt-0.5">—</div>
+                    <!-- Notes -->
+                    <div>
+                        <label class="at-field-label">Notes</label>
+                        <textarea id="at-notes-textarea" class="at-input !bg-[#0e1015] !border-[#181b22] h-[90px] resize-none leading-relaxed" placeholder="Enter your trade notes"></textarea>
+                    </div>
+
+                    <!-- Strategy -->
+                    <div>
+                        <label class="at-field-label">Strategy</label>
+                        <div class="relative">
+                            <select id="e-strategy" class="at-input appearance-none pr-8 cursor-pointer font-medium">
+                                <option value="None" selected>None</option>
+                                <option value="Breakout & Retest">Breakout &amp; Retest</option>
+                                <option value="ICT Silver Bullet">ICT Silver Bullet</option>
+                                <option value="Order Block / FVG">Order Block / FVG</option>
+                                <option value="Trend Continuation">Trend Continuation</option>
+                                <option value="London MSS + FVG">London MSS + FVG</option>
+                            </select>
+                            <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
                         </div>
-                        <div class="bg-[#080b11] p-2 rounded-lg border border-[#141a26]">
-                            <div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Closing Return</div>
-                            <div id="opt-readout-exit" class="text-[14px] font-bold font-mono text-white mt-0.5">—</div>
-                        </div>
-                        <div class="bg-[#080b11] p-2 rounded-lg border border-[#141a26]">
-                            <div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Net P&amp;L</div>
-                            <div id="opt-readout-pnl" class="text-[14px] font-bold font-mono text-emerald-400 mt-0.5">—</div>
-                        </div>
-                        <div class="bg-[#080b11] p-2 rounded-lg border border-[#141a26]">
-                            <div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">Max Risk</div>
-                            <div id="opt-readout-risk" class="text-[14px] font-bold font-mono text-amber-400 mt-0.5">—</div>
-                        </div>
+                        <div class="at-field-sub">Select a strategy to set confluences.</div>
                     </div>
                 </div>
 
-                <!-- Detailed-only fields -->
-                <div id="detailed-fields" class="hidden">
-                    <div class="tm-sec">
-                        <div class="tm-sec-head"><span class="tm-sec-num">+</span>Confluence &amp; Context</div>
-                        <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                            <div>
-                                <label class="field-label">Setup</label>
-                                <select id="e-setup" class="field">
-                                    <option>MSS + FVG</option><option>FVG</option><option>Breakout</option><option>Order Block</option><option>Liquidity Sweep</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="field-label">Timeframe</label>
-                                <select id="e-tf" class="field">
-                                    <option>1m</option><option>5m</option><option>15m</option><option>1h</option><option>4h</option><option>1D</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="field-label">Entry time</label>
-                                <input id="e-time-in" type="time" class="field num">
-                            </div>
-                            <div>
-                                <label class="field-label">Exit time</label>
-                                <input id="e-time-out" type="time" class="field num">
-                            </div>
-                        </div>
-                    </div>
+            </div>
 
-                    <div class="tm-sec">
-                        <div class="tm-sec-head"><span class="tm-sec-num">+</span>Thesis &amp; Review</div>
-                        <div class="mt-0">
-                            <label class="field-label">Thesis (why did you take this trade?)</label>
-                            <textarea id="e-thesis" rows="2" class="field resize-none" placeholder="e.g. MSS into FVG at 1.08845, liquidity above, targeting equal highs…"></textarea>
-                        </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-3">
-                            <div>
-                                <label class="field-label">Exit reason</label>
-                                <select id="e-exit-reason" class="field">
-                                    <option>Target hit</option><option>Stop hit</option><option>Manual — thesis invalidated</option><option>Manual — FOMO/early</option><option>Scratched at entry</option>
-                                </select>
-                            </div>
-                            <div>
-                                <label class="field-label">Emotion at exit</label>
-                                <div class="flex flex-wrap gap-1.5 pt-1">
-                                    <button type="button" class="chip-tag" data-emotion="Calm">Calm</button>
-                                    <button type="button" class="chip-tag" data-emotion="Confident">Confident</button>
-                                    <button type="button" class="chip-tag" data-emotion="Anxious">Anxious</button>
-                                    <button type="button" class="chip-tag" data-emotion="Revenge">Revenge</button>
-                                    <button type="button" class="chip-tag" data-emotion="FOMO">FOMO</button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="mt-3">
-                            <label class="field-label">Screenshot / chart annotation</label>
-                            <label class="field !py-3 flex items-center justify-center gap-2 text-[var(--tm-dim)] cursor-pointer">
-                                <svg data-lucide="image" class="w-4 h-4"></svg> Attach screenshot
-                                <input type="file" accept="image/*" class="hidden">
-                            </label>
-                        </div>
-                    </div>
-                </div>
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 pt-5 mt-5 border-t border-[#16181f]">
+                <button type="button" class="px-5 py-2 rounded-lg bg-[#181b24] border border-[#232734] text-white text-[13px] font-semibold hover:bg-[#202532] transition-colors" onclick="closeEntryModal()">Cancel</button>
+                <button type="button" id="save-trade" class="px-6 py-2 rounded-lg bg-white text-black text-[13px] font-bold hover:bg-[#e2e8f0] transition-colors" onclick="saveTrade()">Save</button>
+            </div>
+        </div>
+    </div>
 
-                <!-- SECTION 4 · CALCULATION READOUTS -->
-                <div class="tm-sec tm-sec-readout">
-                    <div class="tm-sec-head"><span class="tm-sec-num">04</span>Calculation Readouts</div>
-                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                        <div class="tm-readout">
-                            <div class="label-xs mb-1">P&amp;L</div>
-                            <div id="calc-pnl" class="num text-[16px] font-bold text-[var(--tm-green)]">—</div>
-                        </div>
-                        <div class="tm-readout">
-                            <div class="label-xs mb-1">R multiple</div>
-                            <div id="calc-r" class="num text-[16px] font-bold text-[var(--tm-text)]">—</div>
-                        </div>
-                        <div class="tm-readout">
-                            <div class="label-xs mb-1">Risk / reward</div>
-                            <div id="calc-rr" class="num text-[16px] font-bold text-[var(--tm-text)]">—</div>
-                        </div>
-                        <div class="tm-readout">
-                            <div class="label-xs mb-1">Duration</div>
-                            <div id="calc-dur" class="num text-[16px] font-bold text-[var(--tm-text)]">—</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex items-center justify-end gap-2.5 mt-6">
-                    <button class="btn-ghost" onclick="closeEntryModal()">Cancel</button>
-                    <button id="save-trade" class="btn-primary" onclick="saveTrade()">Save Trade</button>
-                </div>
+    <!-- Create Custom Symbol Prompt Modal -->
+    <div class="modal-backdrop" id="create-symbol-modal">
+        <div class="modal-window !max-w-[420px]">
+            <div class="flex items-center justify-between mb-3">
+                <h3 class="text-[16px] font-bold text-white">Create New Symbol</h3>
+                <button type="button" class="text-[#828b99] hover:text-white transition-colors" id="btn-close-create-sym"><svg data-lucide="x" class="w-4 h-4"></svg></button>
+            </div>
+            <input type="text" id="custom-symbol-name" class="at-input uppercase font-bold text-[14px] mb-3" placeholder="e.g. US500, ETHUSD, SOLUSDT">
+            <div class="flex items-center justify-end gap-2">
+                <button type="button" class="px-3.5 py-1.5 rounded-lg bg-[#181b24] text-white text-[12.5px] font-semibold" id="btn-cancel-create-sym">Cancel</button>
+                <button type="button" class="px-4 py-1.5 rounded-lg bg-[#22c55e] text-black text-[12.5px] font-bold" id="btn-confirm-create-sym">Add Symbol</button>
             </div>
         </div>
     </div>
@@ -1773,7 +1844,7 @@
                             r: risk > 0 ? Math.round((pnl / risk) * 100) / 100 : 0,
                             strategy: stratSel && stratSel.selectedOptions[0] ? stratSel.selectedOptions[0].textContent : '—',
                             strategy_id: stratSel && stratSel.value ? stratSel.value : undefined,
-                            note: $('e-thesis') ? $('e-thesis').value : ''
+                            note: $('at-notes-textarea') ? $('at-notes-textarea').value : '', chart_url: currentAttachedScreenshot || undefined, rating: parseFloat($('e-rating-slider').value) || 8.5
                         };
                         const inLedger = core && core.Trades.some(t => t.id === id);
                         if (inLedger && core) {
@@ -1802,7 +1873,7 @@
                             tp: isFinite(tp) ? tp : undefined,
                             adherence: 'followed',
                             reviewed: false,
-                            note: $('e-thesis') ? $('e-thesis').value : '',
+                            note: $('at-notes-textarea') ? $('at-notes-textarea').value : '', chart_url: currentAttachedScreenshot || undefined, rating: parseFloat($('e-rating-slider').value) || 8.5,
                             emotion,
                             strategyType,
                             legs,

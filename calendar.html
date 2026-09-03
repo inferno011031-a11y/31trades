@@ -411,6 +411,120 @@
             transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.2s ease;
         }
         .toast.show { transform: none; opacity: 1; pointer-events: auto; }
+    
+        /* ---- TradesPad Add Trade Modal in Calendar ---- */
+        .add-trade-window {
+            background: #0a0b0e !important;
+            border: 1px solid #16181f !important;
+            border-radius: 16px !important;
+            width: 100% !important;
+            max-width: 820px !important;
+            padding: 24px 28px !important;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
+            max-height: 90vh !important;
+            overflow-y: auto !important;
+        }
+
+        .at-field-label {
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #ffffff !important;
+            margin-bottom: 6px !important;
+            display: block !important;
+        }
+        .at-field-sub {
+            font-size: 11.5px !important;
+            color: #717886 !important;
+            margin-top: 4px !important;
+        }
+
+        .at-input {
+            width: 100% !important;
+            background: #111318 !important;
+            border: 1px solid #1a1d25 !important;
+            border-radius: 10px !important;
+            padding: 9px 12px !important;
+            font-size: 13px !important;
+            color: #ffffff !important;
+            outline: none !important;
+            transition: border-color 0.15s ease !important;
+        }
+        .at-input:focus {
+            border-color: #334155 !important;
+        }
+        .at-input::placeholder {
+            color: #505a69 !important;
+        }
+
+        .at-side-btn {
+            padding: 7px 18px !important;
+            border-radius: 8px !important;
+            font-size: 13px !important;
+            font-weight: 600 !important;
+            color: #717886 !important;
+            background: transparent !important;
+            border: none !important;
+            cursor: pointer !important;
+            transition: all 0.15s ease !important;
+        }
+        .at-side-btn:hover {
+            color: #ffffff !important;
+        }
+        .at-side-btn.active-buy {
+            background: #181b24 !important;
+            color: #ffffff !important;
+            border: 1px solid #232734 !important;
+        }
+        .at-side-btn.active-sell {
+            background: #181b24 !important;
+            color: #ffffff !important;
+            border: 1px solid #232734 !important;
+        }
+
+        .at-adv-drawer {
+            display: grid !important;
+            grid-template-rows: 0fr !important;
+            transition: grid-template-rows 0.3s cubic-bezier(0.16, 1, 0.3, 1) !important;
+        }
+        .at-adv-drawer.open {
+            grid-template-rows: 1fr !important;
+        }
+        .at-adv-inner {
+            overflow: hidden !important;
+            min-height: 0 !important;
+            opacity: 0 !important;
+            transform: translateY(-6px) !important;
+            transition: opacity 0.25s ease, transform 0.25s ease !important;
+        }
+        .at-adv-drawer.open .at-adv-inner {
+            opacity: 1 !important;
+            transform: translateY(0) !important;
+        }
+
+        .at-dropzone {
+            background: #0e1015 !important;
+            border: 1px solid #181b22 !important;
+            border-radius: 12px !important;
+            height: 155px !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            padding: 16px !important;
+            text-align: center !important;
+            cursor: pointer !important;
+            position: relative !important;
+            transition: all 0.15s ease !important;
+        }
+        .at-dropzone:hover {
+            border-color: #262c3a !important;
+            background: #111319 !important;
+        }
+        .at-dropzone.drag-over {
+            background: rgba(34, 197, 94, 0.06) !important;
+            border: 1px dashed rgba(34, 197, 94, 0.4) !important;
+        }
+
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -705,9 +819,9 @@
     </div>
 
     <!-- Floating Action Button (+) -->
-    <a href="journal.html?log=1" class="fab-btn" title="Log Trade">
+    <button type="button" class="fab-btn" id="btn-fab-add-trade" title="Add Trade">
         <svg data-lucide="plus" class="w-6 h-6"></svg>
-    </a>
+    </button>
 
     <!-- ======================================================= -->
     <!-- VIEW 3: DAY DETAIL MODAL (Matches media_1788465263599.png) -->
@@ -837,6 +951,198 @@
             <div class="flex items-center justify-end gap-2.5 mt-4">
                 <button type="button" class="px-4 py-2 rounded-lg bg-[#181b24] border border-[#232734] text-[#cbd5e1] text-[12.5px] font-semibold hover:text-white" id="btn-cancel-edit-notes">Cancel</button>
                 <button type="button" class="px-4 py-2 rounded-lg bg-[#22c55e] text-black font-bold text-[12.5px] hover:bg-[#16a34a] transition-colors" id="btn-save-edit-notes">Save Notes</button>
+            </div>
+        </div>
+    </div>
+
+    
+    <!-- ======================================================= -->
+    <!-- ADD TRADE MODAL (Matches media_1788466567313.png) -->
+    <!-- ======================================================= -->
+    <div class="modal-backdrop" id="add-trade-modal">
+        <div class="add-trade-window">
+            <!-- Modal Header -->
+            <div class="flex items-center justify-between pb-4 mb-4 border-b border-[#16181f]">
+                <div>
+                    <h2 class="text-[18px] font-bold text-white tracking-tight">Add Trade</h2>
+                    <p class="text-[12px] text-[#828b99] mt-0.5">Enter the details of your trade.</p>
+                </div>
+                <button type="button" class="text-[#828b99] hover:text-white transition-colors p-1" id="btn-close-add-trade" title="Close">
+                    <svg data-lucide="x" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <!-- 2-Column Main Layout -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
+
+                <!-- ===== LEFT COLUMN: Core Parameters ===== -->
+                <div class="flex flex-col gap-3.5">
+                    <!-- Symbol -->
+                    <div>
+                        <label class="at-field-label">Symbol *</label>
+                        <div class="relative">
+                            <select id="at-symbol-select" class="at-input appearance-none pr-8 cursor-pointer font-semibold">
+                                <option value="NAS100" selected>NAS100</option>
+                                <option value="XAUUSD">XAUUSD</option>
+                                <option value="EURUSD">EURUSD</option>
+                                <option value="BTCUSD">BTCUSD</option>
+                                <option value="US30">US30</option>
+                                <option value="SPX500">SPX500</option>
+                                <option value="GBPUSD">GBPUSD</option>
+                                <option value="USDJPY">USDJPY</option>
+                                <option value="NVDA">NVDA</option>
+                                <option value="TSLA">TSLA</option>
+                                <option value="AAPL">AAPL</option>
+                            </select>
+                            <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+                        </div>
+                        <div class="at-field-sub">
+                            Can't find a symbol? <button type="button" class="underline font-bold text-white hover:text-emerald-400" id="at-btn-create-sym">Create it</button>
+                        </div>
+                    </div>
+
+                    <!-- Entry Date -->
+                    <div>
+                        <label class="at-field-label">Entry date *</label>
+                        <div class="relative">
+                            <input id="at-date-input" type="datetime-local" class="at-input num pr-9">
+                            <svg data-lucide="calendar" class="w-4 h-4 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+                        </div>
+                    </div>
+
+                    <!-- Side (Segmented Buy / Sell) -->
+                    <div>
+                        <label class="at-field-label">Side *</label>
+                        <div class="flex items-center gap-1 p-1 bg-[#111318] border border-[#1a1d25] rounded-xl w-fit">
+                            <button type="button" class="at-side-btn active-buy" id="at-btn-buy">Buy ↑</button>
+                            <button type="button" class="at-side-btn" id="at-btn-sell">Sell ↓</button>
+                        </div>
+                    </div>
+
+                    <!-- P&L -->
+                    <div>
+                        <label class="at-field-label">P&amp;L *</label>
+                        <div class="relative">
+                            <span class="absolute left-3.5 top-1/2 -translate-y-1/2 text-[13px] font-bold text-[#828b99]">$</span>
+                            <input id="at-pnl-input" type="number" step="any" class="at-input num !pl-8" placeholder="Enter your P&L">
+                        </div>
+                    </div>
+
+                    <!-- Risk/Reward Ratio with Visual Bar -->
+                    <div>
+                        <label class="at-field-label">Risk/Reward ratio</label>
+                        <div class="flex items-center gap-3">
+                            <div class="px-2.5 py-1 rounded-lg bg-[#111318] border border-[#1a1d25] num text-[12px] font-bold text-[#828b99]" id="at-rr-badge">1:2</div>
+                            <div class="flex-1 h-3 rounded-full overflow-hidden bg-[#111318] flex">
+                                <div class="bg-[#ef4444] h-full" id="at-rr-bar-red" style="width: 33%;"></div>
+                                <div class="bg-[#22c55e] h-full" id="at-rr-bar-green" style="width: 67%;"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Rating Slider -->
+                    <div>
+                        <label class="at-field-label">Rating</label>
+                        <div class="flex items-center gap-3">
+                            <span class="text-[13px] font-bold text-white w-6" id="at-rating-label">8.5</span>
+                            <input type="range" min="1" max="10" step="0.5" value="8.5" id="at-rating-slider" class="flex-1 accent-[#22c55e] h-1.5 bg-[#181b24] rounded-lg cursor-pointer">
+                        </div>
+                    </div>
+
+                    <!-- Collapsible Trigger: Advanced Options -->
+                    <div class="pt-1">
+                        <button type="button" class="flex items-center gap-1.5 text-[12.5px] font-semibold text-[#cbd5e1] hover:text-white transition-colors cursor-pointer" id="at-btn-toggle-adv">
+                            <svg data-lucide="chevron-right" class="w-3.5 h-3.5 transition-transform text-[#828b99]" id="at-adv-chevron"></svg>
+                            <span>Advanced options</span>
+                        </button>
+
+                        <div class="at-adv-drawer" id="at-adv-drawer">
+                            <div class="at-adv-inner pt-3 flex flex-col gap-3">
+                                <div class="grid grid-cols-2 gap-2.5">
+                                    <div>
+                                        <label class="at-field-label !text-[11.5px]">Account</label>
+                                        <select id="at-account-select" class="at-input !text-[12px]"></select>
+                                    </div>
+                                    <div>
+                                        <label class="at-field-label !text-[11.5px]">Session</label>
+                                        <select id="at-session-select" class="at-input !text-[12px]">
+                                            <option value="London">London</option>
+                                            <option value="New York" selected>New York</option>
+                                            <option value="Asia">Asia</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-3 gap-2">
+                                    <div>
+                                        <label class="at-field-label !text-[11px]">Entry price</label>
+                                        <input id="at-entry-price" type="number" step="any" class="at-input num !text-[12px] !p-2" placeholder="100.00">
+                                    </div>
+                                    <div>
+                                        <label class="at-field-label !text-[11px]">Exit price</label>
+                                        <input id="at-exit-price" type="number" step="any" class="at-input num !text-[12px] !p-2" placeholder="102.50">
+                                    </div>
+                                    <div>
+                                        <label class="at-field-label !text-[11px]">Size (lots)</label>
+                                        <input id="at-size-lots" type="number" step="0.01" class="at-input num !text-[12px] !p-2" value="1.00">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- ===== RIGHT COLUMN: Evidence & Strategy ===== -->
+                <div class="flex flex-col gap-3.5">
+                    <!-- Screenshots Dropzone -->
+                    <div>
+                        <label class="at-field-label">Screenshots</label>
+                        <div class="at-dropzone" id="at-cal-dropzone">
+                            <input type="file" id="at-cal-file-input" accept="image/*" class="hidden">
+                            <div id="at-cal-drop-empty" class="flex flex-col items-center justify-center gap-1.5">
+                                <svg data-lucide="cloud" class="w-8 h-8 text-[#505a69] stroke-[1.5]"></svg>
+                                <div class="text-[13px] font-semibold text-white mt-1">Upload Screenshot</div>
+                                <div class="text-[11px] text-[#505a69]">Drop here, paste with Ctrl+V or click</div>
+                            </div>
+                            <div id="at-cal-drop-preview" class="hidden relative w-full h-full flex items-center justify-center">
+                                <img src="" id="at-cal-drop-img" class="max-h-[125px] max-w-full rounded-lg object-contain border border-white/10" alt="Trade Screenshot">
+                                <button type="button" id="at-cal-btn-remove-shot" class="absolute top-0 right-0 p-1 bg-red-600/80 hover:bg-red-600 text-white rounded-full transition-colors" title="Remove Screenshot">
+                                    <svg data-lucide="x" class="w-3.5 h-3.5"></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Notes -->
+                    <div>
+                        <label class="at-field-label">Notes</label>
+                        <textarea id="at-cal-notes-text" class="at-input !bg-[#0e1015] !border-[#181b22] h-[90px] resize-none leading-relaxed" placeholder="Enter your trade notes"></textarea>
+                    </div>
+
+                    <!-- Strategy -->
+                    <div>
+                        <label class="at-field-label">Strategy</label>
+                        <div class="relative">
+                            <select id="at-strategy-select" class="at-input appearance-none pr-8 cursor-pointer font-medium">
+                                <option value="None" selected>None</option>
+                                <option value="Breakout & Retest">Breakout &amp; Retest</option>
+                                <option value="ICT Silver Bullet">ICT Silver Bullet</option>
+                                <option value="Order Block / FVG">Order Block / FVG</option>
+                                <option value="Trend Continuation">Trend Continuation</option>
+                                <option value="London MSS + FVG">London MSS + FVG</option>
+                            </select>
+                            <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+                        </div>
+                        <div class="at-field-sub">Select a strategy to set confluences.</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="flex items-center justify-end gap-3 pt-5 mt-5 border-t border-[#16181f]">
+                <button type="button" class="px-5 py-2 rounded-lg bg-[#181b24] border border-[#232734] text-white text-[13px] font-semibold hover:bg-[#202532] transition-colors" id="btn-cancel-add-trade">Cancel</button>
+                <button type="button" id="btn-save-add-trade" class="px-6 py-2 rounded-lg bg-white text-black text-[13px] font-bold hover:bg-[#e2e8f0] transition-colors">Save</button>
             </div>
         </div>
     </div>
@@ -1366,6 +1672,148 @@
                 dropzone.classList.remove('drag-over');
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                     handleScreenshotFile(e.dataTransfer.files[0]);
+                }
+            });
+
+            
+            // ============ CALENDAR IN-PLACE ADD TRADE MODAL ============
+            const addTradeModal = $('add-trade-modal');
+            const btnFabAdd = $('btn-fab-add-trade');
+            let calAttachedScreenshot = '';
+            let currentCalSide = 'Long';
+
+            function openCalendarAddTradeModal() {
+                const now = new Date();
+                const pad = n => String(n).padStart(2, '0');
+                $('at-date-input').value = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+                $('at-pnl-input').value = '';
+                $('at-cal-notes-text').value = '';
+                calAttachedScreenshot = '';
+                renderCalScreenshot('');
+
+                // Populate accounts
+                if (core && core.Accounts && $('at-account-select')) {
+                    $('at-account-select').innerHTML = core.Accounts.map(a => '<option value="' + a.id + '">' + a.name + '</option>').join('');
+                }
+
+                addTradeModal.classList.add('open');
+                if (window.lucide) lucide.createIcons();
+            }
+
+            if (btnFabAdd) {
+                btnFabAdd.addEventListener('click', openCalendarAddTradeModal);
+            }
+
+            $('btn-close-add-trade').addEventListener('click', () => addTradeModal.classList.remove('open'));
+            $('btn-cancel-add-trade').addEventListener('click', () => addTradeModal.classList.remove('open'));
+            addTradeModal.addEventListener('click', e => {
+                if (e.target === addTradeModal) addTradeModal.classList.remove('open');
+            });
+
+            // Buy / Sell
+            $('at-btn-buy').addEventListener('click', () => {
+                currentCalSide = 'Long';
+                $('at-btn-buy').classList.add('active-buy');
+                $('at-btn-sell').classList.remove('active-sell');
+            });
+            $('at-btn-sell').addEventListener('click', () => {
+                currentCalSide = 'Short';
+                $('at-btn-sell').classList.add('active-sell');
+                $('at-btn-buy').classList.remove('active-buy');
+            });
+
+            // PnL & RR bar
+            $('at-pnl-input').addEventListener('input', () => {
+                const pnl = parseFloat($('at-pnl-input').value) || 0;
+                let r = pnl !== 0 ? Math.min(Math.max(Math.abs(pnl) / 100, 0.5), 10) : 2;
+                $('at-rr-badge').textContent = '1:' + r.toFixed(1);
+                const redPct = Math.round(100 / (1 + r));
+                $('at-rr-bar-red').style.width = redPct + '%';
+                $('at-rr-bar-green').style.width = (100 - redPct) + '%';
+            });
+
+            $('at-rating-slider').addEventListener('input', (e) => {
+                $('at-rating-label').textContent = e.target.value;
+            });
+
+            // Advanced toggle
+            $('at-btn-toggle-adv').addEventListener('click', () => {
+                const isOpen = $('at-adv-drawer').classList.toggle('open');
+                $('at-adv-chevron').classList.toggle('rotate-90', isOpen);
+            });
+
+            // Screenshot dropzone & paste in Calendar
+            const calDrop = $('at-cal-dropzone');
+            const calFile = $('at-cal-file-input');
+            calDrop.addEventListener('click', (e) => {
+                if (e.target.closest('#at-cal-btn-remove-shot')) return;
+                calFile.click();
+            });
+            calFile.addEventListener('change', e => {
+                const file = e.target.files[0];
+                if (file) {
+                    const reader = new FileReader();
+                    reader.onload = ev => {
+                        calAttachedScreenshot = ev.target.result;
+                        renderCalScreenshot(calAttachedScreenshot);
+                        showToast('Screenshot attached');
+                    };
+                    reader.readAsDataURL(file);
+                }
+            });
+            $('at-cal-btn-remove-shot').addEventListener('click', (e) => {
+                e.stopPropagation();
+                calAttachedScreenshot = '';
+                renderCalScreenshot('');
+            });
+
+            function renderCalScreenshot(url) {
+                if (url) {
+                    $('at-cal-drop-empty').classList.add('hidden');
+                    $('at-cal-drop-preview').classList.remove('hidden');
+                    $('at-cal-drop-img').src = url;
+                } else {
+                    $('at-cal-drop-empty').classList.remove('hidden');
+                    $('at-cal-drop-preview').classList.add('hidden');
+                    $('at-cal-drop-img').src = '';
+                }
+            }
+
+            // Save Trade in Calendar
+            $('btn-save-add-trade').addEventListener('click', () => {
+                const symbol = $('at-symbol-select').value || 'NAS100';
+                const pnl = parseFloat($('at-pnl-input').value) || 0;
+                const note = $('at-cal-notes-text').value.trim();
+                const strategy = $('at-strategy-select').value || 'None';
+                const accountId = $('at-account-select') ? $('at-account-select').value : (core ? core.selectedAccountId() : undefined);
+                const dt = $('at-date-input').value ? new Date($('at-date-input').value) : new Date();
+
+                if (core && core.logTradePipeline) {
+                    try {
+                        core.logTradePipeline({
+                            account_id: accountId,
+                            ts: dt,
+                            symbol,
+                            dir: currentCalSide,
+                            entry: parseFloat($('at-entry-price').value) || 100,
+                            exit: parseFloat($('at-exit-price').value) || 102,
+                            size: parseFloat($('at-size-lots').value) || 1.0,
+                            risk: 100,
+                            pnl: pnl,
+                            r: Math.round((pnl / 100) * 100) / 100,
+                            setup: 'Breakout',
+                            strategy: strategy,
+                            session: $('at-session-select') ? $('at-session-select').value : 'New York',
+                            note: note,
+                            chart_url: calAttachedScreenshot || undefined,
+                            rating: parseFloat($('at-rating-slider').value) || 8.5
+                        });
+                        showToast('Trade logged successfully');
+                        addTradeModal.classList.remove('open');
+                        renderAll(); // Re-render calendar grids & charts
+                    } catch (err) {
+                        showToast('Could not log trade: ' + err.message);
+                    }
                 }
             });
 
