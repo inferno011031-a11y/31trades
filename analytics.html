@@ -400,13 +400,26 @@
 
                         <div class="flex items-center gap-3">
                             <span class="text-[12.5px] text-[var(--tm-dim)]" id="trades-count-badge">1 trade</span>
-                            <div class="relative">
-                                <select id="time-filter" class="ctrl !py-1.5 !px-3 text-[12.5px] font-medium pr-8">
-                                    <option value="all" selected>All time</option>
-                                    <option value="month">This Month</option>
-                                    <option value="week">This Week</option>
-                                    <option value="today">Today</option>
-                                </select>
+                            <div class="relative" id="time-filter-wrap">
+                                <button type="button" id="time-filter-btn" class="flex items-center gap-2 bg-[#11141c] border border-[var(--tm-border-2)] text-white text-[12.5px] font-medium rounded-lg px-3 py-1.5 hover:border-[var(--tm-muted)] transition-colors">
+                                    <span id="time-filter-label">All time</span>
+                                    <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                                </button>
+                                <div id="time-filter-menu" class="hidden absolute right-0 top-full mt-1.5 w-36 bg-[#0c0e14] border border-[#1f2533] rounded-xl shadow-2xl p-1 z-50 flex flex-col gap-0.5">
+                                    <div class="time-opt px-3 py-1.5 text-[12px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors active" data-value="all">
+                                        <span>All time</span>
+                                        <svg data-lucide="check" class="w-3.5 h-3.5 text-[#22c55e]"></svg>
+                                    </div>
+                                    <div class="time-opt px-3 py-1.5 text-[12px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors" data-value="month">
+                                        <span>This Month</span>
+                                    </div>
+                                    <div class="time-opt px-3 py-1.5 text-[12px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors" data-value="week">
+                                        <span>This Week</span>
+                                    </div>
+                                    <div class="time-opt px-3 py-1.5 text-[12px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors" data-value="today">
+                                        <span>Today</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -1080,11 +1093,37 @@
                 });
             }
 
-            const timeSelect = $('time-filter');
-            if (timeSelect) {
-                timeSelect.addEventListener('change', e => {
-                    timeFilter = e.target.value;
-                    renderAll();
+            // Custom dark time filter (zero OS white/blue popups)
+            const timeBtn = $('time-filter-btn');
+            const timeMenu = $('time-filter-menu');
+            if (timeBtn && timeMenu) {
+                timeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    timeMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#time-filter-wrap')) {
+                        timeMenu.classList.add('hidden');
+                    }
+                });
+                timeMenu.querySelectorAll('.time-opt').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const val = opt.dataset.value;
+                        const label = opt.querySelector('span') ? opt.querySelector('span').textContent : opt.textContent.trim();
+                        $('time-filter-label').textContent = label;
+                        timeMenu.querySelectorAll('.time-opt').forEach(o => {
+                            const isMatch = o.dataset.value === val;
+                            const checkIcon = o.querySelector('svg');
+                            if (checkIcon) checkIcon.remove();
+                            if (isMatch) {
+                                o.insertAdjacentHTML('beforeend', '<svg data-lucide="check" class="w-3.5 h-3.5 text-[#22c55e]"></svg>');
+                            }
+                        });
+                        timeFilter = val;
+                        timeMenu.classList.add('hidden');
+                        renderAll();
+                        if (window.lucide) lucide.createIcons();
+                    });
                 });
             }
 

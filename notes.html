@@ -510,15 +510,29 @@
                                 <div>
                                     <div class="flex items-center justify-between">
                                         <span class="quad-card-title">Strategy</span>
-                                        <div class="relative">
-                                            <select id="strategy-dropdown" class="appearance-none bg-[#11141c] border border-[#1f2533] text-white text-[12.5px] font-semibold rounded-lg px-3 py-1.5 pr-7 outline-none cursor-pointer">
-                                                <option value="None">None</option>
-                                                <option value="Breakout">Breakout &amp; Retest</option>
-                                                <option value="ICT Silver Bullet">ICT Silver Bullet</option>
-                                                <option value="Order Block">Order Block / FVG</option>
-                                                <option value="Trend Continuation">Trend Continuation</option>
-                                            </select>
-                                            <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
+                                        <div class="relative" id="strategy-dropdown-wrap">
+                                            <button type="button" id="strategy-dropdown-btn" class="flex items-center gap-2 bg-[#11141c] border border-[#1f2533] text-white text-[12.5px] font-semibold rounded-lg px-3 py-1.5 hover:border-[#334155] transition-colors">
+                                                <span id="strategy-label">None</span>
+                                                <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
+                                            </button>
+                                            <div id="strategy-menu" class="hidden absolute right-0 top-full mt-1.5 w-52 bg-[#0c0e14] border border-[#1f2533] rounded-xl shadow-2xl p-1 z-50 flex flex-col gap-0.5">
+                                                <div class="strat-opt px-3 py-2 text-[12.5px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors active" data-value="None">
+                                                    <span>None</span>
+                                                    <svg data-lucide="check" class="w-3.5 h-3.5 text-[#22c55e]"></svg>
+                                                </div>
+                                                <div class="strat-opt px-3 py-2 text-[12.5px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors" data-value="Breakout">
+                                                    <span>Breakout &amp; Retest</span>
+                                                </div>
+                                                <div class="strat-opt px-3 py-2 text-[12.5px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors" data-value="ICT Silver Bullet">
+                                                    <span>ICT Silver Bullet</span>
+                                                </div>
+                                                <div class="strat-opt px-3 py-2 text-[12.5px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors" data-value="Order Block">
+                                                    <span>Order Block / FVG</span>
+                                                </div>
+                                                <div class="strat-opt px-3 py-2 text-[12.5px] text-[#cbd5e1] hover:text-white hover:bg-white/[0.06] rounded-lg cursor-pointer flex items-center justify-between transition-colors" data-value="Trend Continuation">
+                                                    <span>Trend Continuation</span>
+                                                </div>
+                                            </div>
                                         </div>
                                     </div>
                                     <div class="quad-card-sub">Select a strategy to set confluences.</div>
@@ -788,16 +802,50 @@
                 renderTradeLog();
             });
 
-            // Strategy dropdown
-            $('strategy-dropdown').addEventListener('change', () => {
+            // Strategy custom dark dropdown (zero OS white/blue popups)
+            const stratBtn = $('strategy-dropdown-btn');
+            const stratMenu = $('strategy-menu');
+            if (stratBtn && stratMenu) {
+                stratBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    stratMenu.classList.toggle('hidden');
+                });
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#strategy-dropdown-wrap')) {
+                        stratMenu.classList.add('hidden');
+                    }
+                });
+                stratMenu.querySelectorAll('.strat-opt').forEach(opt => {
+                    opt.addEventListener('click', () => {
+                        const val = opt.dataset.value;
+                        setStrategy(val);
+                        stratMenu.classList.add('hidden');
+                    });
+                });
+            }
+
+            function setStrategy(val) {
+                $('strategy-label').textContent = val;
                 if (activeTrade) {
-                    activeTrade.strategy = $('strategy-dropdown').value;
+                    activeTrade.strategy = val;
                     if (core && core.TradeService) {
-                        try { core.TradeService.update(activeTrade.id, { setup: activeTrade.strategy }); } catch(e) {}
+                        try { core.TradeService.update(activeTrade.id, { setup: val }); } catch(e) {}
                     }
                 }
-                updateStrategyView();
-            });
+                if (stratMenu) {
+                    stratMenu.querySelectorAll('.strat-opt').forEach(opt => {
+                        const isMatch = opt.dataset.value === val;
+                        opt.classList.toggle('active', isMatch);
+                        const checkIcon = opt.querySelector('svg');
+                        if (checkIcon) checkIcon.remove();
+                        if (isMatch) {
+                            opt.insertAdjacentHTML('beforeend', '<svg data-lucide="check" class="w-3.5 h-3.5 text-[#22c55e]"></svg>');
+                        }
+                    });
+                }
+                updateStrategyView(val);
+                if (window.lucide) lucide.createIcons();
+            }
 
             // Screenshots: dropzone click or paste
             $('card-screenshots-zone').addEventListener('click', (e) => {
