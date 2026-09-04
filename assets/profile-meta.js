@@ -17,11 +17,37 @@
 
         var label = 'Battlex Trader';
         try {
+            // Check if user has active tester entitlement
+            var isTester = false;
+            try {
+                var rawEnt = localStorage.getItem('31trades.tester_entitlement.v1');
+                if (rawEnt) {
+                    var ent = JSON.parse(rawEnt);
+                    if (ent && ent.isTester && ent.expiresAt && new Date(ent.expiresAt).getTime() > Date.now()) {
+                        isTester = true;
+                    }
+                }
+                if (!isTester) {
+                    var rawSess = localStorage.getItem('31trades.session.v1');
+                    if (rawSess) {
+                        var sess = JSON.parse(rawSess);
+                        if (sess && sess.user && sess.user.access_plan === 'tester') {
+                            isTester = true;
+                        }
+                    }
+                }
+            } catch (err) {}
+
             var id = (typeof core.selectedAccountId === 'function') ? core.selectedAccountId() : null;
             var acc = (id && core.ConfigAPI && typeof core.ConfigAPI.getAccount === 'function')
                 ? core.ConfigAPI.getAccount(id)
                 : null;
-            if (acc && acc.account_type) label = acc.account_type;
+            
+            if (isTester) {
+                label = (acc && acc.account_type && acc.account_type !== 'Standard') ? ('Tester · ' + acc.account_type) : 'Tester Account';
+            } else if (acc && acc.account_type) {
+                label = acc.account_type;
+            }
         } catch (e) { /* keep the neutral fallback */ }
 
         if (el.textContent !== label) el.textContent = label;

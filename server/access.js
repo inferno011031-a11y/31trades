@@ -78,6 +78,9 @@ async function getAccessStatus(userId) {
 
     const currentMonth = new Date().toISOString().slice(0, 7);
     const pool = db.getPool();
+    const store = loadLocalStore();
+    const localEnt = store.entitlements ? store.entitlements[userId] : null;
+    const localIsTesterActive = localEnt && localEnt.access_type === 'tester' && localEnt.access_expires_at && new Date(localEnt.access_expires_at).getTime() > Date.now();
 
     if (pool) {
         try {
@@ -87,17 +90,47 @@ async function getAccessStatus(userId) {
             );
             if (res.rows.length) {
                 const row = res.rows[0];
-                const isTesterActive = row.access_type === 'tester' && row.access_expires_at && new Date(row.access_expires_at).getTime() > Date.now();
+                const dbIsTesterActive = row.access_type === 'tester' && row.access_expires_at && new Date(row.access_expires_at).getTime() > Date.now();
                 const isExpired = row.access_type === 'tester' && row.access_expires_at && new Date(row.access_expires_at).getTime() <= Date.now();
 
-                if (isTesterActive) {
-                    const limit = row.tester_ai_limit || DEFAULT_TESTER_AI_LIMIT;
-                    const used = row.tester_ai_month === currentMonth ? row.tester_ai_used : 0;
+                // If DB says active tester OR local store has an active tester entitlement, grant tester access!
+                if (dbIsTesterActive || localIsTesterActive) {
+                    const activeRow = dbIsTesterActive ? row : localEnt;
+                    const limit = activeRow.tester_ai_limit || DEFAULT_TESTER_AI_LIMIT;
+                    const used = activeRow.tester_ai_month === currentMonth ? (activeRow.tester_ai_used || 0) : 0;
+                    const exp = activeRow.access_expires_at ? new Date(activeRow.access_expires_at).toISOString() : null;
+                    const act = activeRow.activated_at ? new Date(activeRow.activated_at).toISOString() : null;
+
+                    // If local had it but DB didn't reflect active tester, self-heal DB
+                    if (!dbIsTesterActive && localIsTesterActive) {
+                        pool.query(
+                            `INSERT INTO user_entitlements (user_id, access_type, access_expires_at, activated_at, tester_ai_limit, tester_ai_month, tester_ai_used, updated_at)
+                             VALUES ($1, 'tester', $2, $3, $4, $5, $6, now())
+                             ON CONFLICT (user_id) DO UPDATE SET
+                               access_type = 'tester', access_expires_at = EXCLUDED.access_expires_at, activated_at = COALESCE(user_entitlements.activated_at, EXCLUDED.activated_at), updated_at = now()`,
+                            [userId, exp, act, limit, currentMonth, used]
+                        ).catch(e => console.warn('[access] self-heal db error:', e.message));
+                    }
+
+                    // Keep local store in sync if DB has it
+                    if (dbIsTesterActive && (!localEnt || localEnt.access_type !== 'tester')) {
+                        if (!store.entitlements) store.entitlements = {};
+                        store.entitlements[userId] = Object.assign(store.entitlements[userId] || {}, {
+                            access_type: 'tester',
+                            access_expires_at: exp,
+                            activated_at: act,
+                            tester_ai_limit: limit,
+                            tester_ai_month: currentMonth,
+                            tester_ai_used: used
+                        });
+                        saveLocalStore(store);
+                    }
+
                     return {
                         isTester: true,
                         accessType: 'tester',
-                        expiresAt: new Date(row.access_expires_at).toISOString(),
-                        activatedAt: row.activated_at ? new Date(row.activated_at).toISOString() : null,
+                        expiresAt: exp,
+                        activatedAt: act,
                         isExpired: false,
                         aiUsage: {
                             tier: 'tester',
@@ -132,20 +165,18 @@ async function getAccessStatus(userId) {
     }
 
     // Local / In-memory fallback
-    const store = loadLocalStore();
-    const ent = store.entitlements[userId];
-    if (ent) {
-        const isTesterActive = ent.access_type === 'tester' && ent.access_expires_at && new Date(ent.access_expires_at).getTime() > Date.now();
-        const isExpired = ent.access_type === 'tester' && ent.access_expires_at && new Date(ent.access_expires_at).getTime() <= Date.now();
+    if (localEnt) {
+        const isTesterActive = localEnt.access_type === 'tester' && localEnt.access_expires_at && new Date(localEnt.access_expires_at).getTime() > Date.now();
+        const isExpired = localEnt.access_type === 'tester' && localEnt.access_expires_at && new Date(localEnt.access_expires_at).getTime() <= Date.now();
 
         if (isTesterActive) {
-            const limit = ent.tester_ai_limit || DEFAULT_TESTER_AI_LIMIT;
-            const used = ent.tester_ai_month === currentMonth ? (ent.tester_ai_used || 0) : 0;
+            const limit = localEnt.tester_ai_limit || DEFAULT_TESTER_AI_LIMIT;
+            const used = localEnt.tester_ai_month === currentMonth ? (localEnt.tester_ai_used || 0) : 0;
             return {
                 isTester: true,
                 accessType: 'tester',
-                expiresAt: ent.access_expires_at,
-                activatedAt: ent.activated_at,
+                expiresAt: localEnt.access_expires_at,
+                activatedAt: localEnt.activated_at,
                 isExpired: false,
                 aiUsage: {
                     tier: 'tester',
@@ -158,11 +189,11 @@ async function getAccessStatus(userId) {
             };
         }
 
-        const used = ent.lifetime_ai_used || 0;
+        const used = localEnt.lifetime_ai_used || 0;
         return {
             isTester: false,
             accessType: isExpired ? 'expired_tester' : 'normal',
-            expiresAt: ent.access_expires_at || null,
+            expiresAt: localEnt.access_expires_at || null,
             isExpired,
             aiUsage: {
                 tier: 'normal',
@@ -216,6 +247,36 @@ async function redeemInviteCode({ userId, code }) {
                 err.code = r.code === 'ALREADY_TESTER' ? 409 : r.code === 'CODE_FULL' || r.code === 'ALL_SLOTS_FULL' ? 409 : 400;
                 throw err;
             }
+
+            // Dual-write: also mirror to local store so local file and DB never drift
+            try {
+                const store = loadLocalStore();
+                if (!store.codes) {
+                    store.codes = {
+                        'BXJ-2026-A': { used_count: 0, users: [] },
+                        'BXJ-2026-B': { used_count: 0, users: [] }
+                    };
+                }
+                if (!store.entitlements) store.entitlements = {};
+                const now = new Date();
+                store.entitlements[userId] = Object.assign(store.entitlements[userId] || {}, {
+                    access_type: 'tester',
+                    access_expires_at: r.expires_at || new Date(now.getTime() + 365 * 86400000).toISOString(),
+                    activated_at: r.activated_at || now.toISOString(),
+                    invite_code_id: normalizedCode,
+                    tester_ai_limit: DEFAULT_TESTER_AI_LIMIT,
+                    tester_ai_month: now.toISOString().slice(0, 7),
+                    tester_ai_used: 0
+                });
+                const codeState = store.codes[normalizedCode] || { used_count: 0, users: [] };
+                codeState.used_count = (codeState.used_count || 0) + 1;
+                if (!codeState.users.includes(userId)) codeState.users.push(userId);
+                store.codes[normalizedCode] = codeState;
+                saveLocalStore(store);
+            } catch (localErr) {
+                console.warn('[access] dual-write local mirror warning:', localErr.message);
+            }
+
             return r;
         } catch (err) {
             if (err.code && (err.code === 400 || err.code === 401 || err.code === 409)) throw err;
@@ -320,6 +381,22 @@ async function enforceAiQuota(userId) {
                 err.code = 429;
                 throw err;
             }
+
+            // Dual-sync: also update local store with latest consumed count
+            try {
+                const store = loadLocalStore();
+                if (!store.entitlements) store.entitlements = {};
+                let ent = store.entitlements[userId] || {};
+                if (r.tier === 'tester') {
+                    ent.tester_ai_used = r.used;
+                    ent.tester_ai_month = currentMonth;
+                } else {
+                    ent.lifetime_ai_used = r.used;
+                }
+                store.entitlements[userId] = ent;
+                saveLocalStore(store);
+            } catch (syncErr) { /* ignore non-fatal local sync */ }
+
             return r;
         } catch (err) {
             if (err.code === 401 || err.code === 429) throw err;

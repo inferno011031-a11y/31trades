@@ -672,12 +672,29 @@
             // ============ RENDER ============
             // ============ AI QUOTA TRACKING ============
             async function refreshAiQuota() {
+                const badge = $('chat-quota-badge');
+                if (!badge) return;
+
+                // 1. Immediate local cache hydration
+                try {
+                    const cachedRaw = localStorage.getItem('31trades.tester_entitlement.v1');
+                    if (cachedRaw) {
+                        const cached = JSON.parse(cachedRaw);
+                        if (cached && cached.isTester && cached.expiresAt && new Date(cached.expiresAt).getTime() > Date.now() && cached.aiUsage) {
+                            badge.classList.remove('hidden');
+                            badge.className = 'tag tag-purple font-mono !py-1 !px-2.5 !text-[11px]';
+                            badge.textContent = 'Tester · ' + cached.aiUsage.remaining + '/' + cached.aiUsage.limit + ' left this mo';
+                        }
+                    }
+                } catch (e) {}
+
+                // 2. Fetch fresh status from API
                 try {
                     const r = await apiFetch('/api/access/status');
                     if (!r.ok) return;
                     const st = await r.json();
-                    const badge = $('chat-quota-badge');
-                    if (!badge || !st || !st.aiUsage) return;
+                    if (!st || !st.aiUsage) return;
+                    try { localStorage.setItem('31trades.tester_entitlement.v1', JSON.stringify(st)); } catch (e) {}
                     badge.classList.remove('hidden');
                     if (st.isTester) {
                         badge.className = 'tag tag-purple font-mono !py-1 !px-2.5 !text-[11px]';

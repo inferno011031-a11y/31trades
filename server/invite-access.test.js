@@ -165,3 +165,35 @@ test('8. Concurrency / Race Condition Prevention: simultaneous claims never exce
     const stats = await Access.getInviteStats();
     assert.equal(stats.groups.find(g => g.code === 'BXJ-2026-A').usedCount, 30);
 });
+
+test('9. Cross-store reconciliation: active tester in local store is recognized and preserved', async () => {
+    const user = 'reconciled-tester-01';
+    const expiresAt = new Date(Date.now() + 365 * 86400000).toISOString();
+    const activatedAt = new Date().toISOString();
+
+    // Directly seed local store
+    const storeFile = path.join(TEST_DATA_DIR, 'entitlements.json');
+    let store = { codes: {}, entitlements: {} };
+    try {
+        if (fs.existsSync(storeFile)) store = JSON.parse(fs.readFileSync(storeFile, 'utf8'));
+    } catch (e) {}
+    if (!store.entitlements) store.entitlements = {};
+    store.entitlements[user] = {
+        access_type: 'tester',
+        access_expires_at: expiresAt,
+        activated_at: activatedAt,
+        tester_ai_limit: 100,
+        tester_ai_month: new Date().toISOString().slice(0, 7),
+        tester_ai_used: 5
+    };
+    fs.mkdirSync(path.dirname(storeFile), { recursive: true });
+    fs.writeFileSync(storeFile, JSON.stringify(store, null, 2));
+
+    const status = await Access.getAccessStatus(user);
+    assert.equal(status.isTester, true);
+    assert.equal(status.accessType, 'tester');
+    assert.equal(status.expiresAt, expiresAt);
+    assert.equal(status.aiUsage.used, 5);
+    assert.equal(status.aiUsage.remaining, 95);
+});
+

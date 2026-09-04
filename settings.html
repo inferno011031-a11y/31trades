@@ -882,43 +882,76 @@
                 return fetch(url, Object.assign({}, opts, { headers }));
             }
 
+            const TESTER_CACHE_KEY = '31trades.tester_entitlement.v1';
+
+            function renderEntitlementUI(st) {
+                if (!st) return;
+                const badge = $('entitlement-status-badge');
+                const aiText = $('entitlement-ai-text');
+                const expRow = $('entitlement-exp-row');
+                const expText = $('entitlement-exp-text');
+                const redeemBox = $('redeem-box');
+
+                if (st.isTester) {
+                    if (badge) {
+                        badge.className = 'tag tag-purple font-mono';
+                        badge.textContent = '1-Year Tester Active';
+                    }
+                    if (aiText && st.aiUsage) {
+                        aiText.textContent = st.aiUsage.remaining + ' / ' + st.aiUsage.limit + ' requests left this month';
+                    }
+                    if (expRow && st.expiresAt) {
+                        expRow.style.display = 'flex';
+                        const d = new Date(st.expiresAt);
+                        if (expText) expText.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
+                    }
+                    if (redeemBox) {
+                        redeemBox.innerHTML = '<div class="p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-medium flex items-center gap-2"><svg data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></svg> Your 1-Year Tester Access is active and permanently tied to this account.</div>';
+                        if (window.lucide) lucide.createIcons();
+                    }
+                } else {
+                    if (badge) {
+                        badge.className = 'tag tag-blue font-mono';
+                        badge.textContent = 'Standard Plan';
+                    }
+                    if (aiText && st.aiUsage) {
+                        aiText.textContent = st.aiUsage.remaining + ' / ' + st.aiUsage.limit + ' lifetime requests remaining';
+                    }
+                    if (expRow) expRow.style.display = 'none';
+                }
+            }
+
             async function loadTesterEntitlement() {
+                // Immediate synchronous hydration from local cache so the UI never flashes Standard Plan
+                try {
+                    const cachedRaw = localStorage.getItem(TESTER_CACHE_KEY);
+                    if (cachedRaw) {
+                        const cached = JSON.parse(cachedRaw);
+                        if (cached && cached.isTester && cached.expiresAt && new Date(cached.expiresAt).getTime() > Date.now()) {
+                            renderEntitlementUI(cached);
+                        }
+                    }
+                } catch (e) {}
+
                 try {
                     const r = await secureApiFetch('/api/access/status');
-                    if (!r.ok) return;
+                    if (!r.ok) {
+                        // If token refresh or network lag caused error, keep using cached active tester if still valid
+                        const cachedRaw = localStorage.getItem(TESTER_CACHE_KEY);
+                        if (cachedRaw) {
+                            const cached = JSON.parse(cachedRaw);
+                            if (cached && cached.isTester && cached.expiresAt && new Date(cached.expiresAt).getTime() > Date.now()) {
+                                renderEntitlementUI(cached);
+                            }
+                        }
+                        return;
+                    }
                     const st = await r.json();
-                    const badge = $('entitlement-status-badge');
-                    const aiText = $('entitlement-ai-text');
-                    const expRow = $('entitlement-exp-row');
-                    const expText = $('entitlement-exp-text');
-                    const redeemBox = $('redeem-box');
-
-                    if (st.isTester) {
-                        if (badge) {
-                            badge.className = 'tag tag-purple font-mono';
-                            badge.textContent = '1-Year Tester Active';
-                        }
-                        if (aiText && st.aiUsage) {
-                            aiText.textContent = st.aiUsage.remaining + ' / ' + st.aiUsage.limit + ' requests left this month';
-                        }
-                        if (expRow && st.expiresAt) {
-                            expRow.style.display = 'flex';
-                            const d = new Date(st.expiresAt);
-                            if (expText) expText.textContent = d.toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-                        }
-                        if (redeemBox) {
-                            redeemBox.innerHTML = '<div class="p-3 rounded-lg bg-emerald-950/40 border border-emerald-800/50 text-emerald-300 text-xs font-medium flex items-center gap-2"><svg data-lucide="check-circle-2" class="w-4 h-4 text-emerald-400"></svg> Your 1-Year Tester Access is active and permanently tied to this account.</div>';
-                            if (window.lucide) lucide.createIcons();
-                        }
-                    } else {
-                        if (badge) {
-                            badge.className = 'tag tag-blue font-mono';
-                            badge.textContent = 'Standard Plan';
-                        }
-                        if (aiText && st.aiUsage) {
-                            aiText.textContent = st.aiUsage.remaining + ' / ' + st.aiUsage.limit + ' lifetime requests remaining';
-                        }
-                        if (expRow) expRow.style.display = 'none';
+                    if (st && (st.ok !== false)) {
+                        try {
+                            localStorage.setItem(TESTER_CACHE_KEY, JSON.stringify(st));
+                        } catch (e) {}
+                        renderEntitlementUI(st);
                     }
                 } catch (e) {
                     console.warn('[settings] loadTesterEntitlement error:', e.message);
@@ -962,6 +995,16 @@
                             msgRedeem.textContent = j.message || 'Tester access activated. Your 1-year BattleXJournal tester access is now active.';
                             msgRedeem.classList.remove('hidden');
                         }
+                        try {
+                            localStorage.setItem(TESTER_CACHE_KEY, JSON.stringify({
+                                ok: true,
+                                isTester: true,
+                                accessType: 'tester',
+                                expiresAt: j.expires_at,
+                                activatedAt: j.activated_at,
+                                aiUsage: { tier: 'tester', remaining: 100, limit: 100, used: 0 }
+                            }));
+                        } catch (e) {}
                         inputCode.value = '';
                         loadTesterEntitlement();
                         showToast('Tester access activated successfully!', true);
