@@ -32,7 +32,14 @@
     <script src="assets/theme-toggle.js"></script>
 
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+        }
 
         html, body {
             height: 100%;
@@ -40,6 +47,9 @@
             color: #f1f5f9;
             font-family: 'Plus Jakarta Sans', var(--tm-sans);
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
         }
 
         .num { font-family: 'JetBrains Mono', var(--tm-mono); font-variant-numeric: tabular-nums; }
@@ -70,7 +80,7 @@
             transition: background 0.15s, color 0.15s;
         }
         .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #ffffff; }
-        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: inset 2px 0 0 0 #ffffff !important; }
+        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: none !important; }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
         /* ---- Exact Cards matching reference screenshot ---- */
@@ -96,8 +106,7 @@
         }
 
         .divider {
-            border-top: 1px solid #161a24;
-            margin: 10px 0;
+            display: none !important;
         }
 
         /* Unit switch */

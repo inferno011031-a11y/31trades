@@ -73,7 +73,7 @@
             transition: background 0.15s, color 0.15s;
         }
         .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
-        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: inset 2px 0 0 0 #ffffff !important; }
+        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: none !important; }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
         .panel { background: var(--tm-card); border: 1px solid var(--tm-border); border-radius: 12px; }
@@ -2712,7 +2712,7 @@
                     (t.setup ? row('Planned setup', t.setup) : '') +
                     (t.session ? row('Planned session', t.session) : '') +
                     (stratEvidence && stratEvidence.length
-                        ? '<div class="mt-2 pt-2 border-t border-[var(--tm-border)]"><div class="text-[11px] text-[var(--tm-dim)] mb-1.5">Evidence you committed to</div><div class="flex flex-wrap gap-1.5">' +
+                        ? '<div class="mt-2 pt-2 border-t border-white/[0.04]"><div class="text-[11px] text-[var(--tm-dim)] mb-1.5">Evidence you committed to</div><div class="flex flex-wrap gap-1.5">' +
                             stratEvidence.map(e => '<span class="tag tag-gray !py-0.5 !px-2 text-[10.5px]">' + e + '</span>').join('') +
                           '</div></div>'
                         : '') +
@@ -2786,7 +2786,7 @@
                                 ).join('') +
                             '</div>' +
                         '</div>' +
-                        '<div class="grid grid-cols-2 gap-3 pt-2 border-t border-[var(--tm-border)]">' +
+                        '<div class="grid grid-cols-2 gap-3 pt-2 border-t border-white/[0.04]">' +
                             '<div>' +
                                 '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Emotion State</label>' +
                                 '<select id="detail-emotion-select" class="ctrl w-full text-[12px]">' +
@@ -2801,14 +2801,14 @@
                                 '</select>' +
                             '</div>' +
                         '</div>' +
-                        '<div class="pt-2 border-t border-[var(--tm-border)]">' +
+                        '<div class="pt-2 border-t border-white/[0.04]">' +
                             '<label class="text-[11px] font-semibold uppercase tracking-wider text-[var(--tm-muted)] mb-1 block">Chart / Screenshot URL</label>' +
                             '<div class="flex items-center gap-2">' +
                                 '<input type="url" id="detail-chart-input" class="ctrl flex-1 text-[12px]" placeholder="https://www.tradingview.com/x/... or chart URL" value="' + esc(t.chart_url || '') + '">' +
                                 (t.chart_url ? '<a href="' + esc(t.chart_url) + '" target="_blank" class="btn-ghost !py-1.5 !px-3 text-[12px]"><svg data-lucide="external-link" class="w-3.5 h-3.5"></svg> View</a>' : '') +
                             '</div>' +
                         '</div>' +
-                        '<div class="flex items-center justify-between pt-2 border-t border-[var(--tm-border)]">' +
+                        '<div class="flex items-center justify-between pt-2 border-t border-white/[0.04]">' +
                             '<button type="button" class="btn-ghost !py-1.5 !px-3 text-[12px]" onclick="clearTradeNotes(\'' + t.id + '\')">Clear</button>' +
                             '<button type="button" class="btn-primary !py-1.5 !px-4 text-[12.5px]" onclick="saveTradeNotes(\'' + t.id + '\')">' +
                                 '<svg data-lucide="save" class="w-3.5 h-3.5"></svg> Save Notes' +
