@@ -1817,38 +1817,73 @@
             window.openEntryModal = function(prefill) {
                 emotion = '';
                 editingId = prefill && prefill.id ? prefill.id : null;
-                if (prefill && (prefill.strategyType || (prefill.legs && prefill.legs.length > 0))) {
-                    window.switchEntryMode('options');
-                    if (prefill.legs) window.optionLegs = JSON.parse(JSON.stringify(prefill.legs));
-                    window.selectOptionPreset(prefill.strategyType || 'CUSTOM');
-                } else {
-                    window.switchEntryMode('fast');
+                
+                const modal = $('entry-modal');
+                const overlay = $('entry-overlay');
+                if (modal) modal.classList.add('open');
+                if (overlay) overlay.classList.add('open');
+
+                // Set datetime input
+                const now = new Date();
+                const pad = n => String(n).padStart(2, '0');
+                const dtStr = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + 'T' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+                if ($('e-date')) $('e-date').value = (prefill && prefill.date) ? prefill.date : dtStr;
+
+                // Symbol
+                const symVal = (prefill && prefill.symbol) || 'NAS100';
+                if ($('e-symbol')) $('e-symbol').value = symVal;
+                if ($('e-symbol-select')) $('e-symbol-select').value = symVal;
+
+                // Side
+                const dirVal = (prefill && prefill.dir) || 'Long';
+                if (typeof updateSideButtons === 'function') updateSideButtons(dirVal);
+
+                // PnL & Notes
+                if ($('e-pnl-manual')) $('e-pnl-manual').value = (prefill && prefill.pnl != null) ? prefill.pnl : '';
+                if ($('at-notes-textarea')) $('at-notes-textarea').value = (prefill && prefill.note) || '';
+
+                // Strategy
+                if (typeof populateUserStrategies === 'function') {
+                    populateUserStrategies((prefill && prefill.strategy) || 'None');
                 }
 
-                if (prefill) {
-                    $('e-symbol').value = prefill.symbol;
-                    if (assetPicker) assetPicker.syncFromSelect();
-                    $('e-dir').value = prefill.dir;
-                    $('e-setup').value = prefill.setup;
-                    if (prefill.strategy_id && $('e-strategy').querySelector('option[value="' + prefill.strategy_id + '"]')) {
-                        $('e-strategy').value = prefill.strategy_id;
-                    } else if (prefill.strategy) {
-                        $('e-strategy').value = prefill.strategy;
-                    }
-                    $('e-session').value = prefill.session;
-                    $('e-entry').value = prefill.entry != null ? prefill.entry : '';
-                    $('e-exit').value = prefill.exit != null ? prefill.exit : '';
-                    $('e-size').value = prefill.size != null ? prefill.size : '';
-                    $('e-risk').value = prefill.risk != null ? prefill.risk : '';
-                    if (prefill.note != null && $('e-thesis')) $('e-thesis').value = prefill.note;
+                // R:R ratio
+                if (typeof setRrRatio === 'function') {
+                    setRrRatio((prefill && prefill.r) ? Math.abs(prefill.r) : 2.0);
                 }
-                $('entry-overlay').classList.add('open');
-                $('entry-modal').classList.add('open');
-                if (entryMode === 'options') {
-                    window.updateOptionsCalc();
-                } else {
-                    updateCalc();
+
+                // Rating
+                const rat = (prefill && prefill.rating != null) ? prefill.rating : 0;
+                if ($('e-rating-slider')) $('e-rating-slider').value = rat;
+                if (typeof updateRatingView === 'function') updateRatingView(rat);
+
+                // Screenshot
+                currentAttachedScreenshot = (prefill && prefill.chart_url) || '';
+                if (typeof renderScreenshotAttachment === 'function') {
+                    renderScreenshotAttachment(currentAttachedScreenshot);
                 }
+
+                // Advanced execution fields prefill
+                if ($('e-entry')) $('e-entry').value = (prefill && prefill.entry != null) ? prefill.entry : '100.00';
+                if ($('e-exit')) $('e-exit').value = (prefill && prefill.exit != null) ? prefill.exit : (dirVal === 'Long' ? '102.50' : '97.50');
+                if ($('e-size')) $('e-size').value = (prefill && prefill.size != null) ? prefill.size : '1.00';
+                if ($('e-risk')) $('e-risk').value = (prefill && prefill.risk != null) ? prefill.risk : '100';
+                if ($('e-sl')) $('e-sl').value = (prefill && prefill.stop != null) ? prefill.stop : '98.00';
+                if ($('e-tp')) $('e-tp').value = (prefill && prefill.tp != null) ? prefill.tp : '105.00';
+
+                // Accounts
+                if (core && core.Accounts && $('e-account')) {
+                    $('e-account').innerHTML = core.Accounts.map(a => '<option value="' + a.id + '">' + a.name + '</option>').join('');
+                }
+
+                // Collapsible drawer resets
+                const advDrawer = $('adv-options-drawer');
+                const advChevron = $('adv-options-chevron');
+                if (advDrawer) advDrawer.classList.remove('open');
+                if (advChevron) advChevron.style.transform = 'rotate(0deg)';
+                if ($('inline-create-sym-box')) $('inline-create-sym-box').classList.add('hidden');
+                if ($('inline-strategy-create-box')) $('inline-strategy-create-box').classList.add('hidden');
+
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
             };
 
@@ -2145,76 +2180,53 @@
             };
 
             window.saveTrade = function() {
-                const accountId = $('e-account').value;
-                if (!accountId) {
+                const accountId = $('e-account') ? $('e-account').value : (core ? core.selectedAccountId() : undefined);
+                if (!accountId && (!core || !core.Accounts || !core.Accounts.length)) {
                     showToast('Create an account first — Strategy Lab → Accounts → Add account');
                     return;
                 }
-                const isOptions = entryMode === 'options';
-                let symbol = $('e-symbol').value;
-                let dir = $('e-dir').value;
-                let entry, exit, size, risk, pnl, sl, tp;
-                let strategyType = undefined;
-                let legs = undefined;
 
-                if (isOptions) {
-                    if (!window.optionLegs || window.optionLegs.length === 0) {
-                        showToast('Please configure at least one option leg');
-                        return;
-                    }
-                    const presetKey = $('opt-preset') ? $('opt-preset').value : 'BULL_CALL_SPREAD';
-                    strategyType = presetKey;
-                    legs = JSON.parse(JSON.stringify(window.optionLegs));
-                    const mult = parseFloat($('opt-multiplier') ? $('opt-multiplier').value : 100) || 100;
+                const symbol = $('e-symbol')?.value || $('e-symbol-select')?.value || 'NAS100';
+                const dir = $('e-dir')?.value || 'Long';
+                
+                // PnL & R
+                let pnl = 0;
+                const manualPnl = parseFloat($('e-pnl-manual')?.value);
+                const entry = parseFloat($('e-entry')?.value) || 100.00;
+                const exit = parseFloat($('e-exit')?.value) || (dir === 'Long' ? 102.50 : 97.50);
+                const size = parseFloat($('e-size')?.value) || 1.0;
+                const risk = parseFloat($('e-risk')?.value) || 100;
+                const sl = parseFloat($('e-sl')?.value);
+                const tp = parseFloat($('e-tp')?.value);
 
-                    let totalPnl = 0;
-                    let netEntryPrem = 0;
-                    let netExitPrem = 0;
-                    let totalContracts = 0;
-
-                    legs.forEach(l => {
-                        const isBuy = l.action === 'BUY';
-                        const legPnl = (isBuy ? (l.exitPrice - l.entryPrice) : (l.entryPrice - l.exitPrice)) * (l.contracts || 1) * mult;
-                        l.pnl = Math.round(legPnl * 100) / 100;
-                        totalPnl += l.pnl;
-                        netEntryPrem += (isBuy ? l.entryPrice : -l.entryPrice) * (l.contracts || 1);
-                        netExitPrem += (isBuy ? l.exitPrice : -l.exitPrice) * (l.contracts || 1);
-                        totalContracts += (l.contracts || 1);
-                    });
-
-                    entry = Math.round(Math.abs(netEntryPrem) * 100) / 100;
-                    exit = Math.round(Math.abs(netExitPrem) * 100) / 100;
-                    size = totalContracts;
-                    pnl = Math.round(totalPnl * 100) / 100;
-                    risk = Math.round(Math.abs(netEntryPrem >= 0 ? netEntryPrem * mult : Math.max(100, Math.abs(netEntryPrem) * mult * 1.5)));
-                    dir = totalPnl >= 0 ? 'Long' : 'Short';
-                    sl = undefined;
-                    tp = undefined;
-                } else {
-                    entry = parseFloat($('e-entry').value);
-                    exit = parseFloat($('e-exit').value);
-                    size = parseFloat($('e-size').value);
-                    risk = parseFloat($('e-risk').value) || 0;
-                    sl = parseFloat($('e-sl').value);
-                    tp = parseFloat($('e-tp').value);
-                    if (isNaN(entry) || isNaN(exit) || !size || size <= 0) {
-                        showToast('Enter symbol, direction, entry, exit and size');
-                        return;
-                    }
+                if (!isNaN(manualPnl)) {
+                    pnl = manualPnl;
+                } else if (!isNaN(entry) && !isNaN(exit) && size > 0 && typeof calcPnl === 'function') {
                     pnl = Math.round(calcPnl(symbol, dir, entry, exit, size) * 100) / 100;
                 }
+
+                const typedR = parseFloat($('at-rr-input')?.value);
+                const rVal = (!isNaN(typedR) && typedR > 0) 
+                    ? (pnl >= 0 ? typedR : -typedR) 
+                    : (risk > 0 ? Math.round((pnl / risk) * 100) / 100 : (pnl >= 0 ? 2.0 : -2.0));
+
+                const note = $('at-notes-textarea')?.value?.trim() || '';
+                const strategy = $('e-strategy')?.value || 'None';
+                const rating = parseFloat($('e-rating-slider')?.value) || 0;
+                const dt = $('e-date')?.value ? new Date($('e-date').value) : new Date();
+
                 const core = window.TradeMindCore;
                 try {
                     if (editingId) {
                         const id = editingId;
                         editingId = null;
-                        const stratSel = $('e-strategy');
                         const fields = {
                             symbol, dir, entry, exit, size, risk, pnl,
-                            r: calculatedR,
-                            strategy: stratSel && stratSel.selectedOptions[0] ? stratSel.selectedOptions[0].textContent : '—',
-                            strategy_id: stratSel && stratSel.value ? stratSel.value : undefined,
-                            note: $('at-notes-textarea') ? $('at-notes-textarea').value : '', chart_url: currentAttachedScreenshot || undefined, rating: parseFloat($('e-rating-slider').value) || 8.5
+                            r: rVal,
+                            strategy,
+                            note,
+                            chart_url: currentAttachedScreenshot || undefined,
+                            rating
                         };
                         const inLedger = core && core.Trades.some(t => t.id === id);
                         if (inLedger && core) {
@@ -2226,33 +2238,33 @@
                             if (idx >= 0) Object.assign(trades[idx], fields);
                         }
                         renderAll();
-                        showToast('Trade updated — risk, discipline & analytics recalculated');
+                        showToast('Trade updated successfully');
                     } else {
-                        const stratSel = $('e-strategy');
-                        core.logTradePipeline({
-                            account_id: accountId,
-                            ts: new Date(),
-                            symbol, dir, entry, exit, size, risk,
-                            pnl, r: calculatedR,
-                            setup: $('e-setup').value || '—',
-                            strategy: stratSel && stratSel.selectedOptions[0] ? stratSel.selectedOptions[0].textContent : '—',
-                            strategy_id: stratSel && stratSel.value ? stratSel.value : undefined,
-                            session: $('e-session').value || '—',
-                            timeframe: $('e-tf') ? $('e-tf').value : '5m',
-                            stop: isFinite(sl) ? sl : undefined,
-                            tp: isFinite(tp) ? tp : undefined,
-                            adherence: 'followed',
-                            reviewed: false,
-                            note: $('at-notes-textarea') ? $('at-notes-textarea').value : '', chart_url: currentAttachedScreenshot || undefined, rating: parseFloat($('e-rating-slider').value) || 8.5,
-                            emotion,
-                            strategyType,
-                            legs,
-                            assetType: isOptions ? 'OPTIONS' : undefined
-                        });
+                        if (core && typeof core.logTradePipeline === 'function') {
+                            core.logTradePipeline({
+                                account_id: accountId,
+                                ts: dt,
+                                symbol, dir, entry, exit, size, risk,
+                                pnl, r: rVal,
+                                setup: 'Breakout',
+                                strategy,
+                                session: $('e-session')?.value || 'New York',
+                                timeframe: '5m',
+                                stop: isFinite(sl) ? sl : undefined,
+                                tp: isFinite(tp) ? tp : undefined,
+                                adherence: 'followed',
+                                reviewed: false,
+                                note,
+                                chart_url: currentAttachedScreenshot || undefined,
+                                rating
+                            });
+                        }
+                        renderAll();
+                        showToast('Trade logged successfully');
                     }
                     closeEntryModal();
                 } catch (err) {
-                    showToast('⚠ Could not save trade — ' + (err && err.message ? err.message : err));
+                    showToast('⚠ Could not save trade: ' + (err && err.message ? err.message : err));
                     if (window.console) console.error('saveTrade failed:', err);
                 }
             };
