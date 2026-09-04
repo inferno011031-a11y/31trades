@@ -804,6 +804,33 @@
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
+    <script>
+        // Immediate fail-safe for opening / closing the Add Trade modal
+        window.openEntryModal = function(prefill) {
+            var m = document.getElementById('entry-modal');
+            var o = document.getElementById('entry-overlay');
+            if (m) {
+                m.classList.add('open');
+                m.style.cssText = 'display:flex !important; opacity:1 !important; visibility:visible !important; z-index:99999 !important; pointer-events:auto !important;';
+            }
+            if (o) {
+                o.classList.add('open');
+                o.style.cssText = 'display:block !important; opacity:1 !important; visibility:visible !important; z-index:99998 !important; pointer-events:auto !important;';
+            }
+        };
+        window.closeEntryModal = function() {
+            var m = document.getElementById('entry-modal');
+            var o = document.getElementById('entry-overlay');
+            if (m) {
+                m.classList.remove('open');
+                m.style.cssText = 'display:none !important; opacity:0 !important; visibility:hidden !important; pointer-events:none !important;';
+            }
+            if (o) {
+                o.classList.remove('open');
+                o.style.cssText = 'display:none !important; opacity:0 !important; visibility:hidden !important; pointer-events:none !important;';
+            }
+        };
+    </script>
 </head>
 <body>
 
@@ -948,7 +975,7 @@
                         <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
-                    <button id="btn-header-log-trade" class="btn-primary !py-2 !px-3.5 cursor-pointer" onclick="window.openEntryModal && window.openEntryModal()">
+                    <button id="btn-header-log-trade" class="btn-primary !py-2 !px-3.5 cursor-pointer" onclick="openEntryModal()">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </button>
                     <button class="account-select hide-when-collapsed" id="acc-chip">
@@ -973,7 +1000,7 @@
                             <a href="imports.html" class="btn-ghost">
                                 <svg data-lucide="file-up" class="w-4 h-4"></svg> Import
                             </a>
-                            <button id="btn-page-log-trade" class="btn-primary cursor-pointer" onclick="window.openEntryModal && window.openEntryModal()">
+                            <button id="btn-page-log-trade" class="btn-primary cursor-pointer" onclick="openEntryModal()">
                                 <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                             </button>
                         </div>
@@ -1093,7 +1120,7 @@
                                 <p class="text-[16px] font-bold text-[var(--tm-text)]" id="empty-title">Your journal is ready</p>
                                 <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed" id="empty-sub">Start logging your executions to unlock automated metrics, discipline audits, and AI behavioral analysis.</p>
                                 <div class="flex flex-wrap items-center justify-center gap-3 mt-6">
-                                    <button id="empty-log" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2 cursor-pointer" onclick="window.openEntryModal && window.openEntryModal()">
+                                    <button id="empty-log" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2 cursor-pointer" onclick="openEntryModal()">
                                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log First Trade
                                     </button>
                                     <a id="empty-import" href="imports.html" class="btn-ghost !py-2.5 !px-4 text-[13px] inline-flex items-center gap-2">
@@ -1414,6 +1441,7 @@
     <script>
         (function() {
             'use strict';
+            const core = window.TradeMindCore;
             // ============ HELPERS ============
             const $ = id => document.getElementById(id) || document.createElement("div");
 
@@ -1859,52 +1887,11 @@
                 showToast(n + ' trade' + (n === 1 ? '' : 's') + ' marked as reviewed');
             };
 
-            // ============ ENTRY MODAL ============
-            let assetPicker = null;
-            if (window.TMAssets && $('asset-picker-root')) {
-                assetPicker = window.TMAssets.createPicker({
-                    root: $('asset-picker-root'),
-                    select: $('e-symbol'),
-                    onPick: function() { updateCalc(); }
-                });
-            }
-
-            
-            
             // =========================================================================
             // COMPREHENSIVE ADD TRADE MODAL CONTROLLER (BUTTONS, R:R, CONFLUENCES, SAVE)
             // =========================================================================
             let currentAttachedScreenshot = '';
             let selectedConfluences = new Set();
-
-            // Strategy Confluences Catalog
-            const STRATEGY_CONFLUENCES = {
-                'Breakout': [
-                    'Higher timeframe key level / range identified',
-                    'Clean liquidity sweep before expansion',
-                    'Strong volume / momentum displacement candle',
-                    'Risk defined strictly at invalidation structure'
-                ],
-                'ICT Silver Bullet': [
-                    'Fair Value Gap (FVG) / Imbalance tagged',
-                    'Market Structure Shift (MSS) with displacement',
-                    'Liquidity pool raided (BSL / SSL)',
-                    'Killzone timing aligned (NY / London open)'
-                ],
-                'Order Block / FVG': [
-                    'High timeframe trend alignment confirmed',
-                    'Mitigation into unmitigated Order Block (OB)',
-                    'Premium / Discount equilibrium pricing (>0.5 Fib)',
-                    'Lower timeframe confirmation trigger'
-                ],
-                'Trend Continuation': [
-                    'Clear higher highs & higher lows structure',
-                    'Pullback into moving average or dynamic support',
-                    'Multi-timeframe trend alignment (1H & 5M)',
-                    'Target set at next significant liquidity pool'
-                ],
-                'None': []
-            };
 
             // 1. R:R Calculation & Visual Bar
             function setRrRatio(r, updateInput) {
@@ -1965,6 +1952,53 @@
                     setRrRatio(computedR, true);
                 }
             }
+            window.computeRrFromInputs = computeRrFromInputs;
+
+            function updateCalc() {
+                const sym = ($('e-symbol')?.value || $('e-symbol-select')?.value || 'NAS100');
+                if (typeof renderAssetInfo === 'function') renderAssetInfo(sym);
+                computeRrFromInputs();
+            }
+            window.updateCalc = updateCalc;
+
+            // ============ ENTRY MODAL ASSET PICKER ============
+            let assetPicker = null;
+            if (window.TMAssets && $('asset-picker-root')) {
+                assetPicker = window.TMAssets.createPicker({
+                    root: $('asset-picker-root'),
+                    select: $('e-symbol'),
+                    onPick: function() { updateCalc(); }
+                });
+            }
+
+            // Strategy Confluences Catalog
+            const STRATEGY_CONFLUENCES = {
+                'Breakout': [
+                    'Higher timeframe key level / range identified',
+                    'Clean liquidity sweep before expansion',
+                    'Strong volume / momentum displacement candle',
+                    'Risk defined strictly at invalidation structure'
+                ],
+                'ICT Silver Bullet': [
+                    'Fair Value Gap (FVG) / Imbalance tagged',
+                    'Market Structure Shift (MSS) with displacement',
+                    'Liquidity pool raided (BSL / SSL)',
+                    'Killzone timing aligned (NY / London open)'
+                ],
+                'Order Block / FVG': [
+                    'High timeframe trend alignment confirmed',
+                    'Mitigation into unmitigated Order Block (OB)',
+                    'Premium / Discount equilibrium pricing (>0.5 Fib)',
+                    'Lower timeframe confirmation trigger'
+                ],
+                'Trend Continuation': [
+                    'Clear higher highs & higher lows structure',
+                    'Pullback into moving average or dynamic support',
+                    'Multi-timeframe trend alignment (1H & 5M)',
+                    'Target set at next significant liquidity pool'
+                ],
+                'None': []
+            };
 
             // 2. Side Buttons (Buy / Sell)
             function updateSideButtons(dir) {
@@ -2315,6 +2349,14 @@
             window.saveTrade = saveTrade;
 
             // 8. ATTACH ALL DIRECT EVENT LISTENERS ONCE DOM READY
+            // Log Trade Trigger Buttons
+            const btnHeaderLog = $('btn-header-log-trade');
+            const btnPageLog = $('btn-page-log-trade');
+            const btnEmptyLog = $('empty-log');
+            if (btnHeaderLog) btnHeaderLog.addEventListener('click', () => openEntryModal());
+            if (btnPageLog) btnPageLog.addEventListener('click', () => openEntryModal());
+            if (btnEmptyLog) btnEmptyLog.addEventListener('click', () => openEntryModal());
+
             // Side Buttons
             const btnBuy = $('btn-side-buy');
             const btnSell = $('btn-side-sell');
@@ -2980,8 +3022,7 @@
             };
 
             // ============ EVENT BUS INTEGRATION ============
-            const core = window.TradeMindCore;
-            if (core) {
+            if (core && core.TradeMindBus && typeof core.TradeMindBus.subscribe === 'function') {
                 const syncAccounts = () => {
                     if (core.Accounts.length) {
                         const sel = core.selectedAccountId();
