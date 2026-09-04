@@ -60,6 +60,7 @@
 
     // ---- module-level state owned by the booted core ----
     let core = null;
+    let repo = null;
     let backendOnline = false;
     let _syncChain = Promise.resolve();
 
@@ -173,7 +174,7 @@
         const userId = (!BYPASS && session.user && session.user.id) ? session.user.id : 'anon';
         const STORAGE_KEY = '31trades.state.v1' + (BYPASS ? '' : '.' + userId);
 
-        const repo = window.localStorage ? {
+        repo = window.localStorage ? {
             load() {
                 try {
                     const raw = window.localStorage.getItem(STORAGE_KEY);

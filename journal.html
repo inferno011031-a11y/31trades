@@ -2308,8 +2308,13 @@
                         const inLedger = core && core.Trades.some(t => t.id === id);
                         if (inLedger && core) {
                             core.TradeService.update(id, fields);
-                            const idx = trades.findIndex(t => t.id === id);
-                            if (idx >= 0) trades[idx] = core.Trades.find(t => t.id === id);
+                            const canonical = loadCanonicalTrades();
+                            if (canonical) {
+                                trades = canonical;
+                            } else {
+                                const idx = trades.findIndex(t => t.id === id);
+                                if (idx >= 0) trades[idx] = core.Trades.find(t => t.id === id);
+                            }
                         } else {
                             const idx = trades.findIndex(t => t.id === id);
                             if (idx >= 0) Object.assign(trades[idx], fields);
@@ -2318,12 +2323,12 @@
                         showToast('Trade updated successfully');
                     } else {
                         if (core && typeof core.logTradePipeline === 'function') {
-                            core.logTradePipeline({
+                            const newTrade = core.logTradePipeline({
                                 account_id: accountId,
                                 ts: dt,
                                 symbol, dir, entry, exit, size, risk,
                                 pnl, r: rVal,
-                                setup: 'Breakout',
+                                setup: $('e-setup')?.value || strategy || 'Breakout',
                                 strategy,
                                 confluences,
                                 session: $('e-session')?.value || 'New York',
@@ -2336,6 +2341,12 @@
                                 chart_url: currentAttachedScreenshot || undefined,
                                 rating
                             });
+                            const canonical = loadCanonicalTrades();
+                            if (canonical) {
+                                trades = canonical;
+                            } else if (newTrade && !trades.some(t => t.id === newTrade.id)) {
+                                trades.unshift(newTrade);
+                            }
                         }
                         renderAll();
                         showToast('Trade logged successfully');
