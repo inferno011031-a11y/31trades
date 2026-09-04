@@ -1108,7 +1108,7 @@
                     <h2 class="at-title">Add Trade</h2>
                     <div class="at-sub">Enter the details of your trade.</div>
                 </div>
-                <button type="button" class="text-[#828b99] hover:text-white transition-colors p-1 cursor-pointer" onclick="closeEntryModal()" title="Close">
+                <button type="button" id="btn-close-add-trade" class="text-[#828b99] hover:text-white transition-colors p-1 cursor-pointer" onclick="closeEntryModal()" title="Close">
                     <svg data-lucide="x" class="w-4 h-4"></svg>
                 </button>
             </div>
@@ -1333,7 +1333,18 @@
                             </select>
                             <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b] absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none"></svg>
                         </div>
-                        <div class="at-field-sub">Select a strategy to set confluences.</div>
+                        <div class="at-field-sub" id="strat-confluence-sub">Select a strategy to set confluences.</div>
+
+                        <!-- Dynamic Confluences Checklist Box -->
+                        <div id="strat-confluences-wrap" class="hidden mt-2.5 p-3 rounded-xl bg-[#10131a] border border-[#1e2330] flex flex-col gap-2">
+                            <div class="flex items-center justify-between pb-1 border-b border-[#1c202c]">
+                                <span class="text-[11px] font-bold uppercase tracking-wider text-[#94a3b8]">Strategy Confluences</span>
+                                <span class="text-[11px] font-semibold text-emerald-400" id="confluence-checked-badge">0 checked</span>
+                            </div>
+                            <div id="confluences-checklist" class="flex flex-col gap-1.5 mt-1">
+                                <!-- Dynamic confluences items rendered here -->
+                            </div>
+                        </div>
 
                         <!-- Inline New Strategy Box -->
                         <div id="inline-strategy-create-box" class="hidden mt-2 p-2.5 rounded-lg bg-[#12141a] border border-[#1f2430]">
@@ -1351,7 +1362,7 @@
 
             <!-- Footer -->
             <div class="at-footer">
-                <button type="button" class="at-btn-cancel" onclick="closeEntryModal()">Cancel</button>
+                <button type="button" id="btn-cancel-add-trade" class="at-btn-cancel" onclick="closeEntryModal()">Cancel</button>
                 <button type="button" id="save-trade" class="at-btn-save" onclick="saveTrade()">Save</button>
             </div>
         </div>
@@ -1374,6 +1385,19 @@
             'use strict';
             // ============ HELPERS ============
             const $ = id => document.getElementById(id) || document.createElement("div");
+
+            function showToast(msg) {
+                const t = $('toast');
+                const m = $('toast-msg');
+                if (m) m.textContent = msg;
+                if (t) {
+                    t.classList.add('show');
+                    clearTimeout(window.__toastTimer);
+                    window.__toastTimer = setTimeout(() => t.classList.remove('show'), 2400);
+                }
+            }
+            window.showToast = showToast;
+
             const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
             const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
             const fmt = n => (n >= 0 ? '+' : '') + n.toFixed(2);
@@ -1814,9 +1838,253 @@
                 });
             }
 
-            window.openEntryModal = function(prefill) {
+            
+            
+            // =========================================================================
+            // COMPREHENSIVE ADD TRADE MODAL CONTROLLER (BUTTONS, R:R, CONFLUENCES, SAVE)
+            // =========================================================================
+            let currentAttachedScreenshot = '';
+            let selectedConfluences = new Set();
+
+            // Strategy Confluences Catalog
+            const STRATEGY_CONFLUENCES = {
+                'Breakout': [
+                    'Higher timeframe key level / range identified',
+                    'Clean liquidity sweep before expansion',
+                    'Strong volume / momentum displacement candle',
+                    'Risk defined strictly at invalidation structure'
+                ],
+                'ICT Silver Bullet': [
+                    'Fair Value Gap (FVG) / Imbalance tagged',
+                    'Market Structure Shift (MSS) with displacement',
+                    'Liquidity pool raided (BSL / SSL)',
+                    'Killzone timing aligned (NY / London open)'
+                ],
+                'Order Block / FVG': [
+                    'High timeframe trend alignment confirmed',
+                    'Mitigation into unmitigated Order Block (OB)',
+                    'Premium / Discount equilibrium pricing (>0.5 Fib)',
+                    'Lower timeframe confirmation trigger'
+                ],
+                'Trend Continuation': [
+                    'Clear higher highs & higher lows structure',
+                    'Pullback into moving average or dynamic support',
+                    'Multi-timeframe trend alignment (1H & 5M)',
+                    'Target set at next significant liquidity pool'
+                ],
+                'None': []
+            };
+
+            // 1. R:R Calculation & Visual Bar
+            function setRrRatio(r, updateInput) {
+                if (updateInput === undefined) updateInput = true;
+                if (isNaN(r) || r <= 0) r = 1.0;
+                r = Math.round(r * 10) / 10;
+                
+                const input = $('at-rr-input');
+                if (updateInput && input) {
+                    input.value = r.toFixed(1);
+                }
+
+                // Calculate visual bar widths: 1 (risk) vs r (reward)
+                const total = 1 + r;
+                const redPct = Math.max(10, Math.min(90, (1 / total) * 100));
+                const greenPct = 100 - redPct;
+
+                const redBar = $('rr-bar-red');
+                const greenBar = $('rr-bar-green');
+                if (redBar) redBar.style.width = redPct.toFixed(1) + '%';
+                if (greenBar) greenBar.style.width = greenPct.toFixed(1) + '%';
+            }
+            window.setRrRatio = setRrRatio;
+
+            // Reactive R:R computation from price and risk inputs
+            function computeRrFromInputs() {
+                const dir = $('e-dir')?.value || 'Long';
+                const entry = parseFloat($('e-entry')?.value);
+                const sl = parseFloat($('e-sl')?.value);
+                const tp = parseFloat($('e-tp')?.value);
+                const exit = parseFloat($('e-exit')?.value);
+                const risk = parseFloat($('e-risk')?.value) || 0;
+                const manualPnl = parseFloat($('e-pnl-manual')?.value);
+
+                // Priority 1: Direct Entry + Stop Loss + Take Profit/Exit
+                if (!isNaN(entry) && !isNaN(sl) && entry !== sl) {
+                    let riskDist = 0;
+                    let rewardDist = 0;
+
+                    if (dir === 'Long') {
+                        riskDist = entry - sl;
+                        rewardDist = (!isNaN(tp) && tp > entry) ? (tp - entry) : (!isNaN(exit) && exit > entry ? (exit - entry) : 0);
+                    } else {
+                        riskDist = sl - entry;
+                        rewardDist = (!isNaN(tp) && tp < entry) ? (entry - tp) : (!isNaN(exit) && exit < entry ? (entry - exit) : 0);
+                    }
+
+                    if (riskDist > 0 && rewardDist > 0) {
+                        const computedR = rewardDist / riskDist;
+                        setRrRatio(computedR, true);
+                        return;
+                    }
+                }
+
+                // Priority 2: Manual P&L and Risk ($)
+                if (risk > 0 && !isNaN(manualPnl) && manualPnl !== 0) {
+                    const computedR = Math.abs(manualPnl) / risk;
+                    setRrRatio(computedR, true);
+                }
+            }
+
+            // 2. Side Buttons (Buy / Sell)
+            function updateSideButtons(dir) {
+                const isLong = dir === 'Long';
+                const buyBtn = $('btn-side-buy');
+                const sellBtn = $('btn-side-sell');
+                const dirInput = $('e-dir');
+
+                if (dirInput) dirInput.value = isLong ? 'Long' : 'Short';
+
+                if (buyBtn && sellBtn) {
+                    if (isLong) {
+                        buyBtn.className = 'at-side-btn active-buy';
+                        sellBtn.className = 'at-side-btn';
+                    } else {
+                        buyBtn.className = 'at-side-btn';
+                        sellBtn.className = 'at-side-btn active-sell';
+                    }
+                }
+                computeRrFromInputs();
+            }
+            window.updateSideButtons = updateSideButtons;
+
+            // 3. Rating Slider & View
+            function updateRatingView(val) {
+                val = parseFloat(val) || 0;
+                const lbl = $('rating-val-label');
+                const fill = $('rating-fill-bar');
+                if (lbl) lbl.textContent = val > 0 ? val.toFixed(1) : '-';
+                if (fill) fill.style.width = Math.min(100, Math.max(0, (val / 10) * 100)) + '%';
+            }
+            window.updateRatingView = updateRatingView;
+
+            // 4. Strategy & Dynamic Confluences
+            function renderStrategyConfluences(stratName) {
+                const wrap = $('strat-confluences-wrap');
+                const sub = $('strat-confluence-sub');
+                const list = $('confluences-checklist');
+                const badge = $('confluence-checked-badge');
+
+                if (!wrap || !list) return;
+
+                if (!stratName || stratName === 'None') {
+                    wrap.classList.add('hidden');
+                    if (sub) sub.classList.remove('hidden');
+                    selectedConfluences.clear();
+                    return;
+                }
+
+                if (sub) sub.classList.add('hidden');
+                wrap.classList.remove('hidden');
+
+                // Get items for strategy, fallback to generic rules
+                const items = STRATEGY_CONFLUENCES[stratName] || [
+                    'Higher timeframe bias / trend confirmed',
+                    'Key support / resistance or liquidity sweep',
+                    'Clean entry trigger candle / pattern',
+                    'Risk / reward minimum 1:2 verified'
+                ];
+
+                list.innerHTML = items.map((text) => {
+                    const isChecked = selectedConfluences.has(text);
+                    return `
+                        <label class="flex items-center gap-2.5 p-1.5 rounded-lg hover:bg-white/[0.04] cursor-pointer text-[12.5px] text-[#cbd5e1] select-none transition-colors">
+                            <input type="checkbox" class="confluence-cb accent-emerald-500 rounded w-3.5 h-3.5 cursor-pointer" data-text="${esc(text)}" ${isChecked ? 'checked' : ''}>
+                            <span class="flex-1">${esc(text)}</span>
+                        </label>
+                    `;
+                }).join('');
+
+                updateConfluenceBadge();
+
+                // Wire up checkbox toggles
+                list.querySelectorAll('.confluence-cb').forEach(cb => {
+                    cb.addEventListener('change', (e) => {
+                        const itemText = e.target.getAttribute('data-text');
+                        if (e.target.checked) {
+                            selectedConfluences.add(itemText);
+                        } else {
+                            selectedConfluences.delete(itemText);
+                        }
+                        updateConfluenceBadge();
+                    });
+                });
+            }
+
+            function updateConfluenceBadge() {
+                const badge = $('confluence-checked-badge');
+                if (badge) {
+                    const count = selectedConfluences.size;
+                    const total = document.querySelectorAll('.confluence-cb').length;
+                    badge.textContent = count + ' of ' + total + ' met';
+                }
+            }
+
+            function populateUserStrategies(selectVal) {
+                const select = $('e-strategy');
+                if (!select) return;
+
+                const customStrats = JSON.parse(localStorage.getItem('bx_custom_strategies') || '[]');
+                let strats = ['None'];
+
+                if (core && core.Strategies && core.Strategies.length) {
+                    strats = strats.concat(core.Strategies.map(s => s.name || s.title || s));
+                }
+                if (core && core.StrategyMaster && core.StrategyMaster.length) {
+                    strats = strats.concat(core.StrategyMaster.map(s => s.name || s.title || s));
+                }
+                strats = strats.concat(customStrats);
+                strats = [...new Set(strats.filter(Boolean))];
+
+                select.innerHTML = strats.map(s => `<option value="${esc(s)}"${s === selectVal ? ' selected' : ''}>${esc(s)}</option>`).join('');
+                renderStrategyConfluences(select.value);
+            }
+            window.populateUserStrategies = populateUserStrategies;
+
+            // 5. Screenshot Attachment
+            function renderScreenshotAttachment(url) {
+                const empty = $('at-dropzone-empty');
+                const prev = $('at-dropzone-preview');
+                const img = $('at-dropzone-img');
+                if (!empty || !prev || !img) return;
+
+                if (url) {
+                    empty.classList.add('hidden');
+                    prev.classList.remove('hidden');
+                    img.src = url;
+                } else {
+                    empty.classList.remove('hidden');
+                    prev.classList.add('hidden');
+                    img.src = '';
+                }
+            }
+            window.renderScreenshotAttachment = renderScreenshotAttachment;
+
+            function handleScreenshotFile(file) {
+                if (!file || !file.type.startsWith('image/')) return;
+                const reader = new FileReader();
+                reader.onload = e => {
+                    currentAttachedScreenshot = e.target.result;
+                    renderScreenshotAttachment(currentAttachedScreenshot);
+                    showToast('Screenshot attached');
+                };
+                reader.readAsDataURL(file);
+            }
+
+            // 6. Modal Open / Close (Hoisted Named Functions)
+            function openEntryModal(prefill) {
                 emotion = '';
                 editingId = prefill && prefill.id ? prefill.id : null;
+                selectedConfluences.clear();
                 
                 const modal = $('entry-modal');
                 const overlay = $('entry-overlay');
@@ -1836,32 +2104,33 @@
 
                 // Side
                 const dirVal = (prefill && prefill.dir) || 'Long';
-                if (typeof updateSideButtons === 'function') updateSideButtons(dirVal);
+                updateSideButtons(dirVal);
 
                 // PnL & Notes
                 if ($('e-pnl-manual')) $('e-pnl-manual').value = (prefill && prefill.pnl != null) ? prefill.pnl : '';
                 if ($('at-notes-textarea')) $('at-notes-textarea').value = (prefill && prefill.note) || '';
 
-                // Strategy
-                if (typeof populateUserStrategies === 'function') {
-                    populateUserStrategies((prefill && prefill.strategy) || 'None');
+                // Strategy & Confluences
+                const stratVal = (prefill && prefill.strategy) || 'None';
+                populateUserStrategies(stratVal);
+
+                // If trade had saved confluences, restore them
+                if (prefill && Array.isArray(prefill.confluences)) {
+                    prefill.confluences.forEach(c => selectedConfluences.add(c));
+                    renderStrategyConfluences(stratVal);
                 }
 
                 // R:R ratio
-                if (typeof setRrRatio === 'function') {
-                    setRrRatio((prefill && prefill.r) ? Math.abs(prefill.r) : 2.0);
-                }
+                setRrRatio((prefill && prefill.r) ? Math.abs(prefill.r) : 2.0);
 
                 // Rating
                 const rat = (prefill && prefill.rating != null) ? prefill.rating : 0;
                 if ($('e-rating-slider')) $('e-rating-slider').value = rat;
-                if (typeof updateRatingView === 'function') updateRatingView(rat);
+                updateRatingView(rat);
 
                 // Screenshot
                 currentAttachedScreenshot = (prefill && prefill.chart_url) || '';
-                if (typeof renderScreenshotAttachment === 'function') {
-                    renderScreenshotAttachment(currentAttachedScreenshot);
-                }
+                renderScreenshotAttachment(currentAttachedScreenshot);
 
                 // Advanced execution fields prefill
                 if ($('e-entry')) $('e-entry').value = (prefill && prefill.entry != null) ? prefill.entry : '100.00';
@@ -1876,7 +2145,7 @@
                     $('e-account').innerHTML = core.Accounts.map(a => '<option value="' + a.id + '">' + a.name + '</option>').join('');
                 }
 
-                // Collapsible drawer resets
+                // Reset drawers
                 const advDrawer = $('adv-options-drawer');
                 const advChevron = $('adv-options-chevron');
                 if (advDrawer) advDrawer.classList.remove('open');
@@ -1885,302 +2154,19 @@
                 if ($('inline-strategy-create-box')) $('inline-strategy-create-box').classList.add('hidden');
 
                 if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-            };
-
-            window.closeEntryModal = function() {
-                $('entry-overlay').classList.remove('open');
-                $('entry-modal').classList.remove('open');
-            };
-
-            window.switchEntryMode = function(mode) {
-                entryMode = mode;
-                $('tab-fast').classList.toggle('active', mode === 'fast');
-                $('tab-detailed').classList.toggle('active', mode === 'detailed');
-                $('tab-options').classList.toggle('active', mode === 'options');
-                $('detailed-fields').classList.toggle('hidden', mode !== 'detailed');
-                $('single-execution-fields').classList.toggle('hidden', mode === 'options');
-                $('options-multi-fields').classList.toggle('hidden', mode !== 'options');
-                if (mode === 'options') {
-                    if (!window.optionLegs || window.optionLegs.length === 0) {
-                        window.applyOptionPreset($('opt-preset') ? $('opt-preset').value : 'BULL_CALL_SPREAD');
-                    } else {
-                        window.renderOptionLegs();
-                    }
-                } else {
-                    updateCalc();
-                }
-            };
-
-            document.querySelectorAll('[data-emotion]').forEach(b => {
-                b.addEventListener('click', () => {
-                    emotion = b.dataset.emotion;
-                    document.querySelectorAll('[data-emotion]').forEach(x => x.classList.toggle('selected', x === b));
-                });
-            });
-
-            ['e-symbol','e-dir','e-entry','e-exit','e-size','e-risk','e-sl','e-tp','e-time-in','e-time-out'].forEach(id =>
-                $(id).addEventListener('input', updateCalc));
-
-            function updateCalc() {
-                const symbol = $('e-symbol').value;
-                const dir = $('e-dir').value;
-                const entry = parseFloat($('e-entry').value);
-                const exit = parseFloat($('e-exit').value);
-                const size = parseFloat($('e-size').value) || 0;
-                const risk = parseFloat($('e-risk').value) || 0;
-                const info = renderAssetInfo(symbol);
-                const slVal = parseFloat($('e-sl').value);
-                const hintEl = $('size-hint');
-                if (hintEl) {
-                    const core = window.TradeMindCore;
-                    const suggested = (risk > 0 && !isNaN(entry) && !isNaN(slVal) && entry !== slVal && core && typeof core.calcPositionSize === 'function')
-                        ? core.calcPositionSize(symbol, risk, entry, slVal)
-                        : null;
-                    if (suggested != null) {
-                        hintEl.textContent = size > 0 && Math.abs(size - suggested) < 0.0001
-                            ? suggested + ' ' + info.sizeLabel.toLowerCase() + ' — matches risk budget'
-                            : 'Suggested: ' + suggested + ' ' + info.sizeLabel.toLowerCase() + ' for $' + risk + ' risk at this stop';
-                    } else {
-                        hintEl.textContent = '';
-                    }
-                }
-
-                if (!isNaN(entry) && !isNaN(exit) && size > 0) {
-                    const pnl = calcPnl(symbol, dir, entry, exit, size);
-                    const r = risk > 0 ? pnl / risk : 0;
-                    $('calc-pnl').textContent = fmt(pnl);
-                    $('calc-pnl').className = 'num text-[16px] font-bold ' + (pnl > 0 ? 'text-[var(--tm-green)]' : pnl < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]');
-                    $('calc-r').textContent = (r >= 0 ? '+' : '') + r.toFixed(2) + 'R';
-                    $('calc-r').className = 'num text-[16px] font-bold ' + (r > 0 ? 'text-[var(--tm-green)]' : r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-text)]');
-                } else {
-                    $('calc-pnl').textContent = '—';
-                    $('calc-r').textContent = '—';
-                }
-
-                const sl = parseFloat($('e-sl').value);
-                const tp = parseFloat($('e-tp').value);
-                if (!isNaN(sl) && !isNaN(tp) && !isNaN(entry) && sl !== entry) {
-                    const rr = Math.abs((tp - entry) / (entry - sl));
-                    $('calc-rr').textContent = '1 : ' + rr.toFixed(2);
-                } else {
-                    $('calc-rr').textContent = '—';
-                }
-
-                const ti = $('e-time-in').value, to = $('e-time-out').value;
-                if (ti && to) {
-                    const [ih, im] = ti.split(':').map(Number);
-                    const [oh, om] = to.split(':').map(Number);
-                    let mins = (oh * 60 + om) - (ih * 60 + im);
-                    if (mins < 0) mins += 1440;
-                    $('calc-dur').textContent = mins < 60 ? mins + ' min' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm';
-                } else {
-                    $('calc-dur').textContent = '—';
-                }
             }
+            window.openEntryModal = openEntryModal;
 
-            
-            // ============ OPTIONS MULTI-LEG LOGIC ============
-            window.optionLegs = [];
+            function closeEntryModal() {
+                $('entry-overlay')?.classList.remove('open');
+                $('entry-modal')?.classList.remove('open');
+            }
+            window.closeEntryModal = closeEntryModal;
 
-            const PRESET_TEMPLATES = {
-                BULL_CALL_SPREAD: [
-                    { action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 4.20, exitPrice: 6.80, contracts: 1 },
-                    { action: 'SELL', optionType: 'CALL', strike: 5025, expiry: '', entryPrice: 1.80, exitPrice: 0.90, contracts: 1 }
-                ],
-                BEAR_PUT_SPREAD: [
-                    { action: 'BUY', optionType: 'PUT', strike: 5000, expiry: '', entryPrice: 4.50, exitPrice: 7.20, contracts: 1 },
-                    { action: 'SELL', optionType: 'PUT', strike: 4975, expiry: '', entryPrice: 2.10, exitPrice: 0.80, contracts: 1 }
-                ],
-                STRADDLE: [
-                    { action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 3.20, exitPrice: 5.50, contracts: 1 },
-                    { action: 'BUY', optionType: 'PUT', strike: 5000, expiry: '', entryPrice: 3.10, exitPrice: 0.60, contracts: 1 }
-                ],
-                STRANGLE: [
-                    { action: 'BUY', optionType: 'CALL', strike: 5030, expiry: '', entryPrice: 2.10, exitPrice: 4.80, contracts: 1 },
-                    { action: 'BUY', optionType: 'PUT', strike: 4970, expiry: '', entryPrice: 2.00, exitPrice: 0.50, contracts: 1 }
-                ],
-                IRON_CONDOR: [
-                    { action: 'BUY', optionType: 'PUT', strike: 4940, expiry: '', entryPrice: 0.80, exitPrice: 0.10, contracts: 1 },
-                    { action: 'SELL', optionType: 'PUT', strike: 4960, expiry: '', entryPrice: 1.90, exitPrice: 0.30, contracts: 1 },
-                    { action: 'SELL', optionType: 'CALL', strike: 5040, expiry: '', entryPrice: 1.80, exitPrice: 0.25, contracts: 1 },
-                    { action: 'BUY', optionType: 'CALL', strike: 5060, expiry: '', entryPrice: 0.70, exitPrice: 0.05, contracts: 1 }
-                ],
-                COVERED_CALL: [
-                    { action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 5000, exitPrice: 5050, contracts: 1 },
-                    { action: 'SELL', optionType: 'CALL', strike: 5080, expiry: '', entryPrice: 2.40, exitPrice: 0.50, contracts: 1 }
-                ],
-                CUSTOM: [
-                    { action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 2.50, exitPrice: 4.00, contracts: 1 }
-                ]
-            };
-
-            window.applyOptionPreset = function(presetKey) {
-                const tpl = PRESET_TEMPLATES[presetKey] || PRESET_TEMPLATES.BULL_CALL_SPREAD;
-                window.optionLegs = JSON.parse(JSON.stringify(tpl));
-                window.renderOptionLegs();
-            };
-
-            window.addOptionLeg = function() {
-                if (window.optionLegs.length >= 4) {
-                    showToast('Maximum 4 legs supported per options position');
-                    return;
-                }
-                window.optionLegs.push({ action: 'BUY', optionType: 'CALL', strike: 5000, expiry: '', entryPrice: 1.00, exitPrice: 1.50, contracts: 1 });
-                window.renderOptionLegs();
-            };
-
-            window.removeOptionLeg = function(index) {
-                if (window.optionLegs.length <= 1) {
-                    showToast('At least 1 leg required');
-                    return;
-                }
-                window.optionLegs.splice(index, 1);
-                window.renderOptionLegs();
-            };
-
-            window.updateOptionLegField = function(index, field, value) {
-                if (!window.optionLegs[index]) return;
-                if (field === 'strike' || field === 'entryPrice' || field === 'exitPrice' || field === 'contracts') {
-                    window.optionLegs[index][field] = parseFloat(value) || 0;
-                } else {
-                    window.optionLegs[index][field] = value;
-                }
-                window.updateOptionsCalc();
-            };
-
-            window.selectOptionPreset = function(presetKey) {
-                const sel = $('opt-preset');
-                if (sel) sel.value = presetKey;
-                document.querySelectorAll('.opt-pill').forEach(pill => {
-                    const fnAttr = pill.getAttribute('onclick') || '';
-                    pill.classList.toggle('active', fnAttr.includes(presetKey));
-                });
-                window.applyOptionPreset(presetKey);
-            };
-
-            window.toggleLegAction = function(idx) {
-                if (!window.optionLegs[idx]) return;
-                window.optionLegs[idx].action = window.optionLegs[idx].action === 'BUY' ? 'SELL' : 'BUY';
-                window.renderOptionLegs();
-            };
-
-            window.toggleLegType = function(idx) {
-                if (!window.optionLegs[idx]) return;
-                window.optionLegs[idx].optionType = window.optionLegs[idx].optionType === 'CALL' ? 'PUT' : 'CALL';
-                window.renderOptionLegs();
-            };
-
-            window.renderOptionLegs = function() {
-                const host = $('options-legs-rows');
-                if (!host) return;
-                host.innerHTML = '';
-
-                // Update toolbar labels
-                const presetKey = $('opt-preset') ? $('opt-preset').value : 'BULL_CALL_SPREAD';
-                const readableName = presetKey.replace(/_/g, ' ');
-                const elTitle = $('opt-active-name');
-                const elBadge = $('opt-legs-count-badge');
-                if (elTitle) elTitle.textContent = readableName;
-                if (elBadge) elBadge.textContent = window.optionLegs.length + ' Leg' + (window.optionLegs.length > 1 ? 's' : '');
-
-                window.optionLegs.forEach((leg, idx) => {
-                    const tr = document.createElement('tr');
-                    tr.className = 'hover:bg-white/[0.02] transition-colors';
-                    tr.innerHTML =
-                        '<td class="py-2 px-2.5 text-center font-mono text-[11px] text-[var(--tm-dim)] font-bold">L' + (idx + 1) + '</td>' +
-                        '<td class="py-2 px-2.5">' +
-                            '<button type="button" class="opt-toggle-btn ' + (leg.action === 'BUY' ? 'opt-toggle-buy' : 'opt-toggle-sell') + '" onclick="window.toggleLegAction(' + idx + ')">' +
-                                leg.action +
-                            '</button>' +
-                        '</td>' +
-                        '<td class="py-2 px-2.5">' +
-                            '<button type="button" class="opt-toggle-btn ' + (leg.optionType === 'CALL' ? 'opt-toggle-call' : 'opt-toggle-put') + '" onclick="window.toggleLegType(' + idx + ')">' +
-                                leg.optionType +
-                            '</button>' +
-                        '</td>' +
-                        '<td class="py-2 px-2.5">' +
-                            '<input type="number" step="1" class="field num !py-1 !px-2 text-[12px] h-7 bg-white/[0.04] text-white border-white/10 w-24" value="' + leg.strike + '" oninput="window.updateOptionLegField(' + idx + ', \'strike\', this.value)">' +
-                        '</td>' +
-                        '<td class="py-2 px-2.5">' +
-                            '<input type="number" step="0.01" class="field num !py-1 !px-2 text-[12px] h-7 bg-white/[0.04] text-white border-white/10 w-24" value="' + leg.entryPrice + '" oninput="window.updateOptionLegField(' + idx + ', \'entryPrice\', this.value)">' +
-                        '</td>' +
-                        '<td class="py-2 px-2.5">' +
-                            '<input type="number" step="0.01" class="field num !py-1 !px-2 text-[12px] h-7 bg-white/[0.04] text-white border-white/10 w-24" value="' + leg.exitPrice + '" oninput="window.updateOptionLegField(' + idx + ', \'exitPrice\', this.value)">' +
-                        '</td>' +
-                        '<td class="py-2 px-2.5 text-center">' +
-                            '<input type="number" step="1" min="1" class="field num !py-1 !px-1.5 text-[12px] h-7 bg-white/[0.04] text-white border-white/10 w-14 text-center font-bold" value="' + leg.contracts + '" oninput="window.updateOptionLegField(' + idx + ', \'contracts\', this.value)">' +
-                        '</td>' +
-                        '<td class="py-2 px-2.5 text-right">' +
-                            '<span id="leg-pnl-' + idx + '" class="num font-bold text-[12px]"></span>' +
-                        '</td>' +
-                        '<td class="py-2 px-1 text-center">' +
-                            '<button type="button" class="btn-ghost !p-1 text-zinc-500 hover:text-rose-400 rounded transition-colors" onclick="window.removeOptionLeg(' + idx + ')" title="Remove leg">' +
-                                '<svg data-lucide="trash-2" class="w-3.5 h-3.5"></svg>' +
-                            '</button>' +
-                        '</td>';
-                    host.appendChild(tr);
-                });
-                if (window.lucide && typeof window.lucide.createIcons === 'function') window.lucide.createIcons();
-                window.updateOptionsCalc();
-            };
-
-            window.updateOptionsCalc = function() {
-                const mult = parseFloat($('opt-multiplier') ? $('opt-multiplier').value : 100) || 100;
-                let netEntryPrem = 0;
-                let netExitPrem = 0;
-                let totalPnl = 0;
-
-                window.optionLegs.forEach((leg, idx) => {
-                    const isBuy = leg.action === 'BUY';
-                    const legPnl = (isBuy ? (leg.exitPrice - leg.entryPrice) : (leg.entryPrice - leg.exitPrice)) * (leg.contracts || 1) * mult;
-                    leg.pnl = Math.round(legPnl * 100) / 100;
-                    totalPnl += leg.pnl;
-
-                    const entryContrib = (isBuy ? leg.entryPrice : -leg.entryPrice) * (leg.contracts || 1);
-                    const exitContrib = (isBuy ? leg.exitPrice : -leg.exitPrice) * (leg.contracts || 1);
-                    netEntryPrem += entryContrib;
-                    netExitPrem += exitContrib;
-
-                    const elPnl = $('leg-pnl-' + idx);
-                    if (elPnl) {
-                        elPnl.className = 'num font-bold text-[12px] ' + (leg.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400');
-                        elPnl.textContent = (leg.pnl >= 0 ? '+' : '-') + '$' + Math.abs(leg.pnl).toFixed(1);
-                    }
-                });
-
-                totalPnl = Math.round(totalPnl * 100) / 100;
-                const isDebit = netEntryPrem >= 0;
-                const maxRisk = Math.round(Math.abs(isDebit ? netEntryPrem * mult : Math.max(100, (Math.abs(netEntryPrem) * mult) * 1.5)));
-
-                const elEntry = $('opt-readout-entry');
-                const elExit = $('opt-readout-exit');
-                const elPnl = $('opt-readout-pnl');
-                const elRisk = $('opt-readout-risk');
-
-                if (elEntry) elEntry.textContent = (isDebit ? 'Debit $' : 'Credit $') + Math.abs(netEntryPrem).toFixed(2);
-                if (elExit) elExit.textContent = (netExitPrem >= 0 ? 'Recv $' : 'Cost $') + Math.abs(netExitPrem).toFixed(2);
-                if (elPnl) {
-                    elPnl.className = 'text-[14px] font-bold font-mono ' + (totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400');
-                    elPnl.textContent = (totalPnl >= 0 ? '+' : '-') + '$' + Math.abs(totalPnl).toFixed(2);
-                }
-                if (elRisk) elRisk.textContent = '$' + maxRisk;
-
-                // Sync with canonical readouts
-                const pnlEl = $('calc-pnl');
-                const rEl = $('calc-r');
-                if (pnlEl) {
-                    pnlEl.textContent = (totalPnl >= 0 ? '+' : '-') + '$' + Math.abs(totalPnl).toFixed(2);
-                    pnlEl.className = 'num text-[16px] font-bold ' + (totalPnl >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]');
-                }
-                if (rEl) {
-                    const r = maxRisk > 0 ? (totalPnl / maxRisk) : 0;
-                    rEl.textContent = (r >= 0 ? '+' : '') + r.toFixed(2) + 'R';
-                    rEl.className = 'num text-[16px] font-bold ' + (r >= 0 ? 'text-[var(--tm-green)]' : 'text-[var(--tm-red)]');
-                }
-            };
-
-            window.saveTrade = function() {
-                const accountId = $('e-account') ? $('e-account').value : (core ? core.selectedAccountId() : undefined);
+            // 7. Form Submission & State Handling (Hoisted Named Function)
+            function saveTrade() {
+                const core = window.TradeMindCore;
+                const accountId = $('e-account')?.value || (core && core.selectedAccountId ? core.selectedAccountId() : undefined) || (core?.Accounts?.[0]?.id);
                 if (!accountId && (!core || !core.Accounts || !core.Accounts.length)) {
                     showToast('Create an account first — Strategy Lab → Accounts → Add account');
                     return;
@@ -2212,10 +2198,9 @@
 
                 const note = $('at-notes-textarea')?.value?.trim() || '';
                 const strategy = $('e-strategy')?.value || 'None';
+                const confluences = Array.from(selectedConfluences);
                 const rating = parseFloat($('e-rating-slider')?.value) || 0;
                 const dt = $('e-date')?.value ? new Date($('e-date').value) : new Date();
-
-                const core = window.TradeMindCore;
                 try {
                     if (editingId) {
                         const id = editingId;
@@ -2224,6 +2209,7 @@
                             symbol, dir, entry, exit, size, risk, pnl,
                             r: rVal,
                             strategy,
+                            confluences,
                             note,
                             chart_url: currentAttachedScreenshot || undefined,
                             rating
@@ -2248,6 +2234,7 @@
                                 pnl, r: rVal,
                                 setup: 'Breakout',
                                 strategy,
+                                confluences,
                                 session: $('e-session')?.value || 'New York',
                                 timeframe: '5m',
                                 stop: isFinite(sl) ? sl : undefined,
@@ -2267,7 +2254,217 @@
                     showToast('⚠ Could not save trade: ' + (err && err.message ? err.message : err));
                     if (window.console) console.error('saveTrade failed:', err);
                 }
-            };
+            }
+            window.saveTrade = saveTrade;
+
+            // 8. ATTACH ALL DIRECT EVENT LISTENERS ONCE DOM READY
+            // Side Buttons
+            const btnBuy = $('btn-side-buy');
+            const btnSell = $('btn-side-sell');
+            if (btnBuy) btnBuy.addEventListener('click', () => updateSideButtons('Long'));
+            if (btnSell) btnSell.addEventListener('click', () => updateSideButtons('Short'));
+
+            // Modal Close & Cancel Buttons
+            const btnCloseModal = $('btn-close-add-trade');
+            const btnCancelModal = $('btn-cancel-add-trade');
+            const btnSaveModal = $('save-trade');
+            if (btnCloseModal) btnCloseModal.addEventListener('click', closeEntryModal);
+            if (btnCancelModal) btnCancelModal.addEventListener('click', closeEntryModal);
+            if (btnSaveModal) btnSaveModal.addEventListener('click', saveTrade);
+
+            // Symbol Select & Inline Creator
+            const symSelect = $('e-symbol-select');
+            if (symSelect) {
+                symSelect.addEventListener('change', () => {
+                    const val = symSelect.value;
+                    if ($('e-symbol')) $('e-symbol').value = val;
+                    computeRrFromInputs();
+                });
+            }
+
+            const btnToggleSym = $('btn-toggle-create-sym');
+            const boxSym = $('inline-create-sym-box');
+            const inputNewSym = $('inline-new-sym-input');
+            const btnConfirmSym = $('btn-confirm-inline-sym');
+            const btnCancelSym = $('btn-cancel-inline-sym');
+
+            if (btnToggleSym && boxSym) {
+                btnToggleSym.addEventListener('click', () => {
+                    boxSym.classList.toggle('hidden');
+                    if (!boxSym.classList.contains('hidden') && inputNewSym) {
+                        inputNewSym.focus();
+                    }
+                });
+            }
+            if (btnConfirmSym && inputNewSym && symSelect) {
+                btnConfirmSym.addEventListener('click', () => {
+                    const val = inputNewSym.value.trim().toUpperCase();
+                    if (!val) return;
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    opt.selected = true;
+                    symSelect.appendChild(opt);
+                    if ($('e-symbol')) $('e-symbol').value = val;
+                    inputNewSym.value = '';
+                    boxSym.classList.add('hidden');
+                    showToast('Symbol ' + val + ' added');
+                });
+            }
+            if (btnCancelSym && boxSym) {
+                btnCancelSym.addEventListener('click', () => {
+                    boxSym.classList.add('hidden');
+                });
+            }
+
+            // Strategy Select & Confluences Trigger & Inline Strategy Creator
+            const stratSelect = $('e-strategy');
+            if (stratSelect) {
+                stratSelect.addEventListener('change', () => {
+                    renderStrategyConfluences(stratSelect.value);
+                });
+            }
+
+            const btnAddStrat = $('btn-add-new-strategy');
+            const boxStrat = $('inline-strategy-create-box');
+            const inputNewStrat = $('inline-strat-name-input');
+            const btnConfirmStrat = $('btn-save-inline-strat');
+            const btnCancelStrat = $('btn-cancel-inline-strat');
+
+            if (btnAddStrat && boxStrat) {
+                btnAddStrat.addEventListener('click', () => {
+                    boxStrat.classList.toggle('hidden');
+                    if (!boxStrat.classList.contains('hidden') && inputNewStrat) {
+                        inputNewStrat.focus();
+                    }
+                });
+            }
+            if (btnConfirmStrat && inputNewStrat && stratSelect) {
+                btnConfirmStrat.addEventListener('click', () => {
+                    const name = inputNewStrat.value.trim();
+                    if (!name) return;
+                    const saved = JSON.parse(localStorage.getItem('bx_custom_strategies') || '[]');
+                    if (!saved.includes(name)) saved.push(name);
+                    localStorage.setItem('bx_custom_strategies', JSON.stringify(saved));
+                    populateUserStrategies(name);
+                    inputNewStrat.value = '';
+                    boxStrat.classList.add('hidden');
+                    showToast('Strategy ' + name + ' created');
+                });
+            }
+            if (btnCancelStrat && boxStrat) {
+                btnCancelStrat.addEventListener('click', () => {
+                    boxStrat.classList.add('hidden');
+                });
+            }
+
+            // Advanced Options Toggle
+            const btnAdv = $('btn-toggle-adv-options');
+            const drawerAdv = $('adv-options-drawer');
+            const chevronAdv = $('adv-options-chevron');
+            if (btnAdv && drawerAdv) {
+                btnAdv.addEventListener('click', () => {
+                    drawerAdv.classList.toggle('open');
+                    if (chevronAdv) {
+                        chevronAdv.style.transform = drawerAdv.classList.contains('open') ? 'rotate(90deg)' : 'rotate(0deg)';
+                    }
+                });
+            }
+
+            // Reactive inputs for R:R computation
+            ['e-entry', 'e-exit', 'e-sl', 'e-tp', 'e-risk', 'e-pnl-manual'].forEach(id => {
+                const el = $(id);
+                if (el) {
+                    el.addEventListener('input', computeRrFromInputs);
+                    el.addEventListener('change', computeRrFromInputs);
+                }
+            });
+
+            // Manual R:R Input Typing Sync
+            const rrInput = $('at-rr-input');
+            if (rrInput) {
+                rrInput.addEventListener('input', (e) => {
+                    const val = parseFloat(e.target.value);
+                    if (!isNaN(val) && val > 0) {
+                        setRrRatio(val, false);
+                    }
+                });
+            }
+
+            // Clickable R:R Track Sync
+            const rrTrack = $('at-rr-clickable-track');
+            if (rrTrack) {
+                rrTrack.addEventListener('click', (e) => {
+                    const rect = rrTrack.getBoundingClientRect();
+                    const clickX = e.clientX - rect.left;
+                    let pct = clickX / rect.width;
+                    pct = Math.max(0.15, Math.min(0.90, pct));
+                    const newR = pct / (1 - pct);
+                    setRrRatio(newR, true);
+                });
+            }
+
+            // Rating Slider Input
+            const rSlider = $('e-rating-slider');
+            if (rSlider) {
+                rSlider.addEventListener('input', (e) => updateRatingView(e.target.value));
+            }
+
+            // Screenshot Dropzone & Paste
+            const dropzone = $('at-dropzone-box');
+            const fileInput = $('at-screenshot-file-input');
+            const btnRemoveShot = $('at-btn-remove-shot');
+
+            if (dropzone && fileInput) {
+                dropzone.addEventListener('click', (e) => {
+                    if (e.target.closest('#at-btn-remove-shot')) return;
+                    fileInput.click();
+                });
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('drag-over');
+                });
+                dropzone.addEventListener('dragleave', () => {
+                    dropzone.classList.remove('drag-over');
+                });
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('drag-over');
+                    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                        handleScreenshotFile(e.dataTransfer.files[0]);
+                    }
+                });
+                fileInput.addEventListener('change', (e) => {
+                    if (e.target.files && e.target.files[0]) {
+                        handleScreenshotFile(e.target.files[0]);
+                    }
+                });
+            }
+
+            if (btnRemoveShot) {
+                btnRemoveShot.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    currentAttachedScreenshot = '';
+                    renderScreenshotAttachment('');
+                });
+            }
+
+            // Global Ctrl+V clipboard paste while Add Trade modal is open
+            window.addEventListener('paste', e => {
+                const modal = $('entry-modal');
+                if (!modal || !modal.classList.contains('open')) return;
+                const items = (e.clipboardData || e.originalEvent?.clipboardData)?.items;
+                if (!items) return;
+                for (let i = 0; i < items.length; i++) {
+                    const item = items[i];
+                    if (item.kind === 'file' && item.type.includes('image')) {
+                        const blob = item.getAsFile();
+                        handleScreenshotFile(blob);
+                        break;
+                    }
+                }
+            });
+
 
             // ============ TRADE EDIT / DELETE ============
             window.editTrade = function(id) {
