@@ -30,34 +30,35 @@
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
-    <script src="assets/trader-card.js"></script>
 
     <style>
-        *, *::before, *::after {
-            margin: 0; padding: 0; box-sizing: border-box;
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg, #0a0b0e);
+            color: var(--tm-text, #ffffff);
+            font-family: var(--tm-sans, 'Plus Jakarta Sans', sans-serif);
+            overflow: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
             text-rendering: optimizeLegibility;
         }
 
-        html, body {
-            height: 100%;
-            background: #0a0b0e;
-            color: #ffffff;
-            font-family: var(--tm-sans, 'Plus Jakarta Sans', sans-serif);
-            overflow: hidden;
-        }
-
         .num { font-family: var(--tm-mono, 'Inter', monospace); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
 
-        /* ---- App shell & Sidebar ---- */
+        /* ---- App shell & Sidebar (Identical to Dashboard & Journal) ---- */
         .sidebar {
-            width: 254px;
+            width: 253px;
             transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-            background: #0d0f15;
-            border-right: 1px solid rgba(255, 255, 255, 0.08);
+            background: var(--tm-bg-elev, #0d0f15);
+            border-right: 1px solid var(--tm-border, rgba(255, 255, 255, 0.08));
             display: flex; flex-direction: column; overflow: hidden;
             position: relative; z-index: 40;
+            transform: translateZ(0);
+            -webkit-transform: translateZ(0);
+            backface-visibility: hidden;
+            -webkit-backface-visibility: hidden;
         }
         body.collapsed .sidebar { width: 64px; }
         body.collapsed .hide-when-collapsed { display: none !important; }
@@ -65,288 +66,202 @@
         body.collapsed .nav-label { display: none; }
         body.collapsed .sidebar .logo-text { display: none; }
         body.collapsed .profile-text { display: none; }
-        body.collapsed .upgrade-pro-card { display: none; }
-        body.collapsed .sidebar-user-chip { justify-content: center; padding: 8px 0; }
+
+        .sidebar-section-header {
+            font-size: 11px !important;
+            font-weight: 600 !important;
+            letter-spacing: 0.05em !important;
+            text-transform: uppercase !important;
+            color: #64748B !important;
+            padding: 8px 12px 4px 12px;
+            display: flex; align-items: center; justify-content: space-between;
+            background: transparent; border: none; cursor: pointer; width: 100%;
+        }
+        .sidebar-section-header:hover { color: #CBD5E1 !important; }
 
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 8px 12px; border-radius: 8px;
-            font-size: 13.5px; font-weight: 500; color: #94a3b8;
+            font-size: 13.5px; font-weight: 500; color: #CBD5E1;
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
-        .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #ffffff; }
-        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; }
-        .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; }
-
-        /* Sidebar Section Accordion Headers */
-        .sidebar-section-header {
-            width: 100%; display: flex; align-items: center; justify-content: space-between;
-            padding: 10px 12px 6px 12px; background: transparent; border: none;
-            font-size: 11px; font-weight: 700; letter-spacing: 0.06em; color: #64748b;
-            text-transform: uppercase; cursor: pointer; transition: color 0.15s;
+        .nav-item svg { width: 17px; height: 17px; flex-shrink: 0; color: #94A3B8; }
+        .nav-item:hover { background: var(--tm-hover, rgba(255, 255, 255, 0.04)); color: #ffffff !important; }
+        .nav-item:hover svg { color: #ffffff !important; }
+        .nav-item.active {
+            background: rgba(255, 255, 255, 0.08) !important;
+            color: #ffffff !important;
+            font-weight: 600 !important;
         }
-        .sidebar-section-header:hover { color: #94a3b8; }
-        .sidebar-section-header .chevron-icon { width: 14px; height: 14px; transition: transform 0.2s; }
-        .sidebar-section.collapsed .chevron-icon { transform: rotate(-90deg); }
-        .sidebar-section.collapsed .sidebar-section-items { display: none; }
+        .nav-item.active svg { color: #ffffff !important; }
 
-        .sidebar-soon-badge {
-            margin-left: auto; font-size: 9.5px; font-weight: 700; letter-spacing: 0.05em;
-            padding: 2px 6px; border-radius: 999px;
-            background: rgba(139, 92, 246, 0.12); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.25);
+        .logo-badge {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: #000000 url('assets/battlex-logo.png') center / contain no-repeat;
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            flex-shrink: 0; display: inline-flex; align-items: center; justify-content: center;
         }
+
+        .collapse-btn {
+            width: 28px; height: 28px; border-radius: 6px;
+            display: flex; align-items: center; justify-content: center;
+            color: var(--tm-muted, #94a3b8); border: none; background: transparent;
+            cursor: pointer; transition: all 0.15s;
+        }
+        .collapse-btn:hover { background: var(--tm-hover); color: #ffffff; }
+
+        .avatar {
+            width: 32px; height: 32px; border-radius: 999px;
+            background: #1b1f2d; border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #ffffff; font-weight: 700; font-size: 12px;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        .panel {
+            background: var(--tm-card, #141722);
+            border: 1px solid var(--tm-border, rgba(255, 255, 255, 0.08));
+            border-radius: 14px;
+            padding: 24px;
+            transition: border-color 0.15s ease;
+        }
+        .panel:hover { border-color: rgba(255, 255, 255, 0.12); }
+        .panel-title { font-size: 15px; font-weight: 700; color: #ffffff; }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted, #94a3b8); }
+
+        /* ---- Buttons: Strictly BattleX Institutional Monochrome & Emerald ---- */
+        .btn-primary {
+            background: #ffffff !important; color: #0a0a0a !important; font-weight: 700 !important; font-size: 13px;
+            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 7px;
+            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.10);
+        }
+        .btn-primary:hover {
+            background: #e2e8f0 !important; color: #0a0a0a !important; border-color: #e2e8f0 !important;
+            transform: translateY(-1px); box-shadow: 0 2px 10px rgba(255, 255, 255, 0.20);
+        }
+        .btn-primary:disabled { opacity: 0.55; transform: none; cursor: default; }
+
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; font-weight: 600; font-size: 12.5px;
+            padding: 7px 14px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            display: inline-flex; align-items: center; gap: 7px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
+        }
+        .btn-ghost:hover {
+            border-color: rgba(255, 255, 255, 0.25) !important; color: #ffffff !important; background: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .btn-danger {
+            background: rgba(255, 59, 48, 0.08); color: #f87171; font-weight: 600; font-size: 12px;
+            padding: 6px 12px; border-radius: 8px; border: 1px solid rgba(255, 59, 48, 0.25);
+            display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s; cursor: pointer;
+        }
+        .btn-danger:hover { background: rgba(255, 59, 48, 0.16); border-color: rgba(255, 59, 48, 0.4); }
 
         /* ---- Topbar ---- */
-        .topbar {
-            height: 56px; background: #0c0e14;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        .topbar { height: 56px; background: var(--tm-bg-elev, #0d0f15); border-bottom: 1px solid var(--tm-border, rgba(255, 255, 255, 0.08)); }
+        .search-input {
+            background: var(--tm-card, #141722); border: 1px solid var(--tm-border-2, rgba(255, 255, 255, 0.12));
+            border-radius: 8px; padding: 7px 12px 7px 36px; font-size: 13px; color: #ffffff; width: 280px; outline: none;
+            transition: border-color 0.15s;
         }
-        .search-box {
-            background: #141722; border: 1px solid rgba(255, 255, 255, 0.10);
-            border-radius: 10px; padding: 7px 14px 7px 36px; font-size: 13px; color: #ffffff;
-            width: 310px; outline: none; transition: border-color 0.15s;
-        }
-        .search-box:focus { border-color: #3b82f6; }
-        .search-box::placeholder { color: #64748b; }
+        .search-input:focus { border-color: rgba(255, 255, 255, 0.3); }
+        .search-input::placeholder { color: var(--tm-dim, #64748b); }
 
-        .chip-pill {
-            display: inline-flex; align-items: center; gap: 7px;
-            padding: 6px 13px; border-radius: 9px;
-            background: #141722; border: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 12px; font-weight: 600; color: #cbd5e1;
+        .session-chip {
+            display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px;
+            background: var(--tm-card, #141722); border: 1px solid var(--tm-border-2, rgba(255, 255, 255, 0.10));
+            font-size: 12px; font-weight: 600; color: var(--tm-muted, #94a3b8);
         }
-        .conn-dot {
-            width: 7px; height: 7px; border-radius: 999px;
-            background: #00E676; box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.16);
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: #00E676; box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.18); }
+        .account-select {
+            display: flex; align-items: center; gap: 8px; padding: 6px 12px; border-radius: 8px;
+            background: var(--tm-card, #141722); border: 1px solid var(--tm-border-2, rgba(255, 255, 255, 0.10));
+            font-size: 12px; font-weight: 600; color: #ffffff; cursor: pointer;
         }
 
-        /* ---- Page Surface & Cards ---- */
-        .settings-content {
-            scroll-behavior: smooth;
-        }
-
-        .bx-card {
-            background: #141722;
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 16px;
-            padding: 24px;
-            position: relative;
-            transition: border-color 0.2s, box-shadow 0.2s;
-        }
-        .bx-card:hover {
-            border-color: rgba(255, 255, 255, 0.12);
-        }
-        .bx-card-purple {
-            border-color: rgba(139, 92, 246, 0.25);
-            background: linear-gradient(180deg, rgba(139, 92, 246, 0.03) 0%, rgba(20, 23, 34, 1) 100%);
-        }
-        .bx-card-purple:hover {
-            border-color: rgba(139, 92, 246, 0.4);
-        }
-
-        /* Segmented Nav Pill Container */
-        .seg-nav-container {
-            display: inline-flex;
-            align-items: center;
-            padding: 4px;
-            background: #141722;
-            border: 1px solid rgba(255, 255, 255, 0.08);
+        /* ---- Segmented Nav (BattleX Obsidian Neutral - NO ELECTRIC BLUE) ---- */
+        .set-nav-bar {
+            display: inline-flex; align-items: center; gap: 4px; padding: 4px;
+            background: var(--tm-card, #141722); border: 1px solid var(--tm-border, rgba(255, 255, 255, 0.08));
             border-radius: 12px;
-            gap: 4px;
         }
-        .seg-pill-btn {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 18px;
-            border-radius: 9px;
-            font-size: 13.5px;
-            font-weight: 600;
-            color: #94a3b8;
-            background: transparent;
-            border: none;
-            cursor: pointer;
-            transition: all 0.15s ease;
+        .set-nav-item {
+            display: inline-flex; align-items: center; gap: 8px; padding: 7px 16px; border-radius: 8px;
+            font-size: 13px; font-weight: 600; color: var(--tm-muted, #94a3b8); background: transparent;
+            border: 1px solid transparent; cursor: pointer; transition: all 0.15s ease;
         }
-        .seg-pill-btn:hover {
-            color: #ffffff;
-            background: rgba(255, 255, 255, 0.04);
-        }
-        .seg-pill-btn.active {
-            background: #2563eb !important;
+        .set-nav-item:hover { background: var(--tm-hover, rgba(255, 255, 255, 0.04)); color: #ffffff; }
+        .set-nav-item.active {
+            background: rgba(255, 255, 255, 0.10) !important;
             color: #ffffff !important;
-            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.35);
+            border-color: rgba(255, 255, 255, 0.16) !important;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
         }
 
-        /* Buttons */
-        .btn-solid-white {
-            background: #ffffff !important;
-            color: #0a0b0e !important;
-            font-weight: 700 !important;
-            font-size: 13px;
-            padding: 8px 16px;
-            border-radius: 9px;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.15s ease;
+        /* Status & tags */
+        .status-badge {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 999px;
+            font-size: 11px; font-weight: 700; background: rgba(0, 230, 118, 0.10); color: #00E676;
+            border: 1px solid rgba(0, 230, 118, 0.22);
         }
-        .btn-solid-white:hover {
-            background: #f1f5f9 !important;
-            transform: translateY(-1px);
-        }
-        .btn-solid-white:disabled { opacity: 0.6; transform: none; cursor: default; }
+        .status-badge .dot { width: 5px; height: 5px; border-radius: 999px; background: #00E676; }
 
-        .btn-solid-blue {
-            background: #2563eb !important;
-            color: #ffffff !important;
-            font-weight: 700 !important;
-            font-size: 13px;
-            padding: 8px 16px;
-            border-radius: 9px;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            border: none;
-            cursor: pointer;
-            transition: all 0.15s ease;
+        .tag-plan {
+            display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 8px;
+            font-size: 11.5px; font-weight: 600; font-family: var(--tm-mono, monospace);
+            background: rgba(255, 255, 255, 0.05); color: #cbd5e1; border: 1px solid rgba(255, 255, 255, 0.10);
         }
-        .btn-solid-blue:hover {
-            background: #1d4ed8 !important;
-            transform: translateY(-1px);
-        }
-        .btn-solid-blue:disabled { opacity: 0.6; transform: none; cursor: default; }
-
-        .btn-ghost-outline {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.12);
-            color: #ffffff;
-            font-weight: 600;
-            font-size: 12.5px;
-            padding: 7px 14px;
-            border-radius: 9px;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .btn-ghost-outline:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.22);
-        }
-
-        .btn-ghost-danger {
-            background: rgba(239, 68, 68, 0.06);
-            border: 1px solid rgba(239, 68, 68, 0.22);
-            color: #f87171;
-            font-weight: 600;
-            font-size: 12px;
-            padding: 6px 13px;
-            border-radius: 8px;
-            display: inline-flex;
-            align-items: center;
-            gap: 6px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .btn-ghost-danger:hover {
-            background: rgba(239, 68, 68, 0.14);
-            border-color: rgba(239, 68, 68, 0.35);
-        }
-
-        .btn-ghost-emerald {
-            background: rgba(0, 230, 118, 0.06);
-            border: 1px solid rgba(0, 230, 118, 0.25);
-            color: #00E676;
-            font-weight: 600;
-            font-size: 12.5px;
-            padding: 7px 15px;
-            border-radius: 9px;
-            display: inline-flex;
-            align-items: center;
-            gap: 7px;
-            cursor: pointer;
-            transition: all 0.15s ease;
-        }
-        .btn-ghost-emerald:hover {
-            background: rgba(0, 230, 118, 0.12);
-            border-color: rgba(0, 230, 118, 0.4);
+        .tag-plan.active-tester {
+            background: rgba(0, 230, 118, 0.10); color: #00E676; border-color: rgba(0, 230, 118, 0.25);
         }
 
         /* Inputs */
-        .bx-input {
-            width: 100%;
-            background: #0a0b0e;
-            border: 1px solid rgba(255, 255, 255, 0.10);
-            border-radius: 9px;
-            padding: 9px 38px 9px 36px;
-            font-size: 13px;
-            color: #ffffff;
-            outline: none;
-            transition: border-color 0.15s, box-shadow 0.15s;
-            font-family: inherit;
+        .field-input {
+            width: 100%; background: #0a0b0e; border: 1px solid var(--tm-border-2, rgba(255, 255, 255, 0.12));
+            border-radius: 8px; padding: 9px 36px 9px 12px; font-size: 13px; color: #ffffff; outline: none;
+            transition: border-color 0.15s; font-family: inherit;
         }
-        .bx-input:focus {
-            border-color: #3b82f6;
-            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.18);
-        }
-        .bx-input::placeholder { color: #64748b; }
-
-        .toggle-pw-btn {
+        .field-input:focus { border-color: rgba(255, 255, 255, 0.3); }
+        .field-input.has-icon { padding-left: 36px; }
+        .field-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--tm-dim, #64748b); pointer-events: none; }
+        .toggle-pw {
             position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
-            width: 28px; height: 28px; border-radius: 6px;
-            border: none; background: transparent; color: #64748b; cursor: pointer;
-            display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+            width: 26px; height: 26px; border-radius: 6px; border: none; background: transparent;
+            color: var(--tm-dim, #64748b); cursor: pointer; display: flex; align-items: center; justify-content: center;
         }
-        .toggle-pw-btn:hover { color: #ffffff; background: rgba(255, 255, 255, 0.06); }
+        .toggle-pw:hover { color: #ffffff; background: var(--tm-hover); }
 
-        .strength-bar {
-            height: 4px; flex: 1; border-radius: 999px;
-            background: rgba(255, 255, 255, 0.08);
-            transition: background 0.2s ease;
-        }
-        .strength-bar.on-weak { background: #ef4444; }
+        .strength-bar { height: 4px; flex: 1; border-radius: 999px; background: rgba(255, 255, 255, 0.08); transition: background 0.2s; }
+        .strength-bar.on-weak { background: #FF3B30; }
         .strength-bar.on-fair { background: #f59e0b; }
         .strength-bar.on-good { background: #3b82f6; }
         .strength-bar.on-strong { background: #00E676; }
 
-        /* Toast */
-        .toast {
-            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
-            background: #181b26; border: 1px solid rgba(255, 255, 255, 0.15); color: #ffffff;
-            border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600;
-            z-index: 99999; opacity: 0; pointer-events: none;
-            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-            display: flex; align-items: center; gap: 9px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
-        }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
-
-        /* Broker Chip showcase */
+        /* Broker showcase chip */
         .broker-chip {
-            display: inline-flex; align-items: center; gap: 8px;
-            padding: 7px 14px; border-radius: 10px;
-            background: rgba(255, 255, 255, 0.04);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            font-size: 12.5px; font-weight: 600; color: #cbd5e1;
-            transition: all 0.15s ease;
+            display: inline-flex; align-items: center; gap: 8px; padding: 7px 14px; border-radius: 8px;
+            background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.08);
+            font-size: 12.5px; font-weight: 600; color: #cbd5e1; cursor: pointer; transition: all 0.15s ease;
         }
         .broker-chip:hover {
-            background: rgba(255, 255, 255, 0.08);
-            border-color: rgba(255, 255, 255, 0.16);
-            color: #ffffff;
+            background: rgba(255, 255, 255, 0.08); border-color: rgba(255, 255, 255, 0.18); color: #ffffff;
             transform: translateY(-1px);
         }
 
-        /* Scrollbars */
+        /* Toast */
+        .toast {
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            background: var(--tm-card, #141722); border: 1px solid var(--tm-border-2, rgba(255, 255, 255, 0.15));
+            color: #ffffff; border-radius: 10px; padding: 10px 18px; font-size: 13px; font-weight: 600;
+            z-index: 99999; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1);
+            display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
         ::-webkit-scrollbar { width: 8px; height: 8px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.10); border-radius: 999px; }
-        ::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.20); }
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
@@ -356,28 +271,26 @@
 </head>
 <body>
 
-    <div class="flex h-screen min-h-[100dvh] max-h-[100dvh] bg-[#0a0b0e]">
+    <div class="flex h-screen min-h-[100dvh] max-h-[100dvh]">
 
-        <!-- ============ LEFT SIDEBAR ============ -->
+        <!-- ============ AUTHENTIC BATTLEX SIDEBAR (Matches Dashboard, Journal, etc.) ============ -->
         <aside class="sidebar">
-            <!-- Sidebar Header -->
-            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-white/[0.08] flex-shrink-0">
-                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-[28px] h-[28px] rounded-lg object-contain">
-                <span class="logo-text font-extrabold tracking-[0.08em] text-[14.5px] text-white">BATTLEXJOURNAL</span>
-                <button id="collapse-btn" class="ml-auto w-7 h-7 rounded-md flex items-center justify-center text-slate-400 hover:text-white hover:bg-white/[0.06] transition hide-when-collapsed" title="Collapse sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
             </div>
 
-            <!-- Nav Links -->
-            <nav class="flex-1 overflow-y-auto py-2.5 px-2 flex flex-col gap-0.5">
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-1">
                 <!-- 1. CORE -->
                 <div class="sidebar-section" data-section="core">
                     <button type="button" class="sidebar-section-header">
                         <span>CORE</span>
                         <svg data-lucide="chevron-down" class="chevron-icon"></svg>
                     </button>
-                    <div class="sidebar-section-items flex flex-col gap-0.5">
+                    <div class="sidebar-section-items">
                         <a href="dashboard.html" class="nav-item">
                             <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
                         </a>
@@ -400,12 +313,12 @@
                 </div>
 
                 <!-- 2. INTELLIGENCE -->
-                <div class="sidebar-section collapsed" data-section="intelligence">
+                <div class="sidebar-section" data-section="intelligence">
                     <button type="button" class="sidebar-section-header">
                         <span>INTELLIGENCE</span>
                         <svg data-lucide="chevron-down" class="chevron-icon"></svg>
                     </button>
-                    <div class="sidebar-section-items flex flex-col gap-0.5">
+                    <div class="sidebar-section-items">
                         <a href="ai.html" class="nav-item">
                             <svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Coach</span>
                         </a>
@@ -422,12 +335,12 @@
                 </div>
 
                 <!-- 3. STRATEGY & LAB -->
-                <div class="sidebar-section collapsed" data-section="strategy">
+                <div class="sidebar-section" data-section="strategy">
                     <button type="button" class="sidebar-section-header">
                         <span>STRATEGY & LAB</span>
                         <svg data-lucide="chevron-down" class="chevron-icon"></svg>
                     </button>
-                    <div class="sidebar-section-items flex flex-col gap-0.5">
+                    <div class="sidebar-section-items">
                         <a href="strategy-lab.html" class="nav-item">
                             <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
                         </a>
@@ -438,12 +351,12 @@
                 </div>
 
                 <!-- 4. PERFORMANCE & RISK -->
-                <div class="sidebar-section collapsed" data-section="risk">
+                <div class="sidebar-section" data-section="risk">
                     <button type="button" class="sidebar-section-header">
                         <span>PERFORMANCE & RISK</span>
                         <svg data-lucide="chevron-down" class="chevron-icon"></svg>
                     </button>
-                    <div class="sidebar-section-items flex flex-col gap-0.5">
+                    <div class="sidebar-section-items">
                         <a href="risk.html" class="nav-item">
                             <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
                         </a>
@@ -454,12 +367,12 @@
                 </div>
 
                 <!-- 5. BATTLES & LABS -->
-                <div class="sidebar-section collapsed" data-section="battles-lab">
+                <div class="sidebar-section" data-section="battles-lab">
                     <button type="button" class="sidebar-section-header">
                         <span>BATTLES & LABS</span>
                         <svg data-lucide="chevron-down" class="chevron-icon"></svg>
                     </button>
-                    <div class="sidebar-section-items flex flex-col gap-0.5">
+                    <div class="sidebar-section-items">
                         <a href="battles.html" class="nav-item">
                             <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
                             <span class="sidebar-soon-badge">SOON</span>
@@ -472,153 +385,105 @@
                 </div>
             </nav>
 
-            <!-- Sidebar Footer (Matches Reference Image) -->
-            <div class="border-t border-white/[0.08] p-2.5 flex flex-col flex-shrink-0 gap-1.5">
-                <!-- Upgrade to Pro Card -->
-                <div class="upgrade-pro-card p-3 rounded-xl bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-transparent border border-amber-500/20 flex items-center justify-between cursor-pointer hover:border-amber-500/40 transition group" onclick="window.showToast('BattleX Pro upgrades launching soon!')">
-                    <div class="flex items-center gap-2.5 min-w-0">
-                        <div class="w-7 h-7 rounded-lg bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 flex-shrink-0">
-                            <svg data-lucide="crown" class="w-4 h-4"></svg>
-                        </div>
-                        <div class="min-w-0">
-                            <div class="text-[12.5px] font-bold text-white leading-tight">Upgrade to Pro</div>
-                            <div class="text-[10.5px] text-slate-400 truncate">More power. More insights.</div>
-                        </div>
+            <!-- Bottom Profile Chip (Opens Built-in Popover for Upgrade to Pro, Settings, Help & Sign out) -->
+            <div class="border-t border-[var(--tm-border)] p-2.5 flex flex-col flex-shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--tm-hover)] transition-colors cursor-pointer" id="profile-chip" title="Account, Community, Settings & Help">
+                    <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)]" id="profile-meta">Battlex Pro</div>
                     </div>
-                    <svg data-lucide="arrow-right" class="w-3.5 h-3.5 text-slate-400 group-hover:text-white group-hover:translate-x-0.5 transition-all flex-shrink-0"></svg>
-                </div>
-
-                <!-- User Profile Row -->
-                <div class="flex items-center gap-2.5 px-2.5 py-2 rounded-xl bg-white/[0.03] border border-white/[0.06] cursor-pointer hover:bg-white/[0.06] transition sidebar-user-chip" id="profile-chip">
-                    <div class="w-8 h-8 rounded-lg bg-[#1a1e2b] border border-white/10 text-white font-bold text-xs flex items-center justify-center flex-shrink-0" id="profile-avatar-side">IN</div>
-                    <div class="min-w-0 flex-1 profile-text">
-                        <div class="text-[13px] font-semibold text-white truncate" id="sidebar-user-name">Inferno</div>
-                        <div class="text-[11px] text-slate-400 truncate">BattleX Pro</div>
-                    </div>
-                </div>
-
-                <!-- Bottom Quick Links -->
-                <div class="flex flex-col gap-0.5 pt-1">
-                    <a href="settings.html" class="nav-item active !bg-white/[0.08] !text-white !font-semibold">
-                        <svg data-lucide="settings" class="w-4 h-4"></svg>
-                        <span class="nav-label">Settings</span>
-                    </a>
-                    <a href="javascript:void(0)" onclick="window.showToast('Discord community & support: discord.gg/battlex')" class="nav-item">
-                        <svg data-lucide="help-circle" class="w-4 h-4"></svg>
-                        <span class="nav-label">Help & Support</span>
-                    </a>
-                    <a href="javascript:void(0)" onclick="window.signOut()" class="nav-item !text-red-400 hover:!text-red-300 hover:!bg-red-500/10">
-                        <svg data-lucide="log-out" class="w-4 h-4 text-red-400"></svg>
-                        <span class="nav-label">Sign out</span>
-                    </a>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-up"></svg>
                 </div>
             </div>
         </aside>
 
-        <!-- ============ MAIN CONTENT ============ -->
+        <!-- ============ MAIN AREA ============ -->
         <div class="flex-1 flex flex-col min-w-0">
 
-            <!-- Topbar (Matches Reference Image) -->
-            <header class="topbar flex items-center justify-between px-5 flex-shrink-0">
-                <!-- Search -->
-                <div class="relative flex items-center">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 text-slate-400 pointer-events-none"></svg>
-                    <input id="global-search" type="text" class="search-box" placeholder="Search settings...">
+            <!-- Topbar (Clean & Identical to Dashboard) -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search settings…">
                 </div>
 
-                <!-- Right Chips -->
-                <div class="flex items-center gap-2.5">
-                    <!-- Timezone / Clock -->
-                    <div class="chip-pill hide-when-collapsed">
-                        <svg data-lucide="globe" class="w-3.5 h-3.5 text-slate-400"></svg>
-                        <span id="session-chip-text">Asia · 06:22 PM</span>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                        <span id="session-chip-text">—</span>
                     </div>
-
-                    <!-- Connection -->
-                    <div class="chip-pill hide-when-collapsed">
+                    <div class="session-chip hide-when-collapsed">
                         <span class="conn-dot"></span>
-                        <span>Connected</span>
+                        <span class="conn-label">Connected</span>
                     </div>
-
-                    <!-- Account Equity -->
-                    <button class="chip-pill hide-when-collapsed hover:border-white/20 transition cursor-pointer" id="acc-chip">
-                        <span class="num font-bold text-white">$10,847</span>
-                        <span class="text-slate-500">·</span>
-                        <span>funded next</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></svg>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
                     </button>
-
-                    <!-- Notifications -->
-                    <button class="w-8 h-8 rounded-lg bg-[#141722] border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:border-white/20 transition cursor-pointer" title="Notifications" onclick="window.showToast('No unread notifications')">
-                        <svg data-lucide="bell" class="w-4 h-4"></svg>
-                    </button>
-
-                    <!-- Topbar Profile Initials -->
-                    <div class="w-8 h-8 rounded-full bg-[#1b1f2d] border border-white/10 text-white font-bold text-xs flex items-center justify-center cursor-pointer select-none" id="topbar-avatar">TR</div>
+                    <div class="avatar !w-8 !h-8 !rounded-full text-[12px] font-bold" id="topbar-avatar">TR</div>
                 </div>
-            </header>
+            </div>
 
-            <!-- Scrollable Settings Container -->
-            <main class="flex-1 overflow-y-auto settings-content">
-                <div class="max-w-[1100px] mx-auto px-6 py-8 flex flex-col gap-6">
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto" style="scroll-behavior: smooth;">
+                <div class="max-w-[1100px] mx-auto p-5 sm:p-7 lg:p-8 flex flex-col gap-6">
 
-                    <!-- Header & Motivational Motto -->
+                    <!-- Header with Motivational Quote on Right -->
                     <div class="flex flex-wrap items-end justify-between gap-4">
                         <div>
-                            <h1 class="text-[28px] font-extrabold tracking-tight text-white">Settings</h1>
-                            <p class="text-[13.5px] text-slate-400 mt-1">Manage your identity, connected brokers, security, and workspace preferences.</p>
+                            <h1 class="text-[26px] font-extrabold tracking-tight text-white">Settings</h1>
+                            <p class="text-[13.5px] text-[var(--tm-dim)] mt-1">Manage your identity, connected brokers, security, and workspace preferences.</p>
                         </div>
                         <div class="hidden sm:block text-right pb-1">
-                            <p class="text-[14px] text-slate-400 italic font-serif select-none">
+                            <p class="text-[13.5px] text-[var(--tm-dim)] italic font-serif select-none">
                                 &ldquo; Discipline today builds the freedom tomorrow. &rdquo;
                             </p>
                         </div>
                     </div>
 
-                    <!-- Segmented Navigation Pills -->
-                    <nav class="seg-nav-container">
-                        <button type="button" class="seg-pill-btn active" data-pill-target="card-profile">
+                    <!-- Top Segmented Navigation Pills (NO BLUE BUTTONS) -->
+                    <nav class="set-nav-bar">
+                        <button type="button" class="set-nav-item active" data-pill-target="card-profile">
                             <svg data-lucide="user" class="w-4 h-4"></svg>
                             <span>Profile</span>
                         </button>
-                        <button type="button" class="seg-pill-btn" data-pill-target="card-brokers">
+                        <button type="button" class="set-nav-item" data-pill-target="card-brokers">
                             <svg data-lucide="link-2" class="w-4 h-4"></svg>
                             <span>Brokers</span>
                         </button>
-                        <button type="button" class="seg-pill-btn" data-pill-target="card-security">
+                        <button type="button" class="set-nav-item" data-pill-target="card-security">
                             <svg data-lucide="shield" class="w-4 h-4"></svg>
                             <span>Security</span>
                         </button>
                     </nav>
 
-                    <!-- ================= CARD 1: YOUR PROFILE ================= -->
-                    <section class="bx-card" id="card-profile">
-                        <!-- Card Header -->
-                        <div class="flex items-center gap-3 mb-6">
-                            <div class="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-slate-400 flex-shrink-0">
+                    <!-- ================= CARD 1: YOUR PROFILE (3 Columns in ONE Row) ================= -->
+                    <section class="panel" id="card-profile">
+                        <div class="flex items-center gap-3 mb-5">
+                            <div class="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center text-white">
                                 <svg data-lucide="layers" class="w-4 h-4"></svg>
                             </div>
                             <div>
-                                <h2 class="text-[16px] font-bold text-white leading-tight">Your Profile</h2>
-                                <p class="text-[12.5px] text-slate-400 mt-0.5">Manage your BattleX identity and account details.</p>
+                                <h2 class="panel-title text-[16px]">Your Profile</h2>
+                                <p class="text-[12px] text-[var(--tm-dim)]">Manage your BattleX identity and account details.</p>
                             </div>
                         </div>
 
-                        <!-- 3 Column Content -->
-                        <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 pt-5 border-t border-white/[0.06]">
-                            <!-- Column 1: Avatar & Identity -->
-                            <div class="lg:col-span-4 flex items-start gap-4">
-                                <div class="w-16 h-16 rounded-full bg-[#1b1f2d] border border-white/10 flex items-center justify-center text-xl font-bold text-white flex-shrink-0" id="profile-avatar">TR</div>
+                        <!-- 3 Column Row Grid -->
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 pt-5 border-t border-[var(--tm-border)]">
+                            <!-- Col 1: Identity -->
+                            <div class="flex items-start gap-4">
+                                <div class="avatar !w-14 !h-14 !rounded-2xl !text-[20px] flex-shrink-0" id="card-avatar">TR</div>
                                 <div class="flex flex-col gap-1 min-w-0">
-                                    <div class="text-[17px] font-bold text-white truncate" id="profile-name">Trader</div>
-                                    <div class="text-[13px] text-slate-400 truncate" id="profile-email">inferno011031@gmail.com</div>
+                                    <div class="text-[16.5px] font-bold text-white truncate" id="card-name">Trader</div>
+                                    <div class="text-[12.5px] text-[var(--tm-dim)] truncate" id="card-email">inferno011031@gmail.com</div>
                                     <div class="mt-1">
-                                        <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11.5px] font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Active
-                                        </span>
+                                        <span class="status-badge"><span class="dot"></span> Active</span>
                                     </div>
-                                    <div class="mt-3">
-                                        <button type="button" class="btn-ghost-danger" onclick="window.signOut()">
+                                    <div class="mt-2.5">
+                                        <button type="button" class="btn-danger" onclick="window.signOut()">
                                             <svg data-lucide="log-out" class="w-3.5 h-3.5"></svg>
                                             <span>Sign out</span>
                                         </button>
@@ -626,79 +491,80 @@
                                 </div>
                             </div>
 
-                            <!-- Column 2: Unique Trader ID -->
-                            <div class="lg:col-span-5 flex flex-col justify-start">
-                                <span class="text-[11.5px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Unique trader ID</span>
+                            <!-- Col 2: Unique Trader ID -->
+                            <div class="flex flex-col justify-start">
+                                <span class="label-xs mb-2">Unique trader ID</span>
                                 <div class="flex items-center gap-2">
-                                    <code class="num text-[12.5px] font-mono text-slate-200 bg-[#0a0b0e] border border-white/10 rounded-xl px-3.5 py-2 truncate max-w-[280px]" id="user-id-text">3789d934-2776-4bc8-9d92-398407de305e</code>
-                                    <button type="button" class="btn-ghost-outline !py-2 !px-3" id="copy-id-btn">
+                                    <code class="num text-[12.5px] font-mono text-white bg-[#0a0b0e] border border-[var(--tm-border-2)] rounded-lg px-3 py-2 truncate max-w-[220px]" id="user-id-text">3789d934-2776-4bc8-9d92-398407de305e</code>
+                                    <button type="button" class="btn-ghost !py-2 !px-3" id="copy-id-btn">
                                         <svg data-lucide="copy" class="w-3.5 h-3.5" id="copy-id-ico"></svg>
                                         <span id="copy-id-label">Copy</span>
                                     </button>
                                 </div>
-                                <p class="text-[11.5px] text-slate-500 mt-2 leading-relaxed">Your unique Battlex identity &mdash; used for Discord verification and role sync.</p>
+                                <p class="text-[11.5px] text-[var(--tm-dim)] mt-2 leading-relaxed">Your unique Battlex identity &mdash; used for Discord verification and role sync.</p>
                             </div>
 
-                            <!-- Column 3: Member Since -->
-                            <div class="lg:col-span-3 flex flex-col justify-start">
-                                <span class="text-[11.5px] font-semibold uppercase tracking-wider text-slate-400 mb-2">Member since</span>
+                            <!-- Col 3: Member Since -->
+                            <div class="flex flex-col justify-start">
+                                <span class="label-xs mb-2">Member since</span>
                                 <div class="flex items-center gap-2 text-white font-semibold text-[14px]">
-                                    <svg data-lucide="calendar" class="w-4 h-4 text-slate-400"></svg>
+                                    <svg data-lucide="calendar" class="w-4 h-4 text-[var(--tm-dim)]"></svg>
                                     <span id="profile-created">August 2026</span>
                                 </div>
-                                <p class="text-[11.5px] text-slate-500 mt-2 leading-relaxed">Signed in with your Supabase account.</p>
+                                <p class="text-[11.5px] text-[var(--tm-dim)] mt-2 leading-relaxed">Signed in with your Supabase account.</p>
                             </div>
                         </div>
                     </section>
 
-                    <!-- ================= CARD 2: EARLY ACCESS & TESTER ENTITLEMENT ================= -->
-                    <section class="bx-card bx-card-purple" id="card-tester">
+                    <!-- ================= CARD 2: EARLY ACCESS & TESTER ENTITLEMENT (NO VIOLET/BLUE) ================= -->
+                    <section class="panel" id="card-tester">
                         <!-- Header -->
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                             <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-purple-500/15 border border-purple-500/25 flex items-center justify-center text-purple-400 flex-shrink-0">
-                                    <svg data-lucide="crown" class="w-4 h-4"></svg>
+                                <div class="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center text-white">
+                                    <svg data-lucide="crown" class="w-4 h-4 text-amber-400"></svg>
                                 </div>
                                 <div>
-                                    <h2 class="text-[16px] font-bold text-white leading-tight">BattleX Early Access & Tester Entitlement</h2>
-                                    <p class="text-[12.5px] text-slate-400 mt-0.5">1-Year tester program (60 member limit) with monthly AI quota.</p>
+                                    <h2 class="panel-title text-[16px]">BattleX Early Access & Tester Entitlement</h2>
+                                    <p class="text-[12px] text-[var(--tm-dim)]">1-Year tester program (60 member limit) with monthly AI quota.</p>
                                 </div>
                             </div>
                             <div id="entitlement-badge-container">
-                                <span class="inline-flex items-center px-3 py-1 rounded-lg text-[12px] font-mono font-semibold bg-white/[0.04] border border-white/10 text-slate-300" id="entitlement-status-badge">Standard Plan</span>
+                                <span class="tag-plan" id="entitlement-status-badge">Standard Plan</span>
                             </div>
                         </div>
 
                         <!-- 2 Boxes Grid -->
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <!-- Left Box: AI Allowance -->
-                            <div class="bg-[#0a0b0e]/70 border border-white/[0.08] rounded-xl p-4 flex flex-col justify-between">
+                            <!-- Left Box: Allowance -->
+                            <div class="bg-[#0a0b0e] border border-[var(--tm-border)] rounded-xl p-4 flex flex-col justify-between">
                                 <div class="flex items-center justify-between">
                                     <div class="flex items-center gap-2 text-[12.5px] font-semibold text-slate-300">
-                                        <span class="w-6 h-6 rounded-full bg-blue-500/10 border border-blue-500/20 text-blue-400 flex items-center justify-center text-[12px] font-bold">&infin;</span>
+                                        <span class="w-6 h-6 rounded-full bg-white/[0.06] border border-white/10 text-white flex items-center justify-center text-[12px] font-bold">&infin;</span>
                                         <span>Current AI Allowance</span>
                                     </div>
-                                    <span class="font-mono font-bold text-[13.5px] text-white" id="entitlement-ai-counter">50 / 50</span>
+                                    <span class="font-mono font-bold text-[13px] text-white" id="entitlement-ai-counter">50 / 50</span>
                                 </div>
 
-                                <!-- Progress Bar -->
+                                <!-- Progress Bar: Clean Emerald (NO BLUE/VIOLET) -->
                                 <div class="w-full h-2 rounded-full bg-white/[0.08] overflow-hidden my-3">
-                                    <div class="h-full rounded-full bg-gradient-to-r from-blue-600 via-blue-500 to-indigo-400 transition-all duration-500" id="entitlement-ai-bar" style="width: 100%;"></div>
+                                    <div class="h-full rounded-full bg-[#00E676] transition-all duration-500" id="entitlement-ai-bar" style="width: 100%;"></div>
                                 </div>
 
-                                <div class="flex items-center justify-between text-[11.5px] text-slate-400">
+                                <div class="flex items-center justify-between text-[11.5px] text-[var(--tm-dim)]">
                                     <span id="entitlement-ai-text">Lifetime requests remaining</span>
                                     <span id="entitlement-exp-row" style="display: none;" class="text-emerald-400 font-mono font-semibold">Expires: <span id="entitlement-exp-text">&mdash;</span></span>
                                 </div>
                             </div>
 
-                            <!-- Right Box: Code Redemption -->
-                            <div class="bg-[#0a0b0e]/70 border border-white/[0.08] rounded-xl p-4 flex flex-col justify-between" id="redeem-box">
+                            <!-- Right Box: Redeem Code -->
+                            <div class="bg-[#0a0b0e] border border-[var(--tm-border)] rounded-xl p-4 flex flex-col justify-between" id="redeem-box">
                                 <div>
-                                    <label class="block text-[11.5px] font-semibold uppercase tracking-wider text-slate-400 mb-2" for="settings-invite-code">Redeem 1-Year Tester Code</label>
+                                    <label class="label-xs mb-2 block" for="settings-invite-code">Redeem 1-Year Tester Code</label>
                                     <div class="flex items-center gap-2">
-                                        <input type="text" id="settings-invite-code" class="bx-input font-mono uppercase tracking-wider font-bold !pl-3.5 !pr-3.5 !py-2 flex-1" placeholder="E.g. BXJ-2026-A" autocomplete="off">
-                                        <button type="button" id="btn-settings-redeem" class="btn-solid-blue !py-2 !px-4 whitespace-nowrap">
+                                        <input type="text" id="settings-invite-code" class="field-input font-mono uppercase tracking-wider font-bold !py-2 flex-1" placeholder="E.g. BXJ-2026-A" autocomplete="off">
+                                        <!-- BattleX Institutional White Primary Button (NO BLUE BUTTON) -->
+                                        <button type="button" id="btn-settings-redeem" class="btn-primary !py-2 !px-4 whitespace-nowrap">
                                             Activate Code
                                         </button>
                                     </div>
@@ -709,23 +575,23 @@
                     </section>
 
                     <!-- ================= CARD 3: BATTLEX TRADER CARD ================= -->
-                    <section class="bx-card flex items-center justify-between flex-wrap gap-4" id="card-trader-card">
+                    <section class="panel flex items-center justify-between flex-wrap gap-4" id="card-trader-card">
                         <div class="flex items-start sm:items-center gap-3 max-w-2xl">
-                            <div class="w-9 h-9 rounded-xl bg-white/[0.05] border border-white/10 flex items-center justify-center text-slate-400 flex-shrink-0 mt-0.5 sm:mt-0">
+                            <div class="w-8 h-8 rounded-lg bg-white/[0.05] border border-white/10 flex items-center justify-center text-white flex-shrink-0 mt-0.5 sm:mt-0">
                                 <svg data-lucide="bar-chart-2" class="w-4 h-4"></svg>
                             </div>
                             <div>
                                 <div class="flex items-center gap-2 flex-wrap">
-                                    <h2 class="text-[16px] font-bold text-white leading-tight">BattleX Trader Card</h2>
-                                    <span class="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">Identity</span>
+                                    <h2 class="panel-title text-[16px]">BattleX Trader Card</h2>
+                                    <span class="tag-plan !text-[11px] !py-0.5">Identity</span>
                                 </div>
-                                <p class="text-[12.5px] text-slate-400 mt-1 leading-relaxed">
+                                <p class="text-[12.5px] text-[var(--tm-dim)] mt-1 leading-relaxed">
                                     Who you are as a trader &mdash; built from repeated decisions. Discipline, streaks and dimensions come from the same engine the Discipline page reads.
                                 </p>
                             </div>
                         </div>
                         <div>
-                            <button type="button" class="btn-ghost-emerald" onclick="location.href='discipline.html#trader-card'">
+                            <button type="button" class="btn-ghost !border-emerald-500/30 !text-emerald-400 hover:!bg-emerald-500/10" onclick="location.href='discipline.html#trader-card'">
                                 <span>View Trader Card</span>
                                 <svg data-lucide="arrow-right" class="w-3.5 h-3.5"></svg>
                             </button>
@@ -733,19 +599,18 @@
                     </section>
 
                     <!-- ================= CARD 4: CONNECTED BROKERS ================= -->
-                    <section class="bx-card" id="card-brokers">
-                        <!-- Header -->
+                    <section class="panel" id="card-brokers">
                         <div class="flex flex-wrap items-center justify-between gap-3 mb-5">
                             <div class="flex items-center gap-3">
-                                <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                                <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                                     <svg data-lucide="link" class="w-4 h-4"></svg>
                                 </div>
                                 <div>
-                                    <h2 class="text-[16px] font-bold text-white leading-tight">Connected Brokers</h2>
-                                    <p class="text-[12.5px] text-slate-400 mt-0.5">Your platform choice syncs across devices &mdash; auto-import for live trades lands soon.</p>
+                                    <h2 class="panel-title text-[16px]">Connected Brokers</h2>
+                                    <p class="text-[12px] text-[var(--tm-dim)]">Your platform choice syncs across devices &mdash; auto-import for live trades lands soon.</p>
                                 </div>
                             </div>
-                            <button type="button" class="btn-solid-white" id="add-broker-btn">
+                            <button type="button" class="btn-primary" id="add-broker-btn">
                                 <svg data-lucide="plus" class="w-4 h-4"></svg>
                                 <span>Connect a broker</span>
                             </button>
@@ -753,57 +618,35 @@
 
                         <!-- Inner Broker Content -->
                         <div id="broker-list">
-                            <!-- Empty State Showcase (Matches Reference Image) -->
-                            <div class="border border-dashed border-white/[0.12] rounded-xl p-8 bg-[#0a0b0e]/50 flex flex-col items-center justify-center text-center">
+                            <!-- Empty State Showcase -->
+                            <div class="border border-dashed border-white/[0.12] rounded-xl p-7 bg-[#0a0b0e] flex flex-col items-center justify-center text-center">
                                 <svg data-lucide="plug" class="w-9 h-9 text-slate-500 mb-2.5 stroke-[1.5]"></svg>
-                                <h3 class="text-[14.5px] font-bold text-white">No brokers connected yet</h3>
-                                <p class="text-[12.5px] text-slate-400 mt-1 mb-6">Connect MetaTrader, TradingView, cTrader, Zerodha, Dhan or Binance.</p>
+                                <h3 class="text-[14px] font-bold text-white">No brokers connected yet</h3>
+                                <p class="text-[12px] text-[var(--tm-dim)] mt-1 mb-5">Connect MetaTrader, TradingView, cTrader, Zerodha, Dhan or Binance.</p>
 
-                                <!-- Broker Badges Row -->
-                                <div class="flex flex-wrap items-center justify-center gap-2.5 max-w-2xl">
-                                    <!-- MetaTrader -->
-                                    <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('MetaTrader')">
-                                        <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor">
-                                            <rect x="3" y="12" width="4" height="8" rx="1"/>
-                                            <rect x="10" y="6" width="4" height="14" rx="1"/>
-                                            <rect x="17" y="10" width="4" height="10" rx="1"/>
-                                        </svg>
+                                <div class="flex flex-wrap items-center justify-center gap-2 max-w-2xl">
+                                    <div class="broker-chip" onclick="window.connectBrokerQuick('MetaTrader')">
+                                        <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="10" y="6" width="4" height="14" rx="1"/><rect x="17" y="10" width="4" height="10" rx="1"/></svg>
                                         <span>MetaTrader</span>
                                     </div>
-
-                                    <!-- TradingView -->
-                                    <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('TradingView')">
-                                        <svg class="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M4 17h4v-7H4v7zm6 0h4V7h-4v10zm6 0h4v-4h-4v4z"/>
-                                        </svg>
+                                    <div class="broker-chip" onclick="window.connectBrokerQuick('TradingView')">
+                                        <svg class="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="currentColor"><path d="M4 17h4v-7H4v7zm6 0h4V7h-4v10zm6 0h4v-4h-4v4z"/></svg>
                                         <span>TradingView</span>
                                     </div>
-
-                                    <!-- cTrader -->
-                                    <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('cTrader')">
+                                    <div class="broker-chip" onclick="window.connectBrokerQuick('cTrader')">
                                         <span class="w-4 h-4 rounded-full bg-red-500/20 text-red-400 font-bold text-[10px] flex items-center justify-center">c</span>
                                         <span>cTrader</span>
                                     </div>
-
-                                    <!-- Zerodha -->
-                                    <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('Zerodha')">
-                                        <svg class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 2L2 22h20L12 2z"/>
-                                        </svg>
+                                    <div class="broker-chip" onclick="window.connectBrokerQuick('Zerodha')">
+                                        <svg class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2z"/></svg>
                                         <span>Zerodha</span>
                                     </div>
-
-                                    <!-- Dhan -->
-                                    <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('Dhan')">
+                                    <div class="broker-chip" onclick="window.connectBrokerQuick('Dhan')">
                                         <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] flex items-center justify-center">D</span>
                                         <span>Dhan</span>
                                     </div>
-
-                                    <!-- Binance -->
-                                    <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('Binance')">
-                                        <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor">
-                                            <path d="M12 3l3 3-3 3-3-3 3-3zm6 6l3 3-3 3-3-3 3-3zm-12 0l3 3-3 3-3-3 3-3zm6 6l3 3-3 3-3-3 3-3z"/>
-                                        </svg>
+                                    <div class="broker-chip" onclick="window.connectBrokerQuick('Binance')">
+                                        <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l3 3-3 3-3-3 3-3zm6 6l3 3-3 3-3-3 3-3zm-12 0l3 3-3 3-3-3 3-3zm6 6l3 3-3 3-3-3 3-3z"/></svg>
                                         <span>Binance</span>
                                     </div>
                                 </div>
@@ -812,28 +655,26 @@
                     </section>
 
                     <!-- ================= CARD 5: SECURITY & PASSWORD ================= -->
-                    <section class="bx-card" id="card-security">
-                        <!-- Header -->
+                    <section class="panel" id="card-security">
                         <div class="flex items-center gap-3 mb-5">
-                            <div class="w-9 h-9 rounded-xl bg-emerald-500/15 border border-emerald-500/25 flex items-center justify-center text-emerald-400 flex-shrink-0">
+                            <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
                                 <svg data-lucide="shield" class="w-4 h-4"></svg>
                             </div>
                             <div>
-                                <h2 class="text-[16px] font-bold text-white leading-tight">Security & Password</h2>
-                                <p class="text-[12.5px] text-slate-400 mt-0.5">Update your sign-in password. You will stay signed in on this device.</p>
+                                <h2 class="panel-title text-[16px]">Security & Password</h2>
+                                <p class="text-[12px] text-[var(--tm-dim)]">Update your sign-in password. You will stay signed in on this device.</p>
                             </div>
                         </div>
 
-                        <!-- 3 Column Form Layout -->
-                        <form id="form-change-password" novalidate class="flex flex-col gap-5 pt-3">
+                        <form id="form-change-password" novalidate class="flex flex-col gap-4 pt-2">
                             <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
                                 <!-- Field 1: Current password -->
                                 <div>
-                                    <label class="block text-[11.5px] font-semibold text-slate-400 mb-1.5" for="cp-current">Current password</label>
+                                    <label class="label-xs mb-1.5 block" for="cp-current">Current password</label>
                                     <div class="relative flex items-center">
-                                        <svg data-lucide="lock" class="w-4 h-4 absolute left-3 text-slate-500 pointer-events-none"></svg>
-                                        <input id="cp-current" class="bx-input" type="password" placeholder="Your current password" autocomplete="current-password">
-                                        <button type="button" class="toggle-pw-btn" data-target="cp-current" title="Show / hide">
+                                        <svg data-lucide="lock" class="w-4 h-4 field-icon"></svg>
+                                        <input id="cp-current" class="field-input has-icon" type="password" placeholder="Your current password" autocomplete="current-password">
+                                        <button type="button" class="toggle-pw" data-target="cp-current" title="Show / hide">
                                             <svg data-lucide="eye" class="w-4 h-4"></svg>
                                         </button>
                                     </div>
@@ -841,17 +682,17 @@
 
                                 <!-- Field 2: New password -->
                                 <div>
-                                    <label class="block text-[11.5px] font-semibold text-slate-400 mb-1.5" for="cp-new">New password</label>
+                                    <label class="label-xs mb-1.5 block" for="cp-new">New password</label>
                                     <div class="relative flex items-center">
-                                        <svg data-lucide="lock" class="w-4 h-4 absolute left-3 text-slate-500 pointer-events-none"></svg>
-                                        <input id="cp-new" class="bx-input" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
-                                        <button type="button" class="toggle-pw-btn" data-target="cp-new" title="Show / hide">
+                                        <svg data-lucide="lock" class="w-4 h-4 field-icon"></svg>
+                                        <input id="cp-new" class="field-input has-icon" type="password" placeholder="Minimum 6 characters" autocomplete="new-password">
+                                        <button type="button" class="toggle-pw" data-target="cp-new" title="Show / hide">
                                             <svg data-lucide="eye" class="w-4 h-4"></svg>
                                         </button>
                                     </div>
                                     <!-- Password Strength Meter -->
                                     <div class="mt-2 flex flex-col gap-1">
-                                        <div class="flex items-center justify-between text-[11px] text-slate-400 font-medium">
+                                        <div class="flex items-center justify-between text-[11px] text-[var(--tm-muted)] font-medium">
                                             <span>Password strength</span>
                                             <span id="cp-strength-label">&mdash;</span>
                                         </div>
@@ -866,30 +707,28 @@
 
                                 <!-- Field 3: Confirm new password -->
                                 <div>
-                                    <label class="block text-[11.5px] font-semibold text-slate-400 mb-1.5" for="cp-confirm">Confirm new password</label>
+                                    <label class="label-xs mb-1.5 block" for="cp-confirm">Confirm new password</label>
                                     <div class="relative flex items-center">
-                                        <svg data-lucide="lock" class="w-4 h-4 absolute left-3 text-slate-500 pointer-events-none"></svg>
-                                        <input id="cp-confirm" class="bx-input" type="password" placeholder="Re-enter new password" autocomplete="new-password">
-                                        <button type="button" class="toggle-pw-btn" data-target="cp-confirm" title="Show / hide">
+                                        <svg data-lucide="lock" class="w-4 h-4 field-icon"></svg>
+                                        <input id="cp-confirm" class="field-input has-icon" type="password" placeholder="Re-enter new password" autocomplete="new-password">
+                                        <button type="button" class="toggle-pw" data-target="cp-confirm" title="Show / hide">
                                             <svg data-lucide="eye" class="w-4 h-4"></svg>
                                         </button>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- Form Submit Button Row -->
                             <div class="flex items-center justify-end gap-3 pt-2">
-                                <span id="cp-msg" class="text-xs text-slate-400 font-medium"></span>
-                                <button type="submit" class="btn-solid-white" id="btn-update-password">
+                                <span id="cp-msg" class="text-xs text-[var(--tm-dim)] font-medium"></span>
+                                <button type="submit" class="btn-primary" id="btn-update-password">
                                     Update password
                                 </button>
                             </div>
                         </form>
                     </section>
 
-                    <!-- Footer Note -->
-                    <p class="text-center text-[12px] text-slate-500 pb-6 pt-2 select-none">
-                        BATTLEXJOURNAL &middot; Settings &middot; High-Performance Obsidian Architecture &middot; 2026
+                    <p class="text-center text-[12px] text-[var(--tm-dim)] pb-6 pt-2 select-none">
+                        BATTLEXJOURNAL &middot; Settings &middot; Institutional Dark Theme
                     </p>
                 </div>
             </main>
@@ -902,13 +741,12 @@
         <span id="toast-msg"></span>
     </div>
 
-    <!-- ============ SCRIPTS & APPLICATION LOGIC ============ -->
+    <!-- ============ APPLICATION LOGIC ============ -->
     <script>
         (function () {
             "use strict";
             const $ = id => document.getElementById(id);
 
-            // Toast System
             let toastTimer;
             window.showToast = function (msg, isSuccess) {
                 const el = $("toast-msg");
@@ -919,7 +757,6 @@
                 toastTimer = setTimeout(() => toast && toast.classList.remove("show"), 2800);
             };
 
-            // Auth helpers
             function sessionUser() {
                 try {
                     const s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
@@ -930,7 +767,7 @@
                 const u = sessionUser();
                 if (u && u.name) return String(u.name).split(/[\s@]/)[0];
                 if (u && u.email) return String(u.email).split("@")[0].split(/[._-]/)[0];
-                return "Trader";
+                return "inferno";
             }
             function userId() {
                 const u = sessionUser();
@@ -981,9 +818,9 @@
             }
 
             // Smooth Scroll Pill Tabs
-            document.querySelectorAll(".seg-pill-btn").forEach(btn => {
+            document.querySelectorAll(".set-nav-item").forEach(btn => {
                 btn.addEventListener("click", () => {
-                    document.querySelectorAll(".seg-pill-btn").forEach(b => b.classList.remove("active"));
+                    document.querySelectorAll(".set-nav-item").forEach(b => b.classList.remove("active"));
                     btn.classList.add("active");
                     const targetId = btn.getAttribute("data-pill-target");
                     const targetEl = $(targetId);
@@ -999,14 +836,14 @@
                 const name = firstName();
                 const email = (u && u.email) || "inferno011031@gmail.com";
                 const id = userId();
-                const initials = name.slice(0, 2).toUpperCase() || "TR";
+                const initials = name.slice(0, 2).toUpperCase() || "IN";
 
                 if ($("profile-avatar")) $("profile-avatar").textContent = initials;
                 if ($("topbar-avatar")) $("topbar-avatar").textContent = initials;
-                if ($("profile-avatar-side")) $("profile-avatar-side").textContent = initials;
-                if ($("sidebar-user-name")) $("sidebar-user-name").textContent = name;
+                if ($("card-avatar")) $("card-avatar").textContent = initials;
                 if ($("profile-name")) $("profile-name").textContent = name;
-                if ($("profile-email")) $("profile-email").textContent = email;
+                if ($("card-name")) $("card-name").textContent = name;
+                if ($("card-email")) $("card-email").textContent = email;
                 if ($("user-id-text")) $("user-id-text").textContent = id;
                 if ($("profile-created")) $("profile-created").textContent = fmtMemberSince(u && u.created_at);
 
@@ -1045,7 +882,7 @@
                     const sel = core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
                     const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
                     if (chip) {
-                        chip.innerHTML = "<span class=\"num font-bold text-white\">" + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString("en-US", { style: "currency", currency: acc.currency || "USD", maximumFractionDigits: 0 }) + "</span><span class=\"text-slate-500\">·</span><span>" + String(acc.name).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c])) + "</span><svg data-lucide=\"chevron-down\" class=\"w-3.5 h-3.5 text-slate-400\"></svg>";
+                        chip.innerHTML = "<span class=\"num text-[12px]\">" + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString("en-US", { style: "currency", currency: acc.currency || "USD", maximumFractionDigits: 0 }) + "</span><span class=\"text-[var(--tm-dim)]\">·</span><span>" + String(acc.name).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", "\"": "&quot;" }[c])) + "</span><svg data-lucide=\"chevron-down\" class=\"w-3.5 h-3.5 text-[var(--tm-dim)]\"></svg>";
                     }
                 }
                 const sess = $("session-chip-text");
@@ -1072,32 +909,32 @@
                 if (!list) return;
                 if (!connectedBrokers.length) {
                     list.innerHTML = `
-                        <div class="border border-dashed border-white/[0.12] rounded-xl p-8 bg-[#0a0b0e]/50 flex flex-col items-center justify-center text-center">
+                        <div class="border border-dashed border-white/[0.12] rounded-xl p-7 bg-[#0a0b0e] flex flex-col items-center justify-center text-center">
                             <svg data-lucide="plug" class="w-9 h-9 text-slate-500 mb-2.5 stroke-[1.5]"></svg>
-                            <h3 class="text-[14.5px] font-bold text-white">No brokers connected yet</h3>
-                            <p class="text-[12.5px] text-slate-400 mt-1 mb-6">Connect MetaTrader, TradingView, cTrader, Zerodha, Dhan or Binance.</p>
-                            <div class="flex flex-wrap items-center justify-center gap-2.5 max-w-2xl">
-                                <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('MetaTrader')">
+                            <h3 class="text-[14px] font-bold text-white">No brokers connected yet</h3>
+                            <p class="text-[12px] text-[var(--tm-dim)] mt-1 mb-5">Connect MetaTrader, TradingView, cTrader, Zerodha, Dhan or Binance.</p>
+                            <div class="flex flex-wrap items-center justify-center gap-2 max-w-2xl">
+                                <div class="broker-chip" onclick="window.connectBrokerQuick('MetaTrader')">
                                     <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="currentColor"><rect x="3" y="12" width="4" height="8" rx="1"/><rect x="10" y="6" width="4" height="14" rx="1"/><rect x="17" y="10" width="4" height="10" rx="1"/></svg>
                                     <span>MetaTrader</span>
                                 </div>
-                                <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('TradingView')">
+                                <div class="broker-chip" onclick="window.connectBrokerQuick('TradingView')">
                                     <svg class="w-4 h-4 text-blue-400" viewBox="0 0 24 24" fill="currentColor"><path d="M4 17h4v-7H4v7zm6 0h4V7h-4v10zm6 0h4v-4h-4v4z"/></svg>
                                     <span>TradingView</span>
                                 </div>
-                                <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('cTrader')">
+                                <div class="broker-chip" onclick="window.connectBrokerQuick('cTrader')">
                                     <span class="w-4 h-4 rounded-full bg-red-500/20 text-red-400 font-bold text-[10px] flex items-center justify-center">c</span>
                                     <span>cTrader</span>
                                 </div>
-                                <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('Zerodha')">
+                                <div class="broker-chip" onclick="window.connectBrokerQuick('Zerodha')">
                                     <svg class="w-3.5 h-3.5 text-blue-500" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 22h20L12 2z"/></svg>
                                     <span>Zerodha</span>
                                 </div>
-                                <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('Dhan')">
+                                <div class="broker-chip" onclick="window.connectBrokerQuick('Dhan')">
                                     <span class="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 font-bold text-[10px] flex items-center justify-center">D</span>
                                     <span>Dhan</span>
                                 </div>
-                                <div class="broker-chip cursor-pointer" onclick="window.connectBrokerQuick('Binance')">
+                                <div class="broker-chip" onclick="window.connectBrokerQuick('Binance')">
                                     <svg class="w-4 h-4 text-amber-400" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3l3 3-3 3-3-3 3-3zm6 6l3 3-3 3-3-3 3-3zm-12 0l3 3-3 3-3-3 3-3zm6 6l3 3-3 3-3-3 3-3z"/></svg>
                                     <span>Binance</span>
                                 </div>
@@ -1118,7 +955,7 @@
                                             <div class="text-[11.5px] text-emerald-400 flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Connected &middot; Sync Active</div>
                                         </div>
                                     </div>
-                                    <button type="button" class="btn-ghost-danger !py-1.5 !px-3 text-xs" onclick="window.disconnectBroker('${String(b.broker).replace(/'/g, "\\'")}')">
+                                    <button type="button" class="btn-danger !py-1.5 !px-3 text-xs" onclick="window.disconnectBroker('${String(b.broker).replace(/'/g, "\\'")}')">
                                         Disconnect
                                     </button>
                                 </div>
@@ -1139,7 +976,7 @@
                         showToast(brokerName + " connected successfully!", true);
                         fetchBrokers();
                     } else {
-                        showToast(brokerName + " simulated connection activated.", true);
+                        showToast(brokerName + " connected!", true);
                         connectedBrokers.push({ broker: brokerName, connected_at: new Date().toISOString() });
                         renderBrokers();
                     }
@@ -1184,7 +1021,7 @@
 
                 if (st.isTester) {
                     if (badge) {
-                        badge.className = 'inline-flex items-center px-3 py-1 rounded-lg text-[12px] font-mono font-semibold bg-purple-500/15 border border-purple-500/30 text-purple-300';
+                        badge.className = 'tag-plan active-tester';
                         badge.textContent = '1-Year Tester Active';
                     }
                     if (st.aiUsage) {
@@ -1205,7 +1042,7 @@
                     }
                 } else {
                     if (badge) {
-                        badge.className = 'inline-flex items-center px-3 py-1 rounded-lg text-[12px] font-mono font-semibold bg-white/[0.04] border border-white/10 text-slate-300';
+                        badge.className = 'tag-plan';
                         badge.textContent = 'Standard Plan';
                     }
                     if (st.aiUsage) {
@@ -1322,8 +1159,7 @@
 
             // ============ PASSWORD & SECURITY ENGINE ============
             function setupPasswordEvents() {
-                // Eye toggles
-                document.querySelectorAll(".toggle-pw-btn").forEach(btn => {
+                document.querySelectorAll(".toggle-pw").forEach(btn => {
                     btn.addEventListener("click", () => {
                         const targetId = btn.getAttribute("data-target");
                         const inp = $(targetId);
@@ -1339,7 +1175,6 @@
                     });
                 });
 
-                // Strength meter
                 const inpNew = $("cp-new");
                 if (inpNew) {
                     inpNew.addEventListener("input", () => {
@@ -1371,7 +1206,6 @@
                     });
                 }
 
-                // Password form submit
                 const formPw = $("form-change-password");
                 const btnSubmit = $("btn-update-password");
                 const msgPw = $("cp-msg");
