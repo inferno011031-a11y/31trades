@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
    31TRADES — Market Replay mode module (runs inside backtesting.html?mode=replay)
    ----------------------------------------------------------------------------
    Bar-by-bar playback of real historical candles streamed from the server
@@ -14,7 +14,7 @@
     const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
 
     const CHART_LIGHT = { bg: '#FFFFFF', text: '#475569', grid: '#E2E8F0', border: '#CBD5E1', up: '#059669', down: '#DC2626' };
-    const CHART_DARK = { bg: '#0F0F11', text: '#B4B4BD', grid: '#1A1A1E', border: '#1F1F23', up: '#10B981', down: '#EF4444' };
+    const CHART_DARK = { bg: '#0a0b0e', text: '#B4B4BD', grid: 'rgba(255, 255, 255, 0.08)', border: 'rgba(255, 255, 255, 0.12)', up: '#00E676', down: '#FF3B30' };
     function chartTheme() {
         const root = document.documentElement;
         return root && root.getAttribute('data-theme') === 'light' ? CHART_LIGHT : CHART_DARK;

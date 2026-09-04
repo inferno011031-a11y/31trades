@@ -1,4 +1,4 @@
-/* ============================================================================
+﻿/* ============================================================================
    account-switcher.js — GLOBAL ACCOUNT SWITCHER (shared, every page)
    Turns the existing topbar #acc-chip into a real account switcher without
    touching the topbar design: same chip, same position, same appearance.
@@ -67,7 +67,7 @@
             '#account-switcher-pop .as-meta { font-size: 11.5px; color: #71717a; margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }',
             '#account-switcher-pop .as-right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; text-align: right; }',
             '#account-switcher-pop .as-eq { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; font-family: var(--tm-mono, monospace); }',
-            '#account-switcher-pop .as-check { width: 18px; height: 18px; color: #10b981; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }',
+            '#account-switcher-pop .as-check { width: 18px; height: 18px; color: var(--tm-green, #00E676); display: flex; align-items: center; justify-content: center; flex-shrink: 0; }',
             '#account-switcher-pop .as-check svg { width: 16px; height: 16px; stroke-width: 2.8; }',
             '#account-switcher-pop .as-check-placeholder { width: 18px; height: 18px; flex-shrink: 0; }',
             '#account-switcher-pop .as-foot { border-top: 1px solid rgba(255, 255, 255, 0.08); padding: 6px; background: rgba(0, 0, 0, 0.15); }',
@@ -102,7 +102,7 @@
         var active = acc.id === selectedId;
         var initials = (acc.name || 'AC').split(/\s+/).map(function (w) { return w[0]; }).join('').slice(0, 2).toUpperCase() || 'AC';
         var eqVal = acc.current_equity != null ? acc.current_equity : 0;
-        var eqCol = eqVal > 0 ? '#10b981' : (eqVal < 0 ? '#ef4444' : '#a1a1aa');
+        var eqCol = eqVal > 0 ? 'var(--tm-green, #00E676)' : (eqVal < 0 ? 'var(--tm-red, #FF3B30)' : 'var(--tm-muted, #a1a1aa)');
 
         return '<button type="button" role="menuitemradio" class="as-row' + (active ? ' as-active' : '') + '" data-acc-id="' + esc(acc.id) + '" aria-checked="' + active + '" tabindex="0">' +
             '<div class="as-avatar">' + esc(initials) + '</div>' +

@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="en" data-theme="dark">
 <head>
     <meta charset="UTF-8">
@@ -6,7 +6,7 @@
     <title>BATTLEXJOURNAL — Dashboard</title>
     <meta name="description" content="BATTLEXJOURNAL Dashboard — your trading workspace: recent trades, discipline, risk and performance at a glance.">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <meta name="theme-color" content="#0a0a0b">
+    <meta name="theme-color" content="#0a0b0e">
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="31TRADES">
     <meta property="og:title" content="BATTLEXJOURNAL — Dashboard">
@@ -101,11 +101,11 @@
            Premium glass system (Calendar parity) — theme-adaptive tokens
            ========================================================================== */
         :root {
-            --glass-bg: rgba(23, 26, 34, 0.55);
-            --glass-bg-strong: rgba(28, 32, 42, 0.78);
-            --glass-border: rgba(255, 255, 255, 0.09);
-            --glass-border-strong: rgba(255, 255, 255, 0.16);
-            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-bg: rgba(20, 23, 34, 0.72);
+            --glass-bg-strong: rgba(24, 28, 42, 0.88);
+            --glass-border: rgba(255, 255, 255, 0.08);
+            --glass-border-strong: rgba(255, 255, 255, 0.15);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.40), 0 2px 8px rgba(0, 0, 0, 0.25);
             --glass-inner: rgba(255, 255, 255, 0.04);
         }
         [data-theme="light"] {
@@ -136,7 +136,7 @@
             position: fixed; inset: 0; z-index: 0; pointer-events: none;
             background:
                 radial-gradient(ellipse 70% 45% at 12% -8%, rgba(99, 102, 241, 0.10), transparent 60%),
-                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(16, 185, 129, 0.07), transparent 58%),
+                radial-gradient(ellipse 55% 40% at 92% 2%, rgba(0, 230, 118, 0.05), transparent 58%),
                 radial-gradient(ellipse 45% 35% at 78% 96%, rgba(245, 158, 11, 0.05), transparent 60%),
                 var(--tm-bg);
         }
@@ -268,8 +268,8 @@
             font-weight: 600;
             border: 1px solid transparent;
         }
-        .tag-emerald { background: rgba(16, 185, 129, 0.10); color: var(--tm-green); border-color: rgba(16, 185, 129, 0.25); }
-        .tag-red { background: rgba(239, 68, 68, 0.10); color: var(--tm-red); border-color: rgba(239, 68, 68, 0.25); }
+        .tag-emerald { background: rgba(0, 230, 118, 0.12); color: var(--tm-green); border-color: rgba(0, 230, 118, 0.28); }
+        .tag-red { background: rgba(255, 59, 48, 0.12); color: var(--tm-red); border-color: rgba(255, 59, 48, 0.28); }
         .tag-amber { background: rgba(245, 158, 11, 0.10); color: var(--tm-amber); border-color: rgba(245, 158, 11, 0.25); }
         .tag-blue { background: rgba(96, 165, 250, 0.12); color: var(--tm-blue); border-color: rgba(96, 165, 250, 0.25); }
         .tag-purple { background: rgba(129, 140, 248, 0.14); color: var(--tm-accent); border-color: rgba(129, 140, 248, 0.28); }
@@ -315,7 +315,7 @@
             font-weight: 600;
             color: var(--tm-muted);
         }
-        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(0, 230, 118, 0.20); }
 
         /* AI read sections */
         .brief-section { border-left: 2px solid var(--tm-border-2); padding-left: 14px; }
@@ -1104,9 +1104,10 @@
             window.__eqRaw = null;
             window.__plotEq = function () {
                 var css = getComputedStyle(document.documentElement);
-                var green = (css.getPropertyValue('--tm-green') || '#10B981').trim();
-                var grid = (css.getPropertyValue('--tm-border') || 'rgba(255,255,255,0.06)').trim();
-                var dotFill = (css.getPropertyValue('--tm-bg') || '#0A0A0C').trim();
+                var green = (css.getPropertyValue('--tm-green') || '#00E676').trim();
+                var red = (css.getPropertyValue('--tm-red') || '#FF3B30').trim();
+                var grid = (css.getPropertyValue('--tm-border') || 'rgba(255,255,255,0.08)').trim();
+                var dotFill = (css.getPropertyValue('--tm-bg') || '#0a0b0e').trim();
                 var W = 760, T = 20, B = 160;
                 var raw = window.__eqRaw;
                 if (!raw) return;
@@ -1222,6 +1223,7 @@
                     byId('st-risk-pct').textContent = riskPct + '% consumed';
                     byId('st-risk-max').textContent = 'limit $' + (rs.dailyRiskBudget || 0);
                     byId('st-risk-fill').style.width = Math.min(100, riskPct) + '%';
+                    byId('st-risk-fill').style.background = (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'var(--tm-red)' : rs.status === 'CAUTION' ? 'var(--tm-amber)' : 'var(--tm-green)');
                     var rt = byId('st-risk-state');
                     if (rt) {
                         rt.textContent = rs.statusLabel;
@@ -1238,6 +1240,7 @@
                     byId('st-dd-pct').textContent = ddPct + '% of limit used';
                     byId('st-dd-marker').textContent = rs.statusLabel;
                     byId('st-dd-fill').style.width = Math.min(100, ddPct) + '%';
+                    byId('st-dd-fill').style.background = (rs.status === 'LIMIT' || rs.status === 'HIGH' ? 'var(--tm-red)' : rs.status === 'CAUTION' ? 'var(--tm-amber)' : 'var(--tm-green)');
                     var dt = byId('st-dd-state');
                     if (dt) {
                         dt.textContent = rs.statusLabel;
