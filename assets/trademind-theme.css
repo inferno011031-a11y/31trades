@@ -1,3 +1,10 @@
+﻿/* Explicit Font Smoothing & Subpixel Antialiasing */
+*, *::before, *::after {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
+
 /* Ensure Profile Popover always sits on top of all drawers & backdrops */
 #sidebar-profile-popover {
     z-index: 100050 !important;
@@ -84,7 +91,12 @@ div[class*="flex h-screen"] {
 /* ---- Base surface hierarchy --------------------------------------------- */
 /* Landing/auth pages opt out with class "tm-landing" (they carry their own
    marketing gradient); every app page inherits the obsidian base. */
-html:not(.tm-landing) { background: var(--tm-bg); }
+html:not(.tm-landing) {
+    background: var(--tm-bg);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+}
 body:not(.tm-landing) {
     background: var(--tm-bg) !important;
     color: var(--tm-text);
@@ -116,6 +128,10 @@ body:not(.tm-landing) .sidebar,
     flex-shrink: 0 !important;
     width: 253px !important;
     min-width: 253px !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
 }
 body.collapsed .sidebar {
     width: 64px !important;
@@ -166,27 +182,37 @@ body:not(.tm-landing) .topbar {
 
 /* ---- Navigation: pill-style active, soft hover --------------------------- */
 .nav-item {
-    font-size: 14.5px !important;
+    font-size: 13.5px !important;
     font-weight: 500 !important;
-    padding: 10px 14px !important;
-    gap: 13px !important;
-    color: var(--tm-muted);
-    border-radius: 9px !important;
-    transition: background 0.18s ease, color 0.18s ease, box-shadow 0.18s ease;
+    padding: 9px 12px !important;
+    gap: 12px !important;
+    color: #CBD5E1 !important;
+    border-radius: 8px !important;
+    transition: background 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
+.nav-item .nav-label { color: inherit; font-weight: 500; }
 .nav-item svg {
-    width: 19px !important;
-    height: 19px !important;
+    width: 18px !important;
+    height: 18px !important;
     flex-shrink: 0 !important;
+    color: #94A3B8 !important;
+    transition: color 0.15s ease;
 }
 .nav-item:hover {
     background: var(--tm-hover);
-    color: var(--tm-text);
+    color: #ffffff !important;
 }
+.nav-item:hover svg { color: #ffffff !important; }
 .nav-item.active {
     background: rgba(255, 255, 255, 0.08) !important;
     color: #ffffff !important;
+    font-weight: 600 !important;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12) !important;
 }
+.nav-item.active .nav-label { color: #ffffff !important; font-weight: 600 !important; }
+.nav-item.active svg { color: #ffffff !important; stroke-width: 2.2 !important; }
 body.collapsed .nav-item.active { box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.10); }
 
 /* ---- Luxury Minimalist SOON Badge --------------------------------------- */
@@ -246,11 +272,11 @@ body.collapsed .sidebar-soon-badge {
     align-items: center;
     justify-content: space-between;
     padding: 7px 12px;
-    font-size: 11.5px !important;
-    font-weight: 700 !important;
-    letter-spacing: 0.07em !important;
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.05em !important;
     text-transform: uppercase;
-    color: var(--tm-dim);
+    color: #64748B !important;
     background: transparent;
     border: none;
     cursor: pointer;
@@ -258,19 +284,27 @@ body.collapsed .sidebar-soon-badge {
     transition: all 0.15s ease;
     width: 100%;
 }
+.sidebar-section-header span {
+    font-size: 11px !important;
+    font-weight: 600 !important;
+    letter-spacing: 0.05em !important;
+    text-transform: uppercase;
+    color: #64748B !important;
+}
+.sidebar-section-header:hover span { color: #CBD5E1 !important; }
 .sidebar-section-header:hover {
     color: var(--tm-text);
     background: var(--tm-hover);
 }
 .sidebar-section .chevron-icon {
-    width: 14px !important;
-    height: 14px !important;
-    color: var(--tm-dim);
-    transition: transform 0.2s ease;
+    width: 13px !important;
+    height: 13px !important;
+    color: #64748B !important;
+    transition: transform 0.2s ease, color 0.15s ease;
 }
 .sidebar-section.open .chevron-icon {
     transform: rotate(180deg);
-    color: var(--tm-text);
+    color: #CBD5E1 !important;
 }
 .sidebar-section-items {
     display: none;
@@ -1732,6 +1766,10 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         position: relative !important;
         width: 253px !important;
         min-width: 253px !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
         max-width: 253px !important;
         height: 100vh !important;
         display: flex !important;
@@ -1924,6 +1962,10 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         position: relative !important;
         width: 253px !important;
         min-width: 253px !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
         max-width: 253px !important;
         height: 100vh !important;
         height: 100dvh !important;
@@ -2095,6 +2137,10 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         position: relative !important;
         width: 253px !important;
         min-width: 253px !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
         max-width: 253px !important;
         height: 100vh !important;
         height: 100dvh !important;
@@ -2159,8 +2205,10 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         height: 100vh !important;
         height: 100dvh !important;
         z-index: 100000 !important;
-        transform: translate3d(-100%, 0, 0) !important;
-        -webkit-transform: translate3d(-100%, 0, 0) !important;
+        transform: translateX(-100%) translateZ(0) !important;
+        -webkit-transform: translateX(-100%) translateZ(0) !important;
+        backface-visibility: hidden !important;
+        -webkit-backface-visibility: hidden !important;
         transition: transform 0.28s cubic-bezier(0.32, 0.72, 0, 1) !important;
         -webkit-transition: -webkit-transform 0.28s cubic-bezier(0.32, 0.72, 0, 1) !important;
         box-shadow: none !important;
@@ -2172,7 +2220,6 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
         overflow-x: hidden !important;
         pointer-events: none !important;
         will-change: transform;
-        -webkit-transform: translateZ(0);
     }
 
     /* Ensure text labels inside mobile drawer are always visible */
@@ -2189,8 +2236,10 @@ body.mobile-sidebar-open .mobile-sidebar-backdrop {
     }
 
     body.mobile-sidebar-open .sidebar {
-        transform: translate3d(0, 0, 0) !important;
-        -webkit-transform: translate3d(0, 0, 0) !important;
+        transform: translateX(0) translateZ(0) !important;
+        -webkit-transform: translateX(0) translateZ(0) !important;
+        backface-visibility: hidden !important;
+        -webkit-backface-visibility: hidden !important;
         pointer-events: auto !important;
         box-shadow: 16px 0 60px rgba(0, 0, 0, 0.95) !important;
     }
