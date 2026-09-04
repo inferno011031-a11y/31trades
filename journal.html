@@ -156,6 +156,37 @@
         }
         .modal.open { opacity: 1; pointer-events: auto; }
 
+        /* Guaranteed Modal & Overlay Display Engine */
+        #entry-modal.open,
+        .modal.open {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            z-index: 9999 !important;
+        }
+        #entry-overlay.open,
+        .overlay.open {
+            display: block !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+            pointer-events: auto !important;
+            z-index: 9998 !important;
+        }
+        #entry-modal:not(.open) {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+        #entry-overlay:not(.open) {
+            display: none !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            visibility: hidden !important;
+        }
+
+
         .modal-box {
             width: 100%; max-width: 860px; max-height: 88vh; overflow-y: auto;
             background: #0e121b; border: 1px solid rgba(255, 255, 255, 0.12);
@@ -917,7 +948,7 @@
                         <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
-                    <button class="btn-primary !py-2 !px-3.5" onclick="window.openEntryModal ? window.openEntryModal() : window.location.href='journal.html?log=1'">
+                    <button id="btn-header-log-trade" class="btn-primary !py-2 !px-3.5 cursor-pointer" onclick="window.openEntryModal && window.openEntryModal()">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </button>
                     <button class="account-select hide-when-collapsed" id="acc-chip">
@@ -942,7 +973,7 @@
                             <a href="imports.html" class="btn-ghost">
                                 <svg data-lucide="file-up" class="w-4 h-4"></svg> Import
                             </a>
-                            <button class="btn-primary" onclick="openEntryModal()">
+                            <button id="btn-page-log-trade" class="btn-primary cursor-pointer" onclick="window.openEntryModal && window.openEntryModal()">
                                 <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                             </button>
                         </div>
@@ -1062,7 +1093,7 @@
                                 <p class="text-[16px] font-bold text-[var(--tm-text)]" id="empty-title">Your journal is ready</p>
                                 <p class="text-[13px] text-[var(--tm-dim)] mt-1.5 max-w-md mx-auto leading-relaxed" id="empty-sub">Start logging your executions to unlock automated metrics, discipline audits, and AI behavioral analysis.</p>
                                 <div class="flex flex-wrap items-center justify-center gap-3 mt-6">
-                                    <button id="empty-log" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2" onclick="openEntryModal()">
+                                    <button id="empty-log" class="btn-primary !py-2.5 !px-5 text-[13px] inline-flex items-center gap-2 cursor-pointer" onclick="window.openEntryModal && window.openEntryModal()">
                                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log First Trade
                                     </button>
                                     <a id="empty-import" href="imports.html" class="btn-ghost !py-2.5 !px-4 text-[13px] inline-flex items-center gap-2">
@@ -2088,8 +2119,20 @@
                 
                 const modal = $('entry-modal');
                 const overlay = $('entry-overlay');
-                if (modal) modal.classList.add('open');
-                if (overlay) overlay.classList.add('open');
+                if (modal) {
+                    modal.classList.add('open');
+                    modal.style.display = 'flex';
+                    modal.style.opacity = '1';
+                    modal.style.visibility = 'visible';
+                    modal.style.pointerEvents = 'auto';
+                }
+                if (overlay) {
+                    overlay.classList.add('open');
+                    overlay.style.display = 'block';
+                    overlay.style.opacity = '1';
+                    overlay.style.visibility = 'visible';
+                    overlay.style.pointerEvents = 'auto';
+                }
 
                 // Set datetime input
                 const now = new Date();
@@ -2158,8 +2201,22 @@
             window.openEntryModal = openEntryModal;
 
             function closeEntryModal() {
-                $('entry-overlay')?.classList.remove('open');
-                $('entry-modal')?.classList.remove('open');
+                const modal = $('entry-modal');
+                const overlay = $('entry-overlay');
+                if (modal) {
+                    modal.classList.remove('open');
+                    modal.style.display = 'none';
+                    modal.style.opacity = '0';
+                    modal.style.visibility = 'hidden';
+                    modal.style.pointerEvents = 'none';
+                }
+                if (overlay) {
+                    overlay.classList.remove('open');
+                    overlay.style.display = 'none';
+                    overlay.style.opacity = '0';
+                    overlay.style.visibility = 'hidden';
+                    overlay.style.pointerEvents = 'none';
+                }
             }
             window.closeEntryModal = closeEntryModal;
 
