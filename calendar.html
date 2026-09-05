@@ -124,20 +124,20 @@
 
         /* Floating Action Button (+) */
         .fab-btn {
-            position: fixed; bottom: 28px; right: 28px; width: 48px; height: 48px;
-            border-radius: 999px; background: #15803d; color: #ffffff;
+            position: fixed; bottom: 28px; right: 28px; width: 44px; height: 44px;
+            border-radius: 999px; background: #22c55e; color: #05070a;
             display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 18px rgba(21, 128, 61, 0.45);
-            transition: all 0.2s; z-index: 80; text-decoration: none; cursor: pointer;
-            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); z-index: 80; text-decoration: none; cursor: pointer;
+            border: none;
         }
-        .fab-btn:hover { background: #16a34a; transform: scale(1.08) translateY(-2px); }
+        .fab-btn:hover { background: #16a34a; transform: scale(1.06) translateY(-2px); box-shadow: 0 6px 24px rgba(34, 197, 94, 0.55); }
 
         
         /* Grid templates with rock-solid CSS (avoids uncompiled Tailwind arbitrary classes) */
         .yearly-grid-matrix {
             display: grid !important;
-            grid-template-columns: 80px repeat(12, minmax(0, 1fr)) 100px !important;
+            grid-template-columns: 80px repeat(12, minmax(0, 1fr)) !important;
             gap: 8px !important;
             align-items: center !important;
         }
@@ -570,6 +570,12 @@
             <main class="flex-1 overflow-y-auto bg-[#06080b]">
                 <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
 
+                    <!-- Page Title Header (Matches Image) -->
+                    <div class="mb-1">
+                        <h1 class="text-[26px] font-extrabold text-white tracking-tight">Calendar</h1>
+                        <p class="text-[13px] text-[#828b99] mt-0.5 font-medium">Review your trading performance over time.</p>
+                    </div>
+
                     <!-- ======================================================= -->
                     <!-- VIEW 1: YEARLY PERFORMANCE & MACRO CURVE (Matches Image 1) -->
                     <!-- ======================================================= -->
@@ -578,28 +584,32 @@
                         <!-- Card 1: Yearly Performance Matrix -->
                         <div class="tp-card">
                             <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <div class="tp-card-title">Yearly Performance</div>
-                                    <div class="tp-card-sub">Select a month to view its performance</div>
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#94a3b8] flex-shrink-0">
+                                        <svg data-lucide="bar-chart-2" class="w-4 h-4"></svg>
+                                    </div>
+                                    <div>
+                                        <div class="tp-card-title">Yearly Performance</div>
+                                        <div class="tp-card-sub">Select a month to view its performance</div>
+                                    </div>
                                 </div>
                                 <div class="relative" id="year-filter-wrap">
                                     <button type="button" id="year-filter-btn" class="flex items-center gap-2 bg-[#11141c] border border-[#1f2533] text-white text-[12.5px] font-semibold rounded-lg px-3 py-1.5 hover:border-[#334155] transition-colors">
                                         <span id="year-filter-label">All years</span>
-                                        <svg data-lucide="chevrons-up-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
+                                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
                                     </button>
                                 </div>
                             </div>
 
-                            <!-- 13-Column Grid for Months + YTD -->
+                            <!-- 12-Month Grid (Jan - Dec) -->
                             <div class="w-full overflow-x-auto">
-                                <div class="min-w-[920px] yearly-grid-matrix text-center text-[12px] font-bold text-[#64748b] mb-2">
+                                <div class="min-w-[900px] yearly-grid-matrix text-center text-[12px] font-bold text-[#64748b] mb-2">
                                     <div></div>
                                     <div>Jan</div><div>Feb</div><div>Mar</div><div>Apr</div><div>May</div><div>Jun</div>
                                     <div>Jul</div><div>Aug</div><div>Sep</div><div>Oct</div><div>Nov</div><div>Dec</div>
-                                    <div class="text-white">YTD</div>
                                 </div>
 
-                                <div class="min-w-[920px] yearly-grid-matrix" id="yearly-matrix-row">
+                                <div class="min-w-[900px] yearly-grid-matrix" id="yearly-matrix-row">
                                     <!-- Populated dynamically -->
                                 </div>
                             </div>
@@ -607,13 +617,89 @@
 
                         <!-- Card 2: Account Balance Equity Curve -->
                         <div class="tp-card">
-                            <div class="mb-4">
-                                <div class="tp-card-title">Account Balance</div>
-                                <div class="tp-card-sub">Equity curve of selected time period</div>
+                            <div class="flex items-center justify-between mb-4">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-9 h-9 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#94a3b8] flex-shrink-0">
+                                        <svg data-lucide="trending-up" class="w-4 h-4"></svg>
+                                    </div>
+                                    <div>
+                                        <div class="tp-card-title">Account Balance</div>
+                                        <div class="tp-card-sub">Equity curve of selected time period</div>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-4">
+                                    <div class="flex items-center gap-1.5 text-[12px] font-medium text-[#828b99]">
+                                        <span class="w-2 h-2 rounded-full bg-[#22c55e]"></span>
+                                        <span>Account Balance</span>
+                                    </div>
+                                    <button type="button" class="flex items-center gap-2 bg-[#11141c] border border-[#1f2533] text-white text-[12.5px] font-semibold rounded-lg px-3 py-1.5 hover:border-[#334155] transition-colors">
+                                        <span>All years</span>
+                                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
+                                    </button>
+                                </div>
                             </div>
 
                             <div class="relative w-full h-[260px]" id="macro-chart-container">
                                 <!-- Area chart rendered dynamically -->
+                            </div>
+                        </div>
+
+                        <!-- 4 Summary KPI Cards (Matches Bottom Row of Screenshot) -->
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                            <!-- KPI 1: YTD -->
+                            <div class="tp-card !p-5 flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[12.5px] font-semibold text-[#828b99]">YTD</span>
+                                    <div class="w-7 h-7 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#828b99]">
+                                        <svg data-lucide="trending-up" class="w-3.5 h-3.5"></svg>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="num text-[24px] font-bold text-[#22c55e] leading-tight" id="kpi-ytd-val">+0.00%</div>
+                                    <div class="text-[11.5px] text-[#64748b] mt-1 font-medium" id="kpi-ytd-sub">0 trades</div>
+                                </div>
+                            </div>
+
+                            <!-- KPI 2: Total Trades -->
+                            <div class="tp-card !p-5 flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[12.5px] font-semibold text-[#828b99]">Total Trades</span>
+                                    <div class="w-7 h-7 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#828b99]">
+                                        <svg data-lucide="crosshair" class="w-3.5 h-3.5"></svg>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="num text-[24px] font-bold text-white leading-tight" id="kpi-trades-val">0</div>
+                                    <div class="text-[11.5px] text-[#64748b] mt-1 font-medium" id="kpi-trades-sub">in 2026</div>
+                                </div>
+                            </div>
+
+                            <!-- KPI 3: Profitable Months -->
+                            <div class="tp-card !p-5 flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[12.5px] font-semibold text-[#828b99]">Profitable Months</span>
+                                    <div class="w-7 h-7 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#828b99]">
+                                        <svg data-lucide="bar-chart-2" class="w-3.5 h-3.5"></svg>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="num text-[24px] font-bold text-white leading-tight" id="kpi-prof-val">0 / 12</div>
+                                    <div class="text-[11.5px] text-[#64748b] mt-1 font-medium truncate" id="kpi-prof-sub">No profitable months</div>
+                                </div>
+                            </div>
+
+                            <!-- KPI 4: Current Month -->
+                            <div class="tp-card !p-5 flex flex-col justify-between">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-[12.5px] font-semibold text-[#828b99]">Current Month</span>
+                                    <div class="w-7 h-7 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#828b99]">
+                                        <svg data-lucide="calendar" class="w-3.5 h-3.5"></svg>
+                                    </div>
+                                </div>
+                                <div>
+                                    <div class="num text-[24px] font-bold text-white leading-tight" id="kpi-cur-val">-</div>
+                                    <div class="text-[11.5px] text-[#64748b] mt-1 font-medium" id="kpi-cur-sub">No trades yet</div>
+                                </div>
                             </div>
                         </div>
 
@@ -944,16 +1030,55 @@
                     }
                 }
 
-                // YTD cell
-                const isYtdProfit = ytdPnl >= 0;
-                html += '<div class="year-cell ' + (ytdTrades > 0 ? (isYtdProfit ? 'active-profit' : 'active-loss') : '') + '">' +
-                    '<span class="num text-[11.5px] font-bold ' + (isYtdProfit ? 'text-[#22c55e]' : 'text-[#ef4444]') + '">' + (ytdTrades ? fmtVal(ytdPnl) : '0%') + '</span>' +
-                    '<span class="text-[9.5px] text-[#94a3b8] mt-0.5">' + ytdTrades + ' trade' + (ytdTrades === 1 ? '' : 's') + '</span>' +
-                '</div>';
-
                 row.innerHTML = html;
 
+                // Update 4 Summary KPI Cards
+                const kpiYtdVal = $('kpi-ytd-val'), kpiYtdSub = $('kpi-ytd-sub');
+                if (kpiYtdVal) {
+                    const isYtdGain = ytdPnl >= 0;
+                    kpiYtdVal.textContent = ytdTrades > 0 ? fmtVal(ytdPnl) : '+0.00%';
+                    kpiYtdVal.className = 'num text-[24px] font-bold leading-tight ' + (ytdTrades > 0 ? (isYtdGain ? 'text-[#22c55e]' : 'text-[#ef4444]') : 'text-white');
+                }
+                if (kpiYtdSub) {
+                    kpiYtdSub.textContent = ytdTrades + ' trade' + (ytdTrades === 1 ? '' : 's');
+                }
+
+                const kpiTradesVal = $('kpi-trades-val'), kpiTradesSub = $('kpi-trades-sub');
+                if (kpiTradesVal) kpiTradesVal.textContent = ytdTrades;
+                if (kpiTradesSub) kpiTradesSub.textContent = 'in ' + selectedYear;
+
+                // Profitable months calculation
+                const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                const profMonths = [];
+                for (let i = 0; i < 12; i++) {
+                    if (monthsData[i].trades > 0 && monthsData[i].pnl > 0) {
+                        profMonths.push(monthShort[i]);
+                    }
+                }
+                const kpiProfVal = $('kpi-prof-val'), kpiProfSub = $('kpi-prof-sub');
+                if (kpiProfVal) kpiProfVal.textContent = profMonths.length + ' / 12';
+                if (kpiProfSub) kpiProfSub.textContent = profMonths.length > 0 ? profMonths.join(', ') : 'No profitable months';
+
+                // Current Month calculation
+                const now = new Date();
+                const curMonthIdx = now.getMonth();
+                const curMonthData = monthsData[curMonthIdx];
+                const kpiCurVal = $('kpi-cur-val'), kpiCurSub = $('kpi-cur-sub');
+                if (kpiCurVal && kpiCurSub) {
+                    if (curMonthData && curMonthData.trades > 0) {
+                        const isCurGain = curMonthData.pnl >= 0;
+                        kpiCurVal.textContent = fmtVal(curMonthData.pnl);
+                        kpiCurVal.className = 'num text-[24px] font-bold leading-tight ' + (isCurGain ? 'text-[#22c55e]' : 'text-[#ef4444]');
+                        kpiCurSub.textContent = curMonthData.trades + ' trade' + (curMonthData.trades === 1 ? '' : 's');
+                    } else {
+                        kpiCurVal.textContent = '-';
+                        kpiCurVal.className = 'num text-[24px] font-bold text-white leading-tight';
+                        kpiCurSub.textContent = 'No trades yet';
+                    }
+                }
+
                 renderMacroChart();
+                if (window.lucide) window.lucide.createIcons();
             }
 
             function renderMacroChart() {
