@@ -384,7 +384,8 @@ function seoHead(route) {
     out += '    <meta name="twitter:card" content="summary">\n';
     out += '    <meta name="twitter:title" content="' + esc(ogTitleOf(entry)) + '">\n';
     out += '    <meta name="twitter:description" content="' + esc(ogDescriptionOf(entry)) + '">\n';
-    out += '    <link rel="canonical" href="' + url + '">';
+    out += '    <link rel="canonical" href="' + url + '">\n';
+    out += '    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-3652422538944831" crossorigin="anonymous"></script>';
     for (const g of ld) {
         out += '\n    <script type="application/ld+json">' + JSON.stringify(g) + '</script>';
     }

@@ -1866,12 +1866,12 @@ const CSP_ENFORCE = process.env.CSP_ENFORCE === 'true';
 function securityHeaders(res) {
     const csp = [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com blob:",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://partner.googleadservices.com blob:",
         "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com blob:",
         "font-src 'self' https://fonts.gstatic.com data:",
         "img-src 'self' data: blob: https:",
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://demo_feed.tradingview.com",
-        "frame-src 'self' blob: data:",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://demo_feed.tradingview.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com",
+        "frame-src 'self' https://googleads.g.doubleclick.net https://pagead2.googlesyndication.com https://*.google.com blob: data:",
         "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'",
@@ -2104,6 +2104,7 @@ function serveStatic(req, res, urlPath) {
     // ---- 1. registry-generated SEO endpoints ----
     if (p === '/robots.txt') return sendText(req, res, SEO.robotsTxt(), 'text/plain; charset=utf-8', 'public, max-age=86400');
     if (p === '/sitemap.xml') return sendText(req, res, SEO.sitemapXml(), 'application/xml; charset=utf-8', 'public, max-age=3600');
+    if (p === '/ads.txt') return sendText(req, res, 'google.com, pub-3652422538944831, DIRECT, f08c47fec0942fa0\n', 'text/plain; charset=utf-8', 'public, max-age=86400');
 
     // ---- 2. exact-match 301 redirects (no chains — every target is final) ----
     const redir = SEO.redirectFor(p);
