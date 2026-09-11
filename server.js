@@ -654,15 +654,28 @@ async function handleApi(req, res, url) {
     if (p === '/api/auth/login' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
+        // Rate limit: per-IP + per-email (applies in both local dev/test and production)
+        const ipRL = authIPRateLimit(req);
+        if (!ipRL.allowed) { res.setHeader('Retry-After', String(ipRL.retryAfter)); return json(res, 429, { error: ipRL.error }); }
+        const rlKey = 'login:' + String(b.email || '').toLowerCase();
+        const rl = authRateLimit(rlKey, MAX_LOGIN_ATTEMPTS);
+        if (!rl.allowed) { res.setHeader('Retry-After', String(rl.retryAfter)); return json(res, 429, { error: rl.error }); }
+
         if (!AUTH_REQUIRED || !process.env.SUPABASE_URL) {
+            authRLRecord(rlKey, false);
+            authRLRecord(ipRLKey(req), false);
             const mockUser = { id: LOCAL_USER_ID, email: b.email || 'trader@battlexjournal.dev', name: 'Trader' };
             return json(res, 200, { ok: true, session: { access_token: 'local_dev_token', user: mockUser } });
         }
         try {
             const r = await auth.login({ email: b.email, password: b.password });
+            authRLRecord(rlKey, true);
+            authRLRecord(ipRLKey(req), true);
             if (r.session && r.session.user) recordUserEmail(r.session.user);
             return json(res, 200, { ok: true, session: r.session });
         } catch (err) {
+            authRLRecord(rlKey, false);
+            authRLRecord(ipRLKey(req), false);
             return json(res, err.code || 400, { error: err.message });
         }
     }
@@ -1613,6 +1626,7 @@ async function handleApi(req, res, url) {
             Core.hydrate(body);
             Core.backfillEvaluations();
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'state.hydrated', trades: Core.Trades.length }); } catch (e) {}
             return json(res, 200, { ok: true, trades: Core.Trades.length, accounts: Core.Accounts.length });
         }
 
@@ -1620,19 +1634,28 @@ async function handleApi(req, res, url) {
         if (req.method === 'POST' && p === '/api/trades') {
             const trade = Core.logTradePipeline(body);
             uc.scheduleSave();
-            return json(res, 201, { ok: true, trade, adherence: trade.adherence_result });
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'trade.created', tradeId: trade.id, trade, accounts: Core.Accounts }); } catch (e) {}
+            return json(res, 201, {
+                ok: true,
+                trade,
+                adherence: trade.adherence_result,
+                accounts: Core.Accounts,
+                evaluations: Core.TradeEvaluations.filter(e => e.trade_id === trade.id)
+            });
         }
 
         // ---- trade edit / delete (full downstream recalculation) ----
         if (req.method === 'PATCH' && (m = p.match(/^\/api\/trades\/([^/]+)$/))) {
             const t = Core.TradeService.update(m[1], body.fields || body);
             uc.scheduleSave();
-            return json(res, 200, { ok: true, trade: t });
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'trade.updated', tradeId: t.id, trade: t, accounts: Core.Accounts }); } catch (e) {}
+            return json(res, 200, { ok: true, trade: t, accounts: Core.Accounts });
         }
         if (req.method === 'DELETE' && (m = p.match(/^\/api\/trades\/([^/]+)$/))) {
             const t = Core.TradeService.remove(m[1]);
             uc.scheduleSave();
-            return json(res, 200, { ok: true, deleted: t.id });
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'trade.deleted', tradeId: t.id, accounts: Core.Accounts }); } catch (e) {}
+            return json(res, 200, { ok: true, deleted: t.id, accounts: Core.Accounts });
         }
 
         // ---- pre-trade check ----
@@ -1744,36 +1767,42 @@ async function handleApi(req, res, url) {
         if (p === '/api/accounts') {
             const id = Core.ConfigAPI.createAccount(body.fields || body, body.id);
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'account.created', accountId: id, accounts: Core.Accounts }); } catch (e) {}
             return json(res, 201, { ok: true, id });
         }
         if ((m = p.match(/^\/api\/accounts\/([^/]+)\/strategies$/))) {
             const ok = Core.ConfigAPI.assignStrategy(m[1], body.strategy_id);
             if (!ok) return json(res, 404, { error: 'account or strategy not found' });
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'account.strategies', accountId: m[1] }); } catch (e) {}
             return json(res, 200, { ok: true });
         }
         if ((m = p.match(/^\/api\/accounts\/([^/]+)\/limits$/))) {
             const v = Core.ConfigAPI.updateAccountLimits(m[1], body.values || body, body.note);
             if (!v) return json(res, 404, { error: 'unknown account: ' + m[1] });
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'account.limits', accountId: m[1], version: v.id }); } catch (e) {}
             return json(res, 200, { ok: true, version: v.id });
         }
         if ((m = p.match(/^\/api\/accounts\/([^/]+)\/status$/))) {
             const a = Core.ConfigAPI.setAccountStatus(m[1], body.status);
             if (!a) return json(res, 404, { error: 'unknown account: ' + m[1] });
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'account.status', accountId: m[1], accounts: Core.Accounts }); } catch (e) {}
             return json(res, 200, { ok: true });
         }
         if ((m = p.match(/^\/api\/accounts\/([^/]+)\/duplicate$/))) {
             const id = Core.ConfigAPI.duplicateAccount(m[1], body.id);
             if (!id) return json(res, 404, { error: 'unknown account: ' + m[1] });
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'account.created', accountId: id, accounts: Core.Accounts }); } catch (e) {}
             return json(res, 201, { ok: true, id });
         }
         if ((m = p.match(/^\/api\/accounts\/([^/]+)$/))) {
             const a = Core.ConfigAPI.updateAccount(m[1], body);
             if (!a) return json(res, 404, { error: 'unknown account: ' + m[1] });
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'account.updated', accountId: m[1], accounts: Core.Accounts }); } catch (e) {}
             return json(res, 200, { ok: true });
         }
 
@@ -1781,18 +1810,21 @@ async function handleApi(req, res, url) {
         if (p === '/api/strategies') {
             const id = Core.ConfigAPI.createStrategy(body.fields || body, body.id);
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'strategy.created', strategyId: id }); } catch (e) {}
             return json(res, 201, { ok: true, id });
         }
         if ((m = p.match(/^\/api\/strategies\/([^/]+)\/duplicate$/))) {
             const id = Core.ConfigAPI.duplicateStrategy(m[1], body.id);
             if (!id) return json(res, 404, { error: 'unknown strategy: ' + m[1] });
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'strategy.created', strategyId: id }); } catch (e) {}
             return json(res, 201, { ok: true, id });
         }
         if ((m = p.match(/^\/api\/strategies\/([^/]+)$/))) {
             const v = Core.ConfigAPI.updateStrategy(m[1], body.fields || body, body.note);
             if (!v) return json(res, 404, { error: 'unknown strategy: ' + m[1] });
             uc.scheduleSave();
+            try { BattleWs.broadcastUser(uc.userId, { type: 'ledger.changed', action: 'strategy.updated', strategyId: m[1], version: v.id }); } catch (e) {}
             return json(res, 200, { ok: true, version: v.id });
         }
 
@@ -1840,7 +1872,7 @@ function securityHeaders(res) {
         "img-src 'self' data: blob: https:",
         "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://demo_feed.tradingview.com",
         "frame-src 'self' blob: data:",
-        "frame-ancestors 'self'",
+        "frame-ancestors 'none'",
         "base-uri 'self'",
         "form-action 'self'",
         "upgrade-insecure-requests"
@@ -1851,7 +1883,7 @@ function securityHeaders(res) {
     // inline scripts are migrated to external files / hashed.
     res.setHeader(CSP_ENFORCE ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only', csp + "; report-uri /api/csp-report");
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('X-Frame-Options', 'DENY');
     res.setHeader('X-XSS-Protection', '0');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');

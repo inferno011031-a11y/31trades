@@ -1846,7 +1846,7 @@
                 loadPractice();
                 if (window.TradeMindCore) {
                     var bus = window.TradeMindCore.TradeMindBus;
-                    ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.changed'].forEach(function (ev) { bus.subscribe(ev, sync); });
+                    ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed', 'config.changed'].forEach(function (ev) { bus.subscribe(ev, sync); });
                     document.addEventListener('tm:theme', function () { window.__plotEq(); });
                     sync();
                 }

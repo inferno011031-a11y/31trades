@@ -2323,7 +2323,7 @@
                         showToast('Trade updated successfully');
                     } else {
                         if (core && typeof core.logTradePipeline === 'function') {
-                            const newTrade = core.logTradePipeline({
+                            core.logTradePipeline({
                                 account_id: accountId,
                                 ts: dt,
                                 symbol, dir, entry, exit, size, risk,
@@ -2341,15 +2341,7 @@
                                 chart_url: currentAttachedScreenshot || undefined,
                                 rating
                             });
-                            const canonical = loadCanonicalTrades();
-                            if (canonical) {
-                                trades = canonical;
-                            } else if (newTrade && !trades.some(t => t.id === newTrade.id)) {
-                                trades.unshift(newTrade);
-                            }
                         }
-                        renderAll();
-                        showToast('Trade logged successfully');
                     }
                     closeEntryModal();
                 } catch (err) {

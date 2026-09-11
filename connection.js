@@ -57,6 +57,50 @@
         } else {
             render(false);
         }
+
+        // Real-time server push listener: connects to /ws to receive instant ledger updates
+        // from other tabs, devices, or server-side automated trades / backfills.
+        let wsConn = null;
+        let wsPingTimer = null;
+        function connectLiveWs() {
+            try {
+                if (wsConn) { wsConn.close(); wsConn = null; }
+                if (wsPingTimer) { clearInterval(wsPingTimer); wsPingTimer = null; }
+            } catch (e) {}
+
+            try {
+                const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+                const host = window.location.host;
+                if (!host) return;
+                const c = window.TradeMindCore;
+                const user = (c && c.session && c.session.user && c.session.user.id) ? c.session.user.id : 'anon';
+                wsConn = new WebSocket(proto + '//' + host + '/ws?user=' + encodeURIComponent(user));
+            } catch (e) { wsConn = null; return; }
+
+            wsConn.onmessage = function (ev) {
+                try {
+                    const msg = JSON.parse(ev.data);
+                    if (msg && msg.type === 'ledger.changed') {
+                        const c = window.TradeMindCore;
+                        if (c && typeof c.syncWithServer === 'function') {
+                            c.syncWithServer(true);
+                        }
+                    }
+                } catch (e) {}
+            };
+            wsConn.onclose = function () {
+                wsConn = null;
+                setTimeout(connectLiveWs, 5000);
+            };
+            wsConn.onerror = function () {
+                try { wsConn.close(); } catch (e) {}
+            };
+            wsPingTimer = setInterval(function () {
+                if (wsConn && wsConn.readyState === 1) wsConn.send('ping');
+            }, 30000);
+        }
+
+        connectLiveWs();
         return true;
     }
 

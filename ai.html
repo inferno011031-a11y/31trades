@@ -1167,7 +1167,7 @@
                 gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
             }
             if (core && core.TradeMindBus) {
-                ['trade.created', 'trade.updated', 'trade.deleted', 'config.version.created', 'config.changed', 'account.changed'].forEach(ev =>
+                ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'config.version.created', 'config.changed', 'account.changed'].forEach(ev =>
                     core.TradeMindBus.subscribe(ev, () => loadBundle(false)));
             }
 

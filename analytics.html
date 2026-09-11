@@ -1146,8 +1146,9 @@
             if (window.lucide) lucide.createIcons();
 
             if (core && core.TradeMindBus) {
-                core.TradeMindBus.subscribe('trade.created', renderAll);
-                core.TradeMindBus.subscribe('trade.updated', renderAll);
+                ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed', 'config.changed'].forEach(ev => {
+                    core.TradeMindBus.subscribe(ev, renderAll);
+                });
             }
         })();
     </script>

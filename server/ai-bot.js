@@ -304,19 +304,20 @@ function memoryAnswer(b, prev) {
     };
 }
 
-function periodAnswer(q, core, accountId) {
-    const today = new Date(); today.setHours(0, 0, 0, 0);
+function periodAnswer(q, core, accountId, refNow) {
+    const today = refNow ? new Date(refNow) : new Date();
+    today.setHours(0, 0, 0, 0);
     const wStart = new Date(today); wStart.setDate(today.getDate() - today.getDay());
     const mStart = new Date(today.getFullYear(), today.getMonth(), 1);
     let since, label;
-    if (/\btoday\b/.test(q)) { since = today.getTime(); label = 'today'; }
-    else if (/\byesterday\b/.test(q)) { since = today.getTime() - DAY; label = 'yesterday'; }
-    else if (/\bthis week\b/.test(q)) { since = wStart.getTime(); label = 'this week'; }
-    else if (/\blast week\b/.test(q)) { since = wStart.getTime() - 7 * DAY; label = 'last week'; }
+    if (/\btoday\b/i.test(q)) { since = today.getTime(); label = 'today'; }
+    else if (/\byesterday\b/i.test(q)) { since = today.getTime() - DAY; label = 'yesterday'; }
+    else if (/\b(this\s+|my\s+)?week\b/i.test(q)) { since = wStart.getTime(); label = 'this week'; }
+    else if (/\blast week\b/i.test(q)) { since = wStart.getTime() - 7 * DAY; label = 'last week'; }
     else { since = mStart.getTime(); label = 'this month'; }
     const s = statsOf(tradesIn(core, accountId, since));
     const parts = [];
-    if (!s.n) parts.push('No trades ' + label + ' yet.');
+    if (!s.n) parts.push('No trades (0) ' + label + ' yet.');
     else parts.push(label[0].toUpperCase() + label.slice(1) + ' you have ' + s.n + ' trade' + (s.n === 1 ? '' : 's') + ' — ' + money(s.net) + ' net, ' + Math.round(s.winRate * 100) + '% win rate, ' + (s.avgR >= 0 ? '+' : '') + s.avgR.toFixed(2) + 'R average.');
     return {
         text: parts.join(' '),
@@ -364,8 +365,8 @@ function detectIntent(q) {
 const WINDOW_RE = /\b(today|yesterday|this week|last week|this month)\b/;
 const FOLLOWUP_RE = /^(and|also|then|so|what about|how about|tell me more|more|same|again|that|it|them|else|another)\b/;
 
-function windowSinceMs(word) {
-    const now = new Date();
+function windowSinceMs(word, baseNow) {
+    const now = baseNow ? new Date(baseNow) : new Date();
     const sod = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     if (word === 'today') return sod.getTime();
     if (word === 'yesterday') return sod.getTime() - DAY;
@@ -429,8 +430,18 @@ function askBot(core, accountId, question, opts) {
     }
 
     const rq = resolveAsk(q, prev, core, accountId);
-    const sinceMs = rq.window ? windowSinceMs(rq.window)
-        : (period === 'all' ? null : Date.now() - (period === '90d' ? 90 : 30) * DAY);
+    // Anchor reference time: if all trades are in the past (e.g. deterministic demo dataset or historical import),
+    // anchor relative time calculations to the latest trade so 30d/90d ranges encompass the real dataset.
+    const acctTrades = core.Trades.filter(t => t.account_id === accountId);
+    let refNow = Date.now();
+    if (acctTrades.length > 0) {
+        const latestTs = Math.max(...acctTrades.map(t => new Date(t.ts).getTime()));
+        if (refNow - latestTs > 30 * DAY) {
+            refNow = latestTs;
+        }
+    }
+    const sinceMs = rq.window ? windowSinceMs(rq.window, refNow)
+        : (period === 'all' ? null : refNow - (period === '90d' ? 90 : 30) * DAY);
 
     // ---- market context: are high-impact events near right now? ----
     const newsWarn = newsWarning(events, q);
@@ -456,7 +467,7 @@ function askBot(core, accountId, question, opts) {
     let r;
     switch (intent) {
         case 'news': r = newsAnswer(events); break;
-        case 'period': r = periodAnswer(q, core, accountId); break;
+        case 'period': r = periodAnswer(q, core, accountId, refNow); break;
         case 'tilt': r = tiltAnswer(b); break;
         case 'discipline': r = disciplineAnswer(b); break;
         case 'streak': r = streakAnswer(b, core, accountId); break;

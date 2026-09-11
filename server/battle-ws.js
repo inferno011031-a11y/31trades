@@ -78,4 +78,14 @@ function broadcastFeed() {
     wss.clients.forEach(ws => { if (ws.readyState === 1) ws.send(ping); });
 }
 
-module.exports = { attach, broadcastFeed };
+function broadcastUser(userId, message) {
+    if (!wss || !userId) return;
+    const msg = typeof message === 'string' ? message : JSON.stringify(message);
+    wss.clients.forEach(ws => {
+        if (ws.readyState === 1 && (ws.user === userId || (!ws.user && userId === 'anon') || userId === '*')) {
+            try { ws.send(msg); } catch (e) {}
+        }
+    });
+}
+
+module.exports = { attach, broadcastFeed, broadcastUser };

@@ -105,7 +105,7 @@
     }
 
     // Two-way reconciliation: if server has state, adopt server state; else push local state.
-    async function adoptState() {
+    async function adoptState(force) {
         try {
             const stateRes = await fetch(API_ROOT + '/api/state', {
                 method: 'GET',
@@ -113,7 +113,11 @@
             });
             if (stateRes.ok) {
                 const serverState = await stateRes.json();
-                if (serverState && Array.isArray(serverState.Trades) && serverState.Trades.length > (core.Trades ? core.Trades.length : 0)) {
+                const serverTradeCount = (serverState && Array.isArray(serverState.Trades)) ? serverState.Trades.length : 0;
+                const localTradeCount = (core.Trades ? core.Trades.length : 0);
+
+                // If server has trades or server was updated or force adoption
+                if (serverState && Array.isArray(serverState.Trades) && (force || serverTradeCount >= localTradeCount || localTradeCount === 0)) {
                     core.hydrate(serverState);
                     if (repo && typeof repo.save === 'function') repo.save(core.serializeState());
                     core.TradeMindBus.publish('state.hydrated', core.serializeState());
@@ -137,6 +141,10 @@
             console.warn('[31trades] backend sync/adopt failed: ' + err.message);
             return false;
         }
+    }
+
+    async function syncWithServer(force) {
+        return adoptState(force === true);
     }
 
     function publishConnectivity() {
@@ -212,6 +220,27 @@
         window.TradeMindCore = core;
         Object.defineProperty(window.TradeMindCore, 'storageKey', { get: () => STORAGE_KEY });
         window.TradeMindCore.isBackendOnline = () => backendOnline;
+        window.TradeMindCore.syncWithServer = syncWithServer;
+
+        // ---- Cross-tab state synchronization: when another tab mutates state
+        // in localStorage, re-hydrate memory core and notify UI subscribers. ----
+        if (typeof window.addEventListener === 'function') {
+            window.addEventListener('storage', (e) => {
+                if (e.key === STORAGE_KEY && e.newValue) {
+                    try {
+                        const parsed = JSON.parse(e.newValue);
+                        if (parsed && Array.isArray(parsed.Accounts) && Array.isArray(parsed.Trades)) {
+                            core.hydrate(parsed);
+                            core.TradeMindBus.publish('state.hydrated', core.serializeState());
+                            core.TradeMindBus.publish('config.changed', { hydrated: true });
+                            console.log('[31trades] cross-tab sync hydrated ' + core.Trades.length + ' trades');
+                        }
+                    } catch (err) {
+                        console.warn('[31trades] cross-tab storage sync failed:', err);
+                    }
+                }
+            });
+        }
 
         // ---- authed fetch for page-level API calls (notifications, settings,
         // backtesting, market replay…). Attaches the session Bearer token so

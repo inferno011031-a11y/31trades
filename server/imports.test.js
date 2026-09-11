@@ -317,13 +317,14 @@ async function main() {
     const API = 'http://127.0.0.1:' + PORT;
     const LOCAL_DB = path.join(root, 'data', 'db-00000000-0000-0000-0000-000000000000.json');
     const backup = fs.existsSync(LOCAL_DB) ? fs.readFileSync(LOCAL_DB, 'utf8') : null;
+    try { if (fs.existsSync(LOCAL_DB)) fs.unlinkSync(LOCAL_DB); } catch (e) {}
 
     let serverProc = null;
     let serverLog = '';
     const startServer = () => new Promise((resolve, reject) => {
         serverProc = spawn(process.execPath, ['server.js'], {
             cwd: root,
-            env: { ...process.env, TRADEMIND_PORT: String(PORT), TRADEMIND_AUTH: 'off', TRADEMIND_IMPORT_DATA_DIR: path.join(TMP, 'e2e') },
+            env: { ...process.env, PORT: String(PORT), TRADEMIND_PORT: String(PORT), TRADEMIND_AUTH: 'off', TRADEMIND_IMPORT_DATA_DIR: path.join(TMP, 'e2e') },
             stdio: ['ignore', 'pipe', 'pipe']
         });
         serverProc.stdout.on('data', d => { serverLog += d; });
@@ -367,11 +368,15 @@ async function main() {
             return { status: r.status, data };
         };
 
+        await j('POST', '/api/reset', {});
+
         const acc = await j('POST', '/api/accounts', {
             name: 'Import Test', type: 'Personal', start: 10000, dailyLoss: 100, maxDD: 500, risk: 25
         });
         ok(acc.status === 201 && acc.data.id, 'account created for import');
         const accountId = acc.data.id;
+
+        await j('POST', '/api/strategies', { name: 'London FVG', markets: 'Forex' });
 
         const csv = 'Date,Symbol,Side,Entry,Exit,P&L,Size,Strategy,Notes\n' +
             '2026-01-05,EURUSD,Buy,1.1000,1.1100,100,1,London FVG,first\n' +
