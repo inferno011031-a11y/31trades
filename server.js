@@ -54,6 +54,7 @@ const Battle = require('./server/battle.js');
 const AICoach = require('./server/ai-coach.js');
 const BattleWs = require('./server/battle-ws.js');
 const Prefs = require('./server/prefs.js');
+const DiscordVerify = require('./server/discord-verify.js');
 const Imports = require('./server/imports.js');
 const SEO = require('./server/seo.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
@@ -727,6 +728,15 @@ async function handleApi(req, res, url) {
         try { return json(res, 200, { user: await auth.verify(token) }); }
         catch (err) { return json(res, 401, { error: err.message }); }
     }
+    // ---------- Discord ↔ BattleX identity verification ----------
+    if (p === '/api/discord/begin' && req.method === 'GET') {
+        try { return await DiscordVerify.handleBegin(req, res, url); }
+        catch (err) { return json(res, err.code || 500, { error: err.message }); }
+    }
+    if (p === '/api/discord/callback' && req.method === 'GET') {
+        try { return await DiscordVerify.handleCallback(req, res, url); }
+        catch (err) { return json(res, err.code || 500, { error: err.message }); }
+    }
     // ---------- 60-Member 1-Year Invite Access System ----------
     if (p === '/api/access/status' && req.method === 'GET') {
         let userId = LOCAL_USER_ID;
@@ -1046,7 +1056,8 @@ async function handleApi(req, res, url) {
                 const data = await MarketData.getCandles({
                     symbol: q.get('symbol') || 'EURUSD',
                     timeframe: q.get('timeframe') || '1h',
-                    count: Number(q.get('count')) || undefined
+                    count: Number(q.get('count')) || undefined,
+                    period: q.get('period') || undefined
                 });
                 return json(res, 200, data);
             }
@@ -1823,12 +1834,13 @@ const CSP_ENFORCE = process.env.CSP_ENFORCE === 'true';
 function securityHeaders(res) {
     const csp = [
         "default-src 'self'",
-        "script-src 'self' https://fonts.googleapis.com",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-        "font-src 'self' https://fonts.gstatic.com",
-        "img-src 'self' data: blob:",
-        "connect-src 'self' https://*.supabase.co wss://*.supabase.co",
-        "frame-ancestors 'none'",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com blob:",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com blob:",
+        "font-src 'self' https://fonts.gstatic.com data:",
+        "img-src 'self' data: blob: https:",
+        "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://demo_feed.tradingview.com",
+        "frame-src 'self' blob: data:",
+        "frame-ancestors 'self'",
         "base-uri 'self'",
         "form-action 'self'",
         "upgrade-insecure-requests"
@@ -1839,7 +1851,7 @@ function securityHeaders(res) {
     // inline scripts are migrated to external files / hashed.
     res.setHeader(CSP_ENFORCE ? 'Content-Security-Policy' : 'Content-Security-Policy-Report-Only', csp + "; report-uri /api/csp-report");
     res.setHeader('X-Content-Type-Options', 'nosniff');
-    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
     res.setHeader('X-XSS-Protection', '0');
     res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
     res.setHeader('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()');

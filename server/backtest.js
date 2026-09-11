@@ -13,9 +13,9 @@
 // this generator behind the same /api/backtest/candles endpoint.
 // ============================================================================
 
-const TIMEFRAMES = { '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14400, '1d': 86400 };
+const TIMEFRAMES = { '1m': 60, '5m': 300, '15m': 900, '30m': 1800, '1h': 3600, '2h': 7200, '4h': 14400, '1d': 86400, 'w': 604800, 'm': 2592000 };
 
-const DEFAULT_COUNTS = { '1m': 720, '5m': 500, '15m': 400, '1h': 320, '4h': 240, '1d': 200 };
+const DEFAULT_COUNTS = { '1m': 720, '5m': 500, '15m': 400, '30m': 350, '1h': 320, '2h': 260, '4h': 240, '1d': 200, 'w': 100, 'm': 50 };
 
 // ---- base price + tick/pip conventions per symbol/category ----
 const BASE_PRICE = {

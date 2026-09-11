@@ -502,6 +502,10 @@
                                     </button>
                                 </div>
                                 <p class="text-[11.5px] text-[var(--tm-dim)] mt-2 leading-relaxed">Your unique Battlex identity &mdash; used for Discord verification and role sync.</p>
+                                <button type="button" class="btn-ghost !py-2 !px-3 mt-3" id="discord-verify-btn">
+                                    <svg data-lucide="shield-check" class="w-3.5 h-3.5"></svg>
+                                    <span id="discord-verify-label">Verify BattleX</span>
+                                </button>
                             </div>
 
                             <!-- Col 3: Member Since -->
@@ -864,6 +868,32 @@
                             if ($("copy-id-label")) $("copy-id-label").textContent = "Copy";
                             if (window.lucide) lucide.createIcons();
                         }, 1600);
+                    };
+                }
+
+                // Discord verification: ask the server for a signed OAuth URL
+                // (Bearer-authenticated fetch — token never touches a URL),
+                // then navigate. Result lands on /discord-verify.html.
+                if ($("discord-verify-btn")) {
+                    $("discord-verify-btn").onclick = async () => {
+                        const label = $("discord-verify-label");
+                        const btn = $("discord-verify-btn");
+                        try {
+                            btn.disabled = true;
+                            if (label) label.textContent = "Contacting Discord…";
+                            const r = await secureApiFetch('/api/discord/begin');
+                            const data = await r.json().catch(() => ({}));
+                            if (r.ok && data && data.url) {
+                                window.location.href = data.url;
+                                return;
+                            }
+                            showToast((data && data.error) || ('Could not start verification (' + r.status + ')'));
+                        } catch (e) {
+                            showToast('Network error while contacting the server');
+                        } finally {
+                            btn.disabled = false;
+                            if (label) label.textContent = "Verify BattleX";
+                        }
                     };
                 }
             }

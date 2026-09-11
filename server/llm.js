@@ -25,18 +25,20 @@
 const GEMINI_BASE = 'https://generativelanguage.googleapis.com';
 const GEMINI_MODEL = process.env.GEMINI_MODEL || 'gemini-2.5-flash';
 
-const OPENAI_BASE = process.env.AICREDITS_API_KEY
-    ? (process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.aicredits.in/v1')
-    : (process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.openai.com/v1');
+const OPENAI_BASE = process.env.SCALEMAX_API_KEY
+    ? (process.env.OPENAI_BASE_URL || 'https://api.scalemax.pro/v1')
+    : (process.env.AICREDITS_API_KEY
+        ? (process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.aicredits.in/v1')
+        : (process.env.OPENAI_BASE_URL || process.env.LLM_BASE_URL || 'https://api.openai.com/v1'));
 
-const OPENAI_MODEL = process.env.OPENAI_MODEL || process.env.LLM_MODEL || 'openai/gpt-oss-120b';
+const OPENAI_MODEL = process.env.OPENAI_MODEL || process.env.LLM_MODEL || 'gpt-5.5';
 
 function apiKey() {
-    return process.env.AICREDITS_API_KEY || process.env.OPENAI_API_KEY || process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || '';
+    return process.env.SCALEMAX_API_KEY || process.env.OPENAI_API_KEY || process.env.AICREDITS_API_KEY || process.env.OPENROUTER_API_KEY || process.env.GEMINI_API_KEY || '';
 }
 
 function isGemini() {
-    return !!process.env.GEMINI_API_KEY && !process.env.AICREDITS_API_KEY && !process.env.OPENAI_API_KEY && !process.env.OPENROUTER_API_KEY;
+    return !!process.env.GEMINI_API_KEY && !process.env.SCALEMAX_API_KEY && !process.env.OPENAI_API_KEY && !process.env.AICREDITS_API_KEY && !process.env.OPENROUTER_API_KEY;
 }
 
 // The narration prompt — structured facts in, warm prose out, no invention.
@@ -49,7 +51,7 @@ function narrationPrompt(role, facts) {
         '- NEVER invent, change, round, or drop ANY number, percentage, $ amount, R value, or trade count that appears in the answer.\n' +
         '- Do not add new facts, predictions, or advice that is not already in the answer.\n' +
         '- Keep every figure EXACTLY as written (e.g. "5 occurrences costing +$22" stays "5 occurrences costing +$22").\n' +
-        '- Reply with only the rephrased answer — no preamble, no quotes, no bullet lists unless the facts are a list.\n\n';
+        '- Reply with only the single rephrased coaching response — no preamble, no multiple options or alternative versions, no quotes.\n\n';
 
     if (facts.ragContext && facts.ragContext.length > 0) {
         prompt += 'PROMPT INJECTION DEFENSE & REFERENCE RULE:\n' +
@@ -107,7 +109,7 @@ async function narrate(role, facts, opts) {
     const key = apiKey();
     if (!key) return null;
     const fetchImpl = (opts && opts.fetchImpl) || fetch;
-    const timeoutMs = (opts && opts.timeoutMs) || 20000;
+    const timeoutMs = (opts && opts.timeoutMs) || 35000;
     const original = (facts && typeof facts === 'object' && facts.answer) ? facts.answer : String(facts || '');
 
     let res;
@@ -139,8 +141,7 @@ async function narrate(role, facts, opts) {
                         messages: [
                             { role: 'system', content: 'You are an AI trading coach inside a trading journal platform.' },
                             { role: 'user', content: narrationPrompt(role, facts) }
-                        ],
-                        temperature: 0.3
+                        ]
                     }),
                     signal: ctl.signal
                 });

@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Discord Verification — BATTLEXJOURNAL</title>
+<meta name="robots" content="noindex, nofollow">
+<style>
+  :root{
+    --bg:#06070B; --panel:#0C0E14; --panel2:#10131C; --line:#1B2030;
+    --text:#E8ECF4; --dim:#8A93A6; --faint:#5A6377;
+    --cyan:#22D3EE; --green:#34D399; --red:#F87171; --amber:#FBBF24;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:var(--bg); color:var(--text);
+    font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px;
+  }
+  .card{
+    width:100%; max-width:480px; background:linear-gradient(180deg,var(--panel),var(--panel2));
+    border:1px solid var(--line); border-radius:16px; padding:40px 36px 32px;
+    text-align:center; position:relative; overflow:hidden;
+  }
+  .card::before{
+    content:''; position:absolute; inset:0 0 auto 0; height:3px;
+    background:linear-gradient(90deg,transparent,var(--cyan),transparent);
+    opacity:.7;
+  }
+  .glyph{
+    width:64px;height:64px;border-radius:50%;margin:0 auto 20px;
+    display:flex;align-items:center;justify-content:center;
+    font-size:30px; border:1px solid var(--line); background:var(--bg);
+  }
+  .success .glyph{border-color:rgba(52,211,153,.4); box-shadow:0 0 24px rgba(52,211,153,.15)}
+  .error .glyph{border-color:rgba(248,113,113,.4); box-shadow:0 0 24px rgba(248,113,113,.12)}
+  h1{
+    font-size:20px; letter-spacing:.14em; text-transform:uppercase;
+    font-weight:700; margin-bottom:10px;
+  }
+  .success h1{color:var(--green)}
+  .error h1{color:var(--red)}
+  .brand{
+    font-size:11px; letter-spacing:.34em; color:var(--faint);
+    text-transform:uppercase; margin-bottom:22px;
+  }
+  .msg{font-size:14.5px; line-height:1.65; color:var(--dim); margin-bottom:28px; word-wrap:break-word}
+  .msg b{color:var(--text)}
+  .actions{display:flex; gap:10px; justify-content:center; flex-wrap:wrap}
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:11px 20px; border-radius:10px; font-size:13px; font-weight:600;
+    letter-spacing:.06em; text-decoration:none; border:1px solid var(--line);
+    color:var(--text); background:var(--bg); transition:border-color .15s, transform .15s;
+  }
+  .btn:hover{border-color:var(--cyan); transform:translateY(-1px)}
+  .btn.primary{background:linear-gradient(135deg,#0E7490,#155E75); border-color:#0E7490}
+  .meta{
+    margin-top:26px; padding-top:18px; border-top:1px solid var(--line);
+    font-size:11px; letter-spacing:.18em; text-transform:uppercase; color:var(--faint);
+  }
+  .meta span{color:var(--cyan)}
+</style>
+</head>
+<body>
+<main class="card" id="card">
+  <div class="glyph" id="glyph">⚔️</div>
+  <div class="brand">BattleXJournal · Discord Verification</div>
+  <h1 id="title">Verifying…</h1>
+  <p class="msg" id="msg">Reading verification result…</p>
+  <div class="actions">
+    <a class="btn primary" id="cta" href="/">Return to BattleXJournal</a>
+    <a class="btn" id="back" href="/settings.html">Open Settings</a>
+  </div>
+  <div class="meta">STATUS · <span id="statusWord">PENDING</span></div>
+</main>
+<script>
+(function(){
+  var q = new URLSearchParams(location.search);
+  var ok = q.get('status') === 'success';
+  var msg = q.get('msg') || '';
+  var card = document.getElementById('card');
+  card.classList.add(ok ? 'success' : 'error');
+  document.getElementById('title').textContent = ok ? 'Verification Complete' : 'Verification Failed';
+  document.getElementById('msg').textContent = msg || (ok ? 'Your Discord account is now linked to your BattleXJournal account.' : 'Something went wrong. Please try again.');
+  document.getElementById('glyph').textContent = ok ? '✅' : '⛔';
+  document.getElementById('statusWord').textContent = ok ? 'LINKED' : 'DENIED';
+  var cta = document.getElementById('cta');
+  if (ok) { cta.textContent = 'Return to Command Center'; cta.href = '/'; }
+  else { cta.textContent = 'Try Again'; cta.href = '/settings.html'; }
+})();
+</script>
+</body>
+</html>

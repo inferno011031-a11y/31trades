@@ -205,7 +205,51 @@ async function getCandles(opts) {
     const o = opts || {};
     const symbol = String(o.symbol || 'EURUSD').toUpperCase();
     const timeframe = String(o.timeframe || '1h');
-    const count = Math.max(30, Math.min(1500, Number(o.count) || 320));
+    const count = Math.max(30, Math.min(6500, Number(o.count) || 320));
+    const period = String(o.period || '').toLowerCase();
+
+    // 0 · Real historical Gold dataset (e.g. Jan 2024 or Feb 2024 backtesting session)
+    if (symbol === 'XAUUSD' || symbol === 'GOLD') {
+        let periodFolder = 'jan2024';
+        let periodLabel = 'January 2024';
+        if (period.includes('feb')) {
+            periodFolder = 'feb2024';
+            periodLabel = 'February 2024';
+        }
+
+        let tfFile = timeframe.toLowerCase();
+        if (!['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d', 'w', 'm'].includes(tfFile)) {
+            if (tfFile.includes('1m') || tfFile.includes('1')) tfFile = '1m';
+            else if (tfFile.includes('3m') || tfFile.includes('3')) tfFile = '3m';
+            else if (tfFile.includes('5')) tfFile = '5m';
+            else if (tfFile.includes('30')) tfFile = '30m';
+            else if (tfFile.includes('15')) tfFile = '15m';
+            else if (tfFile.includes('2h') || tfFile.includes('120')) tfFile = '2h';
+            else if (tfFile.includes('1h') || tfFile.includes('60')) tfFile = '1h';
+            else if (tfFile.includes('4h') || tfFile.includes('240')) tfFile = '4h';
+            else if (tfFile.includes('w')) tfFile = 'w';
+            else if (tfFile.includes('m')) tfFile = 'm';
+            else tfFile = '1d';
+        }
+
+        const histFile = path.join(DATA_DIR, 'gold', periodFolder, `xau_${tfFile}_${periodFolder}.json`);
+        if ((period.includes('jan') || period.includes('feb') || period.includes('2024') || period === 'real') && fs.existsSync(histFile)) {
+            try {
+                const j = JSON.parse(fs.readFileSync(histFile, 'utf8'));
+                const candles = (count && count < j.candles.length && !o.all) ? j.candles.slice(-count) : j.candles;
+                return {
+                    ok: true,
+                    symbol: 'XAUUSD',
+                    timeframe,
+                    period: periodLabel,
+                    count: candles.length,
+                    base: candles[0] ? candles[0].close : 2040,
+                    candles,
+                    meta: { source: 'historical-archive', provider: 'Kaggle Real Gold 2004-2024 Dataset' }
+                };
+            } catch (e) { /* fallback */ }
+        }
+    }
 
     // 1 · fresh cache
     const cached = readCache(symbol, timeframe, count);
