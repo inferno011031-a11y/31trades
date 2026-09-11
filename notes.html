@@ -952,6 +952,20 @@
             const collapseBtn = $('collapse-btn');
             if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
 
+            // Reactive refresh function
+            function notesRefreshAll() {
+                trades = loadTrades();
+                renderChrome();
+                if (!$('view-trade-cockpit').classList.contains('hidden') && activeTrade) {
+                    // re-sync activeTrade reference with updated data
+                    const refreshed = trades.find(t => t.id === activeTrade.id);
+                    if (refreshed) openCockpit(refreshed);
+                    else renderTradeLog();
+                } else {
+                    renderTradeLog();
+                }
+            }
+
             // Initial load
             trades = loadTrades();
             renderChrome();
@@ -962,6 +976,17 @@
                 $('view-trade-log').classList.remove('hidden');
                 renderTradeLog();
             }
+
+            // Subscribe to TradeMindBus for real-time reactivity
+            if (core && core.TradeMindBus) {
+                ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed', 'config.changed'].forEach(ev => {
+                    core.TradeMindBus.subscribe(ev, notesRefreshAll);
+                });
+            }
+            // Cross-tab storage sync
+            window.addEventListener('storage', e => {
+                if (e.key && (e.key.startsWith('tm_') || e.key.includes('trades'))) notesRefreshAll();
+            });
 
             if (window.lucide) lucide.createIcons();
         })();

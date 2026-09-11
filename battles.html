@@ -1352,6 +1352,18 @@
                 if (gs && window.TM_GLOBAL_SEARCH) {
                     gs.addEventListener('keydown', e => { if (e.key === 'Enter' && gs.value.trim()) window.TM_GLOBAL_SEARCH(gs.value.trim()); });
                 }
+
+                // Subscribe to TradeMindBus for real-time chrome and battle-score reactivity
+                if (window.TradeMindCore && window.TradeMindCore.TradeMindBus) {
+                    const bus = window.TradeMindCore.TradeMindBus;
+                    ['state.hydrated', 'account.changed', 'config.changed', 'trade.created', 'trade.updated', 'trade.deleted'].forEach(ev => {
+                        bus.subscribe(ev, () => {
+                            renderChrome();
+                            // refresh battle data so scores reflect latest trades
+                            loadAll();
+                        });
+                    });
+                }
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
         })();

@@ -1296,6 +1296,18 @@
             renderProfile();
             renderChrome();
             fetchBrokers();
+
+            // Subscribe to TradeMindBus for real-time chrome reactivity
+            const _settingsCore = window.TradeMindCore;
+            if (_settingsCore && _settingsCore.TradeMindBus) {
+                ['state.hydrated', 'account.changed', 'config.changed', 'trade.created', 'trade.updated', 'trade.deleted'].forEach(ev => {
+                    _settingsCore.TradeMindBus.subscribe(ev, () => {
+                        renderChrome();
+                        renderProfile();
+                    });
+                });
+            }
+
             if (window.lucide) lucide.createIcons();
         })();
     </script>
