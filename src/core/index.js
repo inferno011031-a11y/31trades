@@ -1728,7 +1728,7 @@
             if (!t) throw new Error('unknown trade ' + tradeId);
             const oldPnl = t.pnl;
             const changes = [];
-            ['symbol', 'dir', 'setup', 'session', 'emotion', 'adherence', 'entry', 'exit', 'size', 'risk', 'pnl', 'note', 'reviewed', 'stop', 'tp'].forEach(k => {
+            ['symbol', 'dir', 'setup', 'session', 'emotion', 'adherence', 'entry', 'exit', 'size', 'risk', 'pnl', 'note', 'reviewed', 'stop', 'tp', 'chart_url', 'r'].forEach(k => {
                 if (fields[k] !== undefined && fields[k] !== null) {
                     if (String(t[k]) !== String(fields[k])) changes.push(k + ': ' + t[k] + ' → ' + fields[k]);
                     t[k] = fields[k];

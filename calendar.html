@@ -329,13 +329,18 @@
             border-bottom: 1px solid #14161d !important;
             align-items: center !important;
             font-size: 13px !important;
+            cursor: pointer !important;
             transition: background 0.15s ease !important;
         }
         .modal-table-row:last-child {
             border-bottom: none !important;
         }
         .modal-table-row:hover {
-            background: rgba(255, 255, 255, 0.02) !important;
+            background: rgba(255, 255, 255, 0.035) !important;
+        }
+        .modal-table-row.selected {
+            background: rgba(34, 197, 94, 0.08) !important;
+            border-left: 3px solid #22c55e !important;
         }
 
         /* Yearly Grid Cells */
@@ -1181,7 +1186,9 @@
 
                 $('m-stat-trades').textContent = totalTrades;
                 $('m-stat-days').textContent = daysSet.size;
-                $('m-stat-rr').textContent = totalTrades ? '8.5R' : '-';
+                const rTrades = monthTrades.filter(t => t.r != null && !isNaN(t.r));
+                const avgR = rTrades.length ? (rTrades.reduce((acc, t) => acc + Number(t.r), 0) / rTrades.length).toFixed(1) + 'R' : (totalTrades ? '8.5R' : '-');
+                $('m-stat-rr').textContent = avgR;
                 const sortedAssets = Object.keys(assetCounts).sort((a, b) => assetCounts[b] - assetCounts[a]);
                 $('m-stat-asset').textContent = sortedAssets[0] || '—';
                 $('m-stat-winrate').textContent = totalTrades ? Math.round((wins / totalTrades) * 100) + '%' : '0%';
@@ -1261,8 +1268,28 @@
             // ==========================================
             // 3. RENDER DAY DETAIL MODAL (Matches Image 3)
             // ==========================================
+            let currentModalDayTrades = [];
+
+            function selectModalTrade(idx) {
+                if (!currentModalDayTrades || !currentModalDayTrades[idx]) return;
+                activeDayTrade = currentModalDayTrades[idx];
+                
+                // Highlight row
+                const rows = document.querySelectorAll('#modal-trade-rows .modal-table-row');
+                rows.forEach((r, i) => {
+                    if (i === idx) r.classList.add('selected');
+                    else r.classList.remove('selected');
+                });
+
+                // Update Notes & Screenshot views
+                updateNotesDisplay(activeDayTrade.note);
+                renderScreenshotInModal(activeDayTrade.chart_url);
+            }
+            window.__selectModalTrade = selectModalTrade;
+
             function openDayDetail(dayNum) {
                 const dayTrades = trades.filter(t => t.ts.getFullYear() === selectedYear && t.ts.getMonth() === selectedMonth && t.ts.getDate() === dayNum);
+                currentModalDayTrades = dayTrades;
                 const d = new Date(selectedYear, selectedMonth, dayNum);
                 
                 $('modal-day-title').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -1285,7 +1312,9 @@
                 $('dm-trades').textContent = dayTrades.length;
                 const wr = dayTrades.length ? Math.round((wins / dayTrades.length) * 100) : 0;
                 $('dm-winrate').textContent = wr + '%';
-                $('dm-rr').textContent = dayTrades.length ? '8.5R' : '-';
+                const dayRTrades = dayTrades.filter(t => t.r != null && !isNaN(t.r));
+                const dayAvgR = dayRTrades.length ? (dayRTrades.reduce((acc, t) => acc + Number(t.r), 0) / dayRTrades.length).toFixed(1) + 'R' : (dayTrades.length ? '8.5R' : '-');
+                $('dm-rr').textContent = dayAvgR;
                 const sorted = Object.keys(assetCounts).sort((a, b) => assetCounts[b] - assetCounts[a]);
                 $('dm-asset').textContent = sorted[0] || '—';
 
@@ -1304,14 +1333,14 @@
 
                 // Trades Table inside modal
                 const rowsHost = $('modal-trade-rows');
-                rowsHost.innerHTML = dayTrades.map(t => {
+                rowsHost.innerHTML = dayTrades.map((t, idx) => {
                     const isLong = t.dir === 'Long';
                     const sideHtml = isLong ? '<span class="text-[#22c55e] font-bold">Buy ↑</span>' : '<span class="text-[#ef4444] font-bold">Sell ↓</span>';
                     const dateStr = t.ts.toLocaleDateString('en-GB') + ' ' + t.ts.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
                     const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '8.5R';
                     const pnlText = (t.pnl >= 0 ? '▲ ' : '▼ ') + fmtVal(t.pnl);
 
-                    return '<div class="modal-table-row">' +
+                    return '<div class="modal-table-row ' + (idx === 0 ? 'selected' : '') + '" onclick="window.__selectModalTrade(' + idx + ')">' +
                         '<div class="text-[#cbd5e1] font-medium font-mono text-[12.5px]">' + dateStr + '</div>' +
                         '<div class="font-bold text-white text-[13.5px]">' + esc(t.symbol) + '</div>' +
                         '<div>' + sideHtml + '</div>' +
@@ -1488,7 +1517,7 @@
             dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
             dropzone.addEventListener('drop', (e) => {
                 e.preventDefault();
-                dropzone.classList.remove('drag-over');
+                dropzone.classList.add('drag-over');
                 if (e.dataTransfer.files && e.dataTransfer.files[0]) {
                     handleScreenshotFile(e.dataTransfer.files[0]);
                 }
@@ -1523,10 +1552,56 @@
             const collapseBtn = $('collapse-btn');
             if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
 
-            // Initial load
+            // ---- UNIFIED REACTIVE RENDER PIPELINE ----
+            function renderAll() {
+                trades = loadTrades();
+                renderChrome();
+                if ($('view-monthly').classList.contains('hidden')) {
+                    renderYearlyView();
+                } else {
+                    renderMonthlyCalendar();
+                }
+            }
+            window.__renderCalendar = renderAll;
+
+            // Initial load & automatic year/month anchoring
             trades = loadTrades();
+            if (trades.length > 0) {
+                const latest = trades[trades.length - 1].ts;
+                selectedYear = latest.getFullYear();
+                selectedMonth = latest.getMonth();
+            } else {
+                const now = new Date();
+                selectedYear = now.getFullYear();
+                selectedMonth = now.getMonth();
+            }
+
             renderChrome();
             renderYearlyView();
+
+            // Subscribe to TradeMindCore Bus events for real-time reactivity
+            if (core && core.TradeMindBus) {
+                const reactiveEvents = [
+                    'state.hydrated',
+                    'trade.created',
+                    'trade.updated',
+                    'trade.deleted',
+                    'account.changed',
+                    'config.changed'
+                ];
+                reactiveEvents.forEach(ev => {
+                    core.TradeMindBus.subscribe(ev, () => {
+                        renderAll();
+                    });
+                });
+            }
+
+            // Cross-tab / window storage event listener
+            window.addEventListener('storage', e => {
+                if (e.key && (e.key.startsWith('tm_') || e.key.includes('trades'))) {
+                    renderAll();
+                }
+            });
 
             if (window.lucide) lucide.createIcons();
         })();
