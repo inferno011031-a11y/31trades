@@ -1678,11 +1678,12 @@
     // ---- CALENDAR SUMMARY SERVICE (Institutional macro analytics, matrix, equity curve, KPIs) ----
     function calendarSummary(accountId, year, options) {
         options = options || {};
-        const acc = Accounts.find(a => a.id === accountId) || Accounts[0];
-        const startingBalance = acc ? (acc.starting_balance || 100000) : 100000;
+        const isAllAccounts = !accountId || accountId === 'all';
+        const acc = isAllAccounts ? (Accounts[0] || null) : (Accounts.find(a => a.id === accountId) || Accounts[0] || null);
+        const startingBalance = acc ? (acc.starting_balance != null ? acc.starting_balance : 10000) : 10000;
 
         // Collect trades for this account
-        let accTrades = Trades.filter(t => !accountId || t.account_id === accountId);
+        let accTrades = Trades.filter(t => isAllAccounts || t.account_id === accountId);
         
         // Extract all years available
         const yearsSet = new Set();
@@ -1883,10 +1884,10 @@
             startingBalance,
             currentBalance: Math.round(runningEquity * 100) / 100,
             account: {
-                id: acc ? acc.id : 'acc-prop',
-                name: acc ? acc.name : 'Apex Live Funded ($100k)',
-                account_type: acc ? acc.account_type : 'Prop / Funded',
-                currency: acc ? acc.currency : 'USD'
+                id: acc ? acc.id : (Accounts[0] ? Accounts[0].id : (accountId || 'acc-primary')),
+                name: acc ? acc.name : (Accounts[0] ? Accounts[0].name : 'Primary Account'),
+                account_type: acc ? acc.account_type : (Accounts[0] ? Accounts[0].account_type : 'Trading Account'),
+                currency: acc ? acc.currency : (Accounts[0] ? Accounts[0].currency : 'USD')
             },
             monthlyMatrix,
             equityCurve: {
