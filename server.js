@@ -1256,7 +1256,7 @@ async function handleApi(req, res, url) {
 
         // ---- market replay controls ----
         if (p === '/api/replay/control') {
-            return json(res, 200, await Replay.control(body.id, body.action, body.speedMs));
+            return json(res, 200, await Replay.control(body.id, body.action, body.speedMs, body.cursor));
         }
 
         // ---- per-user preferences (theme sync across devices) ----

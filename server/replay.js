@@ -204,7 +204,7 @@ async function tickLocal(session) {
     }
 }
 
-async function control(id, action, speedMs) {
+async function control(id, action, speedMs, cursor) {
     const s = sessions.get(id);
     if (!s) return { ok: false, error: 'unknown session' };
     await s.ready.catch(() => {});
@@ -252,6 +252,18 @@ async function control(id, action, speedMs) {
             s.position = Math.min(s.preRoll || DEFAULT_PREROLL, s.all.length);
         }
         s.bars = [];
+        return { ok: true, state: await status(id) };
+    }
+    if (action === 'seek') {
+        s.playing = false;
+        if (s.timer) { clearInterval(s.timer); s.timer = null; }
+        if (s.mode === 'live') {
+            // live mode does not support arbitrary backward seeks
+            return { ok: true, state: await status(id) };
+        }
+        const target = Math.max(0, Math.min(s.all.length, Number(cursor != null ? cursor : speedMs)));
+        s.position = target;
+        s.ended = (s.position >= s.all.length);
         return { ok: true, state: await status(id) };
     }
     if (action === 'close') {

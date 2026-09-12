@@ -346,7 +346,6 @@
                         </a>
                         <a href="backtesting.html" class="nav-item">
                             <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
-                            <span class="sidebar-soon-badge">SOON</span>
                         </a>
                     </div>
                 </div>
@@ -451,14 +450,14 @@
                                             <div class="tp-big-num num text-white" id="tp-balance">$6,102,059</div>
                                             <div class="tp-sub-text" id="tp-date-range">Aug 10 - Sep 04</div>
                                         </div>
-                                        <span class="tag tag-emerald !py-1 !px-2.5 text-[12px] font-bold font-mono" id="tp-pct-badge">+829.38%</span>
+                                        <span class="tag tag-emerald !py-1 !px-2.5 text-[12px] font-bold tabular-nums" id="tp-pct-badge">+829.38%</span>
                                     </div>
                                 </div>
                                 <div class="mt-4 pt-2">
                                     <div id="tp-area-chart" class="w-full h-[140px]">
                                         <!-- Interactive SVG area chart -->
                                     </div>
-                                    <div class="flex items-center justify-between text-[11px] text-[var(--tm-dim)] mt-1 font-mono" id="tp-chart-labels">
+                                    <div class="flex items-center justify-between text-[11px] text-[var(--tm-dim)] mt-1 tabular-nums" id="tp-chart-labels">
                                         <span>Aug 16</span><span>Aug 22</span><span>Aug 28</span><span>Sep 04</span>
                                     </div>
                                 </div>
@@ -510,7 +509,7 @@
                                         <div class="absolute bottom-0 left-0 w-full rounded-full bg-gradient-to-t from-emerald-600 to-emerald-400 transition-all duration-500" id="tp-gauge-fill" style="height: 88%;"></div>
                                     </div>
                                     <!-- Graduated Scale Numbers + Indicator Arrow -->
-                                    <div class="flex flex-col justify-between h-36 text-[10px] font-mono text-[var(--tm-dim)] relative">
+                                    <div class="flex flex-col justify-between h-36 text-[10px] tabular-nums text-[var(--tm-dim)] relative">
                                         <div id="tp-needle" class="absolute -left-3.5 text-emerald-400 font-bold text-[10px]" style="top: 12%;">▶</div>
                                         <span>100</span><span>90</span><span>80</span><span>70</span><span>60</span><span>50</span><span>40</span><span>30</span><span>20</span><span>10</span>
                                     </div>
@@ -909,7 +908,7 @@
                 $('tp-balance').textContent = '$' + Math.round(currentBal).toLocaleString('en-US');
                 const totalPct = ((currentBal - startingBal) / startingBal) * 100;
                 $('tp-pct-badge').textContent = (totalPct >= 0 ? '+' : '') + totalPct.toFixed(2) + '%';
-                $('tp-pct-badge').className = 'tag ' + (totalPct >= 0 ? 'tag-emerald' : 'tag-red') + ' !py-1 !px-2.5 text-[12px] font-bold font-mono';
+                $('tp-pct-badge').className = 'tag ' + (totalPct >= 0 ? 'tag-emerald' : 'tag-red') + ' !py-1 !px-2.5 text-[12px] font-bold tabular-nums';
 
                 if (trades.length) {
                     const firstDate = new Date(trades[0].ts).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });

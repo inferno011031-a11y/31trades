@@ -26,10 +26,37 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
+    
+    <!-- Tailwind CSS CDN with plugins & Stitch config -->
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brandDark: '#070a0f',
+                        cardBg: '#121721',
+                        cardBorder: 'rgba(255, 255, 255, 0.08)',
+                        cardBorderHover: 'rgba(255, 255, 255, 0.18)',
+                        accentBlue: '#2563eb',
+                        goldBarStart: '#f59e0b',
+                        goldBarEnd: '#b45309'
+                    },
+                    fontFamily: {
+                        sans: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif'],
+                        mono: ['"Plus Jakarta Sans"', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'Segoe UI', 'Roboto', 'sans-serif']
+                    }
+                }
+            }
+        }
+    </script>
+
     <!-- Tailwind CSS CDN & Lucide -->
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
+    <script src="assets/lightweight-charts.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -40,6 +67,16 @@
             color: var(--tm-text);
             font-family: var(--tm-sans);
             overflow: hidden;
+        }
+
+        /* Modern High-UX Fintech Typography (Replacing ui-monospace with Plus Jakarta Sans & tabular numerals) */
+        .font-mono, [class*="font-mono"], .tabular-nums, .num {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+            font-variant-numeric: tabular-nums;
+            letter-spacing: -0.01em;
+        }
+        input, select, button, textarea {
+            font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
         }
 
         .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
@@ -250,6 +287,110 @@
         .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--tm-accent-2), var(--tm-green)); transition: width 0.2s ease; }
         
             .topbar { padding-left: 12px; padding-right: 12px; }
+    
+        
+        /* ---- Robust Standalone Stitch Dashboard & Replay System ---- */
+        .stitch-grid-12 {
+            display: grid !important;
+            grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+            gap: 16px !important;
+        }
+        @media (max-width: 1024px) {
+            .stitch-grid-12 {
+                grid-template-columns: 1fr !important;
+            }
+            .stitch-col-7, .stitch-col-5 {
+                grid-column: span 1 / span 1 !important;
+            }
+        }
+        .stitch-col-7 {
+            grid-column: span 7 / span 7 !important;
+        }
+        .stitch-col-5 {
+            grid-column: span 5 / span 5 !important;
+        }
+        .stitch-stat-grid {
+            display: grid !important;
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 16px !important;
+        }
+        @media (max-width: 640px) {
+            .stitch-stat-grid {
+                grid-template-columns: 1fr !important;
+            }
+        }
+
+        .stitch-card {
+            background-color: #111723 !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 12px !important;
+            padding: 20px !important;
+            transition: border-color 0.15s ease, background 0.15s ease !important;
+        }
+        .stitch-card:hover {
+            border-color: rgba(255, 255, 255, 0.20) !important;
+        }
+
+        /* Ambient Radial Glow */
+        .top-glow {
+            background: radial-gradient(circle at 80% -20%, rgba(30, 58, 138, 0.35), transparent 60%) !important;
+        }
+
+        /* Glowing Emerald Green Bars */
+        .gold-bar-tall, .emerald-bar-tall {
+            width: 44px;
+            height: 134px;
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+            background: linear-gradient(180deg, #34d399 0%, rgba(5, 150, 105, 0.4) 100%) !important;
+            box-shadow: 0 0 16px rgba(52, 211, 153, 0.35) !important;
+            transition: all 0.15s ease;
+        }
+        .gold-bar-tall:hover, .emerald-bar-tall:hover {
+            filter: brightness(1.2);
+            box-shadow: 0 0 22px rgba(52, 211, 153, 0.6) !important;
+        }
+        .gold-bar-sliver, .emerald-bar-sliver {
+            width: 44px;
+            height: 4px;
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+            background: #34d399 !important;
+            box-shadow: 0 0 10px rgba(52, 211, 153, 0.45) !important;
+            transition: all 0.15s ease;
+        }
+        .gold-bar-sliver:hover, .emerald-bar-sliver:hover {
+            filter: brightness(1.25);
+            box-shadow: 0 0 16px rgba(52, 211, 153, 0.7) !important;
+        }
+        .gold-bar-short, .emerald-bar-short {
+            width: 44px;
+            height: 22px;
+            border-top-left-radius: 2px;
+            border-top-right-radius: 2px;
+            background: linear-gradient(180deg, #34d399 0%, rgba(5, 150, 105, 0.5) 100%) !important;
+            box-shadow: 0 0 12px rgba(52, 211, 153, 0.30) !important;
+            transition: all 0.15s ease;
+        }
+        .gold-bar-short:hover, .emerald-bar-short:hover {
+            filter: brightness(1.2);
+            box-shadow: 0 0 18px rgba(52, 211, 153, 0.55) !important;
+        }
+
+        .chart-area-h56 {
+            position: relative;
+            width: 100%;
+            height: 224px;
+            padding-top: 24px;
+            padding-bottom: 24px;
+            display: flex;
+            align-items: flex-end;
+        }
+        .stitch-tab.active {
+            color: #ffffff !important;
+            border-bottom-color: #ffffff !important;
+        }
+
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
@@ -382,7 +523,6 @@
                         </a>
                         <a href="backtesting.html" class="nav-item active">
                             <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
-                            <span class="sidebar-soon-badge">SOON</span>
                         </a>
                     </div>
                 </div>
@@ -403,169 +543,552 @@
         <!-- ============ MAIN ============ -->
         <div class="flex-1 flex flex-col min-w-0">
 
-            <!-- Top bar -->
-            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
-                <div class="relative">
-                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
-                    <input id="global-search" type="text" class="search-input" placeholder="Search…">
-                </div>
-                <div class="flex items-center gap-3 ml-auto">
-                    
-                    <div class="session-chip hide-when-collapsed">
-                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
-                    </div>
-                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
-                    <a href="journal.html?log=1" class="btn-primary !py-2 !px-3.5">
-                        <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
-                    </a>
-                    <button class="account-select hide-when-collapsed" id="acc-chip">
-                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
-                        <span>No account</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
-                    </button>
-                </div>
-            </div>
+            
 
             <!-- Content -->
-            <main class="flex-1 overflow-y-auto relative">
-                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+            <main class="flex-1 overflow-y-auto relative bg-[#06090e] text-slate-200">
+                <!-- Ambient background lighting effect -->
+                <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-96 top-glow"></div>
 
-                    <!-- Header -->
-                    <div class="flex flex-wrap items-end justify-between gap-4">
-                        <div>
-                            <h1 class="text-[24px] font-bold tracking-tight">Backtesting</h1>
-                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Practice your decisions without risking capital.</p>
+                <!-- Testing Header with Streak & Tabs -->
+                <header class="relative z-10 w-full pt-5 px-6 lg:px-10 border-b border-white/[0.06] bg-[#070b12]/60 backdrop-blur-md">
+                    <div class="max-w-[1580px] mx-auto">
+                        <!-- Top Title and Streak Row -->
+                        <div class="flex items-center justify-between pb-4">
+                            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                                Testing
+                            </h1>
+                            <!-- Streak Pill Badge -->
+                            <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121824] border border-amber-500/30 hover:border-amber-500/50 transition-colors shadow-sm cursor-pointer" title="Daily backtesting streak">
+                                <span class="text-sm font-semibold text-slate-100" id="streak-days">1</span>
+                                <span class="text-xs text-slate-300 font-medium">day streak!</span>
+                                <span aria-label="fire" class="text-base" role="img">🔥</span>
+                            </div>
                         </div>
-                        <div class="flex items-center gap-1 p-1 rounded-xl border border-[var(--tm-border-2)] bg-[var(--tm-card)]">
-                            <button class="bd-tab active" data-mode="practice"><svg data-lucide="flask-conical" class="w-3.5 h-3.5"></svg> Practice</button>
-                            <button class="bd-tab disabled" data-mode="battle"><svg data-lucide="swords" class="w-3.5 h-3.5"></svg> Battle</button>
-                            <button class="bd-tab disabled" data-mode="replay"><svg data-lucide="history" class="w-3.5 h-3.5"></svg> Market Replay</button>
-                        </div>
+
+                        <!-- Navigation Tabs -->
+                        <nav aria-label="Main Navigation" class="flex space-x-7 text-sm font-medium pt-1 -mb-[1px]">
+                            <!-- Tab: Dashboard -->
+                            <button type="button" class="stitch-tab active flex items-center gap-2 pb-3.5 text-white border-b-2 border-white transition-all font-semibold cursor-pointer" data-tab="dashboard">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <rect height="7" rx="1" width="7" x="3" y="3"></rect>
+                                    <rect height="7" rx="1" width="7" x="14" y="3"></rect>
+                                    <rect height="7" rx="1" width="7" x="14" y="14"></rect>
+                                    <rect height="7" rx="1" width="7" x="3" y="14"></rect>
+                                </svg>
+                                <span>Dashboard</span>
+                            </button>
+                            <!-- Tab: Sessions -->
+                            <button type="button" class="stitch-tab flex items-center gap-2 pb-3.5 text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors font-semibold cursor-pointer" data-tab="sessions">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <line x1="8" x2="21" y1="6" y2="6"></line>
+                                    <line x1="8" x2="21" y1="12" y2="12"></line>
+                                    <line x1="8" x2="21" y1="18" y2="18"></line>
+                                    <line x1="3" x2="3.01" y1="6" y2="6"></line>
+                                    <line x1="3" x2="3.01" y1="12" y2="12"></line>
+                                    <line x1="3" x2="3.01" y1="18" y2="18"></line>
+                                </svg>
+                                <span>Sessions</span>
+                            </button>
+                            <!-- Tab: Trades -->
+                            <button type="button" class="stitch-tab flex items-center gap-2 pb-3.5 text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors font-semibold cursor-pointer" data-tab="trades">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                                    <polyline points="14 2 14 8 20 8"></polyline>
+                                    <line x1="16" x2="8" y1="13" y2="13"></line>
+                                    <line x1="16" x2="8" y1="17" y2="17"></line>
+                                    <polyline points="10 9 9 9 8 9"></polyline>
+                                </svg>
+                                <span>Trades</span>
+                            </button>
+                            <!-- Tab: Analytics -->
+                            <button type="button" class="stitch-tab flex items-center gap-2 pb-3.5 text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors font-semibold cursor-pointer" data-tab="analytics">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
+                                    <line x1="18" x2="18" y1="20" y2="10"></line>
+                                    <line x1="12" x2="12" y1="20" y2="4"></line>
+                                    <line x1="6" x2="6" y1="20" y2="14"></line>
+                                </svg>
+                                <span>Analytics</span>
+                            </button>
+                        </nav>
                     </div>
+                </header>
 
-                    <!-- ============ PRACTICE MODE ============ -->
-                    <section class="mode-panel active flex flex-col gap-4" id="mode-practice">
+                <div class="relative z-10 max-w-[1580px] mx-auto px-6 lg:px-10 py-6 space-y-7">
+                    <!-- ============ TAB 1: DASHBOARD ============ -->
+                    <div id="tab-panel-dashboard" class="stitch-panel space-y-7">
+                        <!-- Membership Plan Upgrade Callout Banner -->
+                        <div class="w-full bg-[#0d131f]/90 border border-blue-900/30 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between sm:justify-center gap-3 text-center text-xs md:text-sm text-slate-300 shadow-inner" data-purpose="notice-banner">
+                            <span>Sessions on the Beginner plan are hidden after 1 week. Upgrade to Pro to unlock all your past sessions.</span>
+                            <button type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1e293b]/90 hover:bg-slate-800 border border-white/10 text-white font-medium text-xs transition duration-150 cursor-pointer" onclick="showToast('Upgrade to Pro: Unlimited Sessions Unlocked!')">
+                                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                </svg>
+                                Upgrade
+                            </button>
+                        </div>
 
-                        <!-- three-zone terminal -->
-                        <div class="grid grid-cols-1 xl:grid-cols-[290px_minmax(0,1fr)_310px] gap-4 items-start">
-
-                            <!-- LEFT: setup + history -->
-                            <div class="flex flex-col gap-4 min-w-0">
-
-                                <div class="glass p-5 fade-up">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <div class="label-xs">Practice setup</div>
-                                        <span class="tag tag-indigo"><svg data-lucide="flask-conical" class="w-3 h-3"></svg> Practice</span>
+                        <!-- Top Interactive Session Mode Cards -->
+                        <section aria-label="Launch Session Types" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:max-w-3xl gap-4">
+                            <!-- Backtesting Session Card (Active / Selected state) -->
+                            <div id="quick-launch-backtest" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-blue-500/80 rounded-xl p-4 cursor-pointer transition-all shadow-[0_0_15px_rgba(37,99,235,0.12)] flex items-start justify-between">
+                                <div class="flex items-start gap-3.5">
+                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-blue-400 mt-0.5">
+                                        <svg class="w-6 h-6 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        </svg>
                                     </div>
-                                    <div class="flex flex-col gap-3">
-                                        <div>
-                                            <label class="field-label" for="pd-symbol">Symbol</label>
-                                            <select id="pd-symbol" class="field-select">
-                                                <option value="EURUSD">EURUSD</option>
-                                                <option value="GBPUSD">GBPUSD</option>
-                                                <option value="USDJPY">USDJPY</option>
-                                                <option value="XAUUSD">XAUUSD</option>
-                                                <option value="AUDNZD">AUDNZD</option>
-                                                <option value="US30">US30</option>
-                                                <option value="NAS100">NAS100</option>
-                                            </select>
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <h3 class="text-sm font-semibold text-white">Backtesting session</h3>
+                                            <svg class="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
                                         </div>
-                                        <div>
-                                            <label class="field-label" for="pd-timeframe">Timeframe</label>
-                                            <select id="pd-timeframe" class="field-select">
-                                                <option value="1m">1m</option>
-                                                <option value="5m">5m</option>
-                                                <option value="15m">15m</option>
-                                                <option value="1h" selected>1h</option>
-                                                <option value="4h">4h</option>
-                                                <option value="1d">1d</option>
-                                            </select>
+                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Start a session</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Prop Firm Session Card -->
+                            <div id="quick-launch-prop" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-white/[0.08] hover:border-white/20 rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between">
+                                <div class="flex items-start gap-3.5">
+                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-blue-400 mt-0.5">
+                                        <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.004-9.375h2.25a2.25 2.25 0 0 0 2.25-2.25V4.5m-16.5 0V3.75a2.25 2.25 0 0 1 2.25-2.25h2.25m9.75 0h-9.75M9 7.5a3 3 0 0 0 6 0" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <h3 class="text-sm font-semibold text-white">Prop firm session</h3>
+                                            <svg class="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
                                         </div>
-                                        <div>
-                                            <label class="field-label" for="pd-strategy">Strategy</label>
-                                            <input id="pd-strategy" class="field-input" type="text" placeholder="e.g. London FVG" value="Manual practice">
+                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Start a challenge</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <!-- Tutorials Card -->
+                            <div id="quick-launch-tutorials" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-white/[0.08] hover:border-white/20 rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between">
+                                <div class="flex items-start gap-3.5">
+                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-blue-400 mt-0.5">
+                                        <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-5.25 6.557q.516.34 1.05.65" stroke-linecap="round" stroke-linejoin="round"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-1.5">
+                                            <h3 class="text-sm font-semibold text-white">Tutorials</h3>
+                                            <svg class="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                                                <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
                                         </div>
-                                        <div class="grid grid-cols-2 gap-3">
-                                            <div>
-                                                <label class="field-label" for="pd-balance">Starting balance</label>
-                                                <input id="pd-balance" class="field-input num" type="number" value="10000" min="100">
+                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Learn more</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- Performance Section -->
+                        <section aria-label="Performance Analytics Overview" class="space-y-4 pt-2">
+                            <!-- Performance Header & Filters -->
+                            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+                                <h2 class="text-lg font-bold text-white tracking-tight">Performance</h2>
+                                <div class="flex items-center gap-2">
+                                    <!-- Backtesting Filter Dropdown -->
+                                    <button class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#111723] hover:bg-[#161e2e] border border-white/[0.08] hover:border-white/20 rounded-lg transition-colors cursor-pointer" type="button">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <line x1="18" x2="18" y1="20" y2="10"></line>
+                                            <line x1="12" x2="12" y1="20" y2="4"></line>
+                                            <line x1="6" x2="6" y1="20" y2="14"></line>
+                                        </svg>
+                                        <span>Backtesting</span>
+                                        <svg class="w-3.5 h-3.5 text-slate-400 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                    </button>
+                                    <!-- Lifetime Range Filter Dropdown -->
+                                    <button class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#111723] hover:bg-[#161e2e] border border-white/[0.08] hover:border-white/20 rounded-lg transition-colors cursor-pointer" type="button">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                            <rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
+                                            <line x1="16" x2="16" y1="2" y2="6"></line>
+                                            <line x1="8" x2="8" y1="2" y2="6"></line>
+                                            <line x1="3" x2="21" y1="10" y2="10"></line>
+                                        </svg>
+                                        <span>Lifetime</span>
+                                        <svg class="w-3.5 h-3.5 text-slate-400 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Main Analytics Grid: Left 4 Metric Cards (7 cols) & Right Glowing Amber Chart (5 cols) -->
+                            <div class="stitch-grid-12 grid grid-cols-1 lg:grid-cols-12 gap-4">
+                                <!-- Left Stats Section (2 Columns across 7/12 width) -->
+                                <div class="stitch-col-7 lg:col-span-7 stitch-stat-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <!-- Metric Card: Time Invested -->
+                                    <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
+                                        <div>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
+                                                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <line x1="18" x2="18" y1="20" y2="10"></line>
+                                                        <line x1="12" x2="12" y1="20" y2="4"></line>
+                                                        <line x1="6" x2="6" y1="20" y2="14"></line>
+                                                    </svg>
+                                                    <span>Time Invested</span>
+                                                </div>
+                                                <button aria-label="Info" class="text-slate-500 hover:text-slate-300 cursor-pointer" type="button">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="10" stroke-width="1.8"></circle>
+                                                        <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                </button>
                                             </div>
-                                            <div>
-                                                <label class="field-label" for="pd-risk">Risk / trade ($)</label>
-                                                <input id="pd-risk" class="field-input num" type="number" value="25" min="1">
+                                        </div>
+                                        <div class="pt-4 flex items-baseline gap-1.5">
+                                            <span class="text-3xl font-extrabold text-white tracking-tight" id="dash-time-invested">41</span>
+                                            <span class="text-sm font-medium text-slate-400">min</span>
+                                        </div>
+                                    </div>
+
+                                    <!-- Metric Card: Historical Time Replayed -->
+                                    <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
+                                        <div>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
+                                                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="10"></circle>
+                                                        <polyline points="12 6 12 12 16 14"></polyline>
+                                                    </svg>
+                                                    <span>Historical time replayed</span>
+                                                </div>
+                                                <button aria-label="Info" class="text-slate-500 hover:text-slate-300 cursor-pointer" type="button">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="10" stroke-width="1.8"></circle>
+                                                        <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                </button>
                                             </div>
                                         </div>
-                                        <button class="btn-primary w-full justify-center mt-1" id="start-practice">
-                                            <svg data-lucide="play" class="w-4 h-4"></svg> Start practice
-                                        </button>
-                                        <p class="text-[11px] text-[var(--tm-dim)]" id="setup-msg"></p>
+                                        <div class="pt-4 flex items-baseline gap-2" id="dash-hist-replayed">
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-d">1</span>
+                                                <span class="text-xs font-semibold text-slate-400">d</span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-hr">2</span>
+                                                <span class="text-xs font-semibold text-slate-400">hr</span>
+                                            </div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-min">45</span>
+                                                <span class="text-xs font-semibold text-slate-400">min</span>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Metric Card: Trades taken -->
+                                    <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
+                                        <div>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
+                                                    <span class="text-slate-300 font-bold">Trades taken</span>
+                                                </div>
+                                                <button aria-label="Info" class="text-slate-500 hover:text-slate-300 cursor-pointer" type="button">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="10" stroke-width="1.8"></circle>
+                                                        <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-slate-400 mt-2 font-normal" id="dash-trades-subtitle">Your trades taken will show up here</p>
+                                        </div>
+                                        <div class="pt-3" id="dash-trades-container">
+                                            <div class="h-5"></div>
+                                        </div>
+                                    </div>
+
+                                    <!-- Metric Card: Overall win rate -->
+                                    <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
+                                        <div>
+                                            <div class="flex items-center justify-between">
+                                                <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
+                                                    <svg class="w-4 h-4 text-slate-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="8" r="6"></circle>
+                                                        <path d="M15.477 12.89L17 22l-5-3-5 3 1.523-9.11"></path>
+                                                    </svg>
+                                                    <span>Overall win rate</span>
+                                                </div>
+                                                <button aria-label="Info" class="text-slate-500 hover:text-slate-300 cursor-pointer" type="button">
+                                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <circle cx="12" cy="12" r="10" stroke-width="1.8"></circle>
+                                                        <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                    </svg>
+                                                </button>
+                                            </div>
+                                            <p class="text-xs text-slate-400 mt-2 font-normal" id="dash-winrate-subtitle">Your win rate will show up here</p>
+                                        </div>
+                                        <div class="pt-3" id="dash-winrate-container">
+                                            <div class="h-5"></div>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div class="glass p-5 fade-up">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <div class="label-xs">Session history</div>
-                                        <span class="text-[11px] text-[var(--tm-dim)] num" id="sess-count">—</span>
+                                <!-- Right Column: Time Invested Glowing Bar Chart (5/12 width) -->
+                                <div class="stitch-col-5 lg:col-span-5 stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between relative hover:border-white/20 transition duration-150 min-h-[336px]">
+                                    <!-- Chart Header -->
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-sm font-semibold text-white">Time Invested</h3>
+                                        <button aria-label="Chart Info" class="text-slate-500 hover:text-slate-300 cursor-pointer" type="button">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <circle cx="12" cy="12" r="10" stroke-width="1.8"></circle>
+                                                <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                            </svg>
+                                        </button>
                                     </div>
-                                    <div class="flex flex-col gap-2" id="sess-list">
-                                        <div class="py-8 text-center text-[12.5px] text-[var(--tm-dim)]">No practice sessions yet.</div>
+                                    <!-- Chart Area with Horizontal Dashed Gridlines & Vertical Glowing Amber Bars -->
+                                    <div class="chart-area-h56 relative w-full h-56 pt-6 pb-6 flex items-end">
+                                        <!-- Left Y-Axis Labels -->
+                                        <div class="absolute left-0 top-6 bottom-8 flex flex-col justify-between text-[11px] text-slate-500 select-none pr-3 text-right">
+                                            <span>0.6 hrs</span>
+                                            <span>0.5 hrs</span>
+                                            <span>0.4 hrs</span>
+                                            <span>0.3 hrs</span>
+                                            <span>0.2 hrs</span>
+                                            <span>0.1 hrs</span>
+                                            <span>0 hrs</span>
+                                        </div>
+                                        <!-- Dashed Grid Lines -->
+                                        <div class="absolute left-14 right-4 top-6 bottom-8 flex flex-col justify-between pointer-events-none">
+                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
+                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
+                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
+                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
+                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
+                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
+                                            <div class="border-b border-dashed border-white/[0.12] w-full"></div>
+                                        </div>
+                                        <!-- Chart Bars Container -->
+                                        <div class="ml-16 mr-4 w-full h-[155px] flex items-end justify-around relative z-10">
+                                            <!-- Jun Bar (~0.52 hrs high) -->
+                                            <div class="flex flex-col items-center group relative cursor-pointer" title="Jun 2026: ~0.52 hrs">
+                                                <div class="gold-bar-tall"></div>
+                                                <span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">
+                                                    Jun 2026
+                                                </span>
+                                            </div>
+                                            <!-- Jul Bar -->
+                                            <div class="flex flex-col items-center group relative cursor-pointer" title="Jul 2026: ~0.02 hrs">
+                                                <div class="gold-bar-sliver"></div>
+                                                <span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">
+                                                    Jul 2026
+                                                </span>
+                                            </div>
+                                            <!-- Aug Bar -->
+                                            <div class="flex flex-col items-center group relative cursor-pointer" title="Aug 2026: ~0.08 hrs">
+                                                <div class="gold-bar-short"></div>
+                                                <span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">
+                                                    Aug 2026
+                                                </span>
+                                            </div>
+                                            <!-- Sep Bar -->
+                                            <div class="flex flex-col items-center group relative cursor-pointer" title="Sep 2026: ~0.08 hrs">
+                                                <div class="gold-bar-short"></div>
+                                                <span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">
+                                                    Sep 2026
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="h-2"></div>
+                                </div>
+                            </div>
+
+                            <!-- Bottom Row: Win Rate & Trades by Symbol Breakdown -->
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
+                                <!-- Win Rate Detail Card -->
+                                <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 min-h-[170px] relative hover:border-white/20 transition duration-150 flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between">
+                                            <h3 class="text-sm font-semibold text-white">Win Rate</h3>
+                                            <button aria-label="Win Rate Info" class="text-slate-500 hover:text-slate-300 cursor-pointer" type="button">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="12" r="10" stroke-width="1.8"></circle>
+                                                    <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p class="text-xs text-slate-400 mt-1 font-normal" id="dash-winrate-detail-sub">Your win rate will show up here</p>
+                                    </div>
+                                    <div class="pt-6 pb-2" id="dash-winrate-bars">
+                                        <div class="w-full border-b border-dashed border-white/[0.08]"></div>
+                                    </div>
+                                </div>
+                                <!-- Trades by Symbol Card -->
+                                <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 min-h-[170px] relative hover:border-white/20 transition duration-150 flex flex-col justify-between">
+                                    <div>
+                                        <div class="flex items-center justify-between">
+                                            <h3 class="text-sm font-semibold text-white">Trades by symbol</h3>
+                                            <button aria-label="Trades by symbol info" class="text-slate-500 hover:text-slate-300 cursor-pointer" type="button">
+                                                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <circle cx="12" cy="12" r="10" stroke-width="1.8"></circle>
+                                                    <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                                </svg>
+                                            </button>
+                                        </div>
+                                        <p class="text-xs text-slate-400 mt-1 font-normal" id="dash-symbol-detail-sub">Your trades by symbol will show up here</p>
+                                    </div>
+                                    <div class="pt-4 pb-2" id="dash-symbol-bars">
+                                        <div class="w-44 h-5 rounded-md bg-[#1f2837]/60 border border-white/[0.04]"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+                    </div>
+
+                    <!-- ============ TAB 2: SESSIONS & STUDIO (Interactive Replay Engine) ============ -->
+                    <div id="tab-panel-sessions" class="stitch-panel hidden space-y-5">
+                        <!-- Studio Control Topbar -->
+                        <div class="flex flex-wrap items-center justify-between gap-4 bg-[#111723] border border-white/[0.08] rounded-xl p-4">
+                            <div>
+                                <h2 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <rect height="7" rx="1" width="7" x="3" y="3"></rect>
+                                        <rect height="7" rx="1" width="7" x="14" y="3"></rect>
+                                        <rect height="7" rx="1" width="7" x="14" y="14"></rect>
+                                        <rect height="7" rx="1" width="7" x="3" y="14"></rect>
+                                    </svg>
+                                    Interactive Simulation Studio
+                                </h2>
+                                <p class="text-xs text-slate-400 mt-0.5" id="chart-sub">No session selected</p>
+                            </div>
+                            <!-- Mode Switch & Controls -->
+                            <div class="flex items-center gap-2">
+                                <span class="tag tag-gray" id="status-tag">No session</span>
+                                <button type="button" class="btn-primary !py-1.5 !px-3 !text-xs" onclick="$('modal-new-session').classList.remove('hidden')">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    </svg>
+                                    New Session
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 3-Column Studio Layout: Sessions List | TV Candlestick Canvas & Dock | Execution Panel -->
+                        <div class="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_320px] gap-4 items-start">
+                            <!-- LEFT: Session History & Setup Trigger -->
+                            <div class="flex flex-col gap-4 min-w-0">
+                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-4 flex flex-col gap-3">
+                                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Sessions</span>
+                                        <span class="text-[11px] text-slate-400 num" id="sess-count">—</span>
+                                    </div>
+                                    <div class="flex flex-col gap-2 max-h-[580px] overflow-y-auto pr-1" id="sess-list">
+                                        <div class="py-8 text-center text-[12.5px] text-slate-500">No practice sessions yet.</div>
                                     </div>
                                 </div>
                             </div>
 
-                            <!-- CENTER: chart + controls + status -->
-                            <div class="flex flex-col gap-4 min-w-0">
+                            <!-- CENTER: Real TradingView Candlestick Chart with FX Replay Bottom Dock -->
+                            <div class="flex flex-col gap-3 min-w-0">
+                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-3">
+                                    <div id="tv-chart-wrapper" class="relative w-full h-[540px] rounded-xl overflow-hidden border border-white/[0.08] bg-[#06080b]">
+                                        <!-- Chart Canvas Container -->
+                                        <div id="tv-chart-container" class="w-full h-full"></div>
 
-                                <div class="glass p-4 fade-up">
-                                    <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
-                                        <div>
-                                            <div class="label-xs">Chart area</div>
-                                            <div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5" id="chart-sub">No session selected</div>
+                                        <!-- OHLC Legend Overlay -->
+                                        <div id="tv-ohlc-legend" class="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-2 text-[11px] tabular-nums text-slate-400 bg-[#0a0c12]/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/[0.08] pointer-events-none">
+                                            <span id="tv-sym-tf" class="text-white font-bold tracking-wider">SELECT A SESSION</span>
+                                            <span>O: <span id="tv-o" class="text-white font-semibold">—</span></span>
+                                            <span>H: <span id="tv-h" class="text-emerald-400 font-semibold">—</span></span>
+                                            <span>L: <span id="tv-l" class="text-red-400 font-semibold">—</span></span>
+                                            <span>C: <span id="tv-c" class="text-white font-semibold">—</span></span>
                                         </div>
-                                        <div class="flex items-center gap-1.5" id="ctrl-bar">
-                                            <button class="btn-mini" data-ctrl="play" disabled><svg data-lucide="play" class="w-3.5 h-3.5"></svg> Play</button>
-                                            <button class="btn-mini" data-ctrl="pause" disabled><svg data-lucide="pause" class="w-3.5 h-3.5"></svg> Pause</button>
-                                            <button class="btn-mini" data-ctrl="step" disabled><svg data-lucide="skip-forward" class="w-3.5 h-3.5"></svg> Step</button>
-                                            <button class="btn-mini" data-ctrl="reset" disabled><svg data-lucide="rotate-ccw" class="w-3.5 h-3.5"></svg> Reset</button>
+
+                                        <!-- Empty State overlay before session starts -->
+                                        <div id="chart-empty-hint" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#06080b]/90 pointer-events-none transition-opacity">
+                                            <div class="w-12 h-12 rounded-2xl mb-3 flex items-center justify-center bg-white/[0.06] border border-white/[0.12]">
+                                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <line x1="18" x2="18" y1="20" y2="10" stroke-width="2"></line>
+                                                    <line x1="12" x2="12" y1="20" y2="4" stroke-width="2"></line>
+                                                    <line x1="6" x2="6" y1="20" y2="14" stroke-width="2"></line>
+                                                </svg>
+                                            </div>
+                                            <div class="text-[14px] font-bold text-white">BattleX Market Replay Engine</div>
+                                            <p class="text-[12px] text-slate-400 mt-1">Select or start a session to begin bar-by-bar playback.</p>
+                                        </div>
+
+                                        <!-- Floating FX Replay Controller Dock -->
+                                        <div id="fx-replay-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 p-1.5 rounded-xl bg-[#0f131c]/95 backdrop-blur-md border border-white/[0.14] shadow-2xl user-select-none">
+                                            <button type="button" class="btn-mini !px-2.5 !py-1.5 !text-[11px] hover:text-white" id="fx-cut-btn" title="Jump / Cut to selected candle">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <circle cx="6" cy="6" r="3" stroke-width="2"></circle>
+                                                    <circle cx="6" cy="18" r="3" stroke-width="2"></circle>
+                                                    <line x1="20" x2="8.12" y1="4" y2="15.88" stroke-width="2"></line>
+                                                    <line x1="14.47" x2="20" y1="14.48" y2="20" stroke-width="2"></line>
+                                                    <line x1="8.12" x2="12" y1="8.12" y2="12" stroke-width="2"></line>
+                                                </svg>
+                                                <span>Cut</span>
+                                            </button>
+                                            <div class="w-[1px] h-4 bg-white/[0.12] mx-0.5"></div>
+                                            <button type="button" class="btn-mini !px-2.5 !py-1.5 !text-[11px]" data-ctrl="play" disabled title="Play (P)">
+                                                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <polygon points="5 3 19 12 5 21 5 3" stroke-width="2"></polygon>
+                                                </svg>
+                                                <span>Play</span>
+                                            </button>
+                                            <button type="button" class="btn-mini !px-2.5 !py-1.5 !text-[11px]" data-ctrl="pause" disabled title="Pause (P)">
+                                                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <rect x="6" y="4" width="4" height="16" stroke-width="2"></rect>
+                                                    <rect x="14" y="4" width="4" height="16" stroke-width="2"></rect>
+                                                </svg>
+                                                <span>Pause</span>
+                                            </button>
+                                            <button type="button" class="btn-mini !px-3 !py-1.5 !text-[11px] !bg-white/[0.10] text-white font-bold" data-ctrl="step" disabled title="Next Candle (Spacebar)">
+                                                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <polygon points="5 4 15 12 5 20 5 4" stroke-width="2"></polygon>
+                                                    <line x1="19" x2="19" y1="5" y2="19" stroke-width="2"></line>
+                                                </svg>
+                                                <span>Step</span>
+                                            </button>
+                                            <div class="w-[1px] h-4 bg-white/[0.12] mx-0.5"></div>
+                                            <select id="fx-speed-select" class="bg-transparent text-[11px] font-semibold text-slate-300 hover:text-white border-none outline-none cursor-pointer py-1 px-1 rounded" title="Replay Speed">
+                                                <option value="200" class="bg-[#12151f]">5x (0.2s)</option>
+                                                <option value="500" class="bg-[#12151f]">2x (0.5s)</option>
+                                                <option value="1000" selected class="bg-[#12151f]">1x (1.0s)</option>
+                                                <option value="2000" class="bg-[#12151f]">0.5x (2.0s)</option>
+                                            </select>
+                                            <div class="w-[1px] h-4 bg-white/[0.12] mx-0.5"></div>
+                                            <button type="button" class="btn-mini !px-2 !py-1.5 !text-[11px]" data-ctrl="reset" disabled title="Reset replay (R)">
+                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path d="M1 4v6h6" stroke-width="2"></path>
+                                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke-width="2"></path>
+                                                </svg>
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <!-- Chart unavailable (honest empty state — reserved for the real chart) -->
-                                    <div class="chart-unavailable">
-                                        <div class="text-center max-w-md px-6 py-10">
-                                            <div class="w-14 h-14 mx-auto rounded-2xl mb-4 flex items-center justify-center" style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12)">
-                                                <svg data-lucide="candlestick-chart" class="w-7 h-7 text-[var(--tm-accent-2)]"></svg>
-                                            </div>
-                                            <div class="text-[16px] font-bold">Chart engine unavailable</div>
-                                            <p class="text-[12.5px] text-[var(--tm-dim)] mt-2 leading-relaxed">The practice engine is ready, but the charting dependency is currently unavailable.</p>
-                                            <p class="text-[11.5px] text-[var(--tm-dim)] mt-2 leading-relaxed">Your practice data and session engine remain intact. Restore the chart dependency to begin replaying candles.</p>
-                                            <div class="flex flex-wrap items-center justify-center gap-1.5 mt-4">
-                                                <span class="tag tag-gray">cursor</span>
-                                                <span class="tag tag-gray">entry</span>
-                                                <span class="tag tag-gray">stop-loss</span>
-                                                <span class="tag tag-gray">take-profit</span>
-                                                <span class="tag tag-gray">drawings</span>
-                                                <span class="tag tag-gray">indicators</span>
-                                            </div>
-                                            <p class="text-[10.5px] text-[var(--tm-dim)] mt-3">Layers reserved for the real chart — not simulated.</p>
-                                        </div>
-                                    </div>
-
-                                    <!-- session progress (real session state, not a chart) -->
-                                    <div class="mt-3">
-                                        <div class="flex items-center justify-between text-[11px] text-[var(--tm-dim)] num mb-1.5">
+                                    <!-- Scrubber Slider -->
+                                    <div class="mt-3 px-1">
+                                        <div class="flex items-center justify-between text-[11px] text-slate-400 num mb-1.5">
                                             <span id="prog-label">No session</span>
                                             <span id="prog-cursor">—</span>
                                         </div>
-                                        <div class="progress-track"><div class="progress-fill" id="prog-fill" style="width:0%"></div></div>
+                                        <div class="relative flex items-center">
+                                            <input type="range" id="fx-scrubber" min="0" max="100" value="0" disabled class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed">
+                                        </div>
                                     </div>
                                 </div>
 
-                                <!-- status strip -->
-                                <div class="glass p-4 fade-up">
+                                <!-- Live Telemetry Strip -->
+                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-4">
                                     <div class="flex items-center justify-between mb-3">
-                                        <div class="label-xs">Live practice status</div>
-                                        <span class="tag tag-gray" id="status-tag">No session</span>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Live Telemetry</span>
+                                        <span class="text-[11px] text-slate-400 tabular-nums">Simulated Account</span>
                                     </div>
                                     <div class="grid grid-cols-4 gap-2" id="status-strip">
                                         <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Balance</div></div>
@@ -580,12 +1103,11 @@
                                 </div>
                             </div>
 
-                            <!-- RIGHT: execution + risk -->
+                            <!-- RIGHT: Trade Execution & Position Risk -->
                             <div class="flex flex-col gap-4 min-w-0">
-
-                                <div class="glass p-5 fade-up">
+                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
                                     <div class="flex items-center justify-between mb-4">
-                                        <div class="label-xs">Trade execution</div>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Trade Execution</span>
                                         <span class="tag tag-indigo" id="exec-mode">Practice</span>
                                     </div>
                                     <div class="flex flex-col gap-3">
@@ -606,126 +1128,104 @@
                                                 <input id="ex-sl" class="field-input num" type="number" step="any" placeholder="Required">
                                             </div>
                                             <div>
-                                                <label class="field-label" for="ex-tp">Take profit</label>
-                                                <input id="ex-tp" class="field-input num" type="number" step="any" placeholder="Optional">
+                                                <div class="flex items-center justify-between">
+                                                    <label class="field-label !mb-0" for="ex-tp">Take profit</label>
+                                                    <div class="flex items-center gap-1">
+                                                        <button type="button" class="text-[10px] tabular-nums px-1 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-blue-400" onclick="window.__setRR && window.__setRR(1)">1R</button>
+                                                        <button type="button" class="text-[10px] tabular-nums px-1 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-blue-400" onclick="window.__setRR && window.__setRR(2)">2R</button>
+                                                        <button type="button" class="text-[10px] tabular-nums px-1 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-blue-400" onclick="window.__setRR && window.__setRR(3)">3R</button>
+                                                    </div>
+                                                </div>
+                                                <input id="ex-tp" class="field-input num mt-1" type="number" step="any" placeholder="Optional">
                                             </div>
                                         </div>
                                         <div>
                                             <label class="field-label" for="ex-risk">Risk ($)</label>
                                             <input id="ex-risk" class="field-input num" type="number" step="any" placeholder="e.g. 25">
                                         </div>
-                                        <button class="btn-primary w-full justify-center" id="enter-trade" disabled>
-                                            <svg data-lucide="log-in" class="w-4 h-4"></svg> Enter trade
+                                        <button class="btn-primary w-full justify-center mt-1" id="enter-trade" disabled>
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke-width="2"></path>
+                                                <polyline points="10 17 15 12 10 7" stroke-width="2"></polyline>
+                                                <line x1="15" x2="3" y1="12" y2="12" stroke-width="2"></line>
+                                            </svg>
+                                            Enter trade
                                         </button>
                                         <button class="btn-danger w-full justify-center" id="close-trade" disabled>
-                                            <svg data-lucide="log-out" class="w-4 h-4"></svg> Close trade
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke-width="2"></path>
+                                                <polyline points="16 17 21 12 16 7" stroke-width="2"></polyline>
+                                                <line x1="21" x2="9" y1="12" y2="12" stroke-width="2"></line>
+                                            </svg>
+                                            Close trade
                                         </button>
-                                        <p class="text-[11px] text-[var(--tm-dim)]" id="exec-msg"></p>
+                                        <p class="text-[11px] text-slate-400" id="exec-msg"></p>
                                     </div>
                                 </div>
 
-                                <div class="glass p-5 fade-up">
+                                <!-- Position Risk Monitor -->
+                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
                                     <div class="flex items-center justify-between mb-4">
-                                        <div class="label-xs">Position risk</div>
-                                        <svg data-lucide="shield" class="w-4 h-4 text-[var(--tm-dim)]"></svg>
+                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Position Risk</span>
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="2"></path>
+                                        </svg>
                                     </div>
                                     <div id="risk-panel" class="flex flex-col gap-2.5">
-                                        <div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">No open position.</div>
+                                        <div class="py-6 text-center text-[12.5px] text-slate-500">No open position.</div>
                                     </div>
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Trade log -->
-                        <div class="glass p-5 fade-up">
-                            <div class="flex items-center justify-between mb-3">
-                                <div class="label-xs">Practice trades</div>
-                                <span class="text-[11px] text-[var(--tm-dim)] num" id="log-count">0</span>
+                    <!-- ============ TAB 3: TRADES ============ -->
+                    <div id="tab-panel-trades" class="stitch-panel hidden space-y-6">
+                        <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h2 class="text-base font-bold text-white tracking-tight">Practice Trades Journal</h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Full execution history across all practice and backtesting runs</p>
+                                </div>
+                                <span class="text-xs text-slate-300 tabular-nums bg-white/[0.06] px-2.5 py-1 rounded-md" id="log-count">0</span>
                             </div>
                             <div class="tbl-wrap">
                                 <table class="tbl">
                                     <thead><tr><th>Direction</th><th>Entry</th><th>Exit</th><th>P&amp;L</th><th>R</th><th>Exit reason</th><th>Result</th></tr></thead>
                                     <tbody id="log-body">
-                                        <tr><td colspan="7" class="!text-center !text-[12px] text-[var(--tm-dim)]" style="text-align:center">No practice trades yet.</td></tr>
+                                        <tr><td colspan="7" class="!text-center !text-[12px] text-slate-500" style="text-align:center">No practice trades yet.</td></tr>
                                     </tbody>
                                 </table>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Session results -->
-                        <div class="glass p-5 fade-up hidden" id="results-panel">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <div class="label-xs">Practice complete</div>
-                                    <div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5" id="results-meta">—</div>
-                                </div>
-                                <span class="tag tag-emerald"><svg data-lucide="check-circle-2" class="w-3.5 h-3.5"></svg> Complete</span>
-                            </div>
-                            <div class="grid grid-cols-3 sm:grid-cols-6 gap-2" id="results-strip"></div>
-                        </div>
-
-                        <!-- AI backtest coach -->
-                        <div class="glass p-5 fade-up hidden" id="coach-panel">
-                            <div class="flex items-center justify-between mb-4">
-                                <div>
-                                    <div class="label-xs">AI Backtest Coach</div>
-                                    <div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">Review of this finished practice session</div>
-                                </div>
-                                <span class="tag tag-indigo"><svg data-lucide="brain-circuit" class="w-3.5 h-3.5"></svg> Coach</span>
-                            </div>
-                            <div id="coach-body"><div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">Complete a session to unlock the coach review.</div></div>
-                        </div>
-
+                    <!-- ============ TAB 4: ANALYTICS ============ -->
+                    <div id="tab-panel-analytics" class="stitch-panel hidden space-y-6">
                         <!-- Practice analytics -->
-                        <div class="glass p-5 fade-up">
+                        <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <div class="label-xs">Practice analytics</div>
-                                    <div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">Canonical analytics over practice trades — strictly separate from live trading</div>
+                                    <h2 class="text-base font-bold text-white tracking-tight">Institutional Practice Analytics</h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Aggregated metrics over practice trades — strictly separated from live journal</p>
                                 </div>
-                                <span class="tag tag-indigo"><svg data-lucide="flask-conical" class="w-3 h-3"></svg> Backtest</span>
+                                <span class="tag tag-indigo">Canonical</span>
                             </div>
-                            <div id="pa-body"><div class="py-8 text-center text-[12.5px] text-[var(--tm-dim)]">Loading practice analytics…</div></div>
+                            <div id="pa-body"><div class="py-8 text-center text-[12.5px] text-slate-500">Loading practice analytics…</div></div>
                         </div>
 
                         <!-- Backtest insights -->
-                        <div class="glass p-5 fade-up">
+                        <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                                 <div>
-                                    <div class="label-xs">Backtest insights</div>
-                                    <div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">Evidence-backed practice findings — never mixed with live-trading Insights</div>
+                                    <h2 class="text-base font-bold text-white tracking-tight">Backtest Insights &amp; Edge Extraction</h2>
+                                    <p class="text-xs text-slate-400 mt-0.5">Algorithmic findings, sequence risk, and consecutive loss profiles</p>
                                 </div>
-                                <span class="tag tag-indigo"><svg data-lucide="sparkles" class="w-3 h-3"></svg> Backtest</span>
+                                <span class="tag tag-indigo">Edge Finder</span>
                             </div>
-                            <div id="pi-body"><div class="py-8 text-center text-[12.5px] text-[var(--tm-dim)]">Loading backtest insights…</div></div>
+                            <div id="pi-body"><div class="py-8 text-center text-[12.5px] text-slate-500">Loading backtest insights…</div></div>
                         </div>
-                    </section>
-
-                    <!-- ============ BATTLE MODE (unavailable) ============ -->
-                    <section class="mode-panel" id="mode-battle">
-                        <div class="glass unavail">
-                            <div class="w-14 h-14 rounded-2xl mb-4 flex items-center justify-center" style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.28)">
-                                <svg data-lucide="swords" class="w-7 h-7 text-[var(--tm-amber)]"></svg>
-                            </div>
-                            <div class="text-[17px] font-bold">Currently unavailable</div>
-                            <p class="text-[13px] text-[var(--tm-dim)] mt-2 max-w-md leading-relaxed">Battle mode requires the chart/replay dependency.</p>
-                            <p class="text-[11.5px] text-[var(--tm-dim)] mt-1.5 max-w-md leading-relaxed">The battle engine is intact — it becomes available when the charting dependency is restored.</p>
-                        </div>
-                    </section>
-
-                    <!-- ============ REPLAY MODE (unavailable) ============ -->
-                    <section class="mode-panel" id="mode-replay">
-                        <div class="glass unavail">
-                            <div class="w-14 h-14 rounded-2xl mb-4 flex items-center justify-center" style="background:rgba(245,158,11,0.10);border:1px solid rgba(245,158,11,0.28)">
-                                <svg data-lucide="history" class="w-7 h-7 text-[var(--tm-amber)]"></svg>
-                            </div>
-                            <div class="text-[17px] font-bold">Currently unavailable</div>
-                            <p class="text-[13px] text-[var(--tm-dim)] mt-2 max-w-md leading-relaxed">Replay mode requires the chart/replay dependency.</p>
-                            <p class="text-[11.5px] text-[var(--tm-dim)] mt-1.5 max-w-md leading-relaxed">The replay engine is intact — it becomes available when the charting dependency is restored.</p>
-                        </div>
-                    </section>
-
-                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Backtesting · practice without risking capital</p>
+                    </div>
                 </div>
             </main>
         </div>
@@ -764,6 +1264,15 @@
             let pollTimer = null;
             let currentMode = 'practice';
 
+            // FX Replay & Lightweight Charts state
+            let tvChart = null;
+            let candleSeries = null;
+            let entryLine = null;
+            let slLine = null;
+            let tpLine = null;
+            let cutMode = false;
+            let playSpeedMs = 1000;
+
             // ============ CHROME ============
             function renderChrome() {
                 const core = window.TradeMindCore;
@@ -773,6 +1282,7 @@
                     const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
                     if (chip) chip.innerHTML = '<span class="num text-[12px]">' + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
                 } else if (chip) chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                setupStitchListeners();
                 if (window.lucide) lucide.createIcons();
                 const sess = $('session-chip-text');
                 if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
@@ -851,7 +1361,7 @@
                     const r = await apiFetch('/api/backtest/sessions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ symbol, timeframe, strategy, startingBalance, riskModel: { basis: 'money', perTrade } })
+                        body: JSON.stringify({ symbol, timeframe, strategy, startingBalance, period: ($('pd-is-random') && $('pd-is-random').value === 'true') ? 'random' : ($('pd-period') ? $('pd-period').value : '2026-06'), riskModel: { basis: 'money', perTrade } })
                     });
                     const data = await r.json().catch(() => ({}));
                     if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
@@ -859,6 +1369,8 @@
                     $('setup-msg').textContent = 'Session created — practice engine is ready.';
                     $('setup-msg').style.color = 'var(--tm-green)';
                     showToast('Practice session created');
+                    $('modal-new-session').classList.add('hidden');
+                    switchStitchTab('sessions');
                     await Promise.all([loadSessions(), loadSessionState()]);
                 } catch (e) {
                     $('setup-msg').textContent = e.message;
@@ -891,13 +1403,13 @@
                 renderTerminal();
             }
 
-            async function control(action, speedMs) {
+            async function control(action, speedMs, cursor) {
                 if (!currentId) return;
                 try {
                     const r = await apiFetch('/api/backtest/sessions/' + encodeURIComponent(currentId) + '/control', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ action, speedMs })
+                        body: JSON.stringify({ action, speedMs, cursor })
                     });
                     const data = await r.json().catch(() => ({}));
                     if (!r.ok) throw new Error(data.error || 'control ' + r.status);
@@ -978,6 +1490,121 @@
                 } catch (e) { coach = null; }
             }
 
+            // ============ TRADINGVIEW LIGHTWEIGHT CHARTS ============
+            function initChart() {
+                if (tvChart) return;
+                const container = $('tv-chart-container');
+                if (!container || !window.LightweightCharts) return;
+
+                tvChart = LightweightCharts.createChart(container, {
+                    layout: {
+                        background: { type: 'solid', color: '#06080b' },
+                        textColor: '#9598a1',
+                        fontSize: 11,
+                        fontFamily: "'JetBrains Mono', 'Segoe UI', -apple-system, sans-serif"
+                    },
+                    grid: {
+                        vertLines: { color: 'rgba(255, 255, 255, 0.04)', style: 0 },
+                        horzLines: { color: 'rgba(255, 255, 255, 0.04)', style: 0 }
+                    },
+                    crosshair: {
+                        mode: LightweightCharts.CrosshairMode.Normal,
+                        vertLine: { color: 'rgba(255, 255, 255, 0.35)', width: 1, style: 3, labelBackgroundColor: '#1a1f2e' },
+                        horzLine: { color: 'rgba(255, 255, 255, 0.35)', width: 1, style: 3, labelBackgroundColor: '#1a1f2e' }
+                    },
+                    rightPriceScale: {
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        scaleMargins: { top: 0.12, bottom: 0.15 },
+                        visible: true
+                    },
+                    timeScale: {
+                        borderColor: 'rgba(255, 255, 255, 0.08)',
+                        timeVisible: true,
+                        secondsVisible: false,
+                        barSpacing: 8,
+                        minBarSpacing: 3
+                    },
+                    handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true, vertTouchDrag: true },
+                    handleScale: { axisPressedMouseMove: { time: true, price: true }, mouseWheel: true, pinch: true }
+                });
+
+                const CandlestickType = LightweightCharts.CandlestickSeries || 'Candlestick';
+                candleSeries = tvChart.addSeries(CandlestickType, {
+                    upColor: '#22c55e',
+                    downColor: '#ef4444',
+                    borderVisible: true,
+                    borderUpColor: '#22c55e',
+                    borderDownColor: '#ef4444',
+                    wickVisible: true,
+                    wickUpColor: '#22c55e',
+                    wickDownColor: '#ef4444'
+                });
+
+                // Crosshair OHLC legend tracker
+                tvChart.subscribeCrosshairMove(param => {
+                    if (!param || !param.time || !candleSeries) {
+                        if (state && state.candle) updateLegend(state.candle);
+                        return;
+                    }
+                    const c = param.seriesData && param.seriesData.get(candleSeries);
+                    if (c) updateLegend(c);
+                });
+
+                // Auto-fit on container resize
+                if (window.ResizeObserver) {
+                    const ro = new ResizeObserver(entries => {
+                        for (const entry of entries) {
+                            if (entry.target === $('tv-chart-wrapper') && tvChart) {
+                                tvChart.resize(entry.contentRect.width, entry.contentRect.height);
+                            }
+                        }
+                    });
+                    ro.observe($('tv-chart-wrapper'));
+                }
+
+                // Cut / Seek on chart click
+                tvChart.subscribeClick(param => {
+                    if (cutMode && param && param.logical != null && state) {
+                        const targetCursor = Math.max(0, Math.min(state.total - 1, Math.round(param.logical)));
+                        cutMode = false;
+                        $('fx-cut-btn').classList.remove('!border-[var(--tm-amber)]', '!text-[var(--tm-amber)]');
+                        showToast('Replaying from bar #' + targetCursor);
+                        control('seek', null, targetCursor);
+                    }
+                });
+            }
+
+            function updateLegend(c) {
+                if (!c) return;
+                $('tv-o').textContent = Number(c.open || 0).toFixed(4);
+                $('tv-h').textContent = Number(c.high || 0).toFixed(4);
+                $('tv-l').textContent = Number(c.low || 0).toFixed(4);
+                $('tv-c').textContent = Number(c.close || 0).toFixed(4);
+            }
+
+            function clearPriceLines() {
+                if (candleSeries) {
+                    if (entryLine) { try { candleSeries.removePriceLine(entryLine); } catch (e) {} entryLine = null; }
+                    if (slLine) { try { candleSeries.removePriceLine(slLine); } catch (e) {} slLine = null; }
+                    if (tpLine) { try { candleSeries.removePriceLine(tpLine); } catch (e) {} tpLine = null; }
+                }
+            }
+
+            // Quick R:R preset handler for trade execution panel
+            window.__setRR = function(ratio) {
+                const entry = Number($('ex-entry').value);
+                const sl = Number($('ex-sl').value);
+                if (!(entry > 0) || !(sl > 0)) {
+                    showToast('Set valid Entry and Stop Loss first');
+                    return;
+                }
+                const dir = $('ex-direction').value;
+                const slDist = Math.abs(entry - sl);
+                const tp = dir === 'Long' ? (entry + slDist * ratio) : (entry - slDist * ratio);
+                $('ex-tp').value = tp > 0 ? Number(tp.toFixed(5)) : '';
+                showToast(ratio + 'R Target calculated');
+            };
+
             // ============ RENDER TERMINAL ============
             function renderTerminal() {
                 const has = !!state;
@@ -987,7 +1614,84 @@
                 const prog = has && state.total ? Math.min(100, Math.round(state.cursor / state.total * 100)) : 0;
                 $('prog-label').textContent = has ? (state.symbol + ' ' + state.timeframe + ' · ' + (state.strategy || 'Practice')) : 'No session';
                 $('prog-cursor').textContent = has ? (state.cursor + ' / ' + state.total + ' bars') : '—';
-                $('prog-fill').style.width = prog + '%';
+                if ($('prog-fill')) $('prog-fill').style.width = prog + '%';
+
+                // Update FX Replay Scrubber
+                const scrubber = $('fx-scrubber');
+                if (scrubber) {
+                    scrubber.disabled = !has;
+                    scrubber.max = has && state.total ? state.total - 1 : 100;
+                    scrubber.value = has ? state.cursor : 0;
+                }
+
+                // Update Chart Candlesticks and State
+                initChart();
+                const emptyHint = $('chart-empty-hint');
+                if (emptyHint) emptyHint.style.display = has ? 'none' : 'flex';
+
+                if (has && candleSeries && Array.isArray(state.candles) && state.candles.length) {
+                    $('tv-sym-tf').textContent = state.symbol + ' · ' + state.timeframe;
+                    const chartData = state.candles.map(c => ({
+                        time: typeof c.time === 'number' ? c.time : Math.floor(new Date(c.time).getTime() / 1000),
+                        open: Number(c.open),
+                        high: Number(c.high),
+                        low: Number(c.low),
+                        close: Number(c.close)
+                    })).sort((a, b) => a.time - b.time);
+
+                    // De-duplicate any identical timestamps
+                    const cleanData = [];
+                    for (let i = 0; i < chartData.length; i++) {
+                        if (i === 0 || chartData[i].time > chartData[i - 1].time) cleanData.push(chartData[i]);
+                    }
+                    candleSeries.setData(cleanData);
+
+                    // Update OHLC legend to current bar
+                    const currentBar = cleanData[cleanData.length - 1];
+                    if (currentBar) updateLegend(currentBar);
+
+                    // Auto-fill entry price with current bar close if input is empty
+                    if (!$('ex-entry').value && currentBar && (!state.position)) {
+                        $('ex-entry').value = currentBar.close;
+                    }
+
+                    // Render Position Price Lines (Entry, SL, TP)
+                    clearPriceLines();
+                    if (state.position) {
+                        const p = state.position;
+                        entryLine = candleSeries.createPriceLine({
+                            price: p.entry,
+                            color: '#3b82f6',
+                            lineWidth: 2,
+                            lineStyle: LightweightCharts.LineStyle.Dashed,
+                            axisLabelVisible: true,
+                            title: 'ENTRY (' + p.direction + ')'
+                        });
+                        if (p.sl > 0) {
+                            slLine = candleSeries.createPriceLine({
+                                price: p.sl,
+                                color: '#ef4444',
+                                lineWidth: 2,
+                                lineStyle: LightweightCharts.LineStyle.Solid,
+                                axisLabelVisible: true,
+                                title: 'SL'
+                            });
+                        }
+                        if (p.tp > 0) {
+                            tpLine = candleSeries.createPriceLine({
+                                price: p.tp,
+                                color: '#22c55e',
+                                lineWidth: 2,
+                                lineStyle: LightweightCharts.LineStyle.Solid,
+                                axisLabelVisible: true,
+                                title: 'TP (' + (p.rr ? p.rr + 'R' : '') + ')'
+                            });
+                        }
+                    }
+                } else {
+                    clearPriceLines();
+                    $('tv-sym-tf').textContent = 'SELECT A SESSION';
+                }
 
                 const stTag = $('status-tag');
                 if (!has) { stTag.textContent = 'No session'; stTag.className = 'tag tag-gray'; }
@@ -1136,6 +1840,7 @@
                     if (!r.ok) throw new Error('pa ' + r.status);
                     const a = await r.json();
                     renderPA(a || {});
+                    updateDashboardMetrics(a || {});
                 } catch (e) {
                     $('pa-body').innerHTML = '<div class="py-8 text-center text-[12.5px] text-[var(--tm-dim)]">Practice analytics unavailable right now.</div>';
                 }
@@ -1212,6 +1917,274 @@
             }
 
             // ============ BOOT ============
+            
+            // ============ STITCH TESTING DASHBOARD LOGIC ============
+            function switchStitchTab(tabName) {
+                document.querySelectorAll('.stitch-tab').forEach(b => {
+                    const active = b.dataset.tab === tabName;
+                    b.classList.toggle('active', active);
+                    b.classList.toggle('text-white', active);
+                    b.classList.toggle('border-white', active);
+                    b.classList.toggle('text-slate-400', !active);
+                    b.classList.toggle('border-transparent', !active);
+                });
+                document.querySelectorAll('.stitch-panel').forEach(p => {
+                    p.classList.toggle('hidden', p.id !== 'tab-panel-' + tabName);
+                });
+                if (tabName === 'sessions' && tvChart) {
+                    setTimeout(() => {
+                        const wrapper = $('tv-chart-wrapper');
+                        if (wrapper && tvChart) tvChart.resize(wrapper.clientWidth, wrapper.clientHeight);
+                    }, 50);
+                }
+            }
+
+            function updateDashboardMetrics(analytics) {
+                if (!analytics) return;
+                const tradesCount = analytics.n || 0;
+                const winRate = analytics.winRate || 0;
+                
+                // Trades Taken card
+                const tradesContainer = $('dash-trades-container');
+                const tradesSub = $('dash-trades-subtitle');
+                if (tradesCount > 0) {
+                    if (tradesSub) tradesSub.textContent = 'Cumulative practice trades recorded';
+                    if (tradesContainer) {
+                        tradesContainer.innerHTML = '<div class="flex items-baseline gap-2"><span class="text-3xl font-extrabold text-white">' + tradesCount + '</span><span class="text-xs font-semibold text-slate-400">taken</span></div>';
+                    }
+                } else {
+                    if (tradesSub) tradesSub.textContent = 'Your trades taken will show up here';
+                    if (tradesContainer) tradesContainer.innerHTML = '<div class="h-5"></div>';
+                }
+
+                // Overall Win Rate card
+                const winrateContainer = $('dash-winrate-container');
+                const winrateSub = $('dash-winrate-subtitle');
+                if (tradesCount > 0) {
+                    if (winrateSub) winrateSub.textContent = 'Based on closed practice trades';
+                    if (winrateContainer) {
+                        const pct = Math.round(winRate * 100);
+                        winrateContainer.innerHTML = '<div class="flex items-baseline gap-2"><span class="text-3xl font-extrabold text-emerald-400">' + pct + '%</span><span class="text-xs font-semibold text-slate-400">win rate</span></div>';
+                    }
+                } else {
+                    if (winrateSub) winrateSub.textContent = 'Your win rate will show up here';
+                    if (winrateContainer) winrateContainer.innerHTML = '<div class="h-5"></div>';
+                }
+
+                // Win rate breakdown
+                const wrDetailSub = $('dash-winrate-detail-sub');
+                const wrBars = $('dash-winrate-bars');
+                if (tradesCount > 0 && wrBars) {
+                    if (wrDetailSub) wrDetailSub.textContent = 'Win/Loss distribution';
+                    const pct = Math.round(winRate * 100);
+                    wrBars.innerHTML = '<div class="w-full h-3 rounded-full bg-slate-800 overflow-hidden flex"><div class="bg-emerald-500 h-full" style="width:' + pct + '%"></div><div class="bg-red-500 h-full" style="width:' + (100 - pct) + '%"></div></div><div class="flex justify-between text-[11px] text-slate-400 mt-2 tabular-nums"><span>Wins: ' + pct + '%</span><span>Losses: ' + (100 - pct) + '%</span></div>';
+                }
+
+                // Trades by Symbol breakdown
+                const symSub = $('dash-symbol-detail-sub');
+                const symBars = $('dash-symbol-bars');
+                if (Array.isArray(analytics.bySymbol) && analytics.bySymbol.length && symBars) {
+                    if (symSub) symSub.textContent = 'Volume across traded instruments';
+                    symBars.innerHTML = '<div class="flex flex-col gap-2">' + analytics.bySymbol.slice(0, 3).map(s => {
+                        return '<div class="flex items-center justify-between text-xs tabular-nums"><span class="text-slate-300 font-bold">' + esc(s.key) + '</span><span class="text-slate-400">' + s.n + ' trades (' + fmtMoney(s.pnl) + ')</span></div>';
+                    }).join('') + '</div>';
+                }
+            }
+
+            
+            function initStitchModalInteractivity() {
+
+                // Year & Month Period Handling
+                function updatePeriodDisplay() {
+                    const yr = $('pd-year') ? $('pd-year').value : '2026';
+                    const mo = $('pd-month') ? $('pd-month').value : '06';
+                    const monthNames = { '01':'Jan', '02':'Feb', '03':'Mar', '04':'Apr', '05':'May', '06':'Jun', '07':'Jul', '08':'Aug', '09':'Sep', '10':'Oct', '11':'Nov', '12':'Dec' };
+                    const label = (monthNames[mo] || mo) + ' ' + yr + ' Sample';
+                    if ($('pd-period')) $('pd-period').value = yr + '-' + mo;
+                    const isRandom = $('pd-is-random') && $('pd-is-random').value === 'true';
+                    if ($('selected-period-display')) {
+                        $('selected-period-display').textContent = isRandom ? '🎲 Blind Random Slice' : label;
+                    }
+                }
+
+                // Period Mode Toggle (Year & Month vs Blind Random)
+                document.querySelectorAll('.period-mode-pill').forEach(pill => {
+                    pill.addEventListener('click', () => {
+                        const isRandom = pill.dataset.mode === 'random';
+                        document.querySelectorAll('.period-mode-pill').forEach(p => {
+                            p.classList.remove('bg-[#1d2230]', 'text-zinc-100', 'border', 'border-zinc-600/40', 'shadow-xs');
+                            p.classList.add('text-zinc-400');
+                        });
+                        pill.classList.remove('text-zinc-400');
+                        pill.classList.add('bg-[#1d2230]', 'text-zinc-100', 'border', 'border-zinc-600/40', 'shadow-xs');
+
+                        const monthContainer = $('month-select-container');
+                        const randomContainer = $('blind-random-container');
+                        const isRandomInput = $('pd-is-random');
+
+                        if (isRandom) {
+                            if (monthContainer) monthContainer.classList.add('hidden');
+                            if (randomContainer) randomContainer.classList.remove('hidden');
+                            if (isRandomInput) isRandomInput.value = 'true';
+                        } else {
+                            if (monthContainer) monthContainer.classList.remove('hidden');
+                            if (randomContainer) randomContainer.classList.add('hidden');
+                            if (isRandomInput) isRandomInput.value = 'false';
+                        }
+                        updatePeriodDisplay();
+                    });
+                });
+
+                // Year Pills Selection
+                document.querySelectorAll('.year-pill').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.year-pill').forEach(b => {
+                            b.classList.remove('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+                            b.classList.add('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        });
+                        btn.classList.remove('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        btn.classList.add('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+
+                        const yr = btn.dataset.year;
+                        if ($('pd-year')) $('pd-year').value = yr;
+                        if ($('year-more-select')) $('year-more-select').value = '';
+                        updatePeriodDisplay();
+                    });
+                });
+
+                // Archive Dropdown Selection
+                const moreYr = $('year-more-select');
+                if (moreYr) {
+                    moreYr.addEventListener('change', e => {
+                        if (!e.target.value) return;
+                        document.querySelectorAll('.year-pill').forEach(b => {
+                            b.classList.remove('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+                            b.classList.add('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        });
+                        if ($('pd-year')) $('pd-year').value = e.target.value;
+                        updatePeriodDisplay();
+                    });
+                }
+
+                // Month Pills Selection
+                document.querySelectorAll('.month-pill').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.month-pill').forEach(b => {
+                            b.classList.remove('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+                            b.classList.add('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        });
+                        btn.classList.remove('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        btn.classList.add('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+
+                        const mo = btn.dataset.month;
+                        if ($('pd-month')) $('pd-month').value = mo;
+                        updatePeriodDisplay();
+                    });
+                });
+
+                // Instrument selection
+                document.querySelectorAll('.inst-card').forEach(card => {
+                    card.addEventListener('click', () => {
+                        document.querySelectorAll('.inst-card').forEach(c => {
+                            c.classList.remove('bg-[#181d29]', 'border-zinc-200');
+                            c.classList.add('bg-[#141822]', 'border-[#232836]');
+                            const dot = c.querySelector('.inst-dot');
+                            if (dot) dot.classList.add('hidden');
+                        });
+                        card.classList.remove('bg-[#141822]', 'border-[#232836]');
+                        card.classList.add('bg-[#181d29]', 'border-zinc-200');
+                        const dot = card.querySelector('.inst-dot');
+                        if (dot) dot.classList.remove('hidden');
+                        
+                        const sym = card.dataset.sym;
+                        if ($('pd-symbol')) $('pd-symbol').value = sym;
+                    });
+                });
+
+                // Category pills
+                document.querySelectorAll('.category-pill').forEach(pill => {
+                    pill.addEventListener('click', () => {
+                        document.querySelectorAll('.category-pill').forEach(p => {
+                            p.classList.remove('bg-[#1d2230]', 'text-zinc-100', 'border', 'border-zinc-600/40', 'shadow-xs');
+                            p.classList.add('text-zinc-400');
+                        });
+                        pill.classList.remove('text-zinc-400');
+                        pill.classList.add('bg-[#1d2230]', 'text-zinc-100', 'border', 'border-zinc-600/40', 'shadow-xs');
+                    });
+                });
+
+                // Balance presets
+                document.querySelectorAll('.bal-preset').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.bal-preset').forEach(b => {
+                            b.classList.remove('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+                            b.classList.add('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        });
+                        btn.classList.remove('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        btn.classList.add('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+                        const val = btn.dataset.val;
+                        if ($('pd-balance')) $('pd-balance').value = val;
+                        if ($('pd-risk')) $('pd-risk').value = Math.round(Number(val) * 0.005);
+                    });
+                });
+
+                // Timeframe pills
+                document.querySelectorAll('.tf-pill').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        document.querySelectorAll('.tf-pill').forEach(b => {
+                            b.classList.remove('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+                            b.classList.add('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        });
+                        btn.classList.remove('bg-[#141822]', 'border-[#232836]', 'text-zinc-300');
+                        btn.classList.add('bg-[#1b202d]', 'border-zinc-300', 'font-semibold', 'text-white');
+                        const tf = btn.dataset.tf;
+                        if ($('pd-timeframe')) $('pd-timeframe').value = tf;
+                    });
+                });
+            }
+
+            function setupStitchListeners() {
+                initStitchModalInteractivity();
+                // Tab switching
+                document.querySelectorAll('.stitch-tab').forEach(btn => {
+                    btn.addEventListener('click', () => switchStitchTab(btn.dataset.tab));
+                });
+
+                // Quick launch cards
+                const qlBacktest = $('quick-launch-backtest');
+                if (qlBacktest) {
+                    qlBacktest.addEventListener('click', () => {
+                        $('modal-session-title').textContent = 'Configure Simulation Session';
+                        $('modal-session-sub').textContent = 'Setup asset, timeframe, and capital risk model';
+                        $('prop-presets-row').classList.add('hidden');
+                        $('pd-strategy').value = 'Manual Backtest';
+                        $('pd-balance').value = 10000;
+                        $('modal-new-session').classList.remove('hidden');
+                    });
+                }
+
+                const qlProp = $('quick-launch-prop');
+                if (qlProp) {
+                    qlProp.addEventListener('click', () => {
+                        $('modal-session-title').textContent = 'Prop Firm Challenge Evaluation';
+                        $('modal-session-sub').textContent = '$100K simulated evaluation with audited compliance rules';
+                        $('prop-presets-row').classList.remove('hidden');
+                        $('pd-strategy').value = 'Prop Firm $100K Challenge';
+                        $('pd-balance').value = 100000;
+                        $('pd-risk').value = 500;
+                        $('modal-new-session').classList.remove('hidden');
+                    });
+                }
+
+                const qlTutorials = $('quick-launch-tutorials');
+                if (qlTutorials) {
+                    qlTutorials.addEventListener('click', () => {
+                        showToast('Tutorial: Spacebar = Next Candle · P = Play/Pause · Cut = Jump to Bar');
+                        switchStitchTab('sessions');
+                    });
+                }
+            }
+
             function boot() {
                 $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
                 const core = window.TradeMindCore;
@@ -1224,10 +2197,81 @@
                 $('close-trade').addEventListener('click', closeTrade);
                 document.querySelectorAll('[data-ctrl]').forEach(b => {
                     b.addEventListener('click', () => {
-                        control(b.dataset.ctrl, 300);
+                        control(b.dataset.ctrl, playSpeedMs);
                         if (b.dataset.ctrl === 'play') startPoll();
                         if (b.dataset.ctrl === 'pause' || b.dataset.ctrl === 'reset') stopPoll();
                     });
+                });
+
+                // FX Replay Cut / Jump Mode
+                const cutBtn = $('fx-cut-btn');
+                if (cutBtn) {
+                    cutBtn.addEventListener('click', () => {
+                        if (!state) { showToast('Select or start a session first'); return; }
+                        cutMode = !cutMode;
+                        if (cutMode) {
+                            cutBtn.classList.add('!border-[var(--tm-amber)]', '!text-[var(--tm-amber)]');
+                            showToast('Cut mode active: click any candle on the chart to jump');
+                        } else {
+                            cutBtn.classList.remove('!border-[var(--tm-amber)]', '!text-[var(--tm-amber)]');
+                        }
+                    });
+                }
+
+                // FX Replay Scrubber Slider Seek
+                const scrubber = $('fx-scrubber');
+                if (scrubber) {
+                    let scrubDebounce = null;
+                    scrubber.addEventListener('input', e => {
+                        if (!state) return;
+                        const targetCursor = Number(e.target.value);
+                        if (scrubDebounce) clearTimeout(scrubDebounce);
+                        scrubDebounce = setTimeout(() => {
+                            control('seek', null, targetCursor);
+                        }, 60);
+                    });
+                }
+
+                // FX Replay Speed selector
+                const speedSel = $('fx-speed-select');
+                if (speedSel) {
+                    speedSel.addEventListener('change', e => {
+                        playSpeedMs = Number(e.target.value) || 1000;
+                        if (state && state.status === 'running') {
+                            control('play', playSpeedMs);
+                        }
+                    });
+                }
+
+                // Hotkeys: Spacebar (Step), P (Play/Pause), R (Reset)
+                window.addEventListener('keydown', e => {
+                    const tag = (e.target && e.target.tagName ? e.target.tagName.toLowerCase() : '');
+                    if (tag === 'input' || tag === 'textarea' || tag === 'select' || (e.target && e.target.isContentEditable)) {
+                        return; // do not capture when typing in inputs
+                    }
+
+                    if (e.code === 'Space') {
+                        e.preventDefault();
+                        if (state && (state.status === 'running' || state.status === 'lobby')) {
+                            control('step');
+                        }
+                    } else if (e.key === 'p' || e.key === 'P') {
+                        e.preventDefault();
+                        if (!state) return;
+                        if (state.status === 'running') {
+                            control('pause');
+                            stopPoll();
+                        } else {
+                            control('play', playSpeedMs);
+                            startPoll();
+                        }
+                    } else if (e.key === 'r' || e.key === 'R') {
+                        e.preventDefault();
+                        if (state) {
+                            control('reset');
+                            stopPoll();
+                        }
+                    }
                 });
 
                 // mode from URL (?mode=replay / ?mode=battle)
@@ -1263,6 +2307,7 @@
                     });
                 }
 
+                setupStitchListeners();
                 if (window.lucide) lucide.createIcons();
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
@@ -1272,5 +2317,292 @@
     <script src="assets/profile-meta.js"></script>
     <script src="assets/account-switcher.js"></script>
     <script src="reset.js"></script>
+
+    <!-- START: modal-new-session (Stitch Design afccae8c73c34aafb08fc87eb595277b) -->
+    <div id="modal-new-session" class="fixed inset-0 bg-[#000000]/75 backdrop-blur-[6px] z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto hidden">
+        <div class="relative w-full max-w-[620px] bg-[#11141c] border border-[#232836] rounded-xl shadow-2xl shadow-black/80 overflow-hidden z-50 my-auto">
+            <!-- Modal Header -->
+            <div class="px-6 py-4 border-b border-[#232836] flex items-start justify-between bg-[#141822]">
+                <div>
+                    <div class="flex items-center gap-2.5">
+                        <h2 id="modal-session-title" class="font-medium text-base text-zinc-100 tracking-tight">Configure Backtesting Session</h2>
+                        <span class="text-[10px] tabular-nums font-medium px-2 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700/70">Engine v0.1</span>
+                    </div>
+                    <p id="modal-session-sub" class="text-xs text-zinc-400 mt-1 font-normal">Select market pair, account balance, and replay parameters.</p>
+                </div>
+                <!-- Close Button -->
+                <button aria-label="Close dialog" class="p-1 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80 transition-colors border border-transparent hover:border-zinc-700/60 focus:outline-none cursor-pointer" type="button" onclick="$('modal-new-session').classList.add('hidden')">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-6 space-y-5">
+                <!-- Hidden inputs for backend state -->
+                <input type="hidden" id="pd-symbol" value="EURUSD">
+                <input type="hidden" id="pd-timeframe" value="1h">
+
+                <!-- 1. Market Instrument Selection -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[11px] font-medium uppercase tracking-wider text-zinc-400">Market Instrument</label>
+                        <span class="text-[11px] text-zinc-400 tabular-nums" id="modal-inst-count">6 Instruments</span>
+                    </div>
+                    <!-- Category Segmented Control -->
+                    <div class="flex items-center gap-1 p-1 bg-[#0c0e14] rounded-lg border border-[#232836] w-fit" id="modal-cat-row">
+                        <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium bg-[#1d2230] text-zinc-100 border border-zinc-600/40 shadow-xs cursor-pointer" data-cat="all">Forex</button>
+                        <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" data-cat="crypto">Crypto</button>
+                        <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" data-cat="indices">Indices</button>
+                        <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" data-cat="commodities">Commodities</button>
+                    </div>
+                    <!-- Instrument Grid Cards -->
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-0.5" id="instrument-grid">
+                        <!-- EUR/USD -->
+                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#181d29] border border-zinc-200 text-left transition-all cursor-pointer" data-sym="EURUSD" data-cat="forex">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="tabular-nums font-semibold text-xs text-white">EUR/USD</span>
+                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-700/80 text-zinc-200 font-medium">FX</span>
+                                </div>
+                                <div class="text-[10px] text-zinc-300 tabular-nums mt-0.5">Spread 0.1 pip</div>
+                            </div>
+                            <span class="inst-dot w-2 h-2 rounded-full bg-white"></span>
+                        </button>
+                        <!-- GBP/USD -->
+                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="GBPUSD" data-cat="forex">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="tabular-nums font-medium text-xs text-zinc-200">GBP/USD</span>
+                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-800 text-zinc-400">FX</span>
+                                </div>
+                                <div class="text-[10px] text-zinc-400 tabular-nums mt-0.5">Spread 0.3 pip</div>
+                            </div>
+                            <span class="inst-dot w-2 h-2 rounded-full bg-white hidden"></span>
+                        </button>
+                        <!-- XAU/USD -->
+                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="XAUUSD" data-cat="commodities">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="tabular-nums font-medium text-xs text-zinc-200">XAU/USD</span>
+                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-800 text-zinc-400">Metal</span>
+                                </div>
+                                <div class="text-[10px] text-zinc-400 tabular-nums mt-0.5">Spread 1.2 pip</div>
+                            </div>
+                            <span class="inst-dot w-2 h-2 rounded-full bg-white hidden"></span>
+                        </button>
+                        <!-- BTC/USD -->
+                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="BTCUSD" data-cat="crypto">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="tabular-nums font-medium text-xs text-zinc-200">BTC/USD</span>
+                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-800 text-zinc-400">Crypto</span>
+                                </div>
+                                <div class="text-[10px] text-zinc-400 tabular-nums mt-0.5">Vol $34.2B</div>
+                            </div>
+                            <span class="inst-dot w-2 h-2 rounded-full bg-white hidden"></span>
+                        </button>
+                        <!-- NAS100 -->
+                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="NAS100" data-cat="indices">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="tabular-nums font-medium text-xs text-zinc-200">NAS100</span>
+                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-800 text-zinc-400">Index</span>
+                                </div>
+                                <div class="text-[10px] text-zinc-400 tabular-nums mt-0.5">Nasdaq 100</div>
+                            </div>
+                            <span class="inst-dot w-2 h-2 rounded-full bg-white hidden"></span>
+                        </button>
+                        <!-- US30 -->
+                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="US30" data-cat="indices">
+                            <div>
+                                <div class="flex items-center gap-1.5">
+                                    <span class="tabular-nums font-medium text-xs text-zinc-200">US30</span>
+                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-800 text-zinc-400">Index</span>
+                                </div>
+                                <div class="text-[10px] text-zinc-400 tabular-nums mt-0.5">Dow Jones 30</div>
+                            </div>
+                            <span class="inst-dot w-2 h-2 rounded-full bg-white hidden"></span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 2. Starting Capital (Account Balance) -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[11px] font-medium uppercase tracking-wider text-zinc-400">Starting Account Equity</label>
+                        <span class="text-[11px] text-zinc-400 tabular-nums">Benchmark Tier</span>
+                    </div>
+                    <!-- Preset Pills -->
+                    <div class="grid grid-cols-5 gap-1.5" id="balance-presets">
+                        <button type="button" class="bal-preset py-1.5 px-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-val="10000">$10,000</button>
+                        <button type="button" class="bal-preset py-1.5 px-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-val="25000">$25,000</button>
+                        <button type="button" class="bal-preset py-1.5 px-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-val="50000">$50,000</button>
+                        <button type="button" class="bal-preset py-1.5 px-1 text-center rounded-md bg-[#1b202d] border border-zinc-300 text-xs tabular-nums font-semibold text-white transition-all cursor-pointer" data-val="100000">$100,000</button>
+                        <button type="button" class="bal-preset py-1.5 px-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-val="200000">$200,000</button>
+                    </div>
+                    <!-- Balance Input Field -->
+                    <div class="relative flex items-center">
+                        <div class="absolute left-3 text-zinc-400 tabular-nums text-xs pointer-events-none">$</div>
+                        <input id="pd-balance" class="w-full bg-[#0c0e14] border border-[#232836] focus:border-zinc-400 focus:ring-0 rounded-lg py-2 pl-7 pr-24 text-xs tabular-nums text-zinc-100 placeholder-zinc-500 outline-none transition-colors" placeholder="0.00" type="number" step="any" value="100000">
+                        <div class="absolute right-2.5 flex items-center gap-1.5">
+                            <span class="text-[10px] tabular-nums text-zinc-400 uppercase bg-[#181d28] px-1.5 py-0.5 rounded border border-[#232836]">USD</span>
+                            <span class="text-[10px] tabular-nums text-zinc-400 bg-zinc-800/80 border border-zinc-700/60 px-1.5 py-0.5 rounded">VALID</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. Historical Practice Period (Year & Month Selector) -->
+                <div class="space-y-2.5">
+                    <div class="flex items-center justify-between">
+                        <label class="text-[11px] font-medium uppercase tracking-wider text-zinc-400">Practice Testing Period</label>
+                        <span class="text-[11px] text-zinc-400 tabular-nums" id="selected-period-display">Jun 2026 Sample</span>
+                    </div>
+
+                    <!-- Mode Segmented Control: Specific Period vs Blind Random -->
+                    <div class="flex items-center justify-between gap-2">
+                        <div class="flex items-center gap-1 p-1 bg-[#0c0e14] rounded-lg border border-[#232836] w-fit" id="period-mode-row">
+                            <button type="button" class="period-mode-pill px-3 py-1 rounded text-xs font-medium bg-[#1d2230] text-zinc-100 border border-zinc-600/40 shadow-xs cursor-pointer" data-mode="month">
+                                📅 Year &amp; Month
+                            </button>
+                            <button type="button" class="period-mode-pill px-3 py-1 rounded text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" data-mode="random">
+                                🎲 Random / Blind
+                            </button>
+                        </div>
+                        <span class="text-[10px] tabular-nums text-zinc-500">Historical Archive: 2018–2026</span>
+                    </div>
+
+                    <!-- Hidden inputs to store chosen period -->
+                    <input type="hidden" id="pd-year" value="2026">
+                    <input type="hidden" id="pd-month" value="06">
+                    <input type="hidden" id="pd-period" value="2026-06">
+                    <input type="hidden" id="pd-is-random" value="false">
+
+                    <!-- Specific Year & Month Container -->
+                    <div id="month-select-container" class="space-y-2.5">
+                        <!-- Year Selection Pills + Dropdown -->
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[10px] tabular-nums uppercase tracking-wider text-zinc-400 font-semibold">1. Select Year</span>
+                                <div class="flex items-center gap-1 text-[11px]">
+                                    <span class="text-zinc-400 tabular-nums text-[10px]">Archive:</span>
+                                    <select id="year-more-select" class="bg-[#141822] border border-[#232836] rounded px-1.5 py-0.5 text-[10px] tabular-nums text-zinc-300 outline-none cursor-pointer">
+                                        <option value="">More years…</option>
+                                        <option value="2020">2020</option>
+                                        <option value="2019">2019</option>
+                                        <option value="2018">2018</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-6 gap-1.5" id="year-pills-grid">
+                                <button type="button" class="year-pill py-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-year="2021">2021</button>
+                                <button type="button" class="year-pill py-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-year="2022">2022</button>
+                                <button type="button" class="year-pill py-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-year="2023">2023</button>
+                                <button type="button" class="year-pill py-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-year="2024">2024</button>
+                                <button type="button" class="year-pill py-1 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-year="2025">2025</button>
+                                <button type="button" class="year-pill py-1 text-center rounded-md bg-[#1b202d] border border-zinc-300 text-xs tabular-nums font-semibold text-white transition-all cursor-pointer" data-year="2026">2026</button>
+                            </div>
+                        </div>
+
+                        <!-- Month Selection 12 Pills -->
+                        <div class="space-y-1">
+                            <span class="text-[10px] tabular-nums uppercase tracking-wider text-zinc-400 font-semibold block">2. Select Month</span>
+                            <div class="grid grid-cols-4 sm:grid-cols-6 gap-1.5" id="month-pills-grid">
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="01" data-label="Jan">Jan</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="02" data-label="Feb">Feb</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="03" data-label="Mar">Mar</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="04" data-label="Apr">Apr</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="05" data-label="May">May</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#1b202d] border border-zinc-300 text-xs tabular-nums font-semibold text-white transition-all cursor-pointer" data-month="06" data-label="Jun">Jun</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="07" data-label="Jul">Jul</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="08" data-label="Aug">Aug</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="09" data-label="Sep">Sep</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="10" data-label="Oct">Oct</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="11" data-label="Nov">Nov</button>
+                                <button type="button" class="month-pill py-1.5 text-center rounded-md bg-[#141822] border border-[#232836] hover:border-zinc-500 text-xs tabular-nums text-zinc-300 hover:text-white transition-all cursor-pointer" data-month="12" data-label="Dec">Dec</button>
+                            </div>
+                        </div>
+                        <p class="text-[10.5px] text-zinc-500 tabular-nums">Collect empirical metrics for this specific month and market regime.</p>
+                    </div>
+
+                    <!-- Blind Random Period Banner -->
+                    <div id="blind-random-container" class="hidden p-3 rounded-lg bg-[#0e131d] border border-blue-500/40 space-y-1.5 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-blue-400 flex items-center gap-1.5">
+                                <span>🎲</span> Blind Random Market Period
+                            </span>
+                            <span class="text-[9px] tabular-nums px-1.5 py-0.5 rounded bg-blue-500/10 text-blue-300 border border-blue-500/30">Zero Bias</span>
+                        </div>
+                        <p class="text-[11px] text-slate-300 leading-relaxed">
+                            A surprise market year and month will be chosen from historical records. Dates are concealed during playback so you can test pure market strategy execution without hindsight bias.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- 4. Strategy & Risk Parameters -->
+                <div class="pt-3 border-t border-[#232836] space-y-2.5">
+                    <label class="text-[11px] font-medium uppercase tracking-wider text-zinc-400 block">Strategy &amp; Risk Parameters</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                        <!-- Strategy Tag -->
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="text-zinc-400 font-medium">Strategy Tag</span>
+                                <span class="text-zinc-400 tabular-nums text-[10px]">Model #04</span>
+                            </div>
+                            <div class="relative">
+                                <input id="pd-strategy" class="w-full bg-[#0c0e14] border border-[#232836] focus:border-zinc-400 focus:ring-0 rounded-lg py-1.5 px-2.5 text-xs tabular-nums text-zinc-100 placeholder-zinc-500 outline-none transition-colors" placeholder="Strategy identifier" type="text" value="ICT Silver Bullet - London AM">
+                                <span class="absolute right-2 top-1.5 text-[9px] tabular-nums px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 border border-zinc-700">Active</span>
+                            </div>
+                        </div>
+                        <!-- Risk per Trade -->
+                        <div class="space-y-1">
+                            <div class="flex items-center justify-between text-[11px]">
+                                <span class="text-zinc-400 font-medium">Risk Per Trade ($)</span>
+                                <span class="text-zinc-400 tabular-nums text-[10px]">1.0% Capital</span>
+                            </div>
+                            <div class="relative flex items-center">
+                                <div class="absolute left-3 text-zinc-400 tabular-nums text-xs pointer-events-none">$</div>
+                                <input id="pd-risk" class="w-full bg-[#0c0e14] border border-[#232836] focus:border-zinc-400 focus:ring-0 rounded-lg py-1.5 pl-7 pr-3 text-xs tabular-nums text-zinc-100 placeholder-zinc-500 outline-none transition-colors" placeholder="25" type="number" step="any" value="500">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Prop Presets Row (conditionally visible) -->
+                <div id="prop-presets-row" class="hidden p-2.5 rounded-lg bg-emerald-950/20 border border-emerald-500/30 text-xs text-emerald-300 tabular-nums flex items-center justify-between">
+                    <span>Prop Challenge: 10% Profit Target • 5% Max Daily Loss</span>
+                    <span class="font-bold uppercase tracking-wider text-[10px]">Audited</span>
+                </div>
+
+                <!-- Telemetry Notice Badge -->
+                <div class="p-2.5 rounded-lg bg-[#0c0e14] border border-[#232836] flex items-center justify-between text-xs text-zinc-400 tabular-nums">
+                    <span class="text-[11px]" id="setup-msg">Historical spreads with simulated execution slippage</span>
+                    <span class="text-[10px] text-zinc-400 font-semibold uppercase tracking-wider">Deterministic</span>
+                </div>
+            </div>
+
+            <!-- Modal Footer -->
+            <div class="px-6 py-3.5 bg-[#0d1017] border-t border-[#232836] flex items-center justify-between gap-3">
+                <div class="flex items-center gap-2 text-xs text-zinc-400">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    <span class="tabular-nums text-[11px] text-zinc-400">Historical data cached • 0.2ms ping</span>
+                </div>
+                <div class="flex items-center gap-2.5">
+                    <button type="button" class="px-3.5 py-1.5 rounded-md text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent transition-all focus:outline-none cursor-pointer" onclick="$('modal-new-session').classList.add('hidden')">
+                        Cancel
+                    </button>
+                    <button type="button" id="start-practice" class="px-4 py-1.5 rounded-md text-xs font-semibold text-zinc-950 bg-zinc-100 hover:bg-white active:bg-zinc-200 transition-colors focus:outline-none cursor-pointer tracking-tight shadow-sm flex items-center gap-1.5">
+                        <span>Start Simulation</span>
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path d="M5 12h14M12 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- END: modal-new-session -->
+
 </body>
 </html>

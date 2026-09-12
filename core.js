@@ -53,10 +53,27 @@
     }
 
     // Tests (Node) inject a bypass to exercise the shell without a real login.
-    // A sessionStorage flag ('1') does the same and survives same-tab navigation
-    // — handy for local previews without a Supabase account.
+    // A sessionStorage / localStorage flag ('1') or URL param (?bypass=1 / ?guest=1)
+    // allows instant direct access on local preview without forcing Supabase login.
+    let urlBypass = false;
+    try {
+        if (typeof window !== 'undefined' && window.location && window.location.search) {
+            const params = new URLSearchParams(window.location.search);
+            if (params.get('bypass') === '1' || params.get('guest') === '1') {
+                urlBypass = true;
+                if (window.sessionStorage) window.sessionStorage.setItem('31trades.auth.bypass', '1');
+            }
+        }
+    } catch (e) {}
+
+    const isLocalHost = typeof window !== 'undefined' && window.location &&
+        (window.location.hostname === '127.0.0.1' || window.location.hostname === 'localhost');
+
     const BYPASS = (typeof window.__TRADEMIND_AUTH_BYPASS__ === 'boolean' && window.__TRADEMIND_AUTH_BYPASS__) ||
-        (typeof window.sessionStorage !== 'undefined' && window.sessionStorage.getItem('31trades.auth.bypass') === '1');
+        urlBypass ||
+        (typeof window.sessionStorage !== 'undefined' && window.sessionStorage.getItem('31trades.auth.bypass') === '1') ||
+        (typeof window.localStorage !== 'undefined' && window.localStorage.getItem('31trades.auth.bypass') === '1') ||
+        (isLocalHost && !getSession());
 
     // ---- module-level state owned by the booted core ----
     let core = null;
