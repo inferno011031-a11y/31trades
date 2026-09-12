@@ -189,6 +189,23 @@
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
+        
+        /* STRICT GUARD: Zero white borders or dividers */
+        [class*="border-white"], [class*="divide-white"] {
+            border-color: #1a2130 !important;
+        }
+        .trade-card {
+            background-color: #0c0e14 !important;
+            border: 1px solid #1a2130 !important;
+        }
+        .trade-card:hover {
+            border-color: #263147 !important;
+        }
+        header[data-purpose="global-header"] {
+            border-bottom: 1px solid #141720 !important;
+            background-color: rgba(9, 12, 18, 0.96) !important;
+        }
+
         /* Toast */
         .toast {
             position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
@@ -317,7 +334,7 @@
             </nav>
 
             <div class="border-t border-[#141720] p-2.5 flex flex-col flex-shrink-0">
-                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer" id="profile-chip" title="Account & Settings">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[#121722] transition-colors cursor-pointer" id="profile-chip" title="Account & Settings">
                     <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center text-xs" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
                         <div class="text-[13.5px] font-semibold text-white truncate" id="profile-name">Trader</div>
@@ -332,11 +349,11 @@
         <div class="flex-1 flex flex-col min-w-0">
 
             <!-- Top Navigation Bar (Stitch Design) -->
-            <header class="border-b border-white/[0.06] bg-[#0b0f17]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex-shrink-0" data-purpose="global-header">
+            <header class="border-b border-[#161a24] bg-[#0b0f17]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex-shrink-0" data-purpose="global-header">
                 <div class="max-w-[1560px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
                     <!-- Brand & Breadcrumbs -->
                     <div class="flex items-center space-x-3.5">
-                        <div class="w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-300">
+                        <div class="w-7 h-7 rounded-md bg-[#121722] border border-[#202738] flex items-center justify-center text-slate-300">
                             <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                 <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" stroke-linecap="round" stroke-linejoin="round"></path>
                             </svg>
@@ -346,7 +363,7 @@
                             <span class="text-slate-600">/</span>
                             <span class="text-slate-400">Performance Calendar</span>
                         </div>
-                        <div class="hidden sm:inline-flex items-center px-2 py-0.5 rounded bg-white/[0.03] border border-white/[0.06] text-[10px] font-mono text-slate-400">
+                        <div class="hidden sm:inline-flex items-center px-2 py-0.5 rounded bg-[#10141d] border border-[#1a2130] text-[10px] font-mono text-slate-400">
                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
                             Live Sync Active
                         </div>
@@ -355,18 +372,18 @@
                     <!-- Account Selector & Header Controls -->
                     <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
                         <div class="relative" data-purpose="account-filter">
-                            <button id="acc-chip" type="button" class="inline-flex items-center justify-between gap-2 bg-[#121824] hover:bg-[#182030] text-slate-200 text-xs font-medium px-3 py-1.5 rounded-md border border-white/[0.08] transition-colors focus:outline-none cursor-pointer">
+                            <button id="acc-chip" type="button" class="inline-flex items-center justify-between gap-2 bg-[#121824] hover:bg-[#182030] text-slate-200 text-xs font-medium px-3 py-1.5 rounded-md border border-[#202738] transition-colors focus:outline-none cursor-pointer">
                                 <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/80"></span>
                                 <span id="header-acc-name">Apex Live Funded ($100k)</span>
                                 <span id="header-acc-tag" class="text-slate-500 text-[10px] font-mono">#APX-9821</span>
                                 <svg class="w-3 h-3 text-slate-400 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                             </button>
                         </div>
-                        <div class="hidden lg:flex items-center text-slate-400 text-xs px-2.5 py-1.5 font-mono bg-[#10141d] rounded-md border border-white/[0.04]" id="utc-clock-badge">
+                        <div class="hidden lg:flex items-center text-slate-400 text-xs px-2.5 py-1.5 font-mono bg-[#10141d] rounded-md border border-[#161c28]" id="utc-clock-badge">
                             <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                             <span id="utc-time-str">UTC-4 (NY EST)</span>
                         </div>
-                        <button id="btn-export-audit" type="button" class="inline-flex items-center gap-1.5 bg-white/[0.03] hover:bg-white/[0.06] text-slate-300 hover:text-white px-3 py-1.5 rounded-md text-xs font-medium border border-white/[0.08] transition-colors cursor-pointer" title="Download audited trading CSV">
+                        <button id="btn-export-audit" type="button" class="inline-flex items-center gap-1.5 bg-[#10141d] hover:bg-[#151c28] text-slate-300 hover:text-white px-3 py-1.5 rounded-md text-xs font-medium border border-[#202738] transition-colors cursor-pointer" title="Download audited trading CSV">
                             <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                             <span>Export Audit</span>
                         </button>
@@ -385,7 +402,7 @@
                         <div>
                             <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
                                 <span>Calendar</span>
-                                <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-white/[0.04] text-slate-300 border border-white/[0.08]" id="title-fiscal-badge">Fiscal Year 2026</span>
+                                <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-[#121722] text-slate-300 border border-[#202738]" id="title-fiscal-badge">Fiscal Year 2026</span>
                             </h1>
                             <p class="text-slate-400 text-xs mt-1">
                                 Trading performance, equity progression, and monthly returns validation.
@@ -394,15 +411,15 @@
 
                         <!-- Year Selector Tabs & View Mode Switcher -->
                         <div class="flex items-center space-x-2">
-                            <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-white/[0.06]" id="year-tabs-container">
+                            <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-[#1a2130]" id="year-tabs-container">
                                 <!-- Populated dynamically (e.g. 2025, 2026 Active, All Years) -->
                                 <button type="button" class="year-tab-btn px-3 py-1.5 rounded text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors" data-year="2025">2025</button>
-                                <button type="button" class="year-tab-btn px-3 py-1.5 rounded text-xs font-medium bg-white/[0.08] text-white border border-white/[0.08] transition-all" data-year="2026">2026 Active</button>
+                                <button type="button" class="year-tab-btn px-3 py-1.5 rounded text-xs font-medium bg-[#1c2436] text-white border border-[#202738] transition-all" data-year="2026">2026 Active</button>
                                 <button type="button" class="year-tab-btn px-3 py-1.5 rounded text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors" data-year="all">All Years</button>
                             </div>
-                            <div class="h-5 w-px bg-white/10 mx-1 hidden sm:block"></div>
-                            <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-white/[0.06]">
-                                <button id="btn-view-macro" type="button" class="p-1.5 rounded bg-white/[0.08] text-slate-200 text-xs cursor-pointer" title="Macro Performance Matrix">
+                            <div class="h-5 w-px bg-[#222a3a] mx-1 hidden sm:block"></div>
+                            <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-[#1a2130]">
+                                <button id="btn-view-macro" type="button" class="p-1.5 rounded bg-[#1c2436] text-slate-200 text-xs cursor-pointer" title="Macro Performance Matrix">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
                                 </button>
                                 <button id="btn-view-day-cal" type="button" class="p-1.5 rounded hover:text-slate-200 text-slate-500 text-xs cursor-pointer" title="Day-by-Day Calendar Grid">
@@ -419,9 +436,9 @@
 
                         <!-- SECTION 1: YEARLY PERFORMANCE MATRIX (13 COLUMNS) -->
                         <section class="trade-card rounded-2xl p-5 sm:p-6" data-purpose="yearly-performance-matrix">
-                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-white/[0.06]">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-[#161a24]">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-300">
+                                    <div class="w-8 h-8 rounded-lg bg-[#10141d] border border-[#202738] flex items-center justify-center text-slate-300">
                                         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                         </svg>
@@ -436,7 +453,7 @@
                                         <div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">YTD Net Return</div>
                                         <div class="text-sm font-mono font-semibold text-emerald-400 tabular-nums" id="matrix-header-ytd">+19.75% <span class="text-xs text-slate-400 font-normal font-sans">(+$19,750.00)</span></div>
                                     </div>
-                                    <select id="matrix-year-dropdown" class="bg-[#131a26] text-slate-300 text-xs font-medium border border-white/[0.08] rounded-md px-2.5 py-1.5 focus:outline-none cursor-pointer">
+                                    <select id="matrix-year-dropdown" class="bg-[#131a26] text-slate-300 text-xs font-medium border border-[#202738] rounded-md px-2.5 py-1.5 focus:outline-none cursor-pointer">
                                         <option value="2026">2026 Active</option>
                                         <option value="2025">2025</option>
                                         <option value="all">All Years</option>
@@ -452,7 +469,7 @@
                             </div>
 
                             <!-- Legend Footnote -->
-                            <div class="mt-4 flex flex-wrap items-center justify-between text-xs text-slate-500 pt-3 border-t border-white/[0.04]">
+                            <div class="mt-4 flex flex-wrap items-center justify-between text-xs text-slate-500 pt-3 border-t border-[#161a24]">
                                 <div class="flex items-center space-x-4 text-[11px]">
                                     <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Positive Return</span>
                                     <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Negative Return</span>
@@ -466,9 +483,9 @@
 
                         <!-- SECTION 2: ACCOUNT BALANCE & EQUITY CURVE (With Live Tickers) -->
                         <section class="trade-card rounded-2xl p-5 sm:p-6" data-purpose="equity-curve-analysis">
-                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-white/[0.06]">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-[#161a24]">
                                 <div class="flex items-center space-x-3">
-                                    <div class="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-300">
+                                    <div class="w-8 h-8 rounded-lg bg-[#10141d] border border-[#202738] flex items-center justify-center text-slate-300">
                                         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                         </svg>
@@ -476,7 +493,7 @@
                                     <div>
                                         <div class="flex items-center gap-2">
                                             <h2 class="text-sm font-semibold text-white tracking-tight">Account Balance &amp; Equity Curve</h2>
-                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-white/[0.04] border border-white/[0.08]" id="chart-ath-badge">ATH $119,750</span>
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-[#121722] border border-[#202738]" id="chart-ath-badge">ATH $119,750</span>
                                         </div>
                                         <p class="text-xs text-slate-400">Mark-to-market progression with high-water mark validation</p>
                                     </div>
@@ -488,21 +505,21 @@
                                         <span class="text-[10px] uppercase tracking-wider text-slate-500 block font-medium">Account Balance</span>
                                         <span class="text-base font-semibold font-mono text-white tabular-nums" id="ticker-balance">$119,750.00</span>
                                     </div>
-                                    <div class="h-6 w-px bg-white/10 hidden sm:block"></div>
+                                    <div class="h-6 w-px bg-[#222a3a] hidden sm:block"></div>
                                     <div>
                                         <span class="text-[10px] uppercase tracking-wider text-slate-500 block font-medium">Net Realized PnL</span>
                                         <span class="text-base font-semibold font-mono text-emerald-400 tabular-nums" id="ticker-pnl">+$19,750.00</span>
                                     </div>
-                                    <div class="h-6 w-px bg-white/10 hidden sm:block"></div>
+                                    <div class="h-6 w-px bg-[#222a3a] hidden sm:block"></div>
                                     <div>
                                         <span class="text-[10px] uppercase tracking-wider text-slate-500 block font-medium">Max Drawdown</span>
                                         <span class="text-base font-semibold font-mono text-slate-300 tabular-nums" id="ticker-drawdown">-0.82%</span>
                                     </div>
                                     <!-- Zoom Pills -->
-                                    <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-white/[0.06] ml-auto lg:ml-2" id="range-pills-row">
+                                    <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-[#1a2130] ml-auto lg:ml-2" id="range-pills-row">
                                         <button class="range-pill px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors" data-range="1M">1M</button>
                                         <button class="range-pill px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors" data-range="3M">3M</button>
-                                        <button class="range-pill px-2 py-1 text-xs font-medium bg-white/[0.08] text-white rounded" data-range="YTD">YTD</button>
+                                        <button class="range-pill px-2 py-1 text-xs font-medium bg-[#1c2436] text-white rounded" data-range="YTD">YTD</button>
                                         <button class="range-pill px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors" data-range="1Y">1Y</button>
                                         <button class="range-pill px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors" data-range="ALL">All</button>
                                     </div>
@@ -512,7 +529,7 @@
                             <!-- SVG Chart Canvas Area -->
                             <div class="pt-6 relative" data-purpose="svg-equity-chart">
                                 <!-- Floating Overlay Legend -->
-                                <div class="absolute top-9 left-4 z-10 hidden sm:flex items-center space-x-3 bg-[#0a0e16]/90 backdrop-blur-md px-3 py-1.5 rounded border border-white/[0.06]">
+                                <div class="absolute top-9 left-4 z-10 hidden sm:flex items-center space-x-3 bg-[#0a0e16]/90 backdrop-blur-md px-3 py-1.5 rounded border border-[#1a2130]">
                                     <div class="flex items-center space-x-2 text-xs">
                                         <span class="w-2.5 h-0.5 bg-emerald-400 rounded-full"></span>
                                         <span class="text-slate-400">Equity Curve:</span>
@@ -547,7 +564,7 @@
                                 </div>
 
                                 <!-- Axis Bottom Info Pill -->
-                                <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-4 mt-2 border-t border-white/[0.04]">
+                                <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-4 mt-2 border-t border-[#161a24]">
                                     <div class="flex items-center space-x-2 text-[11px]">
                                         <span class="text-slate-500">Benchmark:</span>
                                         <span class="text-slate-300">Absolute Dollar Return ($)</span>
@@ -577,7 +594,7 @@
                                         +$19,750.00 Net PnL
                                     </div>
                                 </div>
-                                <div class="pt-3.5 mt-3.5 border-t border-white/[0.04] flex items-center justify-between text-xs">
+                                <div class="pt-3.5 mt-3.5 border-t border-[#161a24] flex items-center justify-between text-xs">
                                     <span class="text-slate-400">Annualized Run-Rate</span>
                                     <span class="font-mono text-slate-200 font-medium" id="kpi-ytd-runrate">+29.62%</span>
                                 </div>
@@ -602,7 +619,7 @@
                                         <span class="text-slate-300 font-medium ml-auto" id="kpi-trades-winrate">100% WR</span>
                                     </div>
                                 </div>
-                                <div class="pt-3.5 mt-3.5 border-t border-white/[0.04] flex items-center justify-between text-xs">
+                                <div class="pt-3.5 mt-3.5 border-t border-[#161a24] flex items-center justify-between text-xs">
                                     <span class="text-slate-400">Avg Duration</span>
                                     <span class="font-mono text-slate-200 font-medium" id="kpi-trades-avg-duration">1h 42m</span>
                                 </div>
@@ -623,12 +640,12 @@
                                         <span class="text-slate-300 font-mono" id="kpi-prof-active-months">Aug, Sep</span>
                                     </div>
                                 </div>
-                                <div class="pt-3.5 mt-3.5 border-t border-white/[0.04]">
+                                <div class="pt-3.5 mt-3.5 border-t border-[#161a24]">
                                     <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1.5">
                                         <span>Month Hit-Rate</span>
                                         <span class="text-slate-300 font-medium" id="kpi-prof-hitrate">100%</span>
                                     </div>
-                                    <div class="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                                    <div class="w-full h-1 bg-[#151c28] rounded-full overflow-hidden">
                                         <div id="kpi-prof-bar" class="bg-slate-300 h-full rounded-full transition-all duration-500" style="width: 100%"></div>
                                     </div>
                                 </div>
@@ -651,7 +668,7 @@
                                         +$15,190.00 Net PnL
                                     </div>
                                 </div>
-                                <div class="pt-3.5 mt-3.5 border-t border-white/[0.04] flex items-center justify-between text-xs">
+                                <div class="pt-3.5 mt-3.5 border-t border-[#161a24] flex items-center justify-between text-xs">
                                     <span class="text-slate-400">Top Trade</span>
                                     <span class="font-mono text-slate-200 font-medium" id="kpi-cur-top-trade">+$7,200 (NQ)</span>
                                 </div>
@@ -660,10 +677,10 @@
 
                         <!-- SECTION 4: RECENT CALENDAR TRADE EVENTS (TABLE) -->
                         <section class="trade-card rounded-2xl p-5 sm:p-6" data-purpose="recent-settled-trades">
-                            <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+                            <div class="flex items-center justify-between pb-4 border-b border-[#161a24]">
                                 <div class="flex items-center space-x-2.5">
                                     <h3 class="text-sm font-semibold text-white tracking-tight">Recent Calendar Trade Events</h3>
-                                    <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 font-mono border border-white/[0.06]" id="recent-trades-year-badge">2026 Settled</span>
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-[#121722] text-slate-400 font-mono border border-[#1a2130]" id="recent-trades-year-badge">2026 Settled</span>
                                 </div>
                                 <a class="text-xs text-slate-400 hover:text-slate-200 font-medium transition-colors flex items-center gap-1" href="journal.html">
                                     <span>Open Full Journal</span>
@@ -674,7 +691,7 @@
                             <!-- Trade Log Table -->
                             <div class="overflow-x-auto pt-2">
                                 <table class="w-full text-left text-xs text-slate-300">
-                                    <thead class="text-[10px] uppercase tracking-wider text-slate-500 font-medium border-b border-white/[0.04]">
+                                    <thead class="text-[10px] uppercase tracking-wider text-slate-500 font-medium border-b border-[#161a24]">
                                         <tr>
                                             <th class="py-2.5 px-2">Date &amp; Time</th>
                                             <th class="py-2.5 px-2">Instrument</th>
@@ -686,7 +703,7 @@
                                             <th class="py-2.5 px-2 text-center">Status</th>
                                         </tr>
                                     </thead>
-                                    <tbody class="divide-y divide-white/[0.03] font-mono text-xs" id="recent-trades-tbody">
+                                    <tbody class="divide-y divide-[#161a24] font-mono text-xs" id="recent-trades-tbody">
                                         <!-- Populated dynamically via JS -->
                                     </tbody>
                                 </table>
@@ -699,9 +716,9 @@
                     <!-- VIEW 2: MONTHLY DAY-BY-DAY EXECUTION CALENDAR (Drilldown) -->
                     <!-- ======================================================= -->
                     <div id="calendar-day-view" class="hidden space-y-5">
-                        <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
+                        <div class="flex items-center justify-between pb-3 border-b border-[#161a24]">
                             <div class="flex items-center gap-3">
-                                <button type="button" id="btn-back-to-macro" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 text-xs font-medium border border-white/[0.06] transition-colors cursor-pointer">
+                                <button type="button" id="btn-back-to-macro" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[#121722] hover:bg-[#1c2436] text-slate-300 text-xs font-medium border border-[#1a2130] transition-colors cursor-pointer">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                                     <span>Back to Yearly Matrix</span>
                                 </button>
@@ -709,9 +726,9 @@
                             </div>
 
                             <div class="flex items-center gap-3">
-                                <button id="btn-month-prev" type="button" class="p-1.5 rounded bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 border border-white/[0.06] transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                                <button id="btn-month-prev" type="button" class="p-1.5 rounded bg-[#10141d] hover:bg-[#1c2436] text-slate-300 border border-[#1a2130] transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
                                 <span class="text-xs font-mono font-medium text-slate-300" id="day-view-current-label">Aug 2026</span>
-                                <button id="btn-month-next" type="button" class="p-1.5 rounded bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 border border-white/[0.06] transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                                <button id="btn-month-next" type="button" class="p-1.5 rounded bg-[#10141d] hover:bg-[#1c2436] text-slate-300 border border-[#1a2130] transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
                             </div>
                         </div>
 
@@ -734,7 +751,7 @@
 
     <!-- Floating Log Trade Action Button -->
     <aside class="floating-action-btn" data-purpose="floating-log-action">
-        <a href="journal.html?action=new" class="flex items-center space-x-2 bg-[#121824] hover:bg-[#182030] text-slate-100 px-4 py-2.5 rounded-full font-medium border border-white/[0.12] shadow-xl transition-all hover:scale-105 active:scale-95 focus:outline-none cursor-pointer" title="Log New Trade Entry">
+        <a href="journal.html?action=new" class="flex items-center space-x-2 bg-[#121824] hover:bg-[#182030] text-slate-100 px-4 py-2.5 rounded-full font-medium border border-[#283248] shadow-xl transition-all hover:scale-105 active:scale-95 focus:outline-none cursor-pointer" title="Log New Trade Entry">
             <svg class="w-4 h-4 text-slate-300 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
             </svg>
@@ -745,24 +762,24 @@
     <!-- DAY DETAIL MODAL -->
     <div class="modal-backdrop" id="day-modal">
         <div class="modal-window">
-            <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
+            <div class="flex items-center justify-between pb-4 border-b border-[#1c2230] mb-4">
                 <div class="flex items-center gap-3">
                     <h3 class="text-base font-bold text-white tracking-tight" id="modal-day-title">Sep 24, 2026</h3>
                     <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" id="modal-day-pnl">+$7,200.00</span>
                 </div>
-                <button type="button" class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer" id="btn-close-day-modal">
+                <button type="button" class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-[#151c28] transition-colors cursor-pointer" id="btn-close-day-modal">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
                 </button>
             </div>
 
             <!-- Modal Trade Rows -->
-            <div class="overflow-x-auto max-h-[320px] overflow-y-auto border border-white/[0.06] rounded-lg bg-[#0c0e14] p-3 mb-4">
+            <div class="overflow-x-auto max-h-[320px] overflow-y-auto border border-[#1a2130] rounded-lg bg-[#0c0e14] p-3 mb-4">
                 <div id="modal-trade-rows" class="space-y-2 text-xs">
                     <!-- Populated dynamically -->
                 </div>
             </div>
 
-            <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/[0.06]">
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-[#161a24]">
                 <span>Click any trade to inspect execution details</span>
                 <a href="journal.html" class="text-emerald-400 hover:text-emerald-300 font-medium">Open in Journal &rarr;</a>
             </div>
@@ -891,10 +908,10 @@
                 if (!host) return;
 
                 const yrLabel = activeYear === 'all' ? 'ALL' : activeYear;
-                let html = '<div class="col-span-2 sm:col-span-4 md:col-span-1 lg:col-span-1 rounded-xl bg-[#090d14] border border-white/[0.06] p-3 flex flex-col justify-between items-center text-center">' +
+                let html = '<div class="col-span-2 sm:col-span-4 md:col-span-1 lg:col-span-1 rounded-xl bg-[#090d14] border border-[#1a2130] p-3 flex flex-col justify-between items-center text-center">' +
                     '<span class="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">Year</span>' +
                     '<div class="text-sm font-semibold font-mono text-white">' + yrLabel + '</div>' +
-                    '<span class="text-[10px] text-slate-400 font-mono bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06]">ACTIVE</span>' +
+                    '<span class="text-[10px] text-slate-400 font-mono bg-[#121722] px-1.5 py-0.5 rounded border border-[#1a2130]">ACTIVE</span>' +
                 '</div>';
 
                 const months = data.monthlyMatrix || [];
@@ -908,7 +925,7 @@
                     if (hasTrades) {
                         const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
                         const dotColor = isProfit ? 'bg-emerald-400/80' : 'bg-rose-400/80';
-                        const badgeTag = m.isCurrentMonth ? '<span class="px-1.5 py-0.2 rounded bg-white/[0.08] text-slate-300 text-[9px] font-mono">' + m.monthName.toUpperCase() + '</span>' : '<span class="w-1.5 h-1.5 rounded-full ' + dotColor + '"></span>';
+                        const badgeTag = m.isCurrentMonth ? '<span class="px-1.5 py-0.2 rounded bg-[#1c2436] text-slate-300 text-[9px] font-mono">' + m.monthName.toUpperCase() + '</span>' : '<span class="w-1.5 h-1.5 rounded-full ' + dotColor + '"></span>';
 
                         contentHtml =
                             '<div class="flex items-center justify-between">' +
@@ -921,7 +938,7 @@
                             '</div>' +
                             '<div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">' +
                                 '<span>' + m.tradesCount + ' trade' + (m.tradesCount === 1 ? '' : 's') + '</span>' +
-                                '<span class="text-[9px] text-slate-400 bg-white/[0.04] px-1 rounded border border-white/[0.04]">' + m.winRate + '% WR</span>' +
+                                '<span class="text-[9px] text-slate-400 bg-[#121722] px-1 rounded border border-[#161c28]">' + m.winRate + '% WR</span>' +
                             '</div>';
                     } else {
                         contentHtml =
@@ -1107,7 +1124,7 @@
                         '<td class="py-2.5 px-2 text-right text-slate-400">' + esc(t.entryExitStr) + '</td>' +
                         '<td class="py-2.5 px-2 text-right font-semibold ' + pnlColor + '">' + (t.pnl >= 0 ? '+$' : '-$') + Math.abs(t.pnl).toLocaleString('en-US') + '</td>' +
                         '<td class="py-2.5 px-2 text-right text-slate-300">' + t.returnPct + '</td>' +
-                        '<td class="py-2.5 px-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] text-slate-400 font-sans bg-white/[0.03] border border-white/[0.06]">' + t.status + '</span></td>' +
+                        '<td class="py-2.5 px-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] text-slate-400 font-sans bg-[#10141d] border border-[#1a2130]">' + t.status + '</span></td>' +
                     '</tr>';
                 }).join('');
             }
@@ -1134,18 +1151,18 @@
             $('btn-view-macro').addEventListener('click', () => {
                 $('calendar-day-view').classList.add('hidden');
                 $('calendar-macro-view').classList.remove('hidden');
-                $('btn-view-macro').classList.add('bg-white/[0.08]', 'text-slate-200');
+                $('btn-view-macro').classList.add('bg-[#1c2436]', 'text-slate-200');
                 $('btn-view-macro').classList.remove('text-slate-500');
-                $('btn-view-day-cal').classList.remove('bg-white/[0.08]', 'text-slate-200');
+                $('btn-view-day-cal').classList.remove('bg-[#1c2436]', 'text-slate-200');
                 $('btn-view-day-cal').classList.add('text-slate-500');
             });
 
             $('btn-view-day-cal').addEventListener('click', () => {
                 $('calendar-macro-view').classList.add('hidden');
                 $('calendar-day-view').classList.remove('hidden');
-                $('btn-view-day-cal').classList.add('bg-white/[0.08]', 'text-slate-200');
+                $('btn-view-day-cal').classList.add('bg-[#1c2436]', 'text-slate-200');
                 $('btn-view-day-cal').classList.remove('text-slate-500');
-                $('btn-view-macro').classList.remove('bg-white/[0.08]', 'text-slate-200');
+                $('btn-view-macro').classList.remove('bg-[#1c2436]', 'text-slate-200');
                 $('btn-view-macro').classList.add('text-slate-500');
                 renderDayCalendarGrid(activeMonthIdx);
             });
@@ -1257,7 +1274,7 @@
                     rowsHost.innerHTML = dayTrades.map(t => {
                         const isWin = Number(t.pnl || 0) > 0;
                         const dateStr = new Date(t.ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-                        return '<div class="flex items-center justify-between p-2 rounded bg-white/[0.03] border border-white/[0.04]">' +
+                        return '<div class="flex items-center justify-between p-2 rounded bg-[#10141d] border border-[#161c28]">' +
                             '<div>' +
                                 '<span class="font-bold text-white mr-2">' + esc(t.symbol) + '</span>' +
                                 '<span class="text-[10px] text-slate-400 font-mono">' + dateStr + ' · ' + (t.dir || 'BUY') + '</span>' +
@@ -1281,11 +1298,11 @@
             document.querySelectorAll('.year-tab-btn').forEach(btn => {
                 btn.addEventListener('click', () => {
                     document.querySelectorAll('.year-tab-btn').forEach(b => {
-                        b.classList.remove('bg-white/[0.08]', 'text-white', 'border', 'border-white/[0.08]');
+                        b.classList.remove('bg-[#1c2436]', 'text-white', 'border', 'border-[#202738]');
                         b.classList.add('text-slate-400');
                     });
                     btn.classList.remove('text-slate-400');
-                    btn.classList.add('bg-white/[0.08]', 'text-white', 'border', 'border-white/[0.08]');
+                    btn.classList.add('bg-[#1c2436]', 'text-white', 'border', 'border-[#202738]');
 
                     activeYear = btn.dataset.year;
                     const dropdown = $('matrix-year-dropdown');
@@ -1310,11 +1327,11 @@
             document.querySelectorAll('.range-pill').forEach(pill => {
                 pill.addEventListener('click', () => {
                     document.querySelectorAll('.range-pill').forEach(p => {
-                        p.classList.remove('bg-white/[0.08]', 'text-white', 'rounded');
+                        p.classList.remove('bg-[#1c2436]', 'text-white', 'rounded');
                         p.classList.add('text-slate-400');
                     });
                     pill.classList.remove('text-slate-400');
-                    pill.classList.add('bg-white/[0.08]', 'text-white', 'rounded');
+                    pill.classList.add('bg-[#1c2436]', 'text-white', 'rounded');
                     activeRange = pill.dataset.range;
                     fetchSummary();
                 });
