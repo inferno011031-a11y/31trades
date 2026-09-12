@@ -1,4 +1,4 @@
-﻿/* Explicit Font Smoothing & Subpixel Antialiasing */
+/* Explicit Font Smoothing & Subpixel Antialiasing */
 *, *::before, *::after {
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -101,6 +101,15 @@ body:not(.tm-landing) {
     background: var(--tm-bg) !important;
     color: var(--tm-text);
     font-family: var(--tm-sans);
+}
+
+h1, h2, h3, h4, .page-title, .panel-title, .modal-title, .card-title, .font-heading, .font-display {
+    font-family: var(--tm-heading, 'Outfit', 'Plus Jakarta Sans', sans-serif);
+    letter-spacing: -0.02em;
+}
+
+.journal-entry, .journal-reflection, .journal-note, .trader-note, .font-journal {
+    font-family: var(--font-journal, 'Newsreader', Georgia, serif);
 }
 
 /* ---- Glass + hairline tokens (canonical) -----------------------------------
@@ -356,7 +365,7 @@ body.collapsed .sidebar-section-items {
 .panel-title { color: var(--tm-text); font-weight: 700; }
 .panel-sub  { color: var(--tm-dim); }
 
-/* ---- Metric / KPI values: Tabular Lining Figures (Inter / Geist) --------- */
+/* ---- Metric / KPI values: Handcrafted Tabular Lining Figures (JetBrains Mono / Plus Jakarta Sans) --------- */
 .metric,
 .metric-mini { background: var(--tm-card); border: 1px solid var(--tm-border); }
 
@@ -379,7 +388,7 @@ body.collapsed .sidebar-section-items {
 .risk-consumed,
 .eq-chart text,
 table td.num {
-    font-family: 'Inter', 'Geist', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif !important;
+    font-family: 'JetBrains Mono', 'Plus Jakarta Sans', monospace !important;
     font-weight: 700 !important;
     letter-spacing: -0.02em !important;
     font-feature-settings: "tnum" on, "lnum" on !important;
