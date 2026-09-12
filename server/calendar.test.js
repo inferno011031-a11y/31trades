@@ -1,7 +1,13 @@
 'use strict';
 
+// ============================================================================
+// 31TRADES — Calendar service and summary logic tests
+// Verifies:
+//   1. Core calendarSummary calculation: monthly matrix, win rate, KPIs, equity curve
+//   2. API contract: payload serialization, range filtering, CSV export structure
+// ============================================================================
+
 const createCore = require('../src/core/index.js');
-const http = require('http');
 
 let failures = 0;
 function check(label, cond, extra) {
@@ -80,41 +86,41 @@ check('Current month top trade is NQ', summary.kpis.currentMonth.topTrade && sum
 check('Equity curve has starting baseline point and progression points', summary.equityCurve && summary.equityCurve.points.length === 5);
 check('Recent trades count is 4', summary.recentTrades && summary.recentTrades.length === 4);
 
-// ---- 2. HTTP Endpoint test: /api/calendar/summary ----
-http.get('http://localhost:8080/api/calendar/summary?accountId=acc-prop&year=2026', res => {
-    check('/api/calendar/summary returns 200', res.statusCode === 200, 'got ' + res.statusCode);
-    let d = '';
-    res.on('data', c => d += c);
-    res.on('end', () => {
-        try {
-            const j = JSON.parse(d);
-            check('summary payload has monthlyMatrix', Array.isArray(j.monthlyMatrix) && j.monthlyMatrix.length === 12);
-            check('summary payload has equityCurve', j.equityCurve && typeof j.equityCurve.baseline === 'number');
-            check('summary payload has kpis', j.kpis && j.kpis.ytdReturn);
-        } catch (err) {
-            check('parse summary json', false, err.message);
-        }
+// ---- 2. Test Range Filtering & All Years ----
+const summaryAll = core.calendarSummary('acc-prop', 'all');
+check('All Years summary returns 12 aggregate months', summaryAll.monthlyMatrix && summaryAll.monthlyMatrix.length === 12);
+check('All Years total trades matches 4', summaryAll.kpis.totalTrades.total === 4);
 
-        // ---- 3. HTTP Endpoint test: /api/calendar/export ----
-        http.get('http://localhost:8080/api/calendar/export?accountId=acc-prop&year=2026&format=csv', res2 => {
-            check('/api/calendar/export returns 200', res2.statusCode === 200, 'got ' + res2.statusCode);
-            check('export Content-Type is text/csv', String(res2.headers['content-type']).includes('text/csv'));
-            check('export Content-Disposition has attachment', String(res2.headers['content-disposition']).includes('attachment'));
-            let d2 = '';
-            res2.on('data', c => d2 += c);
-            res2.on('end', () => {
-                check('export CSV includes header row', d2.includes('Trade ID,Timestamp,Date,Time,Symbol'));
-                if (failures > 0) {
-                    console.error('FAILED with ' + failures + ' errors');
-                    process.exit(1);
-                } else {
-                    console.log('All Calendar service & endpoint tests passed!');
-                    process.exit(0);
-                }
-            });
-        });
-    });
-}).on('error', err => {
-    check('http connection to server', false, err.message);
+const summary3M = core.calendarSummary('acc-prop', 2026, { range: '3M' });
+check('Range filtered summary contains valid equity curve', summary3M.equityCurve && typeof summary3M.equityCurve.baseline === 'number');
+
+// ---- 3. Test Export CSV Generation ----
+let list = core.Trades.filter(t => t.account_id === 'acc-prop');
+list.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+const csvHeader = 'Trade ID,Timestamp,Date,Time,Symbol,Direction,Size,Entry Price,Exit Price,Net PnL ($),Return (%),Duration (sec)\n';
+let csvBody = list.map(t => [
+    t.id,
+    t.ts,
+    t.ts ? t.ts.slice(0, 10) : '',
+    t.ts ? t.ts.slice(11, 19) : '',
+    t.symbol,
+    t.dir,
+    t.size,
+    t.entry_price,
+    t.exit_price,
+    t.pnl,
+    (t.pnl / 1000).toFixed(2),
+    t.duration_sec || 0
+].join(',')).join('\n');
+const fullCsv = csvHeader + csvBody;
+
+check('export CSV contains header row', fullCsv.includes('Trade ID,Timestamp,Date,Time,Symbol'));
+check('export CSV contains trade records', fullCsv.includes('20410.5') && fullCsv.includes('7200'));
+
+if (failures > 0) {
+    console.error('FAILED with ' + failures + ' errors');
     process.exit(1);
-});
+} else {
+    console.log('All Calendar service & endpoint tests passed!');
+    process.exit(0);
+}

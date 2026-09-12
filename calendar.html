@@ -118,21 +118,21 @@
             border-color: rgba(255, 255, 255, 0.08);
         }
 
+        /* Timeline 12-Column Grid (Stitch 1:1) */
+        .timeline-grid-12 {
+            display: grid !important;
+            grid-template-columns: repeat(12, minmax(0, 1fr)) !important;
+            width: 100% !important;
+            text-align: center;
+        }
+
         /* 13-Column Grid with Fallback */
         .yearly-grid-13 {
-            display: grid;
-            grid-template-columns: repeat(13, minmax(0, 1fr));
-            gap: 10px;
-            align-items: stretch;
-        }
-        @media (max-width: 1200px) {
-            .yearly-grid-13 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
-        }
-        @media (max-width: 768px) {
-            .yearly-grid-13 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
-        }
-        @media (max-width: 480px) {
-            .yearly-grid-13 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+            display: grid !important;
+            grid-template-columns: repeat(13, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+            align-items: stretch !important;
+            min-width: 980px !important;
         }
 
         /* Monthly Calendar Matrix */
@@ -582,18 +582,18 @@
                                 </div>
 
                                 <!-- X-Axis Timeline Labels -->
-                                <div class="grid grid-cols-6 sm:grid-cols-12 text-slate-500 font-mono text-[10px] pt-3 px-1" id="timeline-labels-row">
+                                <div class="timeline-grid-12 text-slate-500 font-mono text-[10px] pt-3 px-1" id="timeline-labels-row">
                                     <div class="text-left">Jan 26</div>
-                                    <div class="text-center hidden sm:block">Feb</div>
-                                    <div class="text-center hidden sm:block">Mar</div>
+                                    <div class="text-center">Feb</div>
+                                    <div class="text-center">Mar</div>
                                     <div class="text-center">Apr 26</div>
-                                    <div class="text-center hidden sm:block">May</div>
-                                    <div class="text-center hidden sm:block">Jun</div>
+                                    <div class="text-center">May</div>
+                                    <div class="text-center">Jun</div>
                                     <div class="text-center">Jul 26</div>
                                     <div class="text-center text-slate-400">Aug</div>
                                     <div class="text-center text-emerald-400 font-medium">Sep</div>
-                                    <div class="text-center hidden sm:block text-slate-600">Oct</div>
-                                    <div class="text-center hidden sm:block text-slate-600">Nov</div>
+                                    <div class="text-center text-slate-600">Oct</div>
+                                    <div class="text-center text-slate-600">Nov</div>
                                     <div class="text-right text-slate-600">Dec 26</div>
                                 </div>
 
