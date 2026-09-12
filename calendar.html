@@ -1273,7 +1273,7 @@
                     const borderStyle = isCurrentOrActive 
                         ? (isProfit ? "border border-emerald-500/40 bg-[#121c27]" : "border border-slate-500/40 bg-[#141a26]")
                         : (hasTrades ? "border border-[#1a2232] bg-[#0e1420]" : "border border-[#141924] bg-[#0b0f17]");
-                    const boxClass = "month-box rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer transition-all " + borderStyle;
+                    const boxClass = "month-box group rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer transition-all " + borderStyle;
 
                     let contentHtml = '';
                     if (hasTrades) {
@@ -1330,7 +1330,7 @@
                 if ($('legend-equity-val')) $('legend-equity-val').textContent = '$' + Number(balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 if ($('legend-baseline-val')) $('legend-baseline-val').textContent = '$' + Number(curve.baseline || 100000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
                 if ($('axis-drawdown-days')) $('axis-drawdown-days').textContent = (curve.drawdownDays || 0) + ' Days';
-                if ($('axis-recovery-factor')) $('axis-recovery-factor').textContent = String(curve.recoveryFactor || '24.1');
+                if ($('axis-recovery-factor')) $('axis-recovery-factor').textContent = curve.recoveryFactor != null ? String(curve.recoveryFactor) : 'N/A';
 
                 // Render Dynamic SVG Vector Canvas
                 const host = $('chart-svg-host');
@@ -1719,6 +1719,25 @@
                     fetchSummary();
                 }
             });
+            // ---- 12. Live Settlement Clock (NY Eastern Time) ----
+            (function startSettlementClock() {
+                function updateClock() {
+                    const el = $('settlement-sync-time');
+                    if (!el) return;
+                    const now = new Date();
+                    const nyTime = now.toLocaleTimeString('en-US', {
+                        hour12: false,
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        second: '2-digit',
+                        timeZone: 'America/New_York'
+                    });
+                    el.textContent = nyTime;
+                }
+                updateClock();
+                setInterval(updateClock, 1000);
+            })();
+
 
             // Initial Boot
             fetchSummary();
