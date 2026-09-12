@@ -1028,22 +1028,34 @@ async function handleApi(req, res, url) {
                 return json(res, 200, t);
             }
             if (p === '/api/calendar') {
+                const rawAcc = q.get('accountId');
+                const accountId = (!rawAcc || rawAcc === 'all' || rawAcc === 'null' || rawAcc === 'undefined')
+                    ? 'all'
+                    : rawAcc;
                 const year = Number(q.get('year') || new Date().getFullYear());
                 const month = Number(q.get('month') === undefined ? new Date().getMonth() : q.get('month'));
-                return json(res, 200, Core.calendarMonth(q.get('accountId') || 'acc-prop', year, month));
+                return json(res, 200, Core.calendarMonth(accountId, year, month));
             }
             if (p === '/api/calendar/summary') {
-                const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : 'acc-prop');
+                const rawAcc = q.get('accountId');
+                const userDefaultAccId = (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts && Core.Accounts[0] ? Core.Accounts[0].id : null);
+                const accountId = (!rawAcc || rawAcc === 'null' || rawAcc === 'undefined')
+                    ? userDefaultAccId
+                    : rawAcc;
                 const year = q.get('year') === 'all' ? 'all' : (q.get('year') ? Number(q.get('year')) : new Date().getFullYear());
                 const summary = Core.calendarSummary ? Core.calendarSummary(accountId, year, { range: q.get('range') }) : {};
                 return json(res, 200, summary);
             }
             if (p === '/api/calendar/export') {
-                const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : 'acc-prop');
+                const rawAcc = q.get('accountId');
+                const userDefaultAccId = (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts && Core.Accounts[0] ? Core.Accounts[0].id : null);
+                const accountId = (!rawAcc || rawAcc === 'all' || rawAcc === 'null' || rawAcc === 'undefined')
+                    ? null
+                    : (rawAcc || userDefaultAccId);
                 const year = q.get('year') === 'all' ? 'all' : (q.get('year') ? Number(q.get('year')) : new Date().getFullYear());
                 const format = (q.get('format') || 'csv').toLowerCase();
 
-                let list = Core.Trades.filter(t => !accountId || t.account_id === accountId);
+                let list = Core.Trades.filter(t => !accountId || accountId === 'all' || t.account_id === accountId);
                 if (year !== 'all') {
                     list = list.filter(t => new Date(t.ts).getFullYear() === Number(year));
                 }

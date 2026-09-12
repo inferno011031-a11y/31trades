@@ -1112,47 +1112,48 @@
             }
             updateClock();
 
-            // ---- Fetch Calendar Summary with Session Resiliency & Timeout ----
+            // ---- Fetch Calendar Summary with Session Resiliency & Instant Local-First Hydration ----
             async function fetchSummary() {
                 const accId = currentAccountId();
                 const yr = activeYear;
+
+                // 1. Immediate local core calculation (0ms instant render for real user)
+                try {
+                    const core = getCore();
+                    if (core && core.calendarSummary) {
+                        const localData = core.calendarSummary(accId, yr, { range: activeRange });
+                        if (localData && (localData.monthlyMatrix || localData.kpis || localData.matrix)) {
+                            currentSummaryData = localData;
+                            renderAll(localData);
+                        }
+                    }
+                } catch (e) {
+                    console.warn('[calendar] local render notice:', e);
+                }
+
+                // 2. Background server API reconciliation
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 2000);
+                const timeoutId = setTimeout(() => controller.abort(), 2500);
 
                 try {
-                    // Use apiFetch (attaches Bearer token so server returns THIS user's trades, not demo data)
                     const authFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch)
                         ? (url, opts) => window.TradeMindCore.apiFetch(url, opts)
                         : fetch.bind(window);
-                    const res = await authFetch('/api/calendar/summary?accountId=' + encodeURIComponent(accId) + '&year=' + encodeURIComponent(yr) + '&range=' + encodeURIComponent(activeRange), {
+                    const qAcc = accId ? encodeURIComponent(accId) : 'all';
+                    const res = await authFetch('/api/calendar/summary?accountId=' + qAcc + '&year=' + encodeURIComponent(yr) + '&range=' + encodeURIComponent(activeRange), {
                         signal: controller.signal
                     });
                     clearTimeout(timeoutId);
                     if (res.ok) {
-                        const data = await res.json();
-                        if (data && (data.monthlyMatrix || data.kpis || data.matrix || data.trades)) {
-                            currentSummaryData = data;
-                            renderAll(data);
-                            return;
+                        const serverData = await res.json();
+                        if (serverData && (serverData.monthlyMatrix || serverData.kpis || serverData.matrix || serverData.trades)) {
+                            currentSummaryData = serverData;
+                            renderAll(serverData);
                         }
                     }
                 } catch (e) {
                     clearTimeout(timeoutId);
-                    console.warn('[calendar] API sync bypassed or session timed out, running local calculation:', e.message);
-                }
-
-                // Local core calculation fallback (immune to session timeout)
-                try {
-                    const core = getCore();
-                    if (core && core.calendarSummary) {
-                        const data = core.calendarSummary(accId, yr, { range: activeRange });
-                        if (data && (data.monthlyMatrix || data.kpis || data.matrix)) {
-                            currentSummaryData = data;
-                            renderAll(data);
-                        }
-                    }
-                } catch (e) {
-                    console.warn('[calendar] local calculation fallback:', e);
+                    // Server offline or timed out; already rendered from local canonical store
                 }
             }
 
@@ -1693,22 +1694,21 @@
             // very first fetchSummary() call carries the Bearer token and gets
             // this user's real trades instead of the server's demo data.
             (function bootWithAuth() {
+                function setupBus() {
+                    const core = window.TradeMindCore;
+                    if (core && core.TradeMindBus && !window.__calendarBusBound) {
+                        window.__calendarBusBound = true;
+                        ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed', 'config.changed', 'backend.online'].forEach(function(ev) {
+                            core.TradeMindBus.subscribe(ev, function() { fetchSummary(); });
+                        });
+                    }
+                }
+
                 function tryBoot(attempt) {
-                    if (window.TradeMindCore && window.TradeMindCore.apiFetch) {
-                        // core is ready — subscribe to hydration events then fetch
-                        const core = window.TradeMindCore;
-                        if (core.TradeMindBus) {
-                            ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed', 'config.changed'].forEach(function(ev) {
-                                core.TradeMindBus.subscribe(ev, function() { fetchSummary(); });
-                            });
-                        }
-                        fetchSummary();
-                    } else if (attempt < 20) {
-                        // poll every 100ms up to 2 seconds, then call anyway
-                        setTimeout(function() { tryBoot(attempt + 1); }, 100);
-                    } else {
-                        // 2s timeout: call fetchSummary anyway (falls back to local core)
-                        fetchSummary();
+                    setupBus();
+                    fetchSummary();
+                    if (!(window.TradeMindCore && window.TradeMindCore.apiFetch) && attempt < 25) {
+                        setTimeout(function() { tryBoot(attempt + 1); }, 120);
                     }
                 }
                 tryBoot(0);
