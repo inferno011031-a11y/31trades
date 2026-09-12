@@ -63,6 +63,18 @@ class BacktestSession {
         this.completedAt = o.completedAt || null;
         this.balance = Number(o.balance != null ? o.balance : this.startingBalance);
         this.peak = Number(o.peak != null ? o.peak : this.startingBalance);
+
+        // Extensibility & historical period tracking
+        this.period = o.period || null;
+        this.periodLabel = o.periodLabel || null;
+        this.blind = !!(o.blind || o.isRandom);
+        this.actualPeriod = o.actualPeriod || o.period || null;
+        this.actualLabel = o.actualLabel || o.periodLabel || null;
+        this.notes = String(o.notes || '');
+        this.tags = Array.isArray(o.tags) ? o.tags : [];
+        this.checklist = Array.isArray(o.checklist) ? o.checklist : [];
+        this.propRules = o.propRules || null;
+        this.extensions = o.extensions && typeof o.extensions === 'object' ? { ...o.extensions } : {};
     }
 
     balanceAt(idx) {
@@ -217,6 +229,80 @@ class BacktestSession {
         return { ok: true, position: null, trade: this.trades[this.trades.length - 1] };
     }
 
+    // Active trade management: Break-Even, Partial Close, Dynamic SL/TP modification
+    breakEven() {
+        if (!this.position) return { ok: false, error: 'no open position' };
+        const p = this.position;
+        p.sl = p.entry;
+        p.beApplied = true;
+        this._log('break_even', { sl: p.sl, entry: p.entry });
+        return { ok: true, position: p };
+    }
+
+    closePartial(fraction, o) {
+        if (!this.position) return { ok: false, error: 'no open position' };
+        const frac = Math.max(0.05, Math.min(0.95, Number(fraction) || 0.5));
+        const p = this.position;
+        const bar = this.candles[this.cursor];
+        const price = o && o.price != null ? Number(o.price) : (bar ? bar.close : p.entry);
+        const closeSize = Math.round(p.size * frac * 1e6) / 1e6;
+        if (!(closeSize > 0)) return { ok: false, error: 'cannot calculate partial size' };
+
+        const pnl = p.dir === 'Long' ? (price - p.entry) * closeSize : (p.entry - price) * closeSize;
+        const partialRisk = p.riskAmount * frac;
+        const r = partialRisk > 0 ? pnl / partialRisk : 0;
+
+        const trade = {
+            id: 'btt_' + this.trades.length + '_' + Math.random().toString(36).slice(2, 6),
+            sessionId: this.id,
+            userId: this.userId,
+            symbol: this.symbol,
+            timeframe: this.timeframe,
+            strategy: this.strategy,
+            category: this.category,
+            direction: p.dir,
+            entryTime: p.openedAt,
+            exitTime: bar ? bar.time : Date.now(),
+            entryIndex: p.openedAtIdx,
+            exitIndex: this.cursor,
+            entry: p.entry,
+            exit: price,
+            sl: p.sl,
+            tp: p.tp,
+            size: closeSize,
+            riskAmount: Math.round(partialRisk * 100) / 100,
+            riskPct: Math.round((p.riskPct * frac) * 100) / 100,
+            plannedRR: p.rr,
+            realizedR: Math.round(r * 1000) / 1000,
+            pnl: Math.round(pnl * 100) / 100,
+            result: pnl >= 0 ? 'win' : 'loss',
+            exitReason: 'partial_' + Math.round(frac * 100) + '%',
+            setup: p.setup || '',
+            notes: (p.notes ? p.notes + ' • ' : '') + 'Partial ' + Math.round(frac * 100) + '%',
+            openedAt: new Date().toISOString(),
+            closedAt: new Date().toISOString()
+        };
+        this.trades.push(trade);
+
+        p.size = Math.round((p.size - closeSize) * 1e6) / 1e6;
+        p.riskAmount = Math.max(0, Math.round((p.riskAmount - partialRisk) * 100) / 100);
+        p.riskPct = Math.max(0, Math.round((p.riskPct * (1 - frac)) * 100) / 100);
+
+        this._log('close_partial', { tradeId: trade.id, fraction: frac, price, pnl, remainingSize: p.size });
+        this._refreshBalance();
+        return { ok: true, position: p, trade };
+    }
+
+    modify(o) {
+        if (!this.position) return { ok: false, error: 'no open position' };
+        const p = this.position;
+        if (o && o.sl != null && Number(o.sl) > 0) p.sl = Number(o.sl);
+        if (o && o.tp != null) p.tp = Number(o.tp) > 0 ? Number(o.tp) : null;
+        if (p.tp > 0) p.rr = Math.round(rrOf(p.entry, p.sl, p.tp) * 100) / 100;
+        this._log('modify_position', { sl: p.sl, tp: p.tp, rr: p.rr });
+        return { ok: true, position: p };
+    }
+
     // ---- results (pure derivation) -------------------------------------------
     results() {
         const t = this.trades;
@@ -268,6 +354,12 @@ class BacktestSession {
             maxDrawdown: Math.round(maxDD * 100) / 100,
             bestTrade: sorted[0] || null, worstTrade: sorted[sorted.length - 1] || null,
             bestWinStreak: bestStreak, worstLossStreak: worstStreak,
+            returnPct: this.startingBalance > 0 ? Math.round((net / this.startingBalance) * 10000) / 100 : 0,
+            maxDrawdownPct: this.startingBalance > 0 ? Math.round((maxDD / this.startingBalance) * 10000) / 100 : 0,
+            period: this.period, periodLabel: this.periodLabel, blind: this.blind,
+            actualPeriod: (this.status === 'completed' || !this.blind) ? this.actualPeriod : null,
+            actualLabel: (this.status === 'completed' || !this.blind) ? this.actualLabel : null,
+            propRules: this.propRules, extensions: this.extensions,
             equity, bySetup, byDirection: byDir, bySession, byTimeOfDay: byTime, byExitReason: byExit
         };
     }
@@ -278,6 +370,10 @@ class BacktestSession {
             id: this.id, userId: this.userId, symbol: this.symbol, timeframe: this.timeframe,
             strategy: this.strategy, category: this.category,
             startingBalance: this.startingBalance, riskModel: this.riskModel,
+            period: this.period, periodLabel: this.periodLabel, blind: this.blind,
+            actualPeriod: this.actualPeriod, actualLabel: this.actualLabel,
+            notes: this.notes, tags: this.tags, checklist: this.checklist,
+            propRules: this.propRules, extensions: this.extensions,
             candles: this.candles, startIndex: this.startIndex, cursor: this.cursor,
             position: this.position, trades: this.trades, actions: this.actions,
             status: this.status, createdAt: this.createdAt, completedAt: this.completedAt,
@@ -347,11 +443,22 @@ function listSessions(userId) {
         const r = s && s.trades ? null : null;
         const sess = BacktestSession.hydrate(s);
         const res = sess.results();
+        let replayedSec = 0;
+        if (sess.candles && sess.candles.length) {
+            const startC = sess.candles[sess.startIndex || 0];
+            const currC = sess.candles[sess.cursor || 0];
+            if (startC && currC && currC.time && startC.time && currC.time >= startC.time) {
+                replayedSec = currC.time - startC.time;
+            }
+        }
         return {
             id: sess.id, symbol: sess.symbol, timeframe: sess.timeframe, strategy: sess.strategy,
+            category: sess.category, startingBalance: sess.startingBalance,
+            period: sess.period, periodLabel: sess.periodLabel, blind: sess.blind,
             status: sess.status, createdAt: sess.createdAt,
             trades: res.trades, net: res.net, winRate: res.winRate,
-            balance: sess.balance, open: !!sess.position, cursor: sess.cursor, total: sess.candles.length
+            balance: sess.balance, open: !!sess.position, cursor: sess.cursor, total: sess.candles.length,
+            replayedSec
         };
     });
 }
@@ -471,12 +578,34 @@ function stateOf(s) {
             notes: pos.notes, setup: pos.setup, openedAt: pos.openedAt,
             unrealized: Math.round(unrealized * 100) / 100, unrealizedR: Math.round(unrealizedR * 1000) / 1000
         } : null,
+        period: s.period, periodLabel: s.periodLabel, blind: s.blind,
+        actualPeriod: (s.status === 'completed' || !s.blind) ? s.actualPeriod : null,
+        actualLabel: (s.status === 'completed' || !s.blind) ? s.actualLabel : null,
+        propRules: s.propRules, extensions: s.extensions,
         trades: s.trades, actions: s.actions.slice(-60),
         candles: s.visibleCandles()
     };
 }
 
+function manageSession(userId, id, action, payload) {
+    const s = loadActive(userId, id);
+    if (!s) return { ok: false, error: 'unknown session' };
+    const p = payload || {};
+    let r;
+    if (action === 'be' || action === 'breakeven') {
+        r = s.breakEven();
+    } else if (action === 'partial') {
+        r = s.closePartial(p.fraction || 0.5, p);
+    } else if (action === 'modify') {
+        r = s.modify(p);
+    } else {
+        return { ok: false, error: 'unknown management action' };
+    }
+    if (r.ok) saveSession(userId, s);
+    return { ...r, state: stateOf(s) };
+}
+
 module.exports = {
     BacktestSession, listSessions, getSession, saveSession, deleteSession, sizeFromRisk, rrOf,
-    stateOf, play, pause, stepSession, seekSession, resetSession, loadActive
+    stateOf, play, pause, stepSession, seekSession, resetSession, loadActive, manageSession
 };

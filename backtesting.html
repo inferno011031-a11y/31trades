@@ -556,7 +556,7 @@
                         <!-- Top Title and Streak Row -->
                         <div class="flex items-center justify-between pb-4">
                             <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                                Testing
+                                Backtesting
                             </h1>
                             <!-- Streak Pill Badge -->
                             <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121824] border border-amber-500/30 hover:border-amber-500/50 transition-colors shadow-sm cursor-pointer" title="Daily backtesting streak">
@@ -617,14 +617,14 @@
                 <div class="relative z-10 max-w-[1580px] mx-auto px-6 lg:px-10 py-6 space-y-7">
                     <!-- ============ TAB 1: DASHBOARD ============ -->
                     <div id="tab-panel-dashboard" class="stitch-panel space-y-7">
-                        <!-- Membership Plan Upgrade Callout Banner -->
+                        <!-- Backtesting Engine Status Banner -->
                         <div class="w-full bg-[#0d131f]/90 border border-blue-900/30 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between sm:justify-center gap-3 text-center text-xs md:text-sm text-slate-300 shadow-inner" data-purpose="notice-banner">
-                            <span>Sessions on the Beginner plan are hidden after 1 week. Upgrade to Pro to unlock all your past sessions.</span>
-                            <button type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1e293b]/90 hover:bg-slate-800 border border-white/10 text-white font-medium text-xs transition duration-150 cursor-pointer" onclick="showToast('Upgrade to Pro: Unlimited Sessions Unlocked!')">
+                            <span>Replay historical market regimes, execute simulated trades with custom risk sizing, and analyze empirical edge.</span>
+                            <button type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1e293b]/90 hover:bg-slate-800 border border-white/10 text-white font-medium text-xs transition duration-150 cursor-pointer" onclick="document.getElementById('quick-launch-backtest').click()">
                                 <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path d="M13 10V3L4 14h7v7l9-11h-7z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                    <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>
-                                Upgrade
+                                New Session
                             </button>
                         </div>
 
@@ -751,8 +751,8 @@
                                             </div>
                                         </div>
                                         <div class="pt-4 flex items-baseline gap-1.5">
-                                            <span class="text-3xl font-extrabold text-white tracking-tight" id="dash-time-invested">41</span>
-                                            <span class="text-sm font-medium text-slate-400">min</span>
+                                            <span class="text-3xl font-extrabold text-white tracking-tight" id="dash-time-invested">0</span>
+                                            <span class="text-sm font-medium text-slate-400" id="dash-time-invested-unit">min</span>
                                         </div>
                                     </div>
 
@@ -777,15 +777,15 @@
                                         </div>
                                         <div class="pt-4 flex items-baseline gap-2" id="dash-hist-replayed">
                                             <div class="flex items-baseline gap-1">
-                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-d">1</span>
+                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-d">0</span>
                                                 <span class="text-xs font-semibold text-slate-400">d</span>
                                             </div>
                                             <div class="flex items-baseline gap-1">
-                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-hr">2</span>
+                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-hr">0</span>
                                                 <span class="text-xs font-semibold text-slate-400">hr</span>
                                             </div>
                                             <div class="flex items-baseline gap-1">
-                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-min">45</span>
+                                                <span class="text-3xl font-extrabold text-white" id="dash-hist-min">0</span>
                                                 <span class="text-xs font-semibold text-slate-400">min</span>
                                             </div>
                                         </div>
@@ -873,35 +873,8 @@
                                             <div class="border-b border-dashed border-white/[0.12] w-full"></div>
                                         </div>
                                         <!-- Chart Bars Container -->
-                                        <div class="ml-16 mr-4 w-full h-[155px] flex items-end justify-around relative z-10">
-                                            <!-- Jun Bar (~0.52 hrs high) -->
-                                            <div class="flex flex-col items-center group relative cursor-pointer" title="Jun 2026: ~0.52 hrs">
-                                                <div class="gold-bar-tall"></div>
-                                                <span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">
-                                                    Jun 2026
-                                                </span>
-                                            </div>
-                                            <!-- Jul Bar -->
-                                            <div class="flex flex-col items-center group relative cursor-pointer" title="Jul 2026: ~0.02 hrs">
-                                                <div class="gold-bar-sliver"></div>
-                                                <span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">
-                                                    Jul 2026
-                                                </span>
-                                            </div>
-                                            <!-- Aug Bar -->
-                                            <div class="flex flex-col items-center group relative cursor-pointer" title="Aug 2026: ~0.08 hrs">
-                                                <div class="gold-bar-short"></div>
-                                                <span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">
-                                                    Aug 2026
-                                                </span>
-                                            </div>
-                                            <!-- Sep Bar -->
-                                            <div class="flex flex-col items-center group relative cursor-pointer" title="Sep 2026: ~0.08 hrs">
-                                                <div class="gold-bar-short"></div>
-                                                <span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">
-                                                    Sep 2026
-                                                </span>
-                                            </div>
+                                        <div id="dash-chart-bars" class="ml-16 mr-4 w-full h-[155px] flex items-end justify-around relative z-10">
+                                            <div class="w-full text-center text-xs text-slate-500 py-12">No replay time recorded yet. Start a backtest session to log time.</div>
                                         </div>
                                     </div>
                                     <div class="h-2"></div>
@@ -944,6 +917,30 @@
                                     </div>
                                     <div class="pt-4 pb-2" id="dash-symbol-bars">
                                         <div class="w-44 h-5 rounded-md bg-[#1f2837]/60 border border-white/[0.04]"></div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Active & Recent Backtest Sessions (Entrance Dashboard) -->
+                            <div class="pt-6 space-y-3.5">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center gap-2.5">
+                                        <h2 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
+                                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                            Recent Backtest Sessions
+                                        </h2>
+                                        <span class="px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-500/10 text-blue-400 border border-blue-500/20 tabular-nums" id="dash-sessions-count">0 sessions</span>
+                                    </div>
+                                    <button type="button" class="text-xs font-medium text-slate-400 hover:text-white transition-colors cursor-pointer flex items-center gap-1" onclick="document.getElementById('quick-launch-backtest').click()">
+                                        <span>+ New Session</span>
+                                    </button>
+                                </div>
+
+                                <div id="dash-sessions-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                                    <div class="col-span-full py-10 text-center text-xs text-slate-500 border border-white/[0.06] rounded-xl bg-[#0c1018]/50">
+                                        No backtest sessions created yet. Click <span class="text-blue-400 font-semibold cursor-pointer" onclick="document.getElementById('quick-launch-backtest').click()">Backtesting session</span> above to start your first simulation.
                                     </div>
                                 </div>
                             </div>
@@ -1159,6 +1156,16 @@
                                             </svg>
                                             Close trade
                                         </button>
+                                        <div class="grid grid-cols-2 gap-2 mt-1">
+                                            <button type="button" class="btn-secondary !py-1.5 !px-2 !text-[11.5px] justify-center flex items-center gap-1.5 cursor-pointer" id="be-trade" disabled title="Move Stop Loss to Entry Price">
+                                                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                                Break-Even
+                                            </button>
+                                            <button type="button" class="btn-secondary !py-1.5 !px-2 !text-[11.5px] justify-center flex items-center gap-1.5 cursor-pointer" id="partial-trade" disabled title="Close 50% Position and Leave Runner">
+                                                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-width="2" stroke-linecap="round"></path></svg>
+                                                50% Partial
+                                            </button>
+                                        </div>
                                         <p class="text-[11px] text-slate-400" id="exec-msg"></p>
                                     </div>
                                 </div>
@@ -1325,25 +1332,94 @@
                 } catch (e) {
                     sessions = [];
                 }
-                $('sess-count').textContent = sessions.length + ' session' + (sessions.length === 1 ? '' : 's');
+                
+                // Studio tab count
+                if ($('sess-count')) $('sess-count').textContent = sessions.length + ' session' + (sessions.length === 1 ? '' : 's');
+                
+                // Dashboard entrance count
+                const dashCount = $('dash-sessions-count');
+                if (dashCount) dashCount.textContent = sessions.length + ' session' + (sessions.length === 1 ? '' : 's');
+
+                // Studio tab sidebar list
                 const list = $('sess-list');
-                if (!sessions.length) {
-                    list.innerHTML = '<div class="py-8 text-center text-[12.5px] text-[var(--tm-dim)]">No practice sessions yet.</div>';
-                    return;
+                if (list) {
+                    if (!sessions.length) {
+                        list.innerHTML = '<div class="py-8 text-center text-[12.5px] text-[var(--tm-dim)]">No practice sessions yet.</div>';
+                    } else {
+                        list.innerHTML = sessions.map(s =>
+                            '<button class="sess-row' + (s.id === currentId ? ' active' : '') + '" data-sid="' + esc(s.id) + '">' +
+                                '<div class="flex-1 min-w-0 text-left">' +
+                                    '<div class="text-[12.5px] font-bold truncate">' + esc(s.symbol) + ' · ' + esc(s.timeframe) + '</div>' +
+                                    '<div class="text-[11px] text-[var(--tm-dim)] truncate mt-0.5">' + esc(s.strategy || 'Manual practice') + ' · ' + fmtTime(s.createdAt) + '</div>' +
+                                '</div>' +
+                                '<div class="text-right flex-shrink-0">' +
+                                    '<span class="tag ' + (s.status === 'completed' ? 'tag-emerald' : s.open ? 'tag-blue' : 'tag-gray') + '">' + esc(s.status) + '</span>' +
+                                    '<div class="num text-[11.5px] font-semibold mt-1">' + s.trades + ' trades · ' + fmtMoney(s.net) + '</div>' +
+                                '</div>' +
+                            '</button>'
+                        ).join('');
+                        list.querySelectorAll('[data-sid]').forEach(b => b.addEventListener('click', () => openSession(b.dataset.sid)));
+                    }
                 }
-                list.innerHTML = sessions.map(s =>
-                    '<button class="sess-row' + (s.id === currentId ? ' active' : '') + '" data-sid="' + esc(s.id) + '">' +
-                        '<div class="flex-1 min-w-0">' +
-                            '<div class="text-[12.5px] font-bold truncate">' + esc(s.symbol) + ' · ' + esc(s.timeframe) + '</div>' +
-                            '<div class="text-[11px] text-[var(--tm-dim)] truncate mt-0.5">' + esc(s.strategy || 'Manual practice') + ' · ' + fmtTime(s.createdAt) + '</div>' +
-                        '</div>' +
-                        '<div class="text-right flex-shrink-0">' +
-                            '<span class="tag ' + (s.status === 'completed' ? 'tag-emerald' : s.open ? 'tag-blue' : 'tag-gray') + '">' + esc(s.status) + '</span>' +
-                            '<div class="num text-[11.5px] font-semibold mt-1">' + s.trades + ' trades · ' + fmtMoney(s.net) + '</div>' +
-                        '</div>' +
-                    '</button>'
-                ).join('');
-                list.querySelectorAll('[data-sid]').forEach(b => b.addEventListener('click', () => openSession(b.dataset.sid)));
+
+                // Entrance Dashboard Recent Sessions Grid
+                const dashGrid = $('dash-sessions-grid');
+                if (dashGrid) {
+                    if (!sessions.length) {
+                        dashGrid.innerHTML = '<div class="col-span-full py-10 text-center text-xs text-slate-500 border border-white/[0.06] rounded-xl bg-[#0c1018]/50">' +
+                            'No backtest sessions created yet. Click <span class="text-blue-400 font-semibold cursor-pointer" onclick="document.getElementById(\'quick-launch-backtest\').click()">Backtesting session</span> above to start your first simulation.' +
+                        '</div>';
+                    } else {
+                        dashGrid.innerHTML = sessions.slice(0, 9).map(s => {
+                            const isBlind = s.blind;
+                            const periodText = isBlind ? 'Blind Sample' : (s.periodLabel || s.period || 'Historical');
+                            const statusColor = s.status === 'completed' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/20' : 'text-blue-400 border-blue-500/30 bg-blue-950/20';
+                            const pnlClass = s.net > 0 ? 'text-emerald-400' : s.net < 0 ? 'text-rose-400' : 'text-slate-300';
+                            return '<div class="group relative bg-[#111723] hover:bg-[#151c2b] border border-white/[0.08] hover:border-white/20 rounded-xl p-4 transition-all flex flex-col justify-between gap-3 cursor-pointer" data-sid="' + esc(s.id) + '">' +
+                                '<div class="flex items-start justify-between gap-2">' +
+                                    '<div class="flex items-center gap-2.5">' +
+                                        '<div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">' +
+                                            esc(s.symbol.slice(0, 3)) +
+                                        '</div>' +
+                                        '<div>' +
+                                            '<div class="flex items-center gap-1.5">' +
+                                                '<h4 class="text-sm font-semibold text-white tracking-tight">' + esc(s.symbol) + '</h4>' +
+                                                '<span class="text-[10px] text-slate-400 font-medium px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/[0.06]">' + esc(s.timeframe) + '</span>' +
+                                            '</div>' +
+                                            '<p class="text-[11px] text-slate-400 mt-0.5 font-normal truncate max-w-[180px]">' + esc(s.strategy || 'Manual Backtest') + '</p>' +
+                                        '</div>' +
+                                    '</div>' +
+                                    '<span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ' + statusColor + '">' +
+                                        esc(s.status || 'Ready') +
+                                    '</span>' +
+                                '</div>' +
+                                '<div class="grid grid-cols-3 gap-2 py-2 border-y border-white/[0.05] text-[11px] tabular-nums">' +
+                                    '<div>' +
+                                        '<span class="text-slate-500 text-[10px] block">Period</span>' +
+                                        '<span class="text-slate-200 font-medium truncate block" title="' + esc(periodText) + '">' + esc(periodText) + '</span>' +
+                                    '</div>' +
+                                    '<div>' +
+                                        '<span class="text-slate-500 text-[10px] block">Starting Bal</span>' +
+                                        '<span class="text-slate-200 font-medium">' + fmtMoney(s.startingBalance || 10000) + '</span>' +
+                                    '</div>' +
+                                    '<div class="text-right">' +
+                                        '<span class="text-slate-500 text-[10px] block">P&L / Net</span>' +
+                                        '<span class="font-bold ' + pnlClass + '">' + (s.trades > 0 ? fmtMoney(s.net) : '$0.00') + '</span>' +
+                                    '</div>' +
+                                '</div>' +
+                                '<div class="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">' +
+                                    '<span>' + fmtTime(s.createdAt) + '</span>' +
+                                    '<span class="text-slate-300 font-medium group-hover:text-blue-400 transition-colors flex items-center gap-1">' +
+                                        '<span>' + s.trades + ' trades</span>' +
+                                    '</span>' +
+                                '</div>' +
+                            '</div>';
+                        }).join('');
+                        dashGrid.querySelectorAll('[data-sid]').forEach(b => b.addEventListener('click', () => {
+                            showToast('Selected session: ' + b.dataset.sid);
+                        }));
+                    }
+                }
             }
 
             // ============ SESSION OPS ============
@@ -1368,10 +1444,12 @@
                     currentId = data.session;
                     $('setup-msg').textContent = 'Session created — practice engine is ready.';
                     $('setup-msg').style.color = 'var(--tm-green)';
-                    showToast('Practice session created');
+                    const sym = symbol;
+                    const per = ($('selected-period-display') && $('selected-period-display').textContent) || ($('pd-period') && $('pd-period').value) || 'Ready';
+                    showToast('Practice session created for ' + sym + ' (' + per + ')');
                     $('modal-new-session').classList.add('hidden');
-                    switchStitchTab('sessions');
-                    await Promise.all([loadSessions(), loadSessionState()]);
+                    // Stay on the entrance dashboard page — do not auto-switch to charts
+                    await Promise.all([loadSessions(), loadPracticeAnalytics()]);
                 } catch (e) {
                     $('setup-msg').textContent = e.message;
                     $('setup-msg').style.color = 'var(--tm-red)';
@@ -1463,6 +1541,52 @@
                     const data = await r.json().catch(() => ({}));
                     if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
                     $('exec-msg').textContent = 'Trade closed · ' + fmtMoney(data.trade && data.trade.pnl) + ' · ' + (data.trade && data.trade.realizedR != null ? (data.trade.realizedR > 0 ? '+' : '') + data.trade.realizedR + 'R' : '');
+                    $('exec-msg').style.color = 'var(--tm-green)';
+                    state = data.state || null;
+                    renderTerminal();
+                } catch (e) {
+                    $('exec-msg').textContent = e.message;
+                    $('exec-msg').style.color = 'var(--tm-red)';
+                }
+            }
+
+            async function breakEvenTrade() {
+                if (!currentId || !state || !state.position) return;
+                $('exec-msg').textContent = 'Applying Break-Even…';
+                $('exec-msg').style.color = 'var(--tm-dim)';
+                try {
+                    const r = await apiFetch('/api/backtest/sessions/' + encodeURIComponent(currentId) + '/manage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'be' })
+                    });
+                    const data = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
+                    $('exec-msg').textContent = 'Stop Loss moved to Break-Even (' + fmtNum(data.position && data.position.sl) + ')';
+                    $('exec-msg').style.color = 'var(--tm-green)';
+                    state = data.state || null;
+                    renderTerminal();
+                } catch (e) {
+                    $('exec-msg').textContent = e.message;
+                    $('exec-msg').style.color = 'var(--tm-red)';
+                }
+            }
+
+            async function partialTrade() {
+                if (!currentId || !state || !state.position) return;
+                $('exec-msg').textContent = 'Taking 50% partial…';
+                $('exec-msg').style.color = 'var(--tm-dim)';
+                const price = state && state.candle ? state.candle.close : undefined;
+                try {
+                    const r = await apiFetch('/api/backtest/sessions/' + encodeURIComponent(currentId) + '/manage', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ action: 'partial', fraction: 0.5, price })
+                    });
+                    const data = await r.json().catch(() => ({}));
+                    if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
+                    const pnlStr = data.trade ? (' · ' + signed(data.trade.pnl)) : '';
+                    $('exec-msg').textContent = '50% Partial closed' + pnlStr + ' · runner: ' + fmtNum(data.position && data.position.size);
                     $('exec-msg').style.color = 'var(--tm-green)';
                     state = data.state || null;
                     renderTerminal();
@@ -1610,7 +1734,7 @@
                 const has = !!state;
                 const status = state ? state.status : null;
                 const running = status === 'running' || status === 'lobby';
-                $('chart-sub').textContent = has ? (state.symbol + ' · ' + state.timeframe + ' · ' + (state.strategy || 'Manual practice')) : 'No session selected';
+                $('chart-sub').textContent = has ? (state.symbol + ' · ' + state.timeframe + (state.periodLabel ? ' • ' + state.periodLabel : '') + ' · ' + (state.strategy || 'Manual practice')) : 'No session selected';
                 const prog = has && state.total ? Math.min(100, Math.round(state.cursor / state.total * 100)) : 0;
                 $('prog-label').textContent = has ? (state.symbol + ' ' + state.timeframe + ' · ' + (state.strategy || 'Practice')) : 'No session';
                 $('prog-cursor').textContent = has ? (state.cursor + ' / ' + state.total + ' bars') : '—';
@@ -1713,6 +1837,8 @@
                 const canExec = has && running;
                 $('enter-trade').disabled = !canExec || !!state.position;
                 $('close-trade').disabled = !canExec || !state.position;
+                if ($('be-trade')) $('be-trade').disabled = !canExec || !state.position || (state.position && state.position.beApplied);
+                if ($('partial-trade')) $('partial-trade').disabled = !canExec || !state.position;
 
                 // status strip
                 const trades = state ? (state.trades || []) : [];
@@ -1940,9 +2066,9 @@
             }
 
             function updateDashboardMetrics(analytics) {
-                if (!analytics) return;
-                const tradesCount = analytics.n || 0;
-                const winRate = analytics.winRate || 0;
+                const a = analytics || {};
+                const tradesCount = a.n || 0;
+                const winRate = a.winRate || 0;
                 
                 // Trades Taken card
                 const tradesContainer = $('dash-trades-container');
@@ -1974,20 +2100,99 @@
                 // Win rate breakdown
                 const wrDetailSub = $('dash-winrate-detail-sub');
                 const wrBars = $('dash-winrate-bars');
-                if (tradesCount > 0 && wrBars) {
-                    if (wrDetailSub) wrDetailSub.textContent = 'Win/Loss distribution';
-                    const pct = Math.round(winRate * 100);
-                    wrBars.innerHTML = '<div class="w-full h-3 rounded-full bg-slate-800 overflow-hidden flex"><div class="bg-emerald-500 h-full" style="width:' + pct + '%"></div><div class="bg-red-500 h-full" style="width:' + (100 - pct) + '%"></div></div><div class="flex justify-between text-[11px] text-slate-400 mt-2 tabular-nums"><span>Wins: ' + pct + '%</span><span>Losses: ' + (100 - pct) + '%</span></div>';
+                if (wrBars) {
+                    if (tradesCount > 0) {
+                        if (wrDetailSub) wrDetailSub.textContent = 'Win/Loss distribution';
+                        const pct = Math.round(winRate * 100);
+                        wrBars.innerHTML = '<div class="w-full h-3 rounded-full bg-slate-800 overflow-hidden flex"><div class="bg-emerald-500 h-full" style="width:' + pct + '%"></div><div class="bg-red-500 h-full" style="width:' + (100 - pct) + '%"></div></div><div class="flex justify-between text-[11px] text-slate-400 mt-2 tabular-nums"><span>Wins: ' + pct + '%</span><span>Losses: ' + (100 - pct) + '%</span></div>';
+                    } else {
+                        if (wrDetailSub) wrDetailSub.textContent = 'Your win rate will show up here';
+                        wrBars.innerHTML = '<div class="w-full border-b border-dashed border-white/[0.08]"></div>';
+                    }
                 }
 
                 // Trades by Symbol breakdown
                 const symSub = $('dash-symbol-detail-sub');
                 const symBars = $('dash-symbol-bars');
-                if (Array.isArray(analytics.bySymbol) && analytics.bySymbol.length && symBars) {
-                    if (symSub) symSub.textContent = 'Volume across traded instruments';
-                    symBars.innerHTML = '<div class="flex flex-col gap-2">' + analytics.bySymbol.slice(0, 3).map(s => {
-                        return '<div class="flex items-center justify-between text-xs tabular-nums"><span class="text-slate-300 font-bold">' + esc(s.key) + '</span><span class="text-slate-400">' + s.n + ' trades (' + fmtMoney(s.pnl) + ')</span></div>';
-                    }).join('') + '</div>';
+                if (symBars) {
+                    if (Array.isArray(a.bySymbol) && a.bySymbol.length) {
+                        if (symSub) symSub.textContent = 'Volume across traded instruments';
+                        symBars.innerHTML = '<div class="flex flex-col gap-2">' + a.bySymbol.slice(0, 3).map(s => {
+                            return '<div class="flex items-center justify-between text-xs tabular-nums"><span class="text-slate-300 font-bold">' + esc(s.key) + '</span><span class="text-slate-400">' + s.n + ' trades (' + fmtMoney(s.pnl) + ')</span></div>';
+                        }).join('') + '</div>';
+                    } else {
+                        if (symSub) symSub.textContent = 'Your trades by symbol will show up here';
+                        symBars.innerHTML = '<div class="w-44 h-5 rounded-md bg-[#1f2837]/60 border border-white/[0.04]"></div>';
+                    }
+                }
+
+                // Dynamic calculation of Time Invested & Historical Time Replayed across sessions
+                let totalReplayedSec = 0;
+                let totalTimeInvestedSec = 0;
+                const monthlyUsage = {}; // 'YYYY-MM' -> hours
+
+                if (Array.isArray(sessions)) {
+                    sessions.forEach(s => {
+                        totalReplayedSec += (s.replayedSec || 0);
+                        // Approximate time invested based on sessions / activities logged
+                        const sessAge = s.createdAt ? (Date.now() - new Date(s.createdAt).getTime()) : 0;
+                        const approxInvested = Math.max(120, (s.trades || 0) * 180 + (s.cursor || 0) * 5);
+                        totalTimeInvestedSec += approxInvested;
+
+                        const mKey = s.period || (s.createdAt ? s.createdAt.slice(0, 7) : '2026-06');
+                        monthlyUsage[mKey] = (monthlyUsage[mKey] || 0) + approxInvested;
+                    });
+                }
+
+                // Update Time Invested Display
+                const timeInvestedEl = $('dash-time-invested');
+                const timeUnitEl = $('dash-time-invested-unit');
+                if (timeInvestedEl) {
+                    if (totalTimeInvestedSec >= 3600) {
+                        const hrs = (totalTimeInvestedSec / 3600).toFixed(1);
+                        timeInvestedEl.textContent = hrs;
+                        if (timeUnitEl) timeUnitEl.textContent = 'hrs';
+                    } else {
+                        const mins = Math.max(sessions.length ? 1 : 0, Math.round(totalTimeInvestedSec / 60));
+                        timeInvestedEl.textContent = mins;
+                        if (timeUnitEl) timeUnitEl.textContent = 'min';
+                    }
+                }
+
+                // Update Historical Time Replayed Display (d, hr, min)
+                const dEl = $('dash-hist-d');
+                const hrEl = $('dash-hist-hr');
+                const minEl = $('dash-hist-min');
+                if (dEl && hrEl && minEl) {
+                    const days = Math.floor(totalReplayedSec / 86400);
+                    const remSec = totalReplayedSec % 86400;
+                    const hours = Math.floor(remSec / 3600);
+                    const mins = Math.floor((remSec % 3600) / 60);
+                    dEl.textContent = days;
+                    hrEl.textContent = hours;
+                    minEl.textContent = mins;
+                }
+
+                // Update Time Invested Chart Bars
+                const chartBarsEl = $('dash-chart-bars');
+                if (chartBarsEl) {
+                    const months = Object.keys(monthlyUsage);
+                    if (months.length > 0) {
+                        const maxVal = Math.max(...Object.values(monthlyUsage), 3600);
+                        chartBarsEl.innerHTML = months.slice(0, 5).map(mKey => {
+                            const sec = monthlyUsage[mKey] || 0;
+                            const hrs = (sec / 3600).toFixed(2);
+                            const heightPct = Math.max(12, Math.min(95, Math.round((sec / maxVal) * 100)));
+                            return '<div class="flex flex-col items-center group relative cursor-pointer" title="' + esc(mKey) + ': ' + hrs + ' hrs">' +
+                                '<div class="w-3 sm:w-4 rounded-t-sm transition-all duration-300" style="height:' + heightPct + '%;background:linear-gradient(to top, #d97706, #fbbf24);box-shadow:0 0 12px rgba(245,158,11,0.35);"></div>' +
+                                '<span class="absolute -bottom-8 text-[10px] text-slate-400 font-medium whitespace-nowrap transform -rotate-45 origin-top-left -ml-2">' +
+                                    esc(mKey) +
+                                '</span>' +
+                            '</div>';
+                        }).join('');
+                    } else {
+                        chartBarsEl.innerHTML = '<div class="w-full text-center text-xs text-slate-500 py-12">No replay time logged yet. Launch a session to start tracking.</div>';
+                    }
                 }
             }
 
@@ -2179,8 +2384,7 @@
                 const qlTutorials = $('quick-launch-tutorials');
                 if (qlTutorials) {
                     qlTutorials.addEventListener('click', () => {
-                        showToast('Tutorial: Spacebar = Next Candle · P = Play/Pause · Cut = Jump to Bar');
-                        switchStitchTab('sessions');
+                        showToast('Replay Controls: Spacebar = Step · P = Play/Pause · Cut = Jump to Bar');
                     });
                 }
             }
@@ -2195,6 +2399,8 @@
                 $('start-practice').addEventListener('click', createSession);
                 $('enter-trade').addEventListener('click', enterTrade);
                 $('close-trade').addEventListener('click', closeTrade);
+                if ($('be-trade')) $('be-trade').addEventListener('click', breakEvenTrade);
+                if ($('partial-trade')) $('partial-trade').addEventListener('click', partialTrade);
                 document.querySelectorAll('[data-ctrl]').forEach(b => {
                     b.addEventListener('click', () => {
                         control(b.dataset.ctrl, playSpeedMs);

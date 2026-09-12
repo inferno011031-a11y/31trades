@@ -251,6 +251,17 @@ async function getCandles(opts) {
         }
     }
 
+    // 0.5 · Specific historical period or blind mystery backtesting
+    if (period && period !== 'live' && (period === 'random' || /^[0-9]{4}-[0-9]{2}$/.test(period) || o.blind || o.isRandom)) {
+        const syn = generateCandles({ symbol, timeframe, count, period, blind: o.blind || o.isRandom });
+        return Object.assign({}, syn, {
+            meta: Object.assign({}, syn.meta, {
+                source: syn.meta && syn.meta.blind ? 'blind-archive' : 'historical-period',
+                provider: '31Trades Historical Replay Engine'
+            })
+        });
+    }
+
     // 1 · fresh cache
     const cached = readCache(symbol, timeframe, count);
     if (cached) return { ok: true, symbol, timeframe, count, candles: cached.candles, meta: { source: cached.source, provider: 'TradingView' } };

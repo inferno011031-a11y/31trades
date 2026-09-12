@@ -1273,7 +1273,13 @@ async function handleApi(req, res, url) {
             const symbol = String(body.symbol || 'EURUSD').toUpperCase();
             const timeframe = String(body.timeframe || '1h');
             const window = Math.max(30, Math.min(1500, Number(body.window) || 300));
-            const md = await MarketData.getCandles({ symbol, timeframe, count: window });
+            const md = await MarketData.getCandles({
+                symbol,
+                timeframe,
+                count: window,
+                period: body.period,
+                blind: !!(body.blind || body.isRandom)
+            });
             if (!md.ok || !md.candles.length) return json(res, 400, { error: 'no candles for ' + symbol });
             const startIndex = Math.max(0, Math.min(Number(body.startBars) || Math.min(30, md.candles.length - 1), md.candles.length - 1));
             const sess = new Sim.BacktestSession({
@@ -1282,6 +1288,16 @@ async function handleApi(req, res, url) {
                 strategy: String(body.strategy || 'Manual practice'),
                 startingBalance: Number(body.startingBalance) || 10000,
                 riskModel: body.riskModel || { basis: 'money', perTrade: 25 },
+                period: md.period || body.period || null,
+                periodLabel: md.periodLabel || null,
+                blind: !!(md.meta && md.meta.blind),
+                actualPeriod: md.meta && md.meta.actualPeriod,
+                actualLabel: md.meta && md.meta.actualLabel,
+                notes: body.notes || '',
+                tags: Array.isArray(body.tags) ? body.tags : [],
+                checklist: Array.isArray(body.checklist) ? body.checklist : [],
+                propRules: body.propRules || null,
+                extensions: body.extensions || {},
                 candles: md.candles,
                 startIndex
             });
@@ -1308,6 +1324,13 @@ async function handleApi(req, res, url) {
             if (!r.ok) return json(res, 400, { error: r.error });
             Sim.saveSession(uc.userId, s);
             return json(res, 200, { ok: true, position: r.position, state: Sim.stateOf(s) });
+        }
+        if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/manage$/))) {
+            const id = m[1];
+            const action = String(body.action || '').toLowerCase();
+            const resData = Sim.manageSession(uc.userId, id, action, body);
+            if (!resData.ok) return json(res, 400, { error: resData.error });
+            return json(res, 200, resData);
         }
         if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/close$/))) {
             const s = Sim.loadActive(uc.userId, m[1]);
