@@ -1182,7 +1182,11 @@
                 const timeoutId = setTimeout(() => controller.abort(), 2000);
 
                 try {
-                    const res = await fetch('/api/calendar/summary?accountId=' + encodeURIComponent(accId) + '&year=' + encodeURIComponent(yr) + '&range=' + encodeURIComponent(activeRange), {
+                    // Use apiFetch (attaches Bearer token so server returns THIS user's trades, not demo data)
+                    const authFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch)
+                        ? (url, opts) => window.TradeMindCore.apiFetch(url, opts)
+                        : fetch.bind(window);
+                    const res = await authFetch('/api/calendar/summary?accountId=' + encodeURIComponent(accId) + '&year=' + encodeURIComponent(yr) + '&range=' + encodeURIComponent(activeRange), {
                         signal: controller.signal
                     });
                     clearTimeout(timeoutId);
@@ -1705,14 +1709,7 @@
             const collapseBtn = $('collapse-btn');
             if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
 
-            // ---- 11. Core Bus Subscriptions ----
-            if (core && core.TradeMindBus) {
-                ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed', 'config.changed'].forEach(ev => {
-                    core.TradeMindBus.subscribe(ev, () => {
-                        fetchSummary();
-                    });
-                });
-            }
+            // ---- 11. Core Bus Subscriptions: handled in bootWithAuth ----
 
             window.addEventListener('storage', e => {
                 if (e.key && (e.key.startsWith('tm_') || e.key.includes('trades'))) {
@@ -1739,8 +1736,31 @@
             })();
 
 
-            // Initial Boot
-            fetchSummary();
+            // ---- Initial Boot: wait for apiFetch then fetch real user data ----
+            // apiFetch is set by core.js after it boots. We poll for it so the
+            // very first fetchSummary() call carries the Bearer token and gets
+            // this user's real trades instead of the server's demo data.
+            (function bootWithAuth() {
+                function tryBoot(attempt) {
+                    if (window.TradeMindCore && window.TradeMindCore.apiFetch) {
+                        // core is ready — subscribe to hydration events then fetch
+                        const core = window.TradeMindCore;
+                        if (core.TradeMindBus) {
+                            ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed'].forEach(function(ev) {
+                                core.TradeMindBus.subscribe(ev, function() { fetchSummary(); });
+                            });
+                        }
+                        fetchSummary();
+                    } else if (attempt < 20) {
+                        // poll every 100ms up to 2 seconds, then call anyway
+                        setTimeout(function() { tryBoot(attempt + 1); }, 100);
+                    } else {
+                        // 2s timeout: call fetchSummary anyway (falls back to local core)
+                        fetchSummary();
+                    }
+                }
+                tryBoot(0);
+            })();
             if (window.lucide) lucide.createIcons();
         })();
     </script>
