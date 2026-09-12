@@ -79,43 +79,56 @@
 
         /* Institutional Trade Card */
         .trade-card {
-            background-color: #0e131d;
-            border: 1px solid rgba(255, 255, 255, 0.06);
+            background-color: #0e131d !important;
+            border: 1px solid #161c28 !important;
             box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
         }
         .trade-card:hover {
-            border-color: rgba(255, 255, 255, 0.10);
+            border-color: #202738 !important;
         }
 
         /* Month Matrix Boxes */
         .month-box {
+            background-color: #0b0f17 !important;
+            border: 1px solid #141924 !important;
             transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
+        .month-box.has-trades {
+            background-color: #0e1420 !important;
+            border-color: #1a2232 !important;
+        }
+        .month-box.has-trades:hover {
+            border-color: #283248 !important;
+        }
+        .month-box.active-month {
+            background-color: #141a26 !important;
+            border-color: #283248 !important;
+        }
         .month-box.active-profit {
-            background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%);
-            border: 1px solid rgba(16, 185, 129, 0.35);
+            background: #121c27 !important;
+            border-color: rgba(16, 185, 129, 0.4) !important;
         }
         .month-box.active-profit:hover {
-            border-color: #10b981;
+            border-color: #10b981 !important;
             box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
             transform: translateY(-1px);
         }
         .month-box.active-loss {
-            background: linear-gradient(180deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.04) 100%);
-            border: 1px solid rgba(244, 63, 94, 0.35);
+            background: #18121a !important;
+            border-color: rgba(244, 63, 94, 0.4) !important;
         }
         .month-box.active-loss:hover {
-            border-color: #f43f5e;
+            border-color: #f43f5e !important;
             box-shadow: 0 0 16px rgba(244, 63, 94, 0.15);
             transform: translateY(-1px);
         }
         .month-box.dormant {
-            background-color: rgba(18, 24, 37, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.035);
+            background-color: #0b0f17 !important;
+            border-color: #141924 !important;
         }
         .month-box.dormant:hover {
-            background-color: rgba(26, 35, 52, 0.6);
-            border-color: rgba(255, 255, 255, 0.08);
+            background-color: #101520 !important;
+            border-color: #1c2436 !important;
         }
 
         /* Timeline 12-Column Grid (Stitch 1:1) */
@@ -143,43 +156,91 @@
             align-items: stretch !important;
         }
         .cal-day-cell {
-            background: #0c0e14; border: 1px solid #171a23; border-radius: 10px;
-            min-height: 84px; padding: 8px 10px; display: flex; flex-direction: column;
-            justify-content: space-between; position: relative; transition: all 0.15s ease;
-            cursor: pointer; user-select: none;
+            background: #0c0e14 !important;
+            border: 1px solid #171a23 !important;
+            border-radius: 10px;
+            min-height: 84px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            transition: all 0.15s ease;
+            cursor: pointer;
+            user-select: none;
         }
-        .cal-day-cell:hover { border-color: #334155; background: #11141c; }
+        .cal-day-cell:hover {
+            border-color: #283248 !important;
+            background: #11141c !important;
+        }
         .cal-day-cell.has-trades {
-            background: rgba(16, 185, 129, 0.06); border-color: rgba(16, 185, 129, 0.28);
+            background: rgba(16, 185, 129, 0.06) !important;
+            border-color: rgba(16, 185, 129, 0.3) !important;
         }
         .cal-day-cell.has-trades:hover {
-            border-color: #10b981; background: rgba(16, 185, 129, 0.12);
+            border-color: #10b981 !important;
+            background: rgba(16, 185, 129, 0.12) !important;
+        }
+        .cal-day-cell.has-loss {
+            background: rgba(244, 63, 94, 0.06) !important;
+            border-color: rgba(244, 63, 94, 0.3) !important;
+        }
+        .cal-day-cell.has-loss:hover {
+            border-color: #f43f5e !important;
+            background: rgba(244, 63, 94, 0.12) !important;
+        }
+        .cal-day-cell.empty-cell {
+            background: transparent !important;
+            border: none !important;
+            pointer-events: none !important;
         }
         .cal-week-cell {
-            background: #0c0e14; border: 1px solid #171a23; border-radius: 10px;
-            min-height: 84px; padding: 8px 10px; display: flex; flex-direction: column;
-            align-items: center; justify-content: center; text-align: center;
+            background: #0c0e14 !important;
+            border: 1px solid #171a23 !important;
+            border-radius: 10px;
+            min-height: 84px;
+            padding: 8px 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
         }
 
         /* Modals */
         .modal-backdrop {
-            position: fixed !important; inset: 0 !important;
-            background: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(6px) !important;
-            z-index: 100 !important; display: flex !important; align-items: center !important; justify-content: center !important;
-            opacity: 0 !important; pointer-events: none !important; transition: opacity 0.2s ease !important;
+            position: fixed !important;
+            inset: 0 !important;
+            background: rgba(0, 0, 0, 0.85) !important;
+            backdrop-filter: blur(6px) !important;
+            z-index: 100 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            transition: opacity 0.2s ease !important;
         }
         .modal-backdrop.open { opacity: 1 !important; pointer-events: auto !important; }
         .modal-window {
-            background: #0b0f17 !important; border: 1px solid #1f2533 !important; border-radius: 16px !important;
-            width: 100% !important; max-width: 760px !important; padding: 24px !important;
+            background: #0b0f17 !important;
+            border: 1px solid #1f2533 !important;
+            border-radius: 16px !important;
+            width: 100% !important;
+            max-width: 760px !important;
+            padding: 24px !important;
             box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9) !important;
-            transform: scale(0.97) !important; transition: transform 0.2s ease !important;
+            transform: scale(0.97) !important;
+            transition: transform 0.2s ease !important;
         }
         .modal-backdrop.open .modal-window { transform: scale(1) !important; }
 
         /* Floating action button */
         .floating-action-btn {
-            position: fixed; bottom: 24px; right: 24px; z-index: 40;
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 40;
             box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8);
         }
 
@@ -189,53 +250,12 @@
         ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
         ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
-        
-        
-        /* Stitch Exact Tokens & Component Styling */
-        .trade-card {
-            background-color: #0e131d !important;
-            border: 1px solid rgba(255, 255, 255, 0.06) !important;
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
-        }
-        .trade-card:hover {
-            border-color: rgba(255, 255, 255, 0.12) !important;
-        }
-        .month-box {
-            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .month-box.active-profit {
-            background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%) !important;
-            border: 1px solid rgba(16, 185, 129, 0.35) !important;
-        }
-        .month-box.active-profit:hover {
-            border-color: #10b981 !important;
-            box-shadow: 0 0 16px rgba(16, 185, 129, 0.15) !important;
-            transform: translateY(-1px);
-        }
-        .month-box.active-loss {
-            background: linear-gradient(180deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.04) 100%) !important;
-            border: 1px solid rgba(244, 63, 94, 0.35) !important;
-        }
-        .month-box.active-loss:hover {
-            border-color: #f43f5e !important;
-            box-shadow: 0 0 16px rgba(244, 63, 94, 0.15) !important;
-            transform: translateY(-1px);
-        }
-        .month-box.dormant {
-            background-color: rgba(18, 24, 37, 0.5) !important;
-            border: 1px solid rgba(255, 255, 255, 0.035) !important;
-        }
-        .month-box.dormant:hover {
-            background-color: rgba(26, 35, 52, 0.6) !important;
-            border-color: rgba(255, 255, 255, 0.08) !important;
-        }
-
         /* STRICT GUARD: Zero white borders or dividers */
         [class*="border-white"], [class*="divide-white"] {
             border-color: #1a2130 !important;
         }
         header[data-purpose="global-header"] {
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+            border-bottom: 1px solid #161c28 !important;
             background-color: rgba(11, 15, 23, 0.92) !important;
         }
 
@@ -295,13 +315,25 @@
         .bg-slate-600 { background-color: #475569 !important; }
         .bg-slate-700 { background-color: #334155 !important; }
 
+        /* Universal Dark Fintech Border Fallback: guarantees zero white currentColor lines */
+        .border, [class*="border"] { border-color: #171a23; }
+
         .border-\[\#141720\] { border-color: #141720 !important; }
+        .border-\[\#141924\] { border-color: #141924 !important; }
         .border-\[\#161a24\] { border-color: #161a24 !important; }
         .border-\[\#161c28\] { border-color: #161c28 !important; }
         .border-\[\#1a2130\] { border-color: #1a2130 !important; }
+        .border-\[\#1a2232\] { border-color: #1a2232 !important; }
         .border-\[\#1c2230\] { border-color: #1c2230 !important; }
         .border-\[\#202738\] { border-color: #202738 !important; }
         .border-\[\#283248\] { border-color: #283248 !important; }
+        .border-\[\#10141d\] { border-color: #10141d !important; }
+        .border-\[\#121722\] { border-color: #121722 !important; }
+        .border-\[\#131a26\] { border-color: #131a26 !important; }
+        .border-\[\#1f2533\] { border-color: #1f2533 !important; }
+        .border-\[\#10b981\] { border-color: rgba(16, 185, 129, 0.4) !important; }
+        .border-\[\#f43f5e\] { border-color: rgba(244, 63, 94, 0.4) !important; }
+        .border-transparent, .\!border-transparent { border-color: transparent !important; }
 
         .divide-\[\#161a24\] > :not([hidden]) ~ :not([hidden]) {
             border-top-color: #161a24 !important;
@@ -1042,7 +1074,7 @@
             <div class="flex items-center justify-between pb-4 border-b border-[#1c2230] mb-4">
                 <div class="flex items-center gap-3">
                     <h3 class="text-base font-bold text-white tracking-tight" id="modal-day-title">—</h3>
-                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" id="modal-day-pnl">$0.00</span>
+                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-[#10b981]" id="modal-day-pnl">$0.00</span>
                 </div>
                 <button type="button" class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-[#151c28] transition-colors cursor-pointer" id="btn-close-day-modal">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
@@ -1243,10 +1275,13 @@
                     const isLoss = m.pnl < 0;
                     const hasTrades = m.tradesCount > 0;
                     const isCurrentOrActive = m.isCurrentMonth || (activeMonthIdx === idx);
-                    const borderStyle = isCurrentOrActive 
-                        ? (isProfit ? "border border-emerald-500/40 bg-[#121c27]" : "border border-slate-500/40 bg-[#141a26]")
-                        : (hasTrades ? "border border-[#1a2232] bg-[#0e1420]" : "border border-[#141924] bg-[#0b0f17]");
-                    const boxClass = "month-box group rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer transition-all " + borderStyle;
+                    let statusClass = "dormant";
+                    if (isCurrentOrActive) {
+                        statusClass = isProfit ? "active-profit" : (isLoss ? "active-loss" : "active-month");
+                    } else if (hasTrades) {
+                        statusClass = "has-trades";
+                    }
+                    const boxClass = "month-box group rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer transition-all " + statusClass;
 
                     let contentHtml = '';
                     if (hasTrades) {
@@ -1531,7 +1566,7 @@
 
                     for (let wd = 0; wd < 7; wd++) {
                         if ((weekIdx === 0 && wd < startWeekday) || curDay > daysInMonth) {
-                            weekHtml += '<div class="cal-day-cell !bg-transparent !border-transparent"></div>';
+                            weekHtml += '<div class="cal-day-cell empty-cell" style="background:transparent !important; border:none !important;"></div>';
                         } else {
                             const thisDay = curDay;
                             const dayTrades = allTrades.filter(t => new Date(t.ts).getDate() === thisDay);
@@ -1542,7 +1577,7 @@
 
                             if (dayTrades.length > 0) {
                                 const isGain = dayPnl >= 0;
-                                weekHtml += '<div class="cal-day-cell has-trades" onclick="window.__openDayModal(' + thisDay + ')">' +
+                                weekHtml += '<div class="cal-day-cell ' + (isGain ? 'has-trades' : 'has-loss') + '" onclick="window.__openDayModal(' + thisDay + ')">' +
                                     '<div class="flex items-center justify-between">' +
                                         '<span class="w-1.5 h-1.5 rounded-full ' + (isGain ? 'bg-emerald-400' : 'bg-rose-400') + '"></span>' +
                                         '<span class="num text-[12px] font-bold text-white">' + thisDay + '</span>' +
@@ -1594,7 +1629,7 @@
                 const isGain = dayPnl >= 0;
                 const pnlEl = $('modal-day-pnl');
                 pnlEl.textContent = (isGain ? '+$' : '-$') + Math.abs(Math.round(dayPnl)).toLocaleString('en-US');
-                pnlEl.className = 'px-2 py-0.5 rounded text-xs font-mono font-bold ' + (isGain ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30');
+                pnlEl.className = 'px-2 py-0.5 rounded text-xs font-mono font-bold ' + (isGain ? 'bg-emerald-500/20 text-emerald-300 border border-[#10b981]' : 'bg-rose-500/20 text-rose-300 border border-[#f43f5e]');
 
                 const rowsHost = $('modal-trade-rows');
                 if (dayTrades.length === 0) {
