@@ -680,7 +680,7 @@
                                         <div class="text-[10px] text-slate-600 text-center font-mono">0 trades</div>
                                     </div>
                                     <!-- AUG: Refined Muted Institutional Style -->
-                                    <div class="month-box rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer bg-[#101822] border border-[#202a3c] hover:border-slate-500 transition-colors group" data-month="7" onclick="window.__drillIntoMonth(7)">
+                                    <div class="month-box rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer bg-[#101822] border border-[#161c28] hover:border-[#222c3e] transition-colors group" data-month="7" onclick="window.__drillIntoMonth(7)">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-medium text-slate-300">Aug</span>
                                             <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/80"></span>
@@ -695,7 +695,7 @@
                                         </div>
                                     </div>
                                     <!-- SEP: Current Month with Quiet Accent -->
-                                    <div class="month-box rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer bg-[#121c27] border border-emerald-500/20 hover:border-emerald-500/40 transition-colors group" data-month="8" onclick="window.__drillIntoMonth(8)">
+                                    <div class="month-box rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer bg-[#121c27] border border-emerald-500/30 hover:border-emerald-500/50 transition-colors group" data-month="8" onclick="window.__drillIntoMonth(8)">
                                         <div class="flex items-center justify-between">
                                             <span class="text-xs font-semibold text-slate-200">Sep</span>
                                             <span class="px-1.5 py-0.2 rounded bg-[#162334] text-slate-300 text-[9px] font-mono">SEP</span>
@@ -1266,13 +1266,17 @@
                     const isProfit = m.pnl > 0;
                     const isLoss = m.pnl < 0;
                     const hasTrades = m.tradesCount > 0;
-                    const boxClass = hasTrades ? (isProfit ? 'month-box active-profit' : 'month-box active-loss') : 'month-box dormant';
+                    const isCurrentOrActive = m.isCurrentMonth || (activeMonthIdx === idx);
+                    const borderStyle = isCurrentOrActive 
+                        ? (isProfit ? "border border-emerald-500/40 bg-[#121c27]" : "border border-slate-500/40 bg-[#141a26]")
+                        : (hasTrades ? "border border-[#1a2232] bg-[#0e1420]" : "border border-[#141924] bg-[#0b0f17]");
+                    const boxClass = "month-box rounded-xl p-3 flex flex-col justify-between min-h-[92px] cursor-pointer transition-all " + borderStyle;
 
                     let contentHtml = '';
                     if (hasTrades) {
                         const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
                         const dotColor = isProfit ? 'bg-emerald-400/80' : 'bg-rose-400/80';
-                        const badgeTag = m.isCurrentMonth ? '<span class="px-1.5 py-0.2 rounded bg-[#1c2436] text-slate-300 text-[9px] font-mono">' + m.monthName.toUpperCase() + '</span>' : '<span class="w-1.5 h-1.5 rounded-full ' + dotColor + '"></span>';
+                        const badgeTag = m.isCurrentMonth ? '<span class="px-1.5 py-0.5 rounded bg-[#162334] text-emerald-300 text-[9px] font-mono font-semibold">' + m.monthName.toUpperCase() + '</span>' : (hasTrades ? '<span class="w-1.5 h-1.5 rounded-full ' + dotColor + '"></span>' : '<span class="w-1 h-1 rounded-full bg-slate-700"></span>');
 
                         contentHtml =
                             '<div class="flex items-center justify-between">' +
