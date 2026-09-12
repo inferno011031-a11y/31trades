@@ -1133,7 +1133,7 @@
             'use strict';
             const $ = id => document.getElementById(id);
             window.$ = $;
-            const core = window.TradeMindCore;
+            const getCore = () => window.TradeMindCore;
             const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
             const fmtMoney = n => (n >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(n || 0)).toLocaleString('en-US');
 
@@ -1153,11 +1153,13 @@
             let currentSummaryData = null;
 
             function currentAccountId() {
+                const core = getCore();
                 if (!core) return 'acc-prop';
                 return (core.selectedAccountId && core.selectedAccountId()) || (core.Accounts && core.Accounts[0] ? core.Accounts[0].id : 'acc-prop');
             }
 
             function getAccount() {
+                const core = getCore();
                 if (!core || !core.Accounts) return null;
                 const id = currentAccountId();
                 return core.Accounts.find(a => a.id === id) || core.Accounts[0];
@@ -1186,7 +1188,7 @@
                     clearTimeout(timeoutId);
                     if (res.ok) {
                         const data = await res.json();
-                        if (data && (data.matrix || data.trades)) {
+                        if (data && (data.monthlyMatrix || data.kpis || data.matrix || data.trades)) {
                             currentSummaryData = data;
                             renderAll(data);
                             return;
@@ -1199,9 +1201,10 @@
 
                 // Local core calculation fallback (immune to session timeout)
                 try {
+                    const core = getCore();
                     if (core && core.calendarSummary) {
                         const data = core.calendarSummary(accId, yr, { range: activeRange });
-                        if (data && (data.matrix || data.kpis)) {
+                        if (data && (data.monthlyMatrix || data.kpis || data.matrix)) {
                             currentSummaryData = data;
                             renderAll(data);
                         }
@@ -1540,6 +1543,7 @@
 
                 // Load all trades for this month
                 const accId = currentAccountId();
+                const core = getCore();
                 const allTrades = (core && core.Trades ? core.Trades : [])
                     .filter(t => (!accId || t.account_id === accId) && new Date(t.ts).getFullYear() === yr && new Date(t.ts).getMonth() === mIdx);
 
@@ -1605,6 +1609,7 @@
             window.__openDayModal = function (dayNum) {
                 const yr = Number(activeYear === 'all' ? new Date().getFullYear() : activeYear);
                 const accId = currentAccountId();
+                const core = getCore();
                 const dayTrades = (core && core.Trades ? core.Trades : [])
                     .filter(t => (!accId || t.account_id === accId) && new Date(t.ts).getFullYear() === yr && new Date(t.ts).getMonth() === activeMonthIdx && new Date(t.ts).getDate() === dayNum);
 
