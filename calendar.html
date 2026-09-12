@@ -953,10 +953,16 @@
                                     <h3 class="text-sm font-semibold text-white tracking-tight">Recent Calendar Trade Events</h3>
                                     <span class="text-[10px] px-2 py-0.5 rounded bg-[#121722] text-slate-400 font-mono border border-[#1a2130]" id="recent-trades-year-badge">2026 Settled</span>
                                 </div>
-                                <a class="text-xs text-slate-400 hover:text-slate-200 font-medium transition-colors flex items-center gap-1" href="journal.html">
-                                    <span>Open Full Journal</span>
-                                    <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
-                                </a>
+                                <div class="flex items-center gap-3">
+                                    <button id="btn-export-audit" type="button" class="text-xs text-slate-400 hover:text-slate-200 font-medium transition-colors flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#10151f] border border-[#1a2130] hover:bg-[#161c28]">
+                                        <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                        <span>Export Audit CSV</span>
+                                    </button>
+                                    <a class="text-xs text-slate-400 hover:text-slate-200 font-medium transition-colors flex items-center gap-1" href="journal.html">
+                                        <span>Open Full Journal</span>
+                                        <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                    </a>
+                                </div>
                             </div>
 
                             <!-- Trade Log Table -->
@@ -1103,14 +1109,43 @@
                 return (id ? core.Accounts.find(a => a.id === id) : null) || core.Accounts[0];
             }
 
+            function syncAccountChip(customAcc) {
+                const acc = customAcc || getAccount();
+                const accChip = $('acc-chip');
+                if (accChip) {
+                    if (acc) {
+                        const bal = acc.current_equity != null ? acc.current_equity : (acc.starting_balance != null ? acc.starting_balance : 0);
+                        accChip.innerHTML = '<span class="num text-[12px] font-mono text-emerald-400 font-semibold">$' +
+                            Number(bal || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 }) + '</span><span class="text-slate-600">·</span>' +
+                            '<span class="font-medium">' + esc(acc.name || 'Account') + '</span>' +
+                            '<svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></svg>';
+                    } else {
+                        accChip.innerHTML = '<span class="num text-[12px] font-mono text-slate-400">—</span><span class="text-slate-600">·</span><span class="font-medium">All Accounts</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></svg>';
+                    }
+                    if (window.lucide) lucide.createIcons();
+                }
+                const pName = $('profile-name');
+                const pAvatar = $('profile-avatar');
+                const core = getCore();
+                const defaultAcc = acc || (core && core.Accounts && core.Accounts[0]);
+                if (defaultAcc && pName) {
+                    pName.textContent = defaultAcc.name;
+                    if (pAvatar) pAvatar.textContent = defaultAcc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'TR';
+                }
+            }
+            syncAccountChip();
+
             // ---- Market Clock & Session Status ----
             function updateClock() {
-                const el = $('utc-time-str');
+                const el = $('session-chip-text');
                 if (!el) return;
-                // Keep exact clean institutional session badge
-                el.textContent = 'UTC-4 (NY EST)';
+                const hh2 = new Date();
+                const h2 = hh2.getHours();
+                const curSession = (h2 >= 0 && h2 < 8) ? 'Asia' : (h2 >= 8 && h2 < 14) ? 'London' : (h2 >= 14 && h2 < 21) ? 'New York' : 'Asia';
+                el.textContent = curSession + ' · ' + hh2.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
             }
             updateClock();
+            setInterval(updateClock, 1000);
 
             // ---- Fetch Calendar Summary with Session Resiliency & Instant Local-First Hydration ----
             async function fetchSummary() {
@@ -1163,26 +1198,7 @@
 
                 // 1. Header Account Chip & Profile
                 const acc = data.account || getAccount();
-                const accChip = $('acc-chip');
-                if (accChip) {
-                    if (acc) {
-                        const bal = data.currentBalance != null ? data.currentBalance : (acc.current_equity != null ? acc.current_equity : acc.starting_balance);
-                        accChip.innerHTML = '<span class="num text-[12px] font-mono text-emerald-400 font-semibold">' +
-                            Number(bal || 0).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + '</span><span class="text-slate-600">·</span>' +
-                            '<span class="font-medium">' + esc(acc.name || 'Account') + '</span>' +
-                            '<svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></svg>';
-                    } else {
-                        accChip.innerHTML = '<span class="num text-[12px] font-mono text-slate-400">—</span><span class="text-slate-600">·</span><span class="font-medium">All Accounts</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></svg>';
-                    }
-                }
-                const pName = $('profile-name');
-                const pAvatar = $('profile-avatar');
-                const core = getCore();
-                const defaultAcc = acc || (core && core.Accounts && core.Accounts[0]);
-                if (defaultAcc && pName) {
-                    pName.textContent = defaultAcc.name;
-                    if (pAvatar) pAvatar.textContent = defaultAcc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase() || 'TR';
-                }
+                syncAccountChip(acc);
 
                 // 2. Fiscal Year Badge & Title
                 const fiscalBadge = $('title-fiscal-badge');
@@ -1690,28 +1706,32 @@
 
 
             // ---- Initial Boot: wait for apiFetch then fetch real user data ----
-            // apiFetch is set by core.js after it boots. We poll for it so the
-            // very first fetchSummary() call carries the Bearer token and gets
-            // this user's real trades instead of the server's demo data.
             (function bootWithAuth() {
                 function setupBus() {
                     const core = window.TradeMindCore;
                     if (core && core.TradeMindBus && !window.__calendarBusBound) {
                         window.__calendarBusBound = true;
                         ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed', 'config.changed', 'backend.online'].forEach(function(ev) {
-                            core.TradeMindBus.subscribe(ev, function() { fetchSummary(); });
+                            core.TradeMindBus.subscribe(ev, function() {
+                                syncAccountChip();
+                                fetchSummary();
+                            });
                         });
                     }
                 }
 
                 function tryBoot(attempt) {
                     setupBus();
+                    syncAccountChip();
                     fetchSummary();
                     if (!(window.TradeMindCore && window.TradeMindCore.apiFetch) && attempt < 25) {
                         setTimeout(function() { tryBoot(attempt + 1); }, 120);
                     }
                 }
                 tryBoot(0);
+                if (document.readyState === 'loading') {
+                    document.addEventListener('DOMContentLoaded', () => tryBoot(0));
+                }
             })();
             if (window.lucide) lucide.createIcons();
         })();
