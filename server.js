@@ -1032,6 +1032,59 @@ async function handleApi(req, res, url) {
                 const month = Number(q.get('month') === undefined ? new Date().getMonth() : q.get('month'));
                 return json(res, 200, Core.calendarMonth(q.get('accountId') || 'acc-prop', year, month));
             }
+            if (p === '/api/calendar/summary') {
+                const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : 'acc-prop');
+                const year = q.get('year') === 'all' ? 'all' : (q.get('year') ? Number(q.get('year')) : new Date().getFullYear());
+                const summary = Core.calendarSummary ? Core.calendarSummary(accountId, year, { range: q.get('range') }) : {};
+                return json(res, 200, summary);
+            }
+            if (p === '/api/calendar/export') {
+                const accountId = q.get('accountId') || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : 'acc-prop');
+                const year = q.get('year') === 'all' ? 'all' : (q.get('year') ? Number(q.get('year')) : new Date().getFullYear());
+                const format = (q.get('format') || 'csv').toLowerCase();
+
+                let list = Core.Trades.filter(t => !accountId || t.account_id === accountId);
+                if (year !== 'all') {
+                    list = list.filter(t => new Date(t.ts).getFullYear() === Number(year));
+                }
+                list.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+
+                if (format === 'json') {
+                    res.writeHead(200, {
+                        'Content-Type': 'application/json; charset=utf-8',
+                        'Content-Disposition': `attachment; filename="calendar-audit-${year}-${accountId}.json"`
+                    });
+                    return res.end(JSON.stringify(list, null, 2));
+                }
+
+                // CSV Export
+                const headers = ['Trade ID', 'Timestamp', 'Date', 'Time', 'Symbol', 'Direction', 'Size', 'Entry Price', 'Exit Price', 'Net PnL ($)', 'R Multiple', 'Status', 'Account ID'];
+                const rows = list.map(t => {
+                    const d = new Date(t.ts);
+                    return [
+                        t.id,
+                        t.ts,
+                        d.toISOString().slice(0, 10),
+                        d.toTimeString().slice(0, 8),
+                        t.symbol || '',
+                        t.dir || '',
+                        t.size || '',
+                        t.entry_price || t.entryPrice || '',
+                        t.exit_price || t.exitPrice || '',
+                        t.pnl || 0,
+                        t.r != null ? t.r : '',
+                        'Settled',
+                        t.account_id || accountId
+                    ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',');
+                });
+
+                const csv = [headers.join(','), ...rows].join('\r\n');
+                res.writeHead(200, {
+                    'Content-Type': 'text/csv; charset=utf-8',
+                    'Content-Disposition': `attachment; filename="calendar-audit-${year}-${accountId}.csv"`
+                });
+                return res.end(csv);
+            }
             if (p === '/api/reviews') {
                 return json(res, 200, Core.reviews(q.get('accountId') || 'acc-prop', { period: q.get('period'), date: q.get('date') }));
             }

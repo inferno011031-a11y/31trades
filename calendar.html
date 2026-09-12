@@ -1,16 +1,12 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BATTLEXJOURNAL — Performance Calendar</title>
-    <meta name="description" content="BATTLEXJOURNAL Calendar — multi-tier performance matrix, monthly trading calendar, and day inspection.">
+    <title>BATTLEXJOURNAL — Performance Calendar & Account Analytics</title>
+    <meta name="description" content="BATTLEXJOURNAL Calendar — multi-tier performance matrix, mark-to-market equity curve, and execution analytics.">
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="theme-color" content="#06080b">
-    <meta property="og:type" content="website">
-    <meta property="og:site_name" content="31TRADES">
-    <meta property="og:title" content="BATTLEXJOURNAL — Performance Calendar">
-    <meta property="og:description" content="BATTLEXJOURNAL Calendar — multi-tier performance matrix, monthly trading calendar, and day inspection.">
     <link rel="canonical" href="https://31trades-production.up.railway.app/calendar.html">
 
     <link rel="stylesheet" href="assets/tokens.css">
@@ -21,9 +17,10 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Core Runtime -->
+    <script src="demo-trades.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
@@ -36,14 +33,20 @@
 
         html, body {
             height: 100%;
-            background: #06080b;
-            color: #f1f5f9;
-            font-family: 'Plus Jakarta Sans', var(--tm-sans);
+            background-color: #080b10;
+            color: #e2e8f0;
+            font-family: 'Plus Jakarta Sans', var(--tm-sans), sans-serif;
             overflow: hidden;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
             color-scheme: dark !important;
         }
 
-        .num { font-family: 'JetBrains Mono', var(--tm-mono); font-variant-numeric: tabular-nums; }
+        .num, .font-mono {
+            font-family: 'JetBrains Mono', var(--tm-mono), monospace;
+            font-variant-numeric: tabular-nums;
+            font-feature-settings: "tnum";
+        }
 
         /* ---- Sidebar ---- */
         .sidebar {
@@ -66,359 +69,137 @@
         .nav-item {
             display: flex; align-items: center; gap: 12px;
             padding: 9px 12px; border-radius: 8px;
-            font-size: 14.5px; font-weight: 500; color: #94a3b8;
+            font-size: 14px; font-weight: 500; color: #94a3b8;
             text-decoration: none; white-space: nowrap;
             transition: background 0.15s, color 0.15s;
         }
         .nav-item:hover { background: rgba(255, 255, 255, 0.04); color: #ffffff; }
-        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: none !important; }
+        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; }
         .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
 
-        /* ---- Cards ---- */
-        .tp-card {
-            background: #0c0e14;
-            border: 1px solid #171a23;
-            border-radius: 12px;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
+        /* Institutional Trade Card */
+        .trade-card {
+            background-color: #0e131d;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45);
         }
-        .tp-card-title {
-            font-size: 15px;
-            font-weight: 700;
-            color: #ffffff;
-            letter-spacing: 0.01em;
-        }
-        .tp-card-sub {
-            font-size: 12.5px;
-            color: #64748b;
-            margin-top: 2px;
+        .trade-card:hover {
+            border-color: rgba(255, 255, 255, 0.10);
         }
 
-        /* Unit switch */
-        .unit-toggle {
-            display: inline-flex; align-items: center; justify-content: center;
-            width: 32px; height: 32px; border-radius: 8px;
-            background: #11141c; border: 1px solid #1f2533;
-            color: #f1f5f9; font-weight: 700; font-size: 13.5px;
-            cursor: pointer; transition: all 0.15s ease;
+        /* Month Matrix Boxes */
+        .month-box {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
         }
-        .unit-toggle:hover { border-color: #334155; background: #161b26; }
+        .month-box.active-profit {
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%);
+            border: 1px solid rgba(16, 185, 129, 0.35);
+        }
+        .month-box.active-profit:hover {
+            border-color: #10b981;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.15);
+            transform: translateY(-1px);
+        }
+        .month-box.active-loss {
+            background: linear-gradient(180deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.04) 100%);
+            border: 1px solid rgba(244, 63, 94, 0.35);
+        }
+        .month-box.active-loss:hover {
+            border-color: #f43f5e;
+            box-shadow: 0 0 16px rgba(244, 63, 94, 0.15);
+            transform: translateY(-1px);
+        }
+        .month-box.dormant {
+            background-color: rgba(18, 24, 37, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.035);
+        }
+        .month-box.dormant:hover {
+            background-color: rgba(26, 35, 52, 0.6);
+            border-color: rgba(255, 255, 255, 0.08);
+        }
 
-        .btn-icon-square {
-            width: 34px; height: 34px; border-radius: 8px;
-            background: #11141c; border: 1px solid #1f2533;
-            color: #ffffff; display: inline-flex; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.15s; text-decoration: none;
+        /* 13-Column Grid with Fallback */
+        .yearly-grid-13 {
+            display: grid;
+            grid-template-columns: repeat(13, minmax(0, 1fr));
+            gap: 10px;
+            align-items: stretch;
         }
-        .btn-icon-square:hover { border-color: #334155; background: #161b26; }
+        @media (max-width: 1200px) {
+            .yearly-grid-13 { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+        }
+        @media (max-width: 768px) {
+            .yearly-grid-13 { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+        }
+        @media (max-width: 480px) {
+            .yearly-grid-13 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
 
-        /* Segmented tab pills */
-        .subnav-tab {
-            padding: 6px 14px; border-radius: 7px; font-size: 13px; font-weight: 600;
-            color: #64748b; background: transparent; transition: all 0.15s ease;
-            cursor: pointer; border: none; outline: none;
-        }
-        .subnav-tab:hover { color: #ffffff; background: rgba(255,255,255,0.04); }
-        .subnav-tab.active { background: #181c26; color: #ffffff; box-shadow: 0 1px 3px rgba(0,0,0,0.4); }
-
-        /* Floating Action Button (+) */
-        .fab-btn {
-            position: fixed; bottom: 28px; right: 28px; width: 44px; height: 44px;
-            border-radius: 999px; background: #22c55e; color: #05070a;
-            display: flex; align-items: center; justify-content: center;
-            box-shadow: 0 4px 20px rgba(34, 197, 94, 0.4);
-            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); z-index: 80; text-decoration: none; cursor: pointer;
-            border: none;
-        }
-        .fab-btn:hover { background: #16a34a; transform: scale(1.06) translateY(-2px); box-shadow: 0 6px 24px rgba(34, 197, 94, 0.55); }
-
-        
-        /* Grid templates with rock-solid CSS (avoids uncompiled Tailwind arbitrary classes) */
-        .yearly-grid-matrix {
-            display: grid !important;
-            grid-template-columns: 80px repeat(12, minmax(0, 1fr)) !important;
-            gap: 8px !important;
-            align-items: center !important;
-        }
+        /* Monthly Calendar Matrix */
         .monthly-grid-matrix {
             display: grid !important;
             grid-template-columns: repeat(7, minmax(0, 1fr)) 100px !important;
-            gap: 10px !important;
+            gap: 8px !important;
             align-items: stretch !important;
         }
-        .monthly-stats-grid {
-            display: grid !important;
-            grid-template-columns: repeat(6, minmax(0, 1fr)) !important;
-            gap: 12px !important;
-        }
-        @media (max-width: 1024px) {
-            .monthly-stats-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
-        }
-        @media (max-width: 640px) {
-            .monthly-stats-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
-        }
-
-        /* Modal Exact TradesPad Styles (Matches media_1788465263599.png) */
-        .modal-backdrop {
-            position: fixed !important;
-            inset: 0 !important;
-            background: rgba(0, 0, 0, 0.85) !important;
-            backdrop-filter: blur(6px) !important;
-            z-index: 100 !important;
-            display: flex !important;
-            align-items: center !important;
-            justify-content: center !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        }
-        .modal-backdrop.open {
-            opacity: 1 !important;
-            pointer-events: auto !important;
-        }
-
-        .modal-window {
-            background: #0a0b0e !important;
-            border: 1px solid #16181f !important;
-            border-radius: 16px !important;
-            width: 100% !important;
-            max-width: 820px !important;
-            padding: 26px 28px !important;
-            box-shadow: 0 25px 80px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.02) !important;
-            transform: scale(0.97) !important;
-            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        }
-        .modal-backdrop.open .modal-window {
-            transform: scale(1) !important;
-        }
-
-        .modal-stats-grid {
-            display: grid !important;
-            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
-            gap: 12px !important;
-            margin-bottom: 22px !important;
-        }
-
-        .modal-stat-card {
-            background: #111318 !important;
-            border: 1px solid #1a1d25 !important;
-            border-radius: 12px !important;
-            padding: 16px 18px !important;
-            height: 90px !important;
-            display: flex !important;
-            flex-direction: column !important;
-            justify-content: space-between !important;
-        }
-
-        .modal-stat-label {
-            font-size: 11.5px !important;
-            font-weight: 500 !important;
-            color: #828b99 !important;
-            letter-spacing: 0.01em !important;
-            white-space: nowrap !important;
-            text-overflow: ellipsis !important;
-            overflow: hidden !important;
-        }
-
-        .modal-stat-val {
-            font-size: 26px !important;
-            font-weight: 700 !important;
-            color: #ffffff !important;
-            line-height: 1 !important;
-            letter-spacing: -0.02em !important;
-            font-family: 'Plus Jakarta Sans', var(--tm-sans) !important;
-        }
-
-        
-        /* ---- Accordion Smooth Animation (Matches media_1788465820972.png) ---- */
-        .accordion-drawer {
-            display: grid !important;
-            grid-template-rows: 0fr !important;
-            transition: grid-template-rows 0.32s cubic-bezier(0.16, 1, 0.3, 1) !important;
-        }
-        .accordion-drawer.open {
-            grid-template-rows: 1fr !important;
-        }
-        .accordion-inner {
-            overflow: hidden !important;
-            min-height: 0 !important;
-            opacity: 0 !important;
-            transform: translateY(-8px) !important;
-            transition: opacity 0.28s ease 0.04s, transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) 0.04s !important;
-        }
-        .accordion-drawer.open .accordion-inner {
-            opacity: 1 !important;
-            transform: translateY(0) !important;
-        }
-
-        .accordion-chevron {
-            transition: transform 0.28s cubic-bezier(0.16, 1, 0.3, 1) !important;
-            transform-origin: center !important;
-        }
-        .accordion-chevron.rotated {
-            transform: rotate(180deg) !important;
-        }
-
-        /* 2-Quadrant Cards Inside Drawer */
-        .notes-quad-card {
-            background: #0e1015 !important;
-            border: 1px solid #181b22 !important;
-            border-radius: 12px !important;
-            padding: 16px 18px !important;
-            min-height: 175px !important;
-            display: flex !important;
-            flex-direction: column !important;
-        }
-
-        .open-notes-btn {
-            display: inline-flex !important;
-            align-items: center !important;
-            gap: 6px !important;
-            background: #181b24 !important;
-            border: 1px solid #232734 !important;
-            color: #ffffff !important;
-            font-size: 12px !important;
-            font-weight: 600 !important;
-            padding: 5px 11px !important;
-            border-radius: 8px !important;
-            cursor: pointer !important;
-            transition: all 0.15s ease !important;
-        }
-        .open-notes-btn:hover {
-            background: #202532 !important;
-            border-color: #313749 !important;
-        }
-
-        .dropzone-area {
-            border-radius: 8px !important;
-            transition: all 0.15s ease !important;
-        }
-        .dropzone-area:hover {
-            background: rgba(255, 255, 255, 0.02) !important;
-        }
-        .dropzone-area.drag-over {
-            background: rgba(34, 197, 94, 0.06) !important;
-            border: 1px dashed rgba(34, 197, 94, 0.4) !important;
-        }
-
-        /* Modal trade table grid (6 columns) */
-        .modal-table-shell {
-            background: #0e1015 !important;
-            border: 1px solid #181b22 !important;
-            border-radius: 12px !important;
-            overflow: hidden !important;
-            margin-bottom: 18px !important;
-        }
-
-        .modal-table-header {
-            display: grid !important;
-            grid-template-columns: 160px 120px 90px 120px 90px 1fr !important;
-            padding: 12px 20px !important;
-            background: #090b0e !important;
-            border-bottom: 1px solid #16181f !important;
-            font-size: 12px !important;
-            font-weight: 600 !important;
-            color: #828b99 !important;
-        }
-
-        .modal-table-row {
-            display: grid !important;
-            grid-template-columns: 160px 120px 90px 120px 90px 1fr !important;
-            padding: 14px 20px !important;
-            border-bottom: 1px solid #14161d !important;
-            align-items: center !important;
-            font-size: 13px !important;
-            cursor: pointer !important;
-            transition: background 0.15s ease !important;
-        }
-        .modal-table-row:last-child {
-            border-bottom: none !important;
-        }
-        .modal-table-row:hover {
-            background: rgba(255, 255, 255, 0.035) !important;
-        }
-        .modal-table-row.selected {
-            background: rgba(34, 197, 94, 0.08) !important;
-            border-left: 3px solid #22c55e !important;
-        }
-
-        /* Yearly Grid Cells */
-        .year-cell {
-            border-radius: 10px; background: #0c0e14; border: 1px solid #171a23;
-            height: 52px; display: flex; flex-direction: column; align-items: center; justify-content: center;
-            cursor: pointer; transition: all 0.15s ease; user-select: none;
-        }
-        .year-cell:hover { border-color: #334155; background: #131620; }
-        .year-cell.active-profit {
-            background: rgba(34, 197, 94, 0.08); border-color: rgba(34, 197, 94, 0.3);
-        }
-        .year-cell.active-loss {
-            background: rgba(239, 68, 68, 0.08); border-color: rgba(239, 68, 68, 0.3);
-        }
-
-        /* Monthly Calendar Grid Cells */
         .cal-day-cell {
-            background: #0c0e14; border: 1px solid #171a23; border-radius: 12px;
-            min-height: 96px; padding: 10px 12px; display: flex; flex-direction: column;
+            background: #0c0e14; border: 1px solid #171a23; border-radius: 10px;
+            min-height: 84px; padding: 8px 10px; display: flex; flex-direction: column;
             justify-content: space-between; position: relative; transition: all 0.15s ease;
             cursor: pointer; user-select: none;
         }
-        .cal-day-cell:hover {
-            border-color: #334155; background: #11141c;
-        }
-        .cal-day-cell.active-day {
-            background: #0e121a; border-color: #262e3d;
-        }
+        .cal-day-cell:hover { border-color: #334155; background: #11141c; }
         .cal-day-cell.has-trades {
-            background: rgba(34, 197, 94, 0.05); border-color: rgba(34, 197, 94, 0.25);
+            background: rgba(16, 185, 129, 0.06); border-color: rgba(16, 185, 129, 0.28);
         }
         .cal-day-cell.has-trades:hover {
-            border-color: #22c55e; background: rgba(34, 197, 94, 0.09);
+            border-color: #10b981; background: rgba(16, 185, 129, 0.12);
         }
-
-        /* Week Summary Cell */
         .cal-week-cell {
-            background: #0c0e14; border: 1px solid #171a23; border-radius: 12px;
-            min-height: 96px; padding: 10px 12px; display: flex; flex-direction: column;
+            background: #0c0e14; border: 1px solid #171a23; border-radius: 10px;
+            min-height: 84px; padding: 8px 10px; display: flex; flex-direction: column;
             align-items: center; justify-content: center; text-align: center;
         }
 
-        /* Modal Overlay */
+        /* Modals */
         .modal-backdrop {
-            position: fixed; inset: 0; background: rgba(0, 0, 0, 0.8);
-            backdrop-filter: blur(5px); z-index: 100; display: flex; align-items: center; justify-content: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.2s ease;
+            position: fixed !important; inset: 0 !important;
+            background: rgba(0, 0, 0, 0.85) !important; backdrop-filter: blur(6px) !important;
+            z-index: 100 !important; display: flex !important; align-items: center !important; justify-content: center !important;
+            opacity: 0 !important; pointer-events: none !important; transition: opacity 0.2s ease !important;
         }
-        .modal-backdrop.open { opacity: 1; pointer-events: auto; }
+        .modal-backdrop.open { opacity: 1 !important; pointer-events: auto !important; }
         .modal-window {
-            background: #0c0e14; border: 1px solid #1f2533; border-radius: 16px;
-            width: 100%; max-width: 680px; padding: 24px; box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
-            transform: scale(0.96); transition: transform 0.2s ease;
+            background: #0b0f17 !important; border: 1px solid #1f2533 !important; border-radius: 16px !important;
+            width: 100% !important; max-width: 760px !important; padding: 24px !important;
+            box-shadow: 0 25px 70px rgba(0, 0, 0, 0.9) !important;
+            transform: scale(0.97) !important; transition: transform 0.2s ease !important;
         }
-        .modal-backdrop.open .modal-window { transform: scale(1); }
+        .modal-backdrop.open .modal-window { transform: scale(1) !important; }
 
-        .pnl-badge {
-            display: inline-flex; align-items: center; gap: 5px;
-            padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 700;
-            background: #072416; color: #22c55e; border: 1px solid #0d4a2b;
+        /* Floating action button */
+        .floating-action-btn {
+            position: fixed; bottom: 24px; right: 24px; z-index: 40;
+            box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.8);
         }
-        .pnl-badge.loss {
-            background: #2e0d13; color: #f87171; border-color: #631923;
-        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: #080b10; }
+        ::-webkit-scrollbar-thumb { background: #1e293b; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
         /* Toast */
         .toast {
-            position: fixed; bottom: 24px; right: 24px; z-index: 120;
-            background: #11141c; border: 1px solid #1f2533; border-radius: 10px;
-            padding: 12px 18px; font-size: 13px; font-weight: 600; color: #ffffff;
+            position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px);
+            z-index: 120; background: #11141c; border: 1px solid #1f2533; border-radius: 10px;
+            padding: 10px 18px; font-size: 13px; font-weight: 600; color: #ffffff;
             display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
-            transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.2s ease;
+            opacity: 0; pointer-events: none; transition: all 0.2s ease;
         }
-        .toast.show { transform: none; opacity: 1; pointer-events: auto; }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; pointer-events: auto; }
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
-    <link rel="apple-touch-icon" href="assets/favicon.png">
 </head>
 <body>
 
@@ -427,9 +208,9 @@
         <!-- ============ SIDEBAR ============ -->
         <aside class="sidebar">
             <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[#141720] flex-shrink-0">
-                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
+                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="w-6 h-6 object-contain">
                 <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
-                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed p-1 text-slate-400 hover:text-white" title="Collapse sidebar">
                     <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
                 </button>
             </div>
@@ -437,11 +218,11 @@
             <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-1">
                 <!-- 1. CORE -->
                 <div class="sidebar-section" data-section="core">
-                    <button type="button" class="sidebar-section-header">
+                    <button type="button" class="sidebar-section-header flex items-center justify-between w-full px-2 py-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                         <span>CORE</span>
-                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                        <svg data-lucide="chevron-down" class="w-3 h-3"></svg>
                     </button>
-                    <div class="sidebar-section-items">
+                    <div class="sidebar-section-items flex flex-col gap-0.5 mt-0.5">
                         <a href="dashboard.html" class="nav-item">
                             <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
                         </a>
@@ -465,11 +246,11 @@
 
                 <!-- 2. INTELLIGENCE -->
                 <div class="sidebar-section" data-section="intelligence">
-                    <button type="button" class="sidebar-section-header">
+                    <button type="button" class="sidebar-section-header flex items-center justify-between w-full px-2 py-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                         <span>INTELLIGENCE</span>
-                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                        <svg data-lucide="chevron-down" class="w-3 h-3"></svg>
                     </button>
-                    <div class="sidebar-section-items">
+                    <div class="sidebar-section-items flex flex-col gap-0.5 mt-0.5">
                         <a href="ai.html" class="nav-item">
                             <svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Coach</span>
                         </a>
@@ -487,11 +268,11 @@
 
                 <!-- 3. STRATEGY & LAB -->
                 <div class="sidebar-section" data-section="strategy">
-                    <button type="button" class="sidebar-section-header">
+                    <button type="button" class="sidebar-section-header flex items-center justify-between w-full px-2 py-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                         <span>STRATEGY & LAB</span>
-                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                        <svg data-lucide="chevron-down" class="w-3 h-3"></svg>
                     </button>
-                    <div class="sidebar-section-items">
+                    <div class="sidebar-section-items flex flex-col gap-0.5 mt-0.5">
                         <a href="strategy-lab.html" class="nav-item">
                             <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
                         </a>
@@ -503,11 +284,11 @@
 
                 <!-- 4. PERFORMANCE & RISK -->
                 <div class="sidebar-section" data-section="risk">
-                    <button type="button" class="sidebar-section-header">
+                    <button type="button" class="sidebar-section-header flex items-center justify-between w-full px-2 py-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                         <span>PERFORMANCE & RISK</span>
-                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                        <svg data-lucide="chevron-down" class="w-3 h-3"></svg>
                     </button>
-                    <div class="sidebar-section-items">
+                    <div class="sidebar-section-items flex flex-col gap-0.5 mt-0.5">
                         <a href="risk.html" class="nav-item">
                             <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
                         </a>
@@ -519,14 +300,14 @@
 
                 <!-- 5. BATTLES & LABS -->
                 <div class="sidebar-section" data-section="battles-lab">
-                    <button type="button" class="sidebar-section-header">
+                    <button type="button" class="sidebar-section-header flex items-center justify-between w-full px-2 py-1.5 text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
                         <span>BATTLES & LABS</span>
-                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                        <svg data-lucide="chevron-down" class="w-3 h-3"></svg>
                     </button>
-                    <div class="sidebar-section-items">
+                    <div class="sidebar-section-items flex flex-col gap-0.5 mt-0.5">
                         <a href="battles.html" class="nav-item">
                             <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
-                            <span class="sidebar-soon-badge">SOON</span>
+                            <span class="ml-auto text-[9px] px-1.5 py-0.5 rounded bg-amber-500/20 text-amber-300 font-semibold">SOON</span>
                         </a>
                         <a href="backtesting.html" class="nav-item">
                             <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
@@ -537,10 +318,10 @@
 
             <div class="border-t border-[#141720] p-2.5 flex flex-col flex-shrink-0">
                 <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.04] transition-colors cursor-pointer" id="profile-chip" title="Account & Settings">
-                    <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
+                    <div class="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-300 font-bold flex items-center justify-center text-xs" id="profile-avatar">TR</div>
                     <div class="profile-text flex-1 min-w-0">
                         <div class="text-[13.5px] font-semibold text-white truncate" id="profile-name">Trader</div>
-                        <div class="text-[11.5px] text-[#64748b]" id="profile-meta">Battlex Pro</div>
+                        <div class="text-[11px] text-[#64748b]" id="profile-meta">Battlex Pro</div>
                     </div>
                     <svg class="w-4 h-4 text-[#64748b] hide-when-collapsed" data-lucide="chevron-up"></svg>
                 </div>
@@ -550,243 +331,400 @@
         <!-- ============ MAIN VIEWPORT ============ -->
         <div class="flex-1 flex flex-col min-w-0">
 
-            <!-- Breadcrumb Topbar -->
-            <div class="topbar flex items-center justify-between px-6 h-[56px] border-b border-[#141720] flex-shrink-0">
-                <div class="flex items-center gap-2 text-[13.5px]">
-                    <span class="text-[#64748b] font-medium cursor-pointer" id="crumb-all-accounts">All Accounts</span>
-                    <span class="text-[#64748b]">›</span>
-                    <span class="text-[#64748b] font-medium cursor-pointer" id="crumb-cal-root">Calendar</span>
-                    <span class="text-[#64748b] hidden" id="crumb-sub-sep">›</span>
-                    <span class="text-white font-bold hidden" id="crumb-sub-month">August 2026</span>
-                </div>
-
-                <div class="flex items-center gap-3">
-                    <button class="unit-toggle" id="unit-toggle" title="Toggle % or $">%</button>
-                    <button class="account-select hide-when-collapsed" id="acc-chip">
-                        <span class="num text-[12px]">—</span><span class="text-[#64748b]">·</span>
-                        <span>No account</span>
-                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Main Scrollable Body -->
-            <main class="flex-1 overflow-y-auto bg-[#06080b]">
-                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
-
-                    <!-- Page Title Header (Matches Image) -->
-                    <div class="mb-1">
-                        <h1 class="text-[26px] font-extrabold text-white tracking-tight">Calendar</h1>
-                        <p class="text-[13px] text-[#828b99] mt-0.5 font-medium">Review your trading performance over time.</p>
+            <!-- Top Navigation Bar (Stitch Design) -->
+            <header class="border-b border-white/[0.06] bg-[#0b0f17]/90 backdrop-blur-md sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex-shrink-0" data-purpose="global-header">
+                <div class="max-w-[1560px] mx-auto flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+                    <!-- Brand & Breadcrumbs -->
+                    <div class="flex items-center space-x-3.5">
+                        <div class="w-7 h-7 rounded-md bg-white/[0.04] border border-white/[0.08] flex items-center justify-center text-slate-300">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                <path d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                        </div>
+                        <div class="flex items-center space-x-2 text-xs">
+                            <span class="font-semibold text-slate-100 tracking-tight font-sans">BATTLEXJOURNAL</span>
+                            <span class="text-slate-600">/</span>
+                            <span class="text-slate-400">Performance Calendar</span>
+                        </div>
+                        <div class="hidden sm:inline-flex items-center px-2 py-0.5 rounded bg-white/[0.03] border border-white/[0.06] text-[10px] font-mono text-slate-400">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1.5 animate-pulse"></span>
+                            Live Sync Active
+                        </div>
                     </div>
 
+                    <!-- Account Selector & Header Controls -->
+                    <div class="flex flex-wrap items-center gap-2.5 sm:gap-3">
+                        <div class="relative" data-purpose="account-filter">
+                            <button id="acc-chip" type="button" class="inline-flex items-center justify-between gap-2 bg-[#121824] hover:bg-[#182030] text-slate-200 text-xs font-medium px-3 py-1.5 rounded-md border border-white/[0.08] transition-colors focus:outline-none cursor-pointer">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/80"></span>
+                                <span id="header-acc-name">Apex Live Funded ($100k)</span>
+                                <span id="header-acc-tag" class="text-slate-500 text-[10px] font-mono">#APX-9821</span>
+                                <svg class="w-3 h-3 text-slate-400 ml-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M19 9l-7 7-7-7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            </button>
+                        </div>
+                        <div class="hidden lg:flex items-center text-slate-400 text-xs px-2.5 py-1.5 font-mono bg-[#10141d] rounded-md border border-white/[0.04]" id="utc-clock-badge">
+                            <svg class="w-3.5 h-3.5 mr-1.5 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            <span id="utc-time-str">UTC-4 (NY EST)</span>
+                        </div>
+                        <button id="btn-export-audit" type="button" class="inline-flex items-center gap-1.5 bg-white/[0.03] hover:bg-white/[0.06] text-slate-300 hover:text-white px-3 py-1.5 rounded-md text-xs font-medium border border-white/[0.08] transition-colors cursor-pointer" title="Download audited trading CSV">
+                            <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                            <span>Export Audit</span>
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Scrollable Content Viewport -->
+            <main class="flex-1 overflow-y-auto bg-[#080b10] px-4 sm:px-8 py-6 space-y-7" data-purpose="calendar-dashboard">
+                <div class="max-w-[1560px] mx-auto space-y-7">
+
                     <!-- ======================================================= -->
-                    <!-- VIEW 1: YEARLY PERFORMANCE & MACRO CURVE (Matches Image 1) -->
+                    <!-- PAGE HEADER & PERIOD CONTROLS -->
                     <!-- ======================================================= -->
-                    <div id="view-yearly" class="flex flex-col gap-4">
-
-                        <!-- Card 1: Yearly Performance Matrix -->
-                        <div class="tp-card">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#94a3b8] flex-shrink-0">
-                                        <svg data-lucide="bar-chart-2" class="w-4 h-4"></svg>
-                                    </div>
-                                    <div>
-                                        <div class="tp-card-title">Yearly Performance</div>
-                                        <div class="tp-card-sub">Select a month to view its performance</div>
-                                    </div>
-                                </div>
-                                <div class="relative" id="year-filter-wrap">
-                                    <button type="button" id="year-filter-btn" class="flex items-center gap-2 bg-[#11141c] border border-[#1f2533] text-white text-[12.5px] font-semibold rounded-lg px-3 py-1.5 hover:border-[#334155] transition-colors">
-                                        <span id="year-filter-label">All years</span>
-                                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
-                                    </button>
-                                </div>
-                            </div>
-
-                            <!-- 12-Month Grid (Jan - Dec) -->
-                            <div class="w-full overflow-x-auto">
-                                <div class="min-w-[900px] yearly-grid-matrix text-center text-[12px] font-bold text-[#64748b] mb-2">
-                                    <div></div>
-                                    <div>Jan</div><div>Feb</div><div>Mar</div><div>Apr</div><div>May</div><div>Jun</div>
-                                    <div>Jul</div><div>Aug</div><div>Sep</div><div>Oct</div><div>Nov</div><div>Dec</div>
-                                </div>
-
-                                <div class="min-w-[900px] yearly-grid-matrix" id="yearly-matrix-row">
-                                    <!-- Populated dynamically -->
-                                </div>
-                            </div>
+                    <section class="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-1" data-purpose="page-title-controls">
+                        <div>
+                            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-3">
+                                <span>Calendar</span>
+                                <span class="text-[11px] font-mono font-medium px-2 py-0.5 rounded bg-white/[0.04] text-slate-300 border border-white/[0.08]" id="title-fiscal-badge">Fiscal Year 2026</span>
+                            </h1>
+                            <p class="text-slate-400 text-xs mt-1">
+                                Trading performance, equity progression, and monthly returns validation.
+                            </p>
                         </div>
 
-                        <!-- Card 2: Account Balance Equity Curve -->
-                        <div class="tp-card">
-                            <div class="flex items-center justify-between mb-4">
-                                <div class="flex items-center gap-3">
-                                    <div class="w-9 h-9 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#94a3b8] flex-shrink-0">
-                                        <svg data-lucide="trending-up" class="w-4 h-4"></svg>
+                        <!-- Year Selector Tabs & View Mode Switcher -->
+                        <div class="flex items-center space-x-2">
+                            <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-white/[0.06]" id="year-tabs-container">
+                                <!-- Populated dynamically (e.g. 2025, 2026 Active, All Years) -->
+                                <button type="button" class="year-tab-btn px-3 py-1.5 rounded text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors" data-year="2025">2025</button>
+                                <button type="button" class="year-tab-btn px-3 py-1.5 rounded text-xs font-medium bg-white/[0.08] text-white border border-white/[0.08] transition-all" data-year="2026">2026 Active</button>
+                                <button type="button" class="year-tab-btn px-3 py-1.5 rounded text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors" data-year="all">All Years</button>
+                            </div>
+                            <div class="h-5 w-px bg-white/10 mx-1 hidden sm:block"></div>
+                            <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-white/[0.06]">
+                                <button id="btn-view-macro" type="button" class="p-1.5 rounded bg-white/[0.08] text-slate-200 text-xs cursor-pointer" title="Macro Performance Matrix">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                </button>
+                                <button id="btn-view-day-cal" type="button" class="p-1.5 rounded hover:text-slate-200 text-slate-500 text-xs cursor-pointer" title="Day-by-Day Calendar Grid">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                </button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ======================================================= -->
+                    <!-- VIEW 1: INSTITUTIONAL PERFORMANCE DASHBOARD (Matches Stitch) -->
+                    <!-- ======================================================= -->
+                    <div id="calendar-macro-view" class="space-y-7">
+
+                        <!-- SECTION 1: YEARLY PERFORMANCE MATRIX (13 COLUMNS) -->
+                        <section class="trade-card rounded-2xl p-5 sm:p-6" data-purpose="yearly-performance-matrix">
+                            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-5 border-b border-white/[0.06]">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-300">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
                                     </div>
                                     <div>
-                                        <div class="tp-card-title">Account Balance</div>
-                                        <div class="tp-card-sub">Equity curve of selected time period</div>
+                                        <h2 class="text-sm font-semibold text-white tracking-tight">Yearly Performance Matrix</h2>
+                                        <p class="text-xs text-slate-400">Monthly return attribution, trade count, and execution cadence</p>
                                     </div>
                                 </div>
                                 <div class="flex items-center gap-4">
-                                    <div class="flex items-center gap-1.5 text-[12px] font-medium text-[#828b99]">
-                                        <span class="w-2 h-2 rounded-full bg-[#22c55e]"></span>
-                                        <span>Account Balance</span>
+                                    <div class="text-right hidden sm:block">
+                                        <div class="text-[10px] uppercase tracking-wider text-slate-500 font-medium">YTD Net Return</div>
+                                        <div class="text-sm font-mono font-semibold text-emerald-400 tabular-nums" id="matrix-header-ytd">+19.75% <span class="text-xs text-slate-400 font-normal font-sans">(+$19,750.00)</span></div>
                                     </div>
-                                    <button type="button" class="flex items-center gap-2 bg-[#11141c] border border-[#1f2533] text-white text-[12.5px] font-semibold rounded-lg px-3 py-1.5 hover:border-[#334155] transition-colors">
-                                        <span>All years</span>
-                                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>
-                                    </button>
+                                    <select id="matrix-year-dropdown" class="bg-[#131a26] text-slate-300 text-xs font-medium border border-white/[0.08] rounded-md px-2.5 py-1.5 focus:outline-none cursor-pointer">
+                                        <option value="2026">2026 Active</option>
+                                        <option value="2025">2025</option>
+                                        <option value="all">All Years</option>
+                                    </select>
                                 </div>
                             </div>
 
-                            <div class="relative w-full h-[260px]" id="macro-chart-container">
-                                <!-- Area chart rendered dynamically -->
+                            <!-- 13-Column Grid Container -->
+                            <div class="pt-5 overflow-x-auto">
+                                <div class="yearly-grid-13 min-w-[900px]" id="yearly-grid-host">
+                                    <!-- Populated dynamically: Col 0 is Year Label, Cols 1-12 are Jan-Dec -->
+                                </div>
                             </div>
-                        </div>
 
-                        <!-- 4 Summary KPI Cards (Matches Bottom Row of Screenshot) -->
-                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                            <!-- KPI 1: YTD -->
-                            <div class="tp-card !p-5 flex flex-col justify-between">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[12.5px] font-semibold text-[#828b99]">YTD</span>
-                                    <div class="w-7 h-7 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#828b99]">
-                                        <svg data-lucide="trending-up" class="w-3.5 h-3.5"></svg>
+                            <!-- Legend Footnote -->
+                            <div class="mt-4 flex flex-wrap items-center justify-between text-xs text-slate-500 pt-3 border-t border-white/[0.04]">
+                                <div class="flex items-center space-x-4 text-[11px]">
+                                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Positive Return</span>
+                                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-rose-400"></span> Negative Return</span>
+                                    <span class="flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-slate-700"></span> Flat / Dormant</span>
+                                </div>
+                                <div class="text-[11px] font-mono text-slate-500">
+                                    Settlement sync <span class="text-slate-400" id="settlement-sync-time">03:42:15</span>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- SECTION 2: ACCOUNT BALANCE & EQUITY CURVE (With Live Tickers) -->
+                        <section class="trade-card rounded-2xl p-5 sm:p-6" data-purpose="equity-curve-analysis">
+                            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 pb-6 border-b border-white/[0.06]">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-8 h-8 rounded-lg bg-white/[0.03] border border-white/[0.08] flex items-center justify-center text-slate-300">
+                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                                        </svg>
+                                    </div>
+                                    <div>
+                                        <div class="flex items-center gap-2">
+                                            <h2 class="text-sm font-semibold text-white tracking-tight">Account Balance &amp; Equity Curve</h2>
+                                            <span class="px-1.5 py-0.5 rounded text-[10px] font-mono text-slate-400 bg-white/[0.04] border border-white/[0.08]" id="chart-ath-badge">ATH $119,750</span>
+                                        </div>
+                                        <p class="text-xs text-slate-400">Mark-to-market progression with high-water mark validation</p>
                                     </div>
                                 </div>
+
+                                <!-- Live Tickers in Header -->
+                                <div class="flex flex-wrap items-center gap-4 sm:gap-6 text-left">
+                                    <div>
+                                        <span class="text-[10px] uppercase tracking-wider text-slate-500 block font-medium">Account Balance</span>
+                                        <span class="text-base font-semibold font-mono text-white tabular-nums" id="ticker-balance">$119,750.00</span>
+                                    </div>
+                                    <div class="h-6 w-px bg-white/10 hidden sm:block"></div>
+                                    <div>
+                                        <span class="text-[10px] uppercase tracking-wider text-slate-500 block font-medium">Net Realized PnL</span>
+                                        <span class="text-base font-semibold font-mono text-emerald-400 tabular-nums" id="ticker-pnl">+$19,750.00</span>
+                                    </div>
+                                    <div class="h-6 w-px bg-white/10 hidden sm:block"></div>
+                                    <div>
+                                        <span class="text-[10px] uppercase tracking-wider text-slate-500 block font-medium">Max Drawdown</span>
+                                        <span class="text-base font-semibold font-mono text-slate-300 tabular-nums" id="ticker-drawdown">-0.82%</span>
+                                    </div>
+                                    <!-- Zoom Pills -->
+                                    <div class="inline-flex p-0.5 bg-[#10151f] rounded-lg border border-white/[0.06] ml-auto lg:ml-2" id="range-pills-row">
+                                        <button class="range-pill px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors" data-range="1M">1M</button>
+                                        <button class="range-pill px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors" data-range="3M">3M</button>
+                                        <button class="range-pill px-2 py-1 text-xs font-medium bg-white/[0.08] text-white rounded" data-range="YTD">YTD</button>
+                                        <button class="range-pill px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors" data-range="1Y">1Y</button>
+                                        <button class="range-pill px-2 py-1 text-xs font-medium text-slate-400 hover:text-white transition-colors" data-range="ALL">All</button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- SVG Chart Canvas Area -->
+                            <div class="pt-6 relative" data-purpose="svg-equity-chart">
+                                <!-- Floating Overlay Legend -->
+                                <div class="absolute top-9 left-4 z-10 hidden sm:flex items-center space-x-3 bg-[#0a0e16]/90 backdrop-blur-md px-3 py-1.5 rounded border border-white/[0.06]">
+                                    <div class="flex items-center space-x-2 text-xs">
+                                        <span class="w-2.5 h-0.5 bg-emerald-400 rounded-full"></span>
+                                        <span class="text-slate-400">Equity Curve:</span>
+                                        <span class="font-mono font-medium text-slate-200 tabular-nums" id="legend-equity-val">$119,750.00</span>
+                                    </div>
+                                    <span class="text-slate-600">|</span>
+                                    <div class="flex items-center space-x-2 text-xs">
+                                        <span class="w-2.5 h-0.5 bg-slate-600 rounded-full"></span>
+                                        <span class="text-slate-400">Baseline:</span>
+                                        <span class="font-mono text-slate-400" id="legend-baseline-val">$100,000.00</span>
+                                    </div>
+                                </div>
+
+                                <div class="w-full h-64 sm:h-72 relative" id="chart-svg-host">
+                                    <!-- Populated dynamically via JS -->
+                                </div>
+
+                                <!-- X-Axis Timeline Labels -->
+                                <div class="grid grid-cols-6 sm:grid-cols-12 text-slate-500 font-mono text-[10px] pt-3 px-1" id="timeline-labels-row">
+                                    <div class="text-left">Jan 26</div>
+                                    <div class="text-center hidden sm:block">Feb</div>
+                                    <div class="text-center hidden sm:block">Mar</div>
+                                    <div class="text-center">Apr 26</div>
+                                    <div class="text-center hidden sm:block">May</div>
+                                    <div class="text-center hidden sm:block">Jun</div>
+                                    <div class="text-center">Jul 26</div>
+                                    <div class="text-center text-slate-400">Aug</div>
+                                    <div class="text-center text-emerald-400 font-medium">Sep</div>
+                                    <div class="text-center hidden sm:block text-slate-600">Oct</div>
+                                    <div class="text-center hidden sm:block text-slate-600">Nov</div>
+                                    <div class="text-right text-slate-600">Dec 26</div>
+                                </div>
+
+                                <!-- Axis Bottom Info Pill -->
+                                <div class="flex flex-wrap items-center justify-between text-xs text-slate-400 pt-4 mt-2 border-t border-white/[0.04]">
+                                    <div class="flex items-center space-x-2 text-[11px]">
+                                        <span class="text-slate-500">Benchmark:</span>
+                                        <span class="text-slate-300">Absolute Dollar Return ($)</span>
+                                    </div>
+                                    <div class="flex items-center space-x-2 font-mono text-[11px] text-slate-500">
+                                        <span>Drawdown: <strong class="text-slate-300 font-normal" id="axis-drawdown-days">0 Days</strong></span>
+                                        <span>•</span>
+                                        <span>Recovery Factor: <strong class="text-slate-300 font-normal" id="axis-recovery-factor">24.1</strong></span>
+                                    </div>
+                                </div>
+                            </div>
+                        </section>
+
+                        <!-- SECTION 3: 4 CORE PERFORMANCE METRICS CARDS -->
+                        <section class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4" data-purpose="kpi-metric-cards">
+                            <!-- KPI 1: YTD Net Return -->
+                            <div class="trade-card rounded-xl p-5 flex flex-col justify-between">
                                 <div>
-                                    <div class="num text-[24px] font-bold text-[#22c55e] leading-tight" id="kpi-ytd-val">+0.00%</div>
-                                    <div class="text-[11.5px] text-[#64748b] mt-1 font-medium" id="kpi-ytd-sub">0 trades</div>
+                                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                                        <span class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">YTD Net Return</span>
+                                        <span class="text-[10px] font-mono text-slate-500" id="kpi-ytd-badge">2026</span>
+                                    </div>
+                                    <div class="text-2xl font-semibold font-mono text-white tracking-tight tabular-nums" id="kpi-ytd-pct">
+                                        +19.75%
+                                    </div>
+                                    <div class="text-xs font-mono text-emerald-400 font-normal mt-1" id="kpi-ytd-pnl">
+                                        +$19,750.00 Net PnL
+                                    </div>
+                                </div>
+                                <div class="pt-3.5 mt-3.5 border-t border-white/[0.04] flex items-center justify-between text-xs">
+                                    <span class="text-slate-400">Annualized Run-Rate</span>
+                                    <span class="font-mono text-slate-200 font-medium" id="kpi-ytd-runrate">+29.62%</span>
                                 </div>
                             </div>
 
-                            <!-- KPI 2: Total Trades -->
-                            <div class="tp-card !p-5 flex flex-col justify-between">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[12.5px] font-semibold text-[#828b99]">Total Trades</span>
-                                    <div class="w-7 h-7 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#828b99]">
-                                        <svg data-lucide="crosshair" class="w-3.5 h-3.5"></svg>
+                            <!-- KPI 2: Total Trades & Win-rate -->
+                            <div class="trade-card rounded-xl p-5 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                                        <span class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Total Trades</span>
+                                        <span class="text-[10px] font-mono text-slate-500" id="kpi-trades-count-badge">4 Executions</span>
+                                    </div>
+                                    <div class="flex items-baseline space-x-2">
+                                        <span class="text-2xl font-semibold font-mono text-white tracking-tight tabular-nums" id="kpi-trades-count">4</span>
+                                        <span class="text-xs text-slate-400 font-normal">trades completed</span>
+                                    </div>
+                                    <div class="text-xs font-mono text-slate-300 mt-1 flex items-center gap-1.5" id="kpi-trades-winloss">
+                                        <span class="w-1.5 h-1.5 rounded-full bg-emerald-400/80"></span>
+                                        <span>4 Wins</span>
+                                        <span class="text-slate-600">/</span>
+                                        <span class="text-slate-400">0 Losses</span>
+                                        <span class="text-slate-300 font-medium ml-auto" id="kpi-trades-winrate">100% WR</span>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="num text-[24px] font-bold text-white leading-tight" id="kpi-trades-val">0</div>
-                                    <div class="text-[11.5px] text-[#64748b] mt-1 font-medium" id="kpi-trades-sub">in 2026</div>
+                                <div class="pt-3.5 mt-3.5 border-t border-white/[0.04] flex items-center justify-between text-xs">
+                                    <span class="text-slate-400">Avg Duration</span>
+                                    <span class="font-mono text-slate-200 font-medium" id="kpi-trades-avg-duration">1h 42m</span>
                                 </div>
                             </div>
 
-                            <!-- KPI 3: Profitable Months -->
-                            <div class="tp-card !p-5 flex flex-col justify-between">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[12.5px] font-semibold text-[#828b99]">Profitable Months</span>
-                                    <div class="w-7 h-7 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#828b99]">
-                                        <svg data-lucide="bar-chart-2" class="w-3.5 h-3.5"></svg>
+                            <!-- KPI 3: Profitable Months Ratio -->
+                            <div class="trade-card rounded-xl p-5 flex flex-col justify-between">
+                                <div>
+                                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                                        <span class="text-[11px] uppercase tracking-wider text-slate-500 font-medium">Profitable Months</span>
+                                        <span class="text-[10px] font-mono text-slate-500" id="kpi-prof-badge">Hit Rate 100%</span>
+                                    </div>
+                                    <div class="text-2xl font-semibold font-mono text-white tracking-tight tabular-nums" id="kpi-prof-ratio">
+                                        2 <span class="text-slate-500 text-base font-normal font-sans">/ 12</span>
+                                    </div>
+                                    <div class="text-xs text-slate-400 mt-1 flex items-center gap-1">
+                                        <span>Active:</span>
+                                        <span class="text-slate-300 font-mono" id="kpi-prof-active-months">Aug, Sep</span>
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="num text-[24px] font-bold text-white leading-tight" id="kpi-prof-val">0 / 12</div>
-                                    <div class="text-[11.5px] text-[#64748b] mt-1 font-medium truncate" id="kpi-prof-sub">No profitable months</div>
+                                <div class="pt-3.5 mt-3.5 border-t border-white/[0.04]">
+                                    <div class="flex justify-between text-[11px] font-mono text-slate-400 mb-1.5">
+                                        <span>Month Hit-Rate</span>
+                                        <span class="text-slate-300 font-medium" id="kpi-prof-hitrate">100%</span>
+                                    </div>
+                                    <div class="w-full h-1 bg-white/[0.06] rounded-full overflow-hidden">
+                                        <div id="kpi-prof-bar" class="bg-slate-300 h-full rounded-full transition-all duration-500" style="width: 100%"></div>
+                                    </div>
                                 </div>
                             </div>
 
-                            <!-- KPI 4: Current Month -->
-                            <div class="tp-card !p-5 flex flex-col justify-between">
-                                <div class="flex items-center justify-between mb-2">
-                                    <span class="text-[12.5px] font-semibold text-[#828b99]">Current Month</span>
-                                    <div class="w-7 h-7 rounded-lg bg-[#141721] border border-[#202534] flex items-center justify-center text-[#828b99]">
-                                        <svg data-lucide="calendar" class="w-3.5 h-3.5"></svg>
+                            <!-- KPI 4: Current Month Detail -->
+                            <div class="trade-card rounded-xl p-5 flex flex-col justify-between bg-[#0e141d]">
+                                <div>
+                                    <div class="flex items-center justify-between text-slate-400 mb-2">
+                                        <div class="flex items-center space-x-1.5">
+                                            <span class="text-[11px] uppercase tracking-wider text-slate-400 font-medium">Current Month</span>
+                                            <span class="text-[10px] text-slate-500 font-mono" id="kpi-cur-name">(Sep)</span>
+                                        </div>
+                                        <span class="text-[10px] font-mono text-slate-400" id="kpi-cur-trades">3 Trades</span>
+                                    </div>
+                                    <div class="text-2xl font-semibold font-mono text-white tracking-tight tabular-nums" id="kpi-cur-pct">
+                                        +15.19%
+                                    </div>
+                                    <div class="text-xs font-mono text-emerald-400 font-normal mt-1" id="kpi-cur-pnl">
+                                        +$15,190.00 Net PnL
                                     </div>
                                 </div>
-                                <div>
-                                    <div class="num text-[24px] font-bold text-white leading-tight" id="kpi-cur-val">-</div>
-                                    <div class="text-[11.5px] text-[#64748b] mt-1 font-medium" id="kpi-cur-sub">No trades yet</div>
+                                <div class="pt-3.5 mt-3.5 border-t border-white/[0.04] flex items-center justify-between text-xs">
+                                    <span class="text-slate-400">Top Trade</span>
+                                    <span class="font-mono text-slate-200 font-medium" id="kpi-cur-top-trade">+$7,200 (NQ)</span>
                                 </div>
                             </div>
-                        </div>
+                        </section>
+
+                        <!-- SECTION 4: RECENT CALENDAR TRADE EVENTS (TABLE) -->
+                        <section class="trade-card rounded-2xl p-5 sm:p-6" data-purpose="recent-settled-trades">
+                            <div class="flex items-center justify-between pb-4 border-b border-white/[0.06]">
+                                <div class="flex items-center space-x-2.5">
+                                    <h3 class="text-sm font-semibold text-white tracking-tight">Recent Calendar Trade Events</h3>
+                                    <span class="text-[10px] px-2 py-0.5 rounded bg-white/[0.04] text-slate-400 font-mono border border-white/[0.06]" id="recent-trades-year-badge">2026 Settled</span>
+                                </div>
+                                <a class="text-xs text-slate-400 hover:text-slate-200 font-medium transition-colors flex items-center gap-1" href="journal.html">
+                                    <span>Open Full Journal</span>
+                                    <svg class="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path></svg>
+                                </a>
+                            </div>
+
+                            <!-- Trade Log Table -->
+                            <div class="overflow-x-auto pt-2">
+                                <table class="w-full text-left text-xs text-slate-300">
+                                    <thead class="text-[10px] uppercase tracking-wider text-slate-500 font-medium border-b border-white/[0.04]">
+                                        <tr>
+                                            <th class="py-2.5 px-2">Date &amp; Time</th>
+                                            <th class="py-2.5 px-2">Instrument</th>
+                                            <th class="py-2.5 px-2">Side</th>
+                                            <th class="py-2.5 px-2 text-right">Size</th>
+                                            <th class="py-2.5 px-2 text-right">Entry / Exit</th>
+                                            <th class="py-2.5 px-2 text-right">Net PnL ($)</th>
+                                            <th class="py-2.5 px-2 text-right">Return (%)</th>
+                                            <th class="py-2.5 px-2 text-center">Status</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody class="divide-y divide-white/[0.03] font-mono text-xs" id="recent-trades-tbody">
+                                        <!-- Populated dynamically via JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </section>
 
                     </div>
 
-
                     <!-- ======================================================= -->
-                    <!-- VIEW 2: MONTHLY CALENDAR VIEW (Matches Image 2) -->
+                    <!-- VIEW 2: MONTHLY DAY-BY-DAY EXECUTION CALENDAR (Drilldown) -->
                     <!-- ======================================================= -->
-                    <div id="view-monthly" class="hidden flex flex-col gap-4">
-
-                        <!-- Subnav Tab: Journal / Economic Calendar -->
-                        <div class="flex items-center justify-center">
-                            <div class="flex items-center gap-1 p-1 rounded-lg bg-[#0c0e14] border border-[#171a23]">
-                                <button class="subnav-tab active">Journal</button>
-                                <button class="subnav-tab">Economic Calendar</button>
-                            </div>
-                        </div>
-
-                        <!-- Month Header Row -->
-                        <div class="flex items-center justify-between">
+                    <div id="calendar-day-view" class="hidden space-y-5">
+                        <div class="flex items-center justify-between pb-3 border-b border-white/[0.06]">
                             <div class="flex items-center gap-3">
-                                <button type="button" class="btn-icon-square" id="month-back-btn" title="Back to Yearly View">
-                                    <svg data-lucide="arrow-left" class="w-4 h-4"></svg>
+                                <button type="button" id="btn-back-to-macro" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-slate-300 text-xs font-medium border border-white/[0.06] transition-colors cursor-pointer">
+                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M10 19l-7-7m0 0l7-7m-7 7h18" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                                    <span>Back to Yearly Matrix</span>
                                 </button>
-                                <div>
-                                    <h1 class="text-[20px] font-bold text-white tracking-tight">Monthly Performance</h1>
-                                    <div class="text-[12px] text-[#64748b]">Select a day to view its trades</div>
-                                </div>
+                                <h2 class="text-base font-semibold text-white tracking-tight" id="day-view-month-title">August 2026</h2>
                             </div>
 
                             <div class="flex items-center gap-3">
-                                <button type="button" class="text-[#64748b] hover:text-white transition-colors" id="btn-prev-month"><svg data-lucide="chevron-left" class="w-4 h-4"></svg></button>
-                                <span class="text-[16px] font-bold text-white" id="monthly-title-label">August 2026</span>
-                                <button type="button" class="text-[#64748b] hover:text-white transition-colors" id="btn-next-month"><svg data-lucide="chevron-right" class="w-4 h-4"></svg></button>
+                                <button id="btn-month-prev" type="button" class="p-1.5 rounded bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 border border-white/[0.06] transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
+                                <span class="text-xs font-mono font-medium text-slate-300" id="day-view-current-label">Aug 2026</span>
+                                <button id="btn-month-next" type="button" class="p-1.5 rounded bg-white/[0.03] hover:bg-white/[0.08] text-slate-300 border border-white/[0.06] transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg></button>
                             </div>
                         </div>
 
-                        <!-- 6-Metric Cards Strip -->
-                        <div class="monthly-stats-grid">
-                            <div class="tp-card !p-4">
-                                <div class="text-[11.5px] font-semibold text-[#64748b]">Total trades</div>
-                                <div class="num text-[22px] font-bold text-white mt-1" id="m-stat-trades">1</div>
-                            </div>
-                            <div class="tp-card !p-4">
-                                <div class="text-[11.5px] font-semibold text-[#64748b]">Trading days</div>
-                                <div class="num text-[22px] font-bold text-white mt-1" id="m-stat-days">1</div>
-                            </div>
-                            <div class="tp-card !p-4">
-                                <div class="text-[11.5px] font-semibold text-[#64748b]">Realized RR</div>
-                                <div class="num text-[22px] font-bold text-white mt-1" id="m-stat-rr">-</div>
-                            </div>
-                            <div class="tp-card !p-4">
-                                <div class="text-[11.5px] font-semibold text-[#64748b]">Most traded asset</div>
-                                <div class="text-[20px] font-bold text-white mt-1 truncate" id="m-stat-asset">NAS100</div>
-                            </div>
-                            <div class="tp-card !p-4">
-                                <div class="text-[11.5px] font-semibold text-[#64748b]">Trade Winrate</div>
-                                <div class="flex items-center gap-2 mt-1">
-                                    <span class="num text-[22px] font-bold text-white" id="m-stat-winrate">100%</span>
-                                    <span class="px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-400 text-[10px] font-bold">TW</span>
-                                </div>
-                            </div>
-                            <div class="tp-card !p-4">
-                                <div class="text-[11.5px] font-semibold text-[#64748b]">Month P&amp;L</div>
-                                <div class="num text-[22px] font-extrabold text-[#22c55e] mt-1" id="m-stat-pnl">+11,696.63%</div>
-                            </div>
-                        </div>
-
-                        <!-- 8-Column Calendar Grid (7 Days + Week) -->
-                        <div class="tp-card !p-4">
-                            <!-- Day Headers -->
-                            <div class="monthly-grid-matrix text-center text-[12px] font-bold text-[#64748b] mb-2.5">
+                        <!-- 7-Day Matrix Header -->
+                        <div class="w-full overflow-x-auto">
+                            <div class="min-w-[800px] monthly-grid-matrix text-center text-[11px] font-bold text-slate-500 uppercase tracking-wider mb-2">
                                 <div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div>
-                                <div class="text-white">Week</div>
+                                <div class="text-right pr-2">Week</div>
                             </div>
-
-                            <!-- Calendar Rows -->
-                            <div class="flex flex-col gap-2.5" id="monthly-grid-body">
-                                <!-- Rendered dynamically -->
+                            <div class="min-w-[800px] space-y-2" id="monthly-calendar-rows">
+                                <!-- Populated dynamically with weekly rows -->
                             </div>
                         </div>
-
                     </div>
 
                 </div>
@@ -794,417 +732,449 @@
         </div>
     </div>
 
-    <!-- Floating Action Button (+) -->
-    <a href="journal.html?log=1" class="fab-btn" title="Log Trade">
-        <svg data-lucide="plus" class="w-6 h-6"></svg>
-    </a>
+    <!-- Floating Log Trade Action Button -->
+    <aside class="floating-action-btn" data-purpose="floating-log-action">
+        <a href="journal.html?action=new" class="flex items-center space-x-2 bg-[#121824] hover:bg-[#182030] text-slate-100 px-4 py-2.5 rounded-full font-medium border border-white/[0.12] shadow-xl transition-all hover:scale-105 active:scale-95 focus:outline-none cursor-pointer" title="Log New Trade Entry">
+            <svg class="w-4 h-4 text-slate-300 stroke-[2]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span class="text-xs tracking-wider uppercase font-semibold font-mono pr-0.5">Log Trade</span>
+        </a>
+    </aside>
 
-    <!-- ======================================================= -->
-    <!-- VIEW 3: DAY DETAIL MODAL (Matches media_1788465263599.png) -->
-    <!-- ======================================================= -->
+    <!-- DAY DETAIL MODAL -->
     <div class="modal-backdrop" id="day-modal">
         <div class="modal-window">
-            <!-- Modal Header -->
-            <div class="flex items-center justify-between mb-5">
-                <div>
-                    <h3 class="text-[19px] font-bold text-white tracking-tight" id="modal-day-title">Aug 11, 2026</h3>
-                    <p class="text-[12px] text-[#828b99] mt-0.5">View your trades and statistics for this day.</p>
-                </div>
+            <div class="flex items-center justify-between pb-4 border-b border-white/[0.08] mb-4">
                 <div class="flex items-center gap-3">
-                    <span class="pnl-badge" id="modal-day-pnl">▲ 11,696.63%</span>
-                    <button type="button" class="text-[#828b99] hover:text-white transition-colors p-1" id="btn-close-day-modal" title="Close">
-                        <svg data-lucide="x" class="w-4 h-4"></svg>
-                    </button>
+                    <h3 class="text-base font-bold text-white tracking-tight" id="modal-day-title">Sep 24, 2026</h3>
+                    <span class="px-2 py-0.5 rounded text-xs font-mono font-bold bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" id="modal-day-pnl">+$7,200.00</span>
                 </div>
+                <button type="button" class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-white/[0.06] transition-colors cursor-pointer" id="btn-close-day-modal">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+                </button>
             </div>
 
-            <!-- Top 5 Stat Tiles (Matching Reference Screenshot) -->
-            <div class="modal-stats-grid">
-                <div class="modal-stat-card">
-                    <div class="modal-stat-label">Total trades</div>
-                    <div class="modal-stat-val" id="dm-trades">1</div>
-                </div>
-                <div class="modal-stat-card">
-                    <div class="modal-stat-label">Day winrate</div>
-                    <div class="flex items-center gap-2">
-                        <span class="modal-stat-val" id="dm-winrate">100%</span>
-                        <span class="px-1.5 py-0.5 rounded bg-[#072416] text-[#22c55e] border border-[#0d4a2b] text-[10px] font-bold" id="dm-win-badge">1</span>
-                    </div>
-                </div>
-                <div class="modal-stat-card">
-                    <div class="modal-stat-label">Realized RR</div>
-                    <div class="modal-stat-val" id="dm-rr">-</div>
-                </div>
-                <div class="modal-stat-card">
-                    <div class="modal-stat-label">Most traded asset</div>
-                    <div class="modal-stat-val truncate" id="dm-asset">NAS100</div>
-                </div>
-                <div class="modal-stat-card">
-                    <div class="modal-stat-label">Day PnL curve</div>
-                    <div class="w-full h-8" id="dm-sparkline">
-                        <!-- Mini SVG Area Curve -->
-                    </div>
-                </div>
-            </div>
-
-            <!-- Trade Log Table Inside Modal -->
-            <div class="modal-table-shell">
-                <div class="modal-table-header">
-                    <div>Entry date</div>
-                    <div>Symbol</div>
-                    <div>Side</div>
-                    <div>Trade duration</div>
-                    <div>Risk/Reward</div>
-                    <div class="text-right pr-2">P&amp;L</div>
-                </div>
-                <div id="modal-trade-rows">
+            <!-- Modal Trade Rows -->
+            <div class="overflow-x-auto max-h-[320px] overflow-y-auto border border-white/[0.06] rounded-lg bg-[#0c0e14] p-3 mb-4">
+                <div id="modal-trade-rows" class="space-y-2 text-xs">
                     <!-- Populated dynamically -->
                 </div>
             </div>
 
-            <!-- Collapsible Notes & Screenshots (Matches media_1788465820972.png) -->
-            <div class="pt-2">
-                <button type="button" class="flex items-center gap-2 text-[13px] font-semibold text-white hover:text-white transition-colors cursor-pointer select-none" id="btn-toggle-day-notes">
-                    <svg data-lucide="chevron-down" class="w-4 h-4 text-[#828b99] accordion-chevron" id="day-notes-chevron"></svg>
-                    <span>Notes &amp; Screenshots</span>
-                </button>
-
-                <!-- Animated Accordion Drawer -->
-                <div class="accordion-drawer" id="day-notes-drawer">
-                    <div class="accordion-inner pt-3.5">
-                        <div class="grid grid-cols-2 gap-3.5">
-                            <!-- Left Card: Notes -->
-                            <div class="notes-quad-card">
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="text-[14.5px] font-bold text-white">Notes</span>
-                                    <button type="button" class="open-notes-btn" id="modal-btn-open-notes">
-                                        <svg data-lucide="edit-3" class="w-3.5 h-3.5"></svg>
-                                        <span>Open Notes</span>
-                                    </button>
-                                </div>
-                                <div class="flex-1 flex items-center justify-center p-3 text-center cursor-pointer rounded-lg hover:bg-white/[0.02] transition-colors" id="modal-notes-display-area" title="Click to view/edit notes">
-                                    <span class="text-[12.5px] text-[#505a69] font-medium whitespace-pre-wrap leading-relaxed" id="modal-day-notes-text">Enter your trade notes here</span>
-                                </div>
-                            </div>
-
-                            <!-- Right Card: Screenshot -->
-                            <div class="notes-quad-card">
-                                <div class="flex items-center justify-between mb-3">
-                                    <span class="text-[14.5px] font-bold text-white">Screenshot</span>
-                                </div>
-                                <div class="dropzone-area flex-1 flex flex-col items-center justify-center p-3 text-center cursor-pointer relative" id="modal-dropzone-zone">
-                                    <input type="file" id="modal-screenshot-input" accept="image/*" class="hidden">
-                                    <div id="modal-dropzone-empty" class="flex flex-col items-center justify-center gap-1.5">
-                                        <svg data-lucide="cloud" class="w-8 h-8 text-[#505a69] stroke-[1.5]"></svg>
-                                        <div class="text-[13px] font-semibold text-white mt-1">Upload Screenshot</div>
-                                        <div class="text-[11px] text-[#505a69]">Drop here, paste with Ctrl+V or click</div>
-                                    </div>
-                                    <div id="modal-dropzone-preview" class="hidden relative w-full h-full flex items-center justify-center">
-                                        <img src="" id="modal-dropzone-img" class="max-h-[130px] max-w-full rounded-lg object-contain border border-white/10" alt="Trade Chart Screenshot">
-                                        <button type="button" id="modal-btn-remove-shot" class="absolute top-0 right-0 p-1 bg-red-600/80 hover:bg-red-600 text-white rounded-full transition-colors" title="Remove Screenshot">
-                                            <svg data-lucide="x" class="w-3.5 h-3.5"></svg>
-                                        </button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Edit Notes Popover Modal -->
-    <div class="modal-backdrop" id="edit-notes-modal">
-        <div class="modal-window !max-w-[540px]">
-            <div class="flex items-center justify-between mb-4">
-                <h3 class="text-[16px] font-bold text-white">Trade Notes</h3>
-                <button type="button" class="text-[#828b99] hover:text-white transition-colors p-1" id="btn-close-edit-notes">
-                    <svg data-lucide="x" class="w-4 h-4"></svg>
-                </button>
-            </div>
-            <textarea id="edit-notes-textarea" class="w-full h-36 bg-[#111318] border border-[#1a1d25] rounded-xl p-3.5 text-[13.5px] text-[#f1f5f9] placeholder-[#505a69] focus:border-[#22c55e] outline-none resize-none leading-relaxed" placeholder="Enter your detailed trade notes, reflections, mistakes, or psychological takeaways..."></textarea>
-            <div class="flex items-center justify-end gap-2.5 mt-4">
-                <button type="button" class="px-4 py-2 rounded-lg bg-[#181b24] border border-[#232734] text-[#cbd5e1] text-[12.5px] font-semibold hover:text-white" id="btn-cancel-edit-notes">Cancel</button>
-                <button type="button" class="px-4 py-2 rounded-lg bg-[#22c55e] text-black font-bold text-[12.5px] hover:bg-[#16a34a] transition-colors" id="btn-save-edit-notes">Save Notes</button>
+            <div class="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-white/[0.06]">
+                <span>Click any trade to inspect execution details</span>
+                <a href="journal.html" class="text-emerald-400 hover:text-emerald-300 font-medium">Open in Journal &rarr;</a>
             </div>
         </div>
     </div>
 
     <!-- Toast Notification -->
-    <div id="toast" class="toast"><span id="toast-msg"></span></div>
+    <div id="toast" class="toast">
+        <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+        <span id="toast-msg">Notification</span>
+    </div>
 
     <script>
-        (function() {
+        (function () {
             'use strict';
             const $ = id => document.getElementById(id);
+            window.$ = $;
             const core = window.TradeMindCore;
-            const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+            const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
             const fmtMoney = n => (n >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(n || 0)).toLocaleString('en-US');
 
-            let unitMode = '%'; // '%' or '$'
-            let selectedYear = 2026;
-            let selectedMonth = 7; // August (0-indexed: 7)
-            let trades = [];
+            let toastTimer;
+            window.showToast = function (msg) {
+                const toast = $('toast');
+                if (!toast) return;
+                $('toast-msg').textContent = msg;
+                toast.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => toast.classList.remove('show'), 2600);
+            };
+
+            let activeYear = '2026';
+            let activeRange = 'YTD';
+            let activeMonthIdx = 8; // September (0-indexed: 8)
+            let currentSummaryData = null;
 
             function currentAccountId() {
-                if (!core || !core.Accounts || !core.Accounts.length) return null;
-                return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+                if (!core) return 'acc-prop';
+                return (core.selectedAccountId && core.selectedAccountId()) || (core.Accounts && core.Accounts[0] ? core.Accounts[0].id : 'acc-prop');
             }
 
             function getAccount() {
+                if (!core || !core.Accounts) return null;
                 const id = currentAccountId();
-                return id ? core.Accounts.find(a => a.id === id) : null;
+                return core.Accounts.find(a => a.id === id) || core.Accounts[0];
             }
 
-            function loadTrades() {
-                if (!core || !core.Trades) return [];
-                const accId = currentAccountId();
-                return core.Trades
-                    .filter(t => !accId || t.account_id === accId)
-                    .map(t => ({
-                        ...t,
-                        ts: new Date(t.ts),
-                        pnl: Number(t.pnl || 0)
-                    }))
-                    .sort((a, b) => a.ts - b.ts);
-            }
-
-            function renderChrome() {
-                const acc = getAccount();
-                const chip = $('acc-chip');
-                if (chip) {
-                    if (acc) {
-                        chip.innerHTML = '<span class="num text-[12px]">' + fmtMoney(acc.current_equity) + '</span><span class="text-[#64748b]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>';
-                    } else {
-                        chip.innerHTML = '<span class="text-[#64748b]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[#64748b]"></svg>';
-                    }
-                }
-                const pName = $('profile-name'), pAvatar = $('profile-avatar');
-                if (acc && pName) pName.textContent = acc.name;
-                if (acc && pAvatar) pAvatar.textContent = acc.name.split(/\s+/).map(w => w[0]).join('').slice(0, 2).toUpperCase();
-            }
-
-            function fmtVal(amt, isGain) {
-                const acc = getAccount();
-                const startingBal = acc ? (acc.starting_balance || 100000) : 100000;
-                if (unitMode === '%') {
-                    const pct = (amt / startingBal) * 100;
-                    return (pct >= 0 ? '+' : '-') + Math.abs(pct).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '%';
-                } else {
-                    return (amt >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(amt)).toLocaleString('en-US');
-                }
-            }
-
-            // ==========================================
-            // 1. RENDER YEARLY VIEW (Matches Image 1)
-            // ==========================================
-            function renderYearlyView() {
-                const acc = getAccount();
-                const startingBal = acc ? (acc.starting_balance || 100000) : 100000;
-                let ytdPnl = 0;
-                let ytdTrades = 0;
-
-                // Build month totals
-                const monthsData = Array(12).fill(null).map(() => ({ pnl: 0, trades: 0 }));
-                trades.forEach(t => {
-                    const d = t.ts;
-                    if (d.getFullYear() === selectedYear) {
-                        const m = d.getMonth();
-                        monthsData[m].pnl += t.pnl;
-                        monthsData[m].trades++;
-                        ytdPnl += t.pnl;
-                        ytdTrades++;
-                    }
-                });
-
-                const row = $('yearly-matrix-row');
-                let html = '<button class="year-cell !bg-[#141824] !border-[#262f44] text-white font-bold text-[13px]">' + selectedYear + '</button>';
-
-                for (let i = 0; i < 12; i++) {
-                    const md = monthsData[i];
-                    if (md.trades > 0) {
-                        const isProfit = md.pnl >= 0;
-                        html += '<div class="year-cell ' + (isProfit ? 'active-profit' : 'active-loss') + '" onclick="window.__openMonth(' + i + ')">' +
-                            '<span class="num text-[11.5px] font-bold ' + (isProfit ? 'text-[#22c55e]' : 'text-[#ef4444]') + '">' + fmtVal(md.pnl) + '</span>' +
-                            '<span class="text-[9.5px] text-[#94a3b8] mt-0.5">' + md.trades + ' trade' + (md.trades === 1 ? '' : 's') + '</span>' +
-                        '</div>';
-                    } else {
-                        html += '<div class="year-cell" onclick="window.__openMonth(' + i + ')"><span class="text-[#475569] font-bold text-[13px]">-</span></div>';
-                    }
-                }
-
-                row.innerHTML = html;
-
-                // Update 4 Summary KPI Cards
-                const kpiYtdVal = $('kpi-ytd-val'), kpiYtdSub = $('kpi-ytd-sub');
-                if (kpiYtdVal) {
-                    const isYtdGain = ytdPnl >= 0;
-                    kpiYtdVal.textContent = ytdTrades > 0 ? fmtVal(ytdPnl) : '+0.00%';
-                    kpiYtdVal.className = 'num text-[24px] font-bold leading-tight ' + (ytdTrades > 0 ? (isYtdGain ? 'text-[#22c55e]' : 'text-[#ef4444]') : 'text-white');
-                }
-                if (kpiYtdSub) {
-                    kpiYtdSub.textContent = ytdTrades + ' trade' + (ytdTrades === 1 ? '' : 's');
-                }
-
-                const kpiTradesVal = $('kpi-trades-val'), kpiTradesSub = $('kpi-trades-sub');
-                if (kpiTradesVal) kpiTradesVal.textContent = ytdTrades;
-                if (kpiTradesSub) kpiTradesSub.textContent = 'in ' + selectedYear;
-
-                // Profitable months calculation
-                const monthShort = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                const profMonths = [];
-                for (let i = 0; i < 12; i++) {
-                    if (monthsData[i].trades > 0 && monthsData[i].pnl > 0) {
-                        profMonths.push(monthShort[i]);
-                    }
-                }
-                const kpiProfVal = $('kpi-prof-val'), kpiProfSub = $('kpi-prof-sub');
-                if (kpiProfVal) kpiProfVal.textContent = profMonths.length + ' / 12';
-                if (kpiProfSub) kpiProfSub.textContent = profMonths.length > 0 ? profMonths.join(', ') : 'No profitable months';
-
-                // Current Month calculation
+            // ---- Live UTC Clock ----
+            function updateClock() {
+                const el = $('utc-time-str');
+                if (!el) return;
                 const now = new Date();
-                const curMonthIdx = now.getMonth();
-                const curMonthData = monthsData[curMonthIdx];
-                const kpiCurVal = $('kpi-cur-val'), kpiCurSub = $('kpi-cur-sub');
-                if (kpiCurVal && kpiCurSub) {
-                    if (curMonthData && curMonthData.trades > 0) {
-                        const isCurGain = curMonthData.pnl >= 0;
-                        kpiCurVal.textContent = fmtVal(curMonthData.pnl);
-                        kpiCurVal.className = 'num text-[24px] font-bold leading-tight ' + (isCurGain ? 'text-[#22c55e]' : 'text-[#ef4444]');
-                        kpiCurSub.textContent = curMonthData.trades + ' trade' + (curMonthData.trades === 1 ? '' : 's');
-                    } else {
-                        kpiCurVal.textContent = '-';
-                        kpiCurVal.className = 'num text-[24px] font-bold text-white leading-tight';
-                        kpiCurSub.textContent = 'No trades yet';
+                const str = now.toISOString().slice(11, 19);
+                el.textContent = 'UTC-4 (NY EST) ' + str;
+                const syncEl = $('settlement-sync-time');
+                if (syncEl) syncEl.textContent = str;
+            }
+            setInterval(updateClock, 1000);
+            updateClock();
+
+            // ---- Fetch Calendar Summary from Backend API ----
+            async function fetchSummary() {
+                const accId = currentAccountId();
+                const yr = activeYear;
+                try {
+                    const res = await fetch('/api/calendar/summary?accountId=' + encodeURIComponent(accId) + '&year=' + encodeURIComponent(yr) + '&range=' + encodeURIComponent(activeRange));
+                    if (res.ok) {
+                        const data = await res.json();
+                        currentSummaryData = data;
+                        renderAll(data);
+                        return;
                     }
+                } catch (e) {
+                    console.warn('[calendar] fetch error, using local fallback:', e);
                 }
 
-                renderMacroChart();
-                if (window.lucide) window.lucide.createIcons();
+                // Local core calculation fallback
+                if (core && core.calendarSummary) {
+                    const data = core.calendarSummary(accId, yr, { range: activeRange });
+                    currentSummaryData = data;
+                    renderAll(data);
+                }
             }
 
-            function renderMacroChart() {
-                const box = $('macro-chart-container');
-                const W = 880, H = 220, P = 14;
-                const acc = getAccount();
-                const startingBal = acc ? (acc.starting_balance || 100000) : 100000;
+            // ---- Render Entire Dashboard ----
+            function renderAll(data) {
+                if (!data) return;
 
-                // Points across the year
-                const points = [];
-                let runningEquity = startingBal;
-                points.push({ xLabel: 'Jan ' + selectedYear, equity: startingBal });
-
-                const monthNames = ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-                for (let i = 1; i <= 11; i++) {
-                    const monthTrades = trades.filter(t => t.ts.getFullYear() === selectedYear && t.ts.getMonth() === i);
-                    monthTrades.forEach(t => { runningEquity += t.pnl; });
-                    points.push({ xLabel: monthNames[i-1] + ' ' + selectedYear, equity: runningEquity });
+                // 1. Header Account & Brand
+                const acc = data.account || getAccount();
+                if (acc) {
+                    const accNameEl = $('header-acc-name');
+                    if (accNameEl) accNameEl.textContent = acc.name + ' (' + fmtMoney(data.currentBalance || acc.starting_balance) + ')';
+                    const accTagEl = $('header-acc-tag');
+                    if (accTagEl) accTagEl.textContent = '#' + (acc.id || 'APX-9821').toUpperCase();
                 }
 
-                const maxEq = Math.max.apply(null, points.map(p => p.equity)) * 1.05;
-                const minEq = 0;
-                const span = (maxEq - minEq) || 1;
+                // 2. Fiscal Year Badge & Title
+                const fiscalBadge = $('title-fiscal-badge');
+                if (fiscalBadge) {
+                    fiscalBadge.textContent = activeYear === 'all' ? 'All Fiscal Years' : 'Fiscal Year ' + activeYear;
+                }
+                const matrixYtd = $('matrix-header-ytd');
+                if (matrixYtd && data.kpis && data.kpis.ytdReturn) {
+                    matrixYtd.innerHTML = data.kpis.ytdReturn.returnPct + ' <span class="text-xs text-slate-400 font-normal font-sans">(+$' + Math.abs(data.kpis.ytdReturn.pnl).toLocaleString('en-US') + ')</span>';
+                }
 
-                const getX = i => P + (i / (points.length - 1)) * (W - 2 * P - 60);
-                const getY = val => H - P - ((val - minEq) / span) * (H - 2 * P);
+                // 3. Yearly Performance Matrix (13 Columns)
+                renderYearlyMatrix(data);
 
-                const linePath = points.map((p, i) => (i ? 'L' : 'M') + getX(i).toFixed(1) + ' ' + getY(p.equity).toFixed(1)).join(' ');
-                const areaPath = linePath + ' L' + getX(points.length - 1).toFixed(1) + ' ' + (H - P) + ' L' + getX(0).toFixed(1) + ' ' + (H - P) + ' Z';
+                // 4. Equity Curve & Tickers
+                renderEquityCurve(data);
 
-                // Grid Y lines
-                let gridSvg = '';
-                const ySteps = [6000000, 4000000, 2000000, 0];
-                ySteps.forEach(yVal => {
-                    if (yVal <= maxEq) {
-                        const yCoord = getY(yVal);
-                        gridSvg += '<line x1="' + P + '" y1="' + yCoord + '" x2="' + (W - P - 60) + '" y2="' + yCoord + '" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3 3"/>';
-                        gridSvg += '<text x="' + (W - 50) + '" y="' + (yCoord + 3) + '" fill="#64748b" font-size="10" class="num">$' + (yVal / 1000000) + 'M</text>';
+                // 5. 4 Core KPI Cards
+                renderKpiCards(data);
+
+                // 6. Recent Calendar Trade Events Table
+                renderRecentTradesTable(data);
+
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // ---- 1. Render Yearly Matrix (13 Columns) ----
+            function renderYearlyMatrix(data) {
+                const host = $('yearly-grid-host');
+                if (!host) return;
+
+                const yrLabel = activeYear === 'all' ? 'ALL' : activeYear;
+                let html = '<div class="col-span-2 sm:col-span-4 md:col-span-1 lg:col-span-1 rounded-xl bg-[#090d14] border border-white/[0.06] p-3 flex flex-col justify-between items-center text-center">' +
+                    '<span class="text-[10px] uppercase font-semibold text-slate-500 tracking-wider">Year</span>' +
+                    '<div class="text-sm font-semibold font-mono text-white">' + yrLabel + '</div>' +
+                    '<span class="text-[10px] text-slate-400 font-mono bg-white/[0.04] px-1.5 py-0.5 rounded border border-white/[0.06]">ACTIVE</span>' +
+                '</div>';
+
+                const months = data.monthlyMatrix || [];
+                months.forEach((m, idx) => {
+                    const isProfit = m.pnl > 0;
+                    const isLoss = m.pnl < 0;
+                    const hasTrades = m.tradesCount > 0;
+                    const boxClass = hasTrades ? (isProfit ? 'month-box active-profit' : 'month-box active-loss') : 'month-box dormant';
+
+                    let contentHtml = '';
+                    if (hasTrades) {
+                        const pnlColor = isProfit ? 'text-emerald-400' : 'text-rose-400';
+                        const dotColor = isProfit ? 'bg-emerald-400/80' : 'bg-rose-400/80';
+                        const badgeTag = m.isCurrentMonth ? '<span class="px-1.5 py-0.2 rounded bg-white/[0.08] text-slate-300 text-[9px] font-mono">' + m.monthName.toUpperCase() + '</span>' : '<span class="w-1.5 h-1.5 rounded-full ' + dotColor + '"></span>';
+
+                        contentHtml =
+                            '<div class="flex items-center justify-between">' +
+                                '<span class="text-xs font-semibold text-slate-200">' + m.monthName + '</span>' +
+                                badgeTag +
+                            '</div>' +
+                            '<div class="my-0.5">' +
+                                '<div class="text-sm font-semibold font-mono ' + pnlColor + ' tabular-nums">' + (m.returnPct >= 0 ? '+' : '') + m.returnPct.toFixed(2) + '%</div>' +
+                                '<div class="text-[10px] text-slate-400 font-mono">' + (m.pnl >= 0 ? '+$' : '-$') + Math.abs(m.pnl).toLocaleString('en-US') + '</div>' +
+                            '</div>' +
+                            '<div class="flex items-center justify-between text-[10px] text-slate-400 font-mono">' +
+                                '<span>' + m.tradesCount + ' trade' + (m.tradesCount === 1 ? '' : 's') + '</span>' +
+                                '<span class="text-[9px] text-slate-400 bg-white/[0.04] px-1 rounded border border-white/[0.04]">' + m.winRate + '% WR</span>' +
+                            '</div>';
+                    } else {
+                        contentHtml =
+                            '<div class="flex items-center justify-between">' +
+                                '<span class="text-xs font-medium text-slate-500 group-hover:text-slate-300">' + m.monthName + '</span>' +
+                                '<span class="w-1 h-1 rounded-full bg-slate-700"></span>' +
+                            '</div>' +
+                            '<div class="text-center py-1">' +
+                                '<span class="text-xs font-mono text-slate-600 group-hover:text-slate-500">—</span>' +
+                            '</div>' +
+                            '<div class="text-[10px] text-slate-600 text-center font-mono">0 trades</div>';
                     }
+
+                    html += '<div class="' + boxClass + ' rounded-xl p-3 flex flex-col justify-between min-h-[92px] group cursor-pointer" onclick="window.__drillIntoMonth(' + idx + ')">' + contentHtml + '</div>';
                 });
 
-                // X labels
-                let xLabelsSvg = '';
-                points.forEach((p, i) => {
-                    xLabelsSvg += '<text x="' + getX(i) + '" y="' + (H + 2) + '" text-anchor="middle" fill="#64748b" font-size="10.5">' + p.xLabel + '</text>';
-                });
+                host.innerHTML = html;
+            }
 
-                box.innerHTML =
-                    '<svg viewBox="0 0 ' + W + ' ' + (H + 18) + '" class="w-full h-full">' +
+            // ---- 2. Render Equity Curve Canvas & Tickers ----
+            function renderEquityCurve(data) {
+                const curve = data.equityCurve || {};
+                const balance = data.currentBalance || data.startingBalance || 100000;
+                const netPnl = data.kpis ? data.kpis.ytdReturn.pnl : 0;
+                const ddPct = curve.maxDrawdownPct || 0;
+
+                // Update Tickers
+                if ($('ticker-balance')) $('ticker-balance').textContent = '$' + Number(balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                if ($('ticker-pnl')) {
+                    $('ticker-pnl').textContent = (netPnl >= 0 ? '+' : '-') + '$' + Math.abs(netPnl).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    $('ticker-pnl').className = 'text-base font-semibold font-mono tabular-nums ' + (netPnl >= 0 ? 'text-emerald-400' : 'text-rose-400');
+                }
+                if ($('ticker-drawdown')) $('ticker-drawdown').textContent = '-' + Math.abs(ddPct).toFixed(2) + '%';
+                if ($('chart-ath-badge')) $('chart-ath-badge').textContent = 'ATH $' + Math.round(curve.ath || balance).toLocaleString('en-US');
+                if ($('legend-equity-val')) $('legend-equity-val').textContent = '$' + Number(balance).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                if ($('legend-baseline-val')) $('legend-baseline-val').textContent = '$' + Number(curve.baseline || 100000).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                if ($('axis-drawdown-days')) $('axis-drawdown-days').textContent = (curve.drawdownDays || 0) + ' Days';
+                if ($('axis-recovery-factor')) $('axis-recovery-factor').textContent = String(curve.recoveryFactor || '24.1');
+
+                // Render Dynamic SVG Vector Canvas
+                const host = $('chart-svg-host');
+                if (!host) return;
+
+                const W = 1200, H = 280;
+                const points = curve.points || [];
+                const baseline = curve.baseline || 100000;
+                const ath = curve.ath || balance;
+
+                // Scale calculation
+                let minVal = baseline * 0.95;
+                let maxVal = Math.max(ath, balance) * 1.05;
+                if (minVal === maxVal) { minVal = 95000; maxVal = 105000; }
+                const span = maxVal - minVal;
+
+                const getY = val => H - 20 - (((val - minVal) / span) * (H - 50));
+                const getX = (idx, total) => {
+                    if (total <= 1) return 100;
+                    return (idx / (total - 1)) * W;
+                };
+
+                const baselineY = getY(baseline);
+                const athY = getY(ath);
+
+                // Polyline & Polygon points
+                let polylineStr = '';
+                let polygonStr = '0,' + H + ' ';
+
+                if (points.length <= 1) {
+                    polylineStr = '0,' + baselineY + ' 1200,' + baselineY;
+                    polygonStr += '0,' + baselineY + ' 1200,' + baselineY + ' 1200,' + H;
+                } else {
+                    points.forEach((pt, i) => {
+                        const x = getX(i, points.length).toFixed(1);
+                        const y = getY(pt.equity).toFixed(1);
+                        polylineStr += (i === 0 ? '' : ' ') + x + ',' + y;
+                        polygonStr += x + ',' + y + ' ';
+                    });
+                    polygonStr += W + ',' + H;
+                }
+
+                // Milestone markers on peak / last point
+                let markersSvg = '';
+                if (points.length > 1) {
+                    const lastPt = points[points.length - 1];
+                    const lastX = getX(points.length - 1, points.length).toFixed(1);
+                    const lastY = getY(lastPt.equity).toFixed(1);
+                    markersSvg += '<circle cx="' + lastX + '" cy="' + lastY + '" r="4.5" fill="#10b981" stroke="#080b10" stroke-width="2"/>';
+                }
+
+                host.innerHTML =
+                    '<svg class="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 ' + W + ' ' + H + '">' +
                         '<defs>' +
-                            '<linearGradient id="macroGlow" x1="0" y1="0" x2="0" y2="1">' +
-                                '<stop offset="0%" stop-color="#22c55e" stop-opacity="0.30"/>' +
-                                '<stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>' +
+                            '<linearGradient id="equityGradient" x1="0" x2="0" y1="0" y2="1">' +
+                                '<stop offset="0%" stop-color="#10b981" stop-opacity="0.16"></stop>' +
+                                '<stop offset="60%" stop-color="#10b981" stop-opacity="0.04"></stop>' +
+                                '<stop offset="100%" stop-color="#10b981" stop-opacity="0.00"></stop>' +
                             '</linearGradient>' +
+                            '<pattern height="35" id="gridPattern" patternUnits="userSpaceOnUse" width="100">' +
+                                '<line stroke="rgba(255,255,255,0.02)" stroke-width="1" x1="0" x2="1200" y1="0" y2="0"></line>' +
+                            '</pattern>' +
                         '</defs>' +
-                        gridSvg +
-                        '<path d="' + areaPath + '" fill="url(#macroGlow)"/>' +
-                        '<path d="' + linePath + '" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>' +
-                        xLabelsSvg +
+                        '<rect fill="url(#gridPattern)" height="' + H + '" width="' + W + '"></rect>' +
+                        '<!-- Baseline line -->' +
+                        '<line stroke="rgba(255,255,255,0.08)" stroke-dasharray="3,3" stroke-width="1" x1="0" x2="' + W + '" y1="' + baselineY.toFixed(1) + '" y2="' + baselineY.toFixed(1) + '"></line>' +
+                        '<text fill="#64748b" font-family="monospace" font-size="10" text-anchor="end" x="' + (W - 10) + '" y="' + (baselineY - 6).toFixed(1) + '">$' + (baseline / 1000) + 'K Baseline</text>' +
+                        '<!-- ATH line -->' +
+                        '<line stroke="rgba(255,255,255,0.06)" stroke-dasharray="2,3" stroke-width="1" x1="0" x2="' + W + '" y1="' + athY.toFixed(1) + '" y2="' + athY.toFixed(1) + '"></line>' +
+                        '<text fill="#10b981" font-family="monospace" font-size="10" font-weight="500" text-anchor="end" x="' + (W - 10) + '" y="' + (athY - 6).toFixed(1) + '">$' + Math.round(ath).toLocaleString('en-US') + ' (ATH)</text>' +
+                        '<!-- Area fill -->' +
+                        '<polygon fill="url(#equityGradient)" points="' + polygonStr + '"></polygon>' +
+                        '<!-- Polyline -->' +
+                        '<polyline fill="none" points="' + polylineStr + '" stroke="#34d399" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></polyline>' +
+                        markersSvg +
                     '</svg>';
             }
 
-            // ==========================================
-            // 2. RENDER MONTHLY VIEW (Matches Image 2)
-            // ==========================================
-            const monthNamesFull = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+            // ---- 3. Render 4 Core KPI Cards ----
+            function renderKpiCards(data) {
+                const kpis = data.kpis || {};
+                const ytd = kpis.ytdReturn || { pnl: 0, returnPct: '+0.00%', annualizedRunRate: '+0.00%' };
+                const trades = kpis.totalTrades || { total: 0, completed: 0, wins: 0, losses: 0, winRate: '0%', avgDuration: '1h 42m' };
+                const prof = kpis.profitableMonths || { profitableCount: 0, totalMonths: 12, activeMonths: 'None', hitRatePct: '0%' };
+                const cur = kpis.currentMonth || { monthName: 'Sep', tradesCount: 0, returnPct: '+0.00%', netPnl: 0, topTrade: { pnl: 0, symbol: '—' } };
 
-            function openMonthlyView(mIdx) {
-                selectedMonth = mIdx;
-                $('view-yearly').classList.add('hidden');
-                $('view-monthly').classList.remove('hidden');
+                // KPI 1: YTD Net Return
+                if ($('kpi-ytd-pct')) $('kpi-ytd-pct').textContent = ytd.returnPct;
+                if ($('kpi-ytd-pnl')) $('kpi-ytd-pnl').textContent = (ytd.pnl >= 0 ? '+$' : '-$') + Math.abs(ytd.pnl).toLocaleString('en-US') + ' Net PnL';
+                if ($('kpi-ytd-runrate')) $('kpi-ytd-runrate').textContent = ytd.annualizedRunRate;
+                if ($('kpi-ytd-badge')) $('kpi-ytd-badge').textContent = activeYear === 'all' ? 'All Years' : activeYear;
 
-                $('crumb-sub-sep').classList.remove('hidden');
-                $('crumb-sub-month').classList.remove('hidden');
-                const titleStr = monthNamesFull[selectedMonth] + ' ' + selectedYear;
-                $('crumb-sub-month').textContent = titleStr;
-                $('monthly-title-label').textContent = titleStr;
+                // KPI 2: Total Trades
+                if ($('kpi-trades-count-badge')) $('kpi-trades-count-badge').textContent = trades.total + ' Executions';
+                if ($('kpi-trades-count')) $('kpi-trades-count').textContent = trades.completed;
+                if ($('kpi-trades-winloss')) {
+                    $('kpi-trades-winloss').innerHTML =
+                        '<span class="w-1.5 h-1.5 rounded-full bg-emerald-400/80"></span>' +
+                        '<span>' + trades.wins + ' Wins</span>' +
+                        '<span class="text-slate-600">/</span>' +
+                        '<span class="text-slate-400">' + trades.losses + ' Losses</span>' +
+                        '<span class="text-slate-300 font-medium ml-auto">' + trades.winRate + '</span>';
+                }
+                if ($('kpi-trades-avg-duration')) $('kpi-trades-avg-duration').textContent = trades.avgDuration;
 
-                renderMonthlyCalendar();
+                // KPI 3: Profitable Months
+                if ($('kpi-prof-badge')) $('kpi-prof-badge').textContent = 'Hit Rate ' + prof.hitRatePct;
+                if ($('kpi-prof-ratio')) $('kpi-prof-ratio').innerHTML = prof.profitableCount + ' <span class="text-slate-500 text-base font-normal font-sans">/ ' + prof.totalMonths + '</span>';
+                if ($('kpi-prof-active-months')) $('kpi-prof-active-months').textContent = prof.activeMonths;
+                if ($('kpi-prof-hitrate')) $('kpi-prof-hitrate').textContent = prof.hitRatePct;
+                if ($('kpi-prof-bar')) $('kpi-prof-bar').style.width = prof.hitRatePct;
+
+                // KPI 4: Current Month Detail
+                if ($('kpi-cur-name')) $('kpi-cur-name').textContent = '(' + cur.monthName + ')';
+                if ($('kpi-cur-trades')) $('kpi-cur-trades').textContent = cur.tradesCount + ' Trade' + (cur.tradesCount === 1 ? '' : 's');
+                if ($('kpi-cur-pct')) $('kpi-cur-pct').textContent = cur.returnPct;
+                if ($('kpi-cur-pnl')) $('kpi-cur-pnl').textContent = (cur.netPnl >= 0 ? '+$' : '-$') + Math.abs(cur.netPnl).toLocaleString('en-US') + ' Net PnL';
+                if ($('kpi-cur-top-trade')) {
+                    const tt = cur.topTrade || { pnl: 0, symbol: '—' };
+                    $('kpi-cur-top-trade').textContent = (tt.pnl >= 0 ? '+$' : '-$') + Math.abs(tt.pnl).toLocaleString('en-US') + ' (' + tt.symbol + ')';
+                }
             }
-            window.__openMonth = openMonthlyView;
 
-            function renderMonthlyCalendar() {
-                const monthTrades = trades.filter(t => t.ts.getFullYear() === selectedYear && t.ts.getMonth() === selectedMonth);
-                
-                // 6 Metrics
-                const totalTrades = monthTrades.length;
-                let monthPnl = 0;
-                let wins = 0;
-                const daysSet = new Set();
-                const assetCounts = {};
+            // ---- 4. Render Recent Trades Table ----
+            function renderRecentTradesTable(data) {
+                const tbody = $('recent-trades-tbody');
+                if (!tbody) return;
 
-                monthTrades.forEach(t => {
-                    monthPnl += t.pnl;
-                    if (t.pnl > 0) wins++;
-                    daysSet.add(t.ts.toDateString());
-                    const sym = t.symbol || 'OTHER';
-                    assetCounts[sym] = (assetCounts[sym] || 0) + 1;
-                });
+                const trades = data.recentTrades || [];
+                if (trades.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" class="py-6 text-center text-slate-500 font-sans">No settled calendar trade events in this period.</td></tr>';
+                    return;
+                }
 
-                $('m-stat-trades').textContent = totalTrades;
-                $('m-stat-days').textContent = daysSet.size;
-                const rTrades = monthTrades.filter(t => t.r != null && !isNaN(t.r));
-                const avgR = rTrades.length ? (rTrades.reduce((acc, t) => acc + Number(t.r), 0) / rTrades.length).toFixed(1) + 'R' : (totalTrades ? '8.5R' : '-');
-                $('m-stat-rr').textContent = avgR;
-                const sortedAssets = Object.keys(assetCounts).sort((a, b) => assetCounts[b] - assetCounts[a]);
-                $('m-stat-asset').textContent = sortedAssets[0] || '—';
-                $('m-stat-winrate').textContent = totalTrades ? Math.round((wins / totalTrades) * 100) + '%' : '0%';
-                $('m-stat-pnl').textContent = fmtVal(monthPnl);
-                $('m-stat-pnl').className = 'num text-[22px] font-extrabold ' + (monthPnl >= 0 ? 'text-[#22c55e]' : 'text-[#ef4444]') + ' mt-1';
+                tbody.innerHTML = trades.map(t => {
+                    const isWin = t.pnl > 0;
+                    const pnlColor = isWin ? 'text-emerald-400' : 'text-rose-400';
+                    const sideColor = t.side === 'BUY' ? 'text-slate-300' : 'text-slate-400';
 
-                // Calendar Grid Construction
-                // Start date of month
-                const firstDay = new Date(selectedYear, selectedMonth, 1);
-                const lastDay = new Date(selectedYear, selectedMonth + 1, 0);
+                    return '<tr class="hover:bg-white/[0.02] transition-colors">' +
+                        '<td class="py-2.5 px-2 text-slate-400 font-sans">' + t.dateStr + ' <span class="text-slate-500 font-mono text-[11px]">' + t.timeStr + '</span></td>' +
+                        '<td class="py-2.5 px-2 font-sans font-medium text-white">' + esc(t.symbol) + '</td>' +
+                        '<td class="py-2.5 px-2"><span class="text-[10px] font-sans font-semibold ' + sideColor + '">' + t.side + '</span></td>' +
+                        '<td class="py-2.5 px-2 text-right text-slate-300">' + esc(t.sizeStr) + '</td>' +
+                        '<td class="py-2.5 px-2 text-right text-slate-400">' + esc(t.entryExitStr) + '</td>' +
+                        '<td class="py-2.5 px-2 text-right font-semibold ' + pnlColor + '">' + (t.pnl >= 0 ? '+$' : '-$') + Math.abs(t.pnl).toLocaleString('en-US') + '</td>' +
+                        '<td class="py-2.5 px-2 text-right text-slate-300">' + t.returnPct + '</td>' +
+                        '<td class="py-2.5 px-2 text-center"><span class="px-2 py-0.5 rounded text-[10px] text-slate-400 font-sans bg-white/[0.03] border border-white/[0.06]">' + t.status + '</span></td>' +
+                    '</tr>';
+                }).join('');
+            }
+
+            // ---- 5. Monthly Day-by-Day View Drilldown ----
+            window.__drillIntoMonth = function (mIdx) {
+                activeMonthIdx = mIdx;
+                $('calendar-macro-view').classList.add('hidden');
+                $('calendar-day-view').classList.remove('hidden');
+
+                const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+                const titleStr = monthNames[mIdx] + ' ' + (activeYear === 'all' ? '2026' : activeYear);
+                $('day-view-month-title').textContent = titleStr;
+                $('day-view-current-label').textContent = titleStr;
+
+                renderDayCalendarGrid(mIdx);
+            };
+
+            $('btn-back-to-macro').addEventListener('click', () => {
+                $('calendar-day-view').classList.add('hidden');
+                $('calendar-macro-view').classList.remove('hidden');
+            });
+
+            $('btn-view-macro').addEventListener('click', () => {
+                $('calendar-day-view').classList.add('hidden');
+                $('calendar-macro-view').classList.remove('hidden');
+                $('btn-view-macro').classList.add('bg-white/[0.08]', 'text-slate-200');
+                $('btn-view-macro').classList.remove('text-slate-500');
+                $('btn-view-day-cal').classList.remove('bg-white/[0.08]', 'text-slate-200');
+                $('btn-view-day-cal').classList.add('text-slate-500');
+            });
+
+            $('btn-view-day-cal').addEventListener('click', () => {
+                $('calendar-macro-view').classList.add('hidden');
+                $('calendar-day-view').classList.remove('hidden');
+                $('btn-view-day-cal').classList.add('bg-white/[0.08]', 'text-slate-200');
+                $('btn-view-day-cal').classList.remove('text-slate-500');
+                $('btn-view-macro').classList.remove('bg-white/[0.08]', 'text-slate-200');
+                $('btn-view-macro').classList.add('text-slate-500');
+                renderDayCalendarGrid(activeMonthIdx);
+            });
+
+            $('btn-month-prev').addEventListener('click', () => {
+                if (activeMonthIdx > 0) window.__drillIntoMonth(activeMonthIdx - 1);
+            });
+            $('btn-month-next').addEventListener('click', () => {
+                if (activeMonthIdx < 11) window.__drillIntoMonth(activeMonthIdx + 1);
+            });
+
+            function renderDayCalendarGrid(mIdx) {
+                const host = $('monthly-calendar-rows');
+                if (!host) return;
+
+                const yr = Number(activeYear === 'all' ? new Date().getFullYear() : activeYear);
+                const firstDay = new Date(yr, mIdx, 1);
+                const lastDay = new Date(yr, mIdx + 1, 0);
                 const daysInMonth = lastDay.getDate();
 
-                // Weekday of 1st day (0 = Sun, 1 = Mon ... adjust to Mon-indexed 0..6)
+                // 0 = Sun -> adjust to Mon = 0
                 let startWeekday = firstDay.getDay() - 1;
                 if (startWeekday === -1) startWeekday = 6;
 
-                const gridHost = $('monthly-grid-body');
+                // Load all trades for this month
+                const accId = currentAccountId();
+                const allTrades = (core && core.Trades ? core.Trades : [])
+                    .filter(t => (!accId || t.account_id === accId) && new Date(t.ts).getFullYear() === yr && new Date(t.ts).getMonth() === mIdx);
+
                 let rowsHtml = '';
                 let curDay = 1;
                 let weekIdx = 0;
@@ -1212,35 +1182,35 @@
                 while (curDay <= daysInMonth) {
                     let weekHtml = '<div class="monthly-grid-matrix">';
                     let weekPnl = 0;
-                    let weekTrades = 0;
+                    let weekTradesCount = 0;
 
                     for (let wd = 0; wd < 7; wd++) {
                         if ((weekIdx === 0 && wd < startWeekday) || curDay > daysInMonth) {
-                            // Inactive pad cell
                             weekHtml += '<div class="cal-day-cell !bg-transparent !border-transparent"></div>';
                         } else {
-                            const thisDayTrades = monthTrades.filter(t => t.ts.getDate() === curDay);
+                            const thisDay = curDay;
+                            const dayTrades = allTrades.filter(t => new Date(t.ts).getDate() === thisDay);
                             let dayPnl = 0;
-                            thisDayTrades.forEach(t => { dayPnl += t.pnl; });
+                            dayTrades.forEach(t => dayPnl += Number(t.pnl || 0));
                             weekPnl += dayPnl;
-                            weekTrades += thisDayTrades.length;
+                            weekTradesCount += dayTrades.length;
 
-                            if (thisDayTrades.length > 0) {
+                            if (dayTrades.length > 0) {
                                 const isGain = dayPnl >= 0;
-                                weekHtml += '<div class="cal-day-cell has-trades" onclick="window.__openDayDetail(' + curDay + ')">' +
+                                weekHtml += '<div class="cal-day-cell has-trades" onclick="window.__openDayModal(' + thisDay + ')">' +
                                     '<div class="flex items-center justify-between">' +
-                                        '<svg data-lucide="menu" class="w-3.5 h-3.5 text-[#22c55e]"></svg>' +
-                                        '<span class="num text-[13.5px] font-extrabold text-white">' + curDay + '</span>' +
+                                        '<span class="w-1.5 h-1.5 rounded-full ' + (isGain ? 'bg-emerald-400' : 'bg-rose-400') + '"></span>' +
+                                        '<span class="num text-[12px] font-bold text-white">' + thisDay + '</span>' +
                                     '</div>' +
-                                    '<div class="my-auto py-1 text-center">' +
-                                        '<div class="num text-[12.5px] font-bold ' + (isGain ? 'text-[#22c55e]' : 'text-[#ef4444]') + '">' + fmtVal(dayPnl) + '</div>' +
-                                        '<div class="text-[10px] text-[#94a3b8] mt-0.5">' + thisDayTrades.length + ' trade' + (thisDayTrades.length === 1 ? '' : 's') + '</div>' +
+                                    '<div class="my-auto text-center">' +
+                                        '<div class="num text-[11.5px] font-bold ' + (isGain ? 'text-emerald-400' : 'text-rose-400') + '">' + (dayPnl >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(dayPnl)).toLocaleString('en-US') + '</div>' +
+                                        '<div class="text-[9.5px] text-slate-400 mt-0.5">' + dayTrades.length + ' trade' + (dayTrades.length === 1 ? '' : 's') + '</div>' +
                                     '</div>' +
                                 '</div>';
                             } else {
                                 weekHtml += '<div class="cal-day-cell">' +
                                     '<div class="flex items-center justify-end">' +
-                                        '<span class="num text-[13.5px] font-bold text-white">' + curDay + '</span>' +
+                                        '<span class="num text-[12px] font-medium text-slate-500">' + thisDay + '</span>' +
                                     '</div>' +
                                 '</div>';
                             }
@@ -1248,11 +1218,11 @@
                         }
                     }
 
-                    // Week summary cell (far right column)
+                    // Week summary
                     const isWeekGain = weekPnl >= 0;
                     weekHtml += '<div class="cal-week-cell">' +
-                        '<div class="num text-[12.5px] font-bold ' + (weekTrades > 0 ? (isWeekGain ? 'text-[#22c55e]' : 'text-[#ef4444]') : 'text-white') + '">' + (weekTrades ? fmtVal(weekPnl) : '0%') + '</div>' +
-                        '<div class="text-[10.5px] text-[#64748b] mt-0.5">' + weekTrades + ' trade' + (weekTrades === 1 ? '' : 's') + '</div>' +
+                        '<div class="num text-[12px] font-bold ' + (weekTradesCount > 0 ? (isWeekGain ? 'text-emerald-400' : 'text-rose-400') : 'text-slate-500') + '">' + (weekTradesCount ? (isWeekGain ? '+' : '-') + '$' + Math.abs(Math.round(weekPnl)).toLocaleString('en-US') : '—') + '</div>' +
+                        '<div class="text-[10px] text-slate-500 mt-0.5">' + weekTradesCount + ' trades</div>' +
                     '</div>';
 
                     weekHtml += '</div>';
@@ -1260,348 +1230,125 @@
                     weekIdx++;
                 }
 
-                gridHost.innerHTML = rowsHtml;
-                if (window.lucide) lucide.createIcons();
+                host.innerHTML = rowsHtml;
             }
 
-            // ==========================================
-            // 3. RENDER DAY DETAIL MODAL (Matches Image 3)
-            // ==========================================
-            let currentModalDayTrades = [];
+            // ---- 6. Open Day Modal ----
+            window.__openDayModal = function (dayNum) {
+                const yr = Number(activeYear === 'all' ? new Date().getFullYear() : activeYear);
+                const accId = currentAccountId();
+                const dayTrades = (core && core.Trades ? core.Trades : [])
+                    .filter(t => (!accId || t.account_id === accId) && new Date(t.ts).getFullYear() === yr && new Date(t.ts).getMonth() === activeMonthIdx && new Date(t.ts).getDate() === dayNum);
 
-            function selectModalTrade(idx) {
-                if (!currentModalDayTrades || !currentModalDayTrades[idx]) return;
-                activeDayTrade = currentModalDayTrades[idx];
-                
-                // Highlight row
-                const rows = document.querySelectorAll('#modal-trade-rows .modal-table-row');
-                rows.forEach((r, i) => {
-                    if (i === idx) r.classList.add('selected');
-                    else r.classList.remove('selected');
-                });
-
-                // Update Notes & Screenshot views
-                updateNotesDisplay(activeDayTrade.note);
-                renderScreenshotInModal(activeDayTrade.chart_url);
-            }
-            window.__selectModalTrade = selectModalTrade;
-
-            function openDayDetail(dayNum) {
-                const dayTrades = trades.filter(t => t.ts.getFullYear() === selectedYear && t.ts.getMonth() === selectedMonth && t.ts.getDate() === dayNum);
-                currentModalDayTrades = dayTrades;
-                const d = new Date(selectedYear, selectedMonth, dayNum);
-                
+                const d = new Date(yr, activeMonthIdx, dayNum);
                 $('modal-day-title').textContent = d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
                 let dayPnl = 0;
-                let wins = 0;
-                const assetCounts = {};
-                dayTrades.forEach(t => {
-                    dayPnl += t.pnl;
-                    if (t.pnl > 0) wins++;
-                    const sym = t.symbol || 'OTHER';
-                    assetCounts[sym] = (assetCounts[sym] || 0) + 1;
-                });
-
+                dayTrades.forEach(t => dayPnl += Number(t.pnl || 0));
                 const isGain = dayPnl >= 0;
-                $('modal-day-pnl').textContent = (isGain ? '▲ ' : '▼ ') + fmtVal(dayPnl);
-                $('modal-day-pnl').className = 'pnl-badge ' + (isGain ? '' : 'loss');
+                const pnlEl = $('modal-day-pnl');
+                pnlEl.textContent = (isGain ? '+$' : '-$') + Math.abs(Math.round(dayPnl)).toLocaleString('en-US');
+                pnlEl.className = 'px-2 py-0.5 rounded text-xs font-mono font-bold ' + (isGain ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/30' : 'bg-rose-500/20 text-rose-300 border border-rose-500/30');
 
-                // 5 Stats
-                $('dm-trades').textContent = dayTrades.length;
-                const wr = dayTrades.length ? Math.round((wins / dayTrades.length) * 100) : 0;
-                $('dm-winrate').textContent = wr + '%';
-                const dayRTrades = dayTrades.filter(t => t.r != null && !isNaN(t.r));
-                const dayAvgR = dayRTrades.length ? (dayRTrades.reduce((acc, t) => acc + Number(t.r), 0) / dayRTrades.length).toFixed(1) + 'R' : (dayTrades.length ? '8.5R' : '-');
-                $('dm-rr').textContent = dayAvgR;
-                const sorted = Object.keys(assetCounts).sort((a, b) => assetCounts[b] - assetCounts[a]);
-                $('dm-asset').textContent = sorted[0] || '—';
-
-                // Sparkline
-                $('dm-sparkline').innerHTML =
-                    '<svg viewBox="0 0 100 28" class="w-full h-full">' +
-                        '<defs>' +
-                            '<linearGradient id="spkGlow" x1="0" y1="0" x2="0" y2="1">' +
-                                '<stop offset="0%" stop-color="#22c55e" stop-opacity="0.35"/>' +
-                                '<stop offset="100%" stop-color="#22c55e" stop-opacity="0.0"/>' +
-                            '</linearGradient>' +
-                        '</defs>' +
-                        '<path d="M 0 26 L 25 26 L 65 5 L 100 5 L 100 30 L 0 30 Z" fill="url(#spkGlow)"/>' +
-                        '<path d="M 0 26 L 25 26 L 65 5 L 100 5" fill="none" stroke="#22c55e" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>' +
-                    '</svg>';
-
-                // Trades Table inside modal
                 const rowsHost = $('modal-trade-rows');
-                rowsHost.innerHTML = dayTrades.map((t, idx) => {
-                    const isLong = t.dir === 'Long';
-                    const sideHtml = isLong ? '<span class="text-[#22c55e] font-bold">Buy ↑</span>' : '<span class="text-[#ef4444] font-bold">Sell ↓</span>';
-                    const dateStr = t.ts.toLocaleDateString('en-GB') + ' ' + t.ts.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-                    const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '8.5R';
-                    const pnlText = (t.pnl >= 0 ? '▲ ' : '▼ ') + fmtVal(t.pnl);
-
-                    return '<div class="modal-table-row ' + (idx === 0 ? 'selected' : '') + '" onclick="window.__selectModalTrade(' + idx + ')">' +
-                        '<div class="text-[#cbd5e1] font-medium font-mono text-[12.5px]">' + dateStr + '</div>' +
-                        '<div class="font-bold text-white text-[13.5px]">' + esc(t.symbol) + '</div>' +
-                        '<div>' + sideHtml + '</div>' +
-                        '<div class="text-[#717e91] font-mono">-</div>' +
-                        '<div class="font-bold text-white font-mono">' + rrText + '</div>' +
-                        '<div class="text-right pr-2"><span class="pnl-badge ' + (t.pnl >= 0 ? '' : 'loss') + '">' + pnlText + '</span></div>' +
-                    '</div>';
-                }).join('');
-
-                activeDayTrade = dayTrades[0] || null;
-
-                // Reset accordion state (open by default matching screenshot)
-                notesDrawer.classList.add('open');
-                notesChevron.classList.add('rotated');
-
-                // Update Notes & Screenshot views
-                if (activeDayTrade) {
-                    updateNotesDisplay(activeDayTrade.note);
-                    renderScreenshotInModal(activeDayTrade.chart_url);
+                if (dayTrades.length === 0) {
+                    rowsHost.innerHTML = '<div class="p-3 text-center text-slate-500">No trades recorded on this day.</div>';
                 } else {
-                    updateNotesDisplay('');
-                    renderScreenshotInModal('');
+                    rowsHost.innerHTML = dayTrades.map(t => {
+                        const isWin = Number(t.pnl || 0) > 0;
+                        const dateStr = new Date(t.ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
+                        return '<div class="flex items-center justify-between p-2 rounded bg-white/[0.03] border border-white/[0.04]">' +
+                            '<div>' +
+                                '<span class="font-bold text-white mr-2">' + esc(t.symbol) + '</span>' +
+                                '<span class="text-[10px] text-slate-400 font-mono">' + dateStr + ' · ' + (t.dir || 'BUY') + '</span>' +
+                            '</div>' +
+                            '<div class="num font-bold ' + (isWin ? 'text-emerald-400' : 'text-rose-400') + '">' +
+                                (t.pnl >= 0 ? '+$' : '-$') + Math.abs(Math.round(t.pnl || 0)).toLocaleString('en-US') +
+                            '</div>' +
+                        '</div>';
+                    }).join('');
                 }
 
                 $('day-modal').classList.add('open');
-                if (window.lucide) lucide.createIcons();
-            }
-            window.__openDayDetail = openDayDetail;
+            };
 
-            // ---- EVENT LISTENERS ----
-            $('month-back-btn').addEventListener('click', () => {
-                $('view-monthly').classList.add('hidden');
-                $('view-yearly').classList.remove('hidden');
-                $('crumb-sub-sep').classList.add('hidden');
-                $('crumb-sub-month').classList.add('hidden');
-                renderYearlyView();
-            });
-
-            $('crumb-cal-root').addEventListener('click', () => {
-                $('month-back-btn').click();
-            });
-            $('crumb-all-accounts').addEventListener('click', () => {
-                $('month-back-btn').click();
-            });
-
-            $('btn-prev-month').addEventListener('click', () => {
-                if (selectedMonth > 0) openMonthlyView(selectedMonth - 1);
-            });
-            $('btn-next-month').addEventListener('click', () => {
-                if (selectedMonth < 11) openMonthlyView(selectedMonth + 1);
-            });
-
-            $('unit-toggle').addEventListener('click', () => {
-                unitMode = unitMode === '%' ? '$' : '%';
-                $('unit-toggle').textContent = unitMode;
-                renderYearlyView();
-                if (!$('view-monthly').classList.contains('hidden')) {
-                    renderMonthlyCalendar();
-                }
-            });
-
-            $('btn-close-day-modal').addEventListener('click', () => {
-                $('day-modal').classList.remove('open');
-            });
-            $('day-modal').addEventListener('click', e => {
+            $('btn-close-day-modal').addEventListener('click', () => $('day-modal').classList.remove('open'));
+            $('day-modal').addEventListener('click', (e) => {
                 if (e.target === $('day-modal')) $('day-modal').classList.remove('open');
             });
 
-            let activeDayTrade = null;
+            // ---- 7. Year Tabs & Dropdown Interaction ----
+            document.querySelectorAll('.year-tab-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.year-tab-btn').forEach(b => {
+                        b.classList.remove('bg-white/[0.08]', 'text-white', 'border', 'border-white/[0.08]');
+                        b.classList.add('text-slate-400');
+                    });
+                    btn.classList.remove('text-slate-400');
+                    btn.classList.add('bg-white/[0.08]', 'text-white', 'border', 'border-white/[0.08]');
 
-            // Accordion toggle with smooth slide down, chevron rotation, and content fade-in
-            const btnToggleNotes = $('btn-toggle-day-notes');
-            const notesDrawer = $('day-notes-drawer');
-            const notesChevron = $('day-notes-chevron');
-
-            btnToggleNotes.addEventListener('click', () => {
-                const isOpen = notesDrawer.classList.toggle('open');
-                notesChevron.classList.toggle('rotated', isOpen);
+                    activeYear = btn.dataset.year;
+                    const dropdown = $('matrix-year-dropdown');
+                    if (dropdown) dropdown.value = activeYear;
+                    fetchSummary();
+                });
             });
 
-            // Edit Notes Modal Handlers
-            const editNotesModal = $('edit-notes-modal');
-            const editNotesTextarea = $('edit-notes-textarea');
-
-            function openEditNotesModal() {
-                if (!activeDayTrade) return;
-                editNotesTextarea.value = activeDayTrade.note || '';
-                editNotesModal.classList.add('open');
-                setTimeout(() => editNotesTextarea.focus(), 50);
-            }
-
-            $('modal-btn-open-notes').addEventListener('click', openEditNotesModal);
-            $('modal-notes-display-area').addEventListener('click', openEditNotesModal);
-
-            $('btn-close-edit-notes').addEventListener('click', () => editNotesModal.classList.remove('open'));
-            $('btn-cancel-edit-notes').addEventListener('click', () => editNotesModal.classList.remove('open'));
-            editNotesModal.addEventListener('click', e => {
-                if (e.target === editNotesModal) editNotesModal.classList.remove('open');
-            });
-
-            $('btn-save-edit-notes').addEventListener('click', () => {
-                if (activeDayTrade) {
-                    activeDayTrade.note = editNotesTextarea.value.trim();
-                    updateNotesDisplay(activeDayTrade.note);
-                    showToast('Notes saved');
-                    if (core && core.TradeService) {
-                        try { core.TradeService.update(activeDayTrade.id, { note: activeDayTrade.note }); } catch(err) {}
-                    }
-                }
-                editNotesModal.classList.remove('open');
-            });
-
-            function updateNotesDisplay(noteText) {
-                const textEl = $('modal-day-notes-text');
-                if (noteText && noteText.trim()) {
-                    textEl.textContent = noteText;
-                    textEl.className = 'text-[13px] text-[#cbd5e1] font-normal whitespace-pre-wrap leading-relaxed text-left w-full';
-                } else {
-                    textEl.textContent = 'Enter your trade notes here';
-                    textEl.className = 'text-[12.5px] text-[#505a69] font-medium whitespace-pre-wrap leading-relaxed';
-                }
-            }
-
-            // Screenshot Dropzone & Paste Handlers
-            const dropzone = $('modal-dropzone-zone');
-            const fileInput = $('modal-screenshot-input');
-            const dropEmpty = $('modal-dropzone-empty');
-            const dropPreview = $('modal-dropzone-preview');
-            const dropImg = $('modal-dropzone-img');
-            const btnRemoveShot = $('modal-btn-remove-shot');
-
-            dropzone.addEventListener('click', (e) => {
-                if (e.target.closest('#modal-btn-remove-shot')) return;
-                fileInput.click();
-            });
-
-            fileInput.addEventListener('change', e => {
-                const file = e.target.files[0];
-                if (file) handleScreenshotFile(file);
-            });
-
-            function handleScreenshotFile(file) {
-                const reader = new FileReader();
-                reader.onload = ev => {
-                    if (activeDayTrade) {
-                        activeDayTrade.chart_url = ev.target.result;
-                        renderScreenshotInModal(activeDayTrade.chart_url);
-                        showToast('Screenshot attached');
-                        if (core && core.TradeService) {
-                            try { core.TradeService.update(activeDayTrade.id, { chart_url: activeDayTrade.chart_url }); } catch(err) {}
+            const matrixYearSelect = $('matrix-year-dropdown');
+            if (matrixYearSelect) {
+                matrixYearSelect.addEventListener('change', (e) => {
+                    activeYear = e.target.value;
+                    document.querySelectorAll('.year-tab-btn').forEach(b => {
+                        if (b.dataset.year === activeYear) {
+                            b.click();
                         }
-                    }
-                };
-                reader.readAsDataURL(file);
-            }
-
-            btnRemoveShot.addEventListener('click', (e) => {
-                e.stopPropagation();
-                if (activeDayTrade) {
-                    activeDayTrade.chart_url = '';
-                    renderScreenshotInModal('');
-                    showToast('Screenshot removed');
-                    if (core && core.TradeService) {
-                        try { core.TradeService.update(activeDayTrade.id, { chart_url: '' }); } catch(err) {}
-                    }
-                }
-            });
-
-            // Drag & drop on dropzone
-            dropzone.addEventListener('dragover', (e) => {
-                e.preventDefault();
-                dropzone.classList.add('drag-over');
-            });
-            dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-over'));
-            dropzone.addEventListener('drop', (e) => {
-                e.preventDefault();
-                dropzone.classList.add('drag-over');
-                if (e.dataTransfer.files && e.dataTransfer.files[0]) {
-                    handleScreenshotFile(e.dataTransfer.files[0]);
-                }
-            });
-
-            // Global Ctrl+V clipboard paste while day modal is open
-            window.addEventListener('paste', e => {
-                if (!$('day-modal').classList.contains('open')) return;
-                const items = (e.clipboardData || e.originalEvent.clipboardData).items;
-                for (let i in items) {
-                    const item = items[i];
-                    if (item.kind === 'file' && item.type.includes('image')) {
-                        const blob = item.getAsFile();
-                        handleScreenshotFile(blob);
-                        break;
-                    }
-                }
-            });
-
-            function renderScreenshotInModal(url) {
-                if (url) {
-                    dropEmpty.classList.add('hidden');
-                    dropPreview.classList.remove('hidden');
-                    dropImg.src = url;
-                } else {
-                    dropEmpty.classList.remove('hidden');
-                    dropPreview.classList.add('hidden');
-                    dropImg.src = '';
-                }
-            }
-
-            const collapseBtn = $('collapse-btn');
-            if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
-
-            // ---- UNIFIED REACTIVE RENDER PIPELINE ----
-            function renderAll() {
-                trades = loadTrades();
-                renderChrome();
-                if ($('view-monthly').classList.contains('hidden')) {
-                    renderYearlyView();
-                } else {
-                    renderMonthlyCalendar();
-                }
-            }
-            window.__renderCalendar = renderAll;
-
-            // Initial load & automatic year/month anchoring
-            trades = loadTrades();
-            if (trades.length > 0) {
-                const latest = trades[trades.length - 1].ts;
-                selectedYear = latest.getFullYear();
-                selectedMonth = latest.getMonth();
-            } else {
-                const now = new Date();
-                selectedYear = now.getFullYear();
-                selectedMonth = now.getMonth();
-            }
-
-            renderChrome();
-            renderYearlyView();
-
-            // Subscribe to TradeMindCore Bus events for real-time reactivity
-            if (core && core.TradeMindBus) {
-                const reactiveEvents = [
-                    'state.hydrated',
-                    'trade.created',
-                    'trade.updated',
-                    'trade.deleted',
-                    'account.changed',
-                    'config.changed'
-                ];
-                reactiveEvents.forEach(ev => {
-                    core.TradeMindBus.subscribe(ev, () => {
-                        renderAll();
                     });
                 });
             }
 
-            // Cross-tab / window storage event listener
+            // ---- 8. Time Range Selector Pills ----
+            document.querySelectorAll('.range-pill').forEach(pill => {
+                pill.addEventListener('click', () => {
+                    document.querySelectorAll('.range-pill').forEach(p => {
+                        p.classList.remove('bg-white/[0.08]', 'text-white', 'rounded');
+                        p.classList.add('text-slate-400');
+                    });
+                    pill.classList.remove('text-slate-400');
+                    pill.classList.add('bg-white/[0.08]', 'text-white', 'rounded');
+                    activeRange = pill.dataset.range;
+                    fetchSummary();
+                });
+            });
+
+            // ---- 9. Export Audit Handler ----
+            $('btn-export-audit').addEventListener('click', () => {
+                const accId = currentAccountId();
+                const yr = activeYear;
+                showToast('Generating audit CSV export...');
+                window.location.href = '/api/calendar/export?accountId=' + encodeURIComponent(accId) + '&year=' + encodeURIComponent(yr) + '&format=csv';
+            });
+
+            // ---- 10. Collapse Sidebar Handler ----
+            const collapseBtn = $('collapse-btn');
+            if (collapseBtn) collapseBtn.addEventListener('click', () => document.body.classList.toggle('collapsed'));
+
+            // ---- 11. Core Bus Subscriptions ----
+            if (core && core.TradeMindBus) {
+                ['state.hydrated', 'trade.created', 'trade.updated', 'trade.deleted', 'account.changed', 'config.changed'].forEach(ev => {
+                    core.TradeMindBus.subscribe(ev, () => {
+                        fetchSummary();
+                    });
+                });
+            }
+
             window.addEventListener('storage', e => {
                 if (e.key && (e.key.startsWith('tm_') || e.key.includes('trades'))) {
-                    renderAll();
+                    fetchSummary();
                 }
             });
 
+            // Initial Boot
+            fetchSummary();
             if (window.lucide) lucide.createIcons();
         })();
     </script>
