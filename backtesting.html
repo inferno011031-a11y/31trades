@@ -391,6 +391,163 @@
             border-bottom-color: #ffffff !important;
         }
 
+        /* ============ ON-CHART FLOATING EXECUTION HUD ============ */
+        #chart-floating-hud {
+            position: absolute;
+            top: 26px;
+            right: 26px;
+            width: 310px;
+            max-width: calc(100% - 32px);
+            z-index: 50;
+            background: rgba(13, 19, 31, 0.95);
+            backdrop-filter: blur(24px) saturate(1.25);
+            -webkit-backdrop-filter: blur(24px) saturate(1.25);
+            border: 1px solid #232836;
+            box-shadow: 0 16px 48px rgba(0, 0, 0, 0.75), 0 0 1px 1px rgba(255, 255, 255, 0.05);
+            border-radius: 20px;
+            transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease;
+            user-select: none;
+        }
+        #chart-floating-hud.is-dragging {
+            cursor: grabbing !important;
+            opacity: 0.95;
+            box-shadow: 0 24px 64px rgba(0, 0, 0, 0.85);
+        }
+        .hud-header {
+            cursor: grab;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 14px 18px;
+            border-bottom: 1px solid transparent;
+            transition: border-color 0.2s ease, padding 0.2s ease;
+        }
+        #chart-floating-hud:not(.collapsed) .hud-header {
+            border-bottom-color: #1a2233;
+        }
+        .hud-body {
+            transition: max-height 0.35s cubic-bezier(0.16, 1, 0.3, 1), opacity 0.25s ease, transform 0.25s ease, padding 0.3s ease;
+            max-height: 850px;
+            opacity: 1;
+            transform: scaleY(1);
+            transform-origin: top;
+            padding: 16px 18px 14px 18px;
+            overflow: hidden;
+        }
+        #chart-floating-hud.collapsed .hud-body {
+            max-height: 0 !important;
+            opacity: 0 !important;
+            transform: scaleY(0.92) !important;
+            padding-top: 0 !important;
+            padding-bottom: 0 !important;
+            margin-top: 0 !important;
+            pointer-events: none !important;
+        }
+        #chart-floating-hud.collapsed {
+            width: auto !important;
+            min-width: 340px;
+        }
+        .hud-stat-box {
+            background: #111624;
+            border: 1px solid #1f2738;
+            border-radius: 14px;
+            padding: 12px 14px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: border-color 0.15s ease;
+        }
+        .hud-stat-box:hover {
+            border-color: #2b364d;
+        }
+        .hud-select {
+            background: #111624;
+            border: 1px solid #232d40;
+            border-radius: 10px;
+            color: #f1f5f9;
+            font-size: 12px;
+            padding: 6px 10px;
+            outline: none;
+            width: 100%;
+            cursor: pointer;
+            transition: border-color 0.15s ease;
+        }
+        .hud-select:focus {
+            border-color: #3b82f6;
+        }
+        .hud-btn-buy {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            box-shadow: 0 4px 20px rgba(16, 185, 129, 0.35);
+            border: 1px solid rgba(52, 211, 153, 0.35);
+            color: #ffffff;
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .hud-btn-buy:hover:not(:disabled) {
+            background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+            box-shadow: 0 6px 28px rgba(16, 185, 129, 0.55);
+            transform: translateY(-1px);
+        }
+        .hud-btn-buy:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .hud-btn-sell {
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+            box-shadow: 0 4px 20px rgba(239, 68, 68, 0.35);
+            border: 1px solid rgba(248, 113, 113, 0.35);
+            color: #ffffff;
+            border-radius: 14px;
+            padding: 12px 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2px;
+            cursor: pointer;
+            transition: all 0.18s ease;
+        }
+        .hud-btn-sell:hover:not(:disabled) {
+            background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+            box-shadow: 0 6px 28px rgba(239, 68, 68, 0.55);
+            transform: translateY(-1px);
+        }
+        .hud-btn-sell:active:not(:disabled) {
+            transform: translateY(1px);
+        }
+        .hud-sub-btn {
+            background: #131926;
+            border: 1px solid #1f2738;
+            color: #cbd5e1;
+            font-size: 11.5px;
+            font-weight: 600;
+            border-radius: 10px;
+            padding: 8px 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+        .hud-sub-btn:hover:not(:disabled) {
+            background: #1c2436;
+            border-color: #2b364d;
+            color: #ffffff;
+        }
+        .hud-sub-btn:disabled, .hud-btn-buy:disabled, .hud-btn-sell:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            transform: none !important;
+            box-shadow: none !important;
+        }
+
     </style>
     <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
@@ -410,6 +567,12 @@
     <script src="assets/sidebar-nav.js"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
+
+    <style>
+      [class*="border-white"], [class*="divide-white"] {
+        border-color: #1a2130 !important;
+      }
+    </style>
 </head>
 <body>
 
@@ -551,7 +714,7 @@
                 <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-96 top-glow"></div>
 
                 <!-- Testing Header with Streak & Tabs -->
-                <header class="relative z-10 w-full pt-5 px-6 lg:px-10 border-b border-white/[0.06] bg-[#070b12]/60 backdrop-blur-md">
+                <header class="relative z-10 w-full pt-5 px-6 lg:px-10 border-b border-[#161a24] bg-[#070b12]/60 backdrop-blur-md">
                     <div class="max-w-[1580px] mx-auto">
                         <!-- Top Title and Streak Row -->
                         <div class="flex items-center justify-between pb-4">
@@ -569,7 +732,7 @@
                         <!-- Navigation Tabs -->
                         <nav aria-label="Main Navigation" class="flex space-x-7 text-sm font-medium pt-1 -mb-[1px]">
                             <!-- Tab: Dashboard -->
-                            <button type="button" class="stitch-tab active flex items-center gap-2 pb-3.5 text-white border-b-2 border-white transition-all font-semibold cursor-pointer" data-tab="dashboard">
+                            <button type="button" class="stitch-tab flex items-center gap-2 pb-3.5 text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors font-semibold cursor-pointer" data-tab="dashboard">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <rect height="7" rx="1" width="7" x="3" y="3"></rect>
                                     <rect height="7" rx="1" width="7" x="14" y="3"></rect>
@@ -579,7 +742,7 @@
                                 <span>Dashboard</span>
                             </button>
                             <!-- Tab: Sessions -->
-                            <button type="button" class="stitch-tab flex items-center gap-2 pb-3.5 text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors font-semibold cursor-pointer" data-tab="sessions">
+                            <button type="button" class="stitch-tab active flex items-center gap-2 pb-3.5 text-white border-b-2 border-white transition-all font-semibold cursor-pointer" data-tab="sessions">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <line x1="8" x2="21" y1="6" y2="6"></line>
                                     <line x1="8" x2="21" y1="12" y2="12"></line>
@@ -616,7 +779,7 @@
 
                 <div class="relative z-10 max-w-[1580px] mx-auto px-6 lg:px-10 py-6 space-y-7">
                     <!-- ============ TAB 1: DASHBOARD ============ -->
-                    <div id="tab-panel-dashboard" class="stitch-panel space-y-7">
+                    <div id="tab-panel-dashboard" class="stitch-panel hidden space-y-7">
                         <!-- Backtesting Engine Status Banner -->
                         <div class="w-full bg-[#0d131f]/90 border border-blue-900/30 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between sm:justify-center gap-3 text-center text-xs md:text-sm text-slate-300 shadow-inner" data-purpose="notice-banner">
                             <span>Replay historical market regimes, execute simulated trades with custom risk sizing, and analyze empirical edge.</span>
@@ -651,7 +814,7 @@
                                 </div>
                             </div>
                             <!-- Prop Firm Session Card -->
-                            <div id="quick-launch-prop" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-white/[0.08] hover:border-white/20 rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between">
+                            <div id="quick-launch-prop" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-[#1c2230] hover:border-white/20 rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between">
                                 <div class="flex items-start gap-3.5">
                                     <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-blue-400 mt-0.5">
                                         <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -671,7 +834,7 @@
                                 </div>
                             </div>
                             <!-- Tutorials Card -->
-                            <div id="quick-launch-tutorials" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-white/[0.08] hover:border-white/20 rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between">
+                            <div id="quick-launch-tutorials" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-[#1c2230] hover:border-white/20 rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between">
                                 <div class="flex items-start gap-3.5">
                                     <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-blue-400 mt-0.5">
                                         <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -699,7 +862,7 @@
                                 <h2 class="text-lg font-bold text-white tracking-tight">Performance</h2>
                                 <div class="flex items-center gap-2">
                                     <!-- Backtesting Filter Dropdown -->
-                                    <button class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#111723] hover:bg-[#161e2e] border border-white/[0.08] hover:border-white/20 rounded-lg transition-colors cursor-pointer" type="button">
+                                    <button class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#111723] hover:bg-[#161e2e] border border-[#1c2230] hover:border-white/20 rounded-lg transition-colors cursor-pointer" type="button">
                                         <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <line x1="18" x2="18" y1="20" y2="10"></line>
                                             <line x1="12" x2="12" y1="20" y2="4"></line>
@@ -711,7 +874,7 @@
                                         </svg>
                                     </button>
                                     <!-- Lifetime Range Filter Dropdown -->
-                                    <button class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#111723] hover:bg-[#161e2e] border border-white/[0.08] hover:border-white/20 rounded-lg transition-colors cursor-pointer" type="button">
+                                    <button class="inline-flex items-center gap-2 px-3 py-1.5 text-xs font-medium text-slate-200 bg-[#111723] hover:bg-[#161e2e] border border-[#1c2230] hover:border-white/20 rounded-lg transition-colors cursor-pointer" type="button">
                                         <svg class="w-3.5 h-3.5 text-slate-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                                             <rect height="18" rx="2" ry="2" width="18" x="3" y="4"></rect>
                                             <line x1="16" x2="16" y1="2" y2="6"></line>
@@ -731,7 +894,7 @@
                                 <!-- Left Stats Section (2 Columns across 7/12 width) -->
                                 <div class="stitch-col-7 lg:col-span-7 stitch-stat-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <!-- Metric Card: Time Invested -->
-                                    <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
+                                    <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
@@ -757,7 +920,7 @@
                                     </div>
 
                                     <!-- Metric Card: Historical Time Replayed -->
-                                    <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
+                                    <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
@@ -792,7 +955,7 @@
                                     </div>
 
                                     <!-- Metric Card: Trades taken -->
-                                    <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
+                                    <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
@@ -813,7 +976,7 @@
                                     </div>
 
                                     <!-- Metric Card: Overall win rate -->
-                                    <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
+                                    <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-white/20 transition duration-150">
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
@@ -839,7 +1002,7 @@
                                 </div>
 
                                 <!-- Right Column: Time Invested Glowing Bar Chart (5/12 width) -->
-                                <div class="stitch-col-5 lg:col-span-5 stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 flex flex-col justify-between relative hover:border-white/20 transition duration-150 min-h-[336px]">
+                                <div class="stitch-col-5 lg:col-span-5 stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between relative hover:border-white/20 transition duration-150 min-h-[336px]">
                                     <!-- Chart Header -->
                                     <div class="flex items-center justify-between">
                                         <h3 class="text-sm font-semibold text-white">Time Invested</h3>
@@ -864,13 +1027,13 @@
                                         </div>
                                         <!-- Dashed Grid Lines -->
                                         <div class="absolute left-14 right-4 top-6 bottom-8 flex flex-col justify-between pointer-events-none">
-                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
-                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
-                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
-                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
-                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
-                                            <div class="border-b border-dashed border-white/[0.07] w-full"></div>
-                                            <div class="border-b border-dashed border-white/[0.12] w-full"></div>
+                                            <div class="border-b border-dashed border-[#1a2130] w-full"></div>
+                                            <div class="border-b border-dashed border-[#1a2130] w-full"></div>
+                                            <div class="border-b border-dashed border-[#1a2130] w-full"></div>
+                                            <div class="border-b border-dashed border-[#1a2130] w-full"></div>
+                                            <div class="border-b border-dashed border-[#1a2130] w-full"></div>
+                                            <div class="border-b border-dashed border-[#1a2130] w-full"></div>
+                                            <div class="border-b border-dashed border-[#202738] w-full"></div>
                                         </div>
                                         <!-- Chart Bars Container -->
                                         <div id="dash-chart-bars" class="ml-16 mr-4 w-full h-[155px] flex items-end justify-around relative z-10">
@@ -884,7 +1047,7 @@
                             <!-- Bottom Row: Win Rate & Trades by Symbol Breakdown -->
                             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 pt-2">
                                 <!-- Win Rate Detail Card -->
-                                <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 min-h-[170px] relative hover:border-white/20 transition duration-150 flex flex-col justify-between">
+                                <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 min-h-[170px] relative hover:border-white/20 transition duration-150 flex flex-col justify-between">
                                     <div>
                                         <div class="flex items-center justify-between">
                                             <h3 class="text-sm font-semibold text-white">Win Rate</h3>
@@ -898,11 +1061,11 @@
                                         <p class="text-xs text-slate-400 mt-1 font-normal" id="dash-winrate-detail-sub">Your win rate will show up here</p>
                                     </div>
                                     <div class="pt-6 pb-2" id="dash-winrate-bars">
-                                        <div class="w-full border-b border-dashed border-white/[0.08]"></div>
+                                        <div class="w-full border-b border-dashed border-[#1c2230]"></div>
                                     </div>
                                 </div>
                                 <!-- Trades by Symbol Card -->
-                                <div class="stitch-card bg-[#111723] border border-white/[0.08] rounded-xl p-5 min-h-[170px] relative hover:border-white/20 transition duration-150 flex flex-col justify-between">
+                                <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 min-h-[170px] relative hover:border-white/20 transition duration-150 flex flex-col justify-between">
                                     <div>
                                         <div class="flex items-center justify-between">
                                             <h3 class="text-sm font-semibold text-white">Trades by symbol</h3>
@@ -916,7 +1079,7 @@
                                         <p class="text-xs text-slate-400 mt-1 font-normal" id="dash-symbol-detail-sub">Your trades by symbol will show up here</p>
                                     </div>
                                     <div class="pt-4 pb-2" id="dash-symbol-bars">
-                                        <div class="w-44 h-5 rounded-md bg-[#1f2837]/60 border border-white/[0.04]"></div>
+                                        <div class="w-44 h-5 rounded-md bg-[#1f2837]/60 border border-[#141720]"></div>
                                     </div>
                                 </div>
                             </div>
@@ -939,7 +1102,7 @@
                                 </div>
 
                                 <div id="dash-sessions-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
-                                    <div class="col-span-full py-10 text-center text-xs text-slate-500 border border-white/[0.06] rounded-xl bg-[#0c1018]/50">
+                                    <div class="col-span-full py-10 text-center text-xs text-slate-500 border border-[#161a24] rounded-xl bg-[#0c1018]/50">
                                         No backtest sessions created yet. Click <span class="text-blue-400 font-semibold cursor-pointer" onclick="document.getElementById('quick-launch-backtest').click()">Backtesting session</span> above to start your first simulation.
                                     </div>
                                 </div>
@@ -948,9 +1111,9 @@
                     </div>
 
                     <!-- ============ TAB 2: SESSIONS & STUDIO (Interactive Replay Engine) ============ -->
-                    <div id="tab-panel-sessions" class="stitch-panel hidden space-y-5">
+                    <div id="tab-panel-sessions" class="stitch-panel space-y-5">
                         <!-- Studio Control Topbar -->
-                        <div class="flex flex-wrap items-center justify-between gap-4 bg-[#111723] border border-white/[0.08] rounded-xl p-4">
+                        <div class="flex flex-wrap items-center justify-between gap-4 bg-[#111723] border border-[#1c2230] rounded-xl p-4">
                             <div>
                                 <h2 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
                                     <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -979,8 +1142,8 @@
                         <div class="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_320px] gap-4 items-start">
                             <!-- LEFT: Session History & Setup Trigger -->
                             <div class="flex flex-col gap-4 min-w-0">
-                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-4 flex flex-col gap-3">
-                                    <div class="flex items-center justify-between pb-2 border-b border-white/[0.06]">
+                                <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-4 flex flex-col gap-3">
+                                    <div class="flex items-center justify-between pb-2 border-b border-[#161a24]">
                                         <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Sessions</span>
                                         <span class="text-[11px] text-slate-400 num" id="sess-count">—</span>
                                     </div>
@@ -992,13 +1155,13 @@
 
                             <!-- CENTER: Real TradingView Candlestick Chart with FX Replay Bottom Dock -->
                             <div class="flex flex-col gap-3 min-w-0">
-                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-3">
-                                    <div id="tv-chart-wrapper" class="relative w-full h-[540px] rounded-xl overflow-hidden border border-white/[0.08] bg-[#06080b]">
+                                <div class="relative bg-[#111723] border border-[#1c2230] rounded-xl p-3">
+                                    <div id="tv-chart-wrapper" class="relative w-full h-[540px] rounded-xl overflow-hidden border border-[#1c2230] bg-[#06080b]">
                                         <!-- Chart Canvas Container -->
                                         <div id="tv-chart-container" class="w-full h-full"></div>
 
                                         <!-- OHLC Legend Overlay -->
-                                        <div id="tv-ohlc-legend" class="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-2 text-[11px] tabular-nums text-slate-400 bg-[#0a0c12]/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/[0.08] pointer-events-none">
+                                        <div id="tv-ohlc-legend" class="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-2 text-[11px] tabular-nums text-slate-400 bg-[#0a0c12]/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#232836] pointer-events-none">
                                             <span id="tv-sym-tf" class="text-white font-bold tracking-wider">SELECT A SESSION</span>
                                             <span>O: <span id="tv-o" class="text-white font-semibold">—</span></span>
                                             <span>H: <span id="tv-h" class="text-emerald-400 font-semibold">—</span></span>
@@ -1008,7 +1171,7 @@
 
                                         <!-- Empty State overlay before session starts -->
                                         <div id="chart-empty-hint" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#06080b]/90 pointer-events-none transition-opacity">
-                                            <div class="w-12 h-12 rounded-2xl mb-3 flex items-center justify-center bg-white/[0.06] border border-white/[0.12]">
+                                            <div class="w-12 h-12 rounded-2xl mb-3 flex items-center justify-center bg-white/[0.06] border border-[#202738]">
                                                 <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <line x1="18" x2="18" y1="20" y2="10" stroke-width="2"></line>
                                                     <line x1="12" x2="12" y1="20" y2="4" stroke-width="2"></line>
@@ -1020,7 +1183,7 @@
                                         </div>
 
                                         <!-- Floating FX Replay Controller Dock -->
-                                        <div id="fx-replay-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 p-1.5 rounded-xl bg-[#0f131c]/95 backdrop-blur-md border border-white/[0.14] shadow-2xl user-select-none">
+                                        <div id="fx-replay-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 p-1.5 rounded-xl bg-[#0f131c]/95 backdrop-blur-md border border-[#202738] shadow-2xl user-select-none">
                                             <button type="button" class="btn-mini !px-2.5 !py-1.5 !text-[11px] hover:text-white" id="fx-cut-btn" title="Jump / Cut to selected candle">
                                                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <circle cx="6" cy="6" r="3" stroke-width="2"></circle>
@@ -1081,8 +1244,210 @@
                                     </div>
                                 </div>
 
+                                        <!-- Interactive On-Chart Backtesting Execution HUD (outside overflow-hidden) -->
+                                        <div id="chart-floating-hud" class="select-none">
+                                            <!-- HUD Header (Draggable Handle) -->
+                                            <div class="hud-header" id="hud-drag-handle">
+                                                <div class="flex items-center gap-2 min-w-0">
+                                                    <!-- Crosshair Reticle Icon -->
+                                                    <div class="w-6 h-6 rounded-lg bg-[#141a29] border border-[#232d40] flex items-center justify-center shrink-0">
+                                                        <svg class="w-3.5 h-3.5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <circle cx="12" cy="12" r="3"></circle>
+                                                            <line x1="12" y1="2" x2="12" y2="5"></line>
+                                                            <line x1="12" y1="19" x2="12" y2="22"></line>
+                                                            <line x1="2" y1="12" x2="5" y2="12"></line>
+                                                            <line x1="19" y1="12" x2="22" y2="12"></line>
+                                                        </svg>
+                                                    </div>
+                                                    <span class="text-[13px] font-semibold text-slate-100 tracking-tight truncate">Execute Trade (Backtest)</span>
+                                                </div>
+
+                                                <!-- Right: Brand Label + Mini Summary (When Collapsed) + Three Dots Toggle -->
+                                                <div class="flex items-center gap-3 shrink-0">
+                                                    <!-- Mini Telemetry (Visible only when collapsed) -->
+                                                    <div id="hud-mini-summary" class="hidden items-center gap-2 text-xs">
+                                                        <span id="hud-mini-bal" class="text-slate-300 font-bold tabular-nums">$100,000</span>
+                                                        <span id="hud-mini-pnl" class="px-2 py-0.5 rounded font-bold text-[11px] tabular-nums bg-emerald-950/50 text-emerald-400 border border-emerald-500/30">+$0.00</span>
+                                                    </div>
+                                                    
+                                                    <span class="text-[9px] font-bold tracking-[0.2em] text-slate-400 uppercase hidden sm:inline-block">BATTLEXJOURNAL</span>
+                                                    
+                                                    <!-- Three Dots Button with Collapse / Expand Animation -->
+                                                    <button type="button" id="hud-toggle-btn" class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-[#1a2335] transition-colors focus:outline-none" title="Toggle Collapse / Expand">
+                                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                                                            <circle cx="5" cy="12" r="2"></circle>
+                                                            <circle cx="12" cy="12" r="2"></circle>
+                                                            <circle cx="19" cy="12" r="2"></circle>
+                                                        </svg>
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <!-- HUD Body (Collapsible) -->
+                                            <div class="hud-body" id="hud-body-content">
+                                                <!-- Row 1: Account Balance & Floating P&L -->
+                                                <div class="grid grid-cols-2 gap-3 mb-3.5">
+                                                    <!-- Account Balance Card -->
+                                                    <div class="hud-stat-box">
+                                                        <div class="w-9 h-9 rounded-xl bg-[#172033] border border-[#232d40] flex items-center justify-center shrink-0">
+                                                            <svg class="w-4 h-4 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
+                                                                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
+                                                                <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
+                                                            </svg>
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <div class="text-[11px] font-medium text-slate-400 leading-none mb-1">Account Balance</div>
+                                                            <div id="hud-account-balance" class="text-[15px] font-extrabold text-white tabular-nums tracking-tight truncate">$100,000.00</div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Floating P&L Card -->
+                                                    <div class="hud-stat-box">
+                                                        <div class="w-9 h-9 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-center shrink-0">
+                                                            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
+                                                                <polyline points="16 7 22 7 22 13"></polyline>
+                                                            </svg>
+                                                        </div>
+                                                        <div class="min-w-0">
+                                                            <div class="text-[11px] font-medium text-slate-400 leading-none mb-1">Floating P&L</div>
+                                                            <div id="hud-floating-pnl" class="text-[15px] font-extrabold text-emerald-400 tabular-nums tracking-tight truncate">+$0.00</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Row 2: Session & Strategy -->
+                                                <div class="grid grid-cols-2 gap-3 mb-3.5">
+                                                    <!-- Session Selector -->
+                                                    <div>
+                                                        <div class="flex items-center gap-1.5 mb-1 text-slate-300 text-[11px] font-medium">
+                                                            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <circle cx="12" cy="12" r="10"></circle>
+                                                                <line x1="2" y1="12" x2="22" y2="12"></line>
+                                                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+                                                            </svg>
+                                                            <span>Session</span>
+                                                        </div>
+                                                        <select id="hud-session-select" class="hud-select">
+                                                            <option value="New York AM" selected>New York AM</option>
+                                                            <option value="New York PM">New York PM</option>
+                                                            <option value="London">London</option>
+                                                            <option value="Asian">Asian</option>
+                                                            <option value="Frankfurt">Frankfurt</option>
+                                                        </select>
+                                                        <div id="hud-session-hours" class="text-[10px] text-slate-400 font-mono mt-1 px-1">08:00 – 12:00 EST</div>
+                                                    </div>
+
+                                                    <!-- Strategy Selector + New Button -->
+                                                    <div>
+                                                        <div class="flex items-center gap-1.5 mb-1 text-slate-300 text-[11px] font-medium">
+                                                            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M3 3v18h18"></path>
+                                                                <path d="m19 9-5 5-4-4-3 3"></path>
+                                                            </svg>
+                                                            <span>Strategy</span>
+                                                        </div>
+                                                        <div class="flex items-center gap-1.5">
+                                                            <select id="hud-strategy-select" class="hud-select flex-1 min-w-0">
+                                                                <option value="Silver Bullet" selected>Silver Bullet</option>
+                                                                <option value="ICT 2022 Model">ICT 2022 Model</option>
+                                                                <option value="Fair Value Gap (FVG)">Fair Value Gap</option>
+                                                                <option value="Order Block">Order Block</option>
+                                                                <option value="Breaker Block">Breaker Block</option>
+                                                                <option value="Liquidity Sweep">Liquidity Sweep</option>
+                                                            </select>
+                                                            <button type="button" id="hud-add-strategy-btn" class="px-2 py-1.5 rounded-lg border border-[#2a3449] bg-[#141a27] hover:bg-[#1a2335] text-[11px] font-semibold text-slate-200 flex items-center gap-1 shrink-0 transition-colors" title="Create Strategy On-the-fly">
+                                                                <span>+ New Strategy</span>
+                                                            </button>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Row 3: Lot Size & Risk Calculator -->
+                                                <div class="grid grid-cols-2 gap-3 mb-3.5 items-end">
+                                                    <!-- Lot Size Stepper -->
+                                                    <div>
+                                                        <div class="flex items-center gap-1.5 mb-1 text-slate-300 text-[11px] font-medium">
+                                                            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <circle cx="8" cy="8" r="6"></circle>
+                                                                <path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path>
+                                                                <path d="M7 6h1v4"></path>
+                                                                <path d="m16.71 13.88.7.71-2.82 2.82"></path>
+                                                            </svg>
+                                                            <span>Lot Size</span>
+                                                        </div>
+                                                        <div class="hud-stat-box !p-1.5 !gap-1.5 justify-between">
+                                                            <button type="button" id="hud-lot-dec" class="w-7 h-7 rounded-lg bg-[#182030] hover:bg-[#222d42] active:scale-95 text-slate-300 font-bold flex items-center justify-center transition-all">−</button>
+                                                            <input type="number" id="hud-lot-input" value="2" min="0.1" step="1" class="w-12 text-center bg-transparent text-white font-extrabold text-sm focus:outline-none tabular-nums">
+                                                            <button type="button" id="hud-lot-inc" class="w-7 h-7 rounded-lg bg-[#182030] hover:bg-[#222d42] active:scale-95 text-slate-300 font-bold flex items-center justify-center transition-all">+</button>
+                                                            <span id="hud-lot-unit" class="text-[11px] text-slate-400 font-semibold pr-1.5">Lots</span>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Risk Badge -->
+                                                    <div class="bg-emerald-950/25 border border-emerald-500/30 rounded-xl px-3 py-2 flex items-center gap-2.5">
+                                                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                                                            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                                                                <path d="m9 12 2 2 4-4"></path>
+                                                            </svg>
+                                                        </div>
+                                                        <div>
+                                                            <div id="hud-risk-pct" class="text-[12px] font-bold text-emerald-400 leading-none mb-1">1% Risk</div>
+                                                            <div id="hud-risk-amt" class="text-[10.5px] text-slate-400 tabular-nums font-mono">($1,000)</div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Row 4: BUY & SELL Primary Execution Buttons -->
+                                                <div class="grid grid-cols-2 gap-3 mb-3.5">
+                                                    <!-- BUY Button -->
+                                                    <button type="button" id="hud-buy-btn" class="hud-btn-buy">
+                                                        <div class="flex items-center gap-1.5 text-[15px] font-black tracking-wide leading-tight">
+                                                            <span class="text-lg leading-none">↗</span> BUY
+                                                        </div>
+                                                        <div class="text-[9px] font-extrabold tracking-[0.16em] text-emerald-100/80 uppercase">MARKET EXECUTION</div>
+                                                    </button>
+
+                                                    <!-- SELL Button -->
+                                                    <button type="button" id="hud-sell-btn" class="hud-btn-sell">
+                                                        <div class="flex items-center gap-1.5 text-[15px] font-black tracking-wide leading-tight">
+                                                            <span class="text-lg leading-none">↘</span> SELL
+                                                        </div>
+                                                        <div class="text-[9px] font-extrabold tracking-[0.16em] text-rose-100/80 uppercase">MARKET EXECUTION</div>
+                                                    </button>
+                                                </div>
+
+                                                <!-- Row 5: Quick Management Actions -->
+                                                <div class="grid grid-cols-4 gap-2 mb-3">
+                                                    <button type="button" id="hud-partial-25" class="hud-sub-btn">25%</button>
+                                                    <button type="button" id="hud-partial-50" class="hud-sub-btn">50%</button>
+                                                    <button type="button" id="hud-be-btn" class="hud-sub-btn">Break-Even (BE)</button>
+                                                    <button type="button" id="hud-close-btn" class="hud-sub-btn !text-rose-400 hover:!text-rose-300">
+                                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                                            <circle cx="12" cy="12" r="10"></circle>
+                                                            <line x1="15" y1="9" x2="9" y2="15"></line>
+                                                            <line x1="9" y1="9" x2="15" y2="15"></line>
+                                                        </svg>
+                                                        <span>Close All</span>
+                                                    </button>
+                                                </div>
+
+                                                <!-- Execution Status / Feedback Message -->
+                                                <div id="hud-feedback-msg" class="text-[11px] text-center font-medium text-slate-400 mb-2 min-h-[16px] transition-colors"></div>
+
+                                                <!-- Footer Quote -->
+                                                <div class="text-center text-[11px] italic text-slate-500 font-serif border-t border-[#182030] pt-2.5 tracking-wide">
+                                                    “Same charts. A better you.”
+                                                </div>
+                                            </div>
+                                        </div>
+
+
                                 <!-- Live Telemetry Strip -->
-                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-4">
+                                <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-4">
                                     <div class="flex items-center justify-between mb-3">
                                         <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Live Telemetry</span>
                                         <span class="text-[11px] text-slate-400 tabular-nums">Simulated Account</span>
@@ -1102,7 +1467,7 @@
 
                             <!-- RIGHT: Trade Execution & Position Risk -->
                             <div class="flex flex-col gap-4 min-w-0">
-                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
+                                <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-5">
                                     <div class="flex items-center justify-between mb-4">
                                         <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Trade Execution</span>
                                         <span class="tag tag-indigo" id="exec-mode">Practice</span>
@@ -1171,7 +1536,7 @@
                                 </div>
 
                                 <!-- Position Risk Monitor -->
-                                <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
+                                <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-5">
                                     <div class="flex items-center justify-between mb-4">
                                         <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Position Risk</span>
                                         <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1188,7 +1553,7 @@
 
                     <!-- ============ TAB 3: TRADES ============ -->
                     <div id="tab-panel-trades" class="stitch-panel hidden space-y-6">
-                        <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
+                        <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-5">
                             <div class="flex items-center justify-between mb-4">
                                 <div>
                                     <h2 class="text-base font-bold text-white tracking-tight">Practice Trades Journal</h2>
@@ -1210,7 +1575,7 @@
                     <!-- ============ TAB 4: ANALYTICS ============ -->
                     <div id="tab-panel-analytics" class="stitch-panel hidden space-y-6">
                         <!-- Practice analytics -->
-                        <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
+                        <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-5">
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                                 <div>
                                     <h2 class="text-base font-bold text-white tracking-tight">Institutional Practice Analytics</h2>
@@ -1222,7 +1587,7 @@
                         </div>
 
                         <!-- Backtest insights -->
-                        <div class="bg-[#111723] border border-white/[0.08] rounded-xl p-5">
+                        <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-5">
                             <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
                                 <div>
                                     <h2 class="text-base font-bold text-white tracking-tight">Backtest Insights &amp; Edge Extraction</h2>
@@ -1367,7 +1732,7 @@
                 const dashGrid = $('dash-sessions-grid');
                 if (dashGrid) {
                     if (!sessions.length) {
-                        dashGrid.innerHTML = '<div class="col-span-full py-10 text-center text-xs text-slate-500 border border-white/[0.06] rounded-xl bg-[#0c1018]/50">' +
+                        dashGrid.innerHTML = '<div class="col-span-full py-10 text-center text-xs text-slate-500 border border-[#161a24] rounded-xl bg-[#0c1018]/50">' +
                             'No backtest sessions created yet. Click <span class="text-blue-400 font-semibold cursor-pointer" onclick="document.getElementById(\'quick-launch-backtest\').click()">Backtesting session</span> above to start your first simulation.' +
                         '</div>';
                     } else {
@@ -1376,7 +1741,7 @@
                             const periodText = isBlind ? 'Blind Sample' : (s.periodLabel || s.period || 'Historical');
                             const statusColor = s.status === 'completed' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/20' : 'text-blue-400 border-blue-500/30 bg-blue-950/20';
                             const pnlClass = s.net > 0 ? 'text-emerald-400' : s.net < 0 ? 'text-rose-400' : 'text-slate-300';
-                            return '<div class="group relative bg-[#111723] hover:bg-[#151c2b] border border-white/[0.08] hover:border-white/20 rounded-xl p-4 transition-all flex flex-col justify-between gap-3 cursor-pointer" data-sid="' + esc(s.id) + '">' +
+                            return '<div class="group relative bg-[#111723] hover:bg-[#151c2b] border border-[#1c2230] hover:border-white/20 rounded-xl p-4 transition-all flex flex-col justify-between gap-3 cursor-pointer" data-sid="' + esc(s.id) + '">' +
                                 '<div class="flex items-start justify-between gap-2">' +
                                     '<div class="flex items-center gap-2.5">' +
                                         '<div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">' +
@@ -1385,7 +1750,7 @@
                                         '<div>' +
                                             '<div class="flex items-center gap-1.5">' +
                                                 '<h4 class="text-sm font-semibold text-white tracking-tight">' + esc(s.symbol) + '</h4>' +
-                                                '<span class="text-[10px] text-slate-400 font-medium px-1.5 py-0.5 rounded bg-white/[0.05] border border-white/[0.06]">' + esc(s.timeframe) + '</span>' +
+                                                '<span class="text-[10px] text-slate-400 font-medium px-1.5 py-0.5 rounded bg-white/[0.05] border border-[#161a24]">' + esc(s.timeframe) + '</span>' +
                                             '</div>' +
                                             '<p class="text-[11px] text-slate-400 mt-0.5 font-normal truncate max-w-[180px]">' + esc(s.strategy || 'Manual Backtest') + '</p>' +
                                         '</div>' +
@@ -1394,7 +1759,7 @@
                                         esc(s.status || 'Ready') +
                                     '</span>' +
                                 '</div>' +
-                                '<div class="grid grid-cols-3 gap-2 py-2 border-y border-white/[0.05] text-[11px] tabular-nums">' +
+                                '<div class="grid grid-cols-3 gap-2 py-2 border-y border-[#161a24] text-[11px] tabular-nums">' +
                                     '<div>' +
                                         '<span class="text-slate-500 text-[10px] block">Period</span>' +
                                         '<span class="text-slate-200 font-medium truncate block" title="' + esc(periodText) + '">' + esc(periodText) + '</span>' +
@@ -1730,6 +2095,372 @@
                 showToast(ratio + 'R Target calculated');
             };
 
+            // ============ INTERACTIVE ON-CHART EXECUTION HUD ============
+            const BacktestHUD = {
+                collapsed: false,
+                dragOffset: { x: 0, y: 0 },
+                isDragging: false,
+                initialized: false,
+
+                init() {
+                    if (this.initialized) return;
+                    const hud = $('chart-floating-hud');
+                    if (!hud) return;
+                    this.initialized = true;
+
+                    // Toggle collapse/expand on three dots button click
+                    const toggleBtn = $('hud-toggle-btn');
+                    if (toggleBtn) {
+                        toggleBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            this.toggleCollapse();
+                        });
+                    }
+
+                    // Draggable support via header handle
+                    const dragHandle = $('hud-drag-handle');
+                    if (dragHandle) {
+                        dragHandle.addEventListener('mousedown', (e) => {
+                            if (e.target.closest('button') || e.target.closest('select') || e.target.closest('input')) return;
+                            this.isDragging = true;
+                            hud.classList.add('is-dragging');
+                            const rect = hud.getBoundingClientRect();
+                            this.dragOffset.x = e.clientX - rect.left;
+                            this.dragOffset.y = e.clientY - rect.top;
+                        });
+                    }
+
+                    window.addEventListener('mousemove', (e) => {
+                        if (!this.isDragging) return;
+                        const wrapper = hud.parentElement;
+                        if (!wrapper) return;
+                        const wrapRect = wrapper.getBoundingClientRect();
+                        let newX = e.clientX - wrapRect.left - this.dragOffset.x;
+                        let newY = e.clientY - wrapRect.top - this.dragOffset.y;
+
+                        // Constrain inside panel card
+                        const hudRect = hud.getBoundingClientRect();
+                        newX = Math.max(8, Math.min(wrapRect.width - hudRect.width - 8, newX));
+                        newY = Math.max(8, Math.min(wrapRect.height - hudRect.height - 8, newY));
+
+                        hud.style.left = newX + 'px';
+                        hud.style.top = newY + 'px';
+                        hud.style.right = 'auto';
+                    });
+
+                    window.addEventListener('mouseup', () => {
+                        if (this.isDragging) {
+                            this.isDragging = false;
+                            hud.classList.remove('is-dragging');
+                        }
+                    });
+
+                    // Lot size stepper (+ / -)
+                    const lotInput = $('hud-lot-input');
+                    const lotInc = $('hud-lot-inc');
+                    const lotDec = $('hud-lot-dec');
+                    if (lotInc && lotInput) {
+                        lotInc.addEventListener('click', () => {
+                            lotInput.value = Math.max(0.1, Number(lotInput.value || 1) + 1);
+                            this.updateRiskDisplay();
+                        });
+                    }
+                    if (lotDec && lotInput) {
+                        lotDec.addEventListener('click', () => {
+                            lotInput.value = Math.max(0.1, Number(lotInput.value || 1) - 1);
+                            this.updateRiskDisplay();
+                        });
+                    }
+                    if (lotInput) {
+                        lotInput.addEventListener('input', () => this.updateRiskDisplay());
+                    }
+
+                    // Session Selector change
+                    const sessionSelect = $('hud-session-select');
+                    const sessionHours = $('hud-session-hours');
+                    const sessionHourMap = {
+                        'New York AM': '08:00 – 12:00 EST',
+                        'New York PM': '12:00 – 16:00 EST',
+                        'London': '03:00 – 11:30 EST',
+                        'Asian': '19:00 – 02:00 EST',
+                        'Frankfurt': '02:00 – 10:00 EST'
+                    };
+                    if (sessionSelect && sessionHours) {
+                        sessionSelect.addEventListener('change', () => {
+                            sessionHours.textContent = sessionHourMap[sessionSelect.value] || 'Active Market Session';
+                        });
+                    }
+
+                    // Strategy Selector + Add Custom Strategy
+                    const addStratBtn = $('hud-add-strategy-btn');
+                    const stratSelect = $('hud-strategy-select');
+                    if (addStratBtn && stratSelect) {
+                        addStratBtn.addEventListener('click', () => {
+                            const name = prompt('Enter new strategy name:');
+                            if (name && name.trim()) {
+                                const cleanName = name.trim();
+                                const opt = document.createElement('option');
+                                opt.value = cleanName;
+                                opt.textContent = cleanName;
+                                stratSelect.appendChild(opt);
+                                stratSelect.value = cleanName;
+                                showToast('Added strategy: ' + cleanName);
+                                try {
+                                    const saved = JSON.parse(localStorage.getItem('battlex_custom_strategies') || '[]');
+                                    if (!saved.includes(cleanName)) {
+                                        saved.push(cleanName);
+                                        localStorage.setItem('battlex_custom_strategies', JSON.stringify(saved));
+                                    }
+                                } catch (e) {}
+                            }
+                        });
+                        try {
+                            const saved = JSON.parse(localStorage.getItem('battlex_custom_strategies') || '[]');
+                            saved.forEach(s => {
+                                if (![...stratSelect.options].some(o => o.value === s)) {
+                                    const opt = document.createElement('option');
+                                    opt.value = s;
+                                    opt.textContent = s;
+                                    stratSelect.appendChild(opt);
+                                }
+                            });
+                        } catch (e) {}
+                    }
+
+                    // BUY & SELL Buttons
+                    const buyBtn = $('hud-buy-btn');
+                    const sellBtn = $('hud-sell-btn');
+                    if (buyBtn) {
+                        buyBtn.addEventListener('click', () => this.executeTrade('Long'));
+                    }
+                    if (sellBtn) {
+                        sellBtn.addEventListener('click', () => this.executeTrade('Short'));
+                    }
+
+                    // Quick Management Actions
+                    const p25 = $('hud-partial-25');
+                    const p50 = $('hud-partial-50');
+                    const beBtn = $('hud-be-btn');
+                    const closeBtn = $('hud-close-btn');
+
+                    if (p25) p25.addEventListener('click', () => this.executePartial(0.25));
+                    if (p50) p50.addEventListener('click', () => this.executePartial(0.50));
+                    if (beBtn) beBtn.addEventListener('click', () => this.executeBreakEven());
+                    if (closeBtn) closeBtn.addEventListener('click', () => this.executeCloseAll());
+
+                    this.updateRiskDisplay();
+                },
+
+                toggleCollapse() {
+                    const hud = $('chart-floating-hud');
+                    const mini = $('hud-mini-summary');
+                    if (!hud) return;
+                    this.collapsed = !this.collapsed;
+                    if (this.collapsed) {
+                        hud.classList.add('collapsed');
+                        if (mini) {
+                            mini.classList.remove('hidden');
+                            mini.classList.add('flex');
+                        }
+                    } else {
+                        hud.classList.remove('collapsed');
+                        if (mini) {
+                            mini.classList.add('hidden');
+                            mini.classList.remove('flex');
+                        }
+                    }
+                },
+
+                updateRiskDisplay() {
+                    const bal = (state && state.balance) ? state.balance : 100000;
+                    const lotVal = Number($('hud-lot-input') ? $('hud-lot-input').value : 2) || 1;
+                    const riskPct = 1.0;
+                    const riskAmount = Math.round(bal * (riskPct / 100));
+                    if ($('hud-risk-pct')) $('hud-risk-pct').textContent = riskPct + '% Risk';
+                    if ($('hud-risk-amt')) $('hud-risk-amt').textContent = '($' + fmtNum(riskAmount) + ')';
+                },
+
+                updateTelemetry(s) {
+                    const hud = $('chart-floating-hud');
+                    if (!hud) return;
+                    const bal = (s && s.balance != null) ? s.balance : 100000;
+                    const pos = s ? s.position : null;
+
+                    // Account balance
+                    if ($('hud-account-balance')) $('hud-account-balance').textContent = fmtMoney(bal);
+                    if ($('hud-mini-bal')) $('hud-mini-bal').textContent = fmtMoney(bal).replace('.00', '');
+
+                    // Floating P&L
+                    const unrealized = pos ? (pos.unrealized || 0) : 0;
+                    const pnlEl = $('hud-floating-pnl');
+                    const miniPnlEl = $('hud-mini-pnl');
+
+                    const pnlText = (unrealized > 0 ? '+' : '') + fmtMoney(unrealized);
+                    if (pnlEl) {
+                        pnlEl.textContent = pnlText;
+                        pnlEl.style.color = unrealized > 0 ? '#10b981' : (unrealized < 0 ? '#ef4444' : '#94a3b8');
+                    }
+                    if (miniPnlEl) {
+                        miniPnlEl.textContent = pnlText;
+                        miniPnlEl.className = 'px-2 py-0.5 rounded font-bold text-[11px] tabular-nums ' + 
+                            (unrealized > 0 ? 'bg-emerald-950/50 text-emerald-400 border border-emerald-500/30' : 
+                             (unrealized < 0 ? 'bg-rose-950/50 text-rose-400 border border-rose-500/30' : 'bg-slate-800 text-slate-300 border border-slate-700'));
+                    }
+
+                    // Button states
+                    const buyBtn = $('hud-buy-btn');
+                    const sellBtn = $('hud-sell-btn');
+                    const p25 = $('hud-partial-25');
+                    const p50 = $('hud-partial-50');
+                    const beBtn = $('hud-be-btn');
+                    const closeBtn = $('hud-close-btn');
+
+                    const canTrade = !!currentId && s && (s.status === 'running' || s.status === 'lobby');
+                    if (buyBtn) buyBtn.disabled = !canTrade || !!pos;
+                    if (sellBtn) sellBtn.disabled = !canTrade || !!pos;
+
+                    const hasPos = canTrade && !!pos;
+                    if (p25) p25.disabled = !hasPos;
+                    if (p50) p50.disabled = !hasPos;
+                    if (beBtn) beBtn.disabled = !hasPos || (pos && pos.beApplied);
+                    if (closeBtn) closeBtn.disabled = !hasPos;
+
+                    this.updateRiskDisplay();
+                },
+
+                setFeedback(msg, isError) {
+                    const el = $('hud-feedback-msg');
+                    if (!el) return;
+                    el.textContent = msg;
+                    el.style.color = isError ? '#ef4444' : '#10b981';
+                    setTimeout(() => {
+                        if (el.textContent === msg) el.textContent = '';
+                    }, 4000);
+                },
+
+                async executeTrade(direction) {
+                    if (!currentId) {
+                        this.setFeedback('Please start a backtest session first.', true);
+                        showToast('Start a session first to execute trades');
+                        const modal = $('modal-new-session');
+                        if (modal) modal.classList.remove('hidden');
+                        return;
+                    }
+                    if (!state || !state.candle) {
+                        this.setFeedback('No active candle data available.', true);
+                        return;
+                    }
+
+                    const candle = state.candle;
+                    const entry = candle.close;
+                    const lotSize = Number($('hud-lot-input') ? $('hud-lot-input').value : 2) || 1;
+                    const riskAmount = Math.round((state.balance || 100000) * 0.01);
+                    const strategy = $('hud-strategy-select') ? $('hud-strategy-select').value : 'Silver Bullet';
+                    const session = $('hud-session-select') ? $('hud-session-select').value : 'New York AM';
+
+                    // Auto-calculate smart SL/TP if not configured manually
+                    const spread = Math.abs(candle.high - candle.low) || (entry * 0.002);
+                    const slDist = spread * 1.5;
+                    const tpDist = spread * 3.0;
+
+                    const sl = direction === 'Long' ? (entry - slDist) : (entry + slDist);
+                    const tp = direction === 'Long' ? (entry + tpDist) : (entry - tpDist);
+
+                    this.setFeedback('Executing ' + direction + ' order…', false);
+                    try {
+                        const r = await apiFetch('/api/backtest/sessions/' + encodeURIComponent(currentId) + '/enter', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                direction,
+                                entry,
+                                sl: Number(sl.toFixed(4)),
+                                tp: Number(tp.toFixed(4)),
+                                riskAmount,
+                                size: lotSize,
+                                setup: strategy,
+                                notes: session + ' execution'
+                            })
+                        });
+                        const data = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(data.error || 'Execution failed (' + r.status + ')');
+                        
+                        this.setFeedback('Filled ' + direction + ' @ ' + fmtNum(entry) + ' (' + lotSize + ' Lots)', false);
+                        showToast(direction + ' Order Filled @ ' + fmtNum(entry));
+                        state = data.state || null;
+                        renderTerminal();
+                    } catch (e) {
+                        this.setFeedback(e.message, true);
+                    }
+                },
+
+                async executePartial(fraction) {
+                    if (!currentId || !state || !state.position) return;
+                    const pct = Math.round(fraction * 100);
+                    this.setFeedback('Closing ' + pct + '% Partial…', false);
+                    const price = state.candle ? state.candle.close : undefined;
+                    try {
+                        const r = await apiFetch('/api/backtest/sessions/' + encodeURIComponent(currentId) + '/manage', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'partial', fraction, price })
+                        });
+                        const data = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
+                        const pnl = data.trade ? (' · ' + signed(data.trade.pnl)) : '';
+                        this.setFeedback(pct + '% Partial closed' + pnl, false);
+                        showToast(pct + '% Partial closed' + pnl);
+                        state = data.state || null;
+                        renderTerminal();
+                    } catch (e) {
+                        this.setFeedback(e.message, true);
+                    }
+                },
+
+                async executeBreakEven() {
+                    if (!currentId || !state || !state.position) return;
+                    this.setFeedback('Moving SL to Break-Even…', false);
+                    try {
+                        const r = await apiFetch('/api/backtest/sessions/' + encodeURIComponent(currentId) + '/manage', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ action: 'be' })
+                        });
+                        const data = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
+                        this.setFeedback('Stop Loss moved to Break-Even', false);
+                        showToast('SL Moved to Break-Even');
+                        state = data.state || null;
+                        renderTerminal();
+                    } catch (e) {
+                        this.setFeedback(e.message, true);
+                    }
+                },
+
+                async executeCloseAll() {
+                    if (!currentId || !state || !state.position) return;
+                    const price = state.candle ? state.candle.close : undefined;
+                    this.setFeedback('Closing full position…', false);
+                    try {
+                        const r = await apiFetch('/api/backtest/sessions/' + encodeURIComponent(currentId) + '/close', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ price, reason: 'manual' })
+                        });
+                        const data = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
+                        const pnlStr = data.trade ? (' · ' + signed(data.trade.pnl)) : '';
+                        this.setFeedback('Position closed' + pnlStr, false);
+                        showToast('Position closed' + pnlStr);
+                        state = data.state || null;
+                        renderTerminal();
+                    } catch (e) {
+                        this.setFeedback(e.message, true);
+                    }
+                }
+            };
+            window.BacktestHUD = BacktestHUD;
+
             // ============ RENDER TERMINAL ============
             function renderTerminal() {
                 const has = !!state;
@@ -1867,6 +2598,7 @@
                 if (results) renderResults();
                 $('coach-panel').classList.toggle('hidden', !(coach && coach.ok));
                 if (coach && coach.ok) renderCoach();
+                if (window.BacktestHUD) BacktestHUD.updateTelemetry(state);
                 if (window.lucide) lucide.createIcons();
             }
 
@@ -2108,7 +2840,7 @@
                         wrBars.innerHTML = '<div class="w-full h-3 rounded-full bg-slate-800 overflow-hidden flex"><div class="bg-emerald-500 h-full" style="width:' + pct + '%"></div><div class="bg-red-500 h-full" style="width:' + (100 - pct) + '%"></div></div><div class="flex justify-between text-[11px] text-slate-400 mt-2 tabular-nums"><span>Wins: ' + pct + '%</span><span>Losses: ' + (100 - pct) + '%</span></div>';
                     } else {
                         if (wrDetailSub) wrDetailSub.textContent = 'Your win rate will show up here';
-                        wrBars.innerHTML = '<div class="w-full border-b border-dashed border-white/[0.08]"></div>';
+                        wrBars.innerHTML = '<div class="w-full border-b border-dashed border-[#1c2230]"></div>';
                     }
                 }
 
@@ -2123,7 +2855,7 @@
                         }).join('') + '</div>';
                     } else {
                         if (symSub) symSub.textContent = 'Your trades by symbol will show up here';
-                        symBars.innerHTML = '<div class="w-44 h-5 rounded-md bg-[#1f2837]/60 border border-white/[0.04]"></div>';
+                        symBars.innerHTML = '<div class="w-44 h-5 rounded-md bg-[#1f2837]/60 border border-[#141720]"></div>';
                     }
                 }
 
@@ -2535,6 +3267,7 @@
                 }
 
                 setupStitchListeners();
+                if (window.BacktestHUD) BacktestHUD.init();
                 if (window.lucide) lucide.createIcons();
             }
             if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
