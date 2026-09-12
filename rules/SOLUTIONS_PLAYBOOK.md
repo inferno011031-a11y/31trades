@@ -94,3 +94,26 @@ User explicitly states: *"after every change push to github pls ... if said some
    - Step 4: Commit with semantic message: `git commit -m "feat/fix(...): <description>"`
    - Step 5: Push to remote: `git push origin main`
 2. Never leave verified changes uncommitted on local machine.
+
+---
+
+## 5. Zero Hardcoded UI Mocks & Complete Live Data Guarantee (User Experience First)
+
+### Problem Description
+When converting a Stitch or Figma UI design into a page, static mock numbers (e.g. `Apex Live Funded ($100k)`, `$119,750`, `+19.75%`, static test trade rows) remain embedded in the HTML or default fallbacks. To the user, it looks like fake data or a broken backend.
+
+### Root Cause
+Leaving template/mock placeholder content in the static HTML or hardcoding fallback strings instead of using clean zero/empty-state placeholders and binding live to the user's canonical `TradeMindCore` store and real accounts.
+
+### Automated Prevention & Solution
+1. **Never hardcode mock names or balances in static HTML:**
+   - ❌ `<span class="font-medium">Apex Live Funded ($100k)</span>`
+   - ❌ `<span class="num">$119,750</span>`
+   - ❌ Static rows representing test trades in tables
+   - ✅ Clean neutral placeholders in static HTML: `—`, `$0.00`, `Account`, `No settled trades in this period`
+2. **Always bind topbar account chip and profile to live user data:**
+   - `#acc-chip` must reflect the user's selected account name and balance from `window.TradeMindCore`.
+   - Always include `assets/account-switcher.js` and `assets/profile-meta.js` so account switching works everywhere.
+3. **Local-First Instant Rendering:**
+   - Always render immediately from `window.TradeMindCore` client store (0ms latency), then reconcile with backend API.
+   - Subscribe to all `TradeMindBus` events (`state.hydrated`, `trade.created`, `trade.updated`, `trade.deleted`, `account.changed`, `config.changed`) so user actions anywhere update the UI in real time.
