@@ -17,7 +17,7 @@
     <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Geist+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Core Runtime -->
     <script src="demo-trades.js"></script>
@@ -35,7 +35,7 @@
             height: 100%;
             background-color: #080b10;
             color: #e2e8f0;
-            font-family: 'Plus Jakarta Sans', var(--tm-sans), sans-serif;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             overflow: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
@@ -190,21 +190,55 @@
         ::-webkit-scrollbar-thumb:hover { background: #334155; }
 
         
+        
+        /* Stitch Exact Tokens & Component Styling */
+        .trade-card {
+            background-color: #0e131d !important;
+            border: 1px solid rgba(255, 255, 255, 0.06) !important;
+            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.45) !important;
+        }
+        .trade-card:hover {
+            border-color: rgba(255, 255, 255, 0.12) !important;
+        }
+        .month-box {
+            transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .month-box.active-profit {
+            background: linear-gradient(180deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.04) 100%) !important;
+            border: 1px solid rgba(16, 185, 129, 0.35) !important;
+        }
+        .month-box.active-profit:hover {
+            border-color: #10b981 !important;
+            box-shadow: 0 0 16px rgba(16, 185, 129, 0.15) !important;
+            transform: translateY(-1px);
+        }
+        .month-box.active-loss {
+            background: linear-gradient(180deg, rgba(244, 63, 94, 0.1) 0%, rgba(244, 63, 94, 0.04) 100%) !important;
+            border: 1px solid rgba(244, 63, 94, 0.35) !important;
+        }
+        .month-box.active-loss:hover {
+            border-color: #f43f5e !important;
+            box-shadow: 0 0 16px rgba(244, 63, 94, 0.15) !important;
+            transform: translateY(-1px);
+        }
+        .month-box.dormant {
+            background-color: rgba(18, 24, 37, 0.5) !important;
+            border: 1px solid rgba(255, 255, 255, 0.035) !important;
+        }
+        .month-box.dormant:hover {
+            background-color: rgba(26, 35, 52, 0.6) !important;
+            border-color: rgba(255, 255, 255, 0.08) !important;
+        }
+
         /* STRICT GUARD: Zero white borders or dividers */
         [class*="border-white"], [class*="divide-white"] {
             border-color: #1a2130 !important;
         }
-        .trade-card {
-            background-color: #0c0e14 !important;
-            border: 1px solid #1a2130 !important;
-        }
-        .trade-card:hover {
-            border-color: #263147 !important;
-        }
         header[data-purpose="global-header"] {
-            border-bottom: 1px solid #141720 !important;
-            background-color: rgba(9, 12, 18, 0.96) !important;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06) !important;
+            background-color: rgba(11, 15, 23, 0.92) !important;
         }
+
 
         /* Toast */
         .toast {
