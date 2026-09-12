@@ -966,7 +966,7 @@
                             <!-- Mode Switch & Controls -->
                             <div class="flex items-center gap-2">
                                 <span class="tag tag-gray" id="status-tag">No session</span>
-                                <button type="button" class="btn-primary !py-1.5 !px-3 !text-xs" onclick="$('modal-new-session').classList.remove('hidden')">
+                                <button type="button" id="btn-top-new-session" class="btn-primary !py-1.5 !px-3 !text-xs" onclick="document.getElementById('modal-new-session').classList.remove('hidden')">
                                     <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                     </svg>
@@ -1248,6 +1248,7 @@
         (function () {
             'use strict';
             const $ = id => document.getElementById(id);
+            window.$ = $;
             const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
             let toastTimer;
             window.showToast = function (msg) {
@@ -2387,6 +2388,26 @@
                         showToast('Replay Controls: Spacebar = Step · P = Play/Pause · Cut = Jump to Bar');
                     });
                 }
+
+                // Modal Close Handlers (Close button, Cancel button, backdrop click, Escape key)
+                const modalSession = $('modal-new-session');
+                const closeSessionModal = () => {
+                    if (modalSession) modalSession.classList.add('hidden');
+                };
+                const btnClose = $('modal-session-close');
+                if (btnClose) btnClose.addEventListener('click', closeSessionModal);
+                const btnCancel = $('modal-session-cancel');
+                if (btnCancel) btnCancel.addEventListener('click', closeSessionModal);
+                if (modalSession) {
+                    modalSession.addEventListener('click', (e) => {
+                        if (e.target === modalSession) closeSessionModal();
+                    });
+                }
+                document.addEventListener('keydown', (e) => {
+                    if (e.key === 'Escape' && modalSession && !modalSession.classList.contains('hidden')) {
+                        closeSessionModal();
+                    }
+                });
             }
 
             function boot() {
@@ -2537,7 +2558,7 @@
                     <p id="modal-session-sub" class="text-xs text-zinc-400 mt-1 font-normal">Select market pair, account balance, and replay parameters.</p>
                 </div>
                 <!-- Close Button -->
-                <button aria-label="Close dialog" class="p-1 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80 transition-colors border border-transparent hover:border-zinc-700/60 focus:outline-none cursor-pointer" type="button" onclick="$('modal-new-session').classList.add('hidden')">
+                <button id="modal-session-close" aria-label="Close dialog" class="p-1 rounded-md text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/80 transition-colors border border-transparent hover:border-zinc-700/60 focus:outline-none cursor-pointer" type="button" onclick="document.getElementById('modal-new-session').classList.add('hidden')">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
                         <path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round"></path>
                     </svg>
@@ -2795,7 +2816,7 @@
                     <span class="tabular-nums text-[11px] text-zinc-400">Historical data cached • 0.2ms ping</span>
                 </div>
                 <div class="flex items-center gap-2.5">
-                    <button type="button" class="px-3.5 py-1.5 rounded-md text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent transition-all focus:outline-none cursor-pointer" onclick="$('modal-new-session').classList.add('hidden')">
+                    <button type="button" id="modal-session-cancel" class="px-3.5 py-1.5 rounded-md text-xs font-medium text-zinc-400 hover:text-zinc-200 hover:bg-zinc-800/60 border border-transparent transition-all focus:outline-none cursor-pointer" onclick="document.getElementById('modal-new-session').classList.add('hidden')">
                         Cancel
                     </button>
                     <button type="button" id="start-practice" class="px-4 py-1.5 rounded-md text-xs font-semibold text-zinc-950 bg-zinc-100 hover:bg-white active:bg-zinc-200 transition-colors focus:outline-none cursor-pointer tracking-tight shadow-sm flex items-center gap-1.5">
