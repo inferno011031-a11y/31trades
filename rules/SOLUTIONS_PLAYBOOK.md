@@ -117,3 +117,31 @@ Leaving template/mock placeholder content in the static HTML or hardcoding fallb
 3. **Local-First Instant Rendering:**
    - Always render immediately from `window.TradeMindCore` client store (0ms latency), then reconcile with backend API.
    - Subscribe to all `TradeMindBus` events (`state.hydrated`, `trade.created`, `trade.updated`, `trade.deleted`, `account.changed`, `config.changed`) so user actions anywhere update the UI in real time.
+
+---
+
+## 6. Never Validate Data-Driven UI Against Local Seed Data Before Pushing (Production Empty State Rule)
+
+### Problem Description
+Agent commits and pushes UI claiming it "works" — based on localhost testing where local/seed trade data exists. On production, the user's real account may have **zero trades, zero accounts**, making the UI appear broken (no bars render, no charts, no data rows).
+
+This is exactly what happened with the Reports page vertical green bars: bars only render inside `renderMonths()` which loops `monthlyRows()` which requires `core.Trades` to have entries. Production had 0 trades → no bars → user sees empty page → user thinks UI is broken.
+
+### Root Cause
+Visual testing with local data creates a **false positive**. The agent sees green bars on localhost (because data exists locally) and pushes assuming it works. Production shows nothing because the rendering logic only fires when data exists.
+
+### Mandatory Rules — DO NOT BREAK EVER
+1. **CSS and JS logic changes** can always be pushed — they are data-independent. ✅
+2. **NEVER claim a data-driven UI element "works"** based on localhost visual testing with seed data. ❌
+3. **Always verify empty-state behavior**: every render function MUST have a clear, visible empty state (e.g. `No trades yet`, `—`) when `core.Trades.length === 0`.
+4. **Before every `git push`**: confirm each change is either:
+   - Pure CSS/styling (safe to push regardless of data), OR
+   - Has an explicit empty-state fallback visible with 0 trades.
+5. **State this to the user EXPLICITLY** when data is required: *"These bars appear when you have trades. Your account currently has 0 trades — add a trade to see the bars render."*
+6. **Never say "fixed" or "working" for data-driven UI without confirming the user has real trade data in production.**
+
+### Falsifiability Check
+After every push involving data-driven rendering, the agent MUST ask: *"Does this UI render anything visible when `core.Trades = []`?"* If the answer is NO without an explicit empty state, do NOT push without adding one.
+
+### Testing Rule
+Before pushing any page with dynamic bar/chart/table rendering: temporarily set `core.Trades = []` in browser console and verify the page shows a graceful empty state — not a blank section.
