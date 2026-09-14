@@ -567,10 +567,11 @@
                 return dims.map(d => {
                     const s = d.score;
                     const col = s == null ? 'var(--tm-dim)' : s >= 80 ? 'var(--tm-green)' : s >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
+                    const fillClass = s == null ? '' : (s >= 80 ? 'perf-fill-profit' : s >= 60 ? 'perf-fill-amber' : 'perf-fill-loss');
                     const fill = s == null ? 0 : s;
                     return '<div class="dim-row">' +
                         '<span class="dim-label">' + esc(d.label) + '</span>' +
-                        '<span class="dim-track"><span class="dim-fill" style="width:' + fill + '%;background:' + col + '"></span></span>' +
+                        '<span class="perf-progress-track !mt-0 !w-32"><span class="' + fillClass + '" style="width:' + fill + '%;"></span></span>' +
                         '<span class="dim-val num" style="color:' + col + '">' + (s == null ? '—' : s) + '</span>' +
                         '<span class="dim-meta num">' + (s == null ? 'no rules' : d.passed + '/' + d.total + ' pass') + '</span>' +
                     '</div>';

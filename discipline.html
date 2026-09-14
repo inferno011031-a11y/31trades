@@ -628,11 +628,12 @@
                     const st = dimStatus(d.score);
                     const col = dimColor(d.score);
                     const pct = d.score == null ? 0 : Math.min(100, d.score);
+                    const fillClass = d.score == null ? '' : (d.score >= 80 ? 'perf-fill-profit' : d.score >= 60 ? 'perf-fill-amber' : 'perf-fill-loss');
                     return '<div class="dim-card">' +
                         '<div class="flex items-center justify-between mb-1"><span class="text-[13.5px] font-bold text-[var(--tm-text)]">' + d.label + '</span><span class="tag ' + st.cls + ' !py-0.5 !px-2">' + st.label + '</span></div>' +
                         '<div class="flex items-end justify-between mb-2"><span class="dc-score num" style="color:' + col + '">' + (d.score == null ? '—' : d.score) + '</span>' +
                         '<span class="num text-[11.5px] text-[var(--tm-dim)] pb-1">' + Math.round(d.weight * 100) + '% weight</span></div>' +
-                        '<div class="dim-track"><div class="dim-fill" style="width:' + pct + '%;background:' + col + '"></div></div>' +
+                        '<div class="perf-progress-track"><div class="' + fillClass + '" style="width:' + pct + '%;"></div></div>' +
                         '<div class="flex justify-between text-[10.5px] text-[var(--tm-dim)] mt-1.5 num"><span>' + (d.passed || 0) + ' passed</span><span>' + (d.total || 0) + ' checks</span></div>' +
                     '</div>';
                 }).join('');
@@ -695,10 +696,11 @@
                 $('rules-body').innerHTML = rules.map(r => {
                     const brk = (r.total || 0) - (r.passed || 0);
                     const rate = r.rate || 0;
+                    const fillClass = rate >= 80 ? 'perf-fill-profit' : rate >= 60 ? 'perf-fill-amber' : 'perf-fill-loss';
                     const col = rate >= 80 ? 'var(--tm-green)' : rate >= 60 ? 'var(--tm-amber)' : 'var(--tm-red)';
                     return '<tr>' +
                         '<td class="font-semibold text-[var(--tm-text)]">' + esc(r.label) + '</td>' +
-                        '<td><div class="flex items-center gap-2"><div class="dim-track !w-24"><div class="dim-fill" style="width:' + Math.min(100, rate) + '%;background:' + col + '"></div></div><span class="num font-bold" style="color:' + col + '">' + rate + '%</span></div></td>' +
+                        '<td><div class="flex items-center gap-2.5"><div class="perf-progress-track !mt-0 !w-24"><div class="' + fillClass + '" style="width:' + Math.min(100, rate) + '%;"></div></div><span class="num font-bold" style="color:' + col + '">' + rate + '%</span></div></td>' +
                         '<td class="num">' + (r.total || 0) + '</td>' +
                         '<td class="num text-[var(--tm-green)]">' + (r.passed || 0) + '</td>' +
                         '<td class="num ' + (brk ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]') + '">' + brk + '</td>' +

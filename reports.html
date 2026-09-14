@@ -580,29 +580,34 @@
                     const pos = r.net >= 0;
                     return '<div class="bar-col" data-month="' + r.month + '">' +
                         '<div class="bar-val num ' + (pos ? 'pos' : 'neg') + '">' + money(r.net) + '</div>' +
-                        '<div class="bar" style="height:' + h + 'px;background:' + (pos ? 'var(--tm-green)' : 'var(--tm-red)') + '"></div>' +
+                        '<div class="bar ' + (pos ? 'bar-pos' : 'bar-neg') + '" style="height:' + h + 'px;"></div>' +
                         '<div class="bar-label num">' + r.month + '</div>' +
                     '</div>';
                 }).join('');
                 $('month-bars').innerHTML = '<div class="bar-track">' + bars + '</div>';
-                $('month-body').innerHTML = rows.map(r =>
-                    '<tr data-month="' + r.month + '">' +
+                $('month-body').innerHTML = rows.map(r => {
+                    const wr = Math.round(r.winRate * 100);
+                    const isPos = r.net >= 0;
+                    return '<tr data-month="' + r.month + '">' +
                         '<td class="font-semibold">' + fmtMonth(r.month) + '</td>' +
                         '<td class="num">' + r.n + '</td>' +
-                        '<td class="num ' + (r.net >= 0 ? 'pos' : 'neg') + '">' + money(r.net) + '</td>' +
-                        '<td class="num">' + fmtPct(r.winRate) + '</td>' +
+                        '<td class="num ' + (isPos ? 'pos' : 'neg') + '">' + money(r.net) + '</td>' +
+                        '<td><div class="flex items-center gap-2.5"><div class="perf-progress-track !mt-0 !w-16"><div class="' + (isPos ? 'perf-fill-profit' : 'perf-fill-loss') + '" style="width:' + wr + '%;"></div></div><span class="num font-semibold">' + fmtPct(r.winRate) + '</span></div></td>' +
                         '<td class="num">' + fmtPF(r.pf) + '</td>' +
                         '<td class="num">' + fmtR(r.avgR) + '</td>' +
-                    '</tr>').join('') || '<tr><td colspan="6" class="!text-center text-[var(--tm-dim)]">No months yet.</td></tr>';
+                    '</tr>';
+                }).join('') || '<tr><td colspan="6" class="!text-center text-[var(--tm-dim)]">No months yet.</td></tr>';
             }
             function renderBreakdowns(a) {
                 const rowsHtml = (rows, keyOf) => rows.map(r => {
                     const badge = window.TMAssets && window.TMAssets.badgeHtml && keyOf === 'symbol' ? window.TMAssets.badgeHtml(r.key) : null;
+                    const wr = Math.round((r.winRate || 0) * 100);
+                    const isPos = (r.pnl || 0) >= 0;
                     return '<tr>' +
                         '<td class="font-semibold">' + (badge || esc(r.key || '—')) + '</td>' +
                         '<td class="num">' + r.n + '</td>' +
-                        '<td class="num ' + (r.pnl >= 0 ? 'pos' : 'neg') + '">' + money(r.pnl) + '</td>' +
-                        '<td class="num">' + fmtPct(r.winRate) + '</td>' +
+                        '<td class="num ' + (isPos ? 'pos' : 'neg') + '">' + money(r.pnl) + '</td>' +
+                        '<td><div class="flex items-center gap-2.5"><div class="perf-progress-track !mt-0 !w-16"><div class="' + (isPos ? 'perf-fill-profit' : 'perf-fill-loss') + '" style="width:' + wr + '%;"></div></div><span class="num font-semibold">' + fmtPct(r.winRate) + '</span></div></td>' +
                         '<td class="num">' + fmtR(r.avgR) + '</td>' +
                     '</tr>';
                 }).join('');
@@ -623,12 +628,18 @@
                 ];
                 const tileHtml = tiles.map(t =>
                     '<div class="glass p-3.5"><div class="label-xs">' + t[0] + '</div><div class="num text-[17px] font-extrabold mt-1 ' + (t[2] || '') + '">' + t[1] + '</div></div>').join('');
-                const tableHtml = (rows) => rows.map(r =>
-                    '<div class="flex items-center justify-between py-2 border-b border-[var(--hairline)] last:border-none text-[12.5px]">' +
+                const tableHtml = (rows) => rows.map(r => {
+                    const wr = Math.round((r.winRate || 0) * 100);
+                    const isPos = (r.pnl || 0) >= 0;
+                    return '<div class="flex items-center justify-between py-2 border-b border-[var(--hairline)] last:border-none text-[12.5px]">' +
                         '<span class="font-semibold">' + esc(r.key) + '</span>' +
-                        '<span class="num"><span class="text-[var(--tm-dim)]">' + r.n + ' trades · </span>' +
-                        '<span class="' + (r.pnl >= 0 ? 'pos' : 'neg') + '">' + money(r.pnl) + '</span> · ' + fmtPct(r.winRate) + ' · ' + fmtR(r.avgR) + '</span>' +
-                    '</div>').join('') || '<p class="text-[12px] text-[var(--tm-dim)]">No rows.</p>';
+                        '<div class="flex items-center gap-2.5">' +
+                            '<div class="perf-progress-track !mt-0 !w-14"><div class="' + (isPos ? 'perf-fill-profit' : 'perf-fill-loss') + '" style="width:' + wr + '%;"></div></div>' +
+                            '<span class="num"><span class="text-[var(--tm-dim)]">' + r.n + ' trades · </span>' +
+                            '<span class="' + (isPos ? 'pos' : 'neg') + '">' + money(r.pnl) + '</span> · ' + fmtPct(r.winRate) + ' · ' + fmtR(r.avgR) + '</span>' +
+                        '</div>' +
+                    '</div>';
+                }).join('') || '<p class="text-[12px] text-[var(--tm-dim)]">No rows.</p>';
                 $('md-body').innerHTML =
                     '<div class="grid grid-cols-2 md:grid-cols-3 gap-3">' + tileHtml + '</div>' +
                     '<div class="glass p-4"><div class="label-xs mb-2">By symbol</div>' + tableHtml(row.bySymbol || []) + '</div>' +
