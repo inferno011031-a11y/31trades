@@ -90,6 +90,14 @@ async function signup({ email, password, name }) {
         method: 'POST',
         body: { email, password, data: name ? { full_name: name } : {} }
     });
+    // Fire & forget welcome email via Resend
+    try {
+        const { sendWelcomeEmail } = require('./email.js');
+        sendWelcomeEmail({ email, name }).catch(err => {
+            console.warn('[Resend] Welcome email background send error:', err?.message || err);
+        });
+    } catch (_) {}
+
     return {
         session: pickSession(data),
         needsConfirmation: !data.session && !data.access_token,

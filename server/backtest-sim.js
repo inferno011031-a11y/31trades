@@ -21,6 +21,7 @@
 
 const path = require('node:path');
 const fs = require('node:fs');
+const Analytics = require('./backtest-analytics.js');
 
 // ---------------------------------------------------------------------------
 // Risk / sizing helpers
@@ -145,9 +146,22 @@ class BacktestSession {
             exitReason: reason,
             setup: p.setup || '',
             notes: p.notes || '',
+            tags: Array.isArray(p.tags) ? p.tags : [],
+            session: sessionOf(p.openedAt),
             openedAt: new Date().toISOString(),
             closedAt: new Date().toISOString()
         };
+        // Analytics dimensions stored on the trade at close time (spec 3) so
+        // history queries never re-classify. year/month derived from entryTime.
+        try {
+            const d = new Date((typeof p.openedAt === 'number'
+                ? (p.openedAt > 1e12 ? p.openedAt : p.openedAt * 1000)
+                : Date.parse(p.openedAt)));
+            if (!Number.isNaN(d.getTime())) {
+                trade.year = d.getUTCFullYear();
+                trade.month = d.getUTCMonth() + 1;
+            }
+        } catch (e) { /* legacy-safe: analytics derives from entryTime on read */ }
         this.trades.push(trade);
         this._log('close', { tradeId: trade.id, reason, price, pnl, r: trade.realizedR });
         this.position = null;
@@ -405,12 +419,10 @@ function groupBy(arr, keyFn) {
     return out;
 }
 function sessionOf(ts) {
-    if (!ts) return '—';
-    const h = new Date(ts * 1000).getUTCHours();
-    if (h >= 13 && h < 21) return 'New York';
-    if (h >= 7 && h < 13) return 'London';
-    if (h >= 23 || h < 9) return 'Asia';
-    return 'Sydney';
+    // Delegates to the shared configurable classifier (non-overlapping UTC
+    // windows incl. New York AM/PM split) so per-trade stored values and
+    // analytics aggregation can never disagree.
+    return Analytics.classifySession(ts);
 }
 function hourOf(ts) {
     if (!ts) return '—';
@@ -461,6 +473,9 @@ function listSessions(userId) {
             replayedSec
         };
     });
+}
+function listFullSessions(userId) {
+    return readAll(userId).map(s => BacktestSession.hydrate(s));
 }
 function getSession(userId, id) {
     const s = readAll(userId).find(x => x.id === id);
@@ -606,6 +621,6 @@ function manageSession(userId, id, action, payload) {
 }
 
 module.exports = {
-    BacktestSession, listSessions, getSession, saveSession, deleteSession, sizeFromRisk, rrOf,
+    BacktestSession, listSessions, listFullSessions, getSession, saveSession, deleteSession, sizeFromRisk, rrOf,
     stateOf, play, pause, stepSession, seekSession, resetSession, loadActive, manageSession
 };

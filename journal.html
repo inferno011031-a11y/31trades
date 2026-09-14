@@ -123,23 +123,116 @@
 
         /* ---- Controls & Tables ---- */
         .ctrl {
-            background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
-            font-size: 13px; color: var(--tm-text); padding: 8px 12px; outline: none; transition: border-color 0.15s;
+            background: rgba(24, 24, 27, 0.6) !important;
+            border: 1px solid rgba(255, 255, 255, 0.08) !important;
+            border-radius: 8px;
+            font-size: 12px;
+            color: #d4d4d8;
+            padding: 0 12px;
+            height: 34px;
+            outline: none;
+            transition: all 0.15s ease;
         }
-        .ctrl:focus { border-color: var(--tm-accent); }
-        select.ctrl option { background: var(--tm-card); color: var(--tm-text); }
-        .ctrl::placeholder { color: var(--tm-dim); }
+        .ctrl:hover { border-color: rgba(255, 255, 255, 0.18) !important; }
+        .ctrl:focus { border-color: rgba(255, 255, 255, 0.35) !important; outline: none; }
+        select.ctrl option { background: #141722; color: #f4f4f5; }
+        .ctrl::placeholder { color: #71717a; }
 
         .tbl th {
             text-align: left; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em;
-            color: var(--tm-muted); padding: 8px 12px; border-bottom: 1px solid var(--tm-border); white-space: nowrap;
-            position: sticky; top: 0; background: var(--tm-card); z-index: 1;
+            color: #71717a; padding: 10px 16px; border-bottom: 1px solid rgba(255, 255, 255, 0.06); white-space: nowrap;
+            position: sticky; top: 0; background: #0e111a; z-index: 1;
         }
-        .tbl td { padding: 9px 12px; font-size: 12.5px; color: var(--tm-muted); border-bottom: 1px solid var(--tm-border); white-space: nowrap; }
-        .tbl tbody tr { cursor: pointer; transition: background 0.1s; }
-        .tbl tbody tr:hover { background: var(--tm-hover); }
-        .tbl tbody tr.selected-row { background: rgba(16,185,129,0.05); }
-        .tbl input[type="checkbox"] { accent-color: var(--tm-green); width: 14px; height: 14px; cursor: pointer; }
+        .tbl td { padding: 12px 16px; font-size: 12.5px; color: #a1a1aa; border-bottom: 1px solid rgba(255, 255, 255, 0.04); white-space: nowrap; }
+        .tbl tbody tr { cursor: pointer; transition: background 0.12s ease; }
+        .tbl tbody tr:hover { background: rgba(255, 255, 255, 0.02) !important; }
+        .tbl tbody tr.selected-row { background: rgba(16,185,129,0.06) !important; }
+        .tbl input[type="checkbox"] { accent-color: #10b981; width: 14px; height: 14px; cursor: pointer; }
+
+        /* Modern Fintech Badge & Ticker Tokens */
+        .badge-adherence-blocked {
+            background: rgba(244, 63, 94, 0.10) !important;
+            color: #fb7185 !important;
+            border: 1px solid rgba(244, 63, 94, 0.20) !important;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-adherence-early {
+            background: rgba(245, 158, 11, 0.10) !important;
+            color: #fbbf24 !important;
+            border: 1px solid rgba(245, 158, 11, 0.20) !important;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-adherence-followed {
+            background: rgba(16, 185, 129, 0.10) !important;
+            color: #34d399 !important;
+            border: 1px solid rgba(16, 185, 129, 0.20) !important;
+            font-size: 12px;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .badge-dir-long {
+            background: rgba(16, 185, 129, 0.10) !important;
+            color: #34d399 !important;
+            border: 1px solid rgba(16, 185, 129, 0.20) !important;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .badge-dir-short {
+            background: rgba(244, 63, 94, 0.10) !important;
+            color: #fb7185 !important;
+            border: 1px solid rgba(244, 63, 94, 0.20) !important;
+            font-size: 11px;
+            font-weight: 500;
+            padding: 2px 8px;
+            border-radius: 6px;
+            display: inline-block;
+        }
+        .badge-imported-tag {
+            background: #27272a !important;
+            color: #a1a1aa !important;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 4px;
+            border: 1px solid #3f3f46 !important;
+            vertical-align: middle;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+        }
+        .tm-flag-container {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            font-size: 14px;
+            line-height: 1;
+            opacity: 0.85;
+            flex-shrink: 0;
+        }
+        .tm-ticker-pill {
+            font-family: var(--tm-mono, monospace);
+            font-size: 12.5px;
+            font-weight: 700;
+            color: #f4f4f5;
+            letter-spacing: 0.03em;
+        }
 
         /* ---- Modal & Drawer ---- */
         .overlay {
@@ -1586,12 +1679,22 @@
                 return MARKET_OF[s] || 'Other';
             };
 
-            // Rule-adherence status → badge (Followed / Warning / Violation / Blocked)
+            // Rule-adherence status → badge (Followed / Early exit / Violation / Blocked)
             function adherenceInfo(t) {
-                if (t.adherence_result === 'BLOCK') return { label: 'Blocked', cls: 'tag-red', icon: 'shield-alert' };
-                if (t.adherence_result === 'VIOLATION') return { label: 'Violation', cls: 'tag-red', icon: 'alert-triangle' };
-                if (t.adherence && t.adherence !== 'followed') return { label: ADHERENCE_LABEL[t.adherence] || t.adherence, cls: 'tag-amber', icon: 'alert-triangle' };
-                return { label: 'Followed', cls: 'tag-emerald', icon: 'check' };
+                if (t.adherence_result === 'BLOCK') {
+                    return { label: 'Blocked', cls: 'badge-adherence-blocked', icon: 'shield-alert' };
+                }
+                if (t.adherence_result === 'VIOLATION') {
+                    return { label: 'Violation', cls: 'badge-adherence-blocked', icon: 'alert-triangle' };
+                }
+                if (t.adherence && (t.adherence === 'early_exit' || t.adherence === 'early exit')) {
+                    return { label: 'Early exit', cls: 'badge-adherence-early', icon: 'alert-triangle' };
+                }
+                if (t.adherence && t.adherence !== 'followed') {
+                    const lbl = ADHERENCE_LABEL[t.adherence] || t.adherence;
+                    return { label: lbl, cls: 'badge-adherence-early', icon: 'alert-triangle' };
+                }
+                return { label: 'Followed', cls: 'badge-adherence-followed', icon: 'check' };
             }
 
             function reviewInfo(t) {
@@ -1601,9 +1704,9 @@
             }
 
             function resultInfo(t) {
-                if (t.pnl > 0) return { label: 'Win', cls: 'text-[var(--tm-green)]' };
-                if (t.pnl < 0) return { label: 'Loss', cls: 'text-[var(--tm-red)]' };
-                return { label: 'Breakeven', cls: 'text-[var(--tm-dim)]' };
+                if (t.pnl > 0) return { label: 'Win', cls: 'text-emerald-400 font-semibold font-mono' };
+                if (t.pnl < 0) return { label: 'Loss', cls: 'text-rose-400 font-semibold font-mono' };
+                return { label: 'Breakeven', cls: 'text-zinc-500 font-semibold font-mono' };
             }
 
             // ============ FILTER ============
@@ -1794,26 +1897,47 @@
                     const adh = adherenceInfo(t);
                     const rev = reviewInfo(t);
                     const res = resultInfo(t);
+
+                    const flagHtml = (window.TMAssets && TMAssets.badgeHtml)
+                        ? '<span class="tm-flag-container">' + TMAssets.badgeHtml(t.symbol) + '</span>'
+                        : '';
+                    const tickerHtml = '<span class="tm-ticker-pill">' + esc(t.symbol) + '</span>';
+
+                    const dirBadge = t.dir === 'Long'
+                        ? '<span class="badge-dir-long">Long</span>'
+                        : '<span class="badge-dir-short">Short</span>';
+
+                    const importedBadge = t.source === 'IMPORT'
+                        ? '<span class="badge-imported-tag ml-1.5">Imported</span>'
+                        : '';
+
+                    const stratBadge = t.strategyType
+                        ? '<span class="tag tag-blue !py-0.5 !px-1.5 text-[10px] align-middle font-bold ml-1.5">' + esc(t.strategyType.replace(/_/g, ' ')) + (t.legs ? ' · ' + t.legs.length + 'L' : '') + '</span>'
+                        : '';
+
                     tr.innerHTML =
                         '<td style="position:sticky;left:0;background:inherit;" onclick="event.stopPropagation()">' +
                             '<input type="checkbox" data-id="' + t.id + '"' + (selected.has(t.id) ? ' checked' : '') + '>' +
                         '</td>' +
-                        '<td class="num text-[var(--tm-dim)]">' + fmtTs(t.ts) + '</td>' +
-                        '<td class="tm-sym-cell">' + (window.TMAssets && TMAssets.badgeHtml
-                            ? '<span class="tm-sym-badge">' + TMAssets.badgeHtml(t.symbol) + '</span>'
-                            : '') + '<span class="tm-sym-name">' + t.symbol + '</span>' +
-                        (t.source === 'IMPORT' ? ' <span class="tag tag-gray !py-0.5 !px-1.5 text-[10px] align-middle">Imported</span>' : '') +
-                        (t.strategyType ? ' <span class="tag tag-blue !py-0.5 !px-1.5 text-[10px] align-middle font-bold">' + t.strategyType.replace(/_/g, ' ') + (t.legs ? ' · ' + t.legs.length + 'L' : '') + '</span>' : '') + '</td>' +
-                        '<td>' + (t.dir === 'Long' ? '<span class="tag tag-emerald">Long</span>' : '<span class="tag tag-red">Short</span>') + '</td>' +
-                        '<td class="text-[var(--tm-text)]">' + (t.setup || '—') + '</td>' +
-                        '<td class="text-[var(--tm-dim)]">' + (t.session || '—') + '</td>' +
-                        '<td class="num text-[var(--tm-dim)]">$' + (t.risk || 0) + '</td>' +
-                        '<td><div class="num font-bold ' + res.cls + '">' + fmtMoney(t.pnl) + '</div><div class="text-[10px] ' + res.cls + ' opacity-70">' + res.label + '</div></td>' +
-                        '<td class="num font-bold ' + (t.r > 0 ? 'text-[var(--tm-green)]' : t.r < 0 ? 'text-[var(--tm-red)]' : 'text-[var(--tm-dim)]') + '">' + (t.r > 0 ? '+' : '') + Number(t.r).toFixed(1) + 'R</td>' +
-                        '<td><span class="tag ' + adh.cls + '"><svg data-lucide="' + adh.icon + '" class="w-3 h-3"></svg> ' + adh.label + '</span></td>' +
+                        '<td class="num text-[var(--tm-dim)] font-mono text-[12px]">' + fmtTs(t.ts) + '</td>' +
+                        '<td class="whitespace-nowrap">' +
+                            '<div class="flex items-center gap-2">' + flagHtml + tickerHtml + importedBadge + stratBadge + '</div>' +
+                        '</td>' +
+                        '<td>' + dirBadge + '</td>' +
+                        '<td class="text-zinc-200 font-medium">' + esc(t.setup || '—') + '</td>' +
+                        '<td class="text-zinc-400">' + esc(t.session || '—') + '</td>' +
+                        '<td class="num font-mono text-zinc-400">$' + (t.risk || 0) + '</td>' +
+                        '<td>' +
+                            '<div class="' + res.cls + '">' + fmtMoney(t.pnl) + '</div>' +
+                            '<div class="text-[10px] uppercase tracking-wider text-zinc-500 font-medium">' + res.label + '</div>' +
+                        '</td>' +
+                        '<td class="num font-mono font-semibold ' + (t.r > 0 ? 'text-emerald-400' : t.r < 0 ? 'text-rose-400' : 'text-zinc-500') + '">' +
+                            (t.r > 0 ? '+' : '') + Number(t.r || 0).toFixed(1) + 'R' +
+                        '</td>' +
+                        '<td><span class="' + adh.cls + '"><svg data-lucide="' + adh.icon + '" class="w-3.5 h-3.5"></svg>' + adh.label + '</span></td>' +
                         '<td onclick="event.stopPropagation(); openDetail(\'' + t.id + '\', true);">' +
-                            (t.note ? '<div class="flex items-center gap-1.5 text-[12px] text-[var(--tm-text)] max-w-[200px] truncate cursor-pointer hover:text-white" title="' + esc(t.note) + '"><span class="text-amber-400 flex-shrink-0">📝</span> <span class="truncate text-[var(--tm-muted)]">' + esc(t.note) + '</span></div>'
-                                    : '<button class="btn-mini !py-0.5 !px-2 text-[11px] text-[var(--tm-dim)] hover:text-white"><svg data-lucide=\'plus\' class=\'w-3 h-3\'></svg> Note</button>') +
+                            (t.note ? '<div class="flex items-center gap-1.5 text-[12px] text-zinc-200 max-w-[200px] truncate cursor-pointer hover:text-white" title="' + esc(t.note) + '"><span class="text-amber-400 flex-shrink-0">📝</span> <span class="truncate text-zinc-400">' + esc(t.note) + '</span></div>'
+                                    : '<button class="btn-mini !py-0.5 !px-2 text-[11px] text-zinc-500 hover:text-white"><svg data-lucide=\'plus\' class=\'w-3 h-3\'></svg> Note</button>') +
                         '</td>' +
                         '<td><span class="tag ' + rev.cls + '">' + rev.label + '</span></td>';
                     tr.addEventListener('click', () => openDetail(t.id));

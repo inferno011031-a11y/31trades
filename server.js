@@ -46,6 +46,7 @@ const LLM = require('./server/llm.js');
 const Notif = require('./server/notifications.js');
 const Brokers = require('./server/brokers.js');
 const Backtest = require('./server/backtest.js');
+const BacktestAnalytics = require('./server/backtest-analytics.js');
 const MarketData = require('./server/marketdata.js');
 const Replay = require('./server/replay.js');
 const Sim = require('./server/backtest-sim.js');
@@ -1153,6 +1154,26 @@ async function handleApi(req, res, url) {
                 const s = Sim.getSession(uc.userId, m[1]);
                 if (!s) return json(res, 404, { error: 'unknown session' });
                 return json(res, 200, { ok: true, results: s.results() });
+            }
+
+            // ---------- Backtest history analytics (YEAR → MONTH → drill-down) ----------
+            // Pure aggregation over completed sessions — see server/backtest-analytics.js
+            if (p === '/api/backtest/history/years' && req.method === 'GET') {
+                return json(res, 200, BacktestAnalytics.historyYears(Sim.listFullSessions(uc.userId)));
+            }
+            if (p === '/api/backtest/history/trades' && req.method === 'GET') {
+                const f = {};
+                ['year', 'month', 'session', 'strategy', 'symbol', 'asset', 'direction', 'setup', 'result', 'tag', 'limit', 'offset'].forEach(k => {
+                    if (q.get(k) != null && q.get(k) !== '') f[k] = q.get(k);
+                });
+                return json(res, 200, { ok: true, ...BacktestAnalytics.queryTrades(Sim.listFullSessions(uc.userId), f) });
+            }
+            if ((m = p.match(/^\/api\/backtest\/history\/(\d{4})\/months$/)) && req.method === 'GET') {
+                return json(res, 200, { ok: true, ...BacktestAnalytics.historyMonths(Sim.listFullSessions(uc.userId), Number(m[1])) });
+            }
+            if ((m = p.match(/^\/api\/backtest\/history\/(\d{4})\/(\d{1,2})$/)) && req.method === 'GET') {
+                const r = BacktestAnalytics.historyMonthDetail(Sim.listFullSessions(uc.userId), Number(m[1]), Number(m[2]));
+                return json(res, r.error ? 400 : 200, r.error ? { ok: false, error: r.error } : { ok: true, ...r });
             }
 
             // ---------- Practice view (same canonical analytics/insights over
