@@ -1411,6 +1411,7 @@
                     byId('st-perf-avgr').textContent = (avgRToday >= 0 ? '+' : '') + avgRToday.toFixed(2) + 'R avg';
                     byId('st-perf-ref').textContent = 'today';
                     byId('st-perf-fill').style.width = (today.length ? Math.min(100, Math.round(wins / today.length * 100)) : 0) + '%';
+                    byId('st-perf-fill').className = 'mini-fill ' + (pnl < 0 ? 'bar-loss' : 'bar-profit');
                 }
 
                 // ---- PERFORMANCE PANEL ----
@@ -1463,9 +1464,10 @@
                         dimsWrap.innerHTML = dims.map(function (dm) {
                             var noData = dm.score == null;
                             var pct = noData ? 0 : Math.max(0, Math.min(100, dm.score));
+                            var barFillClass = noData ? '' : (dm.score >= 70 ? 'bar-profit' : dm.score >= 50 ? 'bar-amber' : 'bar-loss');
                             return '<div class="dim-row' + (noData ? ' dim-no-data' : '') + '">' +
                                 '<span class="w-[86px] text-[12.5px] text-[var(--tm-dim)]">' + dm.label + '</span>' +
-                                '<div class="dim-bar' + (noData ? ' empty' : '') + '">' + (noData ? '' : '<div class="dim-bar-fill" style="width:' + pct + '%"></div>') + '</div>' +
+                                '<div class="dim-bar' + (noData ? ' empty' : '') + '">' + (noData ? '' : '<div class="dim-bar-fill ' + barFillClass + '" style="width:' + pct + '%"></div>') + '</div>' +
                                 (noData
                                     ? '<span class="text-[10.5px] text-[var(--tm-dim)] italic whitespace-nowrap" title="Not enough evaluated trades for this dimension yet">Insufficient data</span>'
                                     : '<span class="num text-[12.5px] font-bold w-[34px] text-right">' + dm.score + '</span>') +

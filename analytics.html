@@ -1058,7 +1058,7 @@
                 $('strat-body').innerHTML = Object.keys(bySetup).map(s => {
                     const row = bySetup[s];
                     const wr = Math.round((row.wins / row.n) * 100);
-                    return '<tr><td class="font-semibold text-white">' + esc(s) + '</td><td class="num">' + row.n + '</td><td class="num ' + (row.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') + '">' + money(row.pnl) + '</td><td class="num">' + wr + '%</td></tr>';
+                    return '<tr><td class="font-semibold text-white">' + esc(s) + '</td><td class="num">' + row.n + '</td><td class="num ' + (row.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') + '">' + money(row.pnl) + '</td><td><div class="flex items-center gap-2.5"><div class="perf-progress-track !mt-0 !w-16"><div class="' + (row.pnl >= 0 ? 'perf-fill-profit' : 'perf-fill-loss') + '" style="width:' + wr + '%;"></div></div><span class="num font-semibold text-white">' + wr + '%</span></div></td></tr>';
                 }).join('');
 
                 // By symbol
@@ -1075,7 +1075,7 @@
                 $('sym-body').innerHTML = Object.keys(bySym).map(sym => {
                     const row = bySym[sym];
                     const wr = Math.round((row.wins / row.n) * 100);
-                    return '<tr><td class="font-semibold text-white">' + esc(sym) + '</td><td class="num">' + row.n + '</td><td class="num ' + (row.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') + '">' + money(row.pnl) + '</td><td class="num">' + wr + '%</td></tr>';
+                    return '<tr><td class="font-semibold text-white">' + esc(sym) + '</td><td class="num">' + row.n + '</td><td class="num ' + (row.pnl >= 0 ? 'text-emerald-400' : 'text-rose-400') + '">' + money(row.pnl) + '</td><td><div class="flex items-center gap-2.5"><div class="perf-progress-track !mt-0 !w-16"><div class="' + (row.pnl >= 0 ? 'perf-fill-profit' : 'perf-fill-loss') + '" style="width:' + wr + '%;"></div></div><span class="num font-semibold text-white">' + wr + '%</span></div></td></tr>';
                 }).join('');
             }
 
