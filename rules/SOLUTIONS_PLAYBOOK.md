@@ -5,6 +5,25 @@ This document is permanently preserved for all automated coding agents and engin
 
 ---
 
+## ⛔ MANDATORY PRE-PUSH CHECKLIST — Run EVERY time before `git push`
+
+Before ANY `git push`, the agent MUST answer ALL of the following:
+
+| # | Check | Pass Condition |
+|---|-------|----------------|
+| 1 | `npm test` passed? | 861 tests, 0 failures |
+| 2 | Is this a CSS-only change? | If YES → safe to push |
+| 3 | Does this touch a render function (`renderMonths`, `renderBreakdowns`, `renderDims`, etc.)? | If YES → run checks 4 & 5 |
+| 4 | Does the render function still work when trades EXIST? | Data must still display correctly |
+| 5 | Does the render function gracefully handle 0 trades? | Must show `—` or `No trades yet`, never blank |
+| 6 | Did I only ADD styling — not change data logic? | Never modify conditional/filter/loop logic when adding CSS |
+
+**If ANY check fails → DO NOT PUSH. Fix first.**
+
+---
+
+---
+
 ## 1. The "White Lines" Bug (Tailwind Uncompiled Arbitrary Opacity)
 
 ### Problem Description
