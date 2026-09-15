@@ -3013,73 +3013,7 @@
             let currentSelectedMonth = null;
             let currentMonthDetailData = null;
 
-            // Rich client-side preview fixtures (displays high-density institutional data immediately)
-            const MOCK_PREVIEW_ANALYTICS = {
-                years: [
-                    { year: 2026, trades: 142, sessions: 28, net: 28450.00, totalR: 64.2, winRate: 68.4, months: [1, 2, 3] },
-                    { year: 2025, trades: 418, sessions: 84, net: 74200.00, totalR: 158.5, winRate: 63.8, months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
-                    { year: 2024, trades: 380, sessions: 76, net: 51800.00, totalR: 112.4, winRate: 59.2, months: [3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
-                    { year: 2023, trades: 295, sessions: 60, net: 38650.00, totalR: 88.6, winRate: 57.6, months: [1, 2, 5, 6, 7, 8, 9, 10] }
-                ],
-                monthsByYear: {
-                    2026: [
-                        { month: 3, label: 'March 2026', trades: 38, net: 7850.00, totalR: 16.8, winRate: 68.4, avgR: 0.44, bestSession: 'London', worstSession: 'Asian' },
-                        { month: 2, label: 'February 2026', trades: 52, net: 11200.00, totalR: 24.5, winRate: 71.2, avgR: 0.47, bestSession: 'New York AM', worstSession: 'Sydney' },
-                        { month: 1, label: 'January 2026', trades: 52, net: 9400.00, totalR: 22.9, winRate: 65.4, avgR: 0.44, bestSession: 'London', worstSession: 'Asian' }
-                    ],
-                    2025: [
-                        { month: 12, label: 'December 2025', trades: 34, net: 6200.00, totalR: 14.1, winRate: 64.7, avgR: 0.41, bestSession: 'New York AM', worstSession: 'Asian' },
-                        { month: 11, label: 'November 2025', trades: 41, net: 8900.00, totalR: 19.8, winRate: 65.8, avgR: 0.48, bestSession: 'London', worstSession: 'Sydney' },
-                        { month: 10, label: 'October 2025', trades: 39, net: 7150.00, totalR: 15.6, winRate: 61.5, avgR: 0.40, bestSession: 'London', worstSession: 'New York PM' }
-                    ]
-                },
-                sampleMonthDetail: {
-                    card: { year: 2026, month: 3, label: 'March 2026', trades: 38, net: 7850.00, totalR: 16.8, winRate: 68.4, avgR: 0.44, bestSession: 'London', worstSession: 'Asian' },
-                    headline: {
-                        net: 7850.00, returnPct: 15.7, totalR: 16.8, avgR: 0.44,
-                        trades: 38, wins: 26, losses: 12, winRate: 68.4,
-                        profitFactor: 2.84, maxDrawdown: 920.00, maxDrawdownPct: 1.84
-                    },
-                    bySession: [
-                        { key: 'London', trades: 18, wins: 14, net: 4850.00, totalR: 11.2 },
-                        { key: 'New York AM', trades: 12, wins: 8, net: 2600.00, totalR: 5.6 },
-                        { key: 'New York PM', trades: 5, wins: 3, net: 650.00, totalR: 1.2 },
-                        { key: 'Asian', trades: 3, wins: 1, net: -250.00, totalR: -1.2 }
-                    ],
-                    byStrategy: [
-                        { key: 'Silver Bullet', trades: 16, wins: 12, net: 4200.00, totalR: 9.8 },
-                        { key: 'Liquidity Sweep', trades: 12, wins: 8, net: 2400.00, totalR: 5.2 },
-                        { key: 'FVG Reversal', trades: 10, wins: 6, net: 1250.00, totalR: 1.8 }
-                    ],
-                    byAsset: [
-                        { key: 'EURUSD', trades: 14, wins: 10, net: 3100.00, totalR: 6.8 },
-                        { key: 'XAUUSD', trades: 12, wins: 9, net: 3350.00, totalR: 7.4 },
-                        { key: 'NAS100', trades: 8, wins: 5, net: 1100.00, totalR: 2.2 },
-                        { key: 'BTCUSD', trades: 4, wins: 2, net: 300.00, totalR: 0.4 }
-                    ],
-                    byDayOfWeek: [
-                        { key: 'Tuesday', trades: 11, wins: 9, net: 3100.00, totalR: 7.2 },
-                        { key: 'Wednesday', trades: 10, wins: 7, net: 2450.00, totalR: 5.4 },
-                        { key: 'Thursday', trades: 9, wins: 6, net: 1800.00, totalR: 3.8 },
-                        { key: 'Friday', trades: 5, wins: 3, net: 650.00, totalR: 1.2 },
-                        { key: 'Monday', trades: 3, wins: 1, net: -150.00, totalR: -0.8 }
-                    ],
-                    trades: [
-                        { symbol: 'XAUUSD', direction: 'Long', session: 'London', strategy: 'Silver Bullet', entry: 2712.50, exit: 2724.80, pnl: 1230.00, realizedR: 2.46, result: 'win' },
-                        { symbol: 'EURUSD', direction: 'Short', session: 'London', strategy: 'Liquidity Sweep', entry: 1.0890, exit: 1.0845, pnl: 900.00, realizedR: 1.80, result: 'win' },
-                        { symbol: 'NAS100', direction: 'Long', session: 'New York AM', strategy: 'Silver Bullet', entry: 20450.00, exit: 20580.00, pnl: 1300.00, realizedR: 2.60, result: 'win' },
-                        { symbol: 'XAUUSD', direction: 'Short', session: 'New York AM', strategy: 'FVG Reversal', entry: 2730.00, exit: 2722.50, pnl: 750.00, realizedR: 1.50, result: 'win' },
-                        { symbol: 'EURUSD', direction: 'Long', session: 'New York AM', strategy: 'Liquidity Sweep', entry: 1.0840, exit: 1.0815, pnl: -500.00, realizedR: -1.00, result: 'loss' },
-                        { symbol: 'BTCUSD', direction: 'Long', session: 'New York PM', strategy: 'Silver Bullet', entry: 64200.00, exit: 64850.00, pnl: 650.00, realizedR: 1.30, result: 'win' },
-                        { symbol: 'EURUSD', direction: 'Short', session: 'London', strategy: 'Silver Bullet', entry: 1.0875, exit: 1.0830, pnl: 900.00, realizedR: 1.80, result: 'win' },
-                        { symbol: 'XAUUSD', direction: 'Long', session: 'London', strategy: 'Silver Bullet', entry: 2715.00, exit: 2710.00, pnl: -500.00, realizedR: -1.00, result: 'loss' },
-                        { symbol: 'NAS100', direction: 'Short', session: 'New York PM', strategy: 'FVG Reversal', entry: 20600.00, exit: 20602.00, pnl: 0.00, realizedR: 0.00, result: 'be' },
-                        { symbol: 'EURUSD', direction: 'Long', session: 'London', strategy: 'Liquidity Sweep', entry: 1.0820, exit: 1.0865, pnl: 900.00, realizedR: 1.80, result: 'win' },
-                        { symbol: 'XAUUSD', direction: 'Long', session: 'London', strategy: 'Silver Bullet', entry: 2708.00, exit: 2722.00, pnl: 1400.00, realizedR: 2.80, result: 'win' },
-                        { symbol: 'BTCUSD', direction: 'Short', session: 'Asian', strategy: 'FVG Reversal', entry: 64500.00, exit: 64750.00, pnl: -250.00, realizedR: -1.00, result: 'loss' }
-                    ]
-                }
-            };
+            // Real user data only: No client-side mock fixtures. Empty state rendered if no sessions exist.
 
             async function loadBacktestHistoryAnalytics() {
                 try {
@@ -3089,17 +3023,13 @@
                         const data = await r.json();
                         years = (data && data.years) || [];
                     }
-                    // If real database has no completed sessions yet, seamlessly display institutional demo data
-                    if (!years || !years.length) {
-                        years = MOCK_PREVIEW_ANALYTICS.years;
-                    }
-                    historyYearsData = years;
+                    historyYearsData = years || [];
                     renderHistoryYears(historyYearsData);
                     loadPracticeAnalytics();
                     loadPracticeInsights();
                 } catch (err) {
-                    console.warn('[Backtest Analytics] Live fetch failed, rendering demo showcase:', err);
-                    historyYearsData = MOCK_PREVIEW_ANALYTICS.years;
+                    console.warn('[Backtest Analytics] Live fetch failed:', err);
+                    historyYearsData = [];
                     renderHistoryYears(historyYearsData);
                 }
             }
@@ -3109,11 +3039,11 @@
                 const chipsEl = $('ba-year-chips');
                 const gridEl = $('ba-years-grid');
                 const countLbl = $('ba-years-count-label');
-                if (countLbl) countLbl.textContent = years.length + ' Completed Year' + (years.length === 1 ? '' : 's');
+                if (countLbl) countLbl.textContent = (years ? years.length : 0) + ' Completed Year' + ((years && years.length === 1) ? '' : 's');
 
                 if (!years || !years.length) {
-                    chipsEl.innerHTML = '<span class="text-xs text-slate-500 px-3 py-1">No completed years</span>';
-                    gridEl.innerHTML = '<div class="col-span-full py-12 text-center text-xs text-slate-500 border border-[#1c2230] rounded-xl bg-[#0c1018]/50">No completed backtest years recorded yet. Complete a session to view historical performance.</div>';
+                    if (chipsEl) chipsEl.innerHTML = '<span class="text-xs text-slate-500 px-3 py-1">No completed years</span>';
+                    if (gridEl) gridEl.innerHTML = '<div class="col-span-full py-12 text-center text-xs text-slate-500 border border-[#1c2230] rounded-xl bg-[#0c1018]/50">No completed backtest years recorded yet. Complete a session to view historical performance.</div>';
                     return;
                 }
 
@@ -3164,62 +3094,55 @@
                         const data = await r.json();
                         months = data.months || [];
                     }
-                    if (!months.length && MOCK_PREVIEW_ANALYTICS.monthsByYear[year]) {
-                        months = MOCK_PREVIEW_ANALYTICS.monthsByYear[year];
-                    }
                     renderMonthChips(year, months);
                     if (months && months.length) {
                         selectMonth(year, months[0].month);
+                    } else {
+                        const panel = $('ba-month-detail-panel');
+                        if (panel) panel.classList.add('hidden');
                     }
                 } catch (e) {
-                    console.warn('[Backtest Analytics] selectYear fallback:', e);
-                    const months = MOCK_PREVIEW_ANALYTICS.monthsByYear[year] || MOCK_PREVIEW_ANALYTICS.monthsByYear[2026];
-                    renderMonthChips(year, months);
-                    if (months && months.length) selectMonth(year, months[0].month);
+                    console.warn('[Backtest Analytics] selectYear failed:', e);
+                    renderMonthChips(year, []);
                 }
             }
             window.selectYear = selectYear;
 
             function renderMonthChips(year, months) {
                 const monthChipsEl = $('ba-month-chips');
+                if (!monthChipsEl) return;
+                if (!months || !months.length) {
+                    monthChipsEl.classList.add('hidden');
+                    return;
+                }
                 monthChipsEl.classList.remove('hidden');
                 monthChipsEl.innerHTML = months.map(m => {
                     const active = currentSelectedMonth === m.month;
                     return '<button type="button" class="px-2.5 py-1 text-xs font-semibold rounded-md transition cursor-pointer ' +
                         (active ? 'bg-white text-zinc-950 font-bold shadow-sm' : 'text-slate-400 hover:text-white hover:bg-white/[0.05]') +
-                        '" onclick="selectMonth(' + year + ', ' + m.month + ')">' + m.label.split(' ')[0] + '</button>';
+                        '" onclick="selectMonth(' + year + ', ' + m.month + ')">' + (m.label ? m.label.split(' ')[0] : m.month) + '</button>';
                 }).join('');
             }
 
             async function selectMonth(year, month) {
                 currentSelectedMonth = month;
-                if ($('ba-month-chips')) {
-                    document.querySelectorAll('#ba-month-chips button').forEach(b => {
-                        const mName = b.textContent.trim();
-                        // highlight active
-                    });
-                }
-
                 try {
                     const r = await apiFetch('/api/backtest/history/' + year + '/' + month);
                     let data = null;
                     if (r.ok) {
                         data = await r.json();
                     }
-                    if (!data || !data.headline || !data.headline.trades) {
-                        data = MOCK_PREVIEW_ANALYTICS.sampleMonthDetail;
-                        data.card.year = year;
-                        data.card.month = month;
-                        const mNames = ['January','February','March','April','May','June','July','August','September','October','November','December'];
-                        data.card.label = (mNames[month - 1] || 'Month') + ' ' + year;
+                    if (data && data.headline && data.headline.trades) {
+                        currentMonthDetailData = data;
+                        renderMonthDetail(data);
+                    } else {
+                        const panel = $('ba-month-detail-panel');
+                        if (panel) panel.classList.add('hidden');
                     }
-                    currentMonthDetailData = data;
-                    renderMonthDetail(data);
                 } catch (e) {
-                    console.warn('[Backtest Analytics] selectMonth fallback:', e);
-                    const data = MOCK_PREVIEW_ANALYTICS.sampleMonthDetail;
-                    currentMonthDetailData = data;
-                    renderMonthDetail(data);
+                    console.warn('[Backtest Analytics] selectMonth failed:', e);
+                    const panel = $('ba-month-detail-panel');
+                    if (panel) panel.classList.add('hidden');
                 }
             }
             window.selectMonth = selectMonth;

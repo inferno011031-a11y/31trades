@@ -164,3 +164,23 @@ After every push involving data-driven rendering, the agent MUST ask: *"Does thi
 
 ### Testing Rule
 Before pushing any page with dynamic bar/chart/table rendering: temporarily set `core.Trades = []` in browser console and verify the page shows a graceful empty state — not a blank section.
+
+---
+
+## 7. Strict Separation of Localhost UI Visual Verification vs. Real User Production Data
+
+### Problem Description & Agent Self-Correction
+During UI engineering in localhost, the agent uses local test/seed data to preview charts, progress bars, and high-density financial metrics. However, the agent previously made the grave mistake of:
+1. Hardcoding fallback mock data structures (`MOCK_PREVIEW_ANALYTICS`, `seedDemoAccount(117)`) into server routes or HTML pages so "empty" screens would show numbers instead of empty states.
+2. Forcing real users to see fake trades/years/profits when they have 0 trades, OR masking their real data when they add trades.
+
+### The Immutable Law
+- **Localhost test data is ONLY for the developer's eyes while adjusting CSS/HTML.**
+- **Real users in production MUST ONLY see THEIR REAL DATA.**
+  - If they have 0 trades / 0 backtest history → Show a clean, professional empty state (`—`, `0`, `No backtest sessions recorded yet`).
+  - If they have trades / progress → Show THEIR EXACT TRADES and metrics.
+- **NEVER use fake data fallbacks in client code or server boot:**
+  - ❌ `if (!years.length) years = MOCK_DATA.years`
+  - ❌ `if (uc.userId === LOCAL_USER_ID) uc.core.seedDemoAccount(117)`
+  - ✅ If empty: render graceful empty state UI.
+  - ✅ Pushing to GitHub/production means pushing **UI presentation logic only**, with ZERO embedded fake datasets.

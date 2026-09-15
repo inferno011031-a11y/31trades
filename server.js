@@ -264,11 +264,10 @@ async function loadUserState(uc) {
             console.warn(f + ' unreadable — reseeding (' + err.message + ')');
         }
     }
-    if (uc.userId === LOCAL_USER_ID) {
-        uc.core.seedDemoAccount(117);   // anonymous dev mode — sample data for API testing
-        console.log('[31trades] seeded ' + uc.core.Trades.length + ' demo trades (anonymous mode)');
-    } else {
-        uc.core.reseed();               // real first-time user — clean first-user state
+    // Clean first-user state for everyone: ZERO fake trades.
+    // Real users and anonymous sessions start clean without injecting 117 mock trades.
+    uc.core.reseed();
+    if (uc.userId !== LOCAL_USER_ID) {
         logWelcomeEvent(uc, uc.user);   // one-time welcome in their canonical event log
     }
 }
