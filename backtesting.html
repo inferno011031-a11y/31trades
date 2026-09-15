@@ -2043,48 +2043,87 @@
 
             // ============ SESSION OPS ============
             async function createSession() {
-                const symbol = $('pd-symbol').value;
-                const timeframe = $('pd-timeframe').value;
-                const strategy = $('pd-strategy').value.trim() || 'Manual practice';
-                const startingBalance = Number($('pd-balance').value) || 10000;
-                const perTrade = Number($('pd-risk').value) || 25;
+                const symbol = ($('pd-symbol') && $('pd-symbol').value) || 'EURUSD';
+                const timeframe = ($('pd-timeframe') && $('pd-timeframe').value) || '1h';
+                const strategy = ($('pd-strategy') && $('pd-strategy').value.trim()) || 'Manual practice';
+                const startingBalance = Number($('pd-balance') && $('pd-balance').value) || 10000;
+                const perTrade = Number($('pd-risk') && $('pd-risk').value) || 25;
                 const btn = $('start-practice');
-                btn.disabled = true;
-                $('setup-msg').textContent = 'Creating practice session…';
-                $('setup-msg').style.color = 'var(--tm-dim)';
+                if (btn) btn.disabled = true;
+                if ($('setup-msg')) {
+                    $('setup-msg').textContent = 'Creating practice session…';
+                    $('setup-msg').style.color = 'var(--tm-dim)';
+                }
                 try {
                     const r = await apiFetch('/api/backtest/sessions', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ symbol, timeframe, strategy, startingBalance, period: ($('pd-is-random') && $('pd-is-random').value === 'true') ? 'random' : ($('pd-period') ? $('pd-period').value : '2026-06'), riskModel: { basis: 'money', perTrade } })
+                        body: JSON.stringify({
+                            symbol,
+                            timeframe,
+                            strategy,
+                            startingBalance,
+                            period: ($('pd-is-random') && $('pd-is-random').value === 'true') ? 'random' : ($('pd-period') ? $('pd-period').value : '2026-06'),
+                            riskModel: { basis: 'money', perTrade }
+                        })
                     });
                     const data = await r.json().catch(() => ({}));
                     if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
+                    
+                    // Assign active simulation ID and initial state immediately
                     currentId = data.session;
-                    // Hydrate the live session immediately so the Chart HUD
-                    // (BUY/SELL buttons + telemetry) is tradable without a reload.
+                    if (data.state) {
+                        state = data.state;
+                    }
+                    
+                    const modal = $('modal-new-session');
+                    if (modal) modal.classList.add('hidden');
+                    
+                    // Switch to Chart Studio tab FIRST so container has real non-zero dimensions
+                    switchStitchTab('sessions');
+                    
+                    // Hydrate the live session and render candles onto the visible canvas
                     await loadSessionState();
-                    $('setup-msg').textContent = 'Session created — practice engine is ready.';
-                    $('setup-msg').style.color = 'var(--tm-green)';
+                    
+                    if (tvChart) {
+                        const wrapper = $('tv-chart-wrapper');
+                        if (wrapper && wrapper.clientWidth) {
+                            tvChart.resize(wrapper.clientWidth, wrapper.clientHeight || 540);
+                            tvChart.timeScale().fitContent();
+                        }
+                    }
+                    if ($('setup-msg')) {
+                        $('setup-msg').textContent = 'Session created — practice engine is ready.';
+                        $('setup-msg').style.color = 'var(--tm-green)';
+                    }
                     const sym = symbol;
                     const per = ($('selected-period-display') && $('selected-period-display').textContent) || ($('pd-period') && $('pd-period').value) || 'Ready';
-                    showToast('Practice session created for ' + sym + ' (' + per + ')');
-                    $('modal-new-session').classList.add('hidden');
-                    // Seamlessly switch to the Chart Studio tab and load candles
-                    switchStitchTab('sessions');
+                    showToast('Simulation started for ' + sym + ' (' + per + ')');
                     await Promise.all([loadSessions(), loadPracticeAnalytics()]);
                 } catch (e) {
-                    $('setup-msg').textContent = e.message;
-                    $('setup-msg').style.color = 'var(--tm-red)';
+                    if ($('setup-msg')) {
+                        $('setup-msg').textContent = e.message;
+                        $('setup-msg').style.color = 'var(--tm-red)';
+                    }
+                    showToast(e.message || 'Failed to start simulation');
                 } finally {
-                    btn.disabled = false;
+                    if (btn) btn.disabled = false;
                 }
             }
 
             async function openSession(id) {
+                if (!id) return;
                 currentId = id;
+                switchStitchTab('sessions');
                 await loadSessions();   // re-render active highlight
                 await loadSessionState();
+                if (tvChart) {
+                    const wrapper = $('tv-chart-wrapper');
+                    if (wrapper && wrapper.clientWidth) {
+                        tvChart.resize(wrapper.clientWidth, wrapper.clientHeight || 540);
+                        tvChart.timeScale().fitContent();
+                    }
+                }
             }
 
             async function loadSessionState() {
@@ -2093,9 +2132,9 @@
                     const r = await apiFetch('/api/backtest/sessions/' + encodeURIComponent(currentId));
                     if (!r.ok) throw new Error('state ' + r.status);
                     const data = await r.json();
-                    state = (data && data.state) || null;
+                    if (data && data.state) state = data.state;
                 } catch (e) {
-                    state = null;
+                    console.warn('loadSessionState fetch failed:', e.message);
                 }
                 results = null; coach = null;
                 if (state && state.status === 'completed') {
@@ -2765,6 +2804,9 @@
                         if (i === 0 || chartData[i].time > chartData[i - 1].time) cleanData.push(chartData[i]);
                     }
                     candleSeries.setData(cleanData);
+                    if (tvChart) {
+                        tvChart.timeScale().fitContent();
+                    }
 
                     // Update OHLC legend to current bar
                     const currentBar = cleanData[cleanData.length - 1];
@@ -3342,7 +3384,10 @@
                     if (tvChart) {
                         setTimeout(() => {
                             const wrapper = $('tv-chart-wrapper');
-                            if (wrapper && tvChart) tvChart.resize(wrapper.clientWidth, wrapper.clientHeight);
+                            if (wrapper && tvChart) {
+                                tvChart.resize(wrapper.clientWidth, wrapper.clientHeight);
+                                tvChart.timeScale().fitContent();
+                            }
                         }, 50);
                     }
                 }

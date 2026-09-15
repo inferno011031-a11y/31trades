@@ -319,7 +319,7 @@ function generateCandles(opts) {
 }
 
 function roundP(n) {
-    const scale = n < 0.01 ? 1000000 : n < 1 ? 100000 : n < 100 ? 1000 : 100;
+    const scale = n < 0.01 ? 1000000 : n < 10 ? 100000 : n < 100 ? 1000 : 100;
     return Math.round(n * scale) / scale;
 }
 
