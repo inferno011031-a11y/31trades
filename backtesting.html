@@ -2034,7 +2034,8 @@
                             '</div>';
                         }).join('');
                         dashGrid.querySelectorAll('[data-sid]').forEach(b => b.addEventListener('click', () => {
-                            showToast('Selected session: ' + b.dataset.sid);
+                            openSession(b.dataset.sid);
+                            switchStitchTab('sessions');
                         }));
                     }
                 }
@@ -2060,13 +2061,17 @@
                     const data = await r.json().catch(() => ({}));
                     if (!r.ok) throw new Error(data.error || 'Request failed (' + r.status + ')');
                     currentId = data.session;
+                    // Hydrate the live session immediately so the Chart HUD
+                    // (BUY/SELL buttons + telemetry) is tradable without a reload.
+                    await loadSessionState();
                     $('setup-msg').textContent = 'Session created — practice engine is ready.';
                     $('setup-msg').style.color = 'var(--tm-green)';
                     const sym = symbol;
                     const per = ($('selected-period-display') && $('selected-period-display').textContent) || ($('pd-period') && $('pd-period').value) || 'Ready';
                     showToast('Practice session created for ' + sym + ' (' + per + ')');
                     $('modal-new-session').classList.add('hidden');
-                    // Stay on the entrance dashboard page — do not auto-switch to charts
+                    // Seamlessly switch to the Chart Studio tab and load candles
+                    switchStitchTab('sessions');
                     await Promise.all([loadSessions(), loadPracticeAnalytics()]);
                 } catch (e) {
                     $('setup-msg').textContent = e.message;
@@ -2599,8 +2604,15 @@
                         return;
                     }
                     if (!state || !state.candle) {
-                        this.setFeedback('No active candle data available.', true);
-                        return;
+                        // Self-heal: a session exists but state is stale/missing —
+                        // hydrate once, then re-check before aborting.
+                        if (currentId) {
+                            await loadSessionState();
+                        }
+                        if (!state || !state.candle) {
+                            this.setFeedback('No active candle data available.', true);
+                            return;
+                        }
                     }
 
                     const candle = state.candle;
@@ -3323,11 +3335,16 @@
                 document.querySelectorAll('.stitch-panel').forEach(p => {
                     p.classList.toggle('hidden', p.id !== 'tab-panel-' + tabName);
                 });
-                if (tabName === 'sessions' && tvChart) {
-                    setTimeout(() => {
-                        const wrapper = $('tv-chart-wrapper');
-                        if (wrapper && tvChart) tvChart.resize(wrapper.clientWidth, wrapper.clientHeight);
-                    }, 50);
+                if (tabName === 'sessions') {
+                    // Hydrate session state when entering the chart tab
+                    // (e.g. right after creating a session, or on reload).
+                    if (currentId && !state) loadSessionState();
+                    if (tvChart) {
+                        setTimeout(() => {
+                            const wrapper = $('tv-chart-wrapper');
+                            if (wrapper && tvChart) tvChart.resize(wrapper.clientWidth, wrapper.clientHeight);
+                        }, 50);
+                    }
                 }
                 if (tabName === 'analytics') {
                     loadBacktestHistoryAnalytics();
