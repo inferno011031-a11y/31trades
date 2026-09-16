@@ -770,6 +770,35 @@
             let activeSubTab = 'overview';
             let timeFilter = 'all';
 
+            // ---- Backtest trades feed (server/analytics over completed backtest sessions) ----
+            // Journal trades come from core.Trades; backtest trades arrive async from
+            // /api/backtest/history/trades and are merged into the same analytics.
+            let backtestTrades = [];
+            (function loadBacktestTrades() {
+                const apiFetch = (core && core.apiFetch) || ((url, options) => fetch(url, options));
+                apiFetch('/api/backtest/history/trades?limit=1000')
+                    .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+                    .then(d => {
+                        const list = (d && d.trades) || [];
+                        backtestTrades = list.map(t => {
+                            let ts = Number(t.entryTime) || 0;
+                            if (ts > 0 && ts < 1e12) ts = ts * 1000; // seconds → ms
+                            return {
+                                ts,
+                                pnl: Number(t.pnl) || 0,
+                                dir: t.direction || '',
+                                symbol: t.symbol || t.asset || 'UNKNOWN',
+                                setup: t.setup || t.strategy || 'Backtest',
+                                r: t.realizedR,
+                                result: t.result,
+                                source: 'backtest'
+                            };
+                        }).filter(t => t.ts > 0);
+                        if (backtestTrades.length) renderAll(); // re-render once backtest data lands
+                    })
+                    .catch(() => { /* signed-out or no sessions — analytics stays journal-only */ });
+            })();
+
             function currentAccountId() {
                 if (!core || !core.Accounts || !core.Accounts.length) return null;
                 return core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
@@ -797,7 +826,7 @@
                     list = list.filter(t => new Date(t.ts).toDateString() === todayStr);
                 }
 
-                return list.sort((a, b) => new Date(a.ts) - new Date(b.ts));
+                return list.concat(backtestTrades).sort((a, b) => new Date(a.ts) - new Date(b.ts));
             }
 
             function renderAll() {

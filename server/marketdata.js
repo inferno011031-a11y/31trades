@@ -26,6 +26,8 @@ const { generateCandles, TIMEFRAMES } = require('./backtest.js');
 
 const DATA_DIR = process.env.TRADEMIND_TV_DATA_DIR || path.join(__dirname, '..', 'data');
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000;      // 6h per (symbol, timeframe, count)
+const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
+    'July', 'August', 'September', 'October', 'November', 'December'];
 const FAIL_LATCH_MS = 5 * 60 * 1000;          // skip TV for 5 min after a failure
 const TV_TIMEOUT_MS = 15000;
 
@@ -208,46 +210,65 @@ async function getCandles(opts) {
     const count = Math.max(30, Math.min(6500, Number(o.count) || 320));
     const period = String(o.period || '').toLowerCase();
 
-    // 0 · Real historical Gold dataset (e.g. Jan 2024 or Feb 2024 backtesting session)
+    // 0 · Real historical Gold dataset — per-month archives produced by
+    // tools/split-gold-months.js  (data/gold/YYYY-MM/xau_<tf>_<YYYY-MM>.json)
+    // Legacy folders jan2024/feb2024 keep working unchanged.
     if (symbol === 'XAUUSD' || symbol === 'GOLD') {
-        let periodFolder = 'jan2024';
-        let periodLabel = 'January 2024';
-        if (period.includes('feb')) {
-            periodFolder = 'feb2024';
-            periodLabel = 'February 2024';
+        let periodFolder = null;
+        let periodLabel = null;
+        if (/^\d{4}-\d{2}$/.test(period)) {
+            periodFolder = period;
+            const [yy, mm] = period.split('-');
+            periodLabel = MONTH_NAMES[Number(mm) - 1] + ' ' + yy;
+        } else if (period === 'jan2024' || period.includes('jan2024')) {
+            periodFolder = 'jan2024'; periodLabel = 'January 2024';
+        } else if (period === 'feb2024' || period.includes('feb2024')) {
+            periodFolder = 'feb2024'; periodLabel = 'February 2024';
+        } else if (period.includes('jan')) {          // legacy shorthand
+            periodFolder = 'jan2024'; periodLabel = 'January 2024';
+        } else if (period.includes('feb')) {
+            periodFolder = 'feb2024'; periodLabel = 'February 2024';
         }
 
         let tfFile = timeframe.toLowerCase();
-        if (!['1m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '1d', 'w', 'm'].includes(tfFile)) {
-            if (tfFile.includes('1m') || tfFile.includes('1')) tfFile = '1m';
-            else if (tfFile.includes('3m') || tfFile.includes('3')) tfFile = '3m';
-            else if (tfFile.includes('5')) tfFile = '5m';
-            else if (tfFile.includes('30')) tfFile = '30m';
-            else if (tfFile.includes('15')) tfFile = '15m';
+        if (!['1m', '2m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '1d', 'w', 'm'].includes(tfFile)) {
+            if (tfFile.includes('1440') || tfFile.includes('1d') || tfFile === 'd') tfFile = '1d';
+            else if (tfFile.includes('4h') || tfFile.includes('240')) tfFile = '4h';
+            else if (tfFile.includes('6h') || tfFile.includes('360')) tfFile = '6h';
             else if (tfFile.includes('2h') || tfFile.includes('120')) tfFile = '2h';
             else if (tfFile.includes('1h') || tfFile.includes('60')) tfFile = '1h';
-            else if (tfFile.includes('4h') || tfFile.includes('240')) tfFile = '4h';
+            else if (tfFile.includes('30')) tfFile = '30m';
+            else if (tfFile.includes('15')) tfFile = '15m';
+            else if (tfFile.includes('5')) tfFile = '5m';
+            else if (tfFile.includes('3')) tfFile = '3m';
+            else if (tfFile.includes('2')) tfFile = '2m';
+            else if (tfFile.includes('1')) tfFile = '1m';
             else if (tfFile.includes('w')) tfFile = 'w';
             else if (tfFile.includes('m')) tfFile = 'm';
-            else tfFile = '1d';
+            else tfFile = '1h';
         }
 
-        const histFile = path.join(DATA_DIR, 'gold', periodFolder, `xau_${tfFile}_${periodFolder}.json`);
-        if ((period.includes('jan') || period.includes('feb') || period.includes('2024') || period === 'real') && fs.existsSync(histFile)) {
-            try {
-                const j = JSON.parse(fs.readFileSync(histFile, 'utf8'));
-                const candles = (count && count < j.candles.length && !o.all) ? j.candles.slice(-count) : j.candles;
-                return {
-                    ok: true,
-                    symbol: 'XAUUSD',
-                    timeframe,
-                    period: periodLabel,
-                    count: candles.length,
-                    base: candles[0] ? candles[0].close : 2040,
-                    candles,
-                    meta: { source: 'historical-archive', provider: 'Kaggle Real Gold 2004-2024 Dataset' }
-                };
-            } catch (e) { /* fallback */ }
+        if (periodFolder) {
+            const histFile = path.join(DATA_DIR, 'gold', periodFolder, `xau_${tfFile}_${periodFolder}.json`);
+            if (fs.existsSync(histFile)) {
+                try {
+                    const j = JSON.parse(fs.readFileSync(histFile, 'utf8'));
+                    const candles = (count && count < j.candles.length && !o.all) ? j.candles.slice(-count) : j.candles;
+                    return {
+                        ok: true,
+                        symbol: 'XAUUSD',
+                        timeframe,
+                        period: j.period || periodFolder,
+                        periodLabel: j.label || periodLabel,
+                        count: candles.length,
+                        base: candles[0] ? candles[0].close : 2040,
+                        candles,
+                        meta: { source: 'historical-archive', provider: 'BattleX Gold Historical Archive' }
+                    };
+                } catch (e) { /* fall through to synthetic */ }
+            }
+            // requested month has no archive → fall through: exact-month synthetic
+            // (block 0.5) keeps the period picker meaningful for every month.
         }
     }
 

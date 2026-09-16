@@ -613,6 +613,18 @@ function manageSession(userId, id, action, payload) {
         r = s.closePartial(p.fraction || 0.5, p);
     } else if (action === 'modify') {
         r = s.modify(p);
+    } else if (action === 'complete') {
+        // Replay finished: advance the sim to the final bar (force-closing any still-open
+        // position at the last bar so the trade lands in analytics), then mark completed
+        // so history aggregations (YEAR → MONTH → drill-down) include this session.
+        if (s.position) s.close({ reason: 'Session end' });
+        s.setCursor(s.candles.length - 1);
+        if (s.status === 'running') {
+            s.status = 'completed';
+            s.completedAt = s.completedAt || new Date().toISOString();
+        }
+        saveSession(userId, s);
+        return { ok: true, state: stateOf(s), results: s.results() };
     } else {
         return { ok: false, error: 'unknown management action' };
     }

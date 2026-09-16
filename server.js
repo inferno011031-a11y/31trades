@@ -1135,7 +1135,8 @@ async function handleApi(req, res, url) {
                     symbol: q.get('symbol') || 'EURUSD',
                     timeframe: q.get('timeframe') || '1h',
                     count: Number(q.get('count')) || undefined,
-                    period: q.get('period') || undefined
+                    period: q.get('period') || undefined,
+                    all: q.get('all') === '1' || q.get('all') === 'true'
                 });
                 return json(res, 200, data);
             }

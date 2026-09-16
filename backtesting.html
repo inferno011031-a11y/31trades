@@ -755,7 +755,7 @@
                         <!-- Navigation Tabs -->
                         <nav aria-label="Main Navigation" class="flex space-x-7 text-sm font-medium pt-1 -mb-[1px]">
                             <!-- Tab: Dashboard -->
-                            <button type="button" class="stitch-tab flex items-center gap-2 pb-3.5 text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors font-semibold cursor-pointer" data-tab="dashboard">
+                            <button type="button" class="stitch-tab active flex items-center gap-2 pb-3.5 text-white border-b-2 border-white transition-all font-semibold cursor-pointer" data-tab="dashboard">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
                                     <rect height="7" rx="1" width="7" x="3" y="3"></rect>
                                     <rect height="7" rx="1" width="7" x="14" y="3"></rect>
@@ -763,18 +763,6 @@
                                     <rect height="7" rx="1" width="7" x="3" y="14"></rect>
                                 </svg>
                                 <span>Dashboard</span>
-                            </button>
-                            <!-- Tab: Sessions -->
-                            <button type="button" class="stitch-tab active flex items-center gap-2 pb-3.5 text-white border-b-2 border-white transition-all font-semibold cursor-pointer" data-tab="sessions">
-                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
-                                    <line x1="8" x2="21" y1="6" y2="6"></line>
-                                    <line x1="8" x2="21" y1="12" y2="12"></line>
-                                    <line x1="8" x2="21" y1="18" y2="18"></line>
-                                    <line x1="3" x2="3.01" y1="6" y2="6"></line>
-                                    <line x1="3" x2="3.01" y1="12" y2="12"></line>
-                                    <line x1="3" x2="3.01" y1="18" y2="18"></line>
-                                </svg>
-                                <span>Sessions</span>
                             </button>
                             <!-- Tab: Trades -->
                             <button type="button" class="stitch-tab flex items-center gap-2 pb-3.5 text-slate-400 hover:text-slate-200 border-b-2 border-transparent transition-colors font-semibold cursor-pointer" data-tab="trades">
@@ -802,7 +790,7 @@
 
                 <div class="relative z-10 max-w-[1580px] mx-auto px-6 lg:px-10 py-6 space-y-7">
                     <!-- ============ TAB 1: DASHBOARD ============ -->
-                    <div id="tab-panel-dashboard" class="stitch-panel hidden space-y-7">
+                    <div id="tab-panel-dashboard" class="stitch-panel space-y-7">
                         <!-- Backtesting Engine Status Banner -->
                         <div class="w-full bg-[#0d131f]/90 border border-blue-900/30 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between sm:justify-center gap-3 text-center text-xs md:text-sm text-slate-300 shadow-inner" data-purpose="notice-banner">
                             <span>Replay historical market regimes, execute simulated trades with custom risk sizing, and analyze empirical edge.</span>
@@ -1134,447 +1122,7 @@
                     </div>
 
                     <!-- ============ TAB 2: SESSIONS & STUDIO (Interactive Replay Engine) ============ -->
-                    <div id="tab-panel-sessions" class="stitch-panel space-y-5">
-                        <!-- Studio Control Topbar -->
-                        <div class="flex flex-wrap items-center justify-between gap-4 bg-[#111723] border border-[#1c2230] rounded-xl p-4">
-                            <div>
-                                <h2 class="text-base font-bold text-white tracking-tight flex items-center gap-2">
-                                    <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <rect height="7" rx="1" width="7" x="3" y="3"></rect>
-                                        <rect height="7" rx="1" width="7" x="14" y="3"></rect>
-                                        <rect height="7" rx="1" width="7" x="14" y="14"></rect>
-                                        <rect height="7" rx="1" width="7" x="3" y="14"></rect>
-                                    </svg>
-                                    Interactive Simulation Studio
-                                </h2>
-                                <p class="text-xs text-slate-400 mt-0.5" id="chart-sub">No session selected</p>
-                            </div>
-                            <!-- Mode Switch & Controls -->
-                            <div class="flex items-center gap-2">
-                                <span class="tag tag-gray" id="status-tag">No session</span>
-                                <button type="button" id="btn-top-new-session" class="btn-primary !py-1.5 !px-3 !text-xs" onclick="document.getElementById('modal-new-session').classList.remove('hidden')">
-                                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
-                                    </svg>
-                                    New Session
-                                </button>
-                            </div>
-                        </div>
-
-                        <!-- 3-Column Studio Layout: Sessions List | TV Candlestick Canvas & Dock | Execution Panel -->
-                        <div class="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)_320px] gap-4 items-start">
-                            <!-- LEFT: Session History & Setup Trigger -->
-                            <div class="flex flex-col gap-4 min-w-0">
-                                <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-4 flex flex-col gap-3">
-                                    <div class="flex items-center justify-between pb-2 border-b border-[#161a24]">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Sessions</span>
-                                        <span class="text-[11px] text-slate-400 num" id="sess-count">—</span>
-                                    </div>
-                                    <div class="flex flex-col gap-2 max-h-[580px] overflow-y-auto pr-1" id="sess-list">
-                                        <div class="py-8 text-center text-[12.5px] text-slate-500">No practice sessions yet.</div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- CENTER: Real TradingView Candlestick Chart with FX Replay Bottom Dock -->
-                            <div class="flex flex-col gap-3 min-w-0">
-                                <div class="relative bg-[#111723] border border-[#1c2230] rounded-xl p-3">
-                                    <div id="tv-chart-wrapper" class="relative w-full h-[540px] rounded-xl overflow-hidden border border-[#1c2230] bg-[#06080b]">
-                                        <!-- Chart Canvas Container -->
-                                        <div id="tv-chart-container" class="w-full h-full"></div>
-
-                                        <!-- OHLC Legend Overlay -->
-                                        <div id="tv-ohlc-legend" class="absolute top-3 left-3 z-20 flex flex-wrap items-center gap-2 text-[11px] tabular-nums text-slate-400 bg-[#0a0c12]/85 backdrop-blur-md px-3 py-1.5 rounded-lg border border-[#232836] pointer-events-none">
-                                            <span id="tv-sym-tf" class="text-white font-bold tracking-wider">SELECT A SESSION</span>
-                                            <span>O: <span id="tv-o" class="text-white font-semibold">—</span></span>
-                                            <span>H: <span id="tv-h" class="text-emerald-400 font-semibold">—</span></span>
-                                            <span>L: <span id="tv-l" class="text-red-400 font-semibold">—</span></span>
-                                            <span>C: <span id="tv-c" class="text-white font-semibold">—</span></span>
-                                        </div>
-
-                                        <!-- Empty State overlay before session starts -->
-                                        <div id="chart-empty-hint" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#06080b]/90 pointer-events-none transition-opacity">
-                                            <div class="w-12 h-12 rounded-2xl mb-3 flex items-center justify-center bg-white/[0.06] border border-[#202738]">
-                                                <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <line x1="18" x2="18" y1="20" y2="10" stroke-width="2"></line>
-                                                    <line x1="12" x2="12" y1="20" y2="4" stroke-width="2"></line>
-                                                    <line x1="6" x2="6" y1="20" y2="14" stroke-width="2"></line>
-                                                </svg>
-                                            </div>
-                                            <div class="text-[14px] font-bold text-white">BattleX Market Replay Engine</div>
-                                            <p class="text-[12px] text-slate-400 mt-1">Select or start a session to begin bar-by-bar playback.</p>
-                                        </div>
-
-                                        <!-- Floating FX Replay Controller Dock -->
-                                        <div id="fx-replay-dock" class="absolute bottom-4 left-1/2 -translate-x-1/2 z-30 flex items-center gap-1.5 p-1.5 rounded-xl bg-[#0f131c]/95 backdrop-blur-md border border-[#202738] shadow-2xl user-select-none">
-                                            <button type="button" class="btn-mini !px-2.5 !py-1.5 !text-[11px] hover:text-white" id="fx-cut-btn" title="Jump / Cut to selected candle">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <circle cx="6" cy="6" r="3" stroke-width="2"></circle>
-                                                    <circle cx="6" cy="18" r="3" stroke-width="2"></circle>
-                                                    <line x1="20" x2="8.12" y1="4" y2="15.88" stroke-width="2"></line>
-                                                    <line x1="14.47" x2="20" y1="14.48" y2="20" stroke-width="2"></line>
-                                                    <line x1="8.12" x2="12" y1="8.12" y2="12" stroke-width="2"></line>
-                                                </svg>
-                                                <span>Cut</span>
-                                            </button>
-                                            <div class="w-[1px] h-4 bg-white/[0.12] mx-0.5"></div>
-                                            <button type="button" class="btn-mini !px-2.5 !py-1.5 !text-[11px]" data-ctrl="play" disabled title="Play (P)">
-                                                <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <polygon points="5 3 19 12 5 21 5 3" stroke-width="2"></polygon>
-                                                </svg>
-                                                <span>Play</span>
-                                            </button>
-                                            <button type="button" class="btn-mini !px-2.5 !py-1.5 !text-[11px]" data-ctrl="pause" disabled title="Pause (P)">
-                                                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <rect x="6" y="4" width="4" height="16" stroke-width="2"></rect>
-                                                    <rect x="14" y="4" width="4" height="16" stroke-width="2"></rect>
-                                                </svg>
-                                                <span>Pause</span>
-                                            </button>
-                                            <button type="button" class="btn-mini !px-3 !py-1.5 !text-[11px] !bg-white/[0.10] text-white font-bold" data-ctrl="step" disabled title="Next Candle (Spacebar)">
-                                                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <polygon points="5 4 15 12 5 20 5 4" stroke-width="2"></polygon>
-                                                    <line x1="19" x2="19" y1="5" y2="19" stroke-width="2"></line>
-                                                </svg>
-                                                <span>Step</span>
-                                            </button>
-                                            <div class="w-[1px] h-4 bg-white/[0.12] mx-0.5"></div>
-                                            <select id="fx-speed-select" class="bg-transparent text-[11px] font-semibold text-slate-300 hover:text-white border-none outline-none cursor-pointer py-1 px-1 rounded" title="Replay Speed">
-                                                <option value="200" class="bg-[#12151f]">5x (0.2s)</option>
-                                                <option value="500" class="bg-[#12151f]">2x (0.5s)</option>
-                                                <option value="1000" selected class="bg-[#12151f]">1x (1.0s)</option>
-                                                <option value="2000" class="bg-[#12151f]">0.5x (2.0s)</option>
-                                            </select>
-                                            <div class="w-[1px] h-4 bg-white/[0.12] mx-0.5"></div>
-                                            <button type="button" class="btn-mini !px-2 !py-1.5 !text-[11px]" data-ctrl="reset" disabled title="Reset replay (R)">
-                                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path d="M1 4v6h6" stroke-width="2"></path>
-                                                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10" stroke-width="2"></path>
-                                                </svg>
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <!-- Scrubber Slider -->
-                                    <div class="mt-3 px-1">
-                                        <div class="flex items-center justify-between text-[11px] text-slate-400 num mb-1.5">
-                                            <span id="prog-label">No session</span>
-                                            <span id="prog-cursor">—</span>
-                                        </div>
-                                        <div class="relative flex items-center">
-                                            <input type="range" id="fx-scrubber" min="0" max="100" value="0" disabled class="w-full h-1.5 bg-slate-800 rounded-lg appearance-none cursor-pointer accent-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed">
-                                        </div>
-                                    </div>
-                                </div>
-
-                                        <!-- Interactive On-Chart Backtesting Execution HUD (outside overflow-hidden) -->
-                                        <div id="chart-floating-hud" class="select-none">
-                                            <!-- HUD Header (Draggable Handle) -->
-                                            <div class="hud-header" id="hud-drag-handle">
-                                                <div class="flex items-center gap-2 min-w-0">
-                                                    <!-- Crosshair Reticle Icon -->
-                                                    <div class="w-6 h-6 rounded-lg bg-[#141a29] border border-[#232d40] flex items-center justify-center shrink-0">
-                                                        <svg class="w-3.5 h-3.5 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <circle cx="12" cy="12" r="10"></circle>
-                                                            <circle cx="12" cy="12" r="3"></circle>
-                                                            <line x1="12" y1="2" x2="12" y2="5"></line>
-                                                            <line x1="12" y1="19" x2="12" y2="22"></line>
-                                                            <line x1="2" y1="12" x2="5" y2="12"></line>
-                                                            <line x1="19" y1="12" x2="22" y2="12"></line>
-                                                        </svg>
-                                                    </div>
-                                                    <span class="text-[13px] font-semibold text-slate-100 tracking-tight truncate">Execute Trade (Backtest)</span>
-                                                </div>
-
-                                                <!-- Right: Brand Label + Mini Summary (When Collapsed) + Three Dots Toggle -->
-                                                <div class="flex items-center gap-3 shrink-0">
-                                                    <!-- Mini Telemetry (Visible only when collapsed) -->
-                                                    <div id="hud-mini-summary" class="hidden items-center gap-2 text-xs">
-                                                        <span id="hud-mini-bal" class="text-slate-300 font-bold tabular-nums">$100,000</span>
-                                                        <span id="hud-mini-pnl" class="px-2 py-0.5 rounded font-bold text-[11px] tabular-nums bg-emerald-950/50 text-emerald-400 border border-emerald-500/30">+$0.00</span>
-                                                    </div>
-                                                    
-                                                    <span class="text-[9px] font-bold tracking-[0.2em] text-slate-400 uppercase hidden sm:inline-block">BATTLEXJOURNAL</span>
-                                                    
-                                                    <!-- Three Dots Button with Collapse / Expand Animation -->
-                                                    <button type="button" id="hud-toggle-btn" class="p-1 rounded-md text-slate-400 hover:text-white hover:bg-[#1a2335] transition-colors focus:outline-none" title="Toggle Collapse / Expand">
-                                                        <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
-                                                            <circle cx="5" cy="12" r="2"></circle>
-                                                            <circle cx="12" cy="12" r="2"></circle>
-                                                            <circle cx="19" cy="12" r="2"></circle>
-                                                        </svg>
-                                                    </button>
-                                                </div>
-                                            </div>
-
-                                            <!-- HUD Body (Collapsible) -->
-                                            <div class="hud-body" id="hud-body-content">
-                                                <!-- Row 1: Account Balance & Floating P&L -->
-                                                <div class="grid grid-cols-2 gap-3 mb-3.5">
-                                                    <!-- Account Balance Card -->
-                                                    <div class="hud-stat-box">
-                                                        <div class="w-9 h-9 rounded-xl bg-[#172033] border border-[#232d40] flex items-center justify-center shrink-0">
-                                                            <svg class="w-4 h-4 text-slate-300" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4"></path>
-                                                                <path d="M3 5v14a2 2 0 0 0 2 2h16v-5"></path>
-                                                                <path d="M18 12a2 2 0 0 0 0 4h4v-4Z"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <div class="min-w-0">
-                                                            <div class="text-[11px] font-medium text-slate-400 leading-none mb-1">Account Balance</div>
-                                                            <div id="hud-account-balance" class="text-[15px] font-extrabold text-white tabular-nums tracking-tight truncate">$100,000.00</div>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Floating P&L Card -->
-                                                    <div class="hud-stat-box">
-                                                        <div class="w-9 h-9 rounded-xl bg-emerald-950/40 border border-emerald-500/30 flex items-center justify-center shrink-0">
-                                                            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                <polyline points="22 7 13.5 15.5 8.5 10.5 2 17"></polyline>
-                                                                <polyline points="16 7 22 7 22 13"></polyline>
-                                                            </svg>
-                                                        </div>
-                                                        <div class="min-w-0">
-                                                            <div class="text-[11px] font-medium text-slate-400 leading-none mb-1">Floating P&L</div>
-                                                            <div id="hud-floating-pnl" class="text-[15px] font-extrabold text-emerald-400 tabular-nums tracking-tight truncate">+$0.00</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Row 2: Session & Strategy -->
-                                                <div class="grid grid-cols-2 gap-3 mb-3.5">
-                                                    <!-- Session Selector -->
-                                                    <div>
-                                                        <div class="flex items-center gap-1.5 mb-1 text-slate-300 text-[11px] font-medium">
-                                                            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                <circle cx="12" cy="12" r="10"></circle>
-                                                                <line x1="2" y1="12" x2="22" y2="12"></line>
-                                                                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
-                                                            </svg>
-                                                            <span>Session</span>
-                                                        </div>
-                                                        <select id="hud-session-select" class="hud-select">
-                                                            <option value="New York AM" selected>New York AM</option>
-                                                            <option value="New York PM">New York PM</option>
-                                                            <option value="London">London</option>
-                                                            <option value="Asian">Asian</option>
-                                                            <option value="Frankfurt">Frankfurt</option>
-                                                        </select>
-                                                        <div id="hud-session-hours" class="text-[10px] text-slate-400 font-mono mt-1 px-1">08:00 – 12:00 EST</div>
-                                                    </div>
-
-                                                    <!-- Strategy Selector + New Button -->
-                                                    <div>
-                                                        <div class="flex items-center gap-1.5 mb-1 text-slate-300 text-[11px] font-medium">
-                                                            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                <path d="M3 3v18h18"></path>
-                                                                <path d="m19 9-5 5-4-4-3 3"></path>
-                                                            </svg>
-                                                            <span>Strategy</span>
-                                                        </div>
-                                                        <div class="flex items-center gap-1.5">
-                                                            <select id="hud-strategy-select" class="hud-select flex-1 min-w-0">
-                                                                <option value="Silver Bullet" selected>Silver Bullet</option>
-                                                                <option value="ICT 2022 Model">ICT 2022 Model</option>
-                                                                <option value="Fair Value Gap (FVG)">Fair Value Gap</option>
-                                                                <option value="Order Block">Order Block</option>
-                                                                <option value="Breaker Block">Breaker Block</option>
-                                                                <option value="Liquidity Sweep">Liquidity Sweep</option>
-                                                            </select>
-                                                            <button type="button" id="hud-add-strategy-btn" class="px-2 py-1.5 rounded-lg border border-[#2a3449] bg-[#141a27] hover:bg-[#1a2335] text-[11px] font-semibold text-slate-200 flex items-center gap-1 shrink-0 transition-colors" title="Create Strategy On-the-fly">
-                                                                <span>+ New Strategy</span>
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Row 3: Lot Size & Risk Calculator -->
-                                                <div class="grid grid-cols-2 gap-3 mb-3.5 items-end">
-                                                    <!-- Lot Size Stepper -->
-                                                    <div>
-                                                        <div class="flex items-center gap-1.5 mb-1 text-slate-300 text-[11px] font-medium">
-                                                            <svg class="w-3.5 h-3.5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                <circle cx="8" cy="8" r="6"></circle>
-                                                                <path d="M18.09 10.37A6 6 0 1 1 10.34 18"></path>
-                                                                <path d="M7 6h1v4"></path>
-                                                                <path d="m16.71 13.88.7.71-2.82 2.82"></path>
-                                                            </svg>
-                                                            <span>Lot Size</span>
-                                                        </div>
-                                                        <div class="hud-stat-box !p-1.5 !gap-1.5 justify-between">
-                                                            <button type="button" id="hud-lot-dec" class="w-7 h-7 rounded-lg bg-[#182030] hover:bg-[#222d42] active:scale-95 text-slate-300 font-bold flex items-center justify-center transition-all">−</button>
-                                                            <input type="number" id="hud-lot-input" value="2" min="0.1" step="1" class="w-12 text-center bg-transparent text-white font-extrabold text-sm focus:outline-none tabular-nums">
-                                                            <button type="button" id="hud-lot-inc" class="w-7 h-7 rounded-lg bg-[#182030] hover:bg-[#222d42] active:scale-95 text-slate-300 font-bold flex items-center justify-center transition-all">+</button>
-                                                            <span id="hud-lot-unit" class="text-[11px] text-slate-400 font-semibold pr-1.5">Lots</span>
-                                                        </div>
-                                                    </div>
-
-                                                    <!-- Risk Badge -->
-                                                    <div class="bg-emerald-950/25 border border-emerald-500/30 rounded-xl px-3 py-2 flex items-center gap-2.5">
-                                                        <div class="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center shrink-0">
-                                                            <svg class="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
-                                                                <path d="m9 12 2 2 4-4"></path>
-                                                            </svg>
-                                                        </div>
-                                                        <div>
-                                                            <div id="hud-risk-pct" class="text-[12px] font-bold text-emerald-400 leading-none mb-1">1% Risk</div>
-                                                            <div id="hud-risk-amt" class="text-[10.5px] text-slate-400 tabular-nums font-mono">($1,000)</div>
-                                                        </div>
-                                                    </div>
-                                                </div>
-
-                                                <!-- Row 4: BUY & SELL Primary Execution Buttons -->
-                                                <div class="grid grid-cols-2 gap-3 mb-3.5">
-                                                    <!-- BUY Button -->
-                                                    <button type="button" id="hud-buy-btn" class="hud-btn-buy">
-                                                        <div class="flex items-center gap-1.5 text-[15px] font-black tracking-wide leading-tight">
-                                                            <span class="text-lg leading-none">↗</span> BUY
-                                                        </div>
-                                                        <div class="text-[9px] font-extrabold tracking-[0.16em] text-emerald-100/80 uppercase">MARKET EXECUTION</div>
-                                                    </button>
-
-                                                    <!-- SELL Button -->
-                                                    <button type="button" id="hud-sell-btn" class="hud-btn-sell">
-                                                        <div class="flex items-center gap-1.5 text-[15px] font-black tracking-wide leading-tight">
-                                                            <span class="text-lg leading-none">↘</span> SELL
-                                                        </div>
-                                                        <div class="text-[9px] font-extrabold tracking-[0.16em] text-rose-100/80 uppercase">MARKET EXECUTION</div>
-                                                    </button>
-                                                </div>
-
-                                                <!-- Row 5: Quick Management Actions -->
-                                                <div class="grid grid-cols-4 gap-2 mb-3">
-                                                    <button type="button" id="hud-partial-25" class="hud-sub-btn">25%</button>
-                                                    <button type="button" id="hud-partial-50" class="hud-sub-btn">50%</button>
-                                                    <button type="button" id="hud-be-btn" class="hud-sub-btn">Break-Even (BE)</button>
-                                                    <button type="button" id="hud-close-btn" class="hud-sub-btn !text-rose-400 hover:!text-rose-300">
-                                                        <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                                                            <circle cx="12" cy="12" r="10"></circle>
-                                                            <line x1="15" y1="9" x2="9" y2="15"></line>
-                                                            <line x1="9" y1="9" x2="15" y2="15"></line>
-                                                        </svg>
-                                                        <span>Close All</span>
-                                                    </button>
-                                                </div>
-
-                                                <!-- Execution Status / Feedback Message -->
-                                                <div id="hud-feedback-msg" class="text-[11px] text-center font-medium text-slate-400 mb-2 min-h-[16px] transition-colors"></div>
-
-                                                <!-- Footer Quote -->
-                                                <div class="text-center text-[11px] italic text-slate-500 font-serif border-t border-[#182030] pt-2.5 tracking-wide">
-                                                    “Same charts. A better you.”
-                                                </div>
-                                            </div>
-                                        </div>
-
-
-                                <!-- Live Telemetry Strip -->
-                                <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-4">
-                                    <div class="flex items-center justify-between mb-3">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Live Telemetry</span>
-                                        <span class="text-[11px] text-slate-400 tabular-nums">Simulated Account</span>
-                                    </div>
-                                    <div class="grid grid-cols-4 gap-2" id="status-strip">
-                                        <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Balance</div></div>
-                                        <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Equity</div></div>
-                                        <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Realized</div></div>
-                                        <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Unrealized</div></div>
-                                        <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Trades</div></div>
-                                        <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Wins</div></div>
-                                        <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Losses</div></div>
-                                        <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Position</div></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- RIGHT: Trade Execution & Position Risk -->
-                            <div class="flex flex-col gap-4 min-w-0">
-                                <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-5">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Trade Execution</span>
-                                        <span class="tag tag-indigo" id="exec-mode">Practice</span>
-                                    </div>
-                                    <div class="flex flex-col gap-3">
-                                        <div>
-                                            <label class="field-label" for="ex-direction">Direction</label>
-                                            <select id="ex-direction" class="field-select">
-                                                <option value="Long">Long</option>
-                                                <option value="Short">Short</option>
-                                            </select>
-                                        </div>
-                                        <div class="grid grid-cols-3 gap-2">
-                                            <div>
-                                                <label class="field-label" for="ex-entry">Entry</label>
-                                                <input id="ex-entry" class="field-input num" type="number" step="any" placeholder="Current">
-                                            </div>
-                                            <div>
-                                                <label class="field-label" for="ex-sl">Stop loss</label>
-                                                <input id="ex-sl" class="field-input num" type="number" step="any" placeholder="Required">
-                                            </div>
-                                            <div>
-                                                <div class="flex items-center justify-between">
-                                                    <label class="field-label !mb-0" for="ex-tp">Take profit</label>
-                                                    <div class="flex items-center gap-1">
-                                                        <button type="button" class="text-[10px] tabular-nums px-1 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-blue-400" onclick="window.__setRR && window.__setRR(1)">1R</button>
-                                                        <button type="button" class="text-[10px] tabular-nums px-1 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-blue-400" onclick="window.__setRR && window.__setRR(2)">2R</button>
-                                                        <button type="button" class="text-[10px] tabular-nums px-1 py-0.5 rounded bg-white/[0.06] hover:bg-white/[0.12] text-blue-400" onclick="window.__setRR && window.__setRR(3)">3R</button>
-                                                    </div>
-                                                </div>
-                                                <input id="ex-tp" class="field-input num mt-1" type="number" step="any" placeholder="Optional">
-                                            </div>
-                                        </div>
-                                        <div>
-                                            <label class="field-label" for="ex-risk">Risk ($)</label>
-                                            <input id="ex-risk" class="field-input num" type="number" step="any" placeholder="e.g. 25">
-                                        </div>
-                                        <button class="btn-primary w-full justify-center mt-1" id="enter-trade" disabled>
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" stroke-width="2"></path>
-                                                <polyline points="10 17 15 12 10 7" stroke-width="2"></polyline>
-                                                <line x1="15" x2="3" y1="12" y2="12" stroke-width="2"></line>
-                                            </svg>
-                                            Enter trade
-                                        </button>
-                                        <button class="btn-danger w-full justify-center" id="close-trade" disabled>
-                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" stroke-width="2"></path>
-                                                <polyline points="16 17 21 12 16 7" stroke-width="2"></polyline>
-                                                <line x1="21" x2="9" y1="12" y2="12" stroke-width="2"></line>
-                                            </svg>
-                                            Close trade
-                                        </button>
-                                        <div class="grid grid-cols-2 gap-2 mt-1">
-                                            <button type="button" class="btn-secondary !py-1.5 !px-2 !text-[11.5px] justify-center flex items-center gap-1.5 cursor-pointer" id="be-trade" disabled title="Move Stop Loss to Entry Price">
-                                                <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-                                                Break-Even
-                                            </button>
-                                            <button type="button" class="btn-secondary !py-1.5 !px-2 !text-[11.5px] justify-center flex items-center gap-1.5 cursor-pointer" id="partial-trade" disabled title="Close 50% Position and Leave Runner">
-                                                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-width="2" stroke-linecap="round"></path></svg>
-                                                50% Partial
-                                            </button>
-                                        </div>
-                                        <p class="text-[11px] text-slate-400" id="exec-msg"></p>
-                                    </div>
-                                </div>
-
-                                <!-- Position Risk Monitor -->
-                                <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-5">
-                                    <div class="flex items-center justify-between mb-4">
-                                        <span class="text-xs font-bold uppercase tracking-wider text-slate-300">Position Risk</span>
-                                        <svg class="w-4 h-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" stroke-width="2"></path>
-                                        </svg>
-                                    </div>
-                                    <div id="risk-panel" class="flex flex-col gap-2.5">
-                                        <div class="py-6 text-center text-[12.5px] text-slate-500">No open position.</div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- ============ TAB 3: TRADES ============ -->
+<!-- ============ TAB 3: TRADES ============ -->
                     <div id="tab-panel-trades" class="stitch-panel hidden space-y-6">
                         <div class="bg-[#111723] border border-[#1c2230] rounded-xl p-5">
                             <div class="flex items-center justify-between mb-4">
@@ -1920,8 +1468,10 @@
                     if (u && u.name) name = String(u.name).split(/[\s@]/)[0];
                     else if (u && u.email) name = String(u.email).split('@')[0].split(/[._-]/)[0];
                 } catch (e) {}
-                $('nav-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
-                $('nav-avatar').textContent = name.slice(0, 2).toUpperCase();
+                const nameEl = $('nav-name');
+                const avatarEl = $('nav-avatar');
+                if (nameEl) nameEl.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                if (avatarEl) avatarEl.textContent = name.slice(0, 2).toUpperCase();
             }
 
             // ============ MODE TABS ============
@@ -2035,7 +1585,6 @@
                         }).join('');
                         dashGrid.querySelectorAll('[data-sid]').forEach(b => b.addEventListener('click', () => {
                             openSession(b.dataset.sid);
-                            switchStitchTab('sessions');
                         }));
                     }
                 }
@@ -2079,19 +1628,8 @@
                     const modal = $('modal-new-session');
                     if (modal) modal.classList.add('hidden');
                     
-                    // Switch to Chart Studio tab FIRST so container has real non-zero dimensions
-                    switchStitchTab('sessions');
-                    
-                    // Hydrate the live session and render candles onto the visible canvas
+                    // Hydrate the live session state (HUD lives on the advanced chart page)
                     await loadSessionState();
-                    
-                    if (tvChart) {
-                        const wrapper = $('tv-chart-wrapper');
-                        if (wrapper && wrapper.clientWidth) {
-                            tvChart.resize(wrapper.clientWidth, wrapper.clientHeight || 540);
-                            tvChart.timeScale().fitContent();
-                        }
-                    }
                     if ($('setup-msg')) {
                         $('setup-msg').textContent = 'Session created — practice engine is ready.';
                         $('setup-msg').style.color = 'var(--tm-green)';
@@ -2099,6 +1637,24 @@
                     const sym = symbol;
                     const per = ($('selected-period-display') && $('selected-period-display').textContent) || ($('pd-period') && $('pd-period').value) || 'Ready';
                     showToast('Simulation started for ' + sym + ' (' + per + ')');
+
+                    // Hand off to the advanced TradingView chart with this exact config
+                    // (balance / risk / session id / strategy ride along so the HUD
+                    //  reflects the user's config-panel inputs, not hardcoded defaults)
+                    try {
+                        const handoffUrl = 'chart-test.html?symbol=' + encodeURIComponent(symbol)
+                            + '&tf=' + encodeURIComponent(timeframe)
+                            + '&period=' + encodeURIComponent(($('pd-period') && $('pd-period').value) || '')
+                            + '&label=' + encodeURIComponent(per)
+                            + '&session=' + encodeURIComponent(currentId || '')
+                            + '&balance=' + encodeURIComponent(startingBalance)
+                            + '&risk=' + encodeURIComponent(perTrade)
+                            + '&strategy=' + encodeURIComponent(strategy)
+                            + '&auto=1';
+                        const win = window.open(handoffUrl, '_blank');
+                        if (!win) showToast('Allow pop-ups to auto-open the advanced chart');
+                    } catch (e) { /* never block the session flow on the handoff */ }
+
                     await Promise.all([loadSessions(), loadPracticeAnalytics()]);
                 } catch (e) {
                     if ($('setup-msg')) {
@@ -2114,16 +1670,8 @@
             async function openSession(id) {
                 if (!id) return;
                 currentId = id;
-                switchStitchTab('sessions');
                 await loadSessions();   // re-render active highlight
                 await loadSessionState();
-                if (tvChart) {
-                    const wrapper = $('tv-chart-wrapper');
-                    if (wrapper && wrapper.clientWidth) {
-                        tvChart.resize(wrapper.clientWidth, wrapper.clientHeight || 540);
-                        tvChart.timeScale().fitContent();
-                    }
-                }
             }
 
             async function loadSessionState() {
@@ -2338,14 +1886,17 @@
 
                 // Auto-fit on container resize
                 if (window.ResizeObserver) {
-                    const ro = new ResizeObserver(entries => {
-                        for (const entry of entries) {
-                            if (entry.target === $('tv-chart-wrapper') && tvChart) {
-                                tvChart.resize(entry.contentRect.width, entry.contentRect.height);
+                    const chartWrap = $('tv-chart-wrapper');
+                    if (chartWrap) {
+                        const ro = new ResizeObserver(entries => {
+                            for (const entry of entries) {
+                                if (entry.target === chartWrap && tvChart) {
+                                    tvChart.resize(entry.contentRect.width, entry.contentRect.height);
+                                }
                             }
-                        }
-                    });
-                    ro.observe($('tv-chart-wrapper'));
+                        });
+                        ro.observe(chartWrap);
+                    }
                 }
 
                 // Cut / Seek on chart click
@@ -2353,7 +1904,7 @@
                     if (cutMode && param && param.logical != null && state) {
                         const targetCursor = Math.max(0, Math.min(state.total - 1, Math.round(param.logical)));
                         cutMode = false;
-                        $('fx-cut-btn').classList.remove('!border-[var(--tm-amber)]', '!text-[var(--tm-amber)]');
+                        if ($('fx-cut-btn')) $('fx-cut-btn').classList.remove('!border-[var(--tm-amber)]', '!text-[var(--tm-amber)]');
                         showToast('Replaying from bar #' + targetCursor);
                         control('seek', null, targetCursor);
                     }
@@ -2361,7 +1912,7 @@
             }
 
             function updateLegend(c) {
-                if (!c) return;
+                if (!c || !$('tv-o')) return; // legend lives in the removed Studio tab — no-op without it
                 $('tv-o').textContent = Number(c.open || 0).toFixed(4);
                 $('tv-h').textContent = Number(c.high || 0).toFixed(4);
                 $('tv-l').textContent = Number(c.low || 0).toFixed(4);
@@ -2769,10 +2320,10 @@
                 const has = !!state;
                 const status = state ? state.status : null;
                 const running = status === 'running' || status === 'lobby';
-                $('chart-sub').textContent = has ? (state.symbol + ' · ' + state.timeframe + (state.periodLabel ? ' • ' + state.periodLabel : '') + ' · ' + (state.strategy || 'Manual practice')) : 'No session selected';
+                if ($('chart-sub')) $('chart-sub').textContent = has ? (state.symbol + ' · ' + state.timeframe + (state.periodLabel ? ' • ' + state.periodLabel : '') + ' · ' + (state.strategy || 'Manual practice')) : 'No session selected';
                 const prog = has && state.total ? Math.min(100, Math.round(state.cursor / state.total * 100)) : 0;
-                $('prog-label').textContent = has ? (state.symbol + ' ' + state.timeframe + ' · ' + (state.strategy || 'Practice')) : 'No session';
-                $('prog-cursor').textContent = has ? (state.cursor + ' / ' + state.total + ' bars') : '—';
+                if ($('prog-label')) $('prog-label').textContent = has ? (state.symbol + ' ' + state.timeframe + ' · ' + (state.strategy || 'Practice')) : 'No session';
+                if ($('prog-cursor')) $('prog-cursor').textContent = has ? (state.cursor + ' / ' + state.total + ' bars') : '—';
                 if ($('prog-fill')) $('prog-fill').style.width = prog + '%';
 
                 // Update FX Replay Scrubber
@@ -2789,7 +2340,7 @@
                 if (emptyHint) emptyHint.style.display = has ? 'none' : 'flex';
 
                 if (has && candleSeries && Array.isArray(state.candles) && state.candles.length) {
-                    $('tv-sym-tf').textContent = state.symbol + ' · ' + state.timeframe;
+                    if ($('tv-sym-tf')) $('tv-sym-tf').textContent = state.symbol + ' · ' + state.timeframe;
                     const chartData = state.candles.map(c => ({
                         time: typeof c.time === 'number' ? c.time : Math.floor(new Date(c.time).getTime() / 1000),
                         open: Number(c.open),
@@ -2817,23 +2368,23 @@
                         $('ex-entry').value = currentBar.close;
                     }
 
-                    // Render Position Price Lines (Entry, SL, TP)
+                    // Render Position Price Lines (Entry, SL, TP) — minimal SaaS style
                     clearPriceLines();
                     if (state.position) {
                         const p = state.position;
                         entryLine = candleSeries.createPriceLine({
                             price: p.entry,
-                            color: '#3b82f6',
-                            lineWidth: 2,
+                            color: 'rgba(148, 163, 184, 0.55)',
+                            lineWidth: 1,
                             lineStyle: LightweightCharts.LineStyle.Dashed,
                             axisLabelVisible: true,
-                            title: 'ENTRY (' + p.direction + ')'
+                            title: (p.direction === 'Long' ? 'LONG' : 'SHORT') + ' ' + p.entry.toFixed(2)
                         });
                         if (p.sl > 0) {
                             slLine = candleSeries.createPriceLine({
                                 price: p.sl,
-                                color: '#ef4444',
-                                lineWidth: 2,
+                                color: 'rgba(251, 113, 133, 0.65)',
+                                lineWidth: 1,
                                 lineStyle: LightweightCharts.LineStyle.Solid,
                                 axisLabelVisible: true,
                                 title: 'SL'
@@ -2842,24 +2393,26 @@
                         if (p.tp > 0) {
                             tpLine = candleSeries.createPriceLine({
                                 price: p.tp,
-                                color: '#22c55e',
-                                lineWidth: 2,
+                                color: 'rgba(52, 211, 153, 0.65)',
+                                lineWidth: 1,
                                 lineStyle: LightweightCharts.LineStyle.Solid,
                                 axisLabelVisible: true,
-                                title: 'TP (' + (p.rr ? p.rr + 'R' : '') + ')'
+                                title: 'TP'
                             });
                         }
                     }
                 } else {
                     clearPriceLines();
-                    $('tv-sym-tf').textContent = 'SELECT A SESSION';
+                    if ($('tv-sym-tf')) $('tv-sym-tf').textContent = 'SELECT A SESSION';
                 }
 
                 const stTag = $('status-tag');
-                if (!has) { stTag.textContent = 'No session'; stTag.className = 'tag tag-gray'; }
-                else if (status === 'completed') { stTag.textContent = 'Completed'; stTag.className = 'tag tag-emerald'; }
-                else if (status === 'running') { stTag.textContent = 'Running'; stTag.className = 'tag tag-blue'; }
-                else { stTag.textContent = 'Lobby'; stTag.className = 'tag tag-amber'; }
+                if (stTag) {
+                    if (!has) { stTag.textContent = 'No session'; stTag.className = 'tag tag-gray'; }
+                    else if (status === 'completed') { stTag.textContent = 'Completed'; stTag.className = 'tag tag-emerald'; }
+                    else if (status === 'running') { stTag.textContent = 'Running'; stTag.className = 'tag tag-blue'; }
+                    else { stTag.textContent = 'Lobby'; stTag.className = 'tag tag-amber'; }
+                }
 
                 // controls
                 document.querySelectorAll('[data-ctrl]').forEach(b => {
@@ -2873,8 +2426,8 @@
                 });
                 // execution
                 const canExec = has && running;
-                $('enter-trade').disabled = !canExec || !!state.position;
-                $('close-trade').disabled = !canExec || !state.position;
+                if ($('enter-trade')) $('enter-trade').disabled = !canExec || !!state.position;
+                if ($('close-trade')) $('close-trade').disabled = !canExec || !state.position;
                 if ($('be-trade')) $('be-trade').disabled = !canExec || !state.position || (state.position && state.position.beApplied);
                 if ($('partial-trade')) $('partial-trade').disabled = !canExec || !state.position;
 
@@ -2885,7 +2438,7 @@
                 const wins = trades.filter(t => t.pnl > 0).length;
                 const losses = trades.filter(t => t.pnl <= 0).length;
                 const equity = has ? (state.balance || 0) + unrealized : 0;
-                $('status-strip').innerHTML =
+                if ($('status-strip')) $('status-strip').innerHTML =
                     tile('Balance', has ? fmtMoney(state.balance) : '—') +
                     tile('Equity', has ? fmtMoney(equity) : '—') +
                     tile('Realized', has ? signed(realized) : '—') +
@@ -2900,9 +2453,11 @@
                 // trade log
                 renderLog(trades);
                 // results / coach
-                $('results-panel').classList.toggle('hidden', !(results));
+                const resultsPanelEl = $('results-panel');
+                if (resultsPanelEl) resultsPanelEl.classList.toggle('hidden', !(results));
                 if (results) renderResults();
-                $('coach-panel').classList.toggle('hidden', !(coach && coach.ok));
+                const coachPanelEl = $('coach-panel');
+                if (coachPanelEl) coachPanelEl.classList.toggle('hidden', !(coach && coach.ok));
                 if (coach && coach.ok) renderCoach();
                 if (window.BacktestHUD) BacktestHUD.updateTelemetry(state);
                 if (window.lucide) lucide.createIcons();
@@ -2918,8 +2473,9 @@
             }
 
             function renderRisk() {
-                const p = state && state.position;
                 const el = $('risk-panel');
+                if (!el) return; // panel lived in the removed Studio tab
+                const p = state && state.position;
                 if (!p) {
                     el.innerHTML = '<div class="py-6 text-center text-[12.5px] text-[var(--tm-dim)]">No open position.</div>';
                     return;
@@ -2962,7 +2518,8 @@
 
             function renderResults() {
                 const r = results;
-                $('results-meta').textContent = r.symbol + ' · ' + r.timeframe + ' · ' + (r.strategy || 'Practice') + ' · ' + fmtTime(r.completedAt || r.createdAt);
+                if (!$('results-strip')) return; // panel lived in the removed Studio tab
+                if ($('results-meta')) $('results-meta').textContent = r.symbol + ' · ' + r.timeframe + ' · ' + (r.strategy || 'Practice') + ' · ' + fmtTime(r.completedAt || r.createdAt);
                 $('results-strip').innerHTML =
                     tile('Trades', r.trades) +
                     tile('Wins', r.wins) +
@@ -3377,20 +2934,6 @@
                 document.querySelectorAll('.stitch-panel').forEach(p => {
                     p.classList.toggle('hidden', p.id !== 'tab-panel-' + tabName);
                 });
-                if (tabName === 'sessions') {
-                    // Hydrate session state when entering the chart tab
-                    // (e.g. right after creating a session, or on reload).
-                    if (currentId && !state) loadSessionState();
-                    if (tvChart) {
-                        setTimeout(() => {
-                            const wrapper = $('tv-chart-wrapper');
-                            if (wrapper && tvChart) {
-                                tvChart.resize(wrapper.clientWidth, wrapper.clientHeight);
-                                tvChart.timeScale().fitContent();
-                            }
-                        }, 50);
-                    }
-                }
                 if (tabName === 'analytics') {
                     loadBacktestHistoryAnalytics();
                 }
@@ -3747,9 +3290,9 @@
                 renderChrome();
                 renderProfile();
 
-                $('start-practice').addEventListener('click', createSession);
-                $('enter-trade').addEventListener('click', enterTrade);
-                $('close-trade').addEventListener('click', closeTrade);
+                if ($('start-practice')) $('start-practice').addEventListener('click', createSession);
+                if ($('enter-trade')) $('enter-trade').addEventListener('click', enterTrade);
+                if ($('close-trade')) $('close-trade').addEventListener('click', closeTrade);
                 if ($('be-trade')) $('be-trade').addEventListener('click', breakEvenTrade);
                 if ($('partial-trade')) $('partial-trade').addEventListener('click', partialTrade);
                 document.querySelectorAll('[data-ctrl]').forEach(b => {

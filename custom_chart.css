@@ -1,0 +1,121 @@
+/* ============================================================================
+   BATTLEX — custom_chart.css
+   Injected into the TradingView iframe via custom_css_url.
+   Dims the drawing toolbar, header, and UI chrome to match the OLED theme.
+   ============================================================================ */
+
+/* --- 1. Deep OLED canvas + page background --- */
+html, body {
+    background-color: #0b0e14 !important;
+}
+
+/* ============================================================================
+   TV THEME VARIABLES — the master dimmer.
+   TradingView's own rules use var(--tv-color-*, #131722/#d1d4dc) with bright
+   fallbacks and NOTHING ever defines the variables — so defining them here
+   recolors every toolbar, toggle, divider and popup in one shot, with zero
+   specificity fights (var() resolution ignores source order).
+   ============================================================================ */
+html.theme-dark {
+    --tv-color-pane-background: #0b0e14;
+    --tv-color-pane-background-secondary: #0f1219;
+    --tv-color-toolbar-toggle-background: #0b0e14;
+    --tv-color-toolbar-button-text: #6f7784;
+    --tv-color-toolbar-button-text-hover: #e1e7ec;
+    --tv-color-toolbar-button-background-hover: rgba(255, 255, 255, 0.04);
+    --tv-color-toolbar-button-text-active: #089981;
+    --tv-color-toolbar-button-background-active: rgba(8, 153, 129, 0.10);
+    --tv-color-toolbar-divider-background: rgba(255, 255, 255, 0.04);
+}
+
+/* --- 2. Left drawing sidebar — dark, flat, dimmed --- */
+/* Doubled attribute selectors raise specificity so these beat TV's own theme
+   sheets regardless of injection order. */
+div[class*="drawingToolbar"][class*="drawingToolbar"],
+[data-name="drawing-toolbar"],
+.tv-side-toolbar {
+    background-color: #0b0e14 !important;
+    border-right: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Dim drawing tool icons to muted gray (inherit-safe: hits the SVG + wrappers) */
+div[class*="drawingToolbar"] button,
+.tv-side-toolbar .button,
+.tv-side-toolbar button {
+    color: #6f7784 !important;
+    opacity: 0.8;
+    transition: opacity 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+
+div[class*="drawingToolbar"] button svg,
+.tv-side-toolbar button svg {
+    fill: currentColor;
+}
+
+/* Brighten icon only on hover */
+div[class*="drawingToolbar"] button:hover,
+.tv-side-toolbar .button:hover,
+.tv-side-toolbar button:hover {
+    color: #e1e7ec !important;
+    opacity: 1;
+    background: rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Active/selected tool keeps a subtle emerald tint instead of TV default blue */
+div[class*="drawingToolbar"] button[class*="active"],
+div[class*="drawingToolbar"] button[data-active="true"],
+.tv-side-toolbar .button.isActive,
+.tv-side-toolbar button.active {
+    color: #089981 !important;
+    opacity: 1;
+    background: rgba(8, 153, 129, 0.10) !important;
+}
+
+/* --- 3. Top header + bottom toolbar chrome --- */
+[class*="toolbar-"]:not([class*="drawingToolbar"]):not([class*="management"]):not([class*="bottom"]),
+.tv-header,
+[class*="header-chart-panel"] {
+    background-color: #0b0e14 !important;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+/* Bottom timeframe bar (if visible on some layouts) */
+.layout__area--bottom,
+[class*="bottom-widgetbar"] {
+    background-color: #0b0e14 !important;
+    border-top: 1px solid rgba(255, 255, 255, 0.04) !important;
+}
+
+/* --- 4. Generic TV popups/menus glass-dark instead of bright gray --- */
+[class*="popup"],
+[class*="menu"] {
+    background-color: #0f1219 !important;
+    border: 1px solid rgba(255, 255, 255, 0.06) !important;
+    box-shadow: 0 12px 28px rgba(0, 0, 0, 0.55) !important;
+}
+
+/* Context menu items */
+[class*="item"] [class*="label"],
+[class*="popup"] [class*="title"] {
+    color: #848e9c !important;
+}
+
+/* --- 5. Dialogs (indicator search, settings) --- */
+[class*="dialog"] {
+    background-color: #0f1219 !important;
+    border: 1px solid rgba(255, 255, 255, 0.07) !important;
+    box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Scrollbars — thin and dark */
+::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.12);
+    border-radius: 3px;
+}
+::-webkit-scrollbar-track {
+    background: transparent;
+}
