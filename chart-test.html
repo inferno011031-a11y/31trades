@@ -448,6 +448,7 @@
             border-radius: 12px;
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
             color: #f1f5f9;
+            transition: width 0.32s cubic-bezier(0.16, 1, 0.3, 1);
             user-select: none;
             transition: width 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.2s ease, border-color 0.2s ease;
         }
@@ -584,7 +585,7 @@
             pointer-events: none !important;
         }
         #chart-floating-hud.collapsed {
-            width: auto !important;
+            width: auto;   /* JS animates inline width; falls back to content width */
             min-width: 240px;
         }
 
@@ -1306,7 +1307,7 @@
                 <span class="hud-brand-tag">BATTLEX</span>
 
                 <!-- Three Dots Button with Collapse / Expand Animation -->
-                <button type="button" id="hud-toggle-btn" class="hud-toggle-btn" title="Toggle Collapse / Expand" onclick="window.ChartHUD && window.ChartHUD.toggleCollapse(event)">
+                <button type="button" id="hud-toggle-btn" class="hud-toggle-btn" title="Toggle Collapse / Expand">
                     <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
                         <circle cx="5" cy="12" r="2"></circle>
                         <circle cx="12" cy="12" r="2"></circle>
@@ -1662,6 +1663,24 @@
                     toggleBtn.addEventListener('click', (e) => this.toggleCollapse(e));
                 }
 
+                // 1b. HOVER-PEEK — sliding the mouse over a collapsed panel peeks it
+                // open; leaving slides it closed again. Clicking the three-dots while
+                // peeking pins it fully open (stay expanded).
+                if (hud) {
+                    hud.addEventListener('mouseenter', () => {
+                        if (hud.classList.contains('collapsed') && !this._peeking) {
+                            this._peeking = true;
+                            this.expandPanel();
+                        }
+                    });
+                    hud.addEventListener('mouseleave', () => {
+                        if (this._peeking) {
+                            this._peeking = false;
+                            this.collapsePanel();
+                        }
+                    });
+                }
+
                 // 2. DRAGGABLE CONTROLLER WITH POINTER CAPTURE (Mouse & Touch)
                 const dragHandle = document.getElementById('hud-drag-handle');
                 if (dragHandle) {
@@ -1847,10 +1866,76 @@
                     e.stopPropagation();
                 }
                 const hud = document.getElementById('chart-floating-hud');
-                if (hud) {
-                    hud.classList.toggle('collapsed');
-                    console.log('[BattleX HUD] Toggled collapse. Collapsed:', hud.classList.contains('collapsed'));
+                if (!hud) return;
+                // Behavior spec:
+                //   hover over collapsed panel → peek open (temporary)
+                //   click ⋯ while peeking     → PIN fully open (stays open)
+                //   click ⋯ while open        → close
+                if (this._peeking) {
+                    this._peeking = false;   // pin: already expanded, keep it open
+                    return;
                 }
+                if (this._animTimer) {
+                    clearTimeout(this._animTimer);
+                    this._animTimer = null;
+                    hud.style.width = '';
+                }
+                if (hud.classList.contains('collapsed')) {
+                    this.expandPanel();
+                } else {
+                    this.collapsePanel();
+                }
+            },
+
+            // Finish any in-flight width animation instantly (snap to target) so a
+            // rapid click/hover sequence never fights the previous transition.
+            _finishWidthAnim(hud) {
+                if (this._animTimer) {
+                    clearTimeout(this._animTimer);
+                    this._animTimer = null;
+                    hud.style.width = '';
+                }
+            },
+
+            _measureAutoWidth(hud) {
+                const prev = hud.style.width;
+                hud.style.width = 'auto';
+                const w = hud.getBoundingClientRect().width;
+                hud.style.width = prev;
+                return w;
+            },
+
+            collapsePanel() {
+                const hud = document.getElementById('chart-floating-hud');
+                if (!hud || hud.classList.contains('collapsed')) return;
+                this._finishWidthAnim(hud);
+                this._peeking = false;
+                const w0 = hud.getBoundingClientRect().width;
+                hud.style.width = w0 + 'px';
+                void hud.offsetWidth;                       // reflow → transition starts from real width
+                hud.classList.add('collapsed');
+                const w1 = this._measureAutoWidth(hud);     // target = content width
+                hud.style.width = w1 + 'px';
+                this._animTimer = setTimeout(() => {
+                    hud.style.width = '';                   // hand back to CSS (.collapsed → auto)
+                    this._animTimer = null;
+                }, 340);
+            },
+
+            expandPanel() {
+                const hud = document.getElementById('chart-floating-hud');
+                if (!hud || !hud.classList.contains('collapsed')) return;
+                this._finishWidthAnim(hud);
+                const w1 = hud.getBoundingClientRect().width;
+                hud.style.width = w1 + 'px';
+                void hud.offsetWidth;
+                hud.classList.remove('collapsed');
+                const w0 = this._measureAutoWidth(hud);     // target = full 300px
+                hud.style.width = w0 + 'px';
+                this._animTimer = setTimeout(() => {
+                    hud.style.width = '';
+                    this._animTimer = null;
+                }, 340);
             },
 
             togglePlay() {
@@ -2726,13 +2811,15 @@
                         "widget_logo",
                         "popup_hints",          // kills the blue "Press and hold Ctrl…" banner
                         "header_screenshot",    // no TV camera button
+                        "header_resolutions",   // native corner interval button — replaced by BattleX dropdown (bx_tf_btn)
                         "timeframes_toolbar"    // hides the redundant bottom 1D/5D bar
                     ],
                     enabled_features: [
                         "study_templates",
                         "header_in_fullscreen_mode",
-                        "side_toolbar_in_fullscreen_mode",
-                        "header_resolutions"    // compact native interval dropdown (FX Replay style)
+                        "side_toolbar_in_fullscreen_mode"
+                        // NOTE: header_resolutions removed — timeframe selection now lives
+                        // in the BattleX dropdown beside the symbol (bx_tf_select)
                     ],
                     // Compact single dropdown — replaces the old pill buttons.
                     // Resolution changes flow through chart.onIntervalChanged (replay continuity kept).
@@ -3338,7 +3425,7 @@
                         { label: "W", res: "W" },
                         { label: "M", res: "M" }
                     ];
-                    let currentActiveRes = "15";
+                    let currentActiveRes = window._chartResolution || "15";
 
                     function renderHeaderHTML() {
                         const tfButtonsHTML = timeframes.map(tf => {
@@ -3392,7 +3479,15 @@
 
                             <div style="width:1px;height:16px;background:#2a2e39;margin:0 3px;"></div>
 
-                            <!-- Timeframes now use the native compact interval dropdown (header_resolutions) -->
+                            <!-- Timeframe dropdown (custom, TV-style) — right beside the symbol.
+                                 Native <select> is unusable inside TV's header (its handlers swallow
+                                 the popup), so this is a button + floating menu appended to body. -->
+                            <div id="bx_tf_wrap" style="display:inline-flex;align-items:center;position:relative;">
+                                <button id="bx_tf_btn" title="Chart Timeframe" style="display:inline-flex;align-items:center;gap:5px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:#d1d4dc;font-size:11.5px;font-weight:700;padding:3px 8px;border-radius:6px;cursor:pointer;outline:none;">
+                                    <span id="bx_tf_label">${(timeframes.find(t => t.res === currentActiveRes) || { label: currentActiveRes }).label}</span>
+                                    <svg viewBox="0 0 24 24" width="9" height="9" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                                </button>
+                            </div>
 
                             <div style="width:1px;height:16px;background:rgba(255,255,255,0.08);margin:0 3px;"></div>
 
@@ -3461,9 +3556,14 @@
                                     ['jan2024', 'feb2024'].forEach(k => {
                                         if (k === window.currentBacktestPeriod) _opts.push(`<option value="${k}" selected>Gold ${k === 'jan2024' ? 'Jan' : 'Feb'} 2024</option>`);
                                     });
-                                    return _opts.join('');
-                                })()}
+                                    return _opts.join('');                                    })()}
                             </select>
+
+                            <!-- Exit Backtesting → back to the Backtesting dashboard -->
+                            <button id="bx_btn_exit" title="Exit backtesting and return to the dashboard" style="margin-left:6px;background:rgba(242,54,69,0.10);border:1px solid rgba(242,54,69,0.30);color:#f23645;font-size:12px;font-weight:700;cursor:pointer;padding:3px 10px;border-radius:6px;display:inline-flex;align-items:center;gap:5px;transition:all 0.15s ease;" onmouseover="this.style.background='rgba(242,54,69,0.22)'" onmouseout="this.style.background='rgba(242,54,69,0.10)'">
+                                <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path><polyline points="16 17 21 12 16 7"></polyline><line x1="21" y1="12" x2="9" y2="12"></line></svg>
+                                <span>Exit</span>
+                            </button>
                         `;
 
                         // Wire event listeners
@@ -3534,6 +3634,95 @@
 
                         topGroup.querySelector('#bx_btn_symbol')?.addEventListener('click', () => {
                             try { widget.chart().executeActionById('symbolSearch'); } catch (e) {}
+                        });
+
+                        // BattleX timeframe dropdown (beside the symbol). setResolution
+                        // fires the chart's onIntervalChanged hook, which already owns the
+                        // full replay-continuity logic (same moment, drawings survive).
+                        (function wireTfDropdown() {
+                            const wrap = topGroup.querySelector('#bx_tf_wrap');
+                            const btn = topGroup.querySelector('#bx_tf_btn');
+                            if (!wrap || !btn) return;
+
+                            const frameDoc = topGroup.ownerDocument;               // TV iframe document
+                            const frameWin = frameDoc.defaultView;
+
+                            // TV's header handlers interfere with clicks inside custom widgets —
+                            // stop them at the wrapper before they reach TV.
+                            ['mousedown', 'mouseup', 'click', 'dblclick'].forEach(ev => {
+                                wrap.addEventListener(ev, e => e.stopPropagation());
+                            });
+
+                            // Build the floating menu ONCE, inside the SAME document as the
+                            // button (the TV iframe) so coordinates line up and no parent
+                            // scrolling/stacking can misplace it.
+                            let menu = frameDoc.getElementById('bx_tf_menu');
+                            let onDocDown = null;
+                            if (!menu) {
+                                menu = frameDoc.createElement('div');
+                                menu.id = 'bx_tf_menu';
+                                menu.style.cssText = 'display:none;position:fixed;min-width:110px;background:#131722;border:1px solid rgba(255,255,255,0.09);border-radius:8px;box-shadow:0 12px 28px rgba(0,0,0,0.55);padding:4px;z-index:2147483000;';
+                                menu.innerHTML = timeframes.map(tf =>
+                                    '<div class="bx-tf-item" data-res="' + tf.res + '" style="padding:6px 12px;border-radius:5px;font-size:12px;font-weight:600;color:#9598a1;cursor:pointer;white-space:nowrap;">' + tf.label + '</div>'
+                                ).join('');
+                                frameDoc.body.appendChild(menu);
+
+                                function closeTfMenu() {
+                                    menu.style.display = 'none';
+                                    if (onDocDown) {
+                                        frameDoc.removeEventListener('mousedown', onDocDown, true);
+                                        frameDoc.removeEventListener('wheel', onDocDown, true);
+                                        onDocDown = null;
+                                    }
+                                }
+                                onDocDown = function (e) {
+                                    if (!menu.contains(e.target)) closeTfMenu();
+                                };
+                                menu._close = closeTfMenu;
+                            }
+
+                            function closeTfMenu() { if (menu._close) menu._close(); }
+
+                            function highlightCurrent() {
+                                menu.querySelectorAll('.bx-tf-item').forEach(it => {
+                                    const on = it.getAttribute('data-res') === currentActiveRes;
+                                    it.style.background = on ? 'rgba(41,98,255,0.18)' : 'transparent';
+                                    it.style.color = on ? '#ffffff' : '#9598a1';
+                                });
+                            }
+
+                            menu.addEventListener('mousedown', e => e.stopPropagation());
+                            menu.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                const item = e.target.closest('.bx-tf-item');
+                                if (!item) return;
+                                const newRes = item.getAttribute('data-res');
+                                closeTfMenu();
+                                if (newRes === currentActiveRes) return;
+                                currentActiveRes = newRes;
+                                window._chartResolution = newRes;
+                                const lbl = topGroup.querySelector('#bx_tf_label');
+                                if (lbl) lbl.textContent = (timeframes.find(t => t.res === newRes) || { label: newRes }).label;
+                                if (window.isCutMode) exitCutMode();
+                                try { widget.chart().setResolution(newRes); } catch (err) { console.warn('setResolution error:', err); }
+                            });
+
+                            btn.addEventListener('click', (e) => {
+                                e.stopPropagation();
+                                if (menu.style.display === 'block') { closeTfMenu(); return; }
+                                highlightCurrent();
+                                const r = btn.getBoundingClientRect();
+                                menu.style.left = Math.max(8, Math.round(r.left)) + 'px';
+                                menu.style.top = Math.round(r.bottom + 6) + 'px';
+                                menu.style.display = 'block';
+                                frameDoc.addEventListener('mousedown', onDocDown, true);
+                                frameDoc.addEventListener('wheel', onDocDown, true);
+                            });
+                        })();
+
+                        // Exit → back to the Backtesting dashboard
+                        topGroup.querySelector('#bx_btn_exit')?.addEventListener('click', () => {
+                            window.location.href = '/backtesting.html';
                         });
 
                         topGroup.querySelector('#bx_btn_compare')?.addEventListener('click', () => {
