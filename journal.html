@@ -280,6 +280,35 @@
         }
 
 
+        /* ============ VOICE LOG MODAL ============ */
+        #voice-modal .modal-box { max-width: 640px; }
+        .vc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; }
+        @media (max-width: 560px) { .vc-grid { grid-template-columns: 1fr; } }
+        .vc-chip {
+            display: flex; align-items: center; justify-content: space-between; gap: 10px;
+            padding: 7px 10px; border: 1px solid rgba(255,255,255,0.07);
+            border-radius: 8px; background: rgba(255,255,255,0.03); font-size: 12px;
+        }
+        .vc-chip .k { color: var(--tm-dim); }
+        .vc-chip .v { font-weight: 600; }
+        .vc-chip .v.nil { color: #5b6472; font-weight: 400; }
+        .vc-chip .v.pos { color: var(--tm-green); }
+        .vc-chip .v.neg { color: var(--tm-red); }
+        .vc-mistake {
+            display: inline-block; padding: 2px 8px; border-radius: 999px;
+            background: rgba(242,54,69,0.12); color: #f23645; border: 1px solid rgba(242,54,69,0.3);
+            font-size: 11px; font-weight: 600; margin: 2px 3px 2px 0;
+        }
+        #voice-mic-btn.listening {
+            box-shadow: 0 0 0 0 rgba(16,185,129,0.45);
+            animation: vcpulse 1.4s infinite;
+        }
+        @keyframes vcpulse {
+            70% { box-shadow: 0 0 0 12px rgba(16,185,129,0); }
+            100% { box-shadow: 0 0 0 0 rgba(16,185,129,0); }
+        }
+        .vc-source { font-size: 10.5px; color: var(--tm-dim); letter-spacing: 0.4px; text-transform: uppercase; }
+
         .modal-box {
             width: 100%; max-width: 860px; max-height: 88vh; overflow-y: auto;
             background: #0e121b; border: 1px solid rgba(255, 255, 255, 0.12);
@@ -1067,6 +1096,9 @@
                         <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
                     </div>
                     <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
+                    <button id="btn-header-voice" class="btn-ghost !py-2 !px-3.5 cursor-pointer" onclick="openVoiceModal()" title="Log a trade by voice">
+                        <svg data-lucide="mic" class="w-4 h-4"></svg> Voice
+                    </button>
                     <button id="btn-header-log-trade" class="btn-primary !py-2 !px-3.5 cursor-pointer" onclick="openEntryModal()">
                         <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                     </button>
@@ -1092,6 +1124,9 @@
                             <a href="imports.html" class="btn-ghost">
                                 <svg data-lucide="file-up" class="w-4 h-4"></svg> Import
                             </a>
+                            <button id="btn-page-voice" class="btn-ghost cursor-pointer" onclick="openVoiceModal()" title="Log a trade by voice">
+                                <svg data-lucide="mic" class="w-4 h-4"></svg> Voice
+                            </button>
                             <button id="btn-page-log-trade" class="btn-primary cursor-pointer" onclick="openEntryModal()">
                                 <svg data-lucide="plus" class="w-4 h-4"></svg> Log Trade
                             </button>
@@ -1402,6 +1437,8 @@
                                             <option value="London">London</option>
                                             <option value="New York" selected>New York</option>
                                             <option value="Asia">Asia</option>
+                                            <option value="Overnight">Overnight</option>
+                                            <option value="Premarket">Premarket</option>
                                         </select>
                                     </div>
                                 </div>
@@ -1514,6 +1551,52 @@
             <div class="at-footer">
                 <button type="button" id="btn-cancel-add-trade" class="at-btn-cancel" onclick="closeEntryModal()">Cancel</button>
                 <button type="button" id="save-trade" class="at-btn-save" onclick="saveTrade()">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ============ VOICE LOG MODAL (speech → parsed trade → entry form) ============ -->
+    <div class="overlay" id="voice-overlay" onclick="closeVoiceModal()"></div>
+    <div class="modal" id="voice-modal">
+        <div class="modal-box">
+            <div style="padding: 20px 22px; display: flex; flex-direction: column; gap: 14px;">
+                <div class="flex items-start justify-between gap-3">
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <svg data-lucide="mic" class="w-4.5 h-4.5 text-[var(--tm-green)]"></svg>
+                            <h3 class="text-[16px] font-bold tracking-tight">Voice Log</h3>
+                        </div>
+                        <p class="text-[12px] text-[var(--tm-dim)] mt-0.5">Speak or paste your trade — BattleX extracts the details, you confirm before it saves.</p>
+                    </div>
+                    <button type="button" class="text-[#828b99] hover:text-white cursor-pointer text-[16px] leading-none" onclick="closeVoiceModal()">✕</button>
+                </div>
+
+                <button type="button" id="voice-mic-btn" class="btn-ghost w-full !py-2.5 cursor-pointer flex items-center justify-center gap-2" onclick="toggleVoiceLog()">
+                    <svg data-lucide="mic" class="w-4 h-4"></svg>
+                    <span id="voice-mic-label">Tap to speak</span>
+                </button>
+
+                <div>
+                    <label class="at-field-label">Transcript</label>
+                    <textarea id="voice-transcript" class="at-card-textarea" rows="4" placeholder='e.g. "Lost 180 bucks on gold, fomoed in during London without confirmation, moved my stop…"'></textarea>
+                </div>
+
+                <div id="voice-status" class="hidden text-[12px] text-[var(--tm-dim)]"></div>
+
+                <div id="voice-result" class="hidden" style="display: flex; flex-direction: column; gap: 10px;">
+                    <div class="flex items-center justify-between">
+                        <span class="vc-source" id="voice-parser-source"></span>
+                        <span class="vc-source" id="voice-rules-flag"></span>
+                    </div>
+                    <div class="vc-grid" id="voice-chips"></div>
+                    <div id="voice-mistakes"></div>
+                    <button type="button" id="voice-apply-btn" class="at-btn-save w-full cursor-pointer" onclick="applyVoiceToForm()">Use in entry form →</button>
+                </div>
+
+                <div class="at-footer" style="padding: 0; border-top: 0;">
+                    <button type="button" class="at-btn-cancel" onclick="closeVoiceModal()">Cancel</button>
+                    <button type="button" id="voice-parse-btn" class="at-btn-save" onclick="runVoiceParse()">Extract</button>
+                </div>
             </div>
         </div>
     </div>
@@ -2270,6 +2353,7 @@
 
             // 6. Modal Open / Close (Hoisted Named Functions)
             function openEntryModal(prefill) {
+                if (!prefill) window.__voiceMeta = null; // manual open → no stale voice data
                 emotion = '';
                 editingId = prefill && prefill.id ? prefill.id : null;
                 selectedConfluences.clear();
@@ -2446,14 +2530,23 @@
                         showToast('Trade updated successfully');
                     } else {
                         if (core && typeof core.logTradePipeline === 'function') {
+                            // Voice metadata (emotion/confluences/setup/rr) flows into the
+                            // canonical ledger as MACHINE fields — so psychology, analytics
+                            // and the AI mentor engines see them, not just the notes text.
+                            const vm = window.__voiceMeta || null;
+                            const mergedConfluences = vm && vm.confluences && vm.confluences.length
+                                ? [...new Set([...confluences, ...vm.confluences])]
+                                : confluences;
                             core.logTradePipeline({
                                 account_id: accountId,
                                 ts: dt,
                                 symbol, dir, entry, exit, size, risk,
                                 pnl, r: rVal,
-                                setup: $('e-setup')?.value || strategy || 'Breakout',
+                                setup: (vm && vm.setup) || $('e-setup')?.value || strategy || 'Breakout',
                                 strategy,
-                                confluences,
+                                confluences: mergedConfluences,
+                                emotion: vm && vm.emotion ? vm.emotion : undefined,
+                                source: vm ? 'VOICE' : undefined,
                                 session: $('e-session')?.value || 'New York',
                                 timeframe: '5m',
                                 stop: isFinite(sl) ? sl : undefined,
@@ -2467,12 +2560,268 @@
                         }
                     }
                     closeEntryModal();
+                    window.__voiceMeta = null; // consumed
                 } catch (err) {
                     showToast('⚠ Could not save trade: ' + (err && err.message ? err.message : err));
                     if (window.console) console.error('saveTrade failed:', err);
                 }
             }
             window.saveTrade = saveTrade;
+
+            // ============ VOICE LOG (speech → /api/ai/voice-parse → prefill) ============
+            const VoiceUI = { recog: null, listening: false, parsed: null, meta: null, trades: null };
+
+            function voiceSetStatus(msg) {
+                const el = $('voice-status');
+                if (!el) return;
+                el.textContent = msg || '';
+                el.classList.toggle('hidden', !msg);
+            }
+
+            function openVoiceModal() {
+                VoiceUI.parsed = null; VoiceUI.meta = null;
+                const modal = $('voice-modal'), overlay = $('voice-overlay');
+                if (modal) {
+                    modal.classList.add('open');
+                    modal.style.display = 'flex'; modal.style.opacity = '1';
+                    modal.style.visibility = 'visible'; modal.style.pointerEvents = 'auto';
+                }
+                if (overlay) {
+                    overlay.classList.add('open');
+                    overlay.style.display = 'block'; overlay.style.opacity = '1';
+                    overlay.style.visibility = 'visible'; overlay.style.pointerEvents = 'auto';
+                }
+                const res = $('voice-result'); if (res) res.classList.add('hidden');
+                voiceSetStatus('');
+                const ta = $('voice-transcript'); if (ta) { ta.value = ''; setTimeout(() => ta.focus(), 120); }
+            }
+            window.openVoiceModal = openVoiceModal;
+
+            function closeVoiceModal() {
+                stopVoiceLog(true);
+                const modal = $('voice-modal'), overlay = $('voice-overlay');
+                if (modal) {
+                    modal.classList.remove('open');
+                    modal.style.display = 'none'; modal.style.opacity = '0';
+                    modal.style.visibility = 'hidden'; modal.style.pointerEvents = 'none';
+                }
+                if (overlay) {
+                    overlay.classList.remove('open');
+                    overlay.style.display = 'none'; overlay.style.opacity = '0';
+                    overlay.style.visibility = 'hidden'; overlay.style.pointerEvents = 'none';
+                }
+            }
+            window.closeVoiceModal = closeVoiceModal;
+
+            function voiceSupported() { return !!(window.SpeechRecognition || window.webkitSpeechRecognition); }
+
+            function stopVoiceLog(silent) {
+                VoiceUI.listening = false;
+                if (VoiceUI.recog) { try { VoiceUI.recog.stop(); } catch (e) {} VoiceUI.recog = null; }
+                const btn = $('voice-mic-btn');
+                if (btn) btn.classList.remove('listening');
+                const label = $('voice-mic-label');
+                if (label && !silent) label.textContent = 'Tap to speak';
+            }
+
+            function toggleVoiceLog() {
+                if (!voiceSupported()) {
+                    voiceSetStatus('Speech recognition not available in this browser — type or paste the transcript below, then Extract.');
+                    const ta = $('voice-transcript'); if (ta) ta.focus();
+                    return;
+                }
+                if (VoiceUI.listening) { stopVoiceLog(); return; }
+                const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const recog = new SR();
+                recog.lang = 'en-US';
+                recog.interimResults = false;
+                recog.continuous = false;
+                recog.maxAlternatives = 1;
+                VoiceUI.recog = recog;
+                VoiceUI.listening = true;
+                const btn = $('voice-mic-btn'); if (btn) btn.classList.add('listening');
+                const label = $('voice-mic-label'); if (label) label.textContent = 'Listening… tap to stop';
+                voiceSetStatus('');
+                recog.onresult = function (e) {
+                    const said = e.results && e.results[0] && e.results[0][0] ? e.results[0][0].transcript : '';
+                    if (said && $('voice-transcript')) $('voice-transcript').value = said;
+                    runVoiceParse(); // auto-extract right after speech
+                };
+                recog.onerror = function (e) {
+                    const map = { 'not-allowed': 'Mic permission denied — allow the mic or type the transcript instead.', 'no-speech': 'Nothing heard — try again or type it.', 'network': 'Speech service unreachable — type the transcript instead.' };
+                    voiceSetStatus(map[e.error] || ('Mic error: ' + (e.error || 'unknown')));
+                    stopVoiceLog();
+                };
+                recog.onend = function () {
+                    if (VoiceUI.listening) stopVoiceLog();
+                };
+                try { recog.start(); } catch (err) {
+                    voiceSetStatus('Could not start the mic — type the transcript instead.');
+                    stopVoiceLog();
+                }
+            }
+            window.toggleVoiceLog = toggleVoiceLog;
+
+            async function runVoiceParse() {
+                const transcript = ($('voice-transcript') ? $('voice-transcript').value : '').trim();
+                if (!transcript) { voiceSetStatus('Say or type the trade first.'); return; }
+                const btn = $('voice-parse-btn');
+                if (btn) { btn.disabled = true; btn.textContent = 'Extracting…'; }
+                voiceSetStatus('');
+                try {
+                    const r = await fetch('/api/ai/voice-parse', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ transcript: transcript })
+                    });
+                    const data = await r.json();
+                    if (!r.ok || !data.ok || !data.parsed) {
+                        voiceSetStatus((data && data.error) ? data.error : ('Extraction failed (' + r.status + ')'));
+                        return;
+                    }
+                    VoiceUI.parsed = data.parsed;
+                    VoiceUI.meta = data.meta || {};
+                    VoiceUI.trades = Array.isArray(data.trades) ? data.trades : null;
+                    renderVoiceResult();
+                } catch (err) {
+                    voiceSetStatus('Server unreachable — is the BattleX server running?');
+                } finally {
+                    if (btn) { btn.disabled = false; btn.textContent = 'Extract'; }
+                }
+            }
+            window.runVoiceParse = runVoiceParse;
+
+            function vcChip(k, v, cls) {
+                const val = (v == null || v === '') ? '—' : String(v);
+                const c = cls || (val === '—' ? 'nil' : '');
+                return '<div class="vc-chip"><span class="k">' + k + '</span><span class="v ' + c + '">' + val + '</span></div>';
+            }
+
+            function renderVoiceResult() {
+                const p = VoiceUI.parsed; if (!p) return;
+                const box = $('voice-result'); if (box) box.classList.remove('hidden');
+                const src = $('voice-parser-source');
+                if (src) src.textContent = VoiceUI.meta && VoiceUI.meta.parser === 'llm' ? 'AI extraction' : 'Offline parser';
+                const flag = $('voice-rules-flag');
+                if (flag) {
+                    if (p.rules_followed === true) { flag.textContent = 'RULES FOLLOWED'; flag.style.color = 'var(--tm-green)'; }
+                    else if (p.rules_followed === false) { flag.textContent = 'RULES BROKEN'; flag.style.color = 'var(--tm-red)'; }
+                    else { flag.textContent = 'RULES UNCLEAR'; flag.style.color = 'var(--tm-dim)'; }
+                }
+                const pnlCls = p.pnl == null ? 'nil' : (p.pnl === '$0' ? '' : (p.pnl[0] === '-' ? 'neg' : 'pos'));
+                const riskStr = p.risk != null ? '$' + p.risk : (p.risk_pct != null ? p.risk_pct + '%' : null);
+                const rrStr = p.rr != null ? '1:' + p.rr : null;
+                const rStr = p.r_multiple != null ? p.r_multiple + 'R' : null;
+                const chips = [
+                    vcChip('Symbol', p.symbol),
+                    vcChip('Direction', p.direction),
+                    vcChip('P&L', p.pnl, pnlCls),
+                    vcChip('Quality', p.quality, p.quality === 'A+' || p.quality === 'A' ? 'pos' : (p.quality === 'D' || p.quality === 'C' ? 'neg' : '')),
+                    vcChip('Session', p.session),
+                    vcChip('Setup', p.setup),
+                    vcChip('Size', p.size),
+                    vcChip('Risk', riskStr),
+                    vcChip('R:R', rrStr),
+                    vcChip('Realized', rStr),
+                    vcChip('Emotion', p.emotion),
+                    vcChip('Confidence', p.confidence)
+                ].join('');
+                // multi-trade banner
+                const nTrades = VoiceUI.meta && VoiceUI.meta.fields_found
+                    ? (VoiceUI.meta.fields_found.find(f => String(f).indexOf('multi_trade:') === 0) || '') : '';
+                if (nTrades && $('voice-status')) {
+                    const n = nTrades.split(':')[1];
+                    voiceSetStatus(n + ' trades detected in this transcript — trade 1 loads below; all trades are summarized in the notes.');
+                }
+                const grid = $('voice-chips'); if (grid) grid.innerHTML = chips;
+                const mk = $('voice-mistakes');
+                if (mk) {
+                    const conf = (p.confluences && p.confluences.length)
+                        ? '<div style="margin-top:6px;"><span class="k text-[12px] text-[var(--tm-dim)]">Confluences:</span> ' + p.confluences.map(m => '<span class="vc-mistake" style="background:rgba(16,185,129,0.1);color:var(--tm-green);border-color:rgba(16,185,129,0.3);">' + m + '</span>').join('') + '</div>'
+                        : '';
+                    mk.innerHTML = (p.mistakes && p.mistakes.length
+                        ? '<div><span class="k text-[12px] text-[var(--tm-dim)]">Mistakes:</span> ' + p.mistakes.map(m => '<span class="vc-mistake">' + m + '</span>').join('') + '</div>'
+                        : '') + conf;
+                }
+            }
+
+            function buildVoiceNote(p, allTrades) {
+                const lines = [];
+                lines.push('🎙 logged via voice' + (p.quality ? ' · Execution grade: ' + p.quality : ''));
+                if (p.setup) lines.push('Setup: ' + p.setup);
+                if (p.session) lines.push('Session (spoken): ' + p.session);
+                if (p.size) lines.push('Size (spoken): ' + p.size);
+                if (p.risk != null) lines.push('Risk: $' + p.risk);
+                if (p.risk_pct != null) lines.push('Risk: ' + p.risk_pct + '% of account');
+                if (p.rr != null) lines.push('Planned R:R — 1:' + p.rr);
+                if (p.entry != null) lines.push('Entry: ' + p.entry + (p.stop != null ? ' · SL: ' + p.stop : '') + (p.target != null ? ' · TP: ' + p.target : ''));
+                if (p.r_multiple != null) lines.push('Realized: ' + p.r_multiple + 'R');
+                if (p.confluences && p.confluences.length) lines.push('Confluences: ' + p.confluences.join(', '));
+                if (p.confidence) lines.push('Tone: ' + p.confidence + ' confidence');
+                if (p.setup_notes && p.setup_notes.length) p.setup_notes.forEach(n => lines.push('• ' + n));
+                if (p.mistakes && p.mistakes.length) lines.push('⚠ Mistakes: ' + p.mistakes.join(', '));
+                lines.push('Rules: ' + (p.rules_followed === true ? 'followed' : p.rules_followed === false ? 'broken' : 'unclear'));
+                if (p.emotion) lines.push('Emotion: ' + p.emotion);
+                const r = p.ratings || {};
+                const rparts = [];
+                if (r.focus != null) rparts.push('focus ' + r.focus);
+                if (r.confidence != null) rparts.push('confidence ' + r.confidence);
+                if (r.discipline != null) rparts.push('discipline ' + r.discipline);
+                if (rparts.length) lines.push('Ratings: ' + rparts.join(' · '));
+                if (Array.isArray(allTrades) && allTrades.length > 1) {
+                    lines.push('— All trades in this transcript —');
+                    allTrades.forEach((t2, i) => {
+                        lines.push((i + 1) + '. ' + [t2.symbol, t2.direction, t2.size, 'P&L ' + (t2.pnl || '—'), t2.quality ? 'grade ' + t2.quality : null].filter(Boolean).join(' · '));
+                    });
+                }
+                return lines.join('\n');
+            }
+
+            function applyVoiceToForm() {
+                const p = VoiceUI.parsed;
+                if (!p) return;
+                const prefill = {};
+                if (p.symbol) prefill.symbol = p.symbol;
+                if (p.direction) prefill.dir = p.direction;
+                if (p.pnl_number != null) prefill.pnl = p.pnl_number;
+                if (p.size_number != null) prefill.size = p.size_number;
+                if (p.risk != null) prefill.risk = p.risk;
+                if (p.entry != null) prefill.entry = p.entry;
+                if (p.stop != null) prefill.stop = p.stop;
+                if (p.target != null) prefill.tp = p.target;
+                prefill.note = buildVoiceNote(p, VoiceUI.trades);
+                // Machine-field handoff: emotion → journal vocabulary, confluences,
+                // setup, planned RR. Everything the engines consume.
+                const VOICE_EMOTION_MAP = { fomo: 'FOMO', revenge: 'Revenge', anxious: 'Anxious', confident: 'Confident', calm: 'Calm', neutral: 'Calm', disciplined: 'Confident', frustrated: 'Revenge', panicked: 'Anxious', hesitant: 'Anxious' };
+                window.__voiceMeta = {
+                    emotion: p.emotion ? (VOICE_EMOTION_MAP[p.emotion] || null) : null,
+                    confluences: Array.isArray(p.confluences) ? p.confluences.slice() : [],
+                    setup: p.setup || null,
+                    rr: p.rr || null
+                };
+                if (window.__voiceMeta.setup && $('e-setup')) {
+                    // the setup select is hidden with a single default option — make
+                    // the parsed setup selectable so it survives the save
+                    const sel = $('e-setup');
+                    if (!Array.from(sel.options).some(o => o.value === window.__voiceMeta.setup)) {
+                        const opt = document.createElement('option');
+                        opt.value = window.__voiceMeta.setup;
+                        opt.textContent = window.__voiceMeta.setup;
+                        sel.appendChild(opt);
+                    }
+                    sel.value = window.__voiceMeta.setup;
+                }
+                closeVoiceModal();
+                openEntryModal(prefill); // review → Save (canonical pipeline)
+                // session: the v2 parser already emits the journal's vocabulary
+                const map = { 'London': 'London', 'New York': 'New York', 'Asia': 'Asia', 'Overnight': 'Overnight', 'Premarket': 'Premarket' };
+                if (p.session && $('e-session') && map[p.session]) $('e-session').value = map[p.session];
+                // re-apply note after openEntryModal defaults, then recompute R:R
+                if ($('at-notes-textarea')) $('at-notes-textarea').value = prefill.note;
+                if (typeof computeRrFromInputs === 'function') computeRrFromInputs();
+                showToast('Voice trade loaded — review and Save');
+            }
+            window.applyVoiceToForm = applyVoiceToForm;
 
             // 8. ATTACH ALL DIRECT EVENT LISTENERS ONCE DOM READY
             // Log Trade Trigger Buttons

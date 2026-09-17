@@ -398,6 +398,12 @@
                         </div>
 
                         <div class="flex items-center gap-3">
+                            <!-- Source filter: voice vs manual comparison -->
+                            <div class="flex items-center gap-1 p-1 rounded-lg bg-[var(--tm-card)] border border-[var(--tm-border)]" id="source-filter">
+                                <button class="subnav-tab active" data-source="all">All</button>
+                                <button class="subnav-tab" data-source="voice">🎙 Voice</button>
+                                <button class="subnav-tab" data-source="manual">Manual</button>
+                            </div>
                             <span class="text-[12.5px] text-[var(--tm-dim)]" id="trades-count-badge">1 trade</span>
                             <div class="relative" id="time-filter-wrap">
                                 <button type="button" id="time-filter-btn" class="flex items-center gap-2 bg-[#11141c] border border-[var(--tm-border-2)] text-white text-[12.5px] font-medium rounded-lg px-3 py-1.5 hover:border-[var(--tm-muted)] transition-colors">
@@ -769,6 +775,7 @@
             let unitMode = '%'; // '%' or '$'
             let activeSubTab = 'overview';
             let timeFilter = 'all';
+            let sourceFilter = 'all'; // 'all' | 'voice' | 'manual'
 
             // ---- Backtest trades feed (server/analytics over completed backtest sessions) ----
             // Journal trades come from core.Trades; backtest trades arrive async from
@@ -813,6 +820,8 @@
                 if (!core || !core.Trades) return [];
                 const accId = currentAccountId();
                 let list = core.Trades.filter(t => !accId || t.account_id === accId);
+                if (sourceFilter === 'voice') list = list.filter(t => t.source === 'VOICE');
+                else if (sourceFilter === 'manual') list = list.filter(t => t.source !== 'VOICE' && t.source !== 'backtest');
                 
                 const now = new Date();
                 if (timeFilter === 'month') {
@@ -1156,9 +1165,9 @@
             }
 
             // Sub-nav tab switching
-            document.querySelectorAll('.subnav-tab').forEach(btn => {
+            document.querySelectorAll('.subnav-tab[data-tab]').forEach(btn => {
                 btn.addEventListener('click', () => {
-                    document.querySelectorAll('.subnav-tab').forEach(b => b.classList.remove('active'));
+                    document.querySelectorAll('.subnav-tab[data-tab]').forEach(b => b.classList.remove('active'));
                     btn.classList.add('active');
                     activeSubTab = btn.dataset.tab;
 
@@ -1168,6 +1177,19 @@
                     $('symbols-content').classList.toggle('hidden', activeSubTab !== 'symbols');
                 });
             });
+
+            // Source filter: voice vs manual comparison
+            const sourceWrap = $('source-filter');
+            if (sourceWrap) {
+                sourceWrap.querySelectorAll('[data-source]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        sourceWrap.querySelectorAll('[data-source]').forEach(b => b.classList.remove('active'));
+                        btn.classList.add('active');
+                        sourceFilter = btn.dataset.source;
+                        renderAll();
+                    });
+                });
+            }
 
             // Initial render
             renderAll();

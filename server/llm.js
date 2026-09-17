@@ -190,6 +190,74 @@ async function narrateBotAnswer(answerObj, opts) {
     return narrate(role, facts, opts);
 }
 
+// ---------------------------------------------------------------------------
+// Structured JSON completion (voice parser + future extraction features).
+// Same provider routing as narrate, but asks for raw JSON and parses it
+// defensively: tolerates markdown fences and trailing prose, returns the first
+// JSON object found. Never throws — null means "no LLM answer, use fallback".
+// ---------------------------------------------------------------------------
+function hasKey() { return !!apiKey(); }
+
+function extractJsonObject(text) {
+    if (!text) return null;
+    const cleaned = String(text).replace(/```(?:json)?/gi, '').trim();
+    const start = cleaned.indexOf('{');
+    if (start === -1) return null;
+    // walk to the matching closing brace (string-aware)
+    let depth = 0, inStr = false, esc = false;
+    for (let i = start; i < cleaned.length; i++) {
+        const ch = cleaned[i];
+        if (esc) { esc = false; continue; }
+        if (ch === '\\') { esc = true; continue; }
+        if (ch === '"') { inStr = !inStr; continue; }
+        if (inStr) continue;
+        if (ch === '{') depth++;
+        else if (ch === '}') { depth--; if (depth === 0) { try { return JSON.parse(cleaned.slice(start, i + 1)); } catch (e) { return null; } } }
+    }
+    return null;
+}
+
+async function completeJSON(system, user, opts) {
+    const key = apiKey();
+    if (!key) return null;
+    const fetchImpl = (opts && opts.fetchImpl) || fetch;
+    const timeoutMs = (opts && opts.timeoutMs) || 35000;
+    const instruction = (system || '') + '\nReturn ONLY a valid JSON object. No markdown, no code fences, no commentary.';
+    let res;
+    try {
+        const ctl = new AbortController();
+        const timer = setTimeout(() => ctl.abort(), timeoutMs);
+        try {
+            if (isGemini()) {
+                res = await fetchImpl(GEMINI_BASE + '/v1beta/interactions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'x-goog-api-key': key },
+                    body: JSON.stringify({ model: GEMINI_MODEL, input: instruction + '\n\n' + user, store: false }),
+                    signal: ctl.signal
+                });
+            } else {
+                res = await fetchImpl(OPENAI_BASE.replace(/\/+$/, '') + '/chat/completions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + key },
+                    body: JSON.stringify({
+                        model: OPENAI_MODEL,
+                        messages: [
+                            { role: 'system', content: instruction },
+                            { role: 'user', content: user }
+                        ]
+                    }),
+                    signal: ctl.signal
+                });
+            }
+        } finally { clearTimeout(timer); }
+        if (!res || !res.ok) return null;
+        const json = await res.json();
+        return extractJsonObject(parseResponse(json));
+    } catch (e) {
+        return null; // network / timeout / abort — degrade, caller falls back
+    }
+}
+
 async function narrateCoachMessage(bundle, opts) {
     if (!bundle || !bundle.coach || !bundle.coach.message) return null;
     const role = 'AI mentor summarizing the trader\'s overall state for their dashboard';
@@ -206,4 +274,4 @@ async function narrateCoachMessage(bundle, opts) {
     return narrate(role, facts, opts);
 }
 
-module.exports = { narrate, narrateBotAnswer, narrateCoachMessage, numericFacts, guardPassed, parseResponse, GEMINI_BASE, GEMINI_MODEL };
+module.exports = { narrate, narrateBotAnswer, narrateCoachMessage, completeJSON, hasKey, extractJsonObject, numericFacts, guardPassed, parseResponse, GEMINI_BASE, GEMINI_MODEL };

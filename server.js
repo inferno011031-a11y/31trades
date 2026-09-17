@@ -53,6 +53,7 @@ const Sim = require('./server/backtest-sim.js');
 const Practice = require('./server/practice.js');
 const Battle = require('./server/battle.js');
 const AICoach = require('./server/ai-coach.js');
+const VoiceParser = require('./server/voice-parser.js');
 const BattleWs = require('./server/battle-ws.js');
 const Prefs = require('./server/prefs.js');
 const DiscordVerify = require('./server/discord-verify.js');
@@ -1826,6 +1827,31 @@ async function handleApi(req, res, url) {
                 if (narrated) { r.answer = narrated; r.ai = 'gemini'; }
             }
             return json(res, 200, Object.assign({ ok: true }, r));
+        }
+
+        // ---- Voice trade parser (spoken transcript → structured trade JSON) ----
+        // Metered exactly like /api/ai/ask: one AI request against the user's
+        // 50-lifetime / tester allowance. Deterministic fallback inside the
+        // parser means the endpoint still returns usable structure with no key.
+        if (p === '/api/ai/voice-parse') {
+            if (AUTH_REQUIRED && process.env.SUPABASE_URL) {
+                try {
+                    await Access.enforceAiQuota(uc.userId);
+                    Admin.logActivity(uc.userId, 'ai_request', { question: 'voice-parse' });
+                } catch (err) {
+                    return json(res, err.code || 403, { ok: false, error: err.message });
+                }
+            }
+            const transcript = String((body && body.transcript) || '').trim();
+            if (!transcript) return json(res, 400, { ok: false, error: 'transcript required' });
+            if (transcript.length > 8000) return json(res, 413, { ok: false, error: 'transcript too long (max 8000 chars)' });
+            try {
+                const r = await VoiceParser.extract(transcript);
+                return json(res, 200, Object.assign({ ok: true, transcript_length: transcript.length }, r));
+            } catch (err) {
+                console.error('[voice-parse] failed: ' + err.message);
+                return json(res, 500, { ok: false, error: 'voice parse failed' });
+            }
         }
 
         // ---- AI Mentor findings prefs (dismiss / rate a finding) ----
