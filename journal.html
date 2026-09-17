@@ -217,6 +217,27 @@
             font-weight: 500;
             letter-spacing: 0.02em;
         }
+        .badge-voice-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            background: rgba(139, 92, 246, 0.10) !important;
+            color: #c4b5fd !important;
+            font-size: 11px;
+            padding: 2px 7px;
+            border-radius: 4px;
+            border: 1px solid rgba(139, 92, 246, 0.30) !important;
+            vertical-align: middle;
+            font-weight: 500;
+            letter-spacing: 0.02em;
+            line-height: 1.4;
+        }
+        .badge-voice-tag svg {
+            width: 10px;
+            height: 10px;
+            flex-shrink: 0;
+            opacity: 0.9;
+        }
         .tm-flag-container {
             display: inline-flex;
             align-items: center;
@@ -1994,6 +2015,15 @@
                         ? '<span class="badge-imported-tag ml-1.5">Imported</span>'
                         : '';
 
+                    const voiceBadge = t.source === 'VOICE'
+                        ? '<span class="badge-voice-tag ml-1.5" title="Logged via voice">' +
+                              '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+                              '<path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z"/>' +
+                              '<path d="M19 10v2a7 7 0 0 1-14 0v-2"/>' +
+                              '<line x1="12" x2="12" y1="19" y2="22"/>' +
+                              '</svg>Voice</span>'
+                        : '';
+
                     const stratBadge = t.strategyType
                         ? '<span class="tag tag-blue !py-0.5 !px-1.5 text-[10px] align-middle font-bold ml-1.5">' + esc(t.strategyType.replace(/_/g, ' ')) + (t.legs ? ' · ' + t.legs.length + 'L' : '') + '</span>'
                         : '';
@@ -2004,7 +2034,7 @@
                         '</td>' +
                         '<td class="num text-[var(--tm-dim)] font-mono text-[12px]">' + fmtTs(t.ts) + '</td>' +
                         '<td class="whitespace-nowrap">' +
-                            '<div class="flex items-center gap-2">' + flagHtml + tickerHtml + importedBadge + stratBadge + '</div>' +
+                            '<div class="flex items-center gap-2">' + flagHtml + tickerHtml + importedBadge + voiceBadge + stratBadge + '</div>' +
                         '</td>' +
                         '<td>' + dirBadge + '</td>' +
                         '<td class="text-zinc-200 font-medium">' + esc(t.setup || '—') + '</td>' +
