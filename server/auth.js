@@ -78,6 +78,7 @@ function pickSession(data) {
     if (!token || !user) return null;
     return {
         token,
+        access_token: token,
         refresh_token: data.refresh_token || data.session?.refresh_token || null,
         expires_in: data.expires_in || data.session?.expires_in || null,
         user

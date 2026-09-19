@@ -949,6 +949,18 @@ async function handleApi(req, res, url) {
         } catch (err) { return json(res, err.code || 401, { error: err.message }); }
     }
 
+    // ---------- Backtesting candles data (pre-auth OHLCV for backtesting and charts) ----------
+    if (p === '/api/backtest/candles' && req.method === 'GET') {
+        const data = await MarketData.getCandles({
+            symbol: q.get('symbol') || 'EURUSD',
+            timeframe: q.get('timeframe') || '1h',
+            count: Number(q.get('count')) || undefined,
+            period: q.get('period') || undefined,
+            all: q.get('all') === '1' || q.get('all') === 'true'
+        });
+        return json(res, 200, data);
+    }
+
     // ---------- everything below requires a user context ----------
     let uc;
     try { uc = await coreFor(req); } catch (err) { return json(res, err.code || 401, { error: err.message }); }
@@ -1151,18 +1163,6 @@ async function handleApi(req, res, url) {
             }
             if (p === '/api/prefs') {
                 return json(res, 200, { ok: true, prefs: await Prefs.get(uc.userId) });
-            }
-
-            // ---------- Backtesting data (real TradingView OHLCV, cached, synthetic fallback) ----------
-            if (p === '/api/backtest/candles') {
-                const data = await MarketData.getCandles({
-                    symbol: q.get('symbol') || 'EURUSD',
-                    timeframe: q.get('timeframe') || '1h',
-                    count: Number(q.get('count')) || undefined,
-                    period: q.get('period') || undefined,
-                    all: q.get('all') === '1' || q.get('all') === 'true'
-                });
-                return json(res, 200, data);
             }
 
             // ---------- Backtest practice sessions (simulation engine) ----------

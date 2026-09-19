@@ -2746,7 +2746,13 @@
                     if (!window._candlesCache) window._candlesCache = {};
 
                     if (!window._candlesCache[cacheKey]) {
-                        const res = await fetch(`/api/backtest/candles?symbol=${encodeURIComponent(baseSym)}&timeframe=${tf}&all=1&period=${encodeURIComponent(currentPeriod)}`);
+                        var token = '';
+                        try {
+                            var sess = JSON.parse(localStorage.getItem('31trades.session.v1') || '{}');
+                            token = sess.access_token || sess.token || '';
+                        } catch (e) {}
+                        var hdrs = token ? { 'Authorization': 'Bearer ' + token } : {};
+                        const res = await fetch(`/api/backtest/candles?symbol=${encodeURIComponent(baseSym)}&timeframe=${tf}&all=1&period=${encodeURIComponent(currentPeriod)}`, { headers: hdrs });
                         const json = await res.json();
 
                         if (!json.ok || !Array.isArray(json.candles) || json.candles.length === 0) {

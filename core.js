@@ -97,7 +97,8 @@
     function authHeaders(extra) {
         const h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
         const session = currentSession();
-        if (session && session.token && !BYPASS) h.Authorization = 'Bearer ' + session.token;
+        const tok = session && (session.token || session.access_token);
+        if (tok && !BYPASS) h.Authorization = 'Bearer ' + tok;
         return h;
     }
 
@@ -268,7 +269,8 @@
             const opts = options || {};
             const headers = Object.assign({}, opts.headers || {});
             const sess = BYPASS ? null : getSession();
-            if (sess && sess.token) headers.Authorization = 'Bearer ' + sess.token;
+            const tok = sess && (sess.token || sess.access_token);
+            if (tok) headers.Authorization = 'Bearer ' + tok;
             if (opts.body && typeof opts.body !== 'string' && !headers['Content-Type']) {
                 headers['Content-Type'] = 'application/json';
             }
