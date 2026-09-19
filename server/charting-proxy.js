@@ -124,7 +124,7 @@ async function handle(req, res, p) {
         res.writeHead(403, { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' });
         return res.end('charting token invalid or expired — reload the page');
     }
-    const relPath = sanitize(rest.slice(slash + 1));
+    const relPath = sanitize(rest.slice(slash + 1).split(/[?#]/)[0]);   // strip ?v= / fragment — TV appends cache-busters
     if (!relPath) { res.writeHead(400, { 'Content-Type': 'text/plain' }); return res.end('bad path'); }
 
     // Dev / offline: no Supabase configured → serve the local gitignored copy
