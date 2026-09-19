@@ -115,21 +115,22 @@ class BacktestSession {
         }
     }
 
-    _fillExit(bar, price, reason) {
+    _fillExit(bar, price, reason, opts) {
         const p = this.position;
         const pnl = this._pnlAt(p, price);
         const r = p.riskAmount > 0 ? pnl / p.riskAmount : 0;
+        const exitTime = (opts && opts.exitTime) || (bar && bar.time) || Date.now();
         const trade = {
             id: 'btt_' + this.trades.length + '_' + Math.random().toString(36).slice(2, 6),
             sessionId: this.id,
             userId: this.userId,
             symbol: this.symbol,
             timeframe: this.timeframe,
-            strategy: this.strategy,
+            strategy: p.strategy || this.strategy || 'Manual practice',
             category: this.category,
             direction: p.dir,
             entryTime: p.openedAt,
-            exitTime: bar.time,
+            exitTime: exitTime,
             entryIndex: p.openedAtIdx,
             exitIndex: this.cursor,
             entry: p.entry,
@@ -147,7 +148,7 @@ class BacktestSession {
             setup: p.setup || '',
             notes: p.notes || '',
             tags: Array.isArray(p.tags) ? p.tags : [],
-            session: sessionOf(p.openedAt),
+            session: p.session || sessionOf(p.openedAt),
             openedAt: new Date().toISOString(),
             closedAt: new Date().toISOString()
         };
@@ -224,9 +225,11 @@ class BacktestSession {
             riskAmount: Math.round(riskAmount * 100) / 100,
             riskPct: this.balance > 0 ? Math.round((riskAmount / this.balance) * 10000) / 100 : 0,
             rr: Math.round(rr * 100) / 100,
-            notes: String(o.notes || ''),
+            strategy: String(o.strategy || this.strategy || ''),
+            session: String(o.session || ''),
             setup: String(o.setup || ''),
-            openedAt: bar.time,
+            notes: String(o.notes || ''),
+            openedAt: (o && o.entryTime) || (bar ? bar.time : Date.now()),
             openedAtIdx: this.cursor
         };
         this._log('enter', { direction: this.position.dir, entry, sl, tp, size: this.position.size, riskAmount: this.position.riskAmount });
@@ -239,7 +242,7 @@ class BacktestSession {
         if (!this.position) return { ok: false, error: 'no open position' };
         const bar = this.candles[this.cursor];
         const price = o && o.price != null ? Number(o.price) : (bar ? bar.close : this.position.entry);
-        this._fillExit(bar || { time: Date.now(), close: price, low: price, high: price }, price, String((o && o.reason) || 'manual'));
+        this._fillExit(bar || { time: (o && o.exitTime) || Date.now(), close: price, low: price, high: price }, price, String((o && o.reason) || 'manual'), o);
         return { ok: true, position: null, trade: this.trades[this.trades.length - 1] };
     }
 

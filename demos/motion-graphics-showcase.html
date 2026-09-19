@@ -1,0 +1,736 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AXIOM — Motion Graphics Showcase</title>
+<style>
+/* ============================================================
+   AXIOM — CINEMATIC MOTION SHOWCASE  (self-contained, no deps)
+   Scenes: Cinematic Bars → Logo Sting → Kinetic Text → Product
+           Glass → Self-Draw Chart → Candle Build → 3D Cards → End Card
+   ============================================================ */
+:root{
+  --bg:#050608; --ink:#f2f5f7; --mut:#8b95a1;
+  --acc:#22e5b4; --acc2:#2f7bff; --warn:#ffb020;
+  --easeOutQuint: cubic-bezier(.22,1,.36,1);
+  --easeInOutExpo: cubic-bezier(.87,0,.13,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%}
+body{
+  background:var(--bg); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  overflow:hidden; user-select:none;
+}
+.stage{position:fixed;inset:0;overflow:hidden}
+
+/* ---------- persistent background: aurora + grain + vignette ---------- */
+.bg-aurora{position:absolute;inset:-20%;z-index:0;filter:blur(90px);opacity:.55;
+  background:
+   radial-gradient(38% 42% at 18% 28%, rgba(34,229,180,.18), transparent 70%),
+   radial-gradient(34% 40% at 80% 22%, rgba(47,123,255,.16), transparent 70%),
+   radial-gradient(30% 36% at 62% 78%, rgba(34,229,180,.10), transparent 70%);
+  animation:auroraDrift 16s var(--easeInOutExpo) infinite alternate;
+}
+@keyframes auroraDrift{
+  0%{transform:translate3d(-3%,-2%,0) scale(1)}
+  100%{transform:translate3d(3%,2%,0) scale(1.06)}
+}
+.bg-grid{position:absolute;inset:0;z-index:0;opacity:.5;
+  background-image:linear-gradient(rgba(255,255,255,.025) 1px,transparent 1px),
+                   linear-gradient(90deg,rgba(255,255,255,.025) 1px,transparent 1px);
+  background-size:56px 56px;
+  mask-image:radial-gradient(1200px circle at 50% 45%,#000 0%,transparent 75%);
+  -webkit-mask-image:radial-gradient(1200px circle at 50% 45%,#000 0%,transparent 75%);
+  animation:gridShift 22s linear infinite;
+}
+@keyframes gridShift{from{background-position:0 0}to{background-position:56px 56px}}
+.bg-vignette{position:absolute;inset:0;z-index:40;pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 42%,transparent 55%,rgba(0,0,0,.55) 100%)}
+.bg-grain{position:absolute;inset:0;z-index:41;pointer-events:none;opacity:.05;mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+
+/* ---------- scene machinery ---------- */
+.scene{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  opacity:0;visibility:hidden;transition:opacity .8s var(--easeOutQuint),visibility 0s .8s}
+.scene.on{opacity:1;visibility:visible;transition:opacity .8s var(--easeOutQuint)}
+.scene.leave{opacity:0}
+
+/* ---------- SCENE 1 — cinematic bars + counting line ---------- */
+#s1 .bar{position:absolute;left:0;width:100vw;height:9vh;background:#0a0c10;transform:scaleY(0)}
+#s1 .bar.top{top:0;transform-origin:top}
+#s1 .bar.bot{bottom:0;transform-origin:bottom}
+#s1.on .bar{animation:barIn .9s var(--easeOutQuint) forwards}
+#s1.on .bar.bot{animation-delay:.08s}
+@keyframes barIn{to{transform:scaleY(1)}}
+#s1 .stamp{font-size:11px;letter-spacing:.42em;color:var(--mut);text-transform:uppercase;
+  position:absolute;bottom:3.2vh;left:4vw;opacity:0}
+#s1.on .stamp{animation:fadeIn .6s 1s forwards}
+#s1 .stamp i{font-style:normal;color:var(--acc)}
+#s1 .tape{position:absolute;top:3.4vh;right:4vw;font-size:11px;letter-spacing:.3em;color:var(--mut);opacity:0}
+#s1.on .tape{animation:fadeIn .6s 1.15s forwards}
+@keyframes fadeIn{to{opacity:1}}
+
+/* ---------- SCENE 2 — logo sting ---------- */
+#s2 .mark{width:130px;height:130px;position:relative}
+#s2 .ring{position:absolute;inset:0;border-radius:50%;
+  border:2px solid rgba(34,229,180,.35);
+  border-top-color:var(--acc);opacity:0}
+#s2.on .ring:nth-child(1){animation:ringIn 1.1s var(--easeInOutExpo) forwards, spin 6s linear 1.2s infinite}
+#s2.on .ring:nth-child(2){inset:16px;border-color:rgba(47,123,255,.3);border-bottom-color:var(--acc2);
+  animation:ringIn 1.1s .15s var(--easeInOutExpo) forwards, spinRev 8s linear 1.4s infinite}
+#s2.on .ring:nth-child(3){inset:32px;border-color:rgba(255,255,255,.14);border-top-color:#fff;
+  animation:ringIn 1.1s .3s var(--easeInOutExpo) forwards, spin 10s linear 1.6s infinite}
+@keyframes ringIn{0%{opacity:0;transform:scale(.4)}100%{opacity:1;transform:scale(1)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes spinRev{to{transform:rotate(-360deg)}}
+#s2 .core{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  font-weight:800;font-size:34px;letter-spacing:-.02em;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+  opacity:0;transform:scale(.6)}
+#s2.on .core{animation:coreIn .7s .55s var(--easeOutQuint) forwards}
+@keyframes coreIn{0%{opacity:0;transform:scale(.6)}100%{opacity:1;transform:scale(1)}}
+#s2 .flare{position:absolute;width:520px;height:520px;border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle,rgba(34,229,180,.35),transparent 60%);
+  opacity:0;transform:scale(.2);filter:blur(6px)}
+#s2.on .flare{animation:flare .9s .5s var(--easeOutQuint) forwards}
+@keyframes flare{0%{opacity:0;transform:scale(.2)}35%{opacity:1}100%{opacity:0;transform:scale(1.5)}}
+
+/* ---------- SCENE 3 — kinetic type ---------- */
+.kinetic{display:flex;flex-direction:column;align-items:center;gap:10px}
+.kinetic .word{display:flex;overflow:hidden;font-weight:800;
+  font-size:clamp(42px,8.5vw,104px);line-height:1.02;letter-spacing:-.03em}
+.kinetic .word span{display:inline-block;transform:translateY(110%)}
+#s3.on .word span{animation:riseUp .85s var(--easeOutQuint) forwards}
+#s3.on .word:nth-child(1) span{animation-delay:.05s}
+#s3.on .word:nth-child(2) span{animation-delay:.18s}
+#s3.on .word:nth-child(2) span:last-child{color:var(--acc)}
+#s3 .sub{margin-top:26px;font-size:clamp(13px,1.6vw,17px);letter-spacing:.34em;color:var(--mut);
+  text-transform:uppercase;opacity:0}
+#s3.on .sub{animation:fadeUp .8s .9s var(--easeOutQuint) forwards}
+#s3 .rule{width:0;height:1px;background:linear-gradient(90deg,transparent,var(--acc),transparent);margin-top:22px}
+#s3.on .rule{animation:ruleGrow 1s 1.15s var(--easeOutQuint) forwards}
+@keyframes riseUp{to{transform:translateY(0)}}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes ruleGrow{to{width:min(420px,60vw)}}
+
+/* ---------- SCENE 4 — glass product card ---------- */
+#s4 .card{width:min(880px,90vw);border-radius:22px;position:relative;
+  background:linear-gradient(160deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+  border:1px solid rgba(255,255,255,.09);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  box-shadow:0 30px 80px rgba(0,0,0,.55), inset 0 1px 0 rgba(255,255,255,.08);
+  padding:34px 38px;opacity:0;transform:perspective(1200px) rotateX(14deg) translateY(60px) scale(.96)}
+#s4.on .card{animation:cardIn 1s .1s var(--easeOutQuint) forwards}
+@keyframes cardIn{to{opacity:1;transform:perspective(1200px) rotateX(0) translateY(0) scale(1)}}
+#s4 .row{display:flex;align-items:center;justify-content:space-between;margin-bottom:26px}
+#s4 .brandline{display:flex;align-items:center;gap:12px}
+#s4 .dot{width:10px;height:10px;border-radius:50%;background:var(--acc);
+  box-shadow:0 0 14px rgba(34,229,180,.8)}
+#s4 .ttl{font-weight:700;font-size:15px;letter-spacing:.06em}
+#s4 .tag{font-size:10.5px;letter-spacing:.28em;color:var(--mut);text-transform:uppercase}
+#s4 .kpis{display:flex;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+#s4 .kpi{flex:1;min-width:150px;border-radius:14px;padding:16px 18px;
+  background:rgba(255,255,255,.03);border:1px solid rgba(255,255,255,.06);
+  opacity:0;transform:translateY(18px)}
+#s4.on .kpi{animation:fadeUp .7s var(--easeOutQuint) forwards}
+#s4.on .kpi:nth-child(1){animation-delay:.5s}
+#s4.on .kpi:nth-child(2){animation-delay:.62s}
+#s4.on .kpi:nth-child(3){animation-delay:.74s}
+#s4 .kpi .k{font-size:10.5px;letter-spacing:.22em;color:var(--mut);text-transform:uppercase;margin-bottom:8px}
+#s4 .kpi .v{font-size:26px;font-weight:800;font-variant-numeric:tabular-nums}
+#s4 .kpi .d{font-size:12px;margin-top:4px}
+.up{color:var(--acc)} .down{color:#ff5470}
+
+/* ---------- SCENE 5 — self-drawing chart ---------- */
+#s5 .wrap{width:min(960px,92vw)}
+#s5 h3{font-size:clamp(20px,3vw,30px);font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+#s5 p{color:var(--mut);font-size:14px;margin-bottom:26px}
+#s5 svg{width:100%;height:300px;overflow:visible}
+#s5 .glow-line{filter:drop-shadow(0 0 8px rgba(34,229,180,.55))}
+.draw-line{stroke-dasharray:1;stroke-dashoffset:1}
+#s5.on .draw-line{animation:draw 2.2s .3s var(--easeInOutExpo) forwards}
+@keyframes draw{to{stroke-dashoffset:0}}
+#s5 .area{opacity:0}
+#s5.on .area{animation:fadeIn 1.2s 1.6s forwards}
+#s5 .pt{opacity:0}
+#s5.on .pt{animation:pop .4s var(--easeOutQuint) forwards}
+#s5.on .pt:nth-of-type(1){animation-delay:2.0s}
+#s5.on .pt:nth-of-type(2){animation-delay:2.05s}
+#s5.on .pt:nth-of-type(3){animation-delay:2.10s}
+#s5.on .pt:nth-of-type(4){animation-delay:2.15s}
+@keyframes pop{0%{opacity:0;transform:scale(0)}100%{opacity:1;transform:scale(1)}}
+#s5 .endtag{opacity:0;display:inline-flex;align-items:center;gap:8px;margin-top:18px;
+  font-size:12px;letter-spacing:.18em;color:var(--acc)}
+#s5.on .endtag{animation:fadeUp .6s 2.3s forwards}
+
+/* ---------- SCENE — self-building candles ---------- */
+#s5c .wrap{width:min(960px,92vw)}
+#s5c h3{font-size:clamp(20px,3vw,30px);font-weight:800;letter-spacing:-.02em;margin-bottom:6px}
+#s5c p{color:var(--mut);font-size:14px;margin-bottom:22px}
+#s5c svg{width:100%;height:320px;overflow:visible}
+#s5c .wick,#s5c .cbody{transform-box:fill-box;transform-origin:50% 50%;opacity:0}
+#s5c.on .wick{animation:wickIn .3s var(--easeOutQuint) forwards}
+#s5c.on .cbody{animation:bodyIn .34s var(--easeOutQuint) forwards}
+@keyframes wickIn{0%{opacity:0;transform:scaleY(0)}100%{opacity:1;transform:scaleY(1)}}
+@keyframes bodyIn{0%{opacity:0;transform:scaleY(.15)}100%{opacity:1;transform:scaleY(1)}}
+#s5c .pline{stroke-dasharray:1;stroke-dashoffset:1;
+  filter:drop-shadow(0 0 6px rgba(34,229,180,.9)) drop-shadow(0 0 20px rgba(34,229,180,.35))}
+#s5c.on .pline{animation:draw 1.8s 1.45s var(--easeInOutExpo) forwards}
+#s5c #cDash{opacity:0}
+#s5c.on #cDash{animation:fadeIn .5s 3.3s forwards}
+#s5c #cDot,#s5c #cRing{opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+#s5c #cTag{transform-box:view-box}   /* keep the attribute translate; animate an inner group */
+#s5c.on #cDot{animation:pop .4s 3.25s var(--easeOutQuint) forwards}
+#s5c.on #cRing{animation:ringPulse 1.7s 3.3s ease-out infinite}
+#s5c.on .tagpop{animation:pop .45s 3.35s var(--easeOutQuint) forwards}
+#s5c .tagpop{opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+@keyframes ringPulse{0%{opacity:.9;transform:scale(.3)}100%{opacity:0;transform:scale(3)}}
+#s5c .endtag{opacity:0;display:inline-flex;align-items:center;gap:8px;margin-top:14px;
+  font-size:12px;letter-spacing:.18em;color:var(--acc)}
+#s5c.on .endtag{animation:fadeUp .6s 3.7s forwards}
+
+/* ---------- SCENE — REAL XAUUSD replay (TradingView OLED style) ---------- */
+#s6 .wrap{width:min(1060px,94vw)}
+#s6 h3{font-size:clamp(20px,3vw,30px);font-weight:800;letter-spacing:-.02em;margin-bottom:4px}
+#s6 .sub{color:var(--mut);font-size:13.5px;margin-bottom:16px;letter-spacing:.02em}
+#s6 .panel{border-radius:12px;border:1px solid rgba(255,255,255,.07);
+  background:linear-gradient(180deg,#0b0e14,#0d1017);
+  box-shadow:0 30px 80px rgba(0,0,0,.55);overflow:hidden}
+#s6 .panel-head{display:flex;align-items:center;gap:12px;padding:11px 16px;
+  border-bottom:1px solid rgba(255,255,255,.06);font-size:12px}
+#s6 .sym{font-weight:800;letter-spacing:.02em;color:#e1e7ec}
+#s6 .badge{font-size:10.5px;letter-spacing:.14em;color:#5e6673;text-transform:uppercase}
+#s6 .chip{font-size:10.5px;letter-spacing:.12em;padding:3px 9px;border-radius:6px;
+  background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);color:#848e9c}
+#s6 .chip.up{color:#089981;border-color:rgba(8,153,129,.35);background:rgba(8,153,129,.08)}
+#s6 .chip.dn{color:#f23645;border-color:rgba(242,54,69,.35);background:rgba(242,54,69,.08)}
+#s6 svg{display:block;width:100%;height:400px}
+#s6 .panel-foot{display:flex;justify-content:space-between;padding:9px 16px;
+  border-top:1px solid rgba(255,255,255,.06);font-size:10.5px;letter-spacing:.18em;color:#5e6673}
+#s6 .last{font-variant-numeric:tabular-nums;font-weight:700}
+#s6 .wick{opacity:0}
+#s6 .cbody{opacity:0;transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0)}
+#s6.on .wick{animation:wickIn .22s var(--easeOutQuint) forwards}
+#s6.on .cbody{animation:tvBody .26s var(--easeOutQuint) forwards}
+@keyframes tvBody{0%{opacity:0;transform:scaleY(0)}100%{opacity:1;transform:scaleY(1)}}
+#s6 .vbar{opacity:0;transform-box:fill-box;transform-origin:50% 100%;transform:scaleY(0)}
+#s6.on .vbar{animation:tvBody .2s .04s var(--easeOutQuint) forwards}
+#s6 .lastline{opacity:0}
+#s6.on .lastline{animation:fadeIn .5s var(--easeOutQuint) forwards}
+#s6 .lastdot{opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+#s6.on .lastdot{animation:pop .4s var(--easeOutQuint) forwards}
+#s6.on .lastdot2{animation:ringPulse 1.8s .4s ease-out infinite}
+#s6 .tagbox{transform-box:view-box}   /* outer keeps the position transform; inner animates */
+#s6 .tagpop{opacity:0;transform-box:fill-box;transform-origin:50% 50%}
+#s6.on .tagpop{animation:pop .45s .1s var(--easeOutQuint) forwards}
+#s6 .endtag{opacity:0;display:inline-flex;align-items:center;gap:8px;margin-top:14px;
+  font-size:12px;letter-spacing:.18em;color:var(--acc)}
+#s6.on .endtag{animation:fadeUp .6s .5s forwards}
+
+/* ---------- SCENE 7 — 3D tilt cards ---------- */
+#s7 .trio{display:flex;gap:22px;perspective:1400px}
+#s7 .tcard{width:250px;border-radius:18px;padding:26px 24px;
+  background:linear-gradient(165deg,rgba(255,255,255,.055),rgba(255,255,255,.015));
+  border:1px solid rgba(255,255,255,.08);
+  box-shadow:0 24px 60px rgba(0,0,0,.45);
+  transform-style:preserve-3d;opacity:0;transform:translateY(50px) rotateY(12deg)}
+#s7.on .tcard{animation:tiltIn .9s var(--easeOutQuint) forwards}
+#s7.on .tcard:nth-child(1){animation-delay:.1s}
+#s7.on .tcard:nth-child(2){animation-delay:.24s}
+#s7.on .tcard:nth-child(3){animation-delay:.38s}
+@keyframes tiltIn{to{opacity:1;transform:translateY(0) rotateY(0)}}
+#s7 .tcard h4{font-size:15px;font-weight:700;margin:16px 0 8px}
+#s7 .tcard p{font-size:12.5px;line-height:1.55;color:var(--mut)}
+#s7 .ic{width:42px;height:42px;border-radius:12px;display:flex;align-items:center;justify-content:center;
+  background:linear-gradient(135deg,rgba(34,229,180,.16),rgba(47,123,255,.16));
+  border:1px solid rgba(255,255,255,.1)}
+#s7 .ic svg{width:20px;height:20px;stroke:var(--acc);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}
+
+/* ---------- SCENE 8 — end card ---------- */
+#s8 .end{display:flex;flex-direction:column;align-items:center;gap:18px}
+#s8 .mini{width:60px;height:60px;border-radius:16px;
+  background:linear-gradient(135deg,var(--acc),var(--acc2));
+  display:flex;align-items:center;justify-content:center;
+  font-weight:900;font-size:24px;color:#04110d;opacity:0;transform:scale(.4) rotate(-14deg)}
+#s8.on .mini{animation:miniIn .7s .1s var(--easeOutQuint) forwards}
+@keyframes miniIn{0%{opacity:0;transform:scale(.4) rotate(-14deg)}
+  60%{opacity:1;transform:scale(1.12) rotate(3deg)}100%{opacity:1;transform:scale(1) rotate(0)}}
+#s8 h2{font-size:clamp(30px,5.5vw,58px);font-weight:800;letter-spacing:-.03em;text-align:center}
+#s8 h2 em{font-style:normal;background:linear-gradient(135deg,var(--acc),var(--acc2));
+  -webkit-background-clip:text;background-clip:text;color:transparent}
+#s8 p{color:var(--mut);font-size:15px}
+#s8 .cta{margin-top:10px;padding:13px 30px;border-radius:12px;font-weight:700;font-size:14px;
+  color:#04110d;background:linear-gradient(135deg,var(--acc),#19c79a);
+  box-shadow:0 12px 34px rgba(34,229,180,.35);opacity:0}
+#s8.on .cta{animation:ctaIn .7s 1.1s var(--easeOutQuint) forwards}
+@keyframes ctaIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+
+/* ---------- SCENE 9 — fake AE timeline (control room) ---------- */
+#s9 .tl{width:min(920px,92vw);border-radius:16px;overflow:hidden;
+  border:1px solid rgba(255,255,255,.09);
+  background:rgba(10,12,16,.8);backdrop-filter:blur(14px);
+  box-shadow:0 30px 80px rgba(0,0,0,.6)}
+#s9 .tl-head{display:flex;align-items:center;gap:10px;padding:12px 16px;
+  border-bottom:1px solid rgba(255,255,255,.07);font-size:12px;color:var(--mut)}
+#s9 .tl-head .traffic{display:flex;gap:6px}
+#s9 .tl-head .traffic i{width:10px;height:10px;border-radius:50%;display:block}
+#s8 .traffic i:nth-child(1){background:#ff5f57}
+#s8 .traffic i:nth-child(2){background:#febc2e}
+#s8 .traffic i:nth-child(3){background:#28c840}
+#s9 .tl-track{position:relative;height:150px;padding:14px 0 0}
+#s9 .row{height:26px;margin:4px 12px;border-radius:6px;position:relative;
+  font-size:11px;letter-spacing:.14em;color:#cfe3dd;display:flex;align-items:center;padding:0 10px;
+  background:linear-gradient(90deg,rgba(34,229,180,.25),rgba(34,229,180,.08));
+  border:1px solid rgba(34,229,180,.25);overflow:hidden;white-space:nowrap;
+  transform-origin:left}
+#s9 .row:nth-child(2){background:linear-gradient(90deg,rgba(47,123,255,.25),rgba(47,123,255,.08));
+  border-color:rgba(47,123,255,.25)}
+#s9 .row:nth-child(3){background:linear-gradient(90deg,rgba(255,176,32,.22),rgba(255,176,32,.07));
+  border-color:rgba(255,176,32,.25)}
+#s9 .playhead{position:absolute;top:0;bottom:0;width:1.5px;background:#fff;
+  box-shadow:0 0 10px rgba(255,255,255,.8);left:0;opacity:0}
+#s9.on .playhead{opacity:1}
+#s9 .tl-foot{display:flex;justify-content:space-between;padding:10px 16px;
+  border-top:1px solid rgba(255,255,255,.07);font-size:10.5px;letter-spacing:.22em;color:var(--mut)}
+
+/* ---------- HUD chrome ---------- */
+.hud{position:fixed;left:0;right:0;bottom:0;z-index:60;display:flex;align-items:center;
+  justify-content:center;gap:14px;padding:14px;
+  background:linear-gradient(transparent,rgba(0,0,0,.55));
+}
+.chip{font-size:11px;letter-spacing:.22em;color:var(--mut);text-transform:uppercase}
+.btn{cursor:pointer;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.05);
+  color:var(--ink);border-radius:10px;padding:9px 18px;font-size:12.5px;font-weight:600;
+  letter-spacing:.06em;transition:.2s var(--easeOutQuint)}
+.btn:hover{background:rgba(255,255,255,.1);transform:translateY(-1px)}
+.btn.acc{background:linear-gradient(135deg,var(--acc),#19c79a);border-color:transparent;color:#04110d}
+.dots{display:flex;gap:7px;align-items:center}
+.dots i{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,.16);transition:.3s}
+.dots i.act{background:var(--acc);box-shadow:0 0 10px rgba(34,229,180,.7)}
+.counter{font-variant-numeric:tabular-nums;color:var(--mut);font-size:12px;letter-spacing:.1em}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+
+  <div class="bg-aurora"></div>
+  <div class="bg-grid"></div>
+
+  <!-- SCENE 1 — cinematic intro bars -->
+  <section class="scene" id="s1">
+    <div class="bar top"></div><div class="bar bot"></div>
+    <div class="stamp">AXIOM <i>/</i> MOTION TEST 01 — 60 FPS</div>
+    <div class="tape">SCENE 01 · TAKE ∞</div>
+  </section>
+
+  <!-- SCENE 2 — logo sting -->
+  <section class="scene" id="s2">
+    <div class="mark">
+      <div class="ring"></div><div class="ring"></div><div class="ring"></div>
+      <div class="core">A</div>
+      <div class="flare"></div>
+    </div>
+  </section>
+
+  <!-- SCENE 3 — kinetic type -->
+  <section class="scene" id="s3">
+    <div class="kinetic">
+      <div class="word"><span>MOTION</span></div>
+      <div class="word"><span>IS&nbsp;</span><span>MESSAGE</span></div>
+      <div class="sub">A demonstration of cinematic web animation</div>
+      <div class="rule"></div>
+    </div>
+  </section>
+
+  <!-- SCENE 4 — glass product card -->
+  <section class="scene" id="s4">
+    <div class="card">
+      <div class="row">
+        <div class="brandline"><span class="dot"></span><span class="ttl">AXIOM TERMINAL</span></div>
+        <span class="tag">LIVE DEMO DATA</span>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><div class="k">Portfolio</div><div class="v">$1,284,590</div><div class="d up">▲ 2.4% today</div></div>
+        <div class="kpi"><div class="k">Edge Score</div><div class="v">92.7</div><div class="d up">▲ +1.2 this week</div></div>
+        <div class="kpi"><div class="k">Risk Exposure</div><div class="v">0.8R</div><div class="d down">▼ 0.1R lower</div></div>
+      </div>
+      <div class="kpis" style="margin-bottom:0">
+        <div class="kpi"><div class="k">Session Bias</div><div class="v">NY AM</div><div class="d" style="color:var(--mut)">strongest window</div></div>
+        <div class="kpi"><div class="k">Win Rate</div><div class="v">64.9%</div><div class="d up">▲ rolling 30d</div></div>
+        <div class="kpi"><div class="k">Streak</div><div class="v">+5R</div><div class="d up">▲ 3 trades</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCENE 5 — self-drawing chart -->
+  <section class="scene" id="s5">
+    <div class="wrap">
+      <h3>The line that draws itself</h3>
+      <p>SVG stroke animation — pure code, zero video, scales to any screen</p>
+      <svg viewBox="0 0 900 260" preserveAspectRatio="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="lg" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0" stop-color="#22e5b4" stop-opacity=".28"/>
+            <stop offset="1" stop-color="#22e5b4" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+        <path class="area" fill="url(#lg)"
+          d="M0,215 L80,190 L160,205 L240,150 L320,168 L400,110 L480,132 L560,74 L640,96 L720,42 L800,60 L900,18 L900,260 L0,260 Z"/>
+        <path class="draw-line glow-line" pathLength="1" fill="none" stroke="#22e5b4" stroke-width="2.5"
+          d="M0,215 L80,190 L160,205 L240,150 L320,168 L400,110 L480,132 L560,74 L640,96 L720,42 L800,60 L900,18"/>
+        <circle class="pt" cx="400" cy="110" r="4.5" fill="#22e5b4"/>
+        <circle class="pt" cx="560" cy="74" r="4.5" fill="#22e5b4"/>
+        <circle class="pt" cx="720" cy="42" r="4.5" fill="#22e5b4"/>
+        <circle class="pt" cx="900" cy="18" r="5.5" fill="#fff"/>
+      </svg>
+      <div class="endtag">▲ EQUITY CURVE — +312% CAGR (DEMO)</div>
+    </div>
+  </section>
+
+  <!-- SCENE — self-building candles -->
+  <section class="scene" id="s5c">
+    <div class="wrap">
+      <h3>Candles that build themselves</h3>
+      <p>Wick first, body second — 24 candles stamp in while the glowing close line trails the price</p>
+      <svg id="candleSvg" viewBox="0 0 900 300" aria-hidden="true">
+        <g id="cGrid"></g>
+        <g id="cCandles"></g>
+        <line id="cDash" stroke="rgba(255,255,255,.28)" stroke-width="1" stroke-dasharray="3 6"/>
+        <path id="cLine" class="pline" pathLength="1" stroke="#22e5b4" stroke-width="2.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>
+        <circle id="cRing" r="7" fill="none" stroke="#22e5b4" stroke-width="2"/>
+        <circle id="cDot" r="4" fill="#eafffa"/>
+        <g id="cTag">
+          <g class="tagpop">
+            <rect width="66" height="22" rx="5" fill="#22e5b4"/>
+            <text x="33" y="15" text-anchor="middle" font-size="11.5" font-weight="700" fill="#04110d">2,752.8</text>
+          </g>
+        </g>
+      </svg>
+      <div class="endtag">▲ AXIOM FEED · XAUUSD 15M · REPLAY (DEMO)</div>
+    </div>
+  </section>
+
+  <!-- SCENE — REAL XAUUSD replay (TradingView OLED) -->
+  <section class="scene" id="s6">
+    <div class="wrap">
+      <h3>Rendered from real market data</h3>
+      <p class="sub">Every candle below is genuine XAUUSD price action, streamed in by script — the same engine that powers BattleX replay</p>
+      <div class="panel">
+        <div class="panel-head">
+          <span class="sym">XAUUSD</span>
+          <span class="badge">· 15 · FXCOM</span>
+          <span class="chip" id="tvRange">OCT 2024</span>
+          <span class="chip up" id="tvChg">+0.00%</span>
+          <span style="margin-left:auto" class="badge">BATTLEX REPLAY</span>
+        </div>
+        <svg id="tvSvg" viewBox="0 0 1040 420" preserveAspectRatio="none" aria-hidden="true">
+          <g id="tvGrid"></g>
+          <g id="tvBars"></g>
+          <g id="tvVol"></g>
+          <line id="tvLastLine" class="lastline" stroke-dasharray="4 5" stroke="rgba(242,54,69,.55)" stroke-width="1"/>
+          <circle id="tvLastDot" class="lastdot" r="4" fill="#fff"/>
+ <circle id="tvLastDot2" class="lastdot lastdot2" r="6" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="2"/>
+          <g id="tvTag" class="tagbox">
+            <g class="tagpop">
+              <rect width="74" height="22" rx="4" fill="#f23645"/>
+              <text id="tvTagText" x="37" y="15" text-anchor="middle" font-size="11.5" font-weight="700" fill="#fff">0000.00</text>
+            </g>
+          </g>
+        </svg>
+        <div class="panel-foot">
+          <span id="tvFootL">AXIOM FEED · XAUUSD 15M</span>
+          <span>LAST <span class="last" id="tvLast">0000.00</span></span>
+        </div>
+      </div>
+      <div class="endtag">▲ REAL GOLD DATA · OCTOBER 2024 · BUILT BY build-motion-data.js</div>
+    </div>
+  </section>
+
+  <!-- SCENE 7 — 3D cards -->
+  <section class="scene" id="s7">
+    <div class="trio">
+      <div class="tcard">
+        <div class="ic"><svg viewBox="0 0 24 24"><path d="M3 17l6-6 4 4 8-8"/><path d="M14 7h7v7"/></svg></div>
+        <h4>Reveals that breathe</h4>
+        <p>Staggered entrances with expo easing — the rhythm professionals feel before they notice it.</p>
+      </div>
+      <div class="tcard">
+        <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 12h18M12 3v18"/></svg></div>
+        <h4>Depth without plugins</h4>
+        <p>Perspective, parallax and glass built from raw CSS — no After Effects render farm required.</p>
+      </div>
+      <div class="tcard">
+        <div class="ic"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 3"/></svg></div>
+        <h4>Timed like an edit</h4>
+        <p>Every scene has an in-point, a hold and an out-point — cut on the beat, like a title sequence.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SCENE 8 — end card -->
+  <section class="scene" id="s8">
+    <div class="end">
+      <div class="mini">A</div>
+      <h2>Built like a title sequence.<br><em>Runs like a website.</em></h2>
+      <p>Drop these scenes into any landing page — they're just HTML + CSS.</p>
+      <button class="cta" id="replayBtn">↻ Replay the sequence</button>
+      <p class="chip" style="letter-spacing:.3em;margin-top:6px">AXIOM MOTION · DEMO 2026</p>
+    </div>
+  </section>
+
+  <!-- SCENE 9 — fake AE timeline (control room) -->
+  <section class="scene" id="s9">
+    <div class="tl">
+      <div class="tl-head">
+        <div class="traffic"><i></i><i></i><i></i></div>
+        <span>AXIOM_SEQUENCE.aep — TIMELINE</span>
+        <span style="margin-left:auto" id="tlTime">00:00:00</span>
+      </div>
+      <div class="tl-track" id="tlTrack">
+        <div class="row" style="width:96%">SC 01 · INTRO BARS</div>
+        <div class="row" style="width:74%;margin-left:8%">SC 02 · LOGO STING</div>
+        <div class="row" style="width:58%;margin-left:16%">SC 03 · KINETIC TYPE</div>
+        <div class="row" style="width:82%;margin-left:4%">SC 04 · CANDLE BUILD</div>
+        <div class="playhead" id="playhead"></div>
+      </div>
+      <div class="tl-foot"><span>60 FPS · COMPOSITION 1920×1080</span><span>AXIOM MOTION ENGINE v1.0</span></div>
+    </div>
+  </section>
+
+  <div class="bg-vignette"></div>
+  <div class="bg-grain"></div>
+</div>
+
+<!-- HUD -->
+<div class="hud">
+  <button class="btn" id="prevBtn">‹ Prev</button>
+  <div class="dots" id="dots"></div>
+  <button class="btn acc" id="nextBtn">Next ›</button>
+  <span class="counter" id="counter">01 / 09</span>
+  <button class="btn" id="autoBtn">▶ Auto</button>
+</div>
+
+<script>
+/* ---- SCENE s6 — render REAL XAUUSD candles (injected by build-motion-data.js) ---- */
+const BX_CANDLES=[{"time":1730311200,"open":2784.69,"high":2786.46,"low":2783.03,"close":2784.99,"volume":1386},{"time":1730312100,"open":2784.99,"high":2786.19,"low":2784.28,"close":2785.45,"volume":1327},{"time":1730313000,"open":2785.43,"high":2786.29,"low":2784.49,"close":2785.7,"volume":1089},{"time":1730313900,"open":2785.7,"high":2787.46,"low":2785.14,"close":2785.39,"volume":1131},{"time":1730314800,"open":2785.46,"high":2786.73,"low":2783.98,"close":2786.43,"volume":1047},{"time":1730315700,"open":2786.38,"high":2789.61,"low":2785.7,"close":2789.08,"volume":1141},{"time":1730316600,"open":2789.06,"high":2789.6,"low":2787.66,"close":2788.94,"volume":1018},{"time":1730317500,"open":2788.94,"high":2789.34,"low":2788.02,"close":2788.6,"volume":918},{"time":1730318400,"open":2788.62,"high":2790.05,"low":2788.57,"close":2788.67,"volume":953},{"time":1730319300,"open":2788.72,"high":2789.31,"low":2787.51,"close":2788.18,"volume":943},{"time":1730320200,"open":2788.28,"high":2788.84,"low":2787.35,"close":2788.11,"volume":742},{"time":1730321100,"open":2787.93,"high":2789.06,"low":2787.62,"close":2787.76,"volume":810},{"time":1730322000,"open":2787.77,"high":2788.17,"low":2786.49,"close":2786.95,"volume":900},{"time":1730322900,"open":2786.96,"high":2786.96,"low":2785.4,"close":2786.15,"volume":789},{"time":1730323800,"open":2786.12,"high":2786.12,"low":2784.49,"close":2784.64,"volume":816},{"time":1730324700,"open":2784.74,"high":2787.83,"low":2784.74,"close":2787.38,"volume":832},{"time":1730325600,"open":2787.66,"high":2787.83,"low":2786.22,"close":2786.42,"volume":623},{"time":1730326500,"open":2786.31,"high":2786.5,"low":2784.75,"close":2785.43,"volume":487},{"time":1730327400,"open":2785.4,"high":2787.98,"low":2785.4,"close":2787.93,"volume":415},{"time":1730328300,"open":2787.93,"high":2788.08,"low":2786.28,"close":2787.21,"volume":423},{"time":1730332800,"open":2787.85,"high":2787.85,"low":2786.08,"close":2787.58,"volume":419},{"time":1730333700,"open":2787.46,"high":2787.73,"low":2786.09,"close":2786.86,"volume":346},{"time":1730334600,"open":2786.85,"high":2787.41,"low":2786.62,"close":2787.12,"volume":298},{"time":1730335500,"open":2787.11,"high":2787.77,"low":2786.81,"close":2787.54,"volume":240},{"time":1730336400,"open":2787.54,"high":2788.11,"low":2787.14,"close":2787.25,"volume":327},{"time":1730337300,"open":2787.25,"high":2787.65,"low":2786.47,"close":2786.65,"volume":270},{"time":1730338200,"open":2786.65,"high":2786.96,"low":2786.35,"close":2786.64,"volume":307},{"time":1730339100,"open":2786.64,"high":2786.92,"low":2785.25,"close":2785.33,"volume":432},{"time":1730340000,"open":2785.48,"high":2786.76,"low":2784.71,"close":2786.73,"volume":648},{"time":1730340900,"open":2786.76,"high":2788.21,"low":2785.93,"close":2786.15,"volume":576},{"time":1730341800,"open":2786.23,"high":2787.66,"low":2786.13,"close":2787.61,"volume":450},{"time":1730342700,"open":2787.6,"high":2787.85,"low":2786.8,"close":2787.58,"volume":557},{"time":1730343600,"open":2787.64,"high":2790.09,"low":2787.43,"close":2787.85,"volume":1154},{"time":1730344500,"open":2787.79,"high":2789.34,"low":2786.9,"close":2788.17,"volume":1020},{"time":1730345400,"open":2788.13,"high":2789.37,"low":2785.72,"close":2786.01,"volume":1063},{"time":1730346300,"open":2786.03,"high":2786.53,"low":2783.54,"close":2784.65,"volume":1273},{"time":1730347200,"open":2784.62,"high":2787.13,"low":2784.39,"close":2784.98,"volume":1176},{"time":1730348100,"open":2785.04,"high":2785.45,"low":2784.47,"close":2784.95,"volume":713},{"time":1730349000,"open":2784.94,"high":2789.02,"low":2784.86,"close":2788.24,"volume":1046},{"time":1730349900,"open":2788.24,"high":2788.46,"low":2786.41,"close":2787.11,"volume":963},{"time":1730350800,"open":2786.85,"high":2788.17,"low":2786.72,"close":2787.93,"volume":837},{"time":1730351700,"open":2787.93,"high":2788.45,"low":2785.39,"close":2785.47,"volume":808},{"time":1730352600,"open":2785.44,"high":2787.03,"low":2785.44,"close":2786.05,"volume":478},{"time":1730353500,"open":2786.05,"high":2786.24,"low":2784.33,"close":2784.55,"volume":634},{"time":1730354400,"open":2784.64,"high":2785.35,"low":2783.57,"close":2784.22,"volume":716},{"time":1730355300,"open":2784.27,"high":2784.57,"low":2782.19,"close":2782.24,"volume":648},{"time":1730356200,"open":2782.19,"high":2784.59,"low":2782.05,"close":2784.13,"volume":684},{"time":1730357100,"open":2784.14,"high":2785.07,"low":2783.56,"close":2784.46,"volume":618},{"time":1730358000,"open":2784.37,"high":2784.68,"low":2782.7,"close":2782.78,"volume":682},{"time":1730358900,"open":2782.78,"high":2786.55,"low":2782.63,"close":2785.17,"volume":964},{"time":1730359800,"open":2785.15,"high":2785.32,"low":2782.71,"close":2784.06,"volume":1104},{"time":1730360700,"open":2784.06,"high":2785.17,"low":2783.33,"close":2785.06,"volume":971},{"time":1730361600,"open":2785.08,"high":2785.99,"low":2783.62,"close":2785.49,"volume":1100},{"time":1730362500,"open":2785.49,"high":2786.03,"low":2784.69,"close":2785.39,"volume":886},{"time":1730363400,"open":2785.42,"high":2785.48,"low":2782.09,"close":2783.85,"volume":1196},{"time":1730364300,"open":2783.82,"high":2784.46,"low":2779.65,"close":2779.76,"volume":1180},{"time":1730365200,"open":2779.77,"high":2781.67,"low":2778.11,"close":2781.16,"volume":1183},{"time":1730366100,"open":2781.19,"high":2782.43,"low":2780.66,"close":2782.31,"volume":1024},{"time":1730367000,"open":2782.31,"high":2784.08,"low":2782.28,"close":2783.74,"volume":1005},{"time":1730367900,"open":2783.85,"high":2783.93,"low":2781.03,"close":2782.04,"volume":938},{"time":1730368800,"open":2782.03,"high":2783.11,"low":2778.95,"close":2779.38,"volume":1111},{"time":1730369700,"open":2779.38,"high":2779.48,"low":2777.75,"close":2778.4,"volume":1125},{"time":1730370600,"open":2778.33,"high":2779.49,"low":2776.92,"close":2778.46,"volume":1062},{"time":1730371500,"open":2778.51,"high":2780.21,"low":2778.08,"close":2779,"volume":1008},{"time":1730372400,"open":2778.64,"high":2780.15,"low":2777.69,"close":2778.31,"volume":1013},{"time":1730373300,"open":2777.97,"high":2778.41,"low":2777,"close":2777.41,"volume":915},{"time":1730374200,"open":2777.4,"high":2779.54,"low":2777.23,"close":2779.54,"volume":893},{"time":1730375100,"open":2779.54,"high":2779.85,"low":2778.21,"close":2778.21,"volume":863},{"time":1730376000,"open":2778.21,"high":2778.71,"low":2774.81,"close":2775.12,"volume":936},{"time":1730376900,"open":2775.17,"high":2777.72,"low":2773.34,"close":2777.67,"volume":1072},{"time":1730377800,"open":2777.46,"high":2780.61,"low":2777.34,"close":2780.1,"volume":1059},{"time":1730378700,"open":2780.11,"high":2781.17,"low":2779.76,"close":2780.85,"volume":944},{"time":1730379600,"open":2780.96,"high":2782.61,"low":2778.54,"close":2778.6,"volume":1042},{"time":1730380500,"open":2778.66,"high":2779.68,"low":2777.35,"close":2777.79,"volume":927},{"time":1730381400,"open":2777.8,"high":2779.37,"low":2776.73,"close":2778.81,"volume":921},{"time":1730382300,"open":2778.71,"high":2780.24,"low":2776.92,"close":2779.44,"volume":1066},{"time":1730383200,"open":2779.43,"high":2781.62,"low":2778.98,"close":2781.4,"volume":1116},{"time":1730384100,"open":2781.39,"high":2781.94,"low":2775.81,"close":2776.88,"volume":1178},{"time":1730385000,"open":2776.52,"high":2778.65,"low":2774.14,"close":2774.26,"volume":1548},{"time":1730385900,"open":2774.3,"high":2775.2,"low":2771.99,"close":2773.62,"volume":1437},{"time":1730386800,"open":2773.61,"high":2773.93,"low":2767.49,"close":2769.68,"volume":1642},{"time":1730387700,"open":2769.66,"high":2770.61,"low":2765.65,"close":2767.28,"volume":1568},{"time":1730388600,"open":2767.02,"high":2768.11,"low":2761.37,"close":2761.88,"volume":1545},{"time":1730389500,"open":2761.91,"high":2764.11,"low":2754.71,"close":2755.33,"volume":1669},{"time":1730390400,"open":2755.34,"high":2755.34,"low":2748.13,"close":2752.63,"volume":1659},{"time":1730391300,"open":2752.5,"high":2756.84,"low":2749.07,"close":2749.86,"volume":1651},{"time":1730392200,"open":2749.72,"high":2752.45,"low":2740.53,"close":2740.99,"volume":1639},{"time":1730393100,"open":2740.97,"high":2741.71,"low":2734.68,"close":2734.79,"volume":1663},{"time":1730394000,"open":2734.6,"high":2736.58,"low":2731.64,"close":2734.57,"volume":1615},{"time":1730394900,"open":2734.68,"high":2740.95,"low":2734.55,"close":2739.43,"volume":1593}];
+const BX_META={"label":"October 2024","range":"Oct 30 → Oct 31 2024 · 90×15M","chg":"-1.63%","up":false,"high":2790.09,"low":2731.64,"last":2739.43};
+(function renderTvScene(){
+  const svg=document.getElementById('tvSvg');
+  if(!svg||!BX_CANDLES||!BX_CANDLES.length) return;
+  const W=1040,H=420,PB=96,PAD=14;           // PB = volume strip height
+  const NS='http://www.w3.org/2000/svg';
+  const el=(t,a)=>{const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);return n};
+
+  let lo=Infinity,hi=-Infinity,vmax=0;
+  BX_CANDLES.forEach(c=>{if(c.low<lo)lo=c.low;if(c.high>hi)hi=c.high;if(c.volume>vmax)vmax=c.volume;});
+  const span=(hi-lo)||1;
+  const plotH=H-PB-PAD*2, y=v=>PAD+(hi-v)/span*plotH;
+  const chartH=H-PB-PAD*2;
+  const slot=W/BX_CANDLES.length, bw=Math.max(3,Math.min(12,slot*0.62));
+
+  // horizontal gridlines + price labels (TV-style, right axis)
+  const grid=document.getElementById('tvGrid');
+  for(let i=0;i<=4;i++){
+    const v=lo+span*i/4, yy=y(v);
+    grid.appendChild(el('line',{x1:0,y1:yy,x2:W,y2:yy,stroke:'rgba(255,255,255,.04)','stroke-width':1}));
+    const t=el('text',{x:W-6,y:yy-4,'text-anchor':'end','font-size':10,fill:'#5e6673'});
+    t.textContent=v.toFixed(2);
+    grid.appendChild(t);
+  }
+
+  const bars=document.getElementById('tvBars'), vol=document.getElementById('tvVol');
+  const volTop=H-PAD, volScale=(PB-PAD)/vmax, STAG=0.028;   // ~2.5s total build
+  BX_CANDLES.forEach((c,i)=>{
+    const x=slot*i+slot/2, up=c.close>=c.open;
+    const col=up?'#089981':'#f23645';                       // FX Replay OLED palette
+    const w=el('line',{class:'wick',x1:x,y1:y(c.high),x2:x,y2:y(c.low),stroke:col,'stroke-width':Math.max(1,bw*0.18)});
+    const bh=Math.max(1.5,Math.abs(y(c.open)-y(c.close)));
+    const top=y(Math.max(c.open,c.close));
+    const b=el('rect',{class:'cbody',x:x-bw/2,y:top,width:bw,height:bh,rx:1,fill:col});
+    w.style.animationDelay=(0.15+i*STAG).toFixed(2)+'s';
+    b.style.animationDelay=(0.2+i*STAG).toFixed(2)+'s';
+    bars.appendChild(w);bars.appendChild(b);
+    if(c.volume>0){
+      const vh=Math.max(1,c.volume*volScale);
+      const vb=el('rect',{class:'vbar',x:x-bw/2,y:volTop-vh,width:bw,height:vh,rx:1,fill:col,'fill-opacity':0.32});
+      vb.style.animationDelay=(0.18+i*STAG).toFixed(2)+'s';
+      vol.appendChild(vb);
+    }
+  });
+
+  const last=BX_CANDLES[BX_CANDLES.length-1], up=last.close>=last.open;
+  const lastCol=up?'#089981':'#f23645', ly=y(last.close);
+  const line=document.getElementById('tvLastLine');
+  line.setAttribute('x1',0);line.setAttribute('y1',ly);
+  line.setAttribute('x2',W);line.setAttribute('y2',ly);
+  line.setAttribute('stroke',lastCol);
+  const dot=document.getElementById('tvLastDot'),dot2=document.getElementById('tvLastDot2'),tag=document.getElementById('tvTag');
+  [dot,dot2].forEach(d=>{d.setAttribute('cx',W-3);d.setAttribute('cy',ly);});
+  dot.setAttribute('fill',lastCol);
+  const tx=W-80,tyy=Math.max(4,Math.min(H-PB-26,ly-11));
+  tag.setAttribute('transform',`translate(${tx},${tyy})`);
+  tag.querySelector('rect').setAttribute('fill',lastCol);
+  const tagText=document.getElementById('tvTagText');
+  tagText.textContent=last.close.toFixed(2);
+  tagText.setAttribute('fill',up?'#04110d':'#fff');
+  document.getElementById('tvLast').textContent=last.close.toFixed(2);
+  document.getElementById('tvLast').style.color=lastCol;
+
+  if (typeof BX_META!=='undefined' && BX_META){
+    const m=BX_META;
+    document.getElementById('tvRange').textContent=m.range.toUpperCase();
+    const chg=document.getElementById('tvChg');
+    chg.textContent=m.chg;
+    chg.className='chip '+(m.up?'up':'dn');
+    document.getElementById('tvFootL').textContent='AXIOM FEED · XAUUSD 15M · '+(m.label||'').toUpperCase();
+  }
+})();
+
+/* ---- SCENE s5c — build the candle field once; fresh() re-clones it per visit ---- */
+(function buildCandles(){
+  const D=[[.10,.14,.16,.08],[.14,.12,.17,.10],[.12,.20,.22,.11],[.20,.26,.28,.19],
+           [.26,.22,.27,.20],[.22,.18,.23,.15],[.18,.24,.26,.17],[.24,.32,.34,.23],
+           [.32,.30,.35,.27],[.30,.38,.40,.29],[.38,.44,.47,.37],[.44,.40,.45,.38],
+           [.40,.48,.50,.39],[.48,.46,.51,.42],[.46,.54,.56,.45],[.54,.52,.57,.49],
+           [.52,.60,.63,.51],[.60,.58,.64,.55],[.58,.66,.68,.57],[.66,.72,.75,.65],
+           [.72,.68,.73,.64],[.68,.76,.78,.67],[.76,.82,.85,.75],[.82,.88,.92,.81]]; // [open,close,high,low]
+  const svg=document.getElementById('candleSvg');
+  if(!svg) return;
+  const NS='http://www.w3.org/2000/svg', Y=function(v){return 282-v*252}, slot=818/D.length, bw=14, STAG=.085;
+  const el=function(t,a){const n=document.createElementNS(NS,t);for(const k in a)n.setAttribute(k,a[k]);return n};
+
+  const grid=svg.querySelector('#cGrid');
+  for(let i=0;i<4;i++){const yy=58+i*58;grid.appendChild(el('line',{x1:0,y1:yy,x2:884,y2:yy,stroke:'rgba(255,255,255,.045)','stroke-width':1}));}
+
+  const gc=svg.querySelector('#cCandles'), pts=[];
+  D.forEach(function(c,i){
+    const o=c[0],cl=c[1],h=c[2],l=c[3];
+    const x=12+slot*i+slot/2, up=cl>=o, col=up?'#22e5b4':'#ff5470';
+    const w=el('line',{class:'wick',x1:x.toFixed(1),y1:Y(h).toFixed(1),x2:x.toFixed(1),y2:Y(l).toFixed(1),stroke:col,'stroke-width':2,'stroke-opacity':.85});
+    w.style.animationDelay=(.2+i*STAG).toFixed(2)+'s';
+    const bh=Math.max(2.5,Math.abs(Y(o)-Y(cl)));
+    const b=el('rect',{class:'cbody',x:(x-bw/2).toFixed(1),y:Y(Math.max(o,cl)).toFixed(1),width:bw,height:bh.toFixed(1),rx:1.5,fill:col});
+    b.style.animationDelay=(.26+i*STAG).toFixed(2)+'s';
+    gc.appendChild(w);gc.appendChild(b);
+    pts.push([x,Y(cl)]);
+  });
+
+  svg.querySelector('#cLine').setAttribute('d','M'+pts.map(function(p){return p[0].toFixed(1)+','+p[1].toFixed(1)}).join(' L'));
+
+  const last=pts[pts.length-1], lx=last[0], ly=last[1];
+  const dash=svg.querySelector('#cDash');
+  dash.setAttribute('x1',(lx+9).toFixed(1));dash.setAttribute('y1',ly.toFixed(1));
+  dash.setAttribute('x2',884);dash.setAttribute('y2',ly.toFixed(1));
+  const dot=svg.querySelector('#cDot'),ring=svg.querySelector('#cRing');
+  dot.setAttribute('cx',lx);dot.setAttribute('cy',ly);
+  ring.setAttribute('cx',lx);ring.setAttribute('cy',ly);
+  const tag=svg.querySelector('#cTag');
+  let tx=Math.min(lx+12,900-72),tyy=ly-34; if(tyy<4)tyy=ly+16;
+  tag.setAttribute('transform','translate('+tx.toFixed(1)+','+tyy.toFixed(1)+')');
+  tag.querySelector('text').textContent=(2700+D[D.length-1][1]*60).toLocaleString('en-US',{minimumFractionDigits:1,maximumFractionDigits:1});
+})();
+
+/* ============================================================
+   SEQUENCER — an "After Effects timeline" in ~80 lines of JS.
+   Each scene = {el, in, hold} (seconds). The engine toggles
+   .on / .leave, restarts CSS animations by re-cloning, drives
+   the playhead + counter, and supports auto-play.
+   ============================================================ */
+const sceneEls = [...document.querySelectorAll('.scene')];
+const HOLD = {s1:3.4, s2:4.2, s3:4.6, s4:5.2, s5:5.6, s5c:6.4, s6:6.6, s7:5.2, s8:9999, s9:6.5};
+const scenes = sceneEls.map(el => ({ el, hold: HOLD[el.id] ?? 5, live: el }));
+const dotsWrap = document.getElementById('dots');
+const counter = document.getElementById('counter');
+const autoBtn = document.getElementById('autoBtn');
+
+/* build the dot indicators */
+scenes.forEach((s,i)=>{
+  const d = document.createElement('i');
+  d.addEventListener('click', ()=>go(i));
+  dotsWrap.appendChild(d);
+});
+const dots = [...dotsWrap.children];
+
+let cur = -1, timer = null, tlRAF = null, tlStart = 0, auto = true;
+
+/* Re-clone the scene so every CSS animation restarts from frame 0 */
+function fresh(s){
+  const c = s.live.cloneNode(true);
+  s.live.parentNode.replaceChild(c, s.live);
+  s.live = c;
+  return c;
+}
+
+function updateChrome(){
+  dots.forEach((d,i)=>d.classList.toggle('act', i===cur));
+  counter.textContent = String(cur+1).padStart(2,'0') + ' / ' + String(scenes.length).padStart(2,'0');
+}
+
+/* Scene 8's fake-AE playhead: animate while that scene is active.
+   Query the LIVE clone each frame — the original node is stale after fresh(). */
+function runTimeline(){
+  cancelAnimationFrame(tlRAF);
+  const TL = scenes.findIndex(function(s){return s.el.id==='s9'});
+  if (TL < 0) return;
+  const live = scenes[TL].live;
+  const ph = live.querySelector('.playhead');
+  const tt = live.querySelector('#tlTime');
+  if (cur !== TL){ if (ph) ph.style.left = '0%'; if (tt) tt.textContent = '00:00:00'; return; }
+  tlStart = performance.now();
+  const DUR = 6000;
+  (function tick(t){
+    const p = Math.min(1, (t - tlStart) / DUR);
+    if (ph) ph.style.left = (p*100).toFixed(2) + '%';
+    const sec = p*6;
+    if (tt) tt.textContent = '00:00:' + String(Math.floor(sec)).padStart(2,'0') + ':' + String(Math.floor((sec%1)*60)).padStart(2,'0');
+    if (p < 1 && cur === TL) tlRAF = requestAnimationFrame(tick);
+  })(tlStart);
+}
+
+function go(n, fromAuto=false){
+  clearTimeout(timer); cancelAnimationFrame(tlRAF);
+  if (cur >= 0){
+    const old = scenes[cur].live;
+    old.classList.remove('on');
+    old.classList.add('leave');
+  }
+  cur = ((n % scenes.length) + scenes.length) % scenes.length;
+  const s = scenes[cur];
+  const el = fresh(s);
+  el.classList.remove('leave');
+  void el.offsetWidth;              // force reflow so .on animations replay
+  el.classList.add('on');
+  updateChrome();
+  runTimeline();
+  const END = scenes.findIndex(function(s){return s.el.id==='s8'});   // end card holds the finale
+  if (cur === END){ setAuto(false, true); return; }   // hold the finale
+  if (s.hold < 100){
+    timer = setTimeout(()=>{ if (auto) go(cur+1, true); }, s.hold*1000);
+  }
+}
+
+function setAuto(v, silent){
+  auto = v;
+  autoBtn.textContent = v ? '❚❚ Auto' : '▶ Auto';
+  if (!v) clearTimeout(timer);
+  else if (cur >= 0 && !silent) go(cur, true);
+}
+
+document.getElementById('nextBtn').onclick = ()=>go(cur+1);
+document.getElementById('prevBtn').onclick = ()=>go(cur-1);
+autoBtn.onclick = ()=>setAuto(!auto);
+document.getElementById('replayBtn').onclick = ()=>{ setAuto(true, true); go(0); };
+document.addEventListener('keydown', e=>{
+  if (e.key==='ArrowRight') go(cur+1);
+  else if (e.key==='ArrowLeft') go(cur-1);
+  else if (e.key===' ') { e.preventDefault(); setAuto(!auto); }
+});
+
+/* boot */
+go(0);
+</script>
+</body>
+</html>

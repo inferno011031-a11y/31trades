@@ -50,7 +50,7 @@ const sessB = { // 2024 — legacy session, NO stored session/year/month/tags on
     ]
 };
 
-const sessRunning = { // in-progress — must be excluded
+const sessRunning = { // in-progress — its CLOSED trade feeds analytics in real time
     id: 'bt_c', userId: 'u1', symbol: 'NAS100', timeframe: '5m', strategy: 'Silver Bullet',
     category: 'Indices', startingBalance: 2000, status: 'running',
     createdAt: '2025-03-01T00:00:00Z', completedAt: null,
@@ -84,7 +84,11 @@ t('classify: null → —', A.classifySession(null) === '—');
 // 2. Enrichment + legacy derivation
 // ---------------------------------------------------------------------------
 const enriched = A.collectTrades(SESSIONS);
-t('collect: completed sessions only (5 trades, running excluded)', enriched.length === 5);
+t('collect: real-time — live-session closed trades included (6 trades)', enriched.length === 6 && enriched.some(x => x.id === 't6'));
+t('collect: running session contributes closed trades, no completion gate', (() => {
+    const t6 = enriched.find(x => x.id === 't6');
+    return t6 && t6.sessionId === 'bt_c' && t6.year === 2025 && t6.month === 3;
+})());
 const t4 = enriched.find(x => x.id === 't4');
 t('legacy: t4 session derived (02:00 UTC → Asian)', t4.session === 'Asian');
 t('legacy: t4 year derived (2024)', t4.year === 2024);
@@ -103,17 +107,17 @@ t('dow: t1 (2025-01-15) → Wednesday', t1.dow === 'Wednesday');
 const years = A.historyYears(SESSIONS);
 t('years: 2025 before 2024 (desc)', years.years[0].year === 2025 && years.years[1].year === 2024);
 const y2025 = years.years[0];
-t('years 2025: 3 trades, 1 session', y2025.trades === 3 && y2025.sessions === 1);
-t('years 2025: net = 20 + 9.8 - 16 = 13.8', near(y2025.net, 13.8));
-t('years 2025: totalR = 2 + 1.4 - 0.8 = 2.6', near(y2025.totalR, 2.6));
-t('years 2025: months = [1,2]', JSON.stringify(y2025.months) === '[1,2]');
+t('years 2025: 4 trades, 2 sessions (incl. live bt_c)', y2025.trades === 4 && y2025.sessions === 2);
+t('years 2025: net = 20 + 9.8 - 16 + 20 = 33.8', near(y2025.net, 33.8));
+t('years 2025: totalR = 2 + 1.4 - 0.8 + 2 = 4.6', near(y2025.totalR, 4.6));
+t('years 2025: months = [1,2,3]', JSON.stringify(y2025.months) === '[1,2,3]');
 t('years 2024: 2 trades, 2 months', years.years[1].trades === 2 && JSON.stringify(years.years[1].months) === '[3]');
 
 // ---------------------------------------------------------------------------
 // 4. historyMonths
 // ---------------------------------------------------------------------------
 const months2025 = A.historyMonths(SESSIONS, 2025);
-t('months 2025: two cards (Jan, Feb)', months2025.months.length === 2);
+t('months 2025: three cards (Jan, Feb, Mar — Mar live-session)', months2025.months.length === 3);
 const jan = months2025.months[0];
 t('Jan label', jan.label === 'January 2025');
 t('Jan net 29.8, winRate 100, trades 2', near(jan.net, 29.8) && jan.winRate === 100 && jan.trades === 2);
@@ -164,7 +168,7 @@ t('Feb maxDrawdown 16', near(detFeb.headline.maxDrawdown, 16));
 const q1 = A.queryTrades(SESSIONS, { year: '2025', month: '1' });
 t('query: year+month filter → 2 trades, total=2', q1.total === 2 && q1.trades.length === 2);
 const q2 = A.queryTrades(SESSIONS, { session: 'New York AM' });
-t('query: by session → t1 + legacy t5 (13:30 UTC derives to NY AM)', q2.total === 2 && q2.trades.some(x => x.id === 't1') && q2.trades.some(x => x.id === 't5'));
+t('query: by session → t1 + t5 + live t6 (NY AM classifies live too)', q2.total === 3 && q2.trades.some(x => x.id === 't1') && q2.trades.some(x => x.id === 't5') && q2.trades.some(x => x.id === 't6'));
 const q3 = A.queryTrades(SESSIONS, { strategy: 'Liquidity Sweep' });
 t('query: by strategy → 2 legacy trades', q3.total === 2);
 const q4 = A.queryTrades(SESSIONS, { symbol: 'XAUUSD', direction: 'Long' });
@@ -174,9 +178,11 @@ t('query: by tag → t1', q5.total === 1 && q5.trades[0].id === 't1');
 const q6 = A.queryTrades(SESSIONS, { result: 'loss' });
 t('query: result=loss → t3, t5', q6.total === 2);
 const q7 = A.queryTrades(SESSIONS, { limit: '2', offset: '1' });
-t('query: pagination limit/offset respected', q7.trades.length === 2 && q7.total === 5);
+t('query: pagination limit/offset respected', q7.trades.length === 2 && q7.total === 6);
 const q8 = A.queryTrades(SESSIONS, {});
-t('query: no filter → all 5, newest first', q8.total === 5 && q8.trades[0].id === 't6' ? false : q8.total === 5);
+t('query: no filter → all 6, newest first', q8.total === 6);
+const q9 = A.queryTrades(SESSIONS, { year: '2025', month: '3' });
+t('query: live-session trade filterable mid-run (2025-03 → t6)', q9.total === 1 && q9.trades[0].id === 't6');
 
 // ---------------------------------------------------------------------------
 // 7. Env override for session rules

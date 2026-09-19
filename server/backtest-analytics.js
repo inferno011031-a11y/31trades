@@ -12,9 +12,12 @@
 //   · Pure functions — no I/O, no persistence. Callers pass in sessions
 //     (hydrated BacktestSession instances or plain fixture objects with the
 //     same fields). A Postgres swap later changes only the caller.
-//   · Only sessions with status 'completed' are included: finished backtests
-//     feed history (spec 13). In-progress sessions are excluded, which also
-//     keeps blind-mode periods from leaking mid-run.
+//   · Live sessions feed history in real time: every CLOSED trade is
+//     included the moment it settles (spec 13 — real-time analytics sync,
+//     no waiting for session completion). Open positions have no trade
+//     record yet, so they contribute nothing. Blind-mode masking still
+//     holds: blind sessions expose actualPeriod only after completion.
+//     The optional LIVE_EXCLUDED filter keeps completed-only callers alive.
 //   · Legacy compatibility: trades recorded before session/year/month were
 //     stored on the trade object are derived on read from entryTime.
 //   · Extensible dimensions: one new accessor in DIMENSIONS = one new
@@ -147,12 +150,17 @@ function enrichTrade(t, session) {
     };
 }
 
-/** All closed trades from completed sessions, enriched. */
+/**
+ * All closed trades, enriched — real-time (live + completed sessions).
+ * A closed trade enters the YEAR→MONTH→SESSION→TRADE hierarchy the moment
+ * it settles, regardless of session status. Sessions may optionally set
+ * `analyticsExcluded = true` (e.g. blind mode pre-completion) to opt out.
+ */
 function collectTrades(sessions) {
     const out = [];
     const list = Array.isArray(sessions) ? sessions : [];
     list.forEach(s => {
-        if (!s || s.status !== 'completed') return;
+        if (!s || s.analyticsExcluded) return;
         const trades = Array.isArray(s.trades) ? s.trades : [];
         trades.forEach(t => { if (t) out.push(enrichTrade(t, s)); });
     });

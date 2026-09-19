@@ -1,0 +1,64 @@
+/* ============================================================================
+   BATTLEX TERMINAL BOOT — cinematic pre-loader styles
+   Blueprint canvas assembling the terminal + "POWERED BY BATTLEXJOURNAL".
+   Injected by chart-test.html. Self-removes (#bx_boot.done) after reveal.
+   ==========================================================================*/
+#bx_boot{
+  position:fixed; inset:0; z-index:2147483000;
+  background:#0b0e14;
+  display:flex; align-items:center; justify-content:center;
+  opacity:1; visibility:visible;
+  transition:opacity .7s cubic-bezier(.22,1,.36,1), visibility 0s .7s;
+  overflow:hidden;
+}
+#bx_boot.done{opacity:0; visibility:hidden; pointer-events:none}
+#bx_boot_canvas{position:absolute; inset:0; width:100%; height:100%; display:block}
+#bx_boot .bx-boot-vignette{position:absolute; inset:0; pointer-events:none;
+  background:radial-gradient(120% 90% at 50% 44%, transparent 52%, rgba(0,0,0,.6) 100%)}
+#bx_boot .bx-boot-grain{position:absolute; inset:0; pointer-events:none; opacity:.05; mix-blend-mode:overlay;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='0.55'/%3E%3C/svg%3E")}
+#bx_boot .bx-boot-tape{position:absolute; font-size:10.5px; letter-spacing:.32em;
+  color:rgba(139,149,161,.75); text-transform:uppercase}
+#bx_boot .tape-tl{top:26px; left:30px}
+#bx_boot .tape-br{bottom:24px; right:30px}
+#bx_boot .tape-tl b{color:#22e5b4; font-weight:600}
+
+.bx-boot-core{position:relative; z-index:2; display:flex; flex-direction:column;
+  align-items:center; gap:0; user-select:none}
+.bx-boot-by{font-size:11px; letter-spacing:.55em; text-indent:.55em; color:#8b95a1;
+  text-transform:uppercase; opacity:0; animation:bxBootFade .7s .15s cubic-bezier(.22,1,.36,1) forwards}
+.bx-boot-logo{width:86px; height:86px; margin:18px 0 14px; position:relative;
+  opacity:0; transform:scale(.4); animation:bxBootLogo .8s .35s cubic-bezier(.22,1,.36,1) forwards}
+.bx-boot-logo img{width:100%; height:100%; object-fit:cover; border-radius:20px;
+  box-shadow:0 18px 50px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.08),
+             0 0 42px rgba(34,229,180,.28)}
+.bx-boot-logo::after{content:""; position:absolute; inset:-14px; border-radius:28px;
+  border:1.5px solid rgba(34,229,180,.5); border-top-color:transparent; opacity:0;
+  animation:bxBootRing 1.6s .55s cubic-bezier(.22,1,.36,1) forwards, bxBootSpin 7s 1.2s linear infinite}
+.bx-boot-word{display:flex; gap:0; font-weight:800; letter-spacing:.02em;
+  font-size:clamp(26px,4.6vw,44px); line-height:1}
+.bx-boot-word span{display:inline-block; opacity:0; transform:translateY(16px);
+  animation:bxBootRise .6s cubic-bezier(.22,1,.36,1) forwards}
+.bx-boot-word .g{background:linear-gradient(120deg,#22e5b4,#2f7bff);
+  -webkit-background-clip:text; background-clip:text; color:transparent}
+.bx-boot-bar{width:min(320px,62vw); height:2px; margin:26px 0 10px; border-radius:2px;
+  background:rgba(255,255,255,.08); overflow:hidden}
+.bx-boot-bar i{display:block; height:100%; width:0%; border-radius:2px;
+  background:linear-gradient(90deg,#22e5b4,#2f7bff);
+  box-shadow:0 0 12px rgba(34,229,180,.65);
+  transition:width .25s ease-out}
+.bx-boot-status{font-size:10px; letter-spacing:.34em; text-transform:uppercase;
+  color:#5e6673; min-height:14px}
+@keyframes bxBootFade{to{opacity:1}}
+@keyframes bxBootLogo{0%{opacity:0; transform:scale(.4)}
+  62%{opacity:1; transform:scale(1.1)}100%{opacity:1; transform:scale(1)}}
+@keyframes bxBootRing{0%{opacity:0; transform:scale(.55)}100%{opacity:1; transform:scale(1)}}
+@keyframes bxBootSpin{to{transform:rotate(360deg)}}
+@keyframes bxBootRise{to{opacity:1; transform:translateY(0)}}
+
+/* reveal of the real terminal under the curtain */
+body.bx-booted #tv_chart_container{animation:bxCurtain .8s cubic-bezier(.22,1,.36,1)}
+@keyframes bxCurtain{from{opacity:.25}to{opacity:1}}
+@media (prefers-reduced-motion: reduce){
+  #bx_boot .bx-boot-logo,#bx_boot .bx-boot-by,#bx_boot .bx-boot-word span{animation-duration:.01s !important; animation-delay:0s !important}
+}

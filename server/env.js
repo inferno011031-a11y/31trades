@@ -11,10 +11,8 @@
 const fs = require('node:fs');
 const path = require('node:path');
 
-function loadEnv(file) {
-    const p = file || path.join(__dirname, '..', '.env');
+function _load(p) {
     if (!fs.existsSync(p)) return 0;
-
     let loaded = 0;
     fs.readFileSync(p, 'utf8')
         .split(/\r?\n/)
@@ -34,6 +32,14 @@ function loadEnv(file) {
                 loaded++;
             }
         });
+    return loaded;
+}
+
+function loadEnv(file) {
+    if (file) return _load(file);
+    let loaded = 0;
+    loaded += _load(path.join(__dirname, '..', '.env.local'));
+    loaded += _load(path.join(__dirname, '..', '.env'));
     return loaded;
 }
 

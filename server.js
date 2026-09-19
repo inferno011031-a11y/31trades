@@ -628,6 +628,13 @@ async function handleApi(req, res, url) {
     const q = url.searchParams;
 
     // ---------- auth + health (no session required) ----------
+    if (p === '/api/auth/clerk-config' && req.method === 'GET') {
+        return json(res, 200, {
+            publishableKey: process.env.CLERK_PUBLISHABLE_KEY || '',
+            clerkEnabled: Boolean(process.env.CLERK_PUBLISHABLE_KEY)
+        });
+    }
+
     if (p === '/api/auth/signup' && req.method === 'POST') {
         let b = {};
         try { b = await readBody(req); } catch (e) { return json(res, 400, { error: e.message }); }
@@ -926,6 +933,22 @@ async function handleApi(req, res, url) {
         return json(res, 200, { ok: true, reply });
     }
 
+    // ---------- charting library proxy (pre-auth: the signed token IS the auth) ----------
+    if (p.startsWith('/api/charting/lib/') && (req.method === 'GET' || req.method === 'HEAD')) {
+        try { return require('./server/charting-proxy.js').handle(req, res, p).catch(() => {}); }
+        catch (e) { return json(res, 502, { error: 'charting proxy failed' }); }
+    }
+
+    // ---------- charting library access token (authed, but tiny + public-path) ----------
+    // Gives the chart page a short-lived signed token for /api/charting/lib/*.
+    // The proprietary library itself is NEVER served without this token.
+    if (p === '/api/charting/token' && req.method === 'POST') {
+        try { const ChartingProxy = require('./server/charting-proxy.js');
+            const tokenUser = await coreFor(req);   // auth-gated: throws 401 when sessions are enforced
+            return json(res, 200, ChartingProxy.issueToken(tokenUser.userId));
+        } catch (err) { return json(res, err.code || 401, { error: err.message }); }
+    }
+
     // ---------- everything below requires a user context ----------
     let uc;
     try { uc = await coreFor(req); } catch (err) { return json(res, err.code || 401, { error: err.message }); }
@@ -1158,7 +1181,8 @@ async function handleApi(req, res, url) {
             }
 
             // ---------- Backtest history analytics (YEAR → MONTH → drill-down) ----------
-            // Pure aggregation over completed sessions — see server/backtest-analytics.js
+            // Real-time aggregation over live + completed sessions — every closed
+            // trade feeds the hierarchy instantly — see server/backtest-analytics.js
             if (p === '/api/backtest/history/years' && req.method === 'GET') {
                 return json(res, 200, BacktestAnalytics.historyYears(Sim.listFullSessions(uc.userId)));
             }
@@ -1406,7 +1430,8 @@ async function handleApi(req, res, url) {
             const r = s.enter({
                 direction: body.direction, entry: body.entry, sl: body.sl, tp: body.tp,
                 riskAmount: body.riskAmount, riskPct: body.riskPct, size: body.size,
-                notes: body.notes, setup: body.setup
+                notes: body.notes, setup: body.setup, session: body.session,
+                strategy: body.strategy, entryTime: body.entryTime
             });
             if (!r.ok) return json(res, 400, { error: r.error });
             Sim.saveSession(uc.userId, s);
@@ -1422,7 +1447,7 @@ async function handleApi(req, res, url) {
         if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/close$/))) {
             const s = Sim.loadActive(uc.userId, m[1]);
             if (!s) return json(res, 404, { error: 'unknown session' });
-            const r = s.close({ price: body.price, reason: body.reason });
+            const r = s.close({ price: body.price, reason: body.reason, exitTime: body.exitTime });
             if (!r.ok) return json(res, 400, { error: r.error });
             Sim.saveSession(uc.userId, s);
             return json(res, 200, { ok: true, trade: r.trade, state: Sim.stateOf(s) });
@@ -2001,8 +2026,8 @@ const CSP_ENFORCE = process.env.CSP_ENFORCE === 'true';
 function securityHeaders(res) {
     const csp = [
         "default-src 'self'",
-        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://partner.googleadservices.com blob:",
-        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com blob:",
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://fonts.googleapis.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com https://partner.googleadservices.com https://*.supabase.co blob:",
+        "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://*.supabase.co blob:",
         "font-src 'self' https://fonts.gstatic.com data:",
         "img-src 'self' data: blob: https:",
         "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://demo_feed.tradingview.com https://pagead2.googlesyndication.com https://*.googlesyndication.com https://*.google.com",

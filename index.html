@@ -4,19 +4,19 @@
     <!-- SEO:META -->
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>BattleXJournal — Trade with Proof, Not Memory</title>
-    <meta name="description" content="BattleXJournal is the all-in-one private trading journal, market replay simulator, strategy lab, risk management engine, and AI trading coach.">
+    <title>BattleXJournal — #1 Backtesting & Journaling Platform</title>
+    <meta name="description" content="BattleXJournal is the #1 free backtesting and trading journal platform. OLED interface, instant broker sync, risk radar, and AI trade autopsy.">
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
 
-    <!-- Compiled Tailwind & Token Styles -->
+    <!-- Compiled Tailwind & Theme Styles -->
     <link rel="stylesheet" href="assets/tailwind-compiled.css">
     <link rel="stylesheet" href="assets/trademind-theme.css">
 
     <!-- Self-Hosted Lucide Icons -->
     <script src="/assets/lucide.min.js"></script>
 
-    <!-- Google Fonts -->
+    <!-- Google Fonts: Plus Jakarta Sans, Outfit, JetBrains Mono -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -33,19 +33,17 @@
         }
 
         :root {
-            --tm-bg: #090a0d;
-            --tm-card: #121318;
-            --tm-card-sub: #171821;
-            --tm-border: rgba(255, 255, 255, 0.08);
-            --tm-border-strong: rgba(255, 255, 255, 0.14);
-            --emerald-glow: rgba(16, 185, 129, 0.15);
+            --tm-bg: #000000;
+            --tm-card: #0c0d11;
+            --tm-border: rgba(255, 255, 255, 0.12);
         }
 
+        /* True OLED Black */
         html, body {
             width: 100%;
             min-height: 100vh;
-            background: #08090c !important;
-            background-color: #08090c !important;
+            background: #000000 !important;
+            background-color: #000000 !important;
             color: #FFFFFF !important;
             font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
             overflow-x: hidden;
@@ -56,52 +54,383 @@
             font-variant-numeric: tabular-nums;
         }
 
-        /* Glassmorphism Classes */
+        /* Fully Glassed Navbar with Milky / Slightly White Translucent Sheen */
         .glass-dock {
-            background: rgba(14, 15, 20, 0.78) !important;
-            backdrop-filter: blur(24px) saturate(180%);
-            -webkit-backdrop-filter: blur(24px) saturate(180%);
-            border: 1px solid rgba(255, 255, 255, 0.09);
-            box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(255, 255, 255, 0.08) !important;
+            backdrop-filter: blur(32px) saturate(210%);
+            -webkit-backdrop-filter: blur(32px) saturate(210%);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.22);
+            transition: max-width 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+                        padding 0.5s cubic-bezier(0.16, 1, 0.3, 1), 
+                        background 0.4s ease, 
+                        border-color 0.4s ease,
+                        box-shadow 0.4s ease;
         }
 
+        /* Dock top state: compact capsule width */
         .nav-dock-top {
-            max-width: 960px;
+            max-width: 860px;
+            padding: 10px 22px;
         }
 
+        /* Dock scrolled state: expands smoothly across screen */
         .nav-dock-scrolled {
-            max-width: 1240px;
-            background: rgba(10, 11, 15, 0.92) !important;
-            border-color: rgba(255, 255, 255, 0.13);
+            max-width: 1260px;
+            padding: 12px 28px;
+            background: rgba(255, 255, 255, 0.11) !important;
+            border-color: rgba(255, 255, 255, 0.22);
+            box-shadow: 0 24px 60px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.3);
         }
 
+        /* Inner Navigation Capsule */
+        .nav-inner-capsule {
+            display: inline-flex;
+            align-items: center;
+            gap: 2px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 9999px;
+            padding: 4px 6px;
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        }
+
+        .nav-link-item {
+            color: #A1A1AA;
+            font-size: 13.5px;
+            font-weight: 500;
+            padding: 6px 14px;
+            border-radius: 9999px;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            white-space: nowrap;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            cursor: pointer;
+            border: none;
+            background: transparent;
+        }
+
+        .nav-link-item:hover, .nav-item-dropdown:hover > .nav-link-item {
+            color: #FFFFFF;
+            background: rgba(255, 255, 255, 0.12);
+        }
+
+        /* Glassmorphic Motion Dropdown Menus */
+        .nav-item-dropdown {
+            position: relative;
+        }
+
+        .nav-dropdown-menu {
+            position: absolute;
+            top: calc(100% + 12px);
+            opacity: 0;
+            pointer-events: none;
+            visibility: hidden;
+            background: rgba(10, 11, 15, 0.96);
+            backdrop-filter: blur(28px) saturate(190%);
+            -webkit-backdrop-filter: blur(28px) saturate(190%);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 18px;
+            padding: 12px;
+            box-shadow: 0 28px 70px -15px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.04), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            transition: opacity 0.22s cubic-bezier(0.16, 1, 0.3, 1), transform 0.22s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.22s;
+            z-index: 100;
+            box-sizing: border-box;
+        }
+
+        /* Dropdown invisible hover bridge */
+        .nav-item-dropdown::after {
+            content: '';
+            position: absolute;
+            top: 100%;
+            left: -12px;
+            right: -12px;
+            height: 18px;
+            z-index: 99;
+        }
+
+        /* Specific Dropdown Widths & Calibrated Alignments */
+        .nav-dropdown-features {
+            width: 480px;
+            left: -8px;
+            transform: translateY(8px) scale(0.98);
+        }
+
+        .nav-item-dropdown:hover .nav-dropdown-features,
+        .nav-item-dropdown:focus-within .nav-dropdown-features {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+
+        .nav-dropdown-backtesting {
+            width: 360px;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px) scale(0.98);
+        }
+
+        .nav-item-dropdown:hover .nav-dropdown-backtesting,
+        .nav-item-dropdown:focus-within .nav-dropdown-backtesting {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0) scale(1);
+        }
+
+        .nav-dropdown-tools {
+            width: 340px;
+            left: 50%;
+            transform: translateX(-50%) translateY(8px) scale(0.98);
+        }
+
+        .nav-item-dropdown:hover .nav-dropdown-tools,
+        .nav-item-dropdown:focus-within .nav-dropdown-tools {
+            opacity: 1;
+            pointer-events: auto;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0) scale(1);
+        }
+
+        /* 2-Column Grid for Features Dropdown */
+        .nav-dropdown-grid-2 {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 8px;
+            width: 100%;
+        }
+
+        /* Dropdown Section Header Label */
+        .nav-dropdown-label {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            color: #71717A;
+            padding: 4px 8px 8px 8px;
+        }
+
+        .nav-dropdown-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            text-decoration: none;
+            transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+            background: rgba(255, 255, 255, 0.02);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            box-sizing: border-box;
+        }
+
+        .nav-dropdown-card:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.18);
+            transform: translateY(-1px);
+        }
+
+        .nav-dropdown-icon {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            color: #FFFFFF;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+        }
+
+        .nav-dropdown-card:hover .nav-dropdown-icon {
+            background: #FFFFFF;
+            color: #000000;
+            border-color: #FFFFFF;
+            box-shadow: 0 0 16px rgba(255, 255, 255, 0.3);
+        }
+
+        .nav-card-title {
+            font-size: 13.5px;
+            font-weight: 600;
+            color: #FFFFFF;
+            line-height: 1.25;
+            margin-bottom: 2px;
+        }
+
+        .nav-card-desc {
+            font-size: 11.5px;
+            color: #A1A1AA;
+            line-height: 1.35;
+        }
+
+        .nav-chevron {
+            transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .nav-item-dropdown:hover .nav-chevron {
+            transform: rotate(180deg);
+        }
+
+        /* Logo Badge Style */
         .logo-badge {
             width: 32px;
             height: 32px;
             border-radius: 8px;
             object-fit: contain;
             background: #000000;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(255, 255, 255, 0.18);
             padding: 2px;
             display: inline-block;
+            transition: transform 0.25s ease;
         }
 
-        .btn-cta-primary {
+        .logo-badge:hover {
+            transform: scale(1.05);
+        }
+
+        /* High-Contrast Start For Free Button */
+        .btn-start-free {
             background: #FFFFFF !important;
             color: #000000 !important;
             font-weight: 700 !important;
-            box-shadow: 0 0 25px rgba(255, 255, 255, 0.2), 0 4px 12px rgba(0, 0, 0, 0.5);
+            font-size: 13px !important;
+            padding: 8px 18px !important;
+            border-radius: 9999px !important;
+            border: 1px solid #FFFFFF !important;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            text-decoration: none;
+            white-space: nowrap;
+            box-shadow: 0 4px 16px rgba(255, 255, 255, 0.25);
             transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
         }
 
-        .btn-cta-primary:hover {
-            background: #F0FDF4 !important;
-            transform: translateY(-2px);
-            box-shadow: 0 0 35px rgba(52, 211, 153, 0.4), 0 8px 20px rgba(0, 0, 0, 0.6);
+        .btn-start-free:hover {
+            background: #F4F4F5 !important;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(255, 255, 255, 0.4);
         }
 
-        /* Smooth Cursor Container */
+        /* Demo Glass Cards on Scroll */
+        .demo-card {
+            background: rgba(18, 19, 26, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 20px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            transition: border-color 0.2s ease, transform 0.2s ease;
+        }
+
+        .demo-card:hover {
+            border-color: rgba(255, 255, 255, 0.16);
+            transform: translateY(-2px);
+        }
+
+        /* Ambient Glow Behind Hero */
+        .hero-glow-orb {
+            position: absolute;
+            top: 22%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 900px;
+            height: 480px;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.08) 0%, rgba(16, 185, 129, 0.06) 35%, rgba(6, 182, 212, 0.04) 60%, transparent 75%);
+            filter: blur(110px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Cockpit Showcase Glass Frame */
+        .cockpit-frame {
+            background: #07080b;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            border-radius: 24px;
+            box-shadow: 0 35px 120px -25px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.05), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+            position: relative;
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+        }
+
+        .cockpit-sub-card {
+            background: rgba(13, 15, 21, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 16px;
+            transition: all 0.25s ease;
+        }
+
+        .cockpit-sub-card:hover {
+            border-color: rgba(255, 255, 255, 0.16);
+            background: rgba(18, 21, 30, 0.85);
+        }
+
+        /* Subtle Floating Orbital Badges */
+        @keyframes floatSlowA {
+            0%, 100% { transform: translateY(0px) rotate(-1.5deg); }
+            50% { transform: translateY(-8px) rotate(-1.5deg); }
+        }
+        @keyframes floatSlowB {
+            0%, 100% { transform: translateY(0px) rotate(1.5deg); }
+            50% { transform: translateY(8px) rotate(1.5deg); }
+        }
+        .orbit-badge-left {
+            animation: floatSlowA 6s ease-in-out infinite;
+        }
+        .orbit-badge-right {
+            animation: floatSlowB 7s ease-in-out infinite;
+        }
+
+        /* Interactive Replay Slider */
+        .replay-slider {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: rgba(255, 255, 255, 0.12);
+            border-radius: 2px;
+            outline: none;
+        }
+        .replay-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background: #10b981;
+            box-shadow: 0 0 10px #10b981;
+            cursor: pointer;
+            border: 2px solid #FFFFFF;
+        }
+
+        /* Gravitational Accretion Disc Animation & Glow */
+        @keyframes blackholePulse {
+            0%, 100% { transform: scale(1) rotate(0deg); }
+            50% { transform: scale(1.025) rotate(1.2deg); }
+        }
+        .gravitational-disc {
+            animation: blackholePulse 16s ease-in-out infinite;
+            will-change: transform;
+        }
+        .blackhole-glow {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 650px;
+            height: 650px;
+            background: radial-gradient(circle, rgba(245, 158, 11, 0.16) 0%, rgba(234, 88, 12, 0.08) 35%, rgba(0, 0, 0, 0) 70%);
+            filter: blur(75px);
+            pointer-events: none;
+        }
+
+        /* Smooth Cursor Pointer */
         #smooth-cursor-container, #smooth-cursor-container * {
             pointer-events: none !important;
         }
@@ -114,68 +443,471 @@
             transform: translate(-50%, -50%);
             transition: opacity 0.2s ease;
         }
+
+        /* Screenshot Hero Typography Precision */
+        .hero-layout-wrap {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            padding-top: clamp(5.5rem, 9vh, 7.5rem);
+            padding-bottom: clamp(2rem, 4vh, 3.5rem);
+            max-width: 1560px;
+            padding-left: clamp(1.5rem, 4vw, 3.5rem);
+            padding-right: clamp(1.5rem, 4vw, 3.5rem);
+            box-sizing: border-box;
+        }
+
+        /* Explicit 2-column Centered Side-by-Side Hero Layout */
+        .hero-split-grid {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 2.5rem;
+            width: 100%;
+            flex: 1 0 auto;
+        }
+
+        .hero-left-col {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            text-align: left;
+        }
+
+        .hero-right-col {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+
+        @media (min-width: 1024px) {
+            .hero-split-grid {
+                flex-direction: row;
+                align-items: center;
+                justify-content: space-between;
+                gap: clamp(2rem, 3.5vw, 4.5rem);
+            }
+
+            .hero-left-col {
+                flex: 0 0 45%;
+                max-width: 600px;
+                justify-content: center;
+                align-self: center;
+            }
+
+            .hero-right-col {
+                flex: 1 1 55%;
+                justify-content: flex-end;
+                align-self: center;
+            }
+        }
+
+        /* Enhanced Hero Typography & Sizing for Optimal UX */
+        .hero-screenshot-title {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Segoe UI", "Plus Jakarta Sans", sans-serif;
+            font-size: clamp(2.8rem, 4.4vw, 4.2rem);
+            font-weight: 500;
+            line-height: 1.08;
+            letter-spacing: -0.035em;
+            color: #FFFFFF;
+            margin: 0 0 1.5rem 0;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Subtext: enlarged to 18-20px for high readability */
+        .hero-screenshot-sub {
+            font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", "Plus Jakarta Sans", sans-serif;
+            font-size: clamp(1.05rem, 1.35vw, 1.25rem);
+            font-weight: 400;
+            line-height: 1.65;
+            letter-spacing: -0.01em;
+            color: #a1a1aa;
+            max-width: 560px;
+            margin: 0 0 2.25rem 0;
+            text-rendering: optimizeLegibility;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Enlarged Primary Pill CTA */
+        .hero-pill-btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: #FFFFFF;
+            color: #000000;
+            font-size: 1.05rem;
+            font-weight: 600;
+            letter-spacing: -0.01em;
+            padding: 0.9rem 2.4rem;
+            border-radius: 9999px;
+            transition: all 0.2s ease;
+            text-decoration: none;
+            box-shadow: 0 4px 18px rgba(255, 255, 255, 0.2);
+        }
+        .hero-pill-btn-primary:hover {
+            background: #e4e4e7;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Enlarged Secondary Ghost Pill CTA */
+        .hero-pill-btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #e4e4e7;
+            font-size: 1.05rem;
+            font-weight: 500;
+            letter-spacing: -0.01em;
+            padding: 0.9rem 2.4rem;
+            border-radius: 9999px;
+            transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+            text-decoration: none;
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+        }
+        .hero-pill-btn-secondary:hover {
+            border-color: rgba(255, 255, 255, 0.45);
+            background: rgba(255, 255, 255, 0.12);
+            color: #FFFFFF;
+            transform: translateY(-1px);
+        }
+    
+        /* iPad Air 4 (4th Generation) Precision Landscape Mockup */
+        .ipad-air4-wrapper {
+            position: relative;
+            width: 100%;
+            max-width: 720px;
+            perspective: 1200px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .ipad-air4-glow {
+            position: absolute;
+            inset: -14%;
+            background: radial-gradient(circle at 50% 50%, rgba(16, 185, 129, 0.18) 0%, rgba(245, 158, 11, 0.14) 42%, transparent 72%);
+            filter: blur(52px);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 0;
+            animation: ipad-air4-pulse 8s ease-in-out infinite alternate;
+        }
+
+        @keyframes ipad-air4-pulse {
+            0% { transform: scale(0.96); opacity: 0.7; }
+            100% { transform: scale(1.04); opacity: 1; }
+        }
+
+        /* iPad Air 4 Outer Aluminum Chassis (Subtle 2-degree tilt to anchor cleanly) */
+        .ipad-air4-chassis {
+            position: relative;
+            z-index: 1;
+            width: 100%;
+            background: linear-gradient(135deg, #24252a 0%, #121317 45%, #1d1e23 100%);
+            border-radius: clamp(24px, 3.2vw, 34px);
+            padding: clamp(10px, 1.4vw, 15px);
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.2),
+                0 1px 2px rgba(255, 255, 255, 0.25),
+                0 28px 70px -12px rgba(0, 0, 0, 0.96),
+                0 12px 30px -6px rgba(0, 0, 0, 0.8),
+                inset 0 1px 0 rgba(255, 255, 255, 0.35);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            transform: perspective(1200px) rotateY(-2deg) rotateX(1deg);
+            transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.5s ease;
+            will-change: transform;
+        }
+
+        .ipad-air4-chassis:hover {
+            transform: perspective(1200px) rotateY(0deg) rotateX(0deg) translateY(-4px);
+            box-shadow: 
+                0 0 0 1px rgba(255, 255, 255, 0.28),
+                0 36px 90px -15px rgba(0, 0, 0, 0.98),
+                0 16px 40px -8px rgba(16, 185, 129, 0.22),
+                inset 0 1px 0 rgba(255, 255, 255, 0.5);
+        }
+
+        /* iPad Air 4 Hardware Edge Accents */
+        .ipad-air4-touchid {
+            position: absolute;
+            top: -3px;
+            right: 48px;
+            width: 38px;
+            height: 3px;
+            background: #2b2c34;
+            border-radius: 3px 3px 0 0;
+            box-shadow: 0 -1px 2px rgba(0,0,0,0.6);
+        }
+
+        .ipad-air4-volume {
+            position: absolute;
+            right: -3px;
+            top: 36px;
+            width: 3px;
+            height: 48px;
+            background: #2b2c34;
+            border-radius: 0 3px 3px 0;
+        }
+
+        .ipad-air4-pencil-strip {
+            position: absolute;
+            top: -1px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 90px;
+            height: 1.5px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 9999px;
+        }
+
+        .ipad-air4-camera {
+            position: absolute;
+            top: 50%;
+            right: 5px;
+            transform: translateY(-50%);
+            width: 5px;
+            height: 5px;
+            background: #000000;
+            border-radius: 50%;
+            box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.15), inset 0 0 2px rgba(16, 185, 129, 0.5);
+        }
+
+        /* 10.9-inch Liquid Retina Display Frame - Exactly fitted to full image */
+        .ipad-air4-screen {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 1024 / 490;
+            background: #08090c;
+            border-radius: clamp(14px, 1.9vw, 22px);
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: inset 0 0 16px rgba(0, 0, 0, 0.95);
+        }
+
+        .ipad-air4-chart-img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+            display: block;
+            user-select: none;
+            -webkit-user-drag: none;
+        }
+
+        /* Realistic Glass Reflection Sheen */
+        .ipad-glass-glare {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: linear-gradient(115deg, rgba(255, 255, 255, 0.09) 0%, rgba(255, 255, 255, 0.02) 28%, transparent 48%);
+            border-radius: inherit;
+        }
+
+        /* Subtle floating tactical chips */
+        .ipad-float-badge {
+            position: absolute;
+            z-index: 10;
+            background: rgba(15, 16, 21, 0.88);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-radius: 14px;
+            padding: 8px 14px;
+            display: flex;
+            align-items: center;
+            gap: 9px;
+            box-shadow: 0 16px 36px -10px rgba(0, 0, 0, 0.8), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+            animation: float-chip 6s ease-in-out infinite;
+        }
+
+        @keyframes float-chip {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+
     </style>
 </head>
-<body class="antialiased selection:bg-emerald-500/20 selection:text-emerald-300">
+<body class="antialiased selection:bg-white/20 selection:text-white">
 
     <!-- Directional Smooth Cursor Element -->
     <div id="smooth-cursor-container">
         <svg xmlns="http://www.w3.org/2000/svg" width="44" height="48" viewBox="0 0 50 54" fill="none" style="transform: scale(0.6);">
             <g filter="url(#filter0_d_cursor)">
                 <path d="M42.6817 41.1495L27.5103 6.79925C26.7269 5.02557 24.2082 5.02558 23.3927 6.79925L7.59814 41.1495C6.75833 42.9759 8.52712 44.8902 10.4125 44.1954L24.3757 39.0496C24.8829 38.8627 25.4385 38.8627 25.9422 39.0496L39.8121 44.1954C41.6849 44.8902 43.4884 42.9759 42.6817 41.1495Z" fill="#000000"/>
-                <path d="M43.7146 40.6933L28.5431 6.34306C27.3556 3.65428 23.5772 3.69516 22.3668 6.32755L6.57226 40.6778C5.3134 43.4156 7.97238 46.298 10.803 45.2549L24.7662 40.109C25.0221 40.0147 25.2999 40.0156 25.5494 40.1082L39.4193 45.254C42.2261 46.2953 44.9254 43.4347 43.7146 40.6933Z" stroke="#34d399" stroke-width="2.5"/>
+                <path d="M43.7146 40.6933L28.5431 6.34306C27.3556 3.65428 23.5772 3.69516 22.3668 6.32755L6.57226 40.6778C5.3134 43.4156 7.97238 46.298 10.803 45.2549L24.7662 40.109C25.0221 40.0147 25.2999 40.0156 25.5494 40.1082L39.4193 45.254C42.2261 46.2953 44.9254 43.4347 43.7146 40.6933Z" stroke="#FFFFFF" stroke-width="2.5"/>
             </g>
             <defs>
                 <filter id="filter0_d_cursor" x="0" y="0" width="50" height="54" filterUnits="userSpaceOnUse">
-                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.6"/>
+                    <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.8"/>
                 </filter>
             </defs>
         </svg>
     </div>
 
-    <!-- Background Grid & Glows -->
+    <!-- Background OLED Ambient Layer & Particle Drift Field -->
     <div class="fixed inset-0 pointer-events-none z-0 overflow-hidden">
-        <svg aria-hidden="true" class="absolute inset-0 h-full w-full stroke-white/[0.03] [mask-image:radial-gradient(1100px_circle_at_center,white,transparent)]">
+        <!-- Canvas Particle System Background Field -->
+        <canvas id="particle-canvas" class="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-100"></canvas>
+        <!-- Subtle Grid Pattern -->
+        <svg aria-hidden="true" class="absolute inset-0 h-full w-full stroke-white/[0.03] [mask-image:radial-gradient(1000px_circle_at_center,white,transparent)]">
             <defs>
-                <pattern id="grid-pattern" width="48" height="48" patternUnits="userSpaceOnUse" x="-1" y="-1">
-                    <path d="M.5 48V.5H48" fill="none" stroke-width="1" />
+                <pattern id="oled-grid" width="44" height="44" patternUnits="userSpaceOnUse" x="-1" y="-1">
+                    <path d="M.5 44V.5H44" fill="none" stroke-width="1" />
                 </pattern>
             </defs>
-            <rect width="100%" height="100%" stroke-width="0" fill="url(#grid-pattern)" />
+            <rect width="100%" height="100%" stroke-width="0" fill="url(#oled-grid)" />
         </svg>
-
-        <div class="absolute -top-40 left-1/2 -translate-x-1/2 w-[850px] h-[550px] rounded-full blur-[140px]" style="background: radial-gradient(circle, rgba(16, 185, 129, 0.12) 0%, transparent 70%);"></div>
+        <div class="hero-glow-orb"></div>
     </div>
 
-    <!-- ==================== 1. FLOATING NAVIGATION DOCK ==================== -->
-    <header class="fixed top-4 sm:top-6 inset-x-0 z-50 flex justify-center px-4">
-        <div id="nav-container" class="glass-dock nav-dock-top w-full rounded-2xl px-4 sm:px-6 py-3 flex items-center justify-between">
+    <!-- ==================== 1. FLOATING STRETCHING NAVBAR ==================== -->
+    <header class="fixed top-4 sm:top-6 inset-x-0 z-50 flex justify-center px-4 sm:px-6">
+        <div id="nav-container" class="glass-dock nav-dock-top w-full rounded-full flex items-center justify-between gap-4">
             
-            <!-- Logo -->
-            <a href="/" class="logo flex items-center gap-2.5 text-decoration-none group">
+            <!-- Left: Logo & Brand -->
+            <a href="/" class="logo flex items-center gap-2.5 text-decoration-none shrink-0 group">
                 <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
-                <span class="font-extrabold text-base tracking-tight text-white flex items-center gap-1">
-                    BATTLEX<span class="text-emerald-400">JOURNAL</span>
+                <span class="font-extrabold text-sm sm:text-base tracking-tight text-white flex items-center gap-1">
+                    BATTLEX<span class="text-zinc-400 font-semibold">JOURNAL</span>
                 </span>
             </a>
 
-            <!-- Navigation Links -->
-            <nav class="hidden md:flex items-center gap-1 text-[13.5px] font-medium text-zinc-400">
-                <a href="#cockpit" class="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors">Cockpit</a>
-                <a href="#features" class="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors">Features</a>
-                <a href="#replay" class="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors">Market Replay</a>
-                <a href="#compare" class="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors">Why BattleX</a>
-                <a href="#pricing" class="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors">Pricing</a>
-                <a href="#faq" class="px-3 py-1.5 rounded-lg hover:text-white hover:bg-white/5 transition-colors">FAQ</a>
+            <!-- Center: Distinct Navigation Capsule with Motion Dropdowns -->
+            <nav class="hidden md:flex items-center">
+                <div class="nav-inner-capsule">
+                    
+                    <!-- Features Dropdown -->
+                    <div class="nav-item-dropdown">
+                        <button type="button" class="nav-link-item" aria-haspopup="true">
+                            <span>Features</span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 nav-chevron text-zinc-400"></i>
+                        </button>
+                        <div class="nav-dropdown-menu nav-dropdown-features">
+                            <div class="nav-dropdown-label">PLATFORM CAPABILITIES</div>
+                            <div class="nav-dropdown-grid-2 text-left">
+                                <a href="#cockpit" class="nav-dropdown-card">
+                                    <div class="nav-dropdown-icon">
+                                        <i data-lucide="terminal" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="nav-card-title">Cockpit Studio</div>
+                                        <div class="nav-card-desc">Live multi-asset execution view</div>
+                                    </div>
+                                </a>
+                                <a href="#features" class="nav-dropdown-card">
+                                    <div class="nav-dropdown-icon">
+                                        <i data-lucide="brain-circuit" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="nav-card-title">AI Mentor</div>
+                                        <div class="nav-card-desc">Autopsy mistakes & habits</div>
+                                    </div>
+                                </a>
+                                <a href="#features" class="nav-dropdown-card">
+                                    <div class="nav-dropdown-icon">
+                                        <i data-lucide="shield-alert" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="nav-card-title">Risk Radar</div>
+                                        <div class="nav-card-desc">Real-time tilt lock & drawdown</div>
+                                    </div>
+                                </a>
+                                <a href="#features" class="nav-dropdown-card">
+                                    <div class="nav-dropdown-icon">
+                                        <i data-lucide="bar-chart-3" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="nav-card-title">Prop Metrics</div>
+                                        <div class="nav-card-desc">Sharpe, win-rate & expectancy</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Backtesting Dropdown -->
+                    <div class="nav-item-dropdown">
+                        <button type="button" class="nav-link-item" aria-haspopup="true">
+                            <span>Backtesting</span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 nav-chevron text-zinc-400"></i>
+                        </button>
+                        <div class="nav-dropdown-menu nav-dropdown-backtesting">
+                            <div class="nav-dropdown-label">SIMULATION &amp; REPLAY</div>
+                            <div class="flex flex-col gap-1.5 text-left">
+                                <a href="backtesting.html" class="nav-dropdown-card">
+                                    <div class="nav-dropdown-icon">
+                                        <i data-lucide="history" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="nav-card-title">Market Replay</div>
+                                        <div class="nav-card-desc">10+ Years tick-by-tick CME sessions</div>
+                                    </div>
+                                </a>
+                                <a href="chart-test.html" class="nav-dropdown-card">
+                                    <div class="nav-dropdown-icon">
+                                        <i data-lucide="sliders" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="nav-card-title">Session Simulator</div>
+                                        <div class="nav-card-desc">Simulate order flow & fills</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Tools Dropdown -->
+                    <div class="nav-item-dropdown">
+                        <button type="button" class="nav-link-item" aria-haspopup="true">
+                            <span>Tools</span>
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5 nav-chevron text-zinc-400"></i>
+                        </button>
+                        <div class="nav-dropdown-menu nav-dropdown-tools">
+                            <div class="nav-dropdown-label">ANALYTICS &amp; JOURNAL</div>
+                            <div class="flex flex-col gap-1.5 text-left">
+                                <a href="dashboard.html" class="nav-dropdown-card">
+                                    <div class="nav-dropdown-icon">
+                                        <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="nav-card-title">Dashboard</div>
+                                        <div class="nav-card-desc">Account overview & stats</div>
+                                    </div>
+                                </a>
+                                <a href="journal.html" class="nav-dropdown-card">
+                                    <div class="nav-dropdown-icon">
+                                        <i data-lucide="book-open" class="w-4 h-4"></i>
+                                    </div>
+                                    <div>
+                                        <div class="nav-card-title">Trade Journal</div>
+                                        <div class="nav-card-desc">Execution logs & tagged setups</div>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Direct Link: Pricing -->
+                    <a href="#pricing" class="nav-link-item">Pricing</a>
+                </div>
             </nav>
 
-            <!-- Action Buttons -->
-            <div class="flex items-center gap-2 sm:gap-3">
-                <a href="auth.html" class="text-[13px] font-semibold text-zinc-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/5 transition-colors">
-                    Sign In
-                </a>
-                <a href="auth.html" class="btn-cta-primary text-[13px] px-4 py-2 rounded-xl flex items-center gap-1.5">
-                    <span>Start Free</span>
+            <!-- Right: Start For Free Button -->
+            <div class="flex items-center gap-2 shrink-0">
+                <a href="auth.html" class="btn-start-free">
+                    <span>Start for free</span>
                     <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                 </a>
             </div>
@@ -183,15 +915,505 @@
         </div>
     </header>
 
-    <!-- Clean Main Canvas Area -->
-    <main class="relative z-10 min-h-screen pt-32 sm:pt-40 pb-20 px-4 sm:px-6 flex flex-col items-center justify-center text-center">
-        <h1 class="sr-only">BattleXJournal — Next-Gen Trading Journal & Operating System</h1>
+    <!-- ==================== 2. MAIN HERO SECTION ==================== -->
+    <section class="relative z-10 hero-layout-wrap mx-auto w-full">
+        
+        <!-- Split Hero Grid (Explicit Side-by-Side) -->
+        <div class="hero-split-grid">
+
+            <!-- Left Column: Hero Text (Dragged comfortably to the left) -->
+            <div class="hero-left-col z-20">
+
+                <!-- Main Hero Headline -->
+                <h1 class="hero-screenshot-title">
+                    #no.1 backtesting<br>
+                    and trading journal
+                </h1>
+
+                <!-- Subtitle -->
+                <p class="hero-screenshot-sub">
+                    The ring above the shadow is data over instinct. Relive past sessions tick-by-tick, automate multi-broker analytics, and autopsy every mistake with AI.
+                </p>
+
+                <!-- Pill Buttons -->
+                <div class="flex items-center gap-3.5">
+                    <a href="auth.html" class="hero-pill-btn-primary">
+                        Get started
+                    </a>
+                    <a href="#cockpit" class="hero-pill-btn-secondary">
+                        Read the maths
+                    </a>
+                </div>
+
+            </div>
+
+            <!-- Right Column: iPad Pro Mockup Visual (Side-by-Side on the right) -->
+            <div class="hero-right-col">
+                
+                <div class="ipad-air4-wrapper">
+                    <!-- Ambient Glow Behind iPad Air 4 -->
+                    <div class="ipad-air4-glow"></div>
+
+                    <!-- Floating Top Badge -->
+                    <div class="ipad-float-badge -top-5 -left-3 sm:-left-6" style="animation-delay: 0s;">
+                        <span class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                        <div class="font-mono text-left">
+                            <div class="text-[11px] font-bold text-white leading-tight">XAUUSD Live Replay</div>
+                            <div class="text-[9.5px] text-emerald-400 font-semibold leading-tight">Tick Engine Active</div>
+                        </div>
+                    </div>
+
+                    <!-- Floating Bottom Badge -->
+                    <div class="ipad-float-badge -bottom-5 -right-3 sm:-right-6" style="animation-delay: -3s;">
+                        <div class="w-6 h-6 rounded-lg bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400">
+                            <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 7l5 5m0 0l-5 5m5-5H6"></path></svg>
+                        </div>
+                        <div class="font-mono text-left">
+                            <div class="text-[11px] font-bold text-white leading-tight">Instant Market Fill</div>
+                            <div class="text-[9.5px] text-zinc-400 font-medium leading-tight">1-Click Execution</div>
+                        </div>
+                    </div>
+
+                    <!-- The iPad Air 4 Device Chassis (10.9" Space Gray / Space Black) -->
+                    <div class="ipad-air4-chassis">
+                        <!-- Top Touch ID Power Button -->
+                        <div class="ipad-air4-touchid"></div>
+                        <!-- Top Magnetic Pencil Strip -->
+                        <div class="ipad-air4-pencil-strip"></div>
+                        <!-- Right Volume Rocker -->
+                        <div class="ipad-air4-volume"></div>
+                        <!-- Landscape FaceTime Camera -->
+                        <div class="ipad-air4-camera"></div>
+
+                        <!-- 10.9" Liquid Retina Display Screen (Zero-Crop Full Chart View) -->
+                        <div class="ipad-air4-screen">
+                            <img src="assets/battlex-chart-ipad.png" 
+                                 alt="BattleX TradingView Advanced Chart &amp; Execution Terminal on iPad Air 4" 
+                                 class="ipad-air4-chart-img"
+                                 loading="eager"
+                                 width="1024"
+                                 height="490">
+                            <!-- Glass Glare Sheen -->
+                            <div class="ipad-glass-glare"></div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+    </section>
+
+    <!-- Main Content Container for Cockpit, Features & Pricing -->
+    <main class="relative z-10 px-6 sm:px-12 lg:px-16 max-w-[1440px] mx-auto w-full flex flex-col items-center">
+
+        <!-- ==================== 3. HERO COCKPIT PRODUCT SHOWCASE ==================== -->
+        <div id="cockpit" class="w-full max-w-6xl relative mt-20 sm:mt-32 mb-20 text-left scroll-mt-24">
+            
+            <!-- Left Orbital Floating Badge (Clear of Titlebar) -->
+            <div class="hidden xl:flex items-center gap-3 absolute -top-14 left-0 xl:-left-6 z-20 orbit-badge-left cockpit-sub-card px-4 py-2.5 shadow-2xl">
+                <div class="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400">
+                    <i data-lucide="zap" class="w-4 h-4"></i>
+                </div>
+                <div class="text-left font-mono">
+                    <div class="text-[11px] font-bold text-white">Tick-by-Tick Replay</div>
+                    <div class="text-[10px] text-zinc-400">10+ Years Historical CME Data</div>
+                </div>
+            </div>
+
+            <!-- Right Orbital Floating Badge (Desktop) -->
+            <div class="hidden xl:flex items-center gap-3 absolute -bottom-7 right-0 xl:-right-6 z-20 orbit-badge-right cockpit-sub-card px-4 py-2.5 shadow-2xl">
+                <div class="w-8 h-8 rounded-full bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400">
+                    <i data-lucide="shield" class="w-4 h-4"></i>
+                </div>
+                <div class="text-left font-mono">
+                    <div class="text-[11px] font-bold text-white">Risk Radar &amp; Tilt Lock</div>
+                    <div class="text-[10px] text-emerald-400">0 Rule Breaches Detected</div>
+                </div>
+            </div>
+
+            <!-- Cockpit Window Frame -->
+            <div class="cockpit-frame p-4 sm:p-6 lg:p-7">
+
+                <!-- Cockpit Titlebar -->
+                <div class="flex flex-wrap items-center justify-between pb-4 mb-5 border-b border-white/[0.08] gap-3">
+                    <div class="flex items-center gap-3">
+                        <div class="flex items-center gap-1.5">
+                            <span class="w-3 h-3 rounded-full bg-[#ff5f56]/90 inline-block"></span>
+                            <span class="w-3 h-3 rounded-full bg-[#ffbd2e]/90 inline-block"></span>
+                            <span class="w-3 h-3 rounded-full bg-[#27c93f]/90 inline-block"></span>
+                        </div>
+                        <span class="text-zinc-600">|</span>
+                        <div class="flex items-center gap-2 font-mono text-xs text-zinc-300">
+                            <span class="text-zinc-500">BATTLEX</span>
+                            <span>/</span>
+                            <span class="text-zinc-200 font-semibold">REPLAY_TERMINAL</span>
+                            <span>/</span>
+                            <span class="text-emerald-400 font-bold">ES1!</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3 font-mono text-xs">
+                        <span class="px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 font-bold flex items-center gap-1.5">
+                            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+                            LIVE SIMULATION ENGINE · 60 FPS
+                        </span>
+                    </div>
+                </div>
+
+                <!-- Cockpit Control Header Strip -->
+                <div class="flex flex-wrap items-center justify-between gap-4 mb-5 p-3 rounded-xl bg-black/60 border border-white/[0.06] font-mono text-xs">
+                    <div class="flex items-center gap-4">
+                        <div class="flex items-center gap-2">
+                            <span class="font-bold text-white text-sm">ES 1!</span>
+                            <span class="text-zinc-400 text-xs hidden sm:inline">E-mini S&amp;P 500</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 text-emerald-400 font-bold">
+                            <span>5,420.25</span>
+                            <span class="text-[11px] bg-emerald-500/10 px-1.5 py-0.5 rounded">▲ +32.50 (+0.60%)</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 bg-white/[0.04] p-1 rounded-lg border border-white/[0.06]">
+                        <span class="px-2 py-0.5 text-zinc-400 hover:text-white rounded cursor-pointer">Tick</span>
+                        <span class="px-2 py-0.5 text-zinc-400 hover:text-white rounded cursor-pointer">1m</span>
+                        <span class="px-2 py-0.5 text-white bg-white/[0.12] rounded font-bold cursor-pointer">5m</span>
+                        <span class="px-2 py-0.5 text-zinc-400 hover:text-white rounded cursor-pointer">15m</span>
+                        <span class="px-2 py-0.5 text-zinc-400 hover:text-white rounded cursor-pointer">1h</span>
+                    </div>
+                </div>
+
+                <!-- Cockpit Main Display Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+                    <!-- Left: Interactive Candlestick Chart Viewport (8 Cols) -->
+                    <div class="lg:col-span-8 flex flex-col justify-between cockpit-sub-card p-4 sm:p-5">
+                        
+                        <!-- Chart Area -->
+                        <div class="relative w-full h-[280px] sm:h-[320px] rounded-lg overflow-hidden bg-black/40 border border-white/[0.04] flex flex-col justify-between p-3">
+                            
+                            <!-- Key Level Price Tags (Overlays) -->
+                            <div class="absolute top-4 right-4 z-10 font-mono text-[11px] text-right space-y-1 pointer-events-none">
+                                <div class="text-zinc-500">Session High: <span class="text-zinc-300">5,438.50</span></div>
+                                <div class="text-zinc-500">VWAP: <span class="text-cyan-400">5,418.00</span></div>
+                                <div class="text-zinc-500">Session Low: <span class="text-zinc-300">5,404.25</span></div>
+                            </div>
+
+                            <!-- Execution Bubble Overlay: Entry & Take Profit -->
+                            <div class="absolute top-16 left-28 sm:left-36 z-10 font-mono text-[10.5px] bg-emerald-950/80 border border-emerald-500/40 text-emerald-300 px-2.5 py-1 rounded-md shadow-[0_0_12px_rgba(16,185,129,0.2)] pointer-events-none">
+                                ▲ LONG 2 ES @ 5,412.50 [Liquidity Sweep]
+                            </div>
+
+                            <div class="absolute top-7 right-24 sm:right-32 z-10 font-mono text-[10.5px] bg-emerald-500 text-black font-bold px-2.5 py-1 rounded-md shadow-[0_0_16px_rgba(16,185,129,0.5)] pointer-events-none">
+                                ★ TP HIT @ 5,435.00 (+3.46 R · +$2,250.00)
+                            </div>
+
+                            <!-- SVG Candlestick Simulation Canvas -->
+                            <svg viewBox="0 0 700 280" class="w-full h-full" preserveAspectRatio="none">
+                                <defs>
+                                    <linearGradient id="areaGlow" x1="0" y1="0" x2="0" y2="1">
+                                        <stop offset="0%" stop-color="#10b981" stop-opacity="0.15"/>
+                                        <stop offset="100%" stop-color="#10b981" stop-opacity="0.0"/>
+                                    </linearGradient>
+                                </defs>
+                                
+                                <!-- Background Horizontal Grid Lines -->
+                                <line x1="0" y1="50" x2="700" y2="50" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/>
+                                <line x1="0" y1="110" x2="700" y2="110" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/>
+                                <line x1="0" y1="170" x2="700" y2="170" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/>
+                                <line x1="0" y1="230" x2="700" y2="230" stroke="rgba(255,255,255,0.05)" stroke-dasharray="3,3"/>
+
+                                <!-- Support Level Line -->
+                                <line x1="0" y1="210" x2="700" y2="210" stroke="#f43f5e" stroke-opacity="0.3" stroke-width="1" stroke-dasharray="4,4"/>
+                                <text x="10" y="205" fill="#f43f5e" opacity="0.6" font-size="9" font-family="monospace">KEY SUPPORT: 5,408.00</text>
+
+                                <!-- VWAP Dynamic Line -->
+                                <path d="M 0 160 Q 150 170 300 145 T 700 95" fill="none" stroke="#06b6d4" stroke-width="1.5" stroke-opacity="0.6"/>
+
+                                <!-- Candlestick Sequence -->
+                                <!-- C1 Bear -->
+                                <line x1="30" y1="90" x2="30" y2="150" stroke="#f43f5e" stroke-width="1.2"/>
+                                <rect x="25" y="100" width="10" height="40" fill="#f43f5e" rx="1"/>
+
+                                <!-- C2 Bear -->
+                                <line x1="65" y1="125" x2="65" y2="185" stroke="#f43f5e" stroke-width="1.2"/>
+                                <rect x="60" y="135" width="10" height="35" fill="#f43f5e" rx="1"/>
+
+                                <!-- C3 Bull Small -->
+                                <line x1="100" y1="150" x2="100" y2="190" stroke="#10b981" stroke-width="1.2"/>
+                                <rect x="95" y="155" width="10" height="20" fill="#10b981" rx="1"/>
+
+                                <!-- C4 Bear Dump (Sweep Low) -->
+                                <line x1="135" y1="160" x2="135" y2="245" stroke="#f43f5e" stroke-width="1.2"/>
+                                <rect x="130" y="170" width="10" height="50" fill="#f43f5e" rx="1"/>
+
+                                <!-- C5 Hammer Reversal (Entry Candle) -->
+                                <line x1="170" y1="155" x2="170" y2="250" stroke="#10b981" stroke-width="1.5"/>
+                                <rect x="165" y="160" width="10" height="25" fill="#10b981" rx="1"/>
+
+                                <!-- Entry Level Marker Line -->
+                                <line x1="175" y1="160" x2="520" y2="160" stroke="#10b981" stroke-width="1" stroke-dasharray="4,4" stroke-opacity="0.7"/>
+
+                                <!-- C6 Big Bull -->
+                                <line x1="205" y1="120" x2="205" y2="175" stroke="#10b981" stroke-width="1.2"/>
+                                <rect x="200" y="130" width="10" height="40" fill="#10b981" rx="1"/>
+
+                                <!-- C7 Bull -->
+                                <line x1="240" y1="105" x2="240" y2="150" stroke="#10b981" stroke-width="1.2"/>
+                                <rect x="235" y="115" width="10" height="28" fill="#10b981" rx="1"/>
+
+                                <!-- C8 Minor Pullback -->
+                                <line x1="275" y1="110" x2="275" y2="140" stroke="#f43f5e" stroke-width="1.2"/>
+                                <rect x="270" y="118" width="10" height="16" fill="#f43f5e" rx="1"/>
+
+                                <!-- C9 Bull Continuation -->
+                                <line x1="310" y1="85" x2="310" y2="130" stroke="#10b981" stroke-width="1.2"/>
+                                <rect x="305" y="95" width="10" height="30" fill="#10b981" rx="1"/>
+
+                                <!-- C10 Bull Explosion -->
+                                <line x1="345" y1="65" x2="345" y2="110" stroke="#10b981" stroke-width="1.2"/>
+                                <rect x="340" y="70" width="10" height="35" fill="#10b981" rx="1"/>
+
+                                <!-- C11 Small consolidation -->
+                                <line x1="380" y1="60" x2="380" y2="95" stroke="#f43f5e" stroke-width="1.2"/>
+                                <rect x="375" y="68" width="10" height="14" fill="#f43f5e" rx="1"/>
+
+                                <!-- C12 Bull Push -->
+                                <line x1="415" y1="45" x2="415" y2="85" stroke="#10b981" stroke-width="1.2"/>
+                                <rect x="410" y="52" width="10" height="24" fill="#10b981" rx="1"/>
+
+                                <!-- C13 Final Extension to Target -->
+                                <line x1="450" y1="30" x2="450" y2="65" stroke="#10b981" stroke-width="1.2"/>
+                                <rect x="445" y="35" width="10" height="26" fill="#10b981" rx="1"/>
+
+                                <!-- C14 TP Exit Candle -->
+                                <line x1="485" y1="20" x2="485" y2="55" stroke="#10b981" stroke-width="1.5"/>
+                                <rect x="480" y="22" width="10" height="22" fill="#10b981" rx="1"/>
+
+                                <!-- Replay Current Candle in Formation -->
+                                <line x1="520" y1="22" x2="520" y2="48" stroke="#10b981" stroke-width="1.5"/>
+                                <rect x="515" y="26" width="10" height="15" fill="#10b981" rx="1" opacity="0.9"/>
+                                <circle cx="520" cy="26" r="3" fill="#10b981" class="animate-ping"/>
+                            </svg>
+                        </div>
+
+                        <!-- Interactive Replay Scrub Bar & Controls -->
+                        <div class="mt-4 pt-3 border-t border-white/[0.06] flex flex-col gap-2.5 font-mono text-xs">
+                            <div class="flex items-center justify-between text-zinc-400 text-[11px]">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="clock" class="w-3.5 h-3.5 text-zinc-500"></i>
+                                    <span>09:30:00 AM (Market Open)</span>
+                                </div>
+                                <span class="text-emerald-400 font-bold">10:42:15 AM EST · LIVE PLAYBACK</span>
+                                <span>11:30:00 AM (Mid-Day)</span>
+                            </div>
+
+                            <input type="range" min="0" max="100" value="68" class="replay-slider" aria-label="Replay scrubber">
+
+                            <div class="flex items-center justify-between pt-1">
+                                <div class="flex items-center gap-2">
+                                    <button class="w-7 h-7 rounded-lg bg-emerald-500 text-black flex items-center justify-center font-bold hover:bg-emerald-400 transition-colors shadow-[0_0_12px_rgba(16,185,129,0.4)]">
+                                        <i data-lucide="play" class="w-3.5 h-3.5 fill-black"></i>
+                                    </button>
+                                    <button class="w-7 h-7 rounded-lg bg-white/[0.08] text-zinc-300 flex items-center justify-center hover:bg-white/[0.14] transition-colors">
+                                        <i data-lucide="skip-forward" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <span class="text-zinc-500 text-[11px] ml-2">Bar 142 / 390</span>
+                                </div>
+                                <div class="flex items-center gap-1.5 bg-black/50 p-1 rounded-lg border border-white/[0.06]">
+                                    <span class="px-2 py-0.5 text-zinc-400 hover:text-white rounded cursor-pointer text-[10.5px]">0.5x</span>
+                                    <span class="px-2 py-0.5 text-white bg-white/[0.14] rounded font-bold cursor-pointer text-[10.5px]">1x</span>
+                                    <span class="px-2 py-0.5 text-zinc-400 hover:text-white rounded cursor-pointer text-[10.5px]">5x</span>
+                                    <span class="px-2 py-0.5 text-zinc-400 hover:text-white rounded cursor-pointer text-[10.5px]">MAX</span>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                    <!-- Right: Performance Radar & AI Autopsy Panel (4 Cols) -->
+                    <div class="lg:col-span-4 flex flex-col gap-4">
+
+                        <!-- Mini Stats Grid -->
+                        <div class="cockpit-sub-card p-4">
+                            <div class="flex items-center justify-between pb-3 border-b border-white/[0.06] mb-3">
+                                <span class="text-[11px] font-mono uppercase text-zinc-400 tracking-wider">Session Performance</span>
+                                <span class="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded font-bold">VERIFIED</span>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 font-mono">
+                                <div>
+                                    <div class="text-[10px] text-zinc-500 uppercase">Net Profit</div>
+                                    <div class="text-xl font-bold text-emerald-400 mt-0.5">+$2,250.00</div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-zinc-500 uppercase">Win Rate</div>
+                                    <div class="text-xl font-bold text-white mt-0.5">75.0%</div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-zinc-500 uppercase">Profit Factor</div>
+                                    <div class="text-base font-bold text-white mt-0.5">3.14</div>
+                                </div>
+                                <div>
+                                    <div class="text-[10px] text-zinc-500 uppercase">Avg Risk/Reward</div>
+                                    <div class="text-base font-bold text-cyan-400 mt-0.5">+2.6 R</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- AI Trade Autopsy Card -->
+                        <div class="cockpit-sub-card p-4 flex-1">
+                            <div class="flex items-center gap-2 mb-3">
+                                <div class="w-6 h-6 rounded-md bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400">
+                                    <i data-lucide="bot" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <span class="font-mono text-xs font-bold text-white uppercase tracking-wider">AI Behavioral Autopsy</span>
+                            </div>
+                            <div class="p-3 rounded-xl bg-black/50 border border-purple-500/20 mb-3 font-mono text-xs text-zinc-300 leading-relaxed">
+                                <div class="text-[10px] text-purple-400 font-bold mb-1">SETUP EVALUATION: GRADE A+</div>
+                                "High-probability Asian low sweep followed by 5m displacement candle. Zero FOMO hesitation on entry. Stop loss strictly honored."
+                            </div>
+                            <div class="flex items-center justify-between font-mono text-[11px] text-zinc-400">
+                                <span>Discipline Score</span>
+                                <span class="text-emerald-400 font-bold">98 / 100</span>
+                            </div>
+                            <div class="w-full h-1.5 bg-white/[0.08] rounded-full overflow-hidden mt-1.5">
+                                <div class="h-full bg-gradient-to-r from-emerald-500 to-cyan-400 rounded-full" style="width: 98%;"></div>
+                            </div>
+                        </div>
+
+                        <!-- Prop-Firm Risk Radar -->
+                        <div class="cockpit-sub-card p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-2">
+                                    <i data-lucide="shield-alert" class="w-4 h-4 text-emerald-400"></i>
+                                    <span class="font-mono text-xs font-bold text-white">Risk Lockout Radar</span>
+                                </div>
+                                <span class="font-mono text-[10px] text-emerald-400 font-bold">ARMED</span>
+                            </div>
+                            <p class="text-[11px] text-zinc-400 leading-relaxed mb-3">
+                                Automated cooling period prevents revenge trades if daily drawdown hits limit.
+                            </p>
+                            <div class="flex items-center justify-between font-mono text-[10px] text-zinc-500 bg-black/40 p-2 rounded-lg border border-white/[0.04]">
+                                <span>Daily Risk Budget:</span>
+                                <span class="text-zinc-300 font-bold">$1,000.00 Max Drawdown</span>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ==================== 4. SUPPORTED PLATFORMS & BROKERS RIBBON ==================== -->
+        <div class="w-full max-w-5xl my-16 text-center">
+            <p class="font-mono uppercase tracking-widest text-[11px] text-zinc-500 mb-8 font-semibold">
+                INTEGRATES SEAMLESSLY WITH YOUR FAVORITE PLATFORMS &amp; BROKERS
+            </p>
+            <div class="flex flex-wrap items-center justify-center gap-8 sm:gap-12 opacity-65 grayscale hover:grayscale-0 hover:opacity-100 transition-all duration-300">
+                <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-zinc-300">TRADINGVIEW</span>
+                <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-zinc-300">INTERACTIVE BROKERS</span>
+                <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-zinc-300">METATRADER 5</span>
+                <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-zinc-300">NINJATRADER</span>
+                <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-zinc-300">TRADOVATE</span>
+                <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-zinc-300">BINANCE</span>
+                <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-zinc-300">BYBIT</span>
+                <span class="font-mono text-xs sm:text-sm font-bold tracking-wider text-zinc-300">RITHMIC</span>
+            </div>
+        </div>
+
+        <!-- ==================== 5. NUMBERED FEATURE BREAKDOWN (Pattern 02 & 31) ==================== -->
+        <div id="features" class="w-full max-w-5xl space-y-12 text-left my-12">
+            
+            <div class="flex items-center gap-3">
+                <span class="text-[11px] font-mono text-emerald-400 tracking-widest font-bold">01 // PILLARS</span>
+                <span class="h-px flex-1 bg-gradient-to-r from-emerald-500/40 via-white/10 to-transparent"></span>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                
+                <!-- Feature 1 -->
+                <div id="backtesting" class="demo-card p-6 sm:p-7 flex flex-col justify-between">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center mb-5 text-emerald-400">
+                            <i data-lucide="history" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg mb-2">Tick-by-Tick Replay</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed">
+                            Relive historical CME, Forex, and Crypto sessions bar by bar. Place orders, test stop-losses, and build muscle memory with realistic market fills.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-white/[0.06] font-mono text-[11px] text-emerald-400 flex items-center gap-1">
+                        <span>100% Free Historical Data</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+
+                <!-- Feature 2 -->
+                <div id="tools" class="demo-card p-6 sm:p-7 flex flex-col justify-between">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center mb-5 text-cyan-400">
+                            <i data-lucide="shield-check" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg mb-2">Risk Radar &amp; Tilt Lock</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed">
+                            Hard drawdown limits and automated cooling lockout periods that physically lock order placement during psychological tilt.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-white/[0.06] font-mono text-[11px] text-cyan-400 flex items-center gap-1">
+                        <span>Prop-Firm Rule Protection</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+
+                <!-- Feature 3 -->
+                <div class="demo-card p-6 sm:p-7 flex flex-col justify-between">
+                    <div>
+                        <div class="w-10 h-10 rounded-xl bg-white/[0.06] border border-white/[0.10] flex items-center justify-center mb-5 text-purple-400">
+                            <i data-lucide="cpu" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="font-bold text-white text-lg mb-2">AI Behavioral Autopsy</h3>
+                        <p class="text-xs text-zinc-400 leading-relaxed">
+                            Automated post-session analysis uncovering hidden patterns: FOMO chasing, moving stop losses, overleveraging, and exit anxiety.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-white/[0.06] font-mono text-[11px] text-purple-400 flex items-center gap-1">
+                        <span>Gemini Cognitive Analytics</span>
+                        <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                    </div>
+                </div>
+
+            </div>
+
+        </div>
+
+        <!-- ==================== 6. PRICING & CTA SECTION ==================== -->
+        <div id="pricing" class="w-full max-w-5xl my-12">
+            <div class="demo-card p-8 sm:p-10 text-center relative overflow-hidden">
+                <div class="absolute inset-0 bg-gradient-to-r from-emerald-500/5 via-transparent to-cyan-500/5 pointer-events-none"></div>
+                <span class="inline-block font-mono text-[11px] uppercase tracking-wider text-emerald-400 font-bold px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 mb-4">
+                    NO CREDIT CARD · NO HIDDEN FEES
+                </span>
+                <h3 class="text-2xl sm:text-3xl font-extrabold text-white mb-3">Free Forever Starter Tier</h3>
+                <p class="text-xs sm:text-sm text-zinc-400 max-w-lg mx-auto mb-8 leading-relaxed">
+                    Begin backtesting CME and crypto markets with full trade analytics and AI autopsy today.
+                </p>
+                <div class="flex justify-center">
+                    <a href="auth.html" class="btn-start-free text-[14px] !py-3.5 !px-8">
+                        <span>Create Your Free Account Now</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </a>
+                </div>
+            </div>
+        </div>
     </main>
 
-    <!-- Interactive Logic -->
+    <!-- Interactive Navbar Scroll Stretch Script -->
     <script>
-        // Dynamic Dock Morph on Scroll
         const navContainer = document.getElementById('nav-container');
+
+        // Smooth scroll stretch animation listener
         window.addEventListener('scroll', () => {
             const scrollY = window.scrollY || window.pageYOffset;
             if (navContainer) {
@@ -205,12 +1427,119 @@
             }
         }, { passive: true });
 
-        // Initialize Self-Hosted Icons
+        // Initialize Lucide Icons
         document.addEventListener('DOMContentLoaded', () => {
             if (window.lucide) {
                 lucide.createIcons();
             }
         });
+
+        // --- High-Performance Clean Ambient Particle System ---
+        (function initParticleDrift() {
+            const canvas = document.getElementById('particle-canvas');
+            if (!canvas) return;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return;
+
+            let width, height;
+            let particles = [];
+            let mouse = { x: -1000, y: -1000 };
+
+            function resize() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                canvas.width = width * dpr;
+                canvas.height = height * dpr;
+                ctx.scale(dpr, dpr);
+            }
+
+            window.addEventListener('resize', () => {
+                resize();
+                initParticles();
+            }, { passive: true });
+
+            window.addEventListener('mousemove', e => {
+                mouse.x = e.clientX;
+                mouse.y = e.clientY;
+            }, { passive: true });
+
+            window.addEventListener('mouseleave', () => {
+                mouse.x = -1000;
+                mouse.y = -1000;
+            });
+
+            function initParticles() {
+                // Calm, noise-free celestial micro-particles with enhanced luminous brightness
+                const count = Math.min(50, Math.max(30, Math.floor(width / 36)));
+                particles = Array.from({ length: count }).map(() => ({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 1.3 + 0.75,
+                    vx: (Math.random() - 0.5) * 0.14,
+                    vy: -(Math.random() * 0.22 + 0.1),
+                    baseAlpha: Math.random() * 0.32 + 0.42, // Crisp, bright visibility (0.42 - 0.74)
+                    pulseSpeed: Math.random() * 0.016 + 0.008,
+                    phase: Math.random() * Math.PI * 2,
+                    tint: Math.random() > 0.25 ? '255, 255, 255' : '191, 219, 254' // Crisp white with soft starlight tint
+                }));
+            }
+
+            resize();
+            initParticles();
+
+            let tick = 0;
+            function draw() {
+                tick++;
+                ctx.clearRect(0, 0, width, height);
+
+                particles.forEach(p => {
+                    p.x += p.vx;
+                    p.y += p.vy;
+
+                    // Seamless wrap
+                    if (p.y < -10) {
+                        p.y = height + 10;
+                        p.x = Math.random() * width;
+                    }
+                    if (p.x < -10) p.x = width + 10;
+                    if (p.x > width + 10) p.x = -10;
+
+                    // Subtle breathing pulse with high luminous baseline
+                    let alpha = p.baseAlpha + Math.sin(tick * p.pulseSpeed + p.phase) * 0.12;
+
+                    // Gentle interactive aura without harsh lines
+                    if (mouse.x > 0 && mouse.y > 0) {
+                        const dist = Math.hypot(mouse.x - p.x, mouse.y - p.y);
+                        if (dist < 140) {
+                            const proximity = 1 - dist / 140;
+                            alpha = Math.min(0.98, alpha + proximity * 0.38);
+                            // Very subtle nudge away
+                            const angle = Math.atan2(p.y - mouse.y, p.x - mouse.x);
+                            p.x += Math.cos(angle) * proximity * 0.38;
+                            p.y += Math.sin(angle) * proximity * 0.38;
+                        }
+                    }
+
+                    // Soft ambient halo for larger motes
+                    if (p.radius > 1.35) {
+                        ctx.beginPath();
+                        ctx.arc(p.x, p.y, p.radius * 2.2, 0, Math.PI * 2);
+                        ctx.fillStyle = `rgba(${p.tint}, ${(Math.max(0.1, alpha) * 0.22).toFixed(3)})`;
+                        ctx.fill();
+                    }
+
+                    // Core bright particle point
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
+                    ctx.fillStyle = `rgba(${p.tint}, ${Math.max(0.24, alpha.toFixed(3))})`;
+                    ctx.fill();
+                });
+
+                requestAnimationFrame(draw);
+            }
+            requestAnimationFrame(draw);
+        })();
     </script>
 </body>
 </html>

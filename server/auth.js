@@ -213,6 +213,26 @@ async function verify(token) {
     if (!token) throw Object.assign(new Error('Authentication required — sign in at /auth.html'), { code: 401 });
     const cached = verifyCache.get(token);
     if (cached && Date.now() - cached.at < 60 * 1000) return cached.user;
+
+    if (process.env.CLERK_SECRET_KEY && (token.startsWith('sess_') || token.split('.').length === 3)) {
+        try {
+            const { verifyToken } = require('@clerk/backend');
+            const claims = await verifyToken(token, { secretKey: process.env.CLERK_SECRET_KEY });
+            if (claims && claims.sub) {
+                const clerkUser = {
+                    id: claims.sub,
+                    email: claims.email || claims.primary_email || '',
+                    name: claims.name || claims.username || 'Trader',
+                    created_at: new Date((claims.iat || Math.floor(Date.now() / 1000)) * 1000).toISOString()
+                };
+                verifyCache.set(token, { user: clerkUser, at: Date.now() });
+                return clerkUser;
+            }
+        } catch (_) {
+            // Not a valid Clerk token, fall through to GoTrue
+        }
+    }
+
     const user = pickUser(await gotrue('/auth/v1/user', { token }));
     if (!user) throw Object.assign(new Error('Invalid session'), { code: 401 });
     verifyCache.set(token, { user, at: Date.now() });
