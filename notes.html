@@ -493,6 +493,161 @@
             .log-table-row > :nth-child(7) { grid-column: 3; grid-row: 1; }
             .tl-search { min-width: 0; }
         }
+
+        /* ================================================================
+           BattleX detail cockpit — strict charcoal system
+           No decorative gradients, pastel surfaces, or oversized shadows.
+           All selectors are scoped to the existing cockpit IDs/classes.
+        ================================================================ */
+        #nv-wr { color: #e2e8f0; }
+        #view-trade-cockpit {
+            gap: 18px;
+            color: #e2e8f0;
+        }
+        #view-trade-cockpit > .flex.items-center.justify-between {
+            min-height: 48px; padding: 2px 2px 16px;
+            border-bottom: 1px solid rgba(255,255,255,.05);
+        }
+        #view-trade-cockpit > .flex.items-center.justify-between > div:first-child { gap: 12px; }
+        #view-trade-cockpit #cp-symbol {
+            color: #f1f5f9; font-family: 'JetBrains Mono', monospace; font-size: 22px;
+            letter-spacing: -.045em;
+        }
+        #view-trade-cockpit #cp-date-human {
+            color: #64748b; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+            letter-spacing: .03em;
+        }
+        #view-trade-cockpit .btn-icon-square {
+            width: 34px; height: 34px; background: rgba(255,255,255,.035);
+            border: 1px solid rgba(255,255,255,.08); color: #94a3b8;
+        }
+        #view-trade-cockpit .btn-icon-square:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); color: #f8fafc; }
+        #view-trade-cockpit .btn-delete-solid {
+            width: 34px; height: 34px; background: transparent; border: 1px solid transparent;
+            color: #64748b; border-radius: 9px;
+        }
+        #view-trade-cockpit .btn-delete-solid:hover { color: #fb7185; background: rgba(244,63,94,.1); border-color: rgba(244,63,94,.18); }
+        #view-trade-cockpit > .grid {
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            align-items: start; gap: 14px; overflow: visible;
+        }
+        #view-trade-cockpit > .grid > .quad-card {
+            min-height: 0; padding: 20px; background: rgba(18,22,32,.9);
+            border: 1px solid rgba(255,255,255,.07); border-radius: 12px;
+            box-shadow: none; backdrop-filter: blur(12px); overflow: visible;
+        }
+        #view-trade-cockpit > .grid > .quad-card:hover { border-color: rgba(255,255,255,.1); }
+        #view-trade-cockpit .quad-card-title {
+            color: #94a3b8; font-size: 10px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: .13em;
+        }
+        #view-trade-cockpit .quad-card-sub { color: #64748b; font-size: 11px; line-height: 1.5; }
+        #view-trade-cockpit .quad-card > div:first-child > .flex.items-center.justify-between { margin-bottom: 16px !important; }
+        #view-trade-cockpit #cp-pnl-pill {
+            padding: 5px 9px; border-radius: 7px; background: rgba(16,185,129,.1);
+            border: 1px solid rgba(16,185,129,.2); color: #6ee7b7; font-size: 10px;
+        }
+        #view-trade-cockpit #cp-pnl-pill.loss { background: rgba(244,63,94,.1); border-color: rgba(244,63,94,.2); color: #fda4af; }
+        #view-trade-cockpit > .grid > .quad-card:first-child .flex.flex-col.gap-2 {
+            display: flex; flex-direction: column; gap: 0 !important;
+        }
+        #view-trade-cockpit > .grid > .quad-card:first-child .flex.flex-col.gap-2 > div:not(.divider) {
+            min-height: 37px; padding: 9px 0; border-bottom: 1px solid rgba(255,255,255,.05);
+            font-size: 11px; gap: 10px;
+        }
+        #view-trade-cockpit > .grid > .quad-card:first-child .flex.flex-col.gap-2 > div:not(.divider) > span:first-child { color: #94a3b8; font-weight: 500; }
+        #view-trade-cockpit > .grid > .quad-card:first-child .flex.flex-col.gap-2 > div:not(.divider) > span:last-child { color: #e2e8f0; font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: right; }
+        #view-trade-cockpit > .grid > .quad-card:first-child .divider { display: block !important; grid-column: 1 / -1; height: 7px; border: 0; }
+        #view-trade-cockpit #cp-row-side > span { font-family: 'Plus Jakarta Sans', sans-serif; font-size: 10px; }
+        #view-trade-cockpit #cp-row-side > .side-pill.buy { color: #6ee7b7 !important; }
+        #view-trade-cockpit #cp-row-side > .side-pill.sell { color: #fda4af !important; }
+        #view-trade-cockpit #cp-adherence-bar { background: #34d399 !important; }
+        #view-trade-cockpit .w-24.h-1\.5, #view-trade-cockpit .w-20.h-1\.5 { background: rgba(255,255,255,.05) !important; }
+        #view-trade-cockpit .w-3\.5.h-1\.5.bg-\[\#ef4444\] { background: #fb7185 !important; }
+        #view-trade-cockpit .w-20.h-1\.5.bg-\[\#22c55e\] { background: #34d399 !important; }
+
+        #card-screenshots-zone { cursor: pointer; }
+        #screenshot-content-zone {
+            min-height: 178px; margin-top: 12px; border: 1px dashed rgba(255,255,255,.11);
+            border-radius: 10px; background: rgba(255,255,255,.018); transition: border-color .16s ease, background .16s ease;
+        }
+        #card-screenshots-zone:hover #screenshot-content-zone { border-color: rgba(255,255,255,.22); background: rgba(255,255,255,.03); }
+        #screenshot-content-zone .text-\[14px\] { color: #cbd5e1; font-size: 12px; }
+        #screenshot-content-zone .text-\[12px\] { color: #64748b; font-size: 10px; }
+        #screenshot-content-zone [data-lucide="cloud-upload"] { color: #64748b !important; width: 22px; height: 22px; }
+
+        #strategy-dropdown-wrap { z-index: 70; }
+        #strategy-dropdown-btn {
+            background: rgba(255,255,255,.04) !important; border-color: rgba(255,255,255,.1) !important;
+            color: #e2e8f0 !important; border-radius: 8px; padding: 7px 10px;
+        }
+        #strategy-menu {
+            z-index: 80 !important; background: #151a24 !important; border-color: rgba(255,255,255,.1) !important;
+            box-shadow: 0 16px 32px rgba(0,0,0,.32) !important; border-radius: 10px !important;
+        }
+        #strategy-menu .strat-opt { color: #94a3b8 !important; }
+        #strategy-menu .strat-opt:hover, #strategy-menu .strat-opt.active { background: rgba(255,255,255,.06) !important; color: #f8fafc !important; }
+        #strategy-body-zone { min-height: 178px; padding: 20px 4px !important; }
+        #strategy-body-zone .nt-tag { border-radius: 6px; }
+        #strategy-body-zone > .w-full > div { color: #94a3b8; }
+        #strategy-body-zone .w-4.h-4 { background: rgba(255,255,255,.04) !important; border-color: rgba(255,255,255,.1) !important; }
+        #strategy-body-zone .w-4.h-4.text-\[\#22c55e\] { color: #34d399 !important; }
+        #strategy-body-zone .w-4.h-4.text-\[\#ef4444\] { color: #fb7185 !important; }
+
+        #notes-card { position: relative; z-index: 10; }
+        #notes-card .nt-head { align-items: center; }
+        #notes-card .nt-head-title .quad-card-title { color: #f1f5f9; font-size: 13px; text-transform: none; letter-spacing: 0; }
+        #notes-card .nt-head-title .quad-card-sub { color: #64748b; font-size: 10px; }
+        #notes-card .nt-status { background: rgba(255,255,255,.03); border-color: rgba(255,255,255,.08); color: #94a3b8; }
+        #notes-card .nt-tags { gap: 6px; margin-top: 16px; }
+        #notes-card .nt-tag {
+            padding: 5px 9px; border-radius: 6px; background: rgba(255,255,255,.03);
+            border-color: rgba(255,255,255,.08); color: #cbd5e1; font-size: 10px;
+        }
+        #notes-card .nt-tag:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.16); color: #fff; }
+        #notes-card .nt-tag.on { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); color: #fff; }
+        #notes-card .nt-tag.on.good { background: rgba(255,255,255,.12); border-color: rgba(255,255,255,.28); color: #fff; }
+        #notes-card .nt-tag.on.watch { background: rgba(244,63,94,.14); border-color: rgba(244,63,94,.3); color: #fda4af; }
+        #notes-card .nt-editor-wrap { margin-top: 14px; }
+        #notes-card .nt-input, #notes-card .nt-preview {
+            min-height: 156px; background: rgba(255,255,255,.015); border-color: rgba(255,255,255,.07);
+            border-radius: 9px; color: #e2e8f0; font-size: 12px; line-height: 1.7;
+        }
+        #notes-card .nt-input:focus { border-color: rgba(14,165,233,.45); box-shadow: 0 0 0 2px rgba(14,165,233,.08); }
+        #notes-card .nt-foot {
+            min-width: 0; overflow: visible; flex-wrap: wrap; align-items: center; gap: 10px;
+            padding-top: 2px;
+        }
+        #notes-card .nt-foot > .flex-1 { min-width: 180px; }
+        #notes-card .nt-foot > .text-\[11px\] { overflow: visible; white-space: nowrap; }
+        #notes-card .nt-btn { background: rgba(255,255,255,.04); border-color: rgba(255,255,255,.1); color: #cbd5e1; }
+        #notes-card .nt-btn:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.18); color: #fff; }
+        #notes-card .nt-btn.primary { background: #f8fafc; border-color: #f8fafc; color: #0b0e14; }
+        #notes-card .nt-btn.primary:hover { background: #cbd5e1; border-color: #cbd5e1; }
+        #notes-card .nt-meter-fill { background: #34d399; }
+        #notes-card .nt-menu.hidden { display: none !important; }
+        #notes-card .nt-menu {
+            top: auto !important; bottom: calc(100% + 7px) !important; right: 0; z-index: 90 !important;
+            width: 264px; max-height: min(58vh, 360px); padding: 6px;
+            background: #151b28 !important; border: 1px solid rgba(255,255,255,.1) !important;
+            border-radius: 10px; box-shadow: 0 16px 32px rgba(0,0,0,.32) !important;
+        }
+        /* `up` is the existing overflow marker; when the header is too close
+           to the viewport top, fall back downward instead of clipping. */
+        #notes-card .nt-menu.up { top: calc(100% + 7px) !important; bottom: auto !important; }
+        #notes-card .nt-menu-item { padding: 9px 10px; border-radius: 7px; }
+        #notes-card .nt-menu-item:hover { background: rgba(255,255,255,.06); }
+        #notes-card .nt-menu-item .text-\[12\.5px\] { color: #e2e8f0 !important; }
+        #notes-card .nt-menu-item .nt-menu-sub { color: #64748b !important; }
+        #notes-card .nt-menu-item#nt-clear-note .text-\[12\.5px\] { color: #fda4af !important; }
+        @media (max-width: 900px) {
+            #view-trade-cockpit > .grid { grid-template-columns: 1fr; }
+            #notes-card .nt-menu { right: auto; left: 0; }
+        }
+        @media (max-width: 640px) {
+            #view-trade-cockpit > .grid > .quad-card { padding: 16px; }
+            #notes-card .nt-foot > .text-\[11px\] { white-space: normal; width: 100%; order: 4; }
+        }
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -926,7 +1081,7 @@
                                     </div>
                                     <div class="nt-head-actions">
                                         <div class="nt-status" id="nt-status"><span class="nt-dot" id="nt-dot"></span><span id="nt-status-text">No note yet</span></div>
-                                        <div class="relative hide-when-collapsed" id="nt-template-wrap">
+                                        <div class="relative" id="nt-template-wrap">
                                             <button type="button" class="nt-btn" id="nt-template-btn" title="Insert a structured starter">
                                                 <svg data-lucide="sparkles" class="w-3.5 h-3.5"></svg> Template
                                                 <svg data-lucide="chevron-down" class="w-3 h-3 text-[#64748b]"></svg>
@@ -1159,7 +1314,9 @@
 
                 $('cp-row-symbol').textContent = t.symbol || 'NAS100';
                 const isLong = t.dir === 'Long';
-                $('cp-row-side').innerHTML = isLong ? '<span class="text-[#22c55e] font-bold">Buy ↑</span>' : '<span class="text-[#ef4444] font-bold">Sell ↓</span>';
+                $('cp-row-side').innerHTML = isLong
+                    ? '<span class="side-pill buy"><svg data-lucide="arrow-up-right" class="w-3 h-3"></svg>Buy</span>'
+                    : '<span class="side-pill sell"><svg data-lucide="arrow-down-right" class="w-3 h-3"></svg>Sell</span>';
                 $('cp-row-size').textContent = (t.size != null ? t.size + ' lots' : '-');
 
                 const entryStr = d.getFullYear() + '/' + String(d.getMonth() + 1).padStart(2, '0') + '/' + String(d.getDate()).padStart(2, '0') + ' ' + d.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
@@ -1208,9 +1365,8 @@
                 const total = evals.length;
                 const passed = evals.filter(e => e.state === 'PASS' || e.state === 'pass').length;
                 const result = String(t.adherence_result || '').toUpperCase();
-                const tone = result === 'VIOLATION' ? '#ef4444'
-                    : result === 'BLOCK' ? '#f59e0b'
-                    : result === 'PASS' ? '#22c55e' : '#475569';
+                const tone = result === 'VIOLATION' || result === 'BLOCK' ? '#fb7185'
+                    : result === 'PASS' ? '#34d399' : '#64748b';
 
                 bar.style.width = (total ? Math.round((passed / total) * 100) : 0) + '%';
                 bar.style.background = tone;

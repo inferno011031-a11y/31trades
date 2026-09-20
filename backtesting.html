@@ -214,9 +214,8 @@
             border: 1px solid transparent; background: transparent; cursor: pointer; transition: all 0.15s;
         }
         .bd-tab:hover { color: var(--tm-text); background: var(--tm-hover); }
-        .bd-tab.active {
-            background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(52,211,153,0.08));
-            color: var(--tm-text); border-color: rgba(129,140,248,0.30); box-shadow: inset 2px 0 0 var(--tm-indigo);
+        .bd-tab.active {                    background: rgba(255,255,255,.08);
+                    color: var(--tm-text); border-color: rgba(255,255,255,.10); box-shadow: inset 2px 0 0 #38bdf8;
         }
         .bd-tab.disabled { opacity: 0.6; }
 
@@ -285,7 +284,7 @@
         .fade-up { animation: fadeUp 0.22s ease; }
 
         .progress-track { height: 4px; border-radius: 999px; background: var(--tm-border-2); overflow: hidden; }
-        .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--tm-accent-2), var(--tm-green)); transition: width 0.2s ease; }
+        .progress-fill { height: 100%; border-radius: 999px;            background: linear-gradient(90deg, #38bdf8, #10b981); transition: width 0.2s ease; }
         @media (max-width: 767px) {
             .topbar { padding-left: 12px; padding-right: 12px; }
         }
@@ -323,19 +322,35 @@
         }
 
         .stitch-card {
-            background-color: #111723 !important;
-            border: 1px solid rgba(255, 255, 255, 0.08) !important;
-            border-radius: 12px !important;
+            background: rgba(17, 21, 32, .82) !important;
+            border: 1px solid rgba(255, 255, 255, .07) !important;
+            border-radius: 16px !important;
             padding: 20px !important;
-            transition: border-color 0.15s ease, background 0.15s ease !important;
+            box-shadow: 0 4px 24px rgba(0, 0, 0, .35) !important;
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+            transition: border-color .18s ease, background .18s ease, transform .18s ease !important;
         }
         .stitch-card:hover {
-            border-color: rgba(255, 255, 255, 0.20) !important;
+            border-color: rgba(255, 255, 255, .13) !important;
         }
 
-        /* Ambient Radial Glow */
+        /* Ambient cyan edge light — no decorative violet gradients. */
         .top-glow {
-            background: radial-gradient(circle at 80% -20%, rgba(30, 58, 138, 0.35), transparent 60%) !important;
+            background: radial-gradient(ellipse at top right, rgba(56, 189, 248, .08), transparent 60%) !important;
+        }
+        .bx-mode-switch {
+            display: inline-flex; align-items: center; gap: 3px; padding: 4px;
+            border: 1px solid rgba(255,255,255,.06); border-radius: 12px;
+            background: rgba(255,255,255,.04);
+        }
+        .bx-mode-switch .stitch-tab {
+            padding: 8px 13px !important; border: 0 !important; border-radius: 8px;
+            color: #94a3b8 !important; font-size: 12px; transition: background .15s ease, color .15s ease;
+        }
+        .bx-mode-switch .stitch-tab:hover { background: rgba(255,255,255,.06); color: #e2e8f0 !important; }
+        .bx-mode-switch .stitch-tab.active {
+            background: rgba(255,255,255,.10) !important; color: #fff !important;
+            border: 0 !important; box-shadow: 0 1px 2px rgba(0,0,0,.2);
         }
 
         /* Glowing Emerald Green Bars */
@@ -391,6 +406,39 @@
         .stitch-tab.active {
             color: #ffffff !important;
             border-bottom-color: #ffffff !important;
+        }
+        .bx-engine-status {
+            display: inline-flex; align-items: center; gap: 7px; padding: 5px 9px;
+            border: 1px solid rgba(16,185,129,.22); border-radius: 999px;
+            background: rgba(16,185,129,.08); color: #6ee7b7;
+            font: 600 10px/1 var(--tm-mono); letter-spacing: .04em; text-transform: uppercase;
+        }
+        .bx-status-dot { width: 6px; height: 6px; border-radius: 50%; background: #10b981; box-shadow: 0 0 0 3px rgba(16,185,129,.12); }
+        .bx-header-action {
+            display: inline-flex; align-items: center; gap: 7px; padding: 8px 13px; border-radius: 10px;
+            background: #fff; color: #0b0e14; border: 1px solid #fff; font-size: 12px; font-weight: 800;
+            transition: background .15s ease, transform .15s ease; cursor: pointer;
+        }
+        .bx-header-action:hover { background: #dbe4ed; transform: translateY(-1px); }
+        .bx-header-action span { font-size: 16px; line-height: 10px; font-weight: 400; }
+        .bx-dashboard-surface {
+            background: rgba(17, 21, 32, .82) !important;
+            border-color: rgba(255,255,255,.07) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,.35) !important;
+            backdrop-filter: blur(18px); -webkit-backdrop-filter: blur(18px);
+        }
+        .bx-quick-card { min-height: 132px; transition: transform .18s ease, border-color .18s ease, background .18s ease; }
+        .bx-quick-card:hover { transform: translateY(-2px); border-color: rgba(255,255,255,.14) !important; background: rgba(24,31,46,.9) !important; }
+        .bx-card-arrow { position: absolute; right: 18px; top: 16px; color: #64748b; font: 600 16px/1 var(--tm-mono); transition: color .15s ease, transform .15s ease; }
+        .bx-quick-card:hover .bx-card-arrow { color: #e2e8f0; transform: translateX(2px); }
+        .bx-telemetry-card { min-height: 154px; }
+        .bx-session-row { transition: background .15s ease, border-color .15s ease; }
+        .bx-session-row:hover { background: #181f30 !important; border-color: rgba(255,255,255,.12) !important; }
+        .bx-empty-state { border-style: dashed !important; background: rgba(12,16,24,.55) !important; }
+        @media (max-width: 767px) {
+            .bx-header-action { padding: 7px 10px; }
+            .bx-engine-status { display: none; }
         }
 
         /* ============ ON-CHART FLOATING EXECUTION HUD ============ */
@@ -805,26 +853,30 @@
             <!-- Content -->
             <main class="flex-1 overflow-y-auto relative bg-[#06090e] text-slate-200">
                 <!-- Ambient background lighting effect -->
-                <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-96 top-glow"></div>
+                <div aria-hidden="true" class="pointer-events-none absolute inset-x-0 top-0 h-[420px] top-glow"></div>
 
                 <!-- Testing Header with Streak & Tabs -->
-                <header class="relative z-10 w-full pt-5 px-6 lg:px-10 border-b border-[#161a24] bg-[#070b12]/60 backdrop-blur-md">
+                <header class="relative z-10 w-full pt-5 px-6 lg:px-10 border-b border-white/[0.06] bg-[#0b0e14]/75 backdrop-blur-xl">
                     <div class="max-w-[1580px] mx-auto">
                         <!-- Top Title and Streak Row -->
                         <div class="flex items-center justify-between pb-4">
-                            <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
-                                Backtesting
-                            </h1>
+                            <div class="flex items-center gap-3">
+                                <h1 class="text-2xl font-bold tracking-tight text-white flex items-center gap-2">
+                                    Backtesting
+                                </h1>
+                                <span class="bx-engine-status"><span class="bx-status-dot"></span> Engine Ready</span>
+                            </div>
                             <!-- Streak Pill Badge -->
-                            <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121824] border border-amber-500/30 hover:border-amber-500/50 transition-colors shadow-sm cursor-pointer" title="Daily backtesting streak">
-                                <span class="text-sm font-semibold text-slate-100" id="streak-days">1</span>
-                                <span class="text-xs text-slate-300 font-medium">day streak!</span>
-                                <span aria-label="fire" class="text-base" role="img">🔥</span>
+                            <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#121824] border border-amber-500/30 hover:border-amber-500/50 transition-colors shadow-sm cursor-pointer" title="Backtesting activity streak">
+                                <span class="text-sm font-semibold text-slate-100" id="streak-days">—</span>
+                                <span class="text-xs text-slate-300 font-medium">session streak</span>
+                                <svg class="w-3.5 h-3.5 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v4m0 10v4M3 12h4m10 0h4m-3.64-6.36-2.83 2.83m-8.49 8.49-2.83 2.83m0-11.32 2.83 2.83m8.49 8.49 2.83 2.83" stroke="currentColor" stroke-linecap="round" stroke-width="1.5"/></svg>
                             </div>
                         </div>
 
                         <!-- Navigation Tabs -->
-                        <nav aria-label="Main Navigation" class="flex space-x-7 text-sm font-medium pt-1 -mb-[1px]">
+                        <nav aria-label="Main Navigation" class="flex items-center justify-between gap-4 pt-1 -mb-[1px]">
+                                <div class="bx-mode-switch">
                             <!-- Tab: Dashboard -->
                             <button type="button" class="stitch-tab active flex items-center gap-2 pb-3.5 text-white border-b-2 border-white transition-all font-semibold cursor-pointer" data-tab="dashboard">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" viewBox="0 0 24 24">
@@ -855,17 +907,21 @@
                                 </svg>
                                 <span>Analytics</span>
                             </button>
+                                </div>
+                                <button type="button" class="bx-header-action" onclick="document.getElementById('quick-launch-backtest').click()">
+                                    <span>+</span> New Session
+                                </button>
                         </nav>
                     </div>
                 </header>
 
-                <div class="relative z-10 max-w-[1580px] mx-auto px-6 lg:px-10 py-6 space-y-7">
+                <div class="relative z-10 max-w-[1580px] mx-auto px-6 lg:px-10 py-7 space-y-8">
                     <!-- ============ TAB 1: DASHBOARD ============ -->
                     <div id="tab-panel-dashboard" class="stitch-panel space-y-7">
                         <!-- Backtesting Engine Status Banner -->
-                        <div class="w-full bg-[#0d131f]/90 border border-blue-900/30 rounded-xl px-5 py-3 flex flex-wrap items-center justify-between sm:justify-center gap-3 text-center text-xs md:text-sm text-slate-300 shadow-inner" data-purpose="notice-banner">
+                        <div class="bx-dashboard-surface w-full px-5 py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs md:text-sm text-slate-300" data-purpose="notice-banner">
                             <span>Replay historical market regimes, execute simulated trades with custom risk sizing, and analyze empirical edge.</span>
-                            <button type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full bg-[#1e293b]/90 hover:bg-slate-800 border border-[#202738] text-white font-medium text-xs transition duration-150 cursor-pointer" onclick="document.getElementById('quick-launch-backtest').click()">
+                            <button type="button" class="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-white/[0.06] hover:bg-white/[0.1] border border-white/[0.08] text-white font-semibold text-xs transition duration-150 cursor-pointer" onclick="document.getElementById('quick-launch-backtest').click()">
                                 <svg class="w-3.5 h-3.5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                 </svg>
@@ -874,64 +930,67 @@
                         </div>
 
                         <!-- Top Interactive Session Mode Cards -->
-                        <section aria-label="Launch Session Types" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-3 xl:max-w-3xl gap-4">
+                        <section aria-label="Launch Session Types" class="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <!-- Backtesting Session Card (Active / Selected state) -->
-                            <div id="quick-launch-backtest" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-blue-500/80 rounded-xl p-4 cursor-pointer transition-all shadow-[0_0_15px_rgba(37,99,235,0.12)] flex items-start justify-between">
+                            <div id="quick-launch-backtest" class="bx-dashboard-surface bx-quick-card group relative cursor-pointer flex items-start justify-between p-5">
+                                <span class="bx-card-arrow" aria-hidden="true">→</span>
                                 <div class="flex items-start gap-3.5">
-                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-blue-400 mt-0.5">
+                                    <div class="w-9 h-9 rounded-xl bg-sky-500/10 flex items-center justify-center text-sky-400 mt-0.5">
                                         <svg class="w-6 h-6 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M12 4.5v15m7.5-7.5h-15" stroke-linecap="round" stroke-linejoin="round"></path>
                                         </svg>
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-1.5">
-                                            <h3 class="text-sm font-semibold text-white">Backtesting session</h3>
+                                            <h3 class="text-sm font-semibold text-white">Replay Session</h3>
                                             <svg class="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
                                                 <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
-                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Start a session</p>
+                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Practice custom historical regimes</p>
                                     </div>
                                 </div>
                             </div>
                             <!-- Prop Firm Session Card -->
-                            <div id="quick-launch-prop" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-[#1c2230] hover:border-[#2a3449] rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between">
+                            <div id="quick-launch-prop" class="bx-dashboard-surface bx-quick-card group relative cursor-pointer flex items-start justify-between p-5">
+                                <span class="bx-card-arrow" aria-hidden="true">→</span>
                                 <div class="flex items-start gap-3.5">
-                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-blue-400 mt-0.5">
+                                    <div class="w-9 h-9 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-400 mt-0.5">
                                         <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M16.5 18.75h-9m9 0a3 3 0 0 1 3 3h-15a3 3 0 0 1 3-3m9 0v-3.375c0-.621-.504-1.125-1.125-1.125h-.871M7.5 18.75v-3.375c0-.621.504-1.125 1.125-1.125h.872m5.004-9.375h2.25a2.25 2.25 0 0 0 2.25-2.25V4.5m-16.5 0V3.75a2.25 2.25 0 0 1 2.25-2.25h2.25m9.75 0h-9.75M9 7.5a3 3 0 0 0 6 0" stroke-linecap="round" stroke-linejoin="round"></path>
                                         </svg>
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-1.5">
-                                            <h3 class="text-sm font-semibold text-white">Prop firm session</h3>
+                                            <h3 class="text-sm font-semibold text-white">Simulated Evaluation</h3>
                                             <svg class="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
                                                 <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
-                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Start a challenge</p>
+                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Test rules with hard drawdowns</p>
                                     </div>
                                 </div>
                             </div>
                             <!-- Tutorials Card -->
-                            <div id="quick-launch-tutorials" class="group relative bg-[#111723] hover:bg-[#151c2b] border border-[#1c2230] hover:border-[#2a3449] rounded-xl p-4 cursor-pointer transition-all flex items-start justify-between">
+                            <div id="quick-launch-tutorials" class="bx-dashboard-surface bx-quick-card group relative cursor-pointer flex items-start justify-between p-5">
+                                <span class="bx-card-arrow" aria-hidden="true">→</span>
                                 <div class="flex items-start gap-3.5">
-                                    <div class="w-8 h-8 rounded-lg bg-transparent flex items-center justify-center text-blue-400 mt-0.5">
+                                    <div class="w-9 h-9 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-400 mt-0.5">
                                         <svg class="w-5 h-5 stroke-[1.75]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             <path d="M4.26 10.147a60.438 60.438 0 0 0-.491 6.347A48.62 48.62 0 0 1 12 20.904a48.62 48.62 0 0 1 8.232-4.41 60.46 60.46 0 0 0-.491-6.347m-15.482 0a50.636 50.636 0 0 0-2.658-.813A59.906 59.906 0 0 1 12 3.493a59.903 59.903 0 0 1 10.399 5.84c-.896.248-1.783.52-2.658.814m-15.482 0A50.717 50.717 0 0 1 12 13.489a50.702 50.702 0 0 1 7.74-3.342M6.75 15a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Zm0 0v-3.675A55.378 55.378 0 0 1 12 8.443m-5.25 6.557q.516.34 1.05.65" stroke-linecap="round" stroke-linejoin="round"></path>
                                         </svg>
                                     </div>
                                     <div>
                                         <div class="flex items-center gap-1.5">
-                                            <h3 class="text-sm font-semibold text-white">Tutorials</h3>
+                                            <h3 class="text-sm font-semibold text-white">Edge Verification</h3>
                                             <svg class="w-3.5 h-3.5 text-slate-500 hover:text-slate-300 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
                                                 <path d="M12 16v-4m0-4h.01" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
                                             </svg>
                                         </div>
-                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Learn more</p>
+                                        <p class="text-xs text-slate-400 mt-0.5 font-normal">Inspect R-multiples &amp; distribution</p>
                                     </div>
                                 </div>
                             </div>
@@ -971,12 +1030,12 @@
                                 </div>
                             </div>
 
-                            <!-- Main Analytics Grid: Left 4 Metric Cards (7 cols) & Right Glowing Amber Chart (5 cols) -->
+                            <!-- Main Analytics Grid: live telemetry cards + replay time chart -->
                             <div class="stitch-grid-12 grid grid-cols-1 lg:grid-cols-12 gap-4">
                                 <!-- Left Stats Section (2 Columns across 7/12 width) -->
                                 <div class="stitch-col-7 lg:col-span-7 stitch-stat-grid grid grid-cols-1 sm:grid-cols-2 gap-4">
                                     <!-- Metric Card: Time Invested -->
-                                    <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-[#2a3449] transition duration-150">
+                                    <div class="bx-dashboard-surface bx-telemetry-card stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-[#2a3449] transition duration-150">
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
@@ -1002,7 +1061,7 @@
                                     </div>
 
                                     <!-- Metric Card: Historical Time Replayed -->
-                                    <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-[#2a3449] transition duration-150">
+                                    <div class="bx-dashboard-surface bx-telemetry-card stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-[#2a3449] transition duration-150">
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
@@ -1037,7 +1096,7 @@
                                     </div>
 
                                     <!-- Metric Card: Trades taken -->
-                                    <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-[#2a3449] transition duration-150">
+                                    <div class="bx-dashboard-surface bx-telemetry-card stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-[#2a3449] transition duration-150">
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
@@ -1058,7 +1117,7 @@
                                     </div>
 
                                     <!-- Metric Card: Overall win rate -->
-                                    <div class="stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-[#2a3449] transition duration-150">
+                                    <div class="bx-dashboard-surface bx-telemetry-card stitch-card bg-[#111723] border border-[#1c2230] rounded-xl p-5 flex flex-col justify-between min-h-[160px] relative hover:border-[#2a3449] transition duration-150">
                                         <div>
                                             <div class="flex items-center justify-between">
                                                 <div class="flex items-center gap-2 text-slate-200 font-semibold text-sm">
@@ -1095,7 +1154,7 @@
                                             </svg>
                                         </button>
                                     </div>
-                                    <!-- Chart Area with Horizontal Dashed Gridlines & Vertical Glowing Amber Bars -->
+                                    <!-- Chart Area with subtle gridlines & emerald replay bars -->
                                     <div class="chart-area-h56 relative w-full h-56 pt-6 pb-6 flex items-end">
                                         <!-- Left Y-Axis Labels -->
                                         <div class="absolute left-0 top-6 bottom-8 flex flex-col justify-between text-[11px] text-slate-500 select-none pr-3 text-right">
@@ -1183,9 +1242,9 @@
                                     </button>
                                 </div>
 
-                                <div id="dash-sessions-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+                                <div id="dash-sessions-grid" class="space-y-2">
                                     <div class="col-span-full py-10 text-center text-xs text-slate-500 border border-[#161a24] rounded-xl bg-[#0c1018]/50">
-                                        No backtest sessions created yet. Click <span class="text-blue-400 font-semibold cursor-pointer" onclick="document.getElementById('quick-launch-backtest').click()">Backtesting session</span> above to start your first simulation.
+                                        No backtest sessions yet. Click <span class="text-sky-400 font-semibold cursor-pointer" onclick="document.getElementById('quick-launch-backtest').click()">Replay Session</span> above to start your first simulation.
                                     </div>
                                 </div>
                             </div>
@@ -1495,6 +1554,7 @@
             };
             const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
             const fmtMoney = n => '$' + Number(n || 0).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const fmtSignedMoney = n => { const v = Number(n || 0); return v > 0 ? '+$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v < 0 ? '-$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00'; };
             const fmtNum = n => n == null || isNaN(n) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
             const fmtPct = n => n == null || isNaN(n) ? '—' : Math.round(n * 100) + '%';
             const fmtTime = iso => { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return '—'; } };
@@ -1516,6 +1576,19 @@
             let tpLine = null;
             let cutMode = false;
             let playSpeedMs = 1000;
+            const demoMode = new URLSearchParams(window.location.search).get('demo') === '1';
+
+            // Preview-only fixtures. Normal users always use the live API response;
+            // ?demo=1 is intentionally opt-in for local UI review and screenshots.
+            const demoSessions = [
+                { id: 'demo-replay-01', symbol: 'XAUUSD', timeframe: '15m', strategy: 'ICT Silver Bullet · London AM', status: 'completed', open: false, trades: 4, net: 242.80, startingBalance: 10000, periodLabel: 'Feb 2024', createdAt: '2026-09-03T09:30:00Z', replayedSec: 138240, cursor: 1840 },
+                { id: 'demo-replay-02', symbol: 'BTCUSD', timeframe: '1h', strategy: 'Liquidity Sweep · New York AM', status: 'running', open: true, trades: 1, net: 130.71, startingBalance: 25000, periodLabel: 'Mar 2025', createdAt: '2026-09-02T14:15:00Z', replayedSec: 86400, cursor: 690 },
+                { id: 'demo-replay-03', symbol: 'XAUUSD', timeframe: '5m', strategy: 'FVG Continuation · New York PM', status: 'completed', open: false, trades: 2, net: -48.20, startingBalance: 10000, periodLabel: 'Jan 2024', createdAt: '2026-08-30T11:45:00Z', replayedSec: 43200, cursor: 520 }
+            ];
+            const demoAnalytics = {
+                n: 7, net: 325.31, winRate: 0.7142, avgR: 1.18, maxDD: 48.20,
+                bySymbol: [{ key: 'XAUUSD', n: 6, pnl: 194.60 }, { key: 'BTCUSD', n: 1, pnl: 130.71 }]
+            };
 
             // ============ CHROME ============
             function renderChrome() {
@@ -1563,14 +1636,19 @@
 
             // ============ SESSION LIST ============
             async function loadSessions() {
-                try {
-                    const r = await apiFetch('/api/backtest/sessions');
-                    if (!r.ok) throw new Error('sessions ' + r.status);
-                    const data = await r.json();
-                    sessions = (data && Array.isArray(data.sessions)) ? data.sessions : [];
-                } catch (e) {
-                    sessions = [];
+                if (demoMode) {
+                    sessions = demoSessions.map(s => Object.assign({}, s));
+                } else {
+                    try {
+                        const r = await apiFetch('/api/backtest/sessions');
+                        if (!r.ok) throw new Error('sessions ' + r.status);
+                        const data = await r.json();
+                        sessions = (data && Array.isArray(data.sessions)) ? data.sessions : [];
+                    } catch (e) {
+                        sessions = [];
+                    }
                 }
+                updateSessionStreak();
                 
                 // Studio tab count
                 if ($('sess-count')) $('sess-count').textContent = sessions.length + ' session' + (sessions.length === 1 ? '' : 's');
@@ -1593,11 +1671,14 @@
                                 '</div>' +
                                 '<div class="text-right flex-shrink-0">' +
                                     '<span class="tag ' + (s.status === 'completed' ? 'tag-emerald' : s.open ? 'tag-blue' : 'tag-gray') + '">' + esc(s.status) + '</span>' +
-                                    '<div class="num text-[11.5px] font-semibold mt-1">' + s.trades + ' trades · ' + fmtMoney(s.net) + '</div>' +
+                                    '<div class="num text-[11.5px] font-semibold mt-1">' + s.trades + ' ' + (s.trades === 1 ? 'trade' : 'trades') + ' · ' + fmtSignedMoney(s.net) + '</div>' +
                                 '</div>' +
                             '</button>'
                         ).join('');
-                        list.querySelectorAll('[data-sid]').forEach(b => b.addEventListener('click', () => openSession(b.dataset.sid)));
+                        list.querySelectorAll('[data-sid]').forEach(b => b.addEventListener('click', () => {
+                            if (demoMode) { showToast('Demo preview only — start a live session to open replay'); return; }
+                            openSession(b.dataset.sid);
+                        }));
                     }
                 }
 
@@ -1605,19 +1686,19 @@
                 const dashGrid = $('dash-sessions-grid');
                 if (dashGrid) {
                     if (!sessions.length) {
-                        dashGrid.innerHTML = '<div class="col-span-full py-10 text-center text-xs text-slate-500 border border-[#161a24] rounded-xl bg-[#0c1018]/50">' +
-                            'No backtest sessions created yet. Click <span class="text-blue-400 font-semibold cursor-pointer" onclick="document.getElementById(\'quick-launch-backtest\').click()">Backtesting session</span> above to start your first simulation.' +
+                        dashGrid.innerHTML = '<div class="bx-empty-state col-span-full py-10 text-center text-xs text-slate-500 border border-[#161a24] rounded-xl bg-[#0c1018]/50">' +
+                            'No backtest sessions yet. Click <span class="text-sky-400 font-semibold cursor-pointer" onclick="document.getElementById(\'quick-launch-backtest\').click()">Replay Session</span> above to start your first simulation.' +
                         '</div>';
                     } else {
                         dashGrid.innerHTML = sessions.slice(0, 9).map(s => {
                             const isBlind = s.blind;
                             const periodText = isBlind ? 'Blind Sample' : (s.periodLabel || s.period || 'Historical');
-                            const statusColor = s.status === 'completed' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-950/20' : 'text-blue-400 border-blue-500/30 bg-blue-950/20';
+                            const statusColor = s.status === 'completed' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : s.status === 'running' ? 'text-emerald-400 border-emerald-500/30 bg-emerald-500/10' : 'text-slate-300 border-white/10 bg-white/[0.04]';
                             const pnlClass = s.net > 0 ? 'text-emerald-400' : s.net < 0 ? 'text-rose-400' : 'text-slate-300';
-                            return '<div class="group relative bg-[#111723] hover:bg-[#151c2b] border border-[#1c2230] hover:border-[#2a3449] rounded-xl p-4 transition-all flex flex-col justify-between gap-3 cursor-pointer" data-sid="' + esc(s.id) + '">' +
+                            return '<div class="bx-session-row group relative bg-[#111723] hover:bg-[#151c2b] border border-[#1c2230] hover:border-[#2a3449] rounded-xl p-4 transition-all flex flex-col md:flex-row md:items-center justify-between gap-4 cursor-pointer" data-sid="' + esc(s.id) + '">' +
                                 '<div class="flex items-start justify-between gap-2">' +
                                     '<div class="flex items-center gap-2.5">' +
-                                        '<div class="w-8 h-8 rounded-lg bg-blue-500/10 border border-blue-500/20 flex items-center justify-center text-xs font-bold text-blue-400">' +
+                                        '<div class="w-8 h-8 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center text-xs font-bold text-sky-400">' +
                                             esc(s.symbol.slice(0, 3)) +
                                         '</div>' +
                                         '<div>' +
@@ -1629,40 +1710,61 @@
                                         '</div>' +
                                     '</div>' +
                                     '<span class="text-[10px] font-semibold uppercase tracking-wider px-2 py-0.5 rounded-full border ' + statusColor + '">' +
-                                        esc(s.status || 'Ready') +
+                                        (s.status === 'running' ? '<span class="inline-block w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1 animate-pulse"></span>' : '') + esc(s.status || 'Ready') +
                                     '</span>' +
                                 '</div>' +
-                                '<div class="grid grid-cols-3 gap-2 py-2 border-y border-[#161a24] text-[11px] tabular-nums">' +
+                                '<div class="grid grid-cols-3 md:flex-1 gap-2 py-2 border-y border-[#161a24] md:border-y-0 md:border-x md:px-4 text-[11px] tabular-nums">' +
                                     '<div>' +
                                         '<span class="text-slate-500 text-[10px] block">Period</span>' +
                                         '<span class="text-slate-200 font-medium truncate block" title="' + esc(periodText) + '">' + esc(periodText) + '</span>' +
                                     '</div>' +
                                     '<div>' +
                                         '<span class="text-slate-500 text-[10px] block">Starting Bal</span>' +
-                                        '<span class="text-slate-200 font-medium">' + fmtMoney(s.startingBalance || 10000) + '</span>' +
+                                        '<span class="text-slate-200 font-medium">' + (s.startingBalance != null ? fmtMoney(s.startingBalance) : '—') + '</span>' +
                                     '</div>' +
                                     '<div class="text-right">' +
                                         '<span class="text-slate-500 text-[10px] block">P&L / Net</span>' +
-                                        '<span class="font-bold ' + pnlClass + '">' + (s.trades > 0 ? fmtMoney(s.net) : '$0.00') + '</span>' +
+                                        '<span class="font-bold ' + pnlClass + '">' + (s.trades > 0 ? fmtSignedMoney(s.net) : '—') + '</span>' +
                                     '</div>' +
                                 '</div>' +
                                 '<div class="flex items-center justify-between text-[11px] text-slate-400 pt-0.5">' +
                                     '<span>' + fmtTime(s.createdAt) + '</span>' +
-                                    '<span class="text-slate-300 font-medium group-hover:text-blue-400 transition-colors flex items-center gap-1">' +
-                                        '<span>' + s.trades + ' trades</span>' +
+                                    '<span class="text-slate-300 font-medium group-hover:text-sky-400 transition-colors flex items-center gap-1">' +
+                                        '<span>' + s.trades + ' ' + (s.trades === 1 ? 'trade' : 'trades') + '</span><span aria-hidden="true">·</span><span>Resume Replay →</span>' +
                                     '</span>' +
                                 '</div>' +
                             '</div>';
                         }).join('');
                         dashGrid.querySelectorAll('[data-sid]').forEach(b => b.addEventListener('click', () => {
+                            if (demoMode) { showToast('Demo preview only — start a live session to open replay'); return; }
                             openSession(b.dataset.sid);
                         }));
                     }
                 }
             }
 
+            function updateSessionStreak() {
+                const el = $('streak-days');
+                if (!el) return;
+                if (!sessions.length) { el.textContent = '—'; return; }
+                const days = new Set(sessions.map(s => {
+                    const d = new Date(s.createdAt);
+                    return isNaN(d.getTime()) ? '' : d.toISOString().slice(0, 10);
+                }).filter(Boolean));
+                const ordered = Array.from(days).sort().reverse();
+                let streak = ordered.length ? 1 : 0;
+                for (let i = 1; i < ordered.length; i++) {
+                    const prev = new Date(ordered[i - 1]);
+                    const next = new Date(ordered[i]);
+                    if ((prev - next) / 86400000 !== 1) break;
+                    streak++;
+                }
+                el.textContent = streak || '—';
+            }
+
             // ============ SESSION OPS ============
             async function createSession() {
+                if (demoMode) { showToast('Demo preview only — remove ?demo=1 to create a live session'); return; }
                 const symbol = ($('pd-symbol') && $('pd-symbol').value) || 'XAUUSD';
                 const timeframe = ($('pd-timeframe') && $('pd-timeframe').value) || '1h';
                 const strategy = ($('pd-strategy') && $('pd-strategy').value.trim()) || 'Manual practice';
@@ -2628,6 +2730,11 @@
 
             // ============ PRACTICE ANALYTICS + INSIGHTS ============
             async function loadPracticeAnalytics() {
+                if (demoMode) {
+                    renderPA(demoAnalytics);
+                    updateDashboardMetrics(demoAnalytics);
+                    return;
+                }
                 try {
                     const r = await apiFetch('/api/practice/analytics');
                     if (!r.ok) throw new Error('pa ' + r.status);
@@ -2662,6 +2769,10 @@
             }
 
             async function loadPracticeInsights() {
+                if (demoMode) {
+                    renderPI([{ sev: 'positive', title: 'London AM is carrying the sample', detail: 'The preview dataset shows positive expectancy across the selected replay sessions.', sample: 7, confidence: 'preview' }]);
+                    return;
+                }
                 try {
                     const r = await apiFetch('/api/practice/insights');
                     if (!r.ok) throw new Error('pi ' + r.status);
@@ -3063,7 +3174,7 @@
                     if (Array.isArray(a.bySymbol) && a.bySymbol.length) {
                         if (symSub) symSub.textContent = 'Volume across traded instruments';
                         symBars.innerHTML = '<div class="flex flex-col gap-2">' + a.bySymbol.slice(0, 3).map(s => {
-                            return '<div class="flex items-center justify-between text-xs tabular-nums"><span class="text-slate-300 font-bold">' + esc(s.key) + '</span><span class="text-slate-400">' + s.n + ' trades (' + fmtMoney(s.pnl) + ')</span></div>';
+                            return '<div class="flex items-center justify-between text-xs tabular-nums"><span class="text-slate-300 font-bold">' + esc(s.key) + '</span><span class="text-slate-400">' + s.n + ' ' + (s.n === 1 ? 'trade' : 'trades') + ' · ' + fmtSignedMoney(s.pnl) + '</span></div>';
                         }).join('') + '</div>';
                     } else {
                         if (symSub) symSub.textContent = 'Your trades by symbol will show up here';
