@@ -341,6 +341,158 @@
             transform: translateY(20px); opacity: 0; pointer-events: none; transition: all 0.2s ease;
         }
         .toast.show { transform: none; opacity: 1; pointer-events: auto; }
+        /* ================================================================
+           Premium Trade Log refresh — page-local visual layer
+           Keeps all existing IDs and behavior intact while replacing the
+           generic dashboard treatment with an obsidian trading workspace.
+        ================================================================ */
+        :root {
+            --notes-bg: #080a0f;
+            --notes-surface: rgba(17, 22, 34, 0.82);
+            --notes-surface-strong: #111622;
+            --notes-border: rgba(255, 255, 255, 0.07);
+            --notes-border-soft: rgba(255, 255, 255, 0.045);
+            --notes-blue: #60a5fa;
+            --notes-green: #34d399;
+            --notes-red: #fb7185;
+        }
+
+        html, body { background: var(--notes-bg); }
+        body {
+            background:
+                radial-gradient(ellipse 72% 36% at 56% -4%, rgba(59, 130, 246, 0.09), transparent 68%),
+                radial-gradient(ellipse 48% 38% at 100% 36%, rgba(14, 165, 233, 0.035), transparent 72%),
+                var(--notes-bg);
+        }
+        main { background: transparent !important; }
+        .sidebar {
+            background: rgba(8, 10, 15, 0.88);
+            border-right-color: var(--notes-border);
+            box-shadow: 18px 0 50px rgba(0, 0, 0, 0.16);
+        }
+        .topbar {
+            background: rgba(8, 10, 15, 0.62);
+            border-bottom-color: var(--notes-border);
+            backdrop-filter: blur(18px);
+        }
+        .sidebar-section-header {
+            color: #586579 !important;
+            font-size: 10px !important;
+            letter-spacing: .16em !important;
+            font-weight: 800 !important;
+        }
+        .nav-item { border-radius: 10px; color: #8996a8; }
+        .nav-item:hover { background: rgba(255,255,255,.045); color: #e2e8f0; }
+        .nav-item.active {
+            position: relative;
+            background: linear-gradient(90deg, rgba(59,130,246,.16), transparent) !important;
+            color: #93c5fd !important;
+            box-shadow: inset 2px 0 0 #3b82f6 !important;
+        }
+        .nav-item.active::after {
+            content: ''; position: absolute; left: 0; top: 26%; bottom: 26%; width: 2px;
+            background: #60a5fa; border-radius: 99px; box-shadow: 0 0 14px rgba(96,165,250,.8);
+        }
+        #view-trade-log { gap: 14px; }
+        #view-trade-log > .quad-card:first-child {
+            order: 2;
+            background: linear-gradient(145deg, rgba(17,22,34,.94), rgba(11,15,24,.9));
+            border: 1px solid var(--notes-border);
+            border-radius: 18px;
+            box-shadow: 0 18px 55px rgba(0,0,0,.18), inset 0 1px 0 rgba(255,255,255,.025);
+        }
+        #notes-insight {
+            order: 1;
+            margin: 0 !important;
+            padding: 18px !important;
+            background: linear-gradient(145deg, rgba(17,22,34,.88), rgba(11,15,24,.76));
+            border: 1px solid var(--notes-border);
+            border-radius: 18px;
+            box-shadow: 0 18px 55px rgba(0,0,0,.16), inset 0 1px 0 rgba(255,255,255,.025);
+        }
+        #notes-insight > .flex.items-start { align-items: center; }
+        #notes-insight .quad-card-sub { display: none; }
+        #notes-insight .quad-card-title { font-size: 13px; letter-spacing: .01em; }
+        #notes-insight > .flex.items-start > div:first-child > .flex { gap: 9px; }
+        #notes-insight > .flex.items-start > div:first-child > .flex::after {
+            content: ' / LOG QUALITY'; color: #526174; font-size: 9px; font-weight: 800; letter-spacing: .15em;
+        }
+        #notes-insight > .grid {
+            display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 14px;
+        }
+        .nv-tile {
+            position: relative; min-height: 84px; padding: 13px 14px;
+            background: rgba(255,255,255,.027); border: 1px solid var(--notes-border-soft);
+            border-radius: 14px; overflow: hidden; transition: border-color .18s ease, background .18s ease, transform .18s ease;
+        }
+        .nv-tile::after {
+            content: ''; position: absolute; inset: auto 0 0; height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(96,165,250,.28), transparent); opacity: .7;
+        }
+        .nv-tile:hover { background: rgba(255,255,255,.045); border-color: rgba(96,165,250,.2); transform: translateY(-1px); }
+        .nv-lbl { color: #728096; font-size: 10px; letter-spacing: .12em; }
+        .nv-val { color: #f8fafc; font-family: 'JetBrains Mono', monospace; font-size: 18px; line-height: 1.2; margin-top: 8px; }
+        .nv-sub { color: #526174; font-size: 10px; margin-top: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        #nv-doc { color: var(--notes-green); }
+        #nv-wr { color: #c4b5fd; }
+        #nv-fill { background: linear-gradient(90deg, #34d399, #60a5fa); }
+        .nv-bar { height: 3px; margin-top: 12px; background: rgba(255,255,255,.055); }
+        #nv-note { color: #59687d !important; font-size: 10.5px; margin-top: 9px; }
+
+        #view-trade-log > .quad-card:first-child > .flex.items-center.justify-between {
+            align-items: flex-end; padding-bottom: 16px; border-bottom: 1px solid var(--notes-border-soft); gap: 18px;
+        }
+        #view-trade-log h1 { font-size: 22px; letter-spacing: -.035em; }
+        #view-trade-log h1::after { content: ' / REVIEW'; color: #526174; font-size: 9px; letter-spacing: .18em; vertical-align: middle; margin-left: 9px; font-weight: 800; }
+        #view-trade-log .quad-card:first-child > .flex.items-center.justify-between > div:first-child p { color: #66758a; }
+        #view-trade-log .quad-card:first-child > .flex.items-center.justify-between > div:last-child {
+            padding: 5px; border: 1px solid var(--notes-border); border-radius: 14px; background: rgba(255,255,255,.025); gap: 7px;
+        }
+        .tl-search {
+            width: 250px; height: 38px; border-radius: 10px; background: rgba(255,255,255,.035); border-color: rgba(255,255,255,.09); padding: 7px 34px 7px 34px;
+        }
+        .tl-search:focus { border-color: rgba(96,165,250,.55); box-shadow: 0 0 0 3px rgba(59,130,246,.1); }
+        .notes-search-kbd {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            min-width: 18px; padding: 2px 5px; border: 1px solid rgba(255,255,255,.1);
+            border-radius: 5px; color: #68778c; background: rgba(255,255,255,.035);
+            font: 600 10px/1 'JetBrains Mono', monospace; text-align: center; pointer-events: none;
+        }
+        .nt-seg { border: 0; background: transparent; padding: 0; gap: 2px; }
+        .nt-seg button { padding: 8px 11px; border-radius: 9px; font-size: 11px; color: #748197; }
+        .nt-seg button.on { background: rgba(255,255,255,.09); color: #f8fafc; box-shadow: 0 2px 9px rgba(0,0,0,.18); }
+        .log-table-head, .log-table-row { grid-template-columns: 32px 168px minmax(120px,1.2fr) 108px 132px 110px minmax(105px,1fr); }
+        .log-table-head { background: rgba(255,255,255,.018); color: #617087; border-bottom-color: var(--notes-border); padding-top: 12px; padding-bottom: 12px; font-size: 10px; letter-spacing: .1em; text-transform: uppercase; }
+        .log-table-row { min-height: 58px; border-bottom-color: var(--notes-border-soft); }
+        .log-table-row:hover { background: rgba(96,165,250,.035); }
+        .log-table-row.selected { border-left: 2px solid #3b82f6; background: rgba(59,130,246,.055); padding-left: 18px; }
+        .radio-dot { width: 8px; height: 8px; border-color: #435166; }
+        .log-table-row:hover .radio-dot { border-color: #60a5fa; box-shadow: 0 0 0 3px rgba(96,165,250,.1); }
+        .note-flag.yes { padding: 3px 7px; border: 1px solid rgba(52,211,153,.22); border-radius: 999px; background: rgba(52,211,153,.08); font-size: 9px; color: #6ee7b7; }
+        .note-flag.no { padding: 3px 7px; border: 1px solid rgba(148,163,184,.14); border-radius: 999px; background: rgba(255,255,255,.025); font-size: 9px; color: #64748b; }
+        .pnl-pill { border-radius: 8px; padding: 4px 9px; background: rgba(52,211,153,.09); border-color: rgba(52,211,153,.19); }
+        .pnl-pill.loss { background: rgba(251,113,133,.09); border-color: rgba(251,113,133,.2); color: #fb7185; }
+        .side-pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 8px; border-radius: 7px; font-size: 10px; font-weight: 800; letter-spacing: .03em; }
+        .side-pill.buy { color: #6ee7b7; background: rgba(52,211,153,.09); }
+        .side-pill.sell { color: #fda4af; background: rgba(251,113,133,.09); }
+        @media (max-width: 900px) {
+            #notes-insight > .grid { grid-template-columns: repeat(2, minmax(0,1fr)); }
+            #view-trade-log > .quad-card:first-child > .flex.items-center.justify-between { align-items: stretch; flex-direction: column; }
+            #view-trade-log .quad-card:first-child > .flex.items-center.justify-between > div:last-child { width: 100%; }
+            .tl-search { flex: 1; width: auto; }
+            .log-table-head, .log-table-row { grid-template-columns: 24px 128px minmax(95px,1fr) 82px 90px 72px 96px; }
+        }
+        @media (max-width: 640px) {
+            #notes-insight > .grid { grid-template-columns: 1fr 1fr; }
+            #notes-insight { padding: 14px !important; }
+            #notes-insight > .flex.items-start > span { display: none; }
+            #view-trade-log > .quad-card:first-child { padding: 16px !important; }
+            .log-table-head { display: none; }
+            .log-table-row { grid-template-columns: 24px minmax(120px,1fr) auto; gap: 8px; padding: 14px 12px; }
+            .log-table-row > :nth-child(4), .log-table-row > :nth-child(5), .log-table-row > :nth-child(6) { display: none; }
+            .log-table-row > :nth-child(7) { grid-column: 3; grid-row: 1; }
+            .tl-search { min-width: 0; }
+        }
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
@@ -522,12 +674,13 @@
                             <div class="flex items-center justify-between mb-2">
                                 <div>
                                     <h1 class="text-[20px] font-bold text-white tracking-tight">Trade Log</h1>
-                                    <p class="text-[12.5px] text-[#64748b] mt-0.5">Select a trade to view its details</p>
+                                    <p class="text-[12.5px] text-[#64748b] mt-0.5" id="tl-summary">Execution review · select a trade to inspect the full context</p>
                                 </div>
                                 <div class="flex items-center gap-2.5">
-                                    <div class="relative">
+                                    <div class="relative notes-search-shell">
                                         <svg data-lucide="search" class="w-3.5 h-3.5 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2"></svg>
-                                        <input id="tl-search" class="tl-search" type="search" placeholder="Search notes, symbol, tag…" autocomplete="off">
+                                        <input id="tl-search" class="tl-search" type="search" placeholder="Search symbol, note, tag…" autocomplete="off" aria-label="Search trade log">
+                                        <kbd class="notes-search-kbd">/</kbd>
                                     </div>
                                     <div class="nt-seg" id="tl-scope" role="tablist" aria-label="Note filter">
                                         <button type="button" data-scope="all" class="on">All</button>
@@ -564,7 +717,7 @@
                                 <div>
                                     <div class="flex items-center gap-2">
                                         <svg data-lucide="notebook-pen" class="w-4 h-4 text-[#64748b]"></svg>
-                                        <span class="quad-card-title">Note coverage</span>
+                                        <span class="quad-card-title">Log quality</span>
                                     </div>
                                     <div class="quad-card-sub">A note is the only place your reasoning lives. The mentor reads it, your reports quote it, and nobody else can reconstruct it later.</div>
                                 </div>
@@ -573,7 +726,7 @@
 
                             <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
                                 <div class="nv-tile">
-                                    <div class="nv-lbl">Documented</div>
+                                    <div class="nv-lbl">Documented coverage</div>
                                     <div class="nv-val num" id="nv-doc">—</div>
                                     <div class="nv-sub" id="nv-doc-sub">of trades logged</div>
                                 </div>
@@ -583,12 +736,12 @@
                                     <div class="nv-sub">words per documented trade</div>
                                 </div>
                                 <div class="nv-tile">
-                                    <div class="nv-lbl">Most tagged</div>
+                                    <div class="nv-lbl">Primary focus tag</div>
                                     <div class="nv-val" id="nv-tag">—</div>
                                     <div class="nv-sub" id="nv-tag-sub">reflection tag</div>
                                 </div>
                                 <div class="nv-tile">
-                                    <div class="nv-lbl">Win rate</div>
+                                    <div class="nv-lbl">Win rate impact</div>
                                     <div class="nv-val num" id="nv-wr">—</div>
                                     <div class="nv-sub" id="nv-wr-sub">noted vs unnoted</div>
                                 </div>
@@ -937,6 +1090,12 @@
                         ? list.length + (list.length === 1 ? ' trade' : ' trades')
                         : list.length + ' of ' + trades.length + ' trades';
                 }
+                const summary = $('tl-summary');
+                if (summary) {
+                    summary.textContent = list.length === trades.length
+                        ? 'Execution review · select a trade to inspect the full context'
+                        : 'Filtered view · ' + list.length + ' of ' + trades.length + ' trades in scope';
+                }
                 if (!trades.length) {
                     rowsHost.innerHTML = '<div class="p-8 text-center text-[13px] text-[#64748b]">No trades logged yet.</div>';
                     return;
@@ -948,7 +1107,9 @@
 
                 rowsHost.innerHTML = list.map(t => {
                     const isLong = t.dir === 'Long';
-                    const sideHtml = isLong ? '<span class="text-[#22c55e] font-bold">Buy ↑</span>' : '<span class="text-[#ef4444] font-bold">Sell ↓</span>';
+                    const sideHtml = isLong
+                        ? '<span class="side-pill buy"><svg data-lucide="arrow-up-right" class="w-3 h-3"></svg>Buy</span>'
+                        : '<span class="side-pill sell"><svg data-lucide="arrow-down-right" class="w-3 h-3"></svg>Sell</span>';
                     const isWin = Number(t.pnl || 0) >= 0;
                     const dateStr = new Date(t.ts).toLocaleDateString('en-GB') + ' ' + new Date(t.ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
                     const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '—';
@@ -958,7 +1119,8 @@
                         ? '<span class="note-flag yes" title="' + esc(NT.excerpt(t.note, 110)) + '"><svg data-lucide="notebook-pen" class="w-3 h-3"></svg>NOTED</span>'
                         : '<span class="note-flag no" title="No journal note on this trade"><svg data-lucide="circle-dashed" class="w-3 h-3"></svg>—</span>';
 
-                    return '<div class="log-table-row" data-trade-id="' + t.id + '">' +
+                    const selected = activeTrade && activeTrade.id === t.id ? ' selected' : '';
+                    return '<div class="log-table-row' + selected + '" data-trade-id="' + t.id + '">' +
                         '<div><span class="radio-dot"></span></div>' +
                         '<div class="num text-[12.5px] text-[#cbd5e1] font-medium">' + dateStr + '</div>' +
                         '<div class="flex items-center gap-2 min-w-0"><span class="font-bold text-[13.5px] text-white">' + esc(t.symbol) + '</span>' + noteFlag + '</div>' +
@@ -975,6 +1137,7 @@
                         if (t) openCockpit(t);
                     });
                 });
+                if (window.lucide) lucide.createIcons();
             }
 
             // ---- RENDER VIEW 2: 4-QUADRANT COCKPIT (Image 2) ----
@@ -1589,15 +1752,18 @@
                 const cov = NT.coverage(trades);
                 $('nv-doc').textContent = cov.documented + ' / ' + cov.total;
                 $('nv-doc-sub').textContent = cov.total
-                    ? cov.pct + '% of logged trades have a note'
+                    ? cov.pct + '% of logged trades documented'
                     : 'log a trade to start';
                 $('nv-words').textContent = cov.avgWords ? String(cov.avgWords) : '—';
                 $('nv-tag').textContent = cov.topTag ? cov.topTag.label : '—';
                 $('nv-tag-sub').textContent = cov.topTag
                     ? cov.topTag.count + (cov.topTag.count === 1 ? ' trade tagged' : ' trades tagged')
                     : 'no reflection tags yet';
-                $('nv-wr').textContent = cov.winRateDocumented == null ? '—' : cov.winRateDocumented + '%';
-                $('nv-wr-sub').textContent = 'vs ' + (cov.winRateUndocumented == null ? '—' : cov.winRateUndocumented + '%') + ' on unnoted trades';
+                $('nv-wr').textContent = cov.winRateDocumented == null && cov.winRateUndocumented == null
+                    ? '—'
+                    : (cov.winRateDocumented == null ? '—' : cov.winRateDocumented + '%') + ' vs ' +
+                      (cov.winRateUndocumented == null ? '—' : cov.winRateUndocumented + '%');
+                $('nv-wr-sub').textContent = 'Noted vs unnoted trades';
                 $('nv-fill').style.width = cov.pct + '%';
 
                 const band = cov.pct >= 80 ? { t: 'strong', c: '#22c55e' }
@@ -1621,6 +1787,13 @@
             }
 
             // ---- Search + scope ----
+            document.addEventListener('keydown', (e) => {
+                if ((e.key === '/' || (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 'k') &&
+                    document.activeElement !== $('nt-input')) {
+                    e.preventDefault();
+                    $('tl-search').focus();
+                }
+            });
             $('tl-search').addEventListener('input', (e) => {
                 filterQuery = e.target.value;
                 renderTradeLog();
