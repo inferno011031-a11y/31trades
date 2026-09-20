@@ -233,6 +233,115 @@
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(148, 163, 184, 0.2); border-radius: 999px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.35); }
+        /* ====================================================================
+           BATTLEX ANALYTICS — strict charcoal presentation layer
+           Presentation-only overrides: IDs, bindings, charts, and handlers stay intact.
+           ==================================================================== */
+        :root {
+            --analytics-bg: #0b0e14;
+            --analytics-surface: rgba(17, 21, 32, 0.88);
+            --analytics-surface-2: rgba(15, 19, 28, 0.72);
+            --analytics-line: rgba(255, 255, 255, 0.06);
+            --analytics-line-soft: rgba(255, 255, 255, 0.045);
+            --analytics-muted: #94a3b8;
+            --analytics-dim: #64748b;
+            --analytics-emerald: #34d399;
+            --analytics-rose: #fb7185;
+            --analytics-amber: #fbbf24;
+            --analytics-sky: #38bdf8;
+        }
+
+        html, body { background: var(--analytics-bg) !important; }
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0 0 auto 0;
+            height: 420px;
+            pointer-events: none;
+            background: radial-gradient(ellipse at 72% -12%, rgba(56, 189, 248, 0.065), transparent 62%);
+            z-index: 0;
+        }
+        body > .flex.h-screen { position: relative; z-index: 1; }
+
+        .topbar {
+            min-height: 56px;
+            background: rgba(11, 14, 20, 0.82) !important;
+            border-bottom: 1px solid var(--analytics-line) !important;
+            backdrop-filter: blur(16px);
+        }
+        main { background: transparent !important; }
+        main > div { max-width: 1500px !important; }
+
+        .panel, .tp-card {
+            background: var(--analytics-surface) !important;
+            border: 1px solid var(--analytics-line) !important;
+            border-radius: 16px !important;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28) !important;
+            backdrop-filter: blur(18px);
+            transition: border-color 160ms ease, background 160ms ease, transform 160ms ease;
+        }
+        .tp-card:hover, .panel:hover { border-color: rgba(255, 255, 255, 0.11) !important; }
+        .panel-title { color: #f1f5f9 !important; letter-spacing: -0.01em; }
+        .panel-sub, .tp-sub-text { color: var(--analytics-muted) !important; }
+        .tp-card-title, .label-xs {
+            color: #94a3b8 !important;
+            font-size: 10px !important;
+            font-weight: 700 !important;
+            letter-spacing: 0.11em !important;
+            text-transform: uppercase;
+        }
+        .tp-big-num { color: #f8fafc !important; font-family: var(--tm-mono) !important; letter-spacing: -0.035em; }
+        .tp-card .text-emerald-400, .tp-card .text-emerald-500 { color: var(--analytics-emerald) !important; }
+        .tp-card .text-rose-400, .tp-card .text-red-400 { color: var(--analytics-rose) !important; }
+
+        #subnav-tabs, #source-filter {
+            background: rgba(255, 255, 255, 0.035) !important;
+            border: 1px solid var(--analytics-line) !important;
+            border-radius: 11px !important;
+            padding: 4px !important;
+        }
+        .subnav-tab { color: #94a3b8 !important; border-radius: 8px !important; font-size: 12px !important; }
+        .subnav-tab:hover { color: #f8fafc !important; background: rgba(255, 255, 255, 0.06) !important; }
+        .subnav-tab.active {
+            color: #ffffff !important;
+            background: rgba(255, 255, 255, 0.10) !important;
+            box-shadow: 0 1px 4px rgba(0, 0, 0, 0.28) !important;
+        }
+        #time-filter-btn, .unit-toggle, .ctrl, .account-select {
+            background: rgba(255, 255, 255, 0.035) !important;
+            border-color: var(--analytics-line) !important;
+            border-radius: 10px !important;
+        }
+        #time-filter-btn:hover, .unit-toggle:hover, .ctrl:focus, .account-select:hover { border-color: rgba(255,255,255,.18) !important; }
+        #time-filter-menu {
+            background: #151a24 !important;
+            border-color: rgba(255,255,255,.10) !important;
+            box-shadow: 0 18px 42px rgba(0,0,0,.45) !important;
+        }
+
+        .tag-emerald { background: rgba(16,185,129,.10) !important; color: var(--analytics-emerald) !important; border-color: rgba(16,185,129,.22) !important; }
+        .tag-red { background: rgba(244,63,94,.10) !important; color: var(--analytics-rose) !important; border-color: rgba(244,63,94,.22) !important; }
+        .tag-amber { background: rgba(245,158,11,.10) !important; color: var(--analytics-amber) !important; border-color: rgba(245,158,11,.22) !important; }
+        .tag-blue { background: rgba(56,189,248,.10) !important; color: var(--analytics-sky) !important; border-color: rgba(56,189,248,.22) !important; }
+        .tag-gray { background: rgba(255,255,255,.045) !important; color: #cbd5e1 !important; border-color: var(--analytics-line) !important; }
+
+        .tbl { border: 1px solid var(--analytics-line) !important; border-radius: 12px; overflow: hidden; background: rgba(15,19,28,.42); }
+        .tbl th { background: rgba(255,255,255,.025) !important; color: #64748b !important; border-bottom-color: var(--analytics-line) !important; font-size: 10px !important; letter-spacing: .11em; }
+        .tbl td { color: #94a3b8 !important; border-bottom-color: var(--analytics-line-soft) !important; font-family: var(--tm-mono); }
+        .tbl tbody tr:hover { background: rgba(255,255,255,.025) !important; }
+        .streak-bar.win { background: var(--analytics-emerald) !important; }
+        .streak-bar.loss { background: var(--analytics-rose) !important; }
+        #tp-gauge-fill { background: linear-gradient(to top, #059669, #34d399) !important; }
+        #tp-day-donut, #tp-trade-donut { stroke: var(--analytics-emerald) !important; }
+        .fab-btn { background: #10b981 !important; border-color: rgba(255,255,255,.16) !important; box-shadow: 0 6px 22px rgba(16,185,129,.28) !important; }
+        .fab-btn:hover { background: #34d399 !important; }
+
+        @media (max-width: 760px) {
+            .topbar { padding-left: 14px !important; padding-right: 14px !important; }
+            main > div { padding: 14px !important; }
+            #source-filter { order: 2; }
+            .tp-card { padding: 16px !important; }
+        }
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">

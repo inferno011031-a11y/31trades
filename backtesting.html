@@ -646,62 +646,8 @@
         border-color: #1a2130 !important;
       }
     </style>
-    <link rel="stylesheet" href="/boot-boot.css">
-    <script src="/boot-scene.js?v=3"></script>
 </head>
 <body>
-    <!-- ============================================================
-         BATTLEX DASHBOARD BOOT — same cinematic, dashboard preset
-         Dismisses on window load (or 6s failsafe). ?bootslow=1 holds it.
-         ============================================================ -->
-    <div id="bx_boot" aria-hidden="true">
-        <canvas id="bx_boot_canvas"></canvas>
-        <div class="bx-boot-vignette"></div>
-        <div class="bx-boot-grain"></div>
-        <div class="bx-boot-tape tape-tl">BATTLEX DASHBOARD · <b>BACKTESTING</b></div>
-        <div class="bx-boot-tape tape-br">SESSION · XAUUSD</div>
-        <div class="bx-boot-core">
-            <div class="bx-boot-by">Powered by</div>
-            <div class="bx-boot-logo"><img src="/assets/battlex-logo.png" alt="BattleX"></div>
-            <div class="bx-boot-word"><span>BATTLE</span><span class="g">XJOURNAL</span></div>
-            <div class="bx-boot-bar"><i id="bx_boot_bar"></i></div>
-            <div class="bx-boot-status" id="bx_boot_status">CALIBRATING ENGINE</div>
-        </div>
-    </div>
-    <script>
-    (function(){
-        var boot=document.getElementById('bx_boot');
-        if(!boot) return;
-        var bar=document.getElementById('bx_boot_bar'),
-            status=document.getElementById('bx_boot_status'),
-            lastP=0;
-        var STAGES=[[0.18,'LOADING SESSIONS'],[0.42,'MOUNTING STAT CARDS'],[0.66,'PREPARING ANALYTICS'],[0.88,'SYNCING TRADE HISTORY']];
-        function onProg(p){
-            lastP=Math.max(lastP,p);
-            if(bar) bar.style.width=(lastP*88).toFixed(1)+'%';
-            for(var i=0;i<STAGES.length;i++){ if(lastP>=STAGES[i][0]&&status) status.textContent=STAGES[i][1]; }
-        }
-        var stop=null;
-        try{ stop=window.buildBootScene&&window.buildBootScene(document.getElementById('bx_boot_canvas'),onProg,'dashboard'); }catch(e){ console.warn('boot scene skipped:',e); }
-        var _q=new URLSearchParams(location.search);
-        var HOLD=_q.get('bootslow');
-        var done=false, bootStart=Date.now(), MIN_SHOW=HOLD?0:3400;
-        function finish(){
-            if(bar) bar.style.width='100%';
-            if(status) status.textContent='READY';
-            setTimeout(function(){
-                boot.classList.add('done');
-                document.body.classList.add('bx-booted');
-                setTimeout(function(){ if(stop) stop(); boot.remove(); },900);
-            },360);
-        }
-        window.__bxBootForce=function(){ if(done) return; done=true; finish(); };
-        if(HOLD){ return; }                     // stays open until __bxBootForce()
-        if(document.readyState==='complete'){ setTimeout(window.__bxBootForce,400); }
-        else{ window.addEventListener('load',function(){ setTimeout(window.__bxBootForce,400); }); }
-        setTimeout(window.__bxBootForce,6000);  // failsafe
-    })();
-    </script>
 
     <div class="flex h-screen min-h-[100dvh] max-h-[100dvh]">
 
