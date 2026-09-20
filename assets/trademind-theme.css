@@ -583,6 +583,19 @@ button[onclick*="openTradeDrawer"]:hover,
     color: #c084fc !important;
     border: 1px solid rgba(168, 85, 247, 0.20) !important;
 }
+/* Indigo chip — defined here (not per-page). Colored with --tm-indigo because
+   pages used to use var(--tm-accent-2), a SURFACE token (#18181b in this theme),
+   as a text color → invisible chips. Guarded by server/ui-lint.test.js. */
+.tag-indigo {
+    background: rgba(99, 102, 241, 0.10) !important;
+    color: var(--tm-indigo) !important;
+    border: 1px solid rgba(99, 102, 241, 0.22) !important;
+}
+/* Indigo foreground for markup and JS-generated markup. Uses a hand-written
+   class rather than a Tailwind arbitrary value because the compiled sheet only
+   carries utility names already present in source — a new arbitrary class would
+   silently do nothing, which is the exact failure mode this change removes. */
+.fg-indigo { color: var(--tm-indigo) !important; }
 .tag-gray, .st-noteval, .risk-level-normal {
     background: rgba(255, 255, 255, 0.05) !important;
     color: #a1a1aa !important;
@@ -1171,6 +1184,7 @@ html[data-theme="light"] {
     --glass-inner: rgba(255, 255, 255, 0.5);
     --hairline: rgba(15, 23, 42, 0.07);
 }
+
 
 html[data-theme="light"],
 html[data-theme="light"] body {

@@ -24,12 +24,14 @@
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
 
     <!-- Core Runtime -->
+    <script src="src/merge.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
     <script src="assets/asset-meta.js"></script>
     <script src="assets/sidebar-nav.js"></script>
     <script src="assets/theme-toggle.js"></script>
+    <script src="assets/trade-notes.js"></script>
 
     <style>
         * {
@@ -109,6 +111,10 @@
             display: none !important;
         }
 
+        /* The dropdown marked the chosen row "active" but no rule existed, so
+           the selection was invisible. Make it visible. */
+        .strat-opt.active { background: rgba(255, 255, 255, 0.06); color: #ffffff; }
+
         /* Unit switch */
         .unit-toggle {
             display: inline-flex; align-items: center; justify-content: center;
@@ -148,6 +154,21 @@
             background: #2e0d13; color: #f87171; border-color: #631923;
         }
 
+        /* The header used a Tailwind arbitrary class (grid-cols-[36px_160px…])
+           that tailwind-compiled.css never emitted, so it fell back to one
+           implicit column and every label stacked vertically. Same template as
+           .log-table-row, declared here so the header and cells line up. */
+        .log-table-head {
+            display: grid;
+            grid-template-columns: 36px 160px 140px 100px 130px 100px 1fr;
+            align-items: center;
+            padding: 14px 20px;
+            background: rgba(255, 255, 255, 0.015);
+            border-bottom: 1px solid #141720;
+            font-size: 12px; font-weight: 600; color: #64748b;
+            white-space: nowrap;
+        }
+
         /* Trade Log Table Rows (Image 1) */
         .log-table-row {
             padding: 13px 20px;
@@ -180,6 +201,136 @@
             width: 100%; max-width: 540px; padding: 24px;
             box-shadow: 0 20px 50px rgba(0, 0, 0, 0.8);
         }
+
+        /* The `hidden` attribute loses to any class that sets display (Tailwind's
+           .flex, .nt-btn's inline-flex), so an element marked hidden still painted.
+           Keep the attribute authoritative. */
+        [hidden] { display: none !important; }
+
+        /* ==================== Trade Notes editor ==================== */
+        .nt-status {
+            display: inline-flex; align-items: center; gap: 7px;
+            font-size: 11.5px; font-weight: 600; color: #94a3b8;
+            background: #11141c; border: 1px solid #1f2533; border-radius: 999px;
+            padding: 4px 10px; white-space: nowrap; transition: border-color 0.15s ease, color 0.15s ease;
+        }
+        .nt-status.busy { color: #7dd3fc; border-color: rgba(56, 189, 248, 0.3); }
+        .nt-status.ok { color: #4ade80; border-color: rgba(34, 197, 94, 0.28); }
+        .nt-status.warn { color: #fbbf24; border-color: rgba(245, 158, 11, 0.3); }
+        .nt-status.bad { color: #f87171; border-color: rgba(239, 68, 68, 0.32); }
+        .nt-dot { width: 6px; height: 6px; border-radius: 999px; background: #475569; flex-shrink: 0; }
+
+        .nt-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 14px; }
+        .nt-tag {
+            font-size: 11.5px; font-weight: 600; padding: 4px 10px; border-radius: 999px;
+            border: 1px solid #1f2533; background: #0f1219; color: #8b97a8;
+            cursor: pointer; transition: all 0.14s ease; line-height: 1.35;
+        }
+        .nt-tag:hover { border-color: #334155; color: #e2e8f0; }
+        .nt-tag.on { background: rgba(148, 163, 184, 0.1); border-color: rgba(148, 163, 184, 0.35); color: #e2e8f0; }
+        .nt-tag.on.good { background: rgba(34, 197, 94, 0.11); border-color: rgba(34, 197, 94, 0.34); color: #4ade80; }
+        .nt-tag.on.watch { background: rgba(245, 158, 11, 0.11); border-color: rgba(245, 158, 11, 0.34); color: #fbbf24; }
+
+        .nt-editor-wrap { margin-top: 12px; flex: 1; display: flex; min-height: 0; }
+        .nt-input {
+            width: 100%; min-height: 148px; background: #080a0f;
+            border: 1px solid #1a1f2b; border-radius: 10px; padding: 12px 13px;
+            font-size: 13.5px; line-height: 1.65; color: #e2e8f0; font-family: inherit;
+            resize: vertical; outline: none;
+            transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        }
+        .nt-input::placeholder { color: #4b5563; }
+        .nt-input:focus { border-color: #2f4a63; box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.09); }
+        .nt-preview {
+            width: 100%; min-height: 148px; max-height: 300px; overflow-y: auto;
+            background: #080a0f; border: 1px solid #1a1f2b; border-radius: 10px;
+            padding: 12px 13px; font-size: 13.5px; line-height: 1.7; color: #cbd5e1;
+        }
+        .nt-preview .nt-h { font-size: 12.5px; font-weight: 700; color: #ffffff; margin: 10px 0 2px; letter-spacing: 0.01em; }
+        .nt-preview .nt-h:first-child { margin-top: 0; }
+        .nt-preview .nt-ul { margin: 4px 0 4px 18px; list-style: disc; }
+        .nt-preview .nt-ol { margin: 4px 0 4px 18px; list-style: decimal; }
+        .nt-preview .nt-p { margin: 3px 0; }
+        .nt-preview .nt-gap { height: 8px; }
+        .nt-preview code { background: rgba(255,255,255,0.06); border-radius: 4px; padding: 1px 5px; font-family: 'JetBrains Mono', monospace; font-size: 12px; color: #7dd3fc; }
+        .nt-preview a { color: #38bdf8; text-decoration: underline; text-underline-offset: 2px; }
+        .nt-empty { color: #4b5563; font-style: italic; }
+
+        .nt-foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-top: 12px; }
+        .nt-meter-bar { height: 3px; border-radius: 999px; background: #1a1f2b; overflow: hidden; }
+        .nt-meter-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #22c55e, #38bdf8); transition: width 0.25s ease; }
+        .nt-seg { display: inline-flex; background: #11141c; border: 1px solid #1f2533; border-radius: 8px; padding: 2px; flex-shrink: 0; }
+        .nt-seg button {
+            font-size: 12px; font-weight: 600; color: #94a3b8; padding: 4px 10px;
+            border-radius: 6px; cursor: pointer; transition: all 0.14s ease; white-space: nowrap;
+        }
+        .nt-seg button:hover { color: #ffffff; }
+        .nt-seg button.on { background: rgba(255, 255, 255, 0.09); color: #ffffff; }
+        .nt-kbd {
+            font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: #64748b;
+            border: 1px solid #1f2533; border-radius: 4px; padding: 1px 4px;
+        }
+        .nt-btn {
+            display: inline-flex; align-items: center; gap: 6px;
+            font-size: 12px; font-weight: 600; color: #e2e8f0;
+            background: #11141c; border: 1px solid #1f2533; border-radius: 8px;
+            padding: 6px 10px; cursor: pointer; transition: all 0.14s ease;
+        }
+        .nt-btn:hover { border-color: #334155; background: #161b26; }
+        .nt-btn.primary { background: #ffffff; border-color: #ffffff; color: #06080b; }
+        .nt-btn.primary:hover { background: #e2e8f0; }
+        .nt-btn.rec { color: #f87171; border-color: #631923; }
+        .nt-btn:disabled { opacity: 0.5; cursor: default; }
+        .nt-menu {
+            position: absolute; right: 0; top: 100%; margin-top: 6px; z-index: 60;
+            width: 250px; background: #0c0e14; border: 1px solid #1f2533;
+            border-radius: 12px; box-shadow: 0 20px 45px rgba(0, 0, 0, 0.75); padding: 5px;
+            display: flex; flex-direction: column; gap: 2px;
+            /* A 5-item menu opened on a short card used to run off the bottom of
+               the viewport, clipping the last choices. */
+            max-height: min(58vh, 400px); overflow-y: auto; overscroll-behavior: contain;
+        }
+        /* Flip up when the card sits too low for the menu to open downward. */
+        .nt-menu.up { top: auto; bottom: 100%; margin-top: 0; margin-bottom: 6px; }
+        .nt-menu-item { padding: 8px 10px; border-radius: 8px; cursor: pointer; transition: background 0.12s ease; text-align: left; }
+        .nt-menu-item .nt-menu-sub {
+            display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* Card header: title block + actions. Wrap the actions to their own row
+           instead of squeezing the title into two lines on a narrow column. */
+        .nt-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+        .nt-head-title { min-width: 150px; flex: 1 1 150px; }
+        .nt-head-actions { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+        .nt-menu-item:hover { background: rgba(255, 255, 255, 0.06); }
+
+        /* Focus mode — the note takes the screen, nothing else moves. */
+        .nt-scrim { position: fixed; inset: 0; background: rgba(2, 4, 8, 0.76); backdrop-filter: blur(3px); z-index: 105; opacity: 0; pointer-events: none; transition: opacity 0.2s ease; }
+        body.nt-focus .nt-scrim { opacity: 1; pointer-events: auto; }
+        body.nt-focus .nt-card {
+            position: fixed; inset: 24px; z-index: 110; min-height: auto; overflow-y: auto;
+            background: #0a0c12; border-color: #28303f; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.85);
+        }
+        body.nt-focus .nt-input, body.nt-focus .nt-preview { min-height: calc(100vh - 400px); }
+
+        .nv-bar { height: 6px; border-radius: 999px; background: #14181f; overflow: hidden; margin-top: 14px; }
+        .nv-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, #22c55e, #38bdf8); transition: width 0.3s ease; }
+        .nv-tile { background: #0a0d13; border: 1px solid #161a22; border-radius: 10px; padding: 12px 14px; }
+        .nv-lbl { font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: #64748b; }
+        .nv-val { font-size: 19px; font-weight: 800; color: #ffffff; margin-top: 5px; letter-spacing: -0.02em; }
+        .nv-sub { font-size: 11.5px; color: #64748b; margin-top: 3px; }
+
+        .tl-search {
+            width: 230px; background: #0b0d13; border: 1px solid #1f2533; border-radius: 8px;
+            padding: 7px 10px 7px 32px; font-size: 12.5px; color: #e2e8f0; outline: none;
+            transition: border-color 0.15s ease;
+        }
+        .tl-search::placeholder { color: #4b5563; }
+        .tl-search:focus { border-color: #2f4a63; }
+
+        .note-flag { display: inline-flex; align-items: center; gap: 5px; font-size: 10.5px; font-weight: 700; letter-spacing: 0.04em; }
+        .note-flag.yes { color: #4ade80; }
+        .note-flag.no { color: #475569; }
 
         /* Toast */
         .toast {
@@ -302,8 +453,23 @@
                             <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
                             <span class="sidebar-soon-badge">SOON</span>
                         </a>
+                        <a href="leaderboard.html" class="nav-item">
+                            <svg data-lucide="trophy"></svg><span class="nav-label">Leaderboard</span>
+                        </a>
                         <a href="backtesting.html" class="nav-item">
                             <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- 6. TOOLS -->
+                <div class="sidebar-section" data-section="tools">
+                    <button type="button" class="sidebar-section-header">
+                        <span>TOOLS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="tools.html" class="nav-item">
+                            <svg data-lucide="wrench"></svg><span class="nav-label">Tools</span>
                         </a>
                     </div>
                 </div>
@@ -358,15 +524,22 @@
                                     <h1 class="text-[20px] font-bold text-white tracking-tight">Trade Log</h1>
                                     <p class="text-[12.5px] text-[#64748b] mt-0.5">Select a trade to view its details</p>
                                 </div>
-                                <div class="flex items-center gap-3 text-[#94a3b8]">
-                                    <button class="hover:text-white transition-colors" title="Filter"><svg data-lucide="menu" class="w-4 h-4"></svg></button>
-                                    <button class="hover:text-white transition-colors" title="Filter"><svg data-lucide="filter" class="w-4 h-4"></svg></button>
+                                <div class="flex items-center gap-2.5">
+                                    <div class="relative">
+                                        <svg data-lucide="search" class="w-3.5 h-3.5 text-[#64748b] absolute left-3 top-1/2 -translate-y-1/2"></svg>
+                                        <input id="tl-search" class="tl-search" type="search" placeholder="Search notes, symbol, tag…" autocomplete="off">
+                                    </div>
+                                    <div class="nt-seg" id="tl-scope" role="tablist" aria-label="Note filter">
+                                        <button type="button" data-scope="all" class="on">All</button>
+                                        <button type="button" data-scope="yes">Noted</button>
+                                        <button type="button" data-scope="no">No note</button>
+                                    </div>
                                 </div>
                             </div>
 
                             <!-- Table Container -->
                             <div class="mt-4 rounded-xl border border-[#171a23] bg-[#090b10] overflow-hidden">
-                                <div class="px-5 py-3.5 bg-white/[0.015] border-b border-[#141720] grid grid-cols-[36px_160px_140px_100px_130px_100px_1fr] text-[12px] font-semibold text-[#64748b]">
+                                <div class="log-table-head">
                                     <div></div>
                                     <div>Entry date</div>
                                     <div>Symbol</div>
@@ -378,12 +551,51 @@
                                 <div id="trade-log-rows"></div>
                             </div>
 
-                            <!-- Pagination Footer -->
-                            <div class="flex items-center justify-center gap-3 mt-5 text-[12.5px] text-[#64748b] font-mono">
-                                <button class="hover:text-white transition-colors">‹</button>
-                                <span class="px-2.5 py-0.5 rounded bg-white/[0.04] border border-[#1f2533] text-white font-bold">1</span>
-                                <button class="hover:text-white transition-colors">›</button>
+                            <!-- Footer -->
+                            <div class="flex items-center justify-between mt-5 text-[12.5px] text-[#64748b]">
+                                <span id="tl-count" class="font-mono">—</span>
+                                <span class="hidden sm:inline">Click any row to open its cockpit</span>
                             </div>
+                        </div>
+
+                        <!-- Note coverage — what the analyst layer actually has to work with -->
+                        <div class="quad-card !p-6" id="notes-insight">
+                            <div class="flex items-start justify-between gap-4">
+                                <div>
+                                    <div class="flex items-center gap-2">
+                                        <svg data-lucide="notebook-pen" class="w-4 h-4 text-[#64748b]"></svg>
+                                        <span class="quad-card-title">Note coverage</span>
+                                    </div>
+                                    <div class="quad-card-sub">A note is the only place your reasoning lives. The mentor reads it, your reports quote it, and nobody else can reconstruct it later.</div>
+                                </div>
+                                <span class="nt-status" id="nv-status"><span class="nt-dot" id="nv-dot"></span><span id="nv-status-text">—</span></span>
+                            </div>
+
+                            <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mt-4">
+                                <div class="nv-tile">
+                                    <div class="nv-lbl">Documented</div>
+                                    <div class="nv-val num" id="nv-doc">—</div>
+                                    <div class="nv-sub" id="nv-doc-sub">of trades logged</div>
+                                </div>
+                                <div class="nv-tile">
+                                    <div class="nv-lbl">Avg note length</div>
+                                    <div class="nv-val num" id="nv-words">—</div>
+                                    <div class="nv-sub">words per documented trade</div>
+                                </div>
+                                <div class="nv-tile">
+                                    <div class="nv-lbl">Most tagged</div>
+                                    <div class="nv-val" id="nv-tag">—</div>
+                                    <div class="nv-sub" id="nv-tag-sub">reflection tag</div>
+                                </div>
+                                <div class="nv-tile">
+                                    <div class="nv-lbl">Win rate</div>
+                                    <div class="nv-val num" id="nv-wr">—</div>
+                                    <div class="nv-sub" id="nv-wr-sub">noted vs unnoted</div>
+                                </div>
+                            </div>
+
+                            <div class="nv-bar"><div class="nv-fill" id="nv-fill" style="width:0%"></div></div>
+                            <div class="text-[12px] text-[#64748b] mt-2.5" id="nv-note">—</div>
                         </div>
                     </div>
 
@@ -476,14 +688,14 @@
                                             </div>
                                         </div>
 
-                                        <!-- Rating bar -->
+                                        <!-- Plan adherence — real rule evaluations, never a score we made up -->
                                         <div class="flex items-center justify-between text-[#94a3b8] pt-1">
-                                            <span>Rating</span>
+                                            <span>Plan adherence</span>
                                             <div class="flex items-center gap-3">
                                                 <div class="w-24 h-1.5 rounded-full bg-[#1e232d] overflow-hidden">
-                                                    <div class="h-full bg-[#22c55e] rounded-full" style="width: 84%;"></div>
+                                                    <div class="h-full rounded-full" id="cp-adherence-bar" style="width: 0%; background: #475569;"></div>
                                                 </div>
-                                                <span class="num font-bold text-white text-[13px]">8.4</span>
+                                                <span class="num font-bold text-white text-[13px]" id="cp-adherence">—</span>
                                             </div>
                                         </div>
                                     </div>
@@ -552,23 +764,72 @@
                                 </div>
                             </div>
 
-                            <!-- ================= CARD 4: Notes (EXACT) ================= -->
-                            <div class="quad-card justify-between">
-                                <div>
-                                    <div class="flex items-center justify-between">
-                                        <div>
-                                            <span class="quad-card-title">Notes</span>
-                                            <div class="quad-card-sub">Press "Open Notes" to add, edit or view your notes</div>
+                            <!-- ================= CARD 4: TRADE NOTES ================= -->
+                            <div class="quad-card nt-card justify-between" id="notes-card">
+                                <div class="nt-head">
+                                    <div class="nt-head-title">
+                                        <span class="quad-card-title">Trade Notes</span>
+                                        <div class="quad-card-sub" id="nt-sub">Why the trade existed, how it was executed, what carries forward.</div>
+                                    </div>
+                                    <div class="nt-head-actions">
+                                        <div class="nt-status" id="nt-status"><span class="nt-dot" id="nt-dot"></span><span id="nt-status-text">No note yet</span></div>
+                                        <div class="relative hide-when-collapsed" id="nt-template-wrap">
+                                            <button type="button" class="nt-btn" id="nt-template-btn" title="Insert a structured starter">
+                                                <svg data-lucide="sparkles" class="w-3.5 h-3.5"></svg> Template
+                                                <svg data-lucide="chevron-down" class="w-3 h-3 text-[#64748b]"></svg>
+                                            </button>
+                                            <div class="nt-menu hidden" id="nt-template-menu"></div>
                                         </div>
-                                        <button type="button" class="btn-icon-square !w-auto !h-auto !px-3 !py-1.5 gap-1.5 text-[12px] font-semibold text-white" id="btn-open-notes">
-                                            <svg data-lucide="edit-3" class="w-3.5 h-3.5"></svg> Open Notes
+                                        <button type="button" class="nt-btn" id="nt-mic-btn" title="Dictate the note" hidden>
+                                            <svg data-lucide="mic" class="w-3.5 h-3.5"></svg>
+                                        </button>
+                                        <button type="button" class="nt-btn" id="nt-focus-btn" title="Focus mode">
+                                            <svg data-lucide="maximize-2" class="w-3.5 h-3.5"></svg>
                                         </button>
                                     </div>
                                 </div>
 
-                                <!-- Clean Text Rendering of notes (matching screenshot) -->
-                                <div class="flex-1 py-4 cursor-pointer" id="notes-display-area" title="Click to edit notes">
-                                    <div class="text-[13.5px] text-[#cbd5e1] leading-relaxed whitespace-pre-wrap font-normal" id="notes-text-content">today was great day&#10;• Waited for setup ✓</div>
+                                <!-- Reflection tags — the taxonomy the mentor can count -->
+                                <div class="nt-tags" id="nt-tags"></div>
+
+                                <!-- Editor / preview -->
+                                <div class="nt-editor-wrap" id="nt-editor-wrap">
+                                    <textarea id="nt-input" class="nt-input" spellcheck="true"
+                                        placeholder="Thesis — why this trade existed before you clicked&#10;Execution — entry, stop, exit, size&#10;Psychology — what you felt while it ran&#10;Lesson — what carries into the next session"></textarea>
+                                    <div id="nt-preview" class="nt-preview hidden"></div>
+                                </div>
+
+                                <!-- Evidence + meter + actions -->
+                                <div class="flex items-center gap-2 mt-3" id="nt-evidence" hidden>
+                                    <img id="nt-evidence-img" alt="Chart evidence" class="w-14 h-9 object-cover rounded-md border border-[#1f2533]">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="text-[11.5px] font-semibold text-[#cbd5e1]">Chart evidence attached</div>
+                                        <div class="text-[11px] text-[#64748b] truncate" id="nt-evidence-sub">Stored with this trade</div>
+                                    </div>
+                                    <button type="button" class="nt-btn" id="nt-evidence-btn" title="Open the screenshot card">
+                                        <svg data-lucide="image" class="w-3.5 h-3.5"></svg> View
+                                    </button>
+                                </div>
+
+                                <div class="nt-foot">
+                                    <div class="flex-1 min-w-0">
+                                        <div class="flex items-center justify-between text-[11px] text-[#64748b] mb-1.5">
+                                            <span id="nt-quality">Add a thesis, the outcome and a lesson</span>
+                                            <span class="num" id="nt-count">0 words</span>
+                                        </div>
+                                        <div class="nt-meter-bar"><div class="nt-meter-fill" id="nt-meter" style="width:0%"></div></div>
+                                    </div>
+                                    <div class="nt-seg" id="nt-mode">
+                                        <button type="button" data-mode="write" class="on">Write</button>
+                                        <button type="button" data-mode="preview">Preview</button>
+                                    </div>
+                                    <button type="button" class="nt-btn primary" id="nt-save-btn">
+                                        <svg data-lucide="save" class="w-3.5 h-3.5"></svg> Save
+                                    </button>
+                                </div>
+                                <div class="text-[11px] text-[#4b5563] mt-2.5 flex items-center gap-2">
+                                    <span class="nt-kbd">Ctrl</span><span class="nt-kbd">&#8629;</span>
+                                    <span>saves &amp; drops back to the log · autosave keeps drafts</span>
                                 </div>
                             </div>
 
@@ -581,20 +842,8 @@
         </div>
     </div>
 
-    <!-- Notes Editor Modal (Triggered by "Open Notes") -->
-    <div class="modal-overlay" id="notes-modal">
-        <div class="modal-card">
-            <div class="flex items-center justify-between mb-3">
-                <div class="text-[15px] font-bold text-white">Trade Narrative &amp; Notes</div>
-                <button type="button" class="text-[#64748b] hover:text-white" id="btn-close-notes-modal"><svg data-lucide="x" class="w-4 h-4"></svg></button>
-            </div>
-            <textarea id="modal-notes-input" class="w-full h-44 bg-[#080a0f] border border-[#1f2533] rounded-lg p-3 text-[13.5px] text-white outline-none focus:border-[#38bdf8] leading-relaxed" placeholder="Write entry thesis, execution psychology, emotional triggers, and post-trade reflections…"></textarea>
-            <div class="flex items-center justify-end gap-2.5 mt-4">
-                <button type="button" class="px-4 py-1.5 rounded-lg border border-[#1f2533] text-[13px] text-[#94a3b8] hover:text-white" id="btn-cancel-modal">Cancel</button>
-                <button type="button" class="px-4 py-1.5 rounded-lg bg-white text-black font-bold text-[13px] hover:bg-slate-200" id="btn-save-modal">Save Notes</button>
-            </div>
-        </div>
-    </div>
+    <!-- Focus-mode scrim -->
+    <div class="nt-scrim" id="nt-scrim"></div>
 
     <!-- Toast Notification -->
     <div id="toast" class="toast"><span id="toast-msg"></span></div>
@@ -604,6 +853,7 @@
             'use strict';
             const $ = id => document.getElementById(id);
             const core = window.TradeMindCore;
+            const NT = window.TradeNotes;   // assets/trade-notes.js (tags, markdown, coverage)
             const esc = s => String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
             const fmtMoney = n => (n >= 0 ? '+' : '-') + '$' + Math.abs(Math.round(n || 0)).toLocaleString('en-US');
 
@@ -629,9 +879,13 @@
                     .map(t => ({
                         ...t,
                         ts: new Date(t.ts),
-                        note: t.note || 'today was great day\n• Waited for setup ✓',
-                        emotion: t.emotion || 'Calm',
-                        adherence: t.adherence || 'followed'
+                        // NEVER fabricate journal content. An empty note is empty,
+                        // and an absent tag set is an empty set — sample text here
+                        // would be indistinguishable from something the trader wrote.
+                        note: typeof t.note === 'string' ? t.note : '',
+                        reflection_tags: typeof t.reflection_tags === 'string' ? t.reflection_tags : '',
+                        emotion: t.emotion || '',
+                        adherence: t.adherence || ''
                     }))
                     .sort((a, b) => b.ts - a.ts);
             }
@@ -662,26 +916,52 @@
                 }
             }
 
+            // ---- Filter state (shared by the log table and the coverage strip) ----
+            let filterQuery = '';
+            let filterScope = 'all';   // 'all' | 'yes' | 'no'
+
+            function visibleTrades() {
+                return NT.filterTrades(trades, {
+                    query: filterQuery,
+                    documented: filterScope === 'all' ? '' : filterScope
+                });
+            }
+
             // ---- RENDER VIEW 1: TRADE LOG TABLE ----
             function renderTradeLog() {
                 const rowsHost = $('trade-log-rows');
+                const list = visibleTrades();
+                const countEl = $('tl-count');
+                if (countEl) {
+                    countEl.textContent = list.length === trades.length
+                        ? list.length + (list.length === 1 ? ' trade' : ' trades')
+                        : list.length + ' of ' + trades.length + ' trades';
+                }
                 if (!trades.length) {
                     rowsHost.innerHTML = '<div class="p-8 text-center text-[13px] text-[#64748b]">No trades logged yet.</div>';
                     return;
                 }
+                if (!list.length) {
+                    rowsHost.innerHTML = '<div class="p-8 text-center text-[13px] text-[#64748b]">No trades match this filter.</div>';
+                    return;
+                }
 
-                rowsHost.innerHTML = trades.map(t => {
+                rowsHost.innerHTML = list.map(t => {
                     const isLong = t.dir === 'Long';
                     const sideHtml = isLong ? '<span class="text-[#22c55e] font-bold">Buy ↑</span>' : '<span class="text-[#ef4444] font-bold">Sell ↓</span>';
                     const isWin = Number(t.pnl || 0) >= 0;
                     const dateStr = new Date(t.ts).toLocaleDateString('en-GB') + ' ' + new Date(t.ts).toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit' });
-                    const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '8.5R';
-                    const durationText = t.holdMin != null ? t.holdMin + 'm' : '-';
+                    const rrText = t.r != null && !isNaN(t.r) ? Math.abs(Number(t.r)).toFixed(1) + 'R' : '—';
+                    const durationText = t.holdMin != null ? t.holdMin + 'm' : '—';
+                    const noted = NT.isDocumented(t);
+                    const noteFlag = noted
+                        ? '<span class="note-flag yes" title="' + esc(NT.excerpt(t.note, 110)) + '"><svg data-lucide="notebook-pen" class="w-3 h-3"></svg>NOTED</span>'
+                        : '<span class="note-flag no" title="No journal note on this trade"><svg data-lucide="circle-dashed" class="w-3 h-3"></svg>—</span>';
 
                     return '<div class="log-table-row" data-trade-id="' + t.id + '">' +
                         '<div><span class="radio-dot"></span></div>' +
                         '<div class="num text-[12.5px] text-[#cbd5e1] font-medium">' + dateStr + '</div>' +
-                        '<div class="font-bold text-[13.5px] text-white">' + esc(t.symbol) + '</div>' +
+                        '<div class="flex items-center gap-2 min-w-0"><span class="font-bold text-[13.5px] text-white">' + esc(t.symbol) + '</span>' + noteFlag + '</div>' +
                         '<div class="text-[12.5px]">' + sideHtml + '</div>' +
                         '<div class="num text-[12.5px] text-[#64748b]">' + durationText + '</div>' +
                         '<div class="num font-bold text-[12.5px] text-white">' + rrText + '</div>' +
@@ -726,19 +1006,58 @@
                 $('cp-row-entry-price').textContent = t.entry != null ? Number(t.entry).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-';
                 $('cp-row-exit-price').textContent = t.exit != null ? Number(t.exit).toLocaleString('en-US', { minimumFractionDigits: 2 }) : '-';
 
-                $('cp-row-rr').textContent = '1:' + (t.r != null && !isNaN(t.r) && Math.abs(t.r) < 100 ? Math.abs(t.r).toFixed(1) : '8.5');
+                $('cp-row-rr').textContent = (t.r != null && !isNaN(t.r) && Math.abs(t.r) < 100)
+                    ? '1:' + Math.abs(t.r).toFixed(1)
+                    : '—';
 
                 // Card 2: Screenshots
                 renderScreenshotPreview();
 
-                // Card 3: Strategy
-                $('strategy-dropdown').value = t.strategy || t.setup || 'None';
+                // Card 3: Strategy — the OLD code read $('strategy-dropdown'), an id
+                // that does not exist. That threw, and everything after it (Card 4
+                // notes, evidence, icons) never rendered. Read the real control.
+                const stratVal = t.strategy || t.setup || 'None';
+                $('strategy-label').textContent = stratVal;
+                syncStrategyMenu(stratVal);
                 updateStrategyView();
 
-                // Card 4: Notes
-                $('notes-text-content').textContent = t.note || 'today was great day\n• Waited for setup ✓';
+                // Card 1: plan adherence from stored rule evaluations
+                renderAdherence(t);
+
+                // Card 4: Notes — bind the editor to this trade
+                bindNotes(t);
 
                 if (window.lucide) lucide.createIcons();
+            }
+
+            // Real adherence: how many of this trade's rule checks passed. No score
+            // is invented when the trade has no evaluations on file.
+            function renderAdherence(t) {
+                const bar = $('cp-adherence-bar');
+                const val = $('cp-adherence');
+                let evals = [];
+                try {
+                    if (core && core.TradeService && core.TradeService.evaluationsFor) {
+                        evals = core.TradeService.evaluationsFor(t.id) || [];
+                    }
+                } catch (e) { evals = []; }
+
+                const total = evals.length;
+                const passed = evals.filter(e => e.state === 'PASS' || e.state === 'pass').length;
+                const result = String(t.adherence_result || '').toUpperCase();
+                const tone = result === 'VIOLATION' ? '#ef4444'
+                    : result === 'BLOCK' ? '#f59e0b'
+                    : result === 'PASS' ? '#22c55e' : '#475569';
+
+                bar.style.width = (total ? Math.round((passed / total) * 100) : 0) + '%';
+                bar.style.background = tone;
+                if (total) {
+                    val.textContent = passed + '/' + total + ' rules';
+                    val.style.color = tone;
+                } else {
+                    val.textContent = result || '—';
+                    val.style.color = result ? tone : '#64748b';
+                }
             }
 
             function renderScreenshotPreview() {
@@ -757,25 +1076,74 @@
                 }
             }
 
+            // The strategy zone used to print two ticked "confluences" for ANY
+            // strategy — checklist items nobody ever set. It now shows what is
+            // actually on the trade: the rule checks on file and the trader's own
+            // reflection tags, or an honest empty state.
             function updateStrategyView() {
-                const val = $('strategy-dropdown').value;
                 const zone = $('strategy-body-zone');
-                if (val === 'None') {
-                    zone.innerHTML = '<span class="text-[13px] text-[#4b5563] font-medium">Select a strategy to set confluences.</span>';
-                } else {
-                    zone.innerHTML =
-                        '<div class="w-full flex flex-col gap-2.5 px-2">' +
-                            '<div class="flex items-center gap-2.5 text-[12.5px] text-[#cbd5e1]">' +
-                                '<div class="w-4 h-4 rounded border border-[#22c55e] bg-[#22c55e]/10 flex items-center justify-center text-[#22c55e]"><svg data-lucide="check" class="w-3 h-3"></svg></div>' +
-                                '<span>Higher timeframe trend confirmed</span>' +
-                            '</div>' +
-                            '<div class="flex items-center gap-2.5 text-[12.5px] text-[#cbd5e1]">' +
-                                '<div class="w-4 h-4 rounded border border-[#22c55e] bg-[#22c55e]/10 flex items-center justify-center text-[#22c55e]"><svg data-lucide="check" class="w-3 h-3"></svg></div>' +
-                                '<span>Key liquidity sweep &amp; displacement</span>' +
-                            '</div>' +
-                        '</div>';
-                    if (window.lucide) lucide.createIcons();
+                if (!zone || !activeTrade) return;
+                const val = ($('strategy-label').textContent || '').trim() || 'None';
+
+                let evals = [];
+                try {
+                    if (core && core.TradeService && core.TradeService.evaluationsFor) {
+                        evals = core.TradeService.evaluationsFor(activeTrade.id) || [];
+                    }
+                } catch (e) { evals = []; }
+
+                const tags = NT.parseTags(activeTrade.reflection_tags);
+                let html = '';
+
+                if (tags.length) {
+                    html += '<div class="w-full flex flex-wrap justify-center gap-1.5 mb-2.5">' +
+                        tags.map(k => {
+                            const info = NT.tagInfo(k);
+                            return '<span class="nt-tag on ' + info.kind + '">' + esc(info.label) + '</span>';
+                        }).join('') + '</div>';
                 }
+
+                if (evals.length) {
+                    html += '<div class="w-full flex flex-col gap-2 px-1">' + evals.slice(0, 6).map(e => {
+                        const bad = String(e.state).toUpperCase() === 'FAIL';
+                        const tone = bad ? 'border-[#ef4444] bg-[#ef4444]/10 text-[#ef4444]' : 'border-[#22c55e] bg-[#22c55e]/10 text-[#22c55e]';
+                        // evaluations are camelCase (ruleLabel/ruleKey), not the
+                        // snake_case the DB rows use.
+                        const label = e.ruleLabel || e.rule_label || e.ruleKey || e.rule_key || 'Rule';
+                        const detail = bad ? String(e.explanation || '') : '';
+                        // explanations usually already open with the rule label.
+                        const rest = detail && detail.toLowerCase().indexOf(String(label).toLowerCase()) === 0
+                            ? detail.slice(String(label).length).replace(/^\s*[:—-]\s*/, '')
+                            : detail;
+                        return '<div class="flex items-start gap-2.5 text-[12.5px] text-[#cbd5e1]">' +
+                            '<div class="w-4 h-4 mt-0.5 rounded border ' + tone + ' flex items-center justify-center flex-shrink-0"><svg data-lucide="' + (bad ? 'x' : 'check') + '" class="w-3 h-3"></svg></div>' +
+                            '<span>' + esc(label) + (rest ? ' — ' + esc(rest) : '') + '</span>' +
+                        '</div>';
+                    }).join('') + '</div>';
+                } else if (!tags.length) {
+                    html = '<span class="text-[13px] text-[#4b5563] font-medium">' +
+                        (val === 'None' ? 'No strategy tagged and no rule checks recorded on this trade.' : 'No rule checks recorded on this trade yet.') +
+                        '</span>';
+                }
+
+                zone.innerHTML = html;
+                if (window.lucide) lucide.createIcons();
+            }
+
+            // Keep the dropdown's tick in sync with the value on the trade.
+            function syncStrategyMenu(val) {
+                const menu = $('strategy-menu');
+                if (!menu) return;
+                menu.querySelectorAll('.strat-opt').forEach(opt => {
+                    const isMatch = (opt.dataset.value || '') === val;
+                    opt.classList.toggle('active', isMatch);
+                    const icon = opt.querySelector('svg');
+                    if (isMatch && !icon) {
+                        opt.insertAdjacentHTML('beforeend', '<svg data-lucide="check" class="w-3.5 h-3.5 text-[#22c55e]"></svg>');
+                    } else if (!isMatch && icon) {
+                        icon.remove();
+                    }
+                });
             }
 
             function showToast(msg) {
@@ -787,6 +1155,8 @@
             // ---- EVENT LISTENERS ----
             // Back to trade log
             $('cockpit-back-btn').addEventListener('click', () => {
+                flushNote();                    // never lose a draft on navigation
+                setFocus(false);
                 $('view-trade-cockpit').classList.add('hidden');
                 $('view-trade-log').classList.remove('hidden');
                 $('crumb-tail').textContent = 'Trade Log';
@@ -840,17 +1210,8 @@
                         try { core.TradeService.update(activeTrade.id, { setup: val }); } catch(e) {}
                     }
                 }
-                if (stratMenu) {
-                    stratMenu.querySelectorAll('.strat-opt').forEach(opt => {
-                        const isMatch = opt.dataset.value === val;
-                        opt.classList.toggle('active', isMatch);
-                        const checkIcon = opt.querySelector('svg');
-                        if (checkIcon) checkIcon.remove();
-                        if (isMatch) {
-                            opt.insertAdjacentHTML('beforeend', '<svg data-lucide="check" class="w-3.5 h-3.5 text-[#22c55e]"></svg>');
-                        }
-                    });
-                }
+                if (stratMenu) syncStrategyMenu(val);
+                updateStrategyView();
                 updateStrategyView(val);
                 if (window.lucide) lucide.createIcons();
             }
@@ -910,28 +1271,366 @@
                 }
             });
 
-            // Notes Modal
-            const openNotes = () => {
-                $('modal-notes-input').value = (activeTrade && activeTrade.note) || '';
-                $('notes-modal').classList.add('open');
-            };
-            $('btn-open-notes').addEventListener('click', openNotes);
-            $('notes-display-area').addEventListener('click', openNotes);
+            // =================================================================
+            // TRADE NOTES EDITOR
+            // -----------------------------------------------------------------
+            // The note is edited in place on the cockpit card: no modal, no
+            // "Save" that lies. Drafts autosave into the canonical store, the
+            // status chip reports the real state, and a save is only announced
+            // after it is read back from the store that owns the trade.
+            // =================================================================
+            let noteMode = 'write';
+            let saveTimer = null;
+            let saveState = 'clean';
+            let lastSavedTs = null;
+            let noteBoundId = null;
 
-            $('btn-close-notes-modal').addEventListener('click', () => $('notes-modal').classList.remove('open'));
-            $('btn-cancel-modal').addEventListener('click', () => $('notes-modal').classList.remove('open'));
+            function noteText() { return $('nt-input').value; }
 
-            $('btn-save-modal').addEventListener('click', () => {
-                const text = $('modal-notes-input').value;
-                if (activeTrade) {
-                    activeTrade.note = text;
-                    $('notes-text-content').textContent = text || 'No notes yet.';
-                    if (core && core.TradeService) {
-                        try { core.TradeService.update(activeTrade.id, { note: text }); } catch(e) {}
+            function lastSavedLabel() {
+                if (!lastSavedTs) return '';
+                const d = new Date(lastSavedTs);
+                return String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+            }
+
+            function setSaveState(state) {
+                saveState = state;
+                const lbl = NT.autosaveLabel(state, { at: lastSavedLabel() });
+                const chip = $('nt-status');
+                if (!chip) return;
+                chip.className = 'nt-status' + (lbl.tone === 'muted' ? '' : ' ' + lbl.tone);
+                $('nt-dot').style.background = lbl.dot;
+                $('nt-status-text').textContent = lbl.text;
+            }
+
+            function renderTagChips() {
+                const host = $('nt-tags');
+                if (!host) return;
+                const active = NT.parseTags(activeTrade ? activeTrade.reflection_tags : '');
+                host.innerHTML = NT.NOTE_TAGS.map(t => {
+                    const on = active.indexOf(t.key) !== -1;
+                    return '<button type="button" class="nt-tag' + (on ? ' on ' + t.kind : '') + '" data-tag="' + t.key + '" title="' + esc(t.hint) + '">' + esc(t.label) + '</button>';
+                }).join('');
+                host.querySelectorAll('.nt-tag').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        if (!activeTrade) return;
+                        activeTrade.reflection_tags = NT.toggleTag(activeTrade.reflection_tags, btn.dataset.tag);
+                        renderTagChips();
+                        scheduleSave(400);
+                    });
+                });
+            }
+
+            function renderPreview() {
+                const html = NT.renderMarkdown(noteText());
+                $('nt-preview').innerHTML = html || '<span class="nt-empty">Nothing written yet.</span>';
+            }
+
+            function updateNoteMeta() {
+                const q = NT.noteQuality(noteText());
+                $('nt-count').textContent = q.detail.words + (q.detail.words === 1 ? ' word' : ' words');
+                $('nt-meter').style.width = q.score + '%';
+                const labels = {
+                    strong: 'Strong reflection',
+                    fair: 'Solid reflection',
+                    thin: 'Thin — say why, what happened, what next',
+                    empty: 'Add a thesis, the outcome and a lesson'
+                };
+                const missing = NT.QUALITY_SIGNALS.filter(s => q.signals.indexOf(s.key) === -1).map(s => s.label);
+                $('nt-quality').textContent = labels[q.band] +
+                    (q.band !== 'empty' && missing.length ? ' · missing ' + missing.slice(0, 2).join(' & ').toLowerCase() : '');
+                if (noteMode === 'preview') renderPreview();
+            }
+
+            function setMode(mode) {
+                noteMode = mode;
+                $('nt-mode').querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.mode === mode));
+                $('nt-input').classList.toggle('hidden', mode === 'preview');
+                $('nt-preview').classList.toggle('hidden', mode !== 'preview');
+                if (mode === 'preview') renderPreview(); else $('nt-input').focus();
+            }
+
+            function renderEvidence() {
+                const wrap = $('nt-evidence');
+                if (!wrap) return;
+                const url = activeTrade && activeTrade.chart_url;
+                if (!url) { wrap.hidden = true; return; }
+                wrap.hidden = false;
+                $('nt-evidence-img').src = url;
+                $('nt-evidence-sub').textContent = 'Chart evidence stored with this trade';
+            }
+
+            // Writes the note + tags, then READS THEM BACK. A toast only ever
+            // reports a write that the canonical store actually accepted.
+            function persistNote(opts) {
+                const o = opts || {};
+                if (!activeTrade) return false;
+                const note = noteText();
+                const tags = NT.formatTags(activeTrade.reflection_tags || '');
+
+                if (!core || !core.TradeService || typeof core.TradeService.update !== 'function') {
+                    setSaveState('error');
+                    if (!o.silent) showToast('Trade store not loaded — note not saved');
+                    return false;
+                }
+
+                const prevState = saveState;
+                setSaveState('saving');
+                let stored = null;
+                try {
+                    core.TradeService.update(activeTrade.id, { note: note, reflection_tags: tags });
+                    stored = (core.Trades || []).find(x => x.id === activeTrade.id) || null;
+                } catch (err) {
+                    stored = null;
+                }
+
+                const ok = !!stored &&
+                    String(stored.note == null ? '' : stored.note) === note &&
+                    NT.formatTags(stored.reflection_tags || '') === tags;
+
+                if (!ok) {
+                    setSaveState('error');
+                    if (!o.silent) showToast('Note not saved — retry');
+                    return false;
+                }
+
+                activeTrade.note = note;
+                activeTrade.reflection_tags = tags;
+                lastSavedTs = Date.now();
+                setSaveState(note.trim() || tags ? 'saved' : 'empty');
+                renderCoverage();
+                if (saveState !== prevState) updateStrategyView();
+                if (!o.silent) showToast(note.trim() ? 'Note saved' : 'Note cleared');
+                return true;
+            }
+
+            function scheduleSave(delay) {
+                setSaveState('dirty');
+                if (saveTimer) clearTimeout(saveTimer);
+                saveTimer = setTimeout(() => { saveTimer = null; persistNote({ silent: true }); }, delay || 1200);
+            }
+
+            function flushNote() {
+                if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
+                if (saveState === 'dirty') persistNote({ silent: true });
+            }
+
+            function bindNotes(t) {
+                // Never clobber an in-progress draft. Live sync re-opens the
+                // cockpit on every trade.updated event; if that is the trade being
+                // typed into, leave the editor alone.
+                if (noteBoundId === t.id && saveState === 'dirty') { renderEvidence(); return; }
+                flushNote();
+                noteBoundId = t.id;
+                $('nt-input').value = t.note || '';
+                lastSavedTs = null;
+                setMode('write');
+                renderTagChips();
+                updateNoteMeta();
+                setSaveState(t.note && t.note.trim() ? 'saved' : 'empty');
+                renderEvidence();
+            }
+
+            // ---- Editor bindings ----
+            $('nt-input').addEventListener('input', () => { updateNoteMeta(); scheduleSave(); });
+            $('nt-save-btn').addEventListener('click', () => persistNote());
+            $('nt-mode').querySelectorAll('button').forEach(b => {
+                b.addEventListener('click', () => setMode(b.dataset.mode));
+            });
+
+            // Templates: a real scaffold, inserted where the cursor is.
+            (function buildTemplateMenu() {
+                const menu = $('nt-template-menu');
+                menu.innerHTML = NT.TEMPLATES.map(t =>
+                    '<button type="button" class="nt-menu-item" data-template="' + t.key + '">' +
+                        '<div class="text-[12.5px] font-semibold text-white">' + esc(t.label) + '</div>' +
+                        '<div class="nt-menu-sub text-[11px] text-[#64748b] mt-0.5">' + esc(NT.excerpt(t.body, 46)) + '</div>' +
+                    '</button>'
+                ).join('') +
+                    '<div class="h-px bg-[#1f2533] my-1"></div>' +
+                    '<button type="button" class="nt-menu-item" id="nt-clear-note">' +
+                        '<div class="text-[12.5px] font-semibold text-[#f87171]">Clear note &amp; tags</div>' +
+                        '<div class="nt-menu-sub text-[11px] text-[#64748b] mt-0.5">Removes what you wrote — cannot be undone</div>' +
+                    '</button>';
+
+                $('nt-template-btn').addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    if (!menu.classList.contains('hidden')) { menu.classList.add('hidden'); return; }
+                    menu.classList.remove('hidden');
+                    // Open downward unless that would push the menu past the bottom
+                    // of the window — then flip it above the button instead.
+                    const rect = $('nt-template-btn').getBoundingClientRect();
+                    const below = window.innerHeight - rect.bottom;
+                    menu.classList.toggle('up', below < menu.scrollHeight + 16 && rect.top > menu.scrollHeight + 16);
+                });
+                document.addEventListener('click', (e) => {
+                    if (!e.target.closest('#nt-template-wrap')) menu.classList.add('hidden');
+                });
+                menu.querySelectorAll('[data-template]').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const tpl = NT.TEMPLATES.find(x => x.key === btn.dataset.template);
+                        if (!tpl) return;
+                        const input = $('nt-input');
+                        const existing = input.value.trim();
+                        const body = (existing ? existing + '\n\n' : '') + tpl.body;
+                        input.value = body;
+                        menu.classList.add('hidden');
+                        if (noteMode === 'preview') renderPreview();
+                        updateNoteMeta();
+                        scheduleSave(600);
+                        input.focus();
+                        input.setSelectionRange(body.length, body.length);
+                        showToast(tpl.label + ' template inserted');
+                    });
+                });
+                $('nt-clear-note').addEventListener('click', () => {
+                    if (!activeTrade) return;
+                    if (!confirm('Clear the note and reflection tags on this trade?')) return;
+                    $('nt-input').value = '';
+                    activeTrade.reflection_tags = '';
+                    menu.classList.add('hidden');
+                    renderTagChips();
+                    updateNoteMeta();
+                    persistNote();
+                });
+            })();
+
+            // Focus mode: the note takes the screen.
+            function setFocus(on) {
+                document.body.classList.toggle('nt-focus', !!on);
+                const btn = $('nt-focus-btn');
+                btn.title = on ? 'Exit focus mode' : 'Focus mode';
+                btn.innerHTML = '<svg data-lucide="' + (on ? 'minimize-2' : 'maximize-2') + '" class="w-3.5 h-3.5"></svg>';
+                if (window.lucide) lucide.createIcons();
+                if (on) $('nt-input').focus();
+            }
+            $('nt-focus-btn').addEventListener('click', () => setFocus(!document.body.classList.contains('nt-focus')));
+            $('nt-scrim').addEventListener('click', () => { flushNote(); setFocus(false); });
+
+            $('nt-evidence-btn').addEventListener('click', () => {
+                const zone = $('card-screenshots-zone');
+                if (zone) zone.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            });
+
+            // Ctrl/Cmd+S saves in place, Ctrl/Cmd+Enter saves and drops back to the log.
+            document.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape' && document.body.classList.contains('nt-focus')) {
+                    flushNote(); setFocus(false); return;
+                }
+                if (!(e.ctrlKey || e.metaKey)) return;
+                if (e.key === 's') { e.preventDefault(); persistNote(); return; }
+                if (e.key === 'Enter' && activeTrade) {
+                    e.preventDefault();
+                    if (persistNote()) {
+                        setFocus(false);
+                        $('cockpit-back-btn').click();
                     }
                 }
-                $('notes-modal').classList.remove('open');
-                showToast('Notes saved');
+            });
+
+            // ---- Dictation (no key, no server: the browser's own recogniser) ----
+            (function initDictation() {
+                const Rec = window.SpeechRecognition || window.webkitSpeechRecognition;
+                const btn = $('nt-mic-btn');
+                if (!Rec || !btn) return;
+                btn.hidden = false;
+                let rec = null;
+                let listening = false;
+
+                function stop() {
+                    listening = false;
+                    if (rec) { try { rec.stop(); } catch (e) {} }
+                    btn.classList.remove('rec');
+                    btn.title = 'Dictate the note';
+                }
+
+                btn.addEventListener('click', () => {
+                    if (listening) { stop(); return; }
+                    rec = new Rec();
+                    rec.continuous = true;
+                    rec.interimResults = true;
+                    rec.lang = navigator.language || 'en-US';
+                    rec.onresult = (ev) => {
+                        let finalText = '';
+                        for (let i = ev.resultIndex; i < ev.results.length; i++) {
+                            if (ev.results[i].isFinal) finalText += ev.results[i][0].transcript;
+                        }
+                        if (!finalText) return;
+                        const input = $('nt-input');
+                        const at = input.selectionStart == null ? input.value.length : input.selectionStart;
+                        const insert = finalText.trim() + ' ';
+                        input.value = input.value.slice(0, at) + insert + input.value.slice(input.selectionEnd == null ? at : input.selectionEnd);
+                        input.selectionStart = input.selectionEnd = at + insert.length;
+                        updateNoteMeta();
+                        scheduleSave(700);
+                    };
+                    rec.onerror = (ev) => {
+                        stop();
+                        showToast(ev.error === 'not-allowed'
+                            ? 'Microphone blocked — allow mic access for this site'
+                            : 'Dictation stopped: ' + ev.error);
+                    };
+                    rec.onend = () => { if (listening) stop(); };
+                    try {
+                        rec.start();
+                        listening = true;
+                        btn.classList.add('rec');
+                        btn.title = 'Stop dictation';
+                        showToast('Listening — speak your note');
+                    } catch (err) {
+                        stop();
+                        showToast('Could not start dictation');
+                    }
+                });
+            })();
+
+            // ---- Note coverage strip ----
+            function renderCoverage() {
+                const cov = NT.coverage(trades);
+                $('nv-doc').textContent = cov.documented + ' / ' + cov.total;
+                $('nv-doc-sub').textContent = cov.total
+                    ? cov.pct + '% of logged trades have a note'
+                    : 'log a trade to start';
+                $('nv-words').textContent = cov.avgWords ? String(cov.avgWords) : '—';
+                $('nv-tag').textContent = cov.topTag ? cov.topTag.label : '—';
+                $('nv-tag-sub').textContent = cov.topTag
+                    ? cov.topTag.count + (cov.topTag.count === 1 ? ' trade tagged' : ' trades tagged')
+                    : 'no reflection tags yet';
+                $('nv-wr').textContent = cov.winRateDocumented == null ? '—' : cov.winRateDocumented + '%';
+                $('nv-wr-sub').textContent = 'vs ' + (cov.winRateUndocumented == null ? '—' : cov.winRateUndocumented + '%') + ' on unnoted trades';
+                $('nv-fill').style.width = cov.pct + '%';
+
+                const band = cov.pct >= 80 ? { t: 'strong', c: '#22c55e' }
+                    : cov.pct >= 40 ? { t: 'building', c: '#38bdf8' }
+                    : { t: cov.total ? 'thin' : 'no data', c: '#475569' };
+                $('nv-status-text').textContent = band.t;
+                $('nv-dot').style.background = band.c;
+
+                let note = 'No trades logged yet — coverage appears once your ledger has trades.';
+                if (cov.total) {
+                    if (cov.lift == null) {
+                        note = 'Not enough noted vs unnoted trades yet to compare win rates honestly. Keep journaling ' +
+                            Math.max(0, 5 - Math.min(cov.documented, cov.undocumented)) + ' more on the thinner side.';
+                    } else {
+                        note = 'Noted trades won ' + cov.winRateDocumented + '% vs ' + cov.winRateUndocumented +
+                            '% for unnoted — a ' + (cov.lift >= 0 ? '+' : '') + cov.lift + ' point difference on this sample.';
+                    }
+                    if (cov.undocumented) note += ' ' + cov.undocumented + ' trade' + (cov.undocumented === 1 ? '' : 's') + ' still undocumented.';
+                }
+                $('nv-note').textContent = note;
+            }
+
+            // ---- Search + scope ----
+            $('tl-search').addEventListener('input', (e) => {
+                filterQuery = e.target.value;
+                renderTradeLog();
+            });
+            $('tl-scope').querySelectorAll('button').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    filterScope = btn.dataset.scope;
+                    $('tl-scope').querySelectorAll('button').forEach(b => b.classList.toggle('on', b === btn));
+                    renderTradeLog();
+                });
             });
 
             // Delete Trade
@@ -955,6 +1654,8 @@
             function notesRefreshAll() {
                 trades = loadTrades();
                 renderChrome();
+                renderCoverage();
+                renderTradeLog();
                 if (!$('view-trade-cockpit').classList.contains('hidden') && activeTrade) {
                     // re-sync activeTrade reference with updated data
                     const refreshed = trades.find(t => t.id === activeTrade.id);
@@ -968,6 +1669,8 @@
             // Initial load
             trades = loadTrades();
             renderChrome();
+            renderCoverage();
+            renderTradeLog();          // keeps the log (and its count) ready even when hidden
             if (trades.length) {
                 openCockpit(trades[0]);
             } else {

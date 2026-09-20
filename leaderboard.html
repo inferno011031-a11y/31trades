@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BATTLEXJOURNAL — Leaderboard</title>
+    <meta name="description" content="BATTLEXJOURNAL Leaderboard — global trader standings ranked on process, not luck. Squads, seasons and public trader cards.">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="theme-color" content="#0a0a0b">
+
+    <link rel="stylesheet" href="assets/tokens.css">
+    <link rel="stylesheet" href="assets/tailwind-compiled.css">
+    <script src="/assets/lucide.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <script src="src/merge.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
+            overflow: hidden;
+        }
+
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 253px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 11px; padding: 8px 11px; border-radius: 8px;
+            font-size: 13.5px; font-weight: 500; color: var(--tm-muted); text-decoration: none;
+            transition: all 0.15s; white-space: nowrap;
+        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: none !important; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .sidebar-section-header {
+            width: 100%; display: flex; align-items: center; justify-content: space-between;
+            padding: 7px 11px; background: transparent; border: none; cursor: pointer;
+            font-size: 10.5px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+            color: var(--tm-dim); font-family: var(--tm-sans);
+        }
+        .sidebar-section-header:hover { color: var(--tm-muted); }
+        .sidebar-section-header .chevron-icon { width: 14px; height: 14px; transition: transform 0.2s; }
+        .sidebar-section.collapsed .sidebar-section-items { display: none; }
+        .sidebar-section.collapsed .chevron-icon { transform: rotate(-90deg); }
+        .sidebar-section-items { display: flex; flex-direction: column; gap: 2px; }
+        .sidebar-soon-badge {
+            margin-left: auto; font-size: 9px; font-weight: 800; letter-spacing: 0.06em;
+            padding: 2px 5px; border-radius: 4px; background: rgba(99,102,241,0.14);
+            color: #a5b4fc; border: 1px solid rgba(99,102,241,0.28);
+        }
+        body.collapsed .sidebar-soon-badge { display: none; }
+
+        /* ---- Glass system ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
+        .btn-primary {
+            background: #ffffff !important; color: #000000 !important; font-weight: 700 !important; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.10);
+        }
+        .btn-primary:hover { background: #e2e8f0 !important; border-color: #e2e8f0 !important; transform: translateY(-1px); }
+        .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; font-weight: 600; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
+        }
+        .btn-ghost:hover { border-color: rgba(255, 255, 255, 0.25) !important; background: rgba(255, 255, 255, 0.08) !important; }
+        .btn-mini {
+            background: transparent; border: 1px solid var(--tm-border-2); border-radius: 7px; color: var(--tm-muted);
+            padding: 5px 9px; font-size: 11.5px; font-weight: 600; cursor: pointer; display: inline-flex; align-items: center; gap: 5px; transition: all 0.13s;
+        }
+        .btn-mini:hover { color: var(--tm-text); border-color: var(--tm-muted); background: var(--tm-hover); }
+        .btn-mini:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
+        /* .tag-indigo lives in assets/trademind-theme.css (it is theme-aware there). */
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); padding-left: 12px; padding-right: 12px; }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        /* ---- Stat tiles ---- */
+        .stat-tile { text-align: center; padding: 14px 10px; border-radius: 10px; background: var(--glass-inner); border: 1px solid var(--hairline); }
+        .stat-val { font-size: 22px; font-weight: 800; line-height: 1.1; }
+        .stat-lbl { font-size: 10.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: var(--tm-muted); margin-top: 4px; }
+
+        /* ---- Metric / range tabs ---- */
+        .tabs { display: flex; flex-wrap: wrap; gap: 6px; }
+        .mtab {
+            padding: 6px 12px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer;
+            background: transparent; color: var(--tm-muted); border: 1px solid var(--tm-border-2);
+            transition: all 0.13s; font-family: var(--tm-sans);
+        }
+        .mtab:hover { color: var(--tm-text); background: var(--tm-hover); }
+        .mtab.active { background: rgba(255,255,255,0.07); color: #ffffff; border-color: rgba(255,255,255,0.22); }
+        .tabs-seg { display: inline-flex; padding: 3px; gap: 2px; border-radius: 9px; background: var(--glass-inner); border: 1px solid var(--hairline); }
+        .tabs-seg .mtab { border: none; padding: 5px 11px; font-size: 11px; letter-spacing: 0.04em; text-transform: uppercase; border-radius: 7px; }
+        .tabs-seg .mtab.active { background: rgba(255,255,255,0.10); color: #fff; }
+
+        /* ---- Board rows ---- */
+        .lb-row {
+            display: flex; align-items: center; gap: 12px;
+            padding: 11px 14px; border-bottom: 1px solid var(--hairline); transition: background 0.12s;
+            cursor: pointer;
+        }
+        .lb-row:last-child { border-bottom: none; }
+        .lb-row:hover { background: var(--glass-inner); }
+        .lb-row.me { background: rgba(255,255,255,0.05); box-shadow: inset 0 0 0 1px rgba(255,255,255,0.12); }
+        .lb-rank {
+            width: 26px; height: 26px; border-radius: 8px; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-family: var(--tm-mono); font-size: 12.5px; font-weight: 700;
+            background: var(--tm-card); color: var(--tm-muted); border: 1px solid var(--tm-border-2);
+        }
+        .lb-rank.r1 { background: rgba(245,158,11,0.14); color: var(--tm-amber); border-color: rgba(245,158,11,0.40); }
+        .lb-rank.r2 { background: rgba(148,163,184,0.12); color: var(--tm-muted); border-color: rgba(148,163,184,0.35); }
+        .lb-rank.r3 { background: rgba(180,83,9,0.12); color: #C77B3F; border-color: rgba(180,83,9,0.35); }
+        .lb-col { text-align: right; min-width: 74px; }
+        .lb-col .k { font-size: 10px; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; color: var(--tm-dim); }
+        .lb-col .v { font-size: 13px; font-weight: 700; }
+        .lb-col.em .v { font-size: 15px; color: #fff; }
+        .lb-col.em .k { color: var(--tm-muted); }
+
+        /* ---- Drawer ---- */
+        .drawer-bg { position: fixed; inset: 0; background: rgba(0,0,0,0.55); backdrop-filter: blur(2px); opacity: 0; pointer-events: none; transition: opacity 0.2s; z-index: 80; }
+        .drawer-bg.show { opacity: 1; pointer-events: auto; }
+        .drawer {
+            position: fixed; top: 0; right: 0; height: 100%; width: 100%; max-width: 460px;
+            background: var(--tm-bg-elev); border-left: 1px solid var(--tm-border);
+            transform: translateX(102%); transition: transform 0.26s cubic-bezier(0.16,1,0.3,1);
+            z-index: 85; display: flex; flex-direction: column;
+        }
+        .drawer.show { transform: none; }
+
+        /* ---- Controls ---- */
+        .field {
+            width: 100%; background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
+            padding: 9px 12px; font-size: 13px; color: var(--tm-text); outline: none; font-family: var(--tm-sans);
+        }
+        .field:focus { border-color: var(--tm-accent); }
+        .field::placeholder { color: var(--tm-dim); }
+        .switch-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 12px; border-radius: 9px; background: var(--glass-inner); border: 1px solid var(--hairline); }
+        .sw { position: relative; width: 38px; height: 21px; border-radius: 999px; background: var(--tm-border-2); border: none; cursor: pointer; transition: background 0.15s; flex-shrink: 0; }
+        .sw::after { content: ''; position: absolute; top: 3px; left: 3px; width: 15px; height: 15px; border-radius: 999px; background: #fff; transition: transform 0.15s; }
+        .sw.on { background: var(--tm-green); }
+        .sw.on::after { transform: translateX(17px); }
+        .swatches { display: flex; gap: 6px; flex-wrap: wrap; }
+        .swatch { width: 24px; height: 24px; border-radius: 7px; border: 2px solid transparent; cursor: pointer; }
+        .swatch.on { border-color: #fff; }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .fade-up { animation: fadeUp 0.22s ease; }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
+    <script src="assets/sidebar-nav.js"></script>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/favicon.png">
+</head>
+<body>
+
+    <div class="flex h-screen min-h-[100dvh] max-h-[100dvh]">
+
+        <!-- ============ LEFT SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-1">
+                <div class="sidebar-section" data-section="core">
+                    <button type="button" class="sidebar-section-header"><span>CORE</span><svg data-lucide="chevron-down" class="chevron-icon"></svg></button>
+                    <div class="sidebar-section-items">
+                        <a href="dashboard.html" class="nav-item"><svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span></a>
+                        <a href="journal.html" class="nav-item"><svg data-lucide="book-open"></svg><span class="nav-label">Journal</span></a>
+                        <a href="notes.html" class="nav-item"><svg data-lucide="file-edit"></svg><span class="nav-label">Trade Notes</span></a>
+                        <a href="imports.html" class="nav-item"><svg data-lucide="file-up"></svg><span class="nav-label">Import</span></a>
+                        <a href="analytics.html" class="nav-item"><svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span></a>
+                        <a href="calendar.html" class="nav-item"><svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span></a>
+                    </div>
+                </div>
+
+                <div class="sidebar-section" data-section="intelligence">
+                    <button type="button" class="sidebar-section-header"><span>INTELLIGENCE</span><svg data-lucide="chevron-down" class="chevron-icon"></svg></button>
+                    <div class="sidebar-section-items">
+                        <a href="ai.html" class="nav-item"><svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Coach</span></a>
+                        <a href="patterns.html" class="nav-item"><svg data-lucide="sparkles"></svg><span class="nav-label">Patterns</span></a>
+                        <a href="reports.html" class="nav-item"><svg data-lucide="file-text"></svg><span class="nav-label">Reports</span></a>
+                        <a href="improve.html" class="nav-item"><svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span></a>
+                    </div>
+                </div>
+
+                <div class="sidebar-section" data-section="strategy">
+                    <button type="button" class="sidebar-section-header"><span>STRATEGY &amp; LAB</span><svg data-lucide="chevron-down" class="chevron-icon"></svg></button>
+                    <div class="sidebar-section-items">
+                        <a href="strategy-lab.html" class="nav-item"><svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span></a>
+                        <a href="replay.html" class="nav-item"><svg data-lucide="history"></svg><span class="nav-label">Market Replay</span></a>
+                    </div>
+                </div>
+
+                <div class="sidebar-section" data-section="risk">
+                    <button type="button" class="sidebar-section-header"><span>PERFORMANCE &amp; RISK</span><svg data-lucide="chevron-down" class="chevron-icon"></svg></button>
+                    <div class="sidebar-section-items">
+                        <a href="risk.html" class="nav-item"><svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span></a>
+                        <a href="discipline.html" class="nav-item"><svg data-lucide="target"></svg><span class="nav-label">Discipline</span></a>
+                    </div>
+                </div>
+
+                <div class="sidebar-section" data-section="battles-lab">
+                    <button type="button" class="sidebar-section-header"><span>BATTLES &amp; LABS</span><svg data-lucide="chevron-down" class="chevron-icon"></svg></button>
+                    <div class="sidebar-section-items">
+                        <a href="community.html" class="nav-item"><svg data-lucide="users"></svg><span class="nav-label">Community</span></a>
+                        <a href="battles.html" class="nav-item"><svg data-lucide="swords"></svg><span class="nav-label">Battles</span><span class="sidebar-soon-badge">SOON</span></a>
+                        <a href="leaderboard.html" class="nav-item active"><svg data-lucide="trophy"></svg><span class="nav-label">Leaderboard</span></a>
+                        <a href="backtesting.html" class="nav-item"><svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span></a>
+                    </div>
+                </div>
+                <!-- 6. TOOLS -->
+                <div class="sidebar-section" data-section="tools">
+                    <button type="button" class="sidebar-section-header"><span>TOOLS</span><svg data-lucide="chevron-down" class="chevron-icon"></svg></button>
+                    <div class="sidebar-section-items">
+                        <a href="tools.html" class="nav-item"><svg data-lucide="wrench"></svg><span class="nav-label">Tools</span></a>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="border-t border-[var(--tm-border)] p-2.5 flex flex-col flex-shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--tm-hover)] transition-colors cursor-pointer" id="profile-chip" title="Account, Community, Settings &amp; Help">
+                    <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)]" id="profile-meta">Battlex Pro</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-up"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search a trader by handle…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[24px] font-bold tracking-tight">Leaderboard</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Global standings ranked on process — not one oversized win.</p>
+                        </div>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <span class="tag tag-indigo" id="season-chip"><svg data-lucide="calendar-range" class="w-3 h-3"></svg> Season —</span>
+                            <button class="btn-primary" id="open-profile-btn"><svg data-lucide="user-cog" class="w-4 h-4"></svg> Profile &amp; privacy</button>
+                        </div>
+                    </div>
+
+                    <!-- My rank strip -->
+                    <div class="glass-strong p-5 fade-up" id="myrank-strip">
+                        <div class="flex flex-wrap items-center justify-between gap-4">
+                            <div class="flex items-center gap-4 min-w-0">
+                                <div class="avatar !w-12 !h-12 !rounded-2xl !text-[16px]" id="me-avatar">—</div>
+                                <div class="min-w-0">
+                                    <div class="label-xs mb-0.5">Your standing</div>
+                                    <div class="text-[17px] font-bold leading-tight truncate" id="me-name">—</div>
+                                    <div class="text-[11.5px] text-[var(--tm-dim)]" id="me-handle">—</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <button class="btn-ghost" id="publish-btn"><svg data-lucide="refresh-cw" class="w-4 h-4"></svg> Publish standings</button>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mt-4 pt-4 border-t border-[var(--hairline)]" id="me-stats">
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Rank</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Percentile</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">BX Score</div></div>
+                            <div class="stat-tile"><div class="stat-val num">—</div><div class="stat-lbl">Sample</div></div>
+                        </div>
+
+                        <div id="me-reasons" class="mt-3 flex flex-col gap-2"></div>
+                    </div>
+
+                    <!-- Controls -->
+                    <div class="glass px-5 py-4 flex flex-wrap items-center gap-3 fade-up">
+                        <div class="min-w-0">
+                            <div class="label-xs mb-2">Metric</div>
+                            <div class="tabs" id="metric-tabs"></div>
+                        </div>
+                        <div class="ml-auto flex flex-wrap items-end gap-4">
+                            <div>
+                                <div class="label-xs mb-2 text-right">Minimum sample</div>
+                                <div class="tabs-seg" id="min-trades-tabs"></div>
+                            </div>
+                            <div>
+                                <div class="label-xs mb-2 text-right">Range</div>
+                                <div class="tabs-seg" id="range-tabs"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Board + side rail -->
+                    <div class="grid grid-cols-1 xl:grid-cols-3 gap-4 items-start">
+
+                        <!-- Board -->
+                        <div class="glass p-5 xl:col-span-2 min-w-0 fade-up">
+                            <div class="flex flex-wrap items-center justify-between gap-3 mb-3">
+                                <div>
+                                    <div class="label-xs" id="board-title">Global board</div>
+                                    <div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5" id="board-meta">—</div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="tag tag-gray" id="board-count">—</span>
+                                    <button class="btn-mini" id="reload-btn"><svg data-lucide="refresh-cw" class="w-3.5 h-3.5"></svg> Refresh</button>
+                                </div>
+                            </div>
+
+                            <div id="board-loading" class="py-12 text-center">
+                                <svg data-lucide="loader-2" class="w-6 h-6 mx-auto text-[var(--tm-dim)] animate-spin mb-2"></svg>
+                                <p class="text-[12.5px] text-[var(--tm-dim)]">Loading standings…</p>
+                            </div>
+
+                            <div id="board-body" class="hidden flex-col"></div>
+
+                            <div id="board-empty" class="hidden py-12 text-center">
+                                <svg data-lucide="trophy" class="w-10 h-10 mx-auto text-[var(--tm-dim)] mb-3"></svg>
+                                <h3 class="text-[15.5px] font-bold" id="board-empty-title">No traders on this board yet</h3>
+                                <p class="text-[12.5px] text-[var(--tm-dim)] mt-2 max-w-md mx-auto" id="board-empty-copy">Traders appear here only after they publish a public profile with at least the minimum sample size in the selected range.</p>
+                                <button class="btn-ghost mt-5" id="empty-profile-btn"><svg data-lucide="user-cog" class="w-4 h-4"></svg> Set up my profile</button>
+                            </div>
+
+                            <p class="text-[11px] text-[var(--tm-dim)] mt-4 pt-3 border-t border-[var(--hairline)]">
+                                BX Score blends win rate, average R, recovery and profit factor, scaled by activity — profit alone never tops the board.
+                                Hidden metrics are shown as “—”, never guessed.
+                            </p>
+                        </div>
+
+                        <!-- Right rail -->
+                        <div class="flex flex-col gap-4 min-w-0">
+
+                            <!-- Squad panel -->
+                            <div class="glass p-5 fade-up">
+                                <div class="flex items-center justify-between mb-3">
+                                    <div>
+                                        <div class="label-xs">Squad</div>
+                                        <div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">Team standings, aggregated</div>
+                                    </div>
+                                    <span class="tag tag-indigo" id="squad-member-chip">—</span>
+                                </div>
+
+                                <div id="squad-loading" class="py-6 text-center text-[12px] text-[var(--tm-dim)]">Loading squad…</div>
+
+                                <!-- no squad -->
+                                <div id="squad-none" class="hidden flex-col gap-4">
+                                    <div class="tabs-seg" id="squad-mode-tabs">
+                                        <button class="mtab active" data-mode="create">Create</button>
+                                        <button class="mtab" data-mode="join">Join</button>
+                                    </div>
+                                    <div id="squad-create" class="flex flex-col gap-2">
+                                        <input class="field" id="squad-name" placeholder="Squad name (e.g. London Desk)" maxlength="24">
+                                        <div class="flex gap-2">
+                                            <input class="field" id="squad-tag" placeholder="TAG" maxlength="5" style="text-transform:uppercase">
+                                            <button class="btn-primary" id="squad-create-btn">Create</button>
+                                        </div>
+                                        <p class="text-[11px] text-[var(--tm-dim)]">2–5 letters or digits, unique across BattleX. You become the squad owner.</p>
+                                    </div>
+                                    <div id="squad-join" class="hidden flex-col gap-2">
+                                        <input class="field" id="squad-code" placeholder="Invite code (6 characters)" maxlength="6" style="text-transform:uppercase">
+                                        <button class="btn-primary" id="squad-join-btn">Join squad</button>
+                                        <p class="text-[11px] text-[var(--tm-dim)]">Joining adds your ledger to the squad total. Your per-metric privacy still applies to your own row.</p>
+                                    </div>
+                                </div>
+
+                                <!-- in squad -->
+                                <div id="squad-view" class="hidden flex-col gap-4">
+                                    <div class="flex items-center gap-3">
+                                        <div class="rounded-xl px-3 py-2 text-[14px] font-extrabold tracking-wider" style="background:rgba(99,102,241,0.14);color:#a5b4fc;border:1px solid rgba(99,102,241,0.28)" id="squad-tag-badge">—</div>
+                                        <div class="min-w-0 flex-1">
+                                            <div class="text-[14.5px] font-bold truncate" id="squad-name-view">—</div>
+                                            <div class="text-[11.5px] text-[var(--tm-dim)]" id="squad-role-view">—</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="flex items-center gap-2">
+                                        <code class="num text-[12.5px] bg-[var(--tm-card)] border border-[var(--tm-border-2)] rounded-lg px-3 py-2 flex-1 truncate" id="squad-code-view">—</code>
+                                        <button class="btn-mini" id="squad-copy-btn"><svg data-lucide="copy" class="w-3.5 h-3.5"></svg> Copy</button>
+                                    </div>
+
+                                    <div class="grid grid-cols-2 gap-2.5">
+                                        <div class="stat-tile"><div class="stat-val num" id="sq-trades">—</div><div class="stat-lbl">Team trades</div></div>
+                                        <div class="stat-tile"><div class="stat-val num" id="sq-net">—</div><div class="stat-lbl">Team net</div></div>
+                                        <div class="stat-tile"><div class="stat-val num" id="sq-win">—</div><div class="stat-lbl">Win rate</div></div>
+                                        <div class="stat-tile"><div class="stat-val num" id="sq-bx">—</div><div class="stat-lbl">Squad score</div></div>
+                                    </div>
+
+                                    <div>
+                                        <div class="label-xs mb-2">Members</div>
+                                        <div id="squad-members" class="flex flex-col"></div>
+                                    </div>
+
+                                    <div class="flex gap-2">
+                                        <button class="btn-mini" id="squad-leave-btn">Leave squad</button>
+                                        <button class="btn-mini" id="squad-disband-btn" style="display:none">Disband (owner)</button>
+                                    </div>
+                                </div>
+
+                                <div id="squad-directory" class="mt-4 pt-3 border-t border-[var(--hairline)]">
+                                    <div class="label-xs mb-2">Squads on BattleX</div>
+                                    <div class="flex flex-col" id="squad-directory-list">
+                                        <div class="py-3 text-center text-[11.5px] text-[var(--tm-dim)]">No squads yet.</div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- How it is scored -->
+                            <div class="glass p-5 fade-up">
+                                <div class="label-xs mb-3">How the board works</div>
+                                <ul class="flex flex-col gap-2.5 text-[12px] text-[var(--tm-muted)]">
+                                    <li class="flex gap-2.5"><svg data-lucide="lock" class="w-4 h-4 text-[var(--tm-dim)] flex-shrink-0"></svg><span><b class="text-[var(--tm-text)]">Opt-in only.</b> Private profiles appear on no board and in no directory.</span></li>
+                                    <li class="flex gap-2.5"><svg data-lucide="eye-off" class="w-4 h-4 text-[var(--tm-dim)] flex-shrink-0"></svg><span><b class="text-[var(--tm-text)]">Per-metric privacy.</b> Hide net P&L and you drop off the net board — you are never shown partially.</span></li>
+                                    <li class="flex gap-2.5"><svg data-lucide="activity" class="w-4 h-4 text-[var(--tm-dim)] flex-shrink-0"></svg><span><b class="text-[var(--tm-text)]">Sample floor.</b> Fewer trades than the minimum means no rank, whatever the return.</span></li>
+                                    <li class="flex gap-2.5"><svg data-lucide="refresh-cw" class="w-4 h-4 text-[var(--tm-dim)] flex-shrink-0"></svg><span><b class="text-[var(--tm-text)]">Always current.</b> Opening a board republishes your own snapshot from your journal.</span></li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="text-center text-[11.5px] text-[var(--tm-dim)] pb-2">BATTLEXJOURNAL · Leaderboard · process-ranked global standings, squads and public trader cards</p>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <!-- ============ TRADER CARD DRAWER ============ -->
+    <div class="drawer-bg" id="trader-bg"></div>
+    <aside class="drawer" id="trader-drawer">
+        <div class="flex items-center gap-3 px-5 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+            <div class="label-xs" id="trader-drawer-title">Trader card</div>
+            <button class="btn-mini ml-auto" id="trader-close"><svg data-lucide="x" class="w-3.5 h-3.5"></svg> Close</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4" id="trader-body">
+            <div class="py-12 text-center text-[12.5px] text-[var(--tm-dim)]">Loading trader…</div>
+        </div>
+    </aside>
+
+    <!-- ============ PROFILE / PRIVACY DRAWER ============ -->
+    <div class="drawer-bg" id="profile-bg"></div>
+    <aside class="drawer" id="profile-drawer">
+        <div class="flex items-center gap-3 px-5 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+            <div class="label-xs">Profile &amp; privacy</div>
+            <button class="btn-mini ml-auto" id="profile-close"><svg data-lucide="x" class="w-3.5 h-3.5"></svg> Close</button>
+        </div>
+        <div class="flex-1 overflow-y-auto p-5 flex flex-col gap-4">
+            <div class="glass p-4">
+                <div class="label-xs mb-3">Public identity</div>
+                <div class="flex flex-col gap-2.5">
+                    <div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)] mb-1">Handle (used on the board)</div>
+                        <input class="field" id="p-handle" placeholder="e.g. gold-sniper" maxlength="24">
+                    </div>
+                    <div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)] mb-1">Display name</div>
+                        <input class="field" id="p-display" placeholder="Trader name" maxlength="40">
+                    </div>
+                    <div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)] mb-1">Bio <span class="text-[var(--tm-dim)]">(max 280)</span></div>
+                        <textarea class="field" id="p-bio" rows="3" maxlength="280" placeholder="London session, FVG only, no news trades."></textarea>
+                    </div>
+                    <div class="flex gap-2">
+                        <div class="flex-1">
+                            <div class="text-[11.5px] text-[var(--tm-dim)] mb-1">Country (ISO-2)</div>
+                            <input class="field" id="p-country" placeholder="IN" maxlength="2" style="text-transform:uppercase">
+                        </div>
+                        <div class="flex-1">
+                            <div class="text-[11.5px] text-[var(--tm-dim)] mb-1">Accent</div>
+                            <div class="swatches" id="p-swatches"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass p-4">
+                <div class="label-xs mb-3">Visibility</div>
+                <div class="flex flex-col gap-2" id="p-visibility"></div>
+                <p class="text-[11px] text-[var(--tm-dim)] mt-3">A hidden metric is masked on your card and removes you from boards ranked by it. Nothing here exposes your email, user id, or individual trades.</p>
+            </div>
+
+            <div class="flex gap-2">
+                <button class="btn-primary flex-1 justify-center" id="profile-save-btn"><svg data-lucide="save" class="w-4 h-4"></svg> Save profile</button>
+                <button class="btn-ghost" id="profile-signout"><svg data-lucide="log-out" class="w-4 h-4"></svg> Sign out</button>
+            </div>
+            <p class="text-[11px] text-[var(--tm-dim)]" id="profile-state">—</p>
+        </div>
+    </aside>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+            const $ = id => document.getElementById(id);
+            const apiFetch = (window.TradeMindCore && window.TradeMindCore.apiFetch) || ((url, options) => fetch(url, options));
+
+            // ---- metric / range vocabulary (mirrors server/leaderboard.js) ----
+            const METRICS = [
+                { key: 'bxScore', label: 'BX Score' },
+                { key: 'net', label: 'Net P&L' },
+                { key: 'winRate', label: 'Win rate' },
+                { key: 'avgR', label: 'Avg R' },
+                { key: 'pf', label: 'Profit factor' },
+                { key: 'trades', label: 'Trades' },
+                { key: 'discipline', label: 'Discipline' }
+            ];
+            const RANGES = [
+                { key: '7d', label: '7D' }, { key: '30d', label: '30D' }, { key: '90d', label: '90D' },
+                { key: 'ytd', label: 'YTD' }, { key: 'season', label: 'Season' }, { key: 'all', label: 'All' }
+            ];
+            const MIN_TRADES = [5, 10, 25];
+            const VISIBILITY = [
+                { key: 'public', label: 'Public profile', hint: 'Master switch — nothing is published while this is off.' },
+                { key: 'showNet', label: 'Net P&L', hint: 'Also controls profit factor, max drawdown and the net board.' },
+                { key: 'showWinRate', label: 'Win rate', hint: '' },
+                { key: 'showAvgR', label: 'Average R', hint: 'Required for the BX Score.' },
+                { key: 'showTrades', label: 'Trade count', hint: '' },
+                { key: 'showDiscipline', label: 'Discipline score', hint: '' },
+                { key: 'showSquad', label: 'Squad affiliation', hint: '' }
+            ];
+
+            const state = {
+                metric: 'bxScore',
+                range: '30d',
+                minTrades: 10,
+                board: null,
+                me: null,
+                profile: null,
+                squad: null,
+                squads: [],
+                squadView: null,
+                squadMode: 'create',
+                accent: null,
+                visibility: {}
+            };
+            let toastTimer;
+
+            // ---- format helpers ----
+            const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            const money = v => v == null ? '—' : (v > 0 ? '+' : v < 0 ? '−' : '') + '$' + Math.abs(Math.round(v)).toLocaleString('en-US');
+            const pct = v => v == null ? '—' : v.toFixed(1) + '%';
+            const rMult = v => v == null ? '—' : (v > 0 ? '+' : '') + v.toFixed(2) + 'R';
+            const num = v => v == null ? '—' : Number(v).toLocaleString('en-US');
+            const metricValue = (row, key) => {
+                const m = (row && row.metrics) || {};
+                switch (key) {
+                    case 'bxScore': return row.bxScore == null ? '—' : num(row.bxScore);
+                    case 'net': return money(m.net);
+                    case 'winRate': return pct(m.winRate);
+                    case 'avgR': return rMult(m.avgR);
+                    case 'pf': return m.pf == null ? '—' : m.pf.toFixed(2);
+                    case 'trades': return m.trades == null ? '—' : num(m.trades);
+                    case 'discipline': return row.discipline == null ? '—' : num(row.discipline);
+                    default: return '—';
+                }
+            };
+            window.showToast = function (msg) {
+                $('toast-msg').textContent = msg;
+                $('toast').classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(() => $('toast').classList.remove('show'), 2600);
+            };
+            const icons = () => { if (window.lucide) lucide.createIcons(); };
+
+            // ---- tabs ----
+            function renderTabs() {
+                $('metric-tabs').innerHTML = METRICS.map(m =>
+                    '<button class="mtab' + (m.key === state.metric ? ' active' : '') + '" data-metric="' + m.key + '">' + esc(m.label) + '</button>').join('');
+                $('range-tabs').innerHTML = RANGES.map(r =>
+                    '<button class="mtab' + (r.key === state.range ? ' active' : '') + '" data-range="' + r.key + '">' + esc(r.label) + '</button>').join('');
+                $('min-trades-tabs').innerHTML = MIN_TRADES.map(n =>
+                    '<button class="mtab' + (n === state.minTrades ? ' active' : '') + '" data-min="' + n + '">' + n + '</button>').join('');
+                $('metric-tabs').querySelectorAll('.mtab').forEach(b => b.onclick = () => { state.metric = b.dataset.metric; renderTabs(); loadBoard(); });
+                $('range-tabs').querySelectorAll('.mtab').forEach(b => b.onclick = () => { state.range = b.dataset.range; renderTabs(); loadBoard(); });
+                $('min-trades-tabs').querySelectorAll('.mtab').forEach(b => b.onclick = () => { state.minTrades = Number(b.dataset.min); renderTabs(); loadBoard(); });
+            }
+
+            // ---- chrome (account chip / session / identity) ----
+            function sessionName() {
+                try {
+                    const s = window.TradeMindAuth && window.TradeMindAuth.getSession && window.TradeMindAuth.getSession();
+                    const u = s && s.user;
+                    if (u && u.name) return String(u.name);
+                    if (u && u.email) return String(u.email).split('@')[0];
+                } catch (e) { }
+                return 'Trader';
+            }
+            function renderChrome() {
+                const core = window.TradeMindCore;
+                const chip = $('acc-chip');
+                if (core && core.Accounts && core.Accounts.length) {
+                    const sel = core.selectedAccountId ? core.selectedAccountId() : core.Accounts[0].id;
+                    const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
+                    chip.innerHTML = '<span class="num text-[12px]">' + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0)
+                        .toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 })
+                        + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                } else if (chip) {
+                    chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                }
+                const name = sessionName();
+                $('profile-name').textContent = name;
+                $('profile-avatar').textContent = name.slice(0, 2).toUpperCase();
+                if ($('session-chip-text') && window.TM_SESSION_INFO) $('session-chip-text').textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
+                icons();
+            }
+
+            // ---- my rank strip ----
+            function renderMe() {
+                const me = state.me || {};
+                const p = state.profile || {};
+                const label = (p.displayName || p.handle || sessionName());
+                $('me-name').textContent = label;
+                $('me-handle').textContent = p.handle ? '@' + p.handle : 'no public handle yet';
+                $('me-avatar').textContent = label.slice(0, 2).toUpperCase();
+                if (p.avatar) $('me-avatar').style.background = p.avatar;
+
+                const m = me.metrics || {};
+                const tiles = [
+                    { v: me.rank != null ? '#' + me.rank : '—', l: 'Rank' },
+                    { v: me.percentile != null ? me.percentile.toFixed(1) + '%' : '—', l: 'Percentile' },
+                    { v: me.bxScore != null ? num(me.bxScore) : '—', l: 'BX Score' },
+                    { v: m.trades != null ? num(m.trades) : '—', l: 'Sample' }
+                ];
+                $('me-stats').innerHTML = tiles.map(t =>
+                    '<div class="stat-tile"><div class="stat-val num">' + esc(t.v) + '</div><div class="stat-lbl">' + esc(t.l) + '</div></div>').join('');
+
+                const reasons = Array.isArray(me.reasons) ? me.reasons : [];
+                const box = $('me-reasons');
+                if (!reasons.length) {
+                    box.innerHTML = '<div class="flex items-center gap-2 text-[12px] text-[var(--tm-green)]"><svg data-lucide="check-circle-2" class="w-4 h-4"></svg> Ranked on the ' +
+                        esc(label2(state.metric)) + ' board for the ' + esc(label3(state.range)) + ' range.</div>';
+                } else {
+                    box.innerHTML = reasons.map(r =>
+                        '<div class="flex items-start gap-2 text-[12px] text-[var(--tm-amber)]"><svg data-lucide="alert-circle" class="w-4 h-4 flex-shrink-0"></svg><span>' + esc(r) + '</span></div>').join('') +
+                        '<div class="flex gap-2 mt-1"><button class="btn-mini" id="me-fix-btn"><svg data-lucide="user-cog" class="w-3.5 h-3.5"></svg> Fix in profile &amp; privacy</button></div>';
+                    const fix = $('me-fix-btn');
+                    if (fix) fix.onclick = openProfile;
+                }
+                $('season-chip').innerHTML = '<svg data-lucide="calendar-range" class="w-3 h-3"></svg> Season ' + esc((state.board && state.board.season) || '—');
+                icons();
+            }
+            const label2 = k => (METRICS.find(m => m.key === k) || {}).label || k;
+            const label3 = k => (RANGES.find(r => r.key === k) || {}).label || k;
+
+            // ---- board ----
+            function renderBoard() {
+                const b = state.board;
+                $('board-loading').classList.add('hidden');
+                if (!b) return;
+                const rows = Array.isArray(b.rows) ? b.rows : [];
+                $('board-title').textContent = label2(b.metric) + ' board';
+                $('board-meta').textContent = label3(b.range) + ' · ranked by ' + label2(b.metric) + ' · minimum ' + b.minTrades + ' trades' + (b.season ? ' · season ' + b.season : '');
+                $('board-count').textContent = b.total + (b.total === 1 ? ' trader' : ' traders');
+
+                if (!rows.length) {
+                    $('board-body').classList.add('hidden');
+                    $('board-body').classList.remove('flex');
+                    $('board-empty').classList.remove('hidden');
+                    return;
+                }
+                $('board-empty').classList.add('hidden');
+                const body = $('board-body');
+                body.classList.remove('hidden');
+                body.classList.add('flex');
+                const myHandle = (state.profile && state.profile.handle) || null;
+                body.innerHTML = rows.map(r => {
+                    const rank = r.rank;
+                    const rankCls = 'lb-rank' + (rank === 1 ? ' r1' : rank === 2 ? ' r2' : rank === 3 ? ' r3' : '');
+                    const me = myHandle && r.handle === myHandle;
+                    const initials = String(r.displayName || r.handle || '—').slice(0, 2).toUpperCase();
+                    const accent = r.avatar ? ' style="background:' + esc(r.avatar) + '"' : '';
+                    const squadChip = r.squadId ? '<span class="tag tag-indigo" style="margin-left:6px"><svg data-lucide="users" class="w-3 h-3"></svg> squad</span>' : '';
+                    const youChip = me ? '<span class="tag tag-emerald" style="margin-left:6px">You</span>' : '';
+                    return '<div class="lb-row' + (me ? ' me' : '') + '" data-handle="' + esc(r.handle) + '">' +
+                        '<div class="' + rankCls + '">' + rank + '</div>' +
+                        '<div class="avatar" ' + accent + '>' + esc(initials) + '</div>' +
+                        '<div class="flex-1 min-w-0">' +
+                            '<div class="text-[13.5px] font-semibold truncate">' + esc(r.displayName || r.handle) + youChip + '</div>' +
+                            '<div class="text-[11.5px] text-[var(--tm-dim)] truncate">@' + esc(r.handle) + squadChip +
+                            (r.country ? ' <span class="ml-1">' + esc(r.country) + '</span>' : '') + '</div>' +
+                        '</div>' +
+                        '<div class="lb-col em hidden sm:block"><div class="k">' + esc(shortMetric(b.metric)) + '</div><div class="v num">' + esc(metricValue(r, b.metric)) + '</div></div>' +
+                        '<div class="lb-col hidden md:block"><div class="k">Net</div><div class="v num">' + esc(money(r.metrics.net)) + '</div></div>' +
+                        '<div class="lb-col hidden lg:block"><div class="k">Win</div><div class="v num">' + esc(pct(r.metrics.winRate)) + '</div></div>' +
+                        '<div class="lb-col hidden lg:block"><div class="k">Avg R</div><div class="v num">' + esc(rMult(r.metrics.avgR)) + '</div></div>' +
+                        '<div class="lb-col hidden xl:block"><div class="k">Trades</div><div class="v num">' + esc(r.metrics.trades == null ? '—' : num(r.metrics.trades)) + '</div></div>' +
+                    '</div>';
+                }).join('');
+                body.querySelectorAll('.lb-row').forEach(el => el.onclick = () => openTrader(el.dataset.handle));
+                icons();
+            }
+            const shortMetric = k => k === 'bxScore' ? 'BX' : k === 'winRate' ? 'Win %' : k === 'avgR' ? 'Avg R' : k === 'pf' ? 'PF' : k === 'net' ? 'Net' : k;
+
+            // ---- squad panel ----
+            function renderSquad() {
+                $('squad-loading').classList.add('hidden');
+                const sq = state.squad;
+
+                // directory
+                const dir = state.squads || [];
+                $('squad-directory-list').innerHTML = dir.length
+                    ? dir.slice(0, 8).map(s =>
+                        '<div class="flex items-center gap-3 py-2 border-b border-[var(--hairline)] last:border-0">' +
+                            '<span class="text-[11px] font-bold tracking-wider px-2 py-1 rounded-md" style="background:rgba(99,102,241,0.12);color:#a5b4fc">' + esc(s.tag) + '</span>' +
+                            '<div class="flex-1 min-w-0"><div class="text-[12.5px] font-semibold truncate">' + esc(s.name) + '</div>' +
+                            '<div class="text-[10.5px] text-[var(--tm-dim)]">' + s.members + ' member' + (s.members === 1 ? '' : 's') + '</div></div>' +
+                        '</div>').join('')
+                    : '<div class="py-3 text-center text-[11.5px] text-[var(--tm-dim)]">No squads yet — create the first one.</div>';
+
+                if (!sq) {
+                    $('squad-none').classList.remove('hidden');
+                    $('squad-none').classList.add('flex');
+                    $('squad-view').classList.add('hidden');
+                    $('squad-view').classList.remove('flex');
+                    $('squad-member-chip').textContent = 'No squad';
+                    icons();
+                    return;
+                }
+
+                $('squad-none').classList.add('hidden');
+                $('squad-none').classList.remove('flex');
+                $('squad-view').classList.remove('hidden');
+                $('squad-view').classList.add('flex');
+                $('squad-member-chip').textContent = 'Member';
+
+                const v = state.squadView;
+                $('squad-tag-badge').textContent = sq.tag || '—';
+                $('squad-name-view').textContent = sq.name || '—';
+                $('squad-role-view').textContent = v && v.isOwner ? 'Owner · ' + (v.squad ? v.squad.memberCount : '—') + '/' + (v.squad ? v.squad.maxMembers : 20) + ' members'
+                    : (v && v.squad ? v.squad.memberCount + '/' + v.squad.maxMembers + ' members' : '—');
+                $('squad-code-view').textContent = (v && v.inviteCode) || (sq.inviteCode || '—');
+                const t = (v && v.totals) || {};
+                $('sq-trades').textContent = t.trades != null ? num(t.trades) : '—';
+                $('sq-net').textContent = money(t.net);
+                $('sq-win').textContent = pct(t.winRate);
+                $('sq-bx').textContent = v && v.bxScore != null ? num(v.bxScore) : '—';
+                $('squad-disband-btn').style.display = v && v.isOwner ? 'inline-flex' : 'none';
+
+                const members = (v && v.members) || [];
+                $('squad-members').innerHTML = members.length ? members.map(m =>
+                    '<div class="flex items-center gap-2.5 py-2 border-b border-[var(--hairline)] last:border-0">' +
+                        '<div class="avatar !w-7 !h-7 !text-[10px]"' + (m.avatar ? ' style="background:' + esc(m.avatar) + '"' : '') + '>' + esc(String(m.displayName || '—').slice(0, 2).toUpperCase()) + '</div>' +
+                        '<div class="flex-1 min-w-0"><div class="text-[12.5px] font-semibold truncate">' + esc(m.displayName) +
+                        (m.role === 'owner' ? ' <span class="tag tag-amber" style="font-size:10px">owner</span>' : '') + '</div>' +
+                        '<div class="text-[10.5px] text-[var(--tm-dim)]">' + (m.public ? (m.handle ? '@' + esc(m.handle) : '') : 'private profile · totals only') + '</div></div>' +
+                        '<div class="text-right"><div class="text-[10px] uppercase tracking-wider text-[var(--tm-dim)] font-semibold">BX</div>' +
+                        '<div class="num text-[12.5px] font-bold">' + (m.bxScore == null ? '—' : num(m.bxScore)) + '</div></div>' +
+                    '</div>').join('') : '<div class="py-3 text-center text-[11.5px] text-[var(--tm-dim)]">No members yet.</div>';
+                icons();
+            }
+
+            // ---- data loads ----
+            async function loadBoard() {
+                $('board-loading').classList.remove('hidden');
+                $('board-body').classList.add('hidden');
+                $('board-body').classList.remove('flex');
+                $('board-empty').classList.add('hidden');
+                try {
+                    const qs = 'metric=' + encodeURIComponent(state.metric) + '&range=' + encodeURIComponent(state.range) + '&minTrades=' + state.minTrades + '&limit=50';
+                    const [bRes, mRes] = await Promise.all([
+                        apiFetch('/api/social/leaderboard?' + qs),
+                        apiFetch('/api/social/leaderboard/me?' + qs)
+                    ]);
+                    state.board = bRes.ok ? await bRes.json() : null;
+                    state.me = mRes.ok ? await mRes.json() : null;
+                    renderMe();
+                    renderBoard();
+                } catch (e) {
+                    $('board-loading').classList.add('hidden');
+                    $('board-empty').classList.remove('hidden');
+                    $('board-empty-title').textContent = 'Leaderboard unavailable';
+                    $('board-empty-copy').textContent = 'The social layer did not answer — your journal and analytics are unaffected.';
+                }
+                icons();
+            }
+
+            async function loadProfile() {
+                try {
+                    const r = await apiFetch('/api/social/profile');
+                    const d = r.ok ? await r.json() : {};
+                    state.profile = d.profile || null;
+                    state.squad = d.squad || null;
+                    state.visibility = (state.profile && state.profile.visibility) || {};
+                    state.accent = state.profile && state.profile.avatar;
+                    fillProfileForm();
+                } catch (e) { /* the strip already explains the state */ }
+            }
+
+            async function loadSquads() {
+                $('squad-loading').classList.remove('hidden');
+                try {
+                    const r = await apiFetch('/api/social/squads');
+                    const d = r.ok ? await r.json() : {};
+                    state.squad = d.mine || null;
+                    state.squads = d.squads || [];
+                    if (state.squad) {
+                        const vRes = await apiFetch('/api/social/squads/' + encodeURIComponent(state.squad.id));
+                        state.squadView = vRes.ok ? await vRes.json() : null;
+                    } else {
+                        state.squadView = null;
+                    }
+                } catch (e) { state.squad = null; }
+                renderSquad();
+            }
+
+            // ---- trader card ----
+            async function openTrader(handle) {
+                if (!handle) return;
+                $('trader-drawer-title').textContent = '@' + handle;
+                $('trader-body').innerHTML = '<div class="py-12 text-center text-[12.5px] text-[var(--tm-dim)]">Loading trader…</div>';
+                $('trader-bg').classList.add('show');
+                $('trader-drawer').classList.add('show');
+                try {
+                    const r = await apiFetch('/api/social/profile/' + encodeURIComponent(handle) + '?range=' + encodeURIComponent(state.range));
+                    if (!r.ok) {
+                        $('trader-body').innerHTML = '<div class="py-12 text-center text-[12.5px] text-[var(--tm-dim)]">This trader is private or no longer public.</div>';
+                        return;
+                    }
+                    const d = await r.json();
+                    renderTrader(d.trader || {});
+                } catch (e) {
+                    $('trader-body').innerHTML = '<div class="py-12 text-center text-[12.5px] text-[var(--tm-dim)]">Could not load this trader.</div>';
+                }
+            }
+            function renderTrader(t) {
+                const s = t.stats || {};
+                const name = t.displayName || t.handle || '—';
+                const stats = [
+                    { v: t.bxScore != null ? num(t.bxScore) : '—', l: 'BX Score' },
+                    { v: money(s.net), l: 'Net P&L' },
+                    { v: pct(s.winRate), l: 'Win rate' },
+                    { v: rMult(s.avgR), l: 'Avg R' },
+                    { v: s.pf == null ? '—' : Number(s.pf).toFixed(2), l: 'Profit factor' },
+                    { v: s.trades == null ? '—' : num(s.trades), l: 'Trades' },
+                    { v: s.maxDD == null ? '—' : '$' + Math.round(s.maxDD).toLocaleString('en-US'), l: 'Max drawdown' },
+                    { v: t.discipline == null ? '—' : num(t.discipline), l: 'Discipline' }
+                ];
+                const hidden = Object.keys(t.allowed || {}).filter(k => t.allowed[k] === false);
+                $('trader-body').innerHTML =
+                    '<div class="flex items-center gap-4">' +
+                        '<div class="avatar !w-14 !h-14 !rounded-2xl !text-[18px]"' + (t.avatar ? ' style="background:' + esc(t.avatar) + '"' : '') + '>' + esc(name.slice(0, 2).toUpperCase()) + '</div>' +
+                        '<div class="min-w-0">' +
+                            '<div class="text-[17px] font-bold truncate">' + esc(name) + '</div>' +
+                            '<div class="text-[12px] text-[var(--tm-dim)]">@' + esc(t.handle) + (t.country ? ' · ' + esc(t.country) : '') + '</div>' +
+                        '</div>' +
+                    '</div>' +
+                    (t.bio ? '<p class="text-[12.5px] text-[var(--tm-muted)]">' + esc(t.bio) + '</p>' : '') +
+                    '<div class="flex flex-wrap gap-2">' +
+                        '<span class="tag tag-indigo"><svg data-lucide="calendar-range" class="w-3 h-3"></svg> ' + esc(label3(state.range)) + '</span>' +
+                        (t.squad ? '<span class="tag tag-blue"><svg data-lucide="users" class="w-3 h-3"></svg> ' + esc(t.squad.tag) + ' · ' + esc(t.squad.name) + '</span>' : '') +
+                        (s.streak && s.streak.type ? '<span class="tag ' + (s.streak.type === 'win' ? 'tag-emerald' : 'tag-red') + '">' + esc(s.streak.len + ' ' + s.streak.type + ' day' + (s.streak.len === 1 ? '' : 's')) + '</span>' : '') +
+                    '</div>' +
+                    '<div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5">' + stats.map(x =>
+                        '<div class="stat-tile"><div class="stat-val num" style="font-size:17px">' + esc(x.v) + '</div><div class="stat-lbl">' + esc(x.l) + '</div></div>').join('') + '</div>' +
+                    (t.links && Object.keys(t.links).length ? '<div class="glass p-4"><div class="label-xs mb-2">Links</div><div class="flex flex-col gap-1.5">' +
+                        Object.keys(t.links).map(k => '<a class="text-[12.5px] break-all" style="color:#a5b4fc" href="' + esc(t.links[k]) + '" target="_blank" rel="noopener noreferrer">' + esc(k + ' · ' + t.links[k]) + '</a>').join('') + '</div></div>' : '') +
+                    (hidden.length ? '<p class="text-[11px] text-[var(--tm-dim)]">This trader keeps some metrics private: ' + esc(hidden.join(', ')) + '.</p>' : '');
+                icons();
+            }
+            function closeTrader() { $('trader-bg').classList.remove('show'); $('trader-drawer').classList.remove('show'); }
+
+            // ---- profile drawer ----
+            function fillProfileForm() {
+                const p = state.profile || {};
+                $('p-handle').value = p.handle || '';
+                $('p-display').value = p.displayName || '';
+                $('p-bio').value = p.bio || '';
+                $('p-country').value = p.country || '';
+                const swatches = ['#22d3ee', '#a78bfa', '#34d399', '#f59e0b', '#f472b6', '#60a5fa'];
+                $('p-swatches').innerHTML = swatches.map(c =>
+                    '<button class="swatch' + (state.accent === c ? ' on' : '') + '" data-color="' + c + '" style="background:' + c + '"></button>').join('');
+                $('p-swatches').querySelectorAll('.swatch').forEach(b => b.onclick = () => { state.accent = b.dataset.color; fillProfileForm(); });
+
+                $('p-visibility').innerHTML = VISIBILITY.map(v => {
+                    const on = state.visibility[v.key] !== false && (v.key !== 'public' ? true : state.visibility.public === true);
+                    return '<div class="switch-row"><div class="min-w-0"><div class="text-[12.5px] font-semibold">' + esc(v.label) + '</div>' +
+                        (v.hint ? '<div class="text-[11px] text-[var(--tm-dim)]">' + esc(v.hint) + '</div>' : '') + '</div>' +
+                        '<button class="sw' + (on ? ' on' : '') + '" data-vis="' + v.key + '"></button></div>';
+                }).join('');
+                $('p-visibility').querySelectorAll('.sw').forEach(b => b.onclick = () => {
+                    const k = b.dataset.vis;
+                    const nowOn = b.classList.contains('on');
+                    state.visibility[k] = !nowOn;
+                    b.classList.toggle('on');
+                });
+                const pv = state.visibility.public === true;
+                $('profile-state').textContent = pv
+                    ? 'Your profile is public' + (state.profile && state.profile.handle ? ' as @' + state.profile.handle : '') + ' — you are eligible for boards you expose metrics on.'
+                    : 'Your profile is private — you appear on no board and in no directory.';
+            }
+            function openProfile() {
+                fillProfileForm();
+                $('profile-bg').classList.add('show');
+                $('profile-drawer').classList.add('show');
+            }
+            function closeProfile() { $('profile-bg').classList.remove('show'); $('profile-drawer').classList.remove('show'); }
+
+            async function saveProfile() {
+                const body = {
+                    handle: $('p-handle').value.trim(),
+                    displayName: $('p-display').value.trim(),
+                    bio: $('p-bio').value.trim(),
+                    country: $('p-country').value.trim(),
+                    avatar: state.accent || null,
+                    visibility: state.visibility
+                };
+                $('profile-save-btn').disabled = true;
+                try {
+                    const r = await apiFetch('/api/social/profile', {
+                        method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body)
+                    });
+                    const d = await r.json().catch(() => ({}));
+                    if (!r.ok || d.ok === false) throw new Error(d.error || ('save failed (' + r.status + ')'));
+                    state.profile = d.profile || state.profile;
+                    state.visibility = (state.profile && state.profile.visibility) || state.visibility;
+                    fillProfileForm();
+                    showToast('Profile saved — republished to the board');
+                    await loadBoard();
+                } catch (e) {
+                    showToast(e.message || 'Could not save your profile');
+                } finally {
+                    $('profile-save-btn').disabled = false;
+                }
+            }
+
+            async function publish() {
+                try {
+                    const r = await apiFetch('/api/social/publish', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: '{}' });
+                    const d = await r.json().catch(() => ({}));
+                    showToast(d.note || 'Standings published');
+                    await loadBoard();
+                } catch (e) { showToast('Publish failed — try again'); }
+            }
+
+            // ---- squad actions ----
+            async function squadCreate() {
+                const name = $('squad-name').value.trim();
+                const tag = $('squad-tag').value.trim().toUpperCase();
+                try {
+                    const r = await apiFetch('/api/social/squads', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, tag })
+                    });
+                    const d = await r.json().catch(() => ({}));
+                    if (!r.ok || d.ok === false) throw new Error(d.error || 'could not create the squad');
+                    showToast('Squad [' + d.view.squad.tag + '] created — invite code ' + d.view.inviteCode);
+                    $('squad-name').value = ''; $('squad-tag').value = '';
+                    await loadSquads();
+                    await loadBoard();
+                } catch (e) { showToast(e.message); }
+            }
+            async function squadJoin() {
+                const code = $('squad-code').value.trim().toUpperCase();
+                try {
+                    const r = await apiFetch('/api/social/squads/join', {
+                        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ code })
+                    });
+                    const d = await r.json().catch(() => ({}));
+                    if (!r.ok || d.ok === false) throw new Error(d.error || 'could not join the squad');
+                    showToast('Joined [' + d.view.squad.tag + '] ' + d.view.squad.name);
+                    $('squad-code').value = '';
+                    await loadSquads();
+                    await loadBoard();
+                } catch (e) { showToast(e.message); }
+            }
+            async function squadLeave(disband) {
+                try {
+                    const url = disband ? '/api/social/squads/' + encodeURIComponent(state.squad.id) : '/api/social/squads/leave';
+                    const r = await apiFetch(url, { method: disband ? 'DELETE' : 'POST', headers: { 'Content-Type': 'application/json' }, body: disband ? undefined : '{}' });
+                    const d = await r.json().catch(() => ({}));
+                    if (!r.ok || d.ok === false) throw new Error(d.error || 'action failed');
+                    showToast(disband ? 'Squad disbanded' : 'Left the squad');
+                    await loadSquads();
+                    await loadBoard();
+                } catch (e) { showToast(e.message); }
+            }
+
+            function copyToClipboard(text, done) {
+                navigator.clipboard.writeText(text).then(() => done && done()).catch(() => {
+                    const t = document.createElement('textarea');
+                    t.value = text; document.body.appendChild(t); t.select();
+                    try { document.execCommand('copy'); } catch (e) { }
+                    t.remove();
+                    done && done();
+                });
+            }
+
+            // ---- boot ----
+            async function boot() {
+                $('collapse-btn').addEventListener('click', () => document.body.classList.toggle('collapsed'));
+                $('open-profile-btn').onclick = openProfile;
+                $('empty-profile-btn').onclick = openProfile;
+                $('profile-close').onclick = closeProfile;
+                $('profile-bg').onclick = closeProfile;
+                $('profile-save-btn').onclick = saveProfile;
+                $('profile-signout').onclick = () => { if (window.handleSignOut) window.handleSignOut(); };
+                $('trader-close').onclick = closeTrader;
+                $('trader-bg').onclick = closeTrader;
+                $('publish-btn').onclick = publish;
+                $('reload-btn').onclick = () => loadBoard();
+                $('squad-create-btn').onclick = squadCreate;
+                $('squad-join-btn').onclick = squadJoin;
+                $('squad-leave-btn').onclick = () => squadLeave(false);
+                $('squad-disband-btn').onclick = () => squadLeave(true);
+                $('squad-copy-btn').onclick = () => {
+                    const code = $('squad-code-view').textContent.trim();
+                    copyToClipboard(code, () => showToast('Invite code ' + code + ' copied'));
+                };
+                $('squad-mode-tabs').querySelectorAll('.mtab').forEach(b => b.onclick = () => {
+                    state.squadMode = b.dataset.mode;
+                    $('squad-mode-tabs').querySelectorAll('.mtab').forEach(x => x.classList.toggle('active', x === b));
+                    $('squad-create').classList.toggle('hidden', state.squadMode !== 'create');
+                    $('squad-create').classList.toggle('flex', state.squadMode === 'create');
+                    $('squad-join').classList.toggle('hidden', state.squadMode !== 'join');
+                    $('squad-join').classList.toggle('flex', state.squadMode === 'join');
+                });
+
+                const core = window.TradeMindCore;
+                if (core && core.selectedAccountId) core.setSelectedAccount(core.selectedAccountId());
+                renderChrome();
+                renderTabs();
+                await loadProfile();
+                await loadBoard();
+                loadSquads();
+
+                const gs = $('global-search');
+                if (gs) gs.addEventListener('keydown', e => {
+                    if (e.key === 'Enter' && gs.value.trim()) openTrader(gs.value.trim().replace(/^@/, '').toLowerCase());
+                });
+                icons();
+            }
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot); else boot();
+        })();
+    </script>
+    <script src="assets/tour.js"></script>
+    <script src="assets/profile-meta.js"></script>
+    <script src="assets/account-switcher.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>

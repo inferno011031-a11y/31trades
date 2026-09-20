@@ -49,7 +49,10 @@ const TABLE_COLUMNS = {
     strategies: ['id', 'user_id', 'name', 'description', 'color', 'status'],
     rule_sets: ['id', 'user_id', 'name', 'scope'],
     assignments: ['id', 'user_id', 'account_id', 'strategy_id', 'policy_version_id', 'strategy_version_id', 'active_from'],
-    trades: ['id', 'user_id', 'account_id', 'strategy_id', 'config_version_id', 'strategy_version_id', 'ts', 'symbol', 'dir', 'setup', 'session', 'emotion', 'adherence', 'entry', 'exit', 'size', 'risk', 'pnl', 'r', 'stop', 'tp', 'note', 'reviewed', 'adherence_result', 'block_reason', 'evidence', 'source', 'import_batch_id', 'import_meta', 'created_at', 'updated_at'],
+    // chart_url + reflection_tags come from migration 013. They were missing from
+    // this whitelist, so screenshots and reflection tags were dropped on every
+    // Postgres round-trip even though the columns existed.
+    trades: ['id', 'user_id', 'account_id', 'strategy_id', 'config_version_id', 'strategy_version_id', 'ts', 'symbol', 'dir', 'setup', 'session', 'emotion', 'adherence', 'entry', 'exit', 'size', 'risk', 'pnl', 'r', 'stop', 'tp', 'note', 'reflection_tags', 'chart_url', 'reviewed', 'adherence_result', 'block_reason', 'evidence', 'source', 'import_batch_id', 'import_meta', 'created_at', 'updated_at'],
     trade_evaluations: ['trade_id', 'user_id', 'account_id', 'rule_id', 'rule_key', 'rule_label', 'rule_version', 'category', 'severity', 'expected', 'actual', 'state', 'explanation', 'evaluated_at'],
     violations: ['trade_id', 'user_id', 'account_id', 'rule_key', 'rule_label', 'rule_version', 'severity', 'expected', 'actual', 'explanation', 'pnl', 'r', 'review_state', 'ts', 'created_at'],
     audit_log: ['user_id', 'entity_type', 'entity_id', 'action', 'detail', 'new_value', 'created_at']
@@ -136,7 +139,7 @@ function stateToRows(state, userId) {
         v(t.id), uid, v(t.account_id), v(t.strategy_id), v(t.config_version_id), v(t.strategy_version_id),
         new Date(t.ts), v(t.symbol), v(t.dir), v(t.setup), v(t.session), v(t.emotion), v(t.adherence),
         v(t.entry), v(t.exit), v(t.size), v(t.risk), v(t.pnl), v(t.r), v(t.stop), v(t.tp),
-        v(t.note), v(!!t.reviewed), v(t.adherence_result), v(t.block_reason),
+        v(t.note), v(t.reflection_tags), v(t.chart_url), v(!!t.reviewed), v(t.adherence_result), v(t.block_reason),
         JSON.stringify(t.evidence || []),
         v(t.source), v(t.import_batch_id), t.import_meta ? JSON.stringify(t.import_meta) : null,
         t.created_at ? new Date(t.created_at) : new Date(t.ts),
@@ -198,7 +201,9 @@ function rowsToState(rows) {
             emotion: r.emotion, adherence: r.adherence,
             entry: num(r.entry), exit: num(r.exit), size: num(r.size),
             risk: num(r.risk), pnl: num(r.pnl), r: num(r.r),
-            stop: num(r.stop), tp: num(r.tp), note: r.note, reviewed: !!r.reviewed,
+            stop: num(r.stop), tp: num(r.tp), note: r.note,
+            reflection_tags: r.reflection_tags || '', chart_url: r.chart_url || null,
+            reviewed: !!r.reviewed,
             adherence_result: r.adherence_result, block_reason: r.block_reason,
             evidence: r.evidence || [], source: r.source, import_batch_id: r.import_batch_id,
             import_meta: r.import_meta || null, created_at: r.created_at

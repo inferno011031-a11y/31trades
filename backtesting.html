@@ -53,6 +53,7 @@
     </script>
 
     <!-- Tailwind CSS CDN & Lucide -->
+    <script src="src/merge.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
@@ -191,7 +192,7 @@
         .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
         .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
         .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
-        .tag-indigo { background: rgba(99,102,241,0.10); color: var(--tm-accent-2); border-color: rgba(99,102,241,0.25); }
+        /* .tag-indigo lives in assets/trademind-theme.css (theme-aware there). */
 
         .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
         .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
@@ -215,7 +216,7 @@
         .bd-tab:hover { color: var(--tm-text); background: var(--tm-hover); }
         .bd-tab.active {
             background: linear-gradient(135deg, rgba(99,102,241,0.16), rgba(52,211,153,0.08));
-            color: var(--tm-text); border-color: rgba(129,140,248,0.30); box-shadow: inset 2px 0 0 var(--tm-accent-2);
+            color: var(--tm-text); border-color: rgba(129,140,248,0.30); box-shadow: inset 2px 0 0 var(--tm-indigo);
         }
         .bd-tab.disabled { opacity: 0.6; }
 
@@ -285,8 +286,9 @@
 
         .progress-track { height: 4px; border-radius: 999px; background: var(--tm-border-2); overflow: hidden; }
         .progress-fill { height: 100%; border-radius: 999px; background: linear-gradient(90deg, var(--tm-accent-2), var(--tm-green)); transition: width 0.2s ease; }
-        
+        @media (max-width: 767px) {
             .topbar { padding-left: 12px; padding-right: 12px; }
+        }
     
         
         /* ---- Robust Standalone Stitch Dashboard & Replay System ---- */
@@ -761,8 +763,23 @@
                             <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
                             <span class="sidebar-soon-badge">SOON</span>
                         </a>
+                        <a href="leaderboard.html" class="nav-item">
+                            <svg data-lucide="trophy"></svg><span class="nav-label">Leaderboard</span>
+                        </a>
                         <a href="backtesting.html" class="nav-item active">
                             <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- 6. TOOLS -->
+                <div class="sidebar-section" data-section="tools">
+                    <button type="button" class="sidebar-section-header">
+                        <span>TOOLS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="tools.html" class="nav-item">
+                            <svg data-lucide="wrench"></svg><span class="nav-label">Tools</span>
                         </a>
                     </div>
                 </div>
@@ -1646,7 +1663,7 @@
 
             // ============ SESSION OPS ============
             async function createSession() {
-                const symbol = ($('pd-symbol') && $('pd-symbol').value) || 'EURUSD';
+                const symbol = ($('pd-symbol') && $('pd-symbol').value) || 'XAUUSD';
                 const timeframe = ($('pd-timeframe') && $('pd-timeframe').value) || '1h';
                 const strategy = ($('pd-strategy') && $('pd-strategy').value.trim()) || 'Manual practice';
                 const startingBalance = Number($('pd-balance') && $('pd-balance').value) || 10000;
@@ -1666,7 +1683,7 @@
                             timeframe,
                             strategy,
                             startingBalance,
-                            period: ($('pd-is-random') && $('pd-is-random').value === 'true') ? 'random' : ($('pd-period') ? $('pd-period').value : '2026-06'),
+                            period: ($('pd-is-random') && $('pd-is-random').value === 'true') ? 'random' : ($('pd-period') ? $('pd-period').value : '2024-02'),
                             riskModel: { basis: 'money', perTrade }
                         })
                     });
@@ -3129,10 +3146,10 @@
 
                 // Year & Month Period Handling
                 function updatePeriodDisplay() {
-                    const yr = $('pd-year') ? $('pd-year').value : '2026';
-                    const mo = $('pd-month') ? $('pd-month').value : '06';
+                    const yr = $('pd-year') ? $('pd-year').value : '2024';
+                    const mo = $('pd-month') ? $('pd-month').value : '02';
                     const monthNames = { '01':'Jan', '02':'Feb', '03':'Mar', '04':'Apr', '05':'May', '06':'Jun', '07':'Jul', '08':'Aug', '09':'Sep', '10':'Oct', '11':'Nov', '12':'Dec' };
-                    const label = (monthNames[mo] || mo) + ' ' + yr + ' Sample';
+                    const label = (monthNames[mo] || mo) + ' ' + yr + ' Institutional Archive';
                     if ($('pd-period')) $('pd-period').value = yr + '-' + mo;
                     const isRandom = $('pd-is-random') && $('pd-is-random').value === 'true';
                     if ($('selected-period-display')) {
@@ -3508,7 +3525,7 @@
             <!-- Modal Body -->
             <div class="p-6 space-y-5">
                 <!-- Hidden inputs for backend state -->
-                <input type="hidden" id="pd-symbol" value="EURUSD">
+                <input type="hidden" id="pd-symbol" value="XAUUSD">
                 <input type="hidden" id="pd-timeframe" value="1h">
 
                 <!-- 1. Market Instrument Selection -->
@@ -3519,23 +3536,23 @@
                     </div>
                     <!-- Category Segmented Control -->
                     <div class="flex items-center gap-1 p-1 bg-[#0c0e14] rounded-lg border border-[#232836] w-fit" id="modal-cat-row">
-                        <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium bg-[#1d2230] text-zinc-100 border border-zinc-600/40 shadow-xs cursor-pointer" data-cat="all">Forex</button>
+                        <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" data-cat="all">Forex</button>
                         <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" data-cat="crypto">Crypto</button>
                         <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" data-cat="indices">Indices</button>
-                        <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium text-zinc-400 hover:text-zinc-200 transition-colors cursor-pointer" data-cat="commodities">Commodities</button>
+                        <button type="button" class="category-pill px-3 py-1 rounded text-xs font-medium bg-[#1d2230] text-zinc-100 border border-zinc-600/40 shadow-xs cursor-pointer" data-cat="commodities">Commodities</button>
                     </div>
                     <!-- Instrument Grid Cards -->
                     <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 pt-0.5" id="instrument-grid">
                         <!-- EUR/USD -->
-                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#181d29] border border-zinc-200 text-left transition-all cursor-pointer" data-sym="EURUSD" data-cat="forex">
+                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="EURUSD" data-cat="forex">
                             <div>
                                 <div class="flex items-center gap-1.5">
-                                    <span class="tabular-nums font-semibold text-xs text-white">EUR/USD</span>
-                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-700/80 text-zinc-200 font-medium">FX</span>
+                                    <span class="tabular-nums font-medium text-xs text-zinc-200">EUR/USD</span>
+                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-800 text-zinc-400">FX</span>
                                 </div>
-                                <div class="text-[10px] text-zinc-300 tabular-nums mt-0.5">Spread 0.1 pip</div>
+                                <div class="text-[10px] text-zinc-400 tabular-nums mt-0.5">Spread 0.1 pip</div>
                             </div>
-                            <span class="inst-dot w-2 h-2 rounded-full bg-white"></span>
+                            <span class="inst-dot w-2 h-2 rounded-full bg-white hidden"></span>
                         </button>
                         <!-- GBP/USD -->
                         <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="GBPUSD" data-cat="forex">
@@ -3549,15 +3566,15 @@
                             <span class="inst-dot w-2 h-2 rounded-full bg-white hidden"></span>
                         </button>
                         <!-- XAU/USD -->
-                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="XAUUSD" data-cat="commodities">
+                        <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#181d29] border border-zinc-200 text-left transition-all cursor-pointer" data-sym="XAUUSD" data-cat="commodities">
                             <div>
                                 <div class="flex items-center gap-1.5">
-                                    <span class="tabular-nums font-medium text-xs text-zinc-200">XAU/USD</span>
-                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-800 text-zinc-400">Metal</span>
+                                    <span class="tabular-nums font-semibold text-xs text-white">XAU/USD</span>
+                                    <span class="text-[9px] tabular-nums px-1 py-0.2 rounded bg-zinc-700/80 text-zinc-200 font-medium">Metal</span>
                                 </div>
-                                <div class="text-[10px] text-zinc-400 tabular-nums mt-0.5">Spread 1.2 pip</div>
+                                <div class="text-[10px] text-zinc-300 tabular-nums mt-0.5">Spread 1.2 pip</div>
                             </div>
-                            <span class="inst-dot w-2 h-2 rounded-full bg-white hidden"></span>
+                            <span class="inst-dot w-2 h-2 rounded-full bg-white"></span>
                         </button>
                         <!-- BTC/USD -->
                         <button type="button" class="inst-card relative flex items-center justify-between p-2.5 rounded-lg bg-[#141822] border border-[#232836] hover:border-zinc-500 hover:bg-[#181d28] text-left transition-all cursor-pointer" data-sym="BTCUSD" data-cat="crypto">
@@ -3643,7 +3660,7 @@
                     <!-- Hidden inputs to store chosen period -->
                     <input type="hidden" id="pd-year" value="2024">
                     <input type="hidden" id="pd-month" value="02">
-                    <input type="hidden" id="pd-period" value="feb2024">
+                    <input type="hidden" id="pd-period" value="2024-02">
                     <input type="hidden" id="pd-is-random" value="false">
 
                     <!-- Specific Year & Month Container -->

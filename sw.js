@@ -2,7 +2,7 @@
    BATTLEXJOURNAL — Ultra-Low Latency Service Worker
    Fast Cache-First & Stale-While-Revalidate Strategy for Core Assets
    ============================================================================ */
-const CACHE_NAME = 'battlex-v2';
+const CACHE_NAME = 'battlex-v3';
 const STATIC_ASSETS = [
   '/assets/tokens.css',
   '/assets/tailwind-compiled.css',
@@ -11,13 +11,24 @@ const STATIC_ASSETS = [
   '/assets/sidebar-nav.js',
   '/assets/favicon.png',
   '/src/core/index.js',
+  '/src/merge.js',
   '/core.js',
   '/connection.js'
 ];
 
+// Precache with `cache: 'reload'`: a CACHE_NAME bump must pull the DEPLOYED files,
+// not whatever the browser still considers fresh under a max-age=86400 response
+// header. Without it a release can precache the previous build of core.js and keep
+// serving it long after the fix shipped. Individual failures are tolerated (an
+// asset that 404s must not abort the whole install).
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => cache.addAll(STATIC_ASSETS)).then(() => self.skipWaiting())
+    caches.open(CACHE_NAME)
+      .then(cache => Promise.all(STATIC_ASSETS.map(url =>
+        fetch(new Request(url, { cache: 'reload' }))
+          .then(res => { if (res && res.status === 200) return cache.put(url, res); })
+          .catch(() => {}))))
+      .then(() => self.skipWaiting())
   );
 });
 

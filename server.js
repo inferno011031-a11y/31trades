@@ -57,6 +57,9 @@ const VoiceParser = require('./server/voice-parser.js');
 const BattleWs = require('./server/battle-ws.js');
 const Prefs = require('./server/prefs.js');
 const DiscordVerify = require('./server/discord-verify.js');
+const Profiles = require('./server/profiles.js');
+const Leaderboard = require('./server/leaderboard.js');
+const Squads = require('./server/squads.js');
 const Imports = require('./server/imports.js');
 const SEO = require('./server/seo.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
@@ -64,7 +67,11 @@ const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg
 loadEnv();   // reads .env into process.env (real env vars win)
 
 const ROOT = __dirname;
-const DATA_DIR = path.join(ROOT, 'data');
+// Storage directory for per-user state (`db-<userId>.json`), overridable so tests
+// and harnesses can run against a scratch directory instead of the real `data/`
+// — `POST /api/reset` rewrites whatever store this points at.
+// Same convention as the other modules' TRADEMIND_*_DATA_DIR overrides.
+const DATA_DIR = process.env.TRADEMIND_DATA_DIR || path.join(ROOT, 'data');
 // Port priority: process.env.PORT first (Railway injects the real container
 // port there — it ALWAYS wins when set) → TRADEMIND_PORT (local dev / tests
 // only, never set on Railway) → 8080 default. Falsy values are skipped
@@ -314,6 +321,17 @@ function logBrokerEvent(Core, broker, what) {
         what + ' · ' + name,
         'Broker state shown in Settings & onboarding checklist'
     );
+}
+
+// Record a social-layer change (profile publish, squad create/join/leave) in
+// the user's canonical event log so it flows into audit history + the System
+// notification feed like every other config change. Best-effort: a social
+// action must never fail because logging failed.
+function logSocialEvent(uc, entity, what, detail, impact) {
+    try {
+        uc.core.ConfigAPI.logTagEvent(entity, what, detail, impact);
+        uc.scheduleSave();
+    } catch (err) { /* ignore */ }
 }
 
 // Record an import lifecycle event in the user's canonical event log (flows
@@ -1265,6 +1283,102 @@ async function handleApi(req, res, url) {
                 return json(res, 200, { ok: true, state: b.seatState(seat) });
             }
 
+            // ---------- Social layer (public profiles · global leaderboard · squads) ----------
+            // Publication is on demand: any board read refreshes the caller's
+            // OWN standings row (throttled inside Leaderboard.publish), so the
+            // boards stay fresh without a cron job or background worker.
+            if (p === '/api/social/profile' && req.method === 'GET') {
+                const profile = await Profiles.get(uc.userId);
+                const squad = await Squads.mine(uc.userId);
+                return json(res, 200, {
+                    ok: true,
+                    profile: {
+                        handle: profile.handle,
+                        displayName: profile.displayName,
+                        bio: profile.bio,
+                        country: profile.country,
+                        avatar: profile.avatar,
+                        links: profile.links || {},
+                        visibility: profile.visibility,
+                        allowed: Profiles.allowedMetrics(profile),
+                        createdAt: profile.createdAt,
+                        updatedAt: profile.updatedAt
+                    },
+                    squad: squad ? { id: squad.id, name: squad.name, tag: squad.tag, inviteCode: squad.inviteCode } : null,
+                    ranges: Leaderboard.RANGES,
+                    metrics: Leaderboard.METRICS
+                });
+            }
+            if (p === '/api/social/leaderboard' && req.method === 'GET') {
+                await Leaderboard.publish(uc.userId, { core: uc.core, profile: await Profiles.get(uc.userId) });
+                const r = await Leaderboard.board({
+                    metric: q.get('metric') || undefined,
+                    range: q.get('range') || undefined,
+                    limit: q.get('limit') || undefined,
+                    offset: q.get('offset') || undefined,
+                    minTrades: q.get('minTrades') || undefined,
+                    squadId: q.get('squad') || undefined
+                });
+                return json(res, 200, r);
+            }
+            if (p === '/api/social/leaderboard/me' && req.method === 'GET') {
+                await Leaderboard.publish(uc.userId, { core: uc.core, profile: await Profiles.get(uc.userId) });
+                return json(res, 200, await Leaderboard.myRank(uc.userId, {
+                    metric: q.get('metric') || undefined,
+                    range: q.get('range') || undefined,
+                    minTrades: q.get('minTrades') || undefined
+                }));
+            }
+
+            // ---- squads (static paths first, then :id) ----
+            if (p === '/api/social/squads' && req.method === 'GET') {
+                const r = await Squads.list(uc.userId);
+                return json(res, 200, {
+                    ok: true,
+                    mine: r.mine ? { id: r.mine.id, name: r.mine.name, tag: r.mine.tag, inviteCode: r.mine.inviteCode, ownerId: r.mine.ownerId } : null,
+                    squads: r.squads,
+                    maxMembers: Squads.MAX_MEMBERS
+                });
+            }
+            if ((m = p.match(/^\/api\/social\/squads\/([^/]+)$/)) && req.method === 'GET') {
+                const r = await Squads.view(m[1], {
+                    userId: uc.userId,
+                    range: q.get('range') || undefined,
+                    minTrades: q.get('minTrades') || undefined
+                });
+                if (!r) return json(res, 404, { error: 'unknown squad' });
+                return json(res, 200, r);
+            }
+            if ((m = p.match(/^\/api\/social\/profile\/([^/]+)$/)) && req.method === 'GET') {
+                const profile = await Profiles.byHandle(m[1]);
+                if (!profile || profile.visibility.public !== true) {
+                    return json(res, 404, { error: 'trader not found or profile is private' });
+                }
+                const entry = await Leaderboard.entryFor(profile.userId);
+                const squad = await Squads.mine(profile.userId);
+                const stats = entry ? Leaderboard.summarize(entry, { range: q.get('range') || 'all' }) : null;
+                const allowed = Profiles.allowedMetrics(profile);
+                return json(res, 200, {
+                    ok: true,
+                    trader: Profiles.publicProfile(profile, {
+                        squad: (squad && allowed.showSquad) ? { id: squad.id, name: squad.name, tag: squad.tag } : null,
+                        stats: stats ? {
+                            trades: allowed.trades ? stats.metrics.n : null,
+                            net: allowed.net ? stats.metrics.net : null,
+                            winRate: allowed.winRate ? stats.metrics.winRate : null,
+                            avgR: allowed.avgR ? stats.metrics.avgR : null,
+                            pf: allowed.net ? stats.metrics.pf : null,
+                            maxDD: allowed.net ? stats.metrics.maxDD : null,
+                            activeDays: stats.metrics.activeDays,
+                            bestDayStreak: stats.metrics.bestDayStreak,
+                            streak: stats.metrics.streak
+                        } : null,
+                        discipline: (allowed.discipline && entry) ? entry.discipline : null,
+                        bxScore: (allowed.bxScore && stats) ? stats.bxScore : null
+                    })
+                });
+            }
+
             // ---------- Market Replay (bar-by-bar playback sessions) ----------
             if (p === '/api/replay/start') {
                 return json(res, 200, await Replay.start({
@@ -1368,6 +1482,65 @@ async function handleApi(req, res, url) {
         // ---- market replay controls ----
         if (p === '/api/replay/control') {
             return json(res, 200, await Replay.control(body.id, body.action, body.speedMs, body.cursor));
+        }
+
+        // ---- social layer writes (profile · publish · squads) ----
+        // Reads live in the GET block above; everything that mutates lands here
+        // (this is the write dispatcher — the GET block never sees POST/PUT/DELETE).
+        if (p === '/api/social/profile' && req.method === 'PUT') {
+            const r = await Profiles.save(uc.userId, body);
+            if (!r.ok) return json(res, 400, { ok: false, error: r.error });
+            logSocialEvent(uc, 'Profile · @' + (r.profile.handle || 'trader'),
+                r.profile.visibility.public ? 'Published' : 'Saved (private)',
+                r.profile.visibility.public
+                    ? 'Public profile @' + r.profile.handle + ' — eligible for the BattleX leaderboard'
+                    : 'Profile kept private — this account appears on no board',
+                'Social layer · handle, bio and per-metric privacy');
+            // Visibility decides which boards the trader is eligible for.
+            await Leaderboard.publish(uc.userId, { core: uc.core, profile: r.profile, force: true });
+            return json(res, 200, { ok: true, profile: r.profile, allowed: Profiles.allowedMetrics(r.profile) });
+        }
+        if (p === '/api/social/publish' && req.method === 'POST') {
+            const profile = await Profiles.get(uc.userId);
+            const r = await Leaderboard.publish(uc.userId, { core: uc.core, profile, force: true });
+            if (!r.ok) return json(res, 400, { ok: false, error: r.error });
+            return json(res, 200, {
+                ok: true,
+                public: profile.visibility.public === true,
+                handle: profile.handle,
+                summary: r.summary,
+                note: profile.visibility.public === true
+                    ? 'standings published'
+                    : 'profile is private — this account is not listed on any board yet'
+            });
+        }
+        if (p === '/api/social/squads' && req.method === 'POST') {
+            const r = await Squads.create(uc.userId, body);
+            if (!r.ok) return json(res, 400, { ok: false, error: r.error });
+            logSocialEvent(uc, 'Squad · [' + r.view.squad.tag + '] ' + r.view.squad.name, 'Created',
+                'Squad created — invite traders with code ' + r.view.inviteCode,
+                'Team standings on the BattleX leaderboard');
+            return json(res, 201, r);
+        }
+        if (p === '/api/social/squads/join' && req.method === 'POST') {
+            const r = await Squads.join(uc.userId, body.code || q.get('code'));
+            if (!r.ok) return json(res, 400, { ok: false, error: r.error });
+            logSocialEvent(uc, 'Squad · [' + r.view.squad.tag + '] ' + r.view.squad.name, 'Joined',
+                'Joined squad [' + r.view.squad.tag + '] ' + r.view.squad.name,
+                'Team standings on the BattleX leaderboard');
+            return json(res, 200, r);
+        }
+        if (p === '/api/social/squads/leave' && req.method === 'POST') {
+            const r = await Squads.leave(uc.userId);
+            logSocialEvent(uc, 'Squad', 'Left', 'Left the squad', 'This account no longer contributes to a team total');
+            return json(res, 200, r);
+        }
+        if ((m = p.match(/^\/api\/social\/squads\/([^/]+)$/)) && req.method === 'DELETE') {
+            const r = await Squads.disband(uc.userId, m[1]);
+            if (!r.ok) return json(res, r.error === 'unknown squad' ? 404 : 403, { ok: false, error: r.error });
+            logSocialEvent(uc, 'Squad', 'Disbanded', 'Squad disbanded · ' + r.released + ' member(s) released',
+                'Members are free to join another squad');
+            return json(res, 200, r);
         }
 
         // ---- per-user preferences (theme sync across devices) ----

@@ -248,27 +248,43 @@ async function getCandles(opts) {
             else tfFile = '1h';
         }
 
+        let histFile = null;
         if (periodFolder) {
-            const histFile = path.join(DATA_DIR, 'gold', periodFolder, `xau_${tfFile}_${periodFolder}.json`);
-            if (fs.existsSync(histFile)) {
-                try {
-                    const j = JSON.parse(fs.readFileSync(histFile, 'utf8'));
-                    const candles = (count && count < j.candles.length && !o.all) ? j.candles.slice(-count) : j.candles;
-                    return {
-                        ok: true,
-                        symbol: 'XAUUSD',
-                        timeframe,
-                        period: j.period || periodFolder,
-                        periodLabel: j.label || periodLabel,
-                        count: candles.length,
-                        base: candles[0] ? candles[0].close : 2040,
-                        candles,
-                        meta: { source: 'historical-archive', provider: 'BattleX Gold Historical Archive' }
-                    };
-                } catch (e) { /* fall through to synthetic */ }
+            const candidate = path.join(DATA_DIR, 'gold', periodFolder, `xau_${tfFile}_${periodFolder}.json`);
+            if (fs.existsSync(candidate)) histFile = candidate;
+        }
+
+        // If requested month file is not on disk (or period was random/unspecified),
+        // fallback to verified real gold archives on disk (feb2024 or 2024-02)
+        if (!histFile) {
+            const fallbacks = ['2024-02', 'feb2024', '2024-01', 'jan2024'];
+            for (const fb of fallbacks) {
+                const candidate = path.join(DATA_DIR, 'gold', fb, `xau_${tfFile}_${fb}.json`);
+                if (fs.existsSync(candidate)) {
+                    histFile = candidate;
+                    periodFolder = fb;
+                    if (!periodLabel) periodLabel = fb.startsWith('jan') || fb === '2024-01' ? 'January 2024' : 'February 2024';
+                    break;
+                }
             }
-            // requested month has no archive → fall through: exact-month synthetic
-            // (block 0.5) keeps the period picker meaningful for every month.
+        }
+
+        if (histFile && fs.existsSync(histFile)) {
+            try {
+                const j = JSON.parse(fs.readFileSync(histFile, 'utf8'));
+                const candles = (count && count < j.candles.length && !o.all) ? j.candles.slice(-count) : j.candles;
+                return {
+                    ok: true,
+                    symbol: 'XAUUSD',
+                    timeframe,
+                    period: periodFolder || j.period || '2024-02',
+                    periodLabel: periodLabel || j.label || 'February 2024',
+                    count: candles.length,
+                    base: candles[0] ? candles[0].close : 2040,
+                    candles,
+                    meta: { source: 'historical-archive', provider: 'BattleX Gold Historical Archive' }
+                };
+            } catch (e) { /* fall through */ }
         }
     }
 

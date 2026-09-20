@@ -1,0 +1,1533 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>BATTLEXJOURNAL — Tools</title>
+    <meta name="description" content="BATTLEXJOURNAL Tools — position sizing, expectancy, drawdown recovery, pip value, session timing and target planning.">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="theme-color" content="#0a0a0b">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="31TRADES">
+    <meta property="og:title" content="BATTLEXJOURNAL — Tools">
+    <meta property="og:description" content="BATTLEXJOURNAL Tools — position sizing, expectancy, drawdown recovery, pip value, session timing and target planning.">
+    <meta property="og:url" content="https://31trades-production.up.railway.app/tools.html">
+    <meta name="twitter:card" content="summary">
+    <meta name="twitter:title" content="BATTLEXJOURNAL — Tools">
+    <meta name="twitter:description" content="BATTLEXJOURNAL Tools — position sizing, expectancy, drawdown recovery, pip value, session timing and target planning.">
+    <link rel="canonical" href="https://31trades-production.up.railway.app/tools.html">
+
+    <link rel="stylesheet" href="assets/tokens.css">
+    <link rel="stylesheet" href="assets/tailwind-compiled.css">
+    <script src="/assets/lucide.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=Plus+Jakarta+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400;1,6..72,600&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Shared core (auth gate + account/risk engine, same core the server runs) -->
+    <script src="src/merge.js"></script>
+    <script src="src/core/index.js"></script>
+    <script src="core.js"></script>
+    <script src="connection.js"></script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        html, body {
+            height: 100%;
+            background: var(--tm-bg);
+            color: var(--tm-text);
+            font-family: var(--tm-sans);
+            overflow: hidden;
+        }
+
+        .num { font-family: var(--tm-mono); font-variant-numeric: tabular-nums; letter-spacing: -0.01em; }
+
+        /* ---- App shell ---- */
+        .sidebar {
+            width: 253px;
+            transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+            background: var(--tm-bg-elev);
+            border-right: 1px solid var(--tm-border);
+            display: flex; flex-direction: column; overflow: hidden;
+            position: relative; z-index: 40;
+        }
+        body.collapsed .sidebar { width: 64px; }
+        body.collapsed .hide-when-collapsed { display: none !important; }
+        body.collapsed .nav-item { justify-content: center; padding: 9px 0; }
+        body.collapsed .nav-label { display: none; }
+        body.collapsed .sidebar .logo-text { display: none; }
+        body.collapsed .profile-text { display: none; }
+
+        .nav-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 9px 12px; border-radius: 8px;
+            font-size: 14.5px; font-weight: 500; color: var(--tm-muted);
+            text-decoration: none; white-space: nowrap;
+            transition: background 0.15s, color 0.15s;
+        }
+        .nav-item:hover { background: var(--tm-hover); color: var(--tm-text); }
+        .nav-item.active { background: rgba(255, 255, 255, 0.08) !important; color: #ffffff !important; box-shadow: none !important; }
+        .nav-item svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        /* ---- Glass system (Calendar/AI parity) ---- */
+        :root {
+            --glass-bg: rgba(23, 26, 34, 0.55);
+            --glass-bg-strong: rgba(28, 32, 42, 0.78);
+            --glass-border: rgba(255, 255, 255, 0.09);
+            --glass-border-strong: rgba(255, 255, 255, 0.16);
+            --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.30), 0 2px 8px rgba(0, 0, 0, 0.18);
+            --glass-inner: rgba(255, 255, 255, 0.04);
+            --hairline: rgba(255, 255, 255, 0.06);
+        }
+        [data-theme="light"] {
+            --glass-bg: rgba(255, 255, 255, 0.66);
+            --glass-bg-strong: rgba(255, 255, 255, 0.86);
+            --glass-border: rgba(255, 255, 255, 0.9);
+            --glass-border-strong: rgba(148, 163, 184, 0.35);
+            --glass-shadow: 0 10px 34px rgba(31, 41, 55, 0.10), 0 2px 8px rgba(31, 41, 55, 0.06);
+            --glass-inner: rgba(255, 255, 255, 0.5);
+            --hairline: rgba(15, 23, 42, 0.07);
+        }
+
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px) saturate(1.12);
+            -webkit-backdrop-filter: blur(16px) saturate(1.12);
+            border: 1px solid var(--glass-border);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+        .glass-strong {
+            background: var(--glass-bg-strong);
+            backdrop-filter: blur(20px) saturate(1.15);
+            -webkit-backdrop-filter: blur(20px) saturate(1.15);
+            border: 1px solid var(--glass-border-strong);
+            border-radius: 12px;
+            box-shadow: var(--glass-shadow);
+        }
+
+        .panel-title { font-size: 13px; font-weight: 700; color: var(--tm-text); }
+        .panel-sub { font-size: 12px; color: var(--tm-dim); }
+        .label-xs { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--tm-muted); }
+
+        .btn-primary {
+            background: #ffffff !important; color: #000000 !important; font-weight: 700 !important; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; display: inline-flex; align-items: center; gap: 8px;
+            transition: all 0.15s ease; border: 1px solid #ffffff !important; text-decoration: none; cursor: pointer;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 0 12px rgba(255, 255, 255, 0.10);
+        }
+        .btn-primary:hover {
+            background: #e2e8f0 !important; color: #000000 !important; border-color: #e2e8f0 !important;
+            transform: translateY(-1px); box-shadow: 0 2px 10px rgba(255, 255, 255, 0.20);
+        }
+        .btn-ghost {
+            background: rgba(255, 255, 255, 0.04) !important; color: #ffffff !important; font-weight: 600; font-size: 13.5px;
+            padding: 8px 16px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15) !important;
+            display: inline-flex; align-items: center; gap: 8px; transition: all 0.15s ease; cursor: pointer; text-decoration: none;
+        }
+        .btn-ghost:hover {
+            border-color: rgba(255, 255, 255, 0.25) !important; color: #ffffff !important; background: rgba(255, 255, 255, 0.08) !important;
+        }
+
+        .tag {
+            display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 6px;
+            font-size: 11.5px; font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .tag-emerald { background: rgba(16,185,129,0.10); color: var(--tm-green); border-color: rgba(16,185,129,0.25); }
+        .tag-red { background: rgba(239,68,68,0.10); color: var(--tm-red); border-color: rgba(239,68,68,0.25); }
+        .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
+        .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
+        /* .tag-indigo lives in assets/trademind-theme.css (theme-aware there). */
+
+        .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
+        .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
+        .search-input:focus { border-color: var(--tm-accent); }
+        .search-input::placeholder { color: var(--tm-dim); }
+        .session-chip { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-muted); }
+        .conn-dot { width: 7px; height: 7px; border-radius: 999px; background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .avatar { width: 30px; height: 30px; border-radius: 999px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .logo-badge { width: 30px; height: 30px; border-radius: 8px; background: linear-gradient(135deg, var(--tm-accent-2), var(--tm-green)); color: #fff; font-weight: 900; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .collapse-btn { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; color: var(--tm-muted); border: none; background: transparent; transition: all 0.15s; cursor: pointer; }
+        .collapse-btn:hover { background: var(--tm-hover); color: var(--tm-text); }
+        body.collapsed .collapse-btn svg { transform: rotate(180deg); }
+        .account-select { display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border-2); font-size: 12.5px; font-weight: 600; color: var(--tm-text); }
+
+        .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%) translateY(20px); background: var(--tm-card); border: 1px solid var(--tm-border-2); color: var(--tm-text); border-radius: 10px; padding: 11px 18px; font-size: 13px; font-weight: 600; z-index: 90; opacity: 0; pointer-events: none; transition: all 0.25s cubic-bezier(0.16,1,0.3,1); display: flex; align-items: center; gap: 10px; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: var(--tm-border-2); border-radius: 999px; border: 2px solid var(--tm-bg); }
+        ::-webkit-scrollbar-thumb:hover { background: var(--tm-muted); }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+        .fade-up { animation: fadeUp 0.22s ease; }
+
+        /* ====================================================================
+           TOOLS — page-scoped components. Every colour is a token so both
+           themes flip together; no --tm-accent-2 as a foreground (it is the
+           near-black surface token — see server/ui-lint.test.js).
+           ==================================================================== */
+
+        /* Jump chips */
+        .chip {
+            display: inline-flex; align-items: center; gap: 6px;
+            padding: 6px 11px; border-radius: 8px; font-size: 12px; font-weight: 600;
+            color: var(--tm-muted); background: var(--tm-card);
+            border: 1px solid var(--tm-border-2); text-decoration: none;
+            transition: all 0.15s;
+        }
+        .chip:hover { color: var(--tm-text); border-color: var(--tm-indigo); }
+        .chip svg { width: 13px; height: 13px; }
+
+        /* Inputs */
+        .ctrl {
+            background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px;
+            font-size: 13px; color: var(--tm-text); padding: 8px 12px; outline: none;
+            transition: border-color 0.15s, box-shadow 0.15s; width: 100%;
+        }
+        .ctrl:focus { border-color: var(--tm-accent); box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+        .ctrl::placeholder { color: var(--tm-dim); }
+        select.ctrl option { background: var(--tm-card); color: var(--tm-text); }
+        .field { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
+        .field-note { font-size: 11px; color: var(--tm-dim); }
+
+        /* Segmented toggle */
+        .seg { display: flex; gap: 4px; background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 3px; }
+        .seg button {
+            flex: 1; font-size: 12px; font-weight: 700; color: var(--tm-muted); background: transparent;
+            border: none; border-radius: 6px; padding: 6px 8px; cursor: pointer; transition: all 0.15s;
+            font-family: var(--tm-sans);
+        }
+        .seg button:hover { color: var(--tm-text); }
+        .seg button.on { background: var(--tm-hover); color: var(--tm-text); }
+        .seg button.on[data-dir="Long"] { color: var(--tm-green); }
+        .seg button.on[data-dir="Short"] { color: var(--tm-red); }
+
+        /* Result tiles */
+        .res-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+        .res {
+            background: var(--tm-card); border: 1px solid var(--tm-border);
+            border-radius: 10px; padding: 10px 12px; min-width: 0;
+        }
+        .res-k {
+            font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.07em; color: var(--tm-muted); white-space: nowrap;
+            overflow: hidden; text-overflow: ellipsis;
+        }
+        .res-v { font-size: 17px; font-weight: 800; letter-spacing: -0.01em; margin-top: 3px; }
+        .res-v.sm { font-size: 14px; }
+        .res-v.good { color: var(--tm-green); }
+        .res-v.bad { color: var(--tm-red); }
+        .res-v.warn { color: var(--tm-amber); }
+        .res-v.dim { color: var(--tm-muted); }
+        .res-sub { font-size: 11px; color: var(--tm-dim); margin-top: 2px; }
+
+        /* Reference table */
+        .tbl { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .tbl th {
+            text-align: left; font-size: 10.5px; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.07em; color: var(--tm-muted); padding: 6px 8px; border-bottom: 1px solid var(--tm-border);
+        }
+        .tbl td { padding: 7px 8px; border-bottom: 1px solid var(--hairline); color: var(--tm-muted); }
+        .tbl tr:last-child td { border-bottom: none; }
+        .tbl td.num, .tbl th.num { text-align: right; }
+        .tbl td.strong { color: var(--tm-text); font-weight: 600; }
+
+        /* Session clock */
+        .sess-row {
+            display: flex; align-items: center; gap: 12px; padding: 10px 12px;
+            border-radius: 10px; border: 1px solid var(--tm-border); background: var(--tm-card);
+        }
+        .sess-row.open { border-color: rgba(16,185,129,0.30); }
+        .sess-name { font-size: 12.5px; font-weight: 700; color: var(--tm-text); white-space: nowrap; }
+        .sess-win { font-size: 11px; color: var(--tm-dim); white-space: nowrap; }
+        .sess-track { position: relative; height: 6px; border-radius: 999px; background: var(--tm-hover); overflow: hidden; flex: 1; min-width: 40px; }
+        .sess-fill { position: absolute; top: 0; bottom: 0; left: 0; border-radius: 999px; background: linear-gradient(90deg, var(--tm-green), rgba(16,185,129,0.45)); }
+        .sess-fill.pending { background: var(--tm-hover); }
+        .sess-state { font-size: 11.5px; font-weight: 700; white-space: nowrap; }
+        .dot { width: 8px; height: 8px; border-radius: 999px; flex-shrink: 0; }
+        .dot-open { background: var(--tm-green); box-shadow: 0 0 0 3px rgba(16,185,129,0.15); }
+        .dot-closed { background: var(--tm-muted); opacity: 0.45; }
+
+        .tl { position: relative; height: 36px; border-radius: 8px; background: var(--tm-card); border: 1px solid var(--tm-border); overflow: hidden; }
+        .tl-seg { position: absolute; top: 9px; bottom: 9px; border-radius: 4px; opacity: 0.85; }
+        .tl-hour { position: absolute; top: 0; bottom: 0; width: 1px; background: var(--tm-border); }
+        .tl-now { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--tm-text); opacity: 0.85; }
+        .tl-legend { display: flex; flex-wrap: wrap; gap: 12px; font-size: 11px; color: var(--tm-dim); }
+        .tl-legend span { display: inline-flex; align-items: center; gap: 6px; }
+        .swatch { width: 10px; height: 10px; border-radius: 3px; }
+
+        /* Equity curve */
+        .curve { width: 100%; height: 92px; display: block; }
+
+        /* Pre-trade check result */
+        .pt-status { display: flex; align-items: flex-start; gap: 10px; padding: 11px 13px; border-radius: 10px; border: 1px solid var(--tm-border-2); background: var(--tm-card); font-size: 12.5px; line-height: 1.5; }
+        .pt-status svg { flex-shrink: 0; margin-top: 1px; }
+
+        @media (min-width: 768px) {
+            .res-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+            .res-wide { grid-column: span 2; }
+        }
+
+        @media (max-width: 767px) {
+            .topbar { padding-left: 12px; padding-right: 12px; }
+            .search-input { width: 100%; }
+            .res-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        }
+    </style>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
+    <script src="assets/theme-toggle.js"></script>
+    <script src="assets/sidebar-nav.js"></script>
+    <link rel="icon" type="image/png" href="assets/favicon.png">
+    <link rel="apple-touch-icon" href="assets/favicon.png">
+</head>
+<body>
+
+    <div class="flex h-screen min-h-[100dvh] max-h-[100dvh]">
+
+        <!-- ============ LEFT SIDEBAR ============ -->
+        <aside class="sidebar">
+            <div class="flex items-center gap-3 px-4 h-[56px] border-b border-[var(--tm-border)] flex-shrink-0">
+                <img src="assets/battlex-logo.png" alt="BattleX Logo" class="logo-badge">
+                <span class="logo-text font-extrabold tracking-[0.08em] text-[15px]">BATTLEXJOURNAL</span>
+                <button id="collapse-btn" class="collapse-btn ml-auto hide-when-collapsed" title="Collapse sidebar">
+                    <svg data-lucide="chevrons-left" class="w-4 h-4"></svg>
+                </button>
+            </div>
+
+            <nav class="flex-1 overflow-y-auto py-3 px-2.5 flex flex-col gap-1">
+                <!-- 1. CORE -->
+                <div class="sidebar-section" data-section="core">
+                    <button type="button" class="sidebar-section-header">
+                        <span>CORE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="dashboard.html" class="nav-item">
+                            <svg data-lucide="layout-dashboard"></svg><span class="nav-label">Dashboard</span>
+                        </a>
+                        <a href="journal.html" class="nav-item">
+                            <svg data-lucide="book-open"></svg><span class="nav-label">Journal</span>
+                        </a>
+                        <a href="notes.html" class="nav-item">
+                            <svg data-lucide="file-edit"></svg><span class="nav-label">Trade Notes</span>
+                        </a>
+                        <a href="imports.html" class="nav-item">
+                            <svg data-lucide="file-up"></svg><span class="nav-label">Import</span>
+                        </a>
+                        <a href="analytics.html" class="nav-item">
+                            <svg data-lucide="bar-chart-3"></svg><span class="nav-label">Analytics</span>
+                        </a>
+                        <a href="calendar.html" class="nav-item">
+                            <svg data-lucide="calendar-days"></svg><span class="nav-label">Calendar</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 2. INTELLIGENCE -->
+                <div class="sidebar-section" data-section="intelligence">
+                    <button type="button" class="sidebar-section-header">
+                        <span>INTELLIGENCE</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="ai.html" class="nav-item">
+                            <svg data-lucide="brain-circuit"></svg><span class="nav-label">AI Coach</span>
+                        </a>
+                        <a href="patterns.html" class="nav-item">
+                            <svg data-lucide="sparkles"></svg><span class="nav-label">Patterns</span>
+                        </a>
+                        <a href="reports.html" class="nav-item">
+                            <svg data-lucide="file-text"></svg><span class="nav-label">Reports</span>
+                        </a>
+                        <a href="improve.html" class="nav-item">
+                            <svg data-lucide="refresh-cw"></svg><span class="nav-label">Improve</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 3. STRATEGY & LAB -->
+                <div class="sidebar-section" data-section="strategy">
+                    <button type="button" class="sidebar-section-header">
+                        <span>STRATEGY & LAB</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="strategy-lab.html" class="nav-item">
+                            <svg data-lucide="beaker"></svg><span class="nav-label">Strategy Lab</span>
+                        </a>
+                        <a href="replay.html" class="nav-item">
+                            <svg data-lucide="history"></svg><span class="nav-label">Market Replay</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 4. PERFORMANCE & RISK -->
+                <div class="sidebar-section" data-section="risk">
+                    <button type="button" class="sidebar-section-header">
+                        <span>PERFORMANCE & RISK</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="risk.html" class="nav-item">
+                            <svg data-lucide="shield-alert"></svg><span class="nav-label">Risk</span>
+                        </a>
+                        <a href="discipline.html" class="nav-item">
+                            <svg data-lucide="target"></svg><span class="nav-label">Discipline</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 5. BATTLES & LABS -->
+                <div class="sidebar-section" data-section="battles-lab">
+                    <button type="button" class="sidebar-section-header">
+                        <span>BATTLES & LABS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="battles.html" class="nav-item">
+                            <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
+                            <span class="sidebar-soon-badge">SOON</span>
+                        </a>
+                        <a href="leaderboard.html" class="nav-item">
+                            <svg data-lucide="trophy"></svg><span class="nav-label">Leaderboard</span>
+                        </a>
+                        <a href="backtesting.html" class="nav-item">
+                            <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- 6. TOOLS -->
+                <div class="sidebar-section" data-section="tools">
+                    <button type="button" class="sidebar-section-header">
+                        <span>TOOLS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="tools.html" class="nav-item active">
+                            <svg data-lucide="wrench"></svg><span class="nav-label">Tools</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <div class="border-t border-[var(--tm-border)] p-2.5 flex flex-col flex-shrink-0">
+                <div class="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-[var(--tm-hover)] transition-colors cursor-pointer" id="profile-chip" title="Account, Community, Settings & Help">
+                    <div class="avatar !w-8 !h-8 !rounded-lg" id="profile-avatar">TR</div>
+                    <div class="profile-text flex-1 min-w-0">
+                        <div class="text-[13.5px] font-semibold text-[var(--tm-text)] truncate" id="profile-name">Trader</div>
+                        <div class="text-[11.5px] text-[var(--tm-dim)]" id="profile-meta">Battlex Pro</div>
+                    </div>
+                    <svg class="w-4 h-4 text-[var(--tm-dim)] hide-when-collapsed" data-lucide="chevron-up"></svg>
+                </div>
+            </div>
+        </aside>
+
+        <!-- ============ MAIN ============ -->
+        <div class="flex-1 flex flex-col min-w-0">
+
+            <!-- Top bar -->
+            <div class="topbar flex items-center gap-3 px-4 flex-shrink-0">
+                <div class="relative">
+                    <svg data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[var(--tm-dim)]"></svg>
+                    <input id="global-search" type="text" class="search-input" placeholder="Search tools…">
+                </div>
+                <div class="flex items-center gap-3 ml-auto">
+                    <div class="session-chip hide-when-collapsed">
+                        <svg data-lucide="clock" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg> <span id="session-chip-text">—</span>
+                    </div>
+                    <div class="session-chip hide-when-collapsed"><span class="conn-dot"></span> <span class="conn-label">Connected</span></div>
+                    <button class="account-select hide-when-collapsed" id="acc-chip">
+                        <span class="num text-[12px]">—</span><span class="text-[var(--tm-dim)]">·</span>
+                        <span>No account</span>
+                        <svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <main class="flex-1 overflow-y-auto relative">
+                <div class="max-w-[1440px] mx-auto p-5 lg:p-6 flex flex-col gap-4">
+
+                    <!-- Header -->
+                    <div class="flex flex-wrap items-end justify-between gap-4">
+                        <div>
+                            <h1 class="text-[24px] font-bold tracking-tight">Tools</h1>
+                            <p class="text-[13px] text-[var(--tm-dim)] mt-0.5">Size the trade, price the edge, survive the drawdown. Everything here is instant and runs in your browser.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="tag tag-gray"><svg data-lucide="zap" class="w-3 h-3"></svg> Live maths</span>
+                            <button id="reset-all" class="btn-ghost !py-2 !px-3.5 !text-[12.5px]">
+                                <svg data-lucide="rotate-ccw" class="w-3.5 h-3.5"></svg> Reset inputs
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Jump chips -->
+                    <div class="flex flex-wrap items-center gap-2">
+                        <a href="#size" class="chip"><svg data-lucide="ruler"></svg> Position size</a>
+                        <a href="#edge" class="chip"><svg data-lucide="sigma"></svg> Expectancy</a>
+                        <a href="#drawdown" class="chip"><svg data-lucide="trending-down"></svg> Drawdown</a>
+                        <a href="#pip" class="chip"><svg data-lucide="percent"></svg> Pip value</a>
+                        <a href="#sessions" class="chip"><svg data-lucide="clock"></svg> Session clock</a>
+                        <a href="#planner" class="chip"><svg data-lucide="target"></svg> Target planner</a>
+                    </div>
+
+                    <!-- ============ 1. POSITION SIZE ============ -->
+                    <section id="size" class="panel p-5 fade-up">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                            <div>
+                                <div class="panel-title flex items-center gap-2"><svg data-lucide="ruler" class="w-4 h-4 text-[var(--tm-indigo)]"></svg> Position size &amp; risk</div>
+                                <p class="panel-sub mt-1">Turn a risk percentage into an exact lot size, and see where 1R–3R actually sits.</p>
+                            </div>
+                            <span class="tag tag-gray">pip value editable</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="field lg:col-span-2">
+                                <label class="label-xs" for="sz-symbol">Instrument</label>
+                                <select id="sz-symbol" class="ctrl" data-persist></select>
+                                <span class="field-note" id="sz-spec-note">—</span>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="sz-balance">Account balance ($)</label>
+                                <input id="sz-balance" class="ctrl num" type="number" inputmode="decimal" step="100" value="10000" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="sz-risk">Risk per trade (%)</label>
+                                <input id="sz-risk" class="ctrl num" type="number" inputmode="decimal" step="0.25" value="1" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="sz-entry">Entry price</label>
+                                <input id="sz-entry" class="ctrl num" type="number" inputmode="decimal" step="0.00001" value="2038.97" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="sz-stop">Stop loss</label>
+                                <input id="sz-stop" class="ctrl num" type="number" inputmode="decimal" step="0.00001" value="2034.97" data-persist>
+                            </div>
+                            <div class="field lg:col-span-2">
+                                <label class="label-xs">Direction</label>
+                                <div class="seg" id="sz-dir">
+                                    <button type="button" data-dir="Long" class="on">Long</button>
+                                    <button type="button" data-dir="Short">Short</button>
+                                </div>
+                            </div>
+                            <div class="field lg:col-span-2">
+                                <label class="label-xs" for="sz-pipval">Value per pip, per lot ($)</label>
+                                <input id="sz-pipval" class="ctrl num" type="number" inputmode="decimal" step="0.01" data-persist>
+                                <span class="field-note">Auto-filled from the instrument; edit it to match your broker's contract.</span>
+                            </div>
+                        </div>
+
+                        <div class="res-grid mt-4" id="sz-out"></div>
+
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4">
+                            <div class="panel p-4">
+                                <div class="label-xs mb-2.5">R targets</div>
+                                <div id="sz-targets"></div>
+                            </div>
+                            <div class="panel p-4">
+                                <div class="flex items-center justify-between mb-2.5">
+                                    <div class="label-xs">Pre-trade check</div>
+                                    <span class="tag tag-gray" id="pt-acc">no account</span>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3 mb-3">
+                                    <div class="field">
+                                        <label class="label-xs" for="pt-session">Session</label>
+                                        <select id="pt-session" class="ctrl">
+                                            <option value="">Any session</option>
+                                            <option>Asia</option>
+                                            <option>London</option>
+                                            <option>New York</option>
+                                        </select>
+                                    </div>
+                                    <div class="field">
+                                        <label class="label-xs" for="pt-setup">Setup</label>
+                                        <select id="pt-setup" class="ctrl">
+                                            <option value="">Any setup</option>
+                                            <option>Breakout</option>
+                                            <option>FVG</option>
+                                            <option>MSS + FVG</option>
+                                            <option>Order Block</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2 mb-3">
+                                    <button id="pt-run" class="btn-primary !py-2 !px-3.5 !text-[12.5px]">
+                                        <svg data-lucide="shield-check" class="w-3.5 h-3.5"></svg> Check this trade
+                                    </button>
+                                    <button id="pt-now" class="btn-ghost !py-2 !px-3.5 !text-[12.5px]">Use open session</button>
+                                </div>
+                                <div id="pt-result"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ============ 2. EXPECTANCY ============ -->
+                    <section id="edge" class="panel p-5 fade-up">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                            <div>
+                                <div class="panel-title flex items-center gap-2"><svg data-lucide="sigma" class="w-4 h-4 text-[var(--tm-indigo)]"></svg> Expectancy &amp; edge</div>
+                                <p class="panel-sub mt-1">What your win rate and average R are actually worth per trade.</p>
+                            </div>
+                            <span class="tag tag-gray" id="edge-verdict">—</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                            <div class="field">
+                                <label class="label-xs" for="ed-wr">Win rate (%)</label>
+                                <input id="ed-wr" class="ctrl num" type="number" inputmode="decimal" step="1" value="45" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="ed-win">Avg win (R)</label>
+                                <input id="ed-win" class="ctrl num" type="number" inputmode="decimal" step="0.1" value="2.4" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="ed-loss">Avg loss (R)</label>
+                                <input id="ed-loss" class="ctrl num" type="number" inputmode="decimal" step="0.1" value="1" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="ed-sample">Trades in sample</label>
+                                <input id="ed-sample" class="ctrl num" type="number" inputmode="numeric" step="1" value="120" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="ed-riskmoney">Risk per trade ($)</label>
+                                <input id="ed-riskmoney" class="ctrl num" type="number" inputmode="decimal" step="10" value="100" data-persist>
+                            </div>
+                        </div>
+
+                        <div class="res-grid mt-4" id="ed-out"></div>
+                        <p class="panel-sub mt-3" id="ed-note"></p>
+                    </section>
+
+                    <!-- ============ 3. DRAWDOWN ============ -->
+                    <section id="drawdown" class="panel p-5 fade-up">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                            <div>
+                                <div class="panel-title flex items-center gap-2"><svg data-lucide="trending-down" class="w-4 h-4 text-[var(--tm-indigo)]"></svg> Drawdown recovery &amp; loss streaks</div>
+                                <p class="panel-sub mt-1">How much you must gain to get back to flat — and the losing run you should expect to survive.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="field">
+                                <label class="label-xs" for="dd-peak">Peak equity ($)</label>
+                                <input id="dd-peak" class="ctrl num" type="number" inputmode="decimal" step="100" value="12000" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="dd-now">Current equity ($)</label>
+                                <input id="dd-now" class="ctrl num" type="number" inputmode="decimal" step="100" value="9600" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="dd-wr">Win rate for streak (%)</label>
+                                <input id="dd-wr" class="ctrl num" type="number" inputmode="decimal" step="1" value="45" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="dd-n">Trades in the run</label>
+                                <input id="dd-n" class="ctrl num" type="number" inputmode="numeric" step="10" value="200" data-persist>
+                            </div>
+                        </div>
+
+                        <div class="res-grid mt-4" id="dd-out"></div>
+
+                        <div class="grid grid-cols-1 xl:grid-cols-2 gap-3 mt-4">
+                            <div class="panel p-4">
+                                <div class="label-xs mb-2.5">Gain required to recover</div>
+                                <table class="tbl">
+                                    <thead><tr><th>Drawdown</th><th class="num">Gain needed</th><th class="num">At 2% risk</th></tr></thead>
+                                    <tbody id="dd-table"></tbody>
+                                </table>
+                            </div>
+                            <div class="panel p-4">
+                                <div class="label-xs mb-2.5">Risk sizing that survives the streak</div>
+                                <div id="dd-survive"></div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ============ 4. PIP VALUE ============ -->
+                    <section id="pip" class="panel p-5 fade-up">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                            <div>
+                                <div class="panel-title flex items-center gap-2"><svg data-lucide="percent" class="w-4 h-4 text-[var(--tm-indigo)]"></svg> Pip &amp; point value</div>
+                                <p class="panel-sub mt-1">What a move is worth at your size, before you take it.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-2 lg:grid-cols-5 gap-3">
+                            <div class="field lg:col-span-1">
+                                <label class="label-xs" for="pv-symbol">Instrument</label>
+                                <select id="pv-symbol" class="ctrl num" data-persist></select>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pv-lots">Lots</label>
+                                <input id="pv-lots" class="ctrl num" type="number" inputmode="decimal" step="0.01" value="1" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pv-entry">Entry</label>
+                                <input id="pv-entry" class="ctrl num" type="number" inputmode="decimal" step="0.00001" value="2038.97" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pv-exit">Exit</label>
+                                <input id="pv-exit" class="ctrl num" type="number" inputmode="decimal" step="0.00001" value="2046.00" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs">Direction</label>
+                                <div class="seg" id="pv-dir">
+                                    <button type="button" data-dir="Long" class="on">Long</button>
+                                    <button type="button" data-dir="Short">Short</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="res-grid mt-4" id="pv-out"></div>
+
+                        <div class="panel p-4 mt-4">
+                            <div class="label-xs mb-2.5">Value per pip at different sizes — <span id="pv-note">—</span></div>
+                            <table class="tbl">
+                                <thead><tr><th>Size</th><th class="num">Per pip</th><th class="num">Per point</th><th class="num">10 pips</th><th class="num">50 pips</th></tr></thead>
+                                <tbody id="pv-table"></tbody>
+                            </table>
+                        </div>
+                    </section>
+
+                    <!-- ============ 5. SESSION CLOCK ============ -->
+                    <section id="sessions" class="panel p-5 fade-up">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                            <div>
+                                <div class="panel-title flex items-center gap-2"><svg data-lucide="clock" class="w-4 h-4 text-[var(--tm-indigo)]"></svg> Session clock</div>
+                                <p class="panel-sub mt-1">Which sessions are open right now, in your own timezone.</p>
+                            </div>
+                            <div class="flex items-center gap-2">
+                                <span class="tag tag-gray"><svg data-lucide="globe" class="w-3 h-3"></svg> <span id="sess-tz">—</span></span>
+                                <span class="tag tag-gray num" id="sess-clock">—</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-col gap-2" id="sess-rows"></div>
+
+                        <div class="mt-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="label-xs">Your 24 hours</div>
+                                <div class="label-xs" id="sess-utc">—</div>
+                            </div>
+                            <div class="tl" id="sess-timeline"></div>
+                            <div class="tl-legend mt-2.5">
+                                <span><i class="swatch" style="background:#6366f1"></i> Asian</span>
+                                <span><i class="swatch" style="background:#10b981"></i> London</span>
+                                <span><i class="swatch" style="background:#f59e0b"></i> New York AM</span>
+                                <span><i class="swatch" style="background:#3b82f6"></i> New York PM</span>
+                                <span><i class="swatch" style="background:var(--tm-text)"></i> Now</span>
+                            </div>
+                        </div>
+
+                        <p class="panel-sub mt-4">Windows are the standard FX hours in UTC — Asian 23:00–08:00, London 07:00–16:00, New York AM 12:00–16:00 (the London/NY overlap), New York PM 16:00–21:00. Daylight-saving shifts in New York and London can move these by an hour.</p>
+                    </section>
+
+                    <!-- ============ 6. TARGET PLANNER ============ -->
+                    <section id="planner" class="panel p-5 fade-up">
+                        <div class="flex flex-wrap items-start justify-between gap-3 mb-4">
+                            <div>
+                                <div class="panel-title flex items-center gap-2"><svg data-lucide="target" class="w-4 h-4 text-[var(--tm-indigo)]"></svg> Compounding &amp; target planner</div>
+                                <p class="panel-sub mt-1">At this risk and this edge, how long does the target actually take?</p>
+                            </div>
+                            <span class="tag tag-gray" id="pl-badge">—</span>
+                        </div>
+
+                        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                            <div class="field">
+                                <label class="label-xs" for="pl-start">Starting balance ($)</label>
+                                <input id="pl-start" class="ctrl num" type="number" inputmode="decimal" step="1000" value="10000" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pl-target">Target ($)</label>
+                                <input id="pl-target" class="ctrl num" type="number" inputmode="decimal" step="1000" value="100000" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pl-risk">Risk per trade (%)</label>
+                                <input id="pl-risk" class="ctrl num" type="number" inputmode="decimal" step="0.25" value="1" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pl-week">Trades per week</label>
+                                <input id="pl-week" class="ctrl num" type="number" inputmode="numeric" step="1" value="10" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pl-wr">Win rate (%)</label>
+                                <input id="pl-wr" class="ctrl num" type="number" inputmode="decimal" step="1" value="45" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pl-aw">Avg win (R)</label>
+                                <input id="pl-aw" class="ctrl num" type="number" inputmode="decimal" step="0.1" value="2.4" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pl-al">Avg loss (R)</label>
+                                <input id="pl-al" class="ctrl num" type="number" inputmode="decimal" step="0.1" value="1" data-persist>
+                            </div>
+                            <div class="field">
+                                <label class="label-xs" for="pl-fees">Cost per trade ($)</label>
+                                <input id="pl-fees" class="ctrl num" type="number" inputmode="decimal" step="0.5" value="0" data-persist>
+                                <span class="field-note">Spread + commission, deducted per trade.</span>
+                            </div>
+                        </div>
+
+                        <div class="res-grid mt-4" id="pl-out"></div>
+
+                        <div class="panel p-4 mt-4">
+                            <div class="flex items-center justify-between mb-2.5">
+                                <div class="label-xs">Projected equity path</div>
+                                <div class="label-xs" id="pl-curve-note">—</div>
+                            </div>
+                            <svg class="curve" id="pl-curve" viewBox="0 0 300 92" preserveAspectRatio="none" role="img" aria-label="Projected equity curve"></svg>
+                        </div>
+
+                        <p class="panel-sub mt-3">Projection compounds the geometric expectancy: each trade grows the balance by <span class="num">((1 + risk × avgWin) ^ winRate) × ((1 − risk × avgLoss) ^ lossRate)</span>. It is an average path, not a promise — variance is real and streaks are unavoidable.</p>
+                    </section>
+
+                    <p class="text-[11.5px] text-[var(--tm-dim)] text-center py-2 fade-up">
+                        Every number on this page is calculated locally in your browser from the inputs above. Contract and pip specs are CFD-standard — override the pip value on any instrument to match your broker.
+                    </p>
+
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <div class="toast" id="toast">
+        <svg data-lucide="check-circle-2" class="w-4 h-4 text-[var(--tm-green)]"></svg>
+        <span id="toast-msg"></span>
+    </div>
+
+    <script>
+        (function () {
+            'use strict';
+
+            const $ = id => document.getElementById(id);
+            const $$ = sel => Array.prototype.slice.call(document.querySelectorAll(sel));
+
+            /* ================================================================
+               Formatters
+               ================================================================ */
+            const isNum = v => typeof v === 'number' && isFinite(v);
+            function num(v, d) {
+                d = d == null ? 2 : d;
+                return isNum(v) ? Number(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }) : '—';
+            }
+            function money(v, d) {
+                d = d == null ? 2 : d;
+                if (!isNum(v)) return '—';
+                return (v < 0 ? '-$' : '$') + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: d, maximumFractionDigits: d });
+            }
+            function pct(v, d) { return isNum(v) ? num(v, d == null ? 2 : d) + '%' : '—'; }
+            function rmult(v) { return isNum(v) ? (v > 0 ? '+' : '') + num(v, 2) + 'R' : '—'; }
+            function val(id, fallback) {
+                const el = $(id);
+                if (!el) return fallback;
+                const n = parseFloat(el.value);
+                return isFinite(n) ? n : fallback;
+            }
+            function intVal(id, fallback) {
+                const el = $(id);
+                if (!el) return fallback;
+                const n = parseInt(el.value, 10);
+                return isFinite(n) ? n : fallback;
+            }
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+            }
+            function tile(k, v, cls, sub) {
+                return '<div class="res">' +
+                    '<div class="res-k">' + esc(k) + '</div>' +
+                    '<div class="res-v num ' + (cls || '') + '">' + v + '</div>' +
+                    (sub ? '<div class="res-sub">' + sub + '</div>' : '') +
+                    '</div>';
+            }
+
+            /* ================================================================
+               Instrument specs
+               units  = units per 1.00 lot
+               pip    = one pip in price terms
+               point  = minimum tick
+               jpy    = quote currency is JPY, so USD value needs the USD/JPY rate
+               Indices and crypto are quoted per point with units = 1; the pip
+               value field stays editable because contract sizes differ by broker.
+               ================================================================ */
+            const REF_USDJPY = 150;
+            const SPECS = [
+                { sym: 'XAUUSD', name: 'Gold — XAU/USD',      group: 'Metals',  units: 100,    pip: 0.1,     point: 0.01,    dec: 2 },
+                { sym: 'XAGUSD', name: 'Silver — XAG/USD',    group: 'Metals',  units: 5000,   pip: 0.01,    point: 0.001,   dec: 3 },
+                { sym: 'XPTUSD', name: 'Platinum — XPT/USD',  group: 'Metals',  units: 100,    pip: 0.1,     point: 0.01,    dec: 2 },
+                { sym: 'USOIL',  name: 'WTI Crude — USOIL',   group: 'Energy',  units: 1000,   pip: 0.01,    point: 0.01,    dec: 2 },
+                { sym: 'UKOIL',  name: 'Brent — UKOIL',       group: 'Energy',  units: 1000,   pip: 0.01,    point: 0.01,    dec: 2 },
+                { sym: 'EURUSD', name: 'Euro — EUR/USD',      group: 'Forex',   units: 100000, pip: 0.0001,  point: 0.00001, dec: 5 },
+                { sym: 'GBPUSD', name: 'Sterling — GBP/USD',  group: 'Forex',   units: 100000, pip: 0.0001,  point: 0.00001, dec: 5 },
+                { sym: 'AUDUSD', name: 'Aussie — AUD/USD',    group: 'Forex',   units: 100000, pip: 0.0001,  point: 0.00001, dec: 5 },
+                { sym: 'NZDUSD', name: 'Kiwi — NZD/USD',      group: 'Forex',   units: 100000, pip: 0.0001,  point: 0.00001, dec: 5 },
+                { sym: 'USDCAD', name: 'Loonie — USD/CAD',    group: 'Forex',   units: 100000, pip: 0.0001,  point: 0.00001, dec: 5 },
+                { sym: 'USDCHF', name: 'Swissy — USD/CHF',    group: 'Forex',   units: 100000, pip: 0.0001,  point: 0.00001, dec: 5 },
+                { sym: 'USDJPY', name: 'Yen — USD/JPY',       group: 'Forex',   units: 100000, pip: 0.01,    point: 0.001,   dec: 3, jpy: true },
+                { sym: 'EURJPY', name: 'Euro/Yen — EUR/JPY',  group: 'Forex',   units: 100000, pip: 0.01,    point: 0.001,   dec: 3, jpy: true },
+                { sym: 'NAS100', name: 'Nasdaq 100 — NAS100', group: 'Indices', units: 1,      pip: 1,       point: 0.25,    dec: 2 },
+                { sym: 'US30',   name: 'Dow 30 — US30',       group: 'Indices', units: 1,      pip: 1,       point: 1,       dec: 1 },
+                { sym: 'SPX500', name: 'S&P 500 — SPX500',    group: 'Indices', units: 1,      pip: 1,       point: 0.1,     dec: 2 },
+                { sym: 'GER40',  name: 'DAX 40 — GER40',      group: 'Indices', units: 1,      pip: 1,       point: 0.1,     dec: 2 },
+                { sym: 'BTCUSD', name: 'Bitcoin — BTC/USD',   group: 'Crypto',  units: 1,      pip: 1,       point: 1,       dec: 2 },
+                { sym: 'ETHUSD', name: 'Ethereum — ETH/USD',  group: 'Crypto',  units: 1,      pip: 1,       point: 0.1,     dec: 2 }
+            ];
+            const ORDER = ['Metals', 'Energy', 'Forex', 'Indices', 'Crypto'];
+
+            const specOf = sym => SPECS.filter(s => s.sym === sym)[0] || SPECS[0];
+            function builtinPipValue(spec) {
+                const raw = spec.pip * spec.units;
+                return spec.jpy ? raw / REF_USDJPY : raw;
+            }
+            function fillSymbolSelect(sel) {
+                if (!sel) return;
+                let html = '';
+                ORDER.forEach(function (g) {
+                    const rows = SPECS.filter(s => s.group === g);
+                    if (!rows.length) return;
+                    html += '<optgroup label="' + esc(g) + '">';
+                    rows.forEach(function (s) { html += '<option value="' + esc(s.sym) + '">' + esc(s.name) + '</option>'; });
+                    html += '</optgroup>';
+                });
+                sel.innerHTML = html;
+            }
+
+            /* ================================================================
+               1. Position size & risk
+               ================================================================ */
+            let pipValTouched = false;
+            let sizeDir = 'Long';
+
+            function syncPipValue() {
+                const spec = specOf($('sz-symbol').value);
+                const note = $('sz-spec-note');
+                if (note) {
+                    note.textContent = '1.00 lot = ' + num(spec.units, 0) + ' units · 1 pip = ' + num(spec.pip, spec.dec) +
+                        (spec.jpy ? ' · auto rate 1 USD = ' + num(REF_USDJPY, 2) + ' JPY' : '');
+                }
+                const pv = $('sz-pipval');
+                if (pv && !pipValTouched) pv.value = num(builtinPipValue(spec), 2);
+            }
+
+            function runSize() {
+                const spec = specOf($('sz-symbol').value);
+                const balance = val('sz-balance', 0);
+                const riskPct = val('sz-risk', 0);
+                const entry = val('sz-entry', NaN);
+                const stop = val('sz-stop', NaN);
+                const pipVal = val('sz-pipval', builtinPipValue(spec));
+
+                const riskAmount = balance * riskPct / 100;
+                const dist = Math.abs(entry - stop);
+                const pips = dist / spec.pip;
+                const points = dist / spec.point;
+                const perPipAtSize = pipVal;                       // per 1.00 lot
+                const lots = (dist > 0 && pipVal > 0) ? riskAmount / (pips * pipVal) : NaN;
+                const units = isNum(lots) ? lots * spec.units : NaN;
+                const valPerPoint = pipVal * (spec.pip / spec.point);
+
+                const out = $('sz-out');
+                if (out) {
+                    out.innerHTML =
+                        tile('Risk amount', money(riskAmount, 2), riskPct > 3 ? 'warn' : '', num(riskPct, 2) + '% of ' + money(balance, 0)) +
+                        tile('Position size', isNum(lots) ? num(lots, 2) + ' lots' : '—', lots > 0 ? 'good' : '', isNum(units) ? num(units, 0) + ' units' : '') +
+                        tile('Stop distance', pips > 0 ? num(pips, 1) + ' pips' : '—', '', num(points, points < 10 ? 2 : 0) + ' points') +
+                        tile('Value per pip', money(perPipAtSize, 2), '', 'per 1.00 lot · ' + money(valPerPoint, 2) + '/pt');
+                }
+
+                /* R target ladder */
+                const ladder = $('sz-targets');
+                if (ladder) {
+                    const dir = sizeDir === 'Long' ? 1 : -1;
+                    let rows = '<table class="tbl"><thead><tr><th>Target</th><th class="num">Price</th><th class="num">Pips</th><th class="num">P&amp;L</th></tr></thead><tbody>';
+                    [1, 2, 3].forEach(function (r) {
+                        const price = entry + dir * dist * r;
+                        rows += '<tr>' +
+                            '<td class="strong">' + r + 'R</td>' +
+                            '<td class="num strong">' + (isFinite(price) ? num(price, spec.dec) : '—') + '</td>' +
+                            '<td class="num">' + num(pips * r, 1) + '</td>' +
+                            '<td class="num strong">' + money(riskAmount * r, 2) + '</td>' +
+                            '</tr>';
+                    });
+                    rows += '</tbody></table>';
+                    ladder.innerHTML = rows;
+                }
+                return riskAmount;
+            }
+
+            /* ================================================================
+               2. Expectancy
+               ================================================================ */
+            function runExpectancy() {
+                const wr = val('ed-wr', 0) / 100;
+                const aw = val('ed-win', 0);
+                const al = val('ed-loss', 0);
+                const sample = intVal('ed-sample', 0);
+                const riskMoney = val('ed-riskmoney', 0);
+
+                const lr = 1 - wr;
+                const expR = wr * aw - lr * al;
+                const expMoney = expR * riskMoney;
+                const breakeven = (aw + al) > 0 ? al / (aw + al) : NaN;
+                const pf = (lr * al) > 0 ? (wr * aw) / (lr * al) : NaN;
+                const odds = al > 0 ? aw / al : NaN;
+                const kelly = isNum(odds) ? (wr * odds - lr) / odds : NaN;
+
+                const out = $('ed-out');
+                if (out) {
+                    out.innerHTML =
+                        tile('Expectancy', rmult(expR), expR > 0.05 ? 'good' : (expR > 0 ? 'warn' : 'bad'), 'per trade') +
+                        tile('Per trade', money(expMoney, 2), expMoney > 0 ? 'good' : 'bad', 'at ' + money(riskMoney, 0) + ' risk') +
+                        tile('Breakeven win rate', pct(breakeven * 100, 1), '', wr * 100 > breakeven * 100 ? 'you are above it' : 'you are below it') +
+                        tile('Profit factor', isNum(pf) ? num(pf, 2) : '—', pf >= 1.5 ? 'good' : (pf >= 1 ? 'warn' : 'bad'), num(pf, 2) >= 1.5 ? 'healthy' : 'thin') +
+                        tile('Over 100 trades', money(expMoney * 100, 0), expMoney > 0 ? 'good' : 'bad', 'expectancy × 100') +
+                        tile('Suggested risk cap', isNum(kelly) ? pct(Math.max(0, kelly / 4) * 100, 2) : '—', '', 'quarter-Kelly') +
+                        tile('Total R gained', rmult(expR * sample), expR > 0 ? 'good' : 'bad', sample + ' trades') +
+                        tile('Edge verdict', expR > 0.05 ? 'Positive' : (expR > 0 ? 'Marginal' : 'Negative'), expR > 0.05 ? 'good' : (expR > 0 ? 'warn' : 'bad'), expR > 0 ? 'keep the process' : 'stop and rebuild');
+                }
+
+                const badge = $('edge-verdict');
+                if (badge) {
+                    badge.className = 'tag ' + (expR > 0.05 ? 'tag-emerald' : (expR > 0 ? 'tag-amber' : 'tag-red'));
+                    badge.textContent = expR > 0 ? 'positive expectancy' : 'negative expectancy';
+                }
+                const note = $('ed-note');
+                if (note) {
+                    if (sample < 30) note.textContent = 'Sample is small (' + sample + ' trades). Under ~30 trades the numbers still move more from luck than from your decisions.';
+                    else if (expR > 0) note.textContent = 'At this edge each trade is worth ' + rmult(expR) + '. The work is repetition, not bigger size.';
+                    else note.textContent = 'This combination loses money on average. Fix the average loss or the win rate before increasing size.';
+                }
+            }
+
+            /* ================================================================
+               3. Drawdown & streaks
+               ================================================================ */
+            function longestStreak(n, pLoss) {
+                if (pLoss <= 0 || pLoss >= 1 || n < 2) return NaN;
+                const approx = Math.log(n * (1 - pLoss)) / Math.log(1 / pLoss);
+                return Math.max(1, Math.min(40, Math.round(approx)));
+            }
+            function runDrawdown() {
+                const peak = val('dd-peak', 0);
+                const nowE = val('dd-now', 0);
+                const wr = val('dd-wr', 45) / 100;
+                const n = intVal('dd-n', 200);
+
+                const dd = peak > 0 ? Math.max(0, (peak - nowE) / peak) : NaN;
+                const gainNeeded = nowE > 0 ? (peak / nowE - 1) : NaN;
+                const streak = longestStreak(n, 1 - wr);
+                const ddFromStreak = isNum(streak) ? (1 - Math.pow(0.98, streak)) : NaN;
+                const safeRisk = 1 - Math.pow(0.8, 1 / 10);       // 10-loss streak inside a 20% DD
+
+                const out = $('dd-out');
+                if (out) {
+                    out.innerHTML =
+                        tile('Current drawdown', pct(dd * 100, 2), dd > 0.2 ? 'bad' : (dd > 0.1 ? 'warn' : 'good'), money(peak - nowE, 0)) +
+                        tile('Gain to recover', pct(gainNeeded * 100, 2), gainNeeded > 0.25 ? 'bad' : (gainNeeded > 0.1 ? 'warn' : 'good'), 'back to ' + money(peak, 0)) +
+                        tile('Likely worst streak', isNum(streak) ? streak + ' losses' : '—', streak > 8 ? 'warn' : '', 'in ' + n + ' trades at ' + num(wr * 100, 0) + '% win rate') +
+                        tile('DD from that streak', pct(ddFromStreak * 100, 1), ddFromStreak > 0.2 ? 'bad' : 'warn', 'at 2% risk per trade');
+                }
+
+                const table = $('dd-table');
+                if (table) {
+                    let rows = '';
+                    [10, 20, 30, 40, 50, 60].forEach(function (d) {
+                        const recovery = d / 100 / (1 - d / 100);
+                        rows += '<tr>' +
+                            '<td class="strong">-' + d + '%</td>' +
+                            '<td class="num strong">+' + num(recovery * 100, 1) + '%</td>' +
+                            '<td class="num">' + num(recovery / 0.02, 0) + ' trades</td>' +
+                            '</tr>';
+                    });
+                    table.innerHTML = rows;
+                }
+
+                const surv = $('dd-survive');
+                if (surv) {
+                    surv.innerHTML =
+                        '<div class="res-grid">' +
+                        tile('Worst streak', isNum(streak) ? streak : '—', '', 'at ' + num(wr * 100, 0) + '% win rate') +
+                        tile('Survivable risk', pct(safeRisk * 100, 2), 'good', 'keeps a 10-loss run inside −20%') +
+                        tile('Risk to clear ' + (isNum(streak) ? streak : '—') + ' losses', pct((1 - Math.pow(0.8, 1 / (isNum(streak) ? streak : 1))) * 100, 2), '', 'and stay above −20%') +
+                        tile('Trades to recover', isNum(gainNeeded) ? num(gainNeeded / 0.02, 0) : '—', '', 'at 2% gained per winning trade') +
+                        '</div>';
+                }
+            }
+
+            /* ================================================================
+               4. Pip / point value
+               ================================================================ */
+            let pvDir = 'Long';
+            function runPip() {
+                const spec = specOf($('pv-symbol').value);
+                const lots = val('pv-lots', 0);
+                const entry = val('pv-entry', NaN);
+                const exit = val('pv-exit', NaN);
+                const pipVal = builtinPipValue(spec);
+                const move = (pvDir === 'Long' ? 1 : -1) * (exit - entry);
+                const pips = move / spec.pip;
+                const points = move / spec.point;
+                const pnl = move * spec.units * lots * (spec.jpy ? 1 / REF_USDJPY : 1);
+
+                const out = $('pv-out');
+                if (out) {
+                    out.innerHTML =
+                        tile('Result', money(pnl, 2), pnl >= 0 ? 'good' : 'bad', pvDir + ' ' + num(lots, 2) + ' lots') +
+                        tile('Move', isNum(pips) ? num(pips, 1) + ' pips' : '—', '', num(points, points < 10 ? 2 : 0) + ' points') +
+                        tile('Value per pip', money(pipVal * lots, 2), '', 'at this size') +
+                        tile('Value per point', money(pipVal * (spec.pip / spec.point) * lots, 2), '', 'minimum tick = ' + num(spec.point, spec.dec));
+                }
+
+                const note = $('pv-note');
+                if (note) note.textContent = spec.name + (spec.jpy ? ' (auto at ' + num(REF_USDJPY, 0) + ' USD/JPY)' : '');
+
+                const table = $('pv-table');
+                if (table) {
+                    let rows = '';
+                    [0.01, 0.1, 1, 5].forEach(function (l) {
+                        rows += '<tr>' +
+                            '<td class="strong">' + num(l, 2) + ' lots</td>' +
+                            '<td class="num">' + money(pipVal * l, 2) + '</td>' +
+                            '<td class="num">' + money(pipVal * (spec.pip / spec.point) * l, 2) + '</td>' +
+                            '<td class="num">' + money(pipVal * l * 10, 2) + '</td>' +
+                            '<td class="num">' + money(pipVal * l * 50, 2) + '</td>' +
+                            '</tr>';
+                    });
+                    table.innerHTML = rows;
+                }
+                return spec;
+            }
+
+            /* ================================================================
+               5. Session clock
+               UTC windows in minutes-of-day. The 23:00→08:00 Asian window wraps.
+               ================================================================ */
+            const SESSIONS = [
+                { key: 'asia',   name: 'Asian',       start: 23 * 60, end: 8 * 60,  color: '#6366f1' },
+                { key: 'london', name: 'London',      start: 7 * 60,  end: 16 * 60, color: '#10b981' },
+                { key: 'nyam',   name: 'New York AM', start: 12 * 60, end: 16 * 60, color: '#f59e0b' },
+                { key: 'nypm',   name: 'New York PM', start: 16 * 60, end: 21 * 60, color: '#3b82f6' }
+            ];
+            const WRAP = 1440;
+            function utcMinutes() {
+                const d = new Date();
+                return d.getUTCHours() * 60 + d.getUTCMinutes() + d.getUTCSeconds() / 60;
+            }
+            function localMinutes() {
+                const d = new Date();
+                return d.getHours() * 60 + d.getMinutes() + d.getSeconds() / 60;
+            }
+            function tzOffset() { return -new Date().getTimezoneOffset(); }
+            function withinWindow(nowMin, start, end) {
+                const dur = ((end - start) % WRAP + WRAP) % WRAP;
+                const passed = ((nowMin - start) % WRAP + WRAP) % WRAP;
+                return { open: passed < dur, progress: dur > 0 ? passed / dur : 0, remaining: dur - passed };
+            }
+            function hhmm(minutes) {
+                const m = ((Math.round(minutes) % WRAP) + WRAP) % WRAP;
+                return String(Math.floor(m / 60)).padStart(2, '0') + ':' + String(m % 60).padStart(2, '0');
+            }
+            function humanSpan(mins) {
+                const t = Math.max(0, Math.round(mins));
+                const h = Math.floor(t / 60), m = t % 60;
+                return (h ? h + 'h ' : '') + m + 'm';
+            }
+            function shiftWindow(start, end, offset) {
+                return { start: ((start + offset) % WRAP + WRAP) % WRAP, end: ((end + offset) % WRAP + WRAP) % WRAP };
+            }
+            function openSessions(nowMin) {
+                return SESSIONS.filter(s => withinWindow(nowMin, s.start, s.end).open);
+            }
+
+            function renderSessions() {
+                const nowUtc = utcMinutes();
+                const off = tzOffset();
+                const rows = $('sess-rows');
+                if (!rows) return;
+
+                let html = '';
+                SESSIONS.forEach(function (s) {
+                    const w = withinWindow(nowUtc, s.start, s.end);
+                    const loc = shiftWindow(s.start, s.end, off);
+                    const pctFill = Math.round(w.progress * 100);
+                    const state = w.open
+                        ? '<span class="sess-state" style="color:var(--tm-green)">Open · closes in ' + humanSpan(w.remaining) + '</span>'
+                        : '<span class="sess-state" style="color:var(--tm-dim)">Closed · opens in ' + humanSpan(((s.start - nowUtc) % WRAP + WRAP) % WRAP) + '</span>';
+                    html += '<div class="sess-row' + (w.open ? ' open' : '') + '">' +
+                        '<span class="dot ' + (w.open ? 'dot-open' : 'dot-closed') + '"></span>' +
+                        '<span class="sess-name">' + esc(s.name) + '</span>' +
+                        '<span class="sess-win num">' + hhmm(loc.start) + '–' + hhmm(loc.end) + '</span>' +
+                        '<span class="sess-track"><span class="sess-fill' + (w.open ? '' : ' pending') + '" style="width:' + (w.open ? pctFill : 0) + '%"></span></span>' +
+                        state +
+                        '</div>';
+                });
+                rows.innerHTML = html;
+
+                const clock = $('sess-clock');
+                if (clock) {
+                    const d = new Date();
+                    clock.textContent = String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0') + ':' + String(d.getSeconds()).padStart(2, '0');
+                }
+                const tz = $('sess-tz');
+                if (tz) {
+                    const sign = off >= 0 ? '+' : '-';
+                    const abs = Math.abs(off);
+                    const hh = Math.floor(abs / 60), mm = abs % 60;
+                    tz.textContent = 'UTC' + sign + hh + (mm ? ':' + String(mm).padStart(2, '0') : '');
+                }
+                const utcLabel = $('sess-utc');
+                if (utcLabel) utcLabel.textContent = 'UTC ' + hhmm(nowUtc) + ' · local ' + hhmm(localMinutes());
+
+                /* 24h timeline — wrapped windows render as two segments */
+                const tl = $('sess-timeline');
+                if (tl) {
+                    let segs = '';
+                    SESSIONS.forEach(function (s) {
+                        const loc = shiftWindow(s.start, s.end, off);
+                        const dur = ((s.end - s.start) % WRAP + WRAP) % WRAP;
+                        const wraps = (loc.start + dur) > WRAP;
+                        const first = wraps ? WRAP - loc.start : dur;
+                        const second = dur - first;
+                        segs += '<span class="tl-seg" style="left:' + (loc.start / WRAP * 100) + '%;width:' + (first / WRAP * 100) + '%;background:' + s.color + '"></span>';
+                        if (wraps && second > 0) {
+                            segs += '<span class="tl-seg" style="left:0;width:' + (second / WRAP * 100) + '%;background:' + s.color + '"></span>';
+                        }
+                    });
+                    let ticks = '';
+                    for (let h = 0; h < 24; h += 3) {
+                        ticks += '<span class="tl-hour" style="left:' + (h / 24 * 100) + '%"></span>';
+                    }
+                    segs += ticks + '<span class="tl-now" style="left:' + (localMinutes() / WRAP * 100) + '%" title="Now"></span>';
+                    tl.innerHTML = segs;
+                }
+
+                /* topbar chip + a shared global other pages read when present */
+                const names = openSessions(nowUtc).map(s => s.name);
+                const label = names.length ? names.join(' + ') + ' open' : 'No session open';
+                const chip = $('session-chip-text');
+                if (chip) chip.textContent = label + ' · ' + hhmm(localMinutes());
+                window.TM_SESSION_INFO = { label: label, time: hhmm(localMinutes()) };
+            }
+
+            /* ================================================================
+               6. Target planner
+               ================================================================ */
+            function growthPerTrade(risk, wr, aw, al, fees, balance) {
+                const feePct = balance > 0 ? fees / balance : 0;
+                const winFactor = 1 + (risk * aw) - feePct;
+                const lossFactor = 1 - (risk * al) - feePct;
+                return Math.pow(Math.max(winFactor, 0.0001), wr) * Math.pow(Math.max(lossFactor, 0.0001), 1 - wr);
+            }
+            function runPlanner() {
+                const start = val('pl-start', 0);
+                const target = val('pl-target', 0);
+                const risk = val('pl-risk', 0) / 100;
+                const wr = val('pl-wr', 0) / 100;
+                const aw = val('pl-aw', 0);
+                const al = val('pl-al', 0);
+                const perWeek = intVal('pl-week', 0);
+                const fees = val('pl-fees', 0);
+
+                const g = growthPerTrade(risk, wr, aw, al, fees, start);
+                const perTrade = (g - 1) * 100;
+                const needed = perTrade > 0 ? Math.log(target / start) / Math.log(g) : NaN;
+                const weeks = isNum(needed) && perWeek > 0 ? needed / perWeek : NaN;
+                const zeroFeeG = growthPerTrade(risk, wr, aw, al, 0, start);
+
+                const d = new Date();
+                const eta = isNum(weeks) ? new Date(d.getTime() + weeks * 7 * 86400000) : null;
+
+                const out = $('pl-out');
+                if (out) {
+                    out.innerHTML =
+                        tile('Growth per trade', pct(perTrade, 3), perTrade > 0 ? 'good' : 'bad', 'geometric expectancy') +
+                        tile('Trades to target', isNum(needed) ? num(needed, 0) : '—', isNum(needed) ? '' : 'bad', isNum(needed) ? money(start, 0) + ' → ' + money(target, 0) : 'this edge does not compound') +
+                        tile('Weeks to target', isNum(weeks) ? num(weeks, 1) : '—', '', perWeek + ' trades a week') +
+                        tile('Target date', eta ? eta.toISOString().slice(0, 10) : '—', '', isNum(weeks) ? 'at this pace' : 'no path at this risk') +
+                        tile('After 20 trades', money(start * Math.pow(g, 20), 0), '', 'compounded') +
+                        tile('After 52 weeks', money(start * Math.pow(g, perWeek * 52), 0), '', 'compounded') +
+                        tile('Fees drag', pct((g - zeroFeeG) * 100, 3), fees > 0 ? 'warn' : '', fees > 0 ? money(fees, 2) + ' per trade' : 'no costs in the model') +
+                        tile('Doubling time', perTrade > 0 ? num(Math.log(2) / Math.log(g), 0) + ' trades' : '—', '', perTrade > 0 ? 'to double the account' : 'needs positive growth');
+                }
+
+                const badge = $('pl-badge');
+                if (badge) {
+                    badge.className = 'tag ' + (perTrade > 0.5 ? 'tag-emerald' : (perTrade > 0 ? 'tag-amber' : 'tag-red'));
+                    badge.textContent = perTrade > 0 ? pct(perTrade, 2) + ' per trade' : 'no compounding edge';
+                }
+
+                /* equity path */
+                const svg = $('pl-curve');
+                const curveNote = $('pl-curve-note');
+                if (svg) {
+                    const W = 300, H = 92, pad = 4;
+                    const span = isNum(needed) ? Math.min(needed, 2000) : 200;
+                    const steps = 60;
+                    const pts = [];
+                    let lo = Infinity, hi = -Infinity;
+                    for (let i = 0; i <= steps; i++) {
+                        const t = span * i / steps;
+                        const bal = start * Math.pow(g, t);
+                        pts.push(bal);
+                        if (bal < lo) lo = bal;
+                        if (bal > hi) hi = bal;
+                    }
+                    if (!isFinite(lo) || !isFinite(hi) || hi === lo) { lo = 0; hi = Math.max(target, start); }
+                    const x = i => pad + (W - pad * 2) * (i / steps);
+                    const y = v => H - pad - (H - pad * 2) * ((v - lo) / (hi - lo));
+                    const line = pts.map((v, i) => (i ? 'L' : 'M') + x(i).toFixed(1) + ' ' + y(v).toFixed(1)).join(' ');
+                    const area = line + ' L' + x(steps).toFixed(1) + ' ' + (H - pad) + ' L' + x(0).toFixed(1) + ' ' + (H - pad) + ' Z';
+                    const targetLine = (target >= lo && target <= hi)
+                        ? '<line x1="' + pad + '" y1="' + y(target).toFixed(1) + '" x2="' + (W - pad) + '" y2="' + y(target).toFixed(1) + '" stroke="var(--tm-amber)" stroke-width="1" stroke-dasharray="4 4" opacity="0.7"></line>'
+                        : '';
+                    svg.innerHTML =
+                        '<defs><linearGradient id="plFill" x1="0" y1="0" x2="0" y2="1">' +
+                        '<stop offset="0%" stop-color="#10b981" stop-opacity="0.30"></stop>' +
+                        '<stop offset="100%" stop-color="#10b981" stop-opacity="0"></stop>' +
+                        '</linearGradient></defs>' +
+                        targetLine +
+                        '<path d="' + area + '" fill="url(#plFill)"></path>' +
+                        '<path d="' + line + '" fill="none" stroke="#10b981" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"></path>';
+                    if (curveNote) {
+                        curveNote.textContent = isNum(needed)
+                            ? money(lo, 0) + ' → ' + money(hi, 0) + ' over ' + num(span, 0) + ' trades'
+                            : 'no positive growth path at these inputs';
+                    }
+                }
+            }
+
+            /* ================================================================
+               Pre-trade check — same shared core the Risk page uses
+               ================================================================ */
+            function accountId() {
+                const core = window.TradeMindCore;
+                if (!core) return null;
+                try {
+                    if (core.selectedAccountId) {
+                        const sel = core.selectedAccountId();
+                        if (sel) return sel;
+                    }
+                    if (core.Accounts && core.Accounts.length) return core.Accounts[0].id;
+                } catch (e) { }
+                return null;
+            }
+            function refreshAccountTag() {
+                const tag = $('pt-acc');
+                const core = window.TradeMindCore;
+                if (!tag) return;
+                if (!core || !core.Accounts || !core.Accounts.length) {
+                    tag.className = 'tag tag-gray';
+                    tag.textContent = 'no account';
+                    return;
+                }
+                const id = accountId();
+                const acc = core.Accounts.filter(a => a.id === id)[0] || core.Accounts[0];
+                tag.className = 'tag tag-blue';
+                tag.textContent = acc && acc.name ? acc.name : 'account';
+            }
+            function runPreTrade() {
+                const el = $('pt-result');
+                if (!el) return;
+                const core = window.TradeMindCore;
+                const id = accountId();
+                if (!core || !id) {
+                    el.innerHTML = '<div class="pt-status"><svg data-lucide="sliders-horizontal" class="w-4 h-4 text-[var(--tm-dim)]"></svg><span>No account found in this session, so the constraint check is unavailable. The position sizing above still applies.</span></div>';
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+                const draft = {
+                    risk: runSize(),
+                    session: $('pt-session') ? ($('pt-session').value || undefined) : undefined,
+                    setup: $('pt-setup') ? ($('pt-setup').value || undefined) : undefined
+                };
+                let res = null;
+                try { res = core.preTradeCheck(id, draft); } catch (e) { res = { error: e && e.message ? e.message : 'check failed' }; }
+                if (res && res.error) {
+                    el.innerHTML = '<div class="pt-status"><svg data-lucide="alert-triangle" class="w-4 h-4 text-[var(--tm-red)]"></svg><span>' + esc(res.error) + '</span></div>';
+                    if (window.lucide) lucide.createIcons();
+                    return;
+                }
+                const ok = res && (res.ok === true || res.status === 'ok' || res.allowed === true || res.verdict === 'pass');
+                const verdict = res && (res.verdict || res.status || res.result) ? String(res.verdict || res.status || res.result) : (ok ? 'pass' : 'review');
+                const reasons = []
+                    .concat(res && res.reasons ? res.reasons : [])
+                    .concat(res && res.violations ? res.violations : [])
+                    .concat(res && res.notes ? res.notes : [])
+                    .map(x => (typeof x === 'string' ? x : (x && (x.message || x.reason || x.label)) || ''))
+                    .filter(Boolean);
+                const colour = ok ? 'var(--tm-green)' : 'var(--tm-amber)';
+                const icon = ok ? 'shield-check' : 'shield-alert';
+                el.innerHTML = '<div class="pt-status" style="border-color:' + colour + '33">' +
+                    '<svg data-lucide="' + icon + '" class="w-4 h-4" style="color:' + colour + '"></svg>' +
+                    '<span><strong style="color:' + colour + '">' + esc(verdict.toUpperCase()) + '</strong>' +
+                    (reasons.length ? ' — ' + esc(reasons.join(' · ')) : ' — risk of ' + money(draft.risk, 0) + ' is inside your configured limits.') +
+                    '</span></div>';
+                if (window.lucide) lucide.createIcons();
+            }
+
+            /* ================================================================
+               Persistence + wiring
+               ================================================================ */
+            const STORE = '31trades.tools.v1';
+            function saveParams() {
+                const o = {};
+                $$('[data-persist]').forEach(function (el) {
+                    if (!el.id) return;
+                    o[el.id] = el.value;
+                });
+                o['__dir'] = { size: sizeDir, pip: pvDir };
+                try { localStorage.setItem(STORE, JSON.stringify(o)); } catch (e) { }
+            }
+            function loadParams() {
+                let o = {};
+                try { o = JSON.parse(localStorage.getItem(STORE) || '{}') || {}; } catch (e) { o = {}; }
+                Object.keys(o).forEach(function (k) {
+                    if (k === '__dir') return;
+                    const el = $(k);
+                    if (el && typeof o[k] === 'string') el.value = o[k];
+                });
+                if (o.__dir) {
+                    if (o.__dir.size === 'Short' || o.__dir.size === 'Long') sizeDir = o.__dir.size;
+                    if (o.__dir.pip === 'Short' || o.__dir.pip === 'Long') pvDir = o.__dir.pip;
+                }
+                pipValTouched = !!o['sz-pipval'];
+            }
+
+            function paintSeg(container, dir) {
+                $$('#' + container + ' button').forEach(function (b) {
+                    b.classList.toggle('on', b.getAttribute('data-dir') === dir);
+                });
+            }
+
+            function runAll() {
+                runSize();
+                runExpectancy();
+                runDrawdown();
+                runPip();
+                runPlanner();
+                renderSessions();
+            }
+
+            function wireSeg(container, set) {
+                const el = $(container);
+                if (!el) return;
+                el.addEventListener('click', function (e) {
+                    const btn = e.target.closest ? e.target.closest('button[data-dir]') : null;
+                    if (!btn) return;
+                    const dir = btn.getAttribute('data-dir');
+                    set(dir);
+                    paintSeg(container, dir);
+                    runAll();
+                    saveParams();
+                });
+            }
+
+            function boot() {
+                fillSymbolSelect($('sz-symbol'));
+                fillSymbolSelect($('pv-symbol'));
+                loadParams();
+                paintSeg('sz-dir', sizeDir);
+                paintSeg('pv-dir', pvDir);
+
+                const pipInput = $('sz-pipval');
+                if (pipInput) {
+                    pipInput.addEventListener('input', function () { pipValTouched = true; runSize(); saveParams(); });
+                }
+                const symSel = $('sz-symbol');
+                if (symSel) {
+                    symSel.addEventListener('change', function () { pipValTouched = false; syncPipValue(); runAll(); saveParams(); });
+                }
+
+                wireSeg('sz-dir', function (d) { sizeDir = d; });
+                wireSeg('pv-dir', function (d) { pvDir = d; });
+
+                $$('[data-persist]').forEach(function (el) {
+                    el.addEventListener('input', function () { runAll(); saveParams(); });
+                    el.addEventListener('change', function () { runAll(); saveParams(); });
+                });
+
+                const runBtn = $('pt-run');
+                if (runBtn) runBtn.addEventListener('click', runPreTrade);
+                const nowBtn = $('pt-now');
+                if (nowBtn) {
+                    nowBtn.addEventListener('click', function () {
+                        const open = openSessions(utcMinutes());
+                        const pick = open.length ? open[0].name : '';
+                        const sel = $('pt-session');
+                        if (sel) {
+                            const target = pick.indexOf('New York') === 0 ? 'New York' : pick;
+                            sel.value = target;
+                        }
+                        showToast(pick ? pick + ' is open' : 'No session open right now');
+                    });
+                }
+                const resetBtn = $('reset-all');
+                if (resetBtn) {
+                    resetBtn.addEventListener('click', function () {
+                        try { localStorage.removeItem(STORE); } catch (e) { }
+                        window.location.reload();
+                    });
+                }
+
+                /* topbar chrome */
+                const chip = $('acc-chip');
+                const core = window.TradeMindCore;
+                if (chip && core && core.Accounts && core.Accounts.length) {
+                    const acc = core.Accounts.filter(a => a.id === accountId())[0] || core.Accounts[0];
+                    if (acc) {
+                        const eq = Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0);
+                        chip.innerHTML = '<span class="num text-[12px]">' + eq.toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
+                    }
+                }
+                let uname = 'trader';
+                try {
+                    const s = window.TradeMindAuth && window.TradeMindAuth.getSession ? window.TradeMindAuth.getSession() : null;
+                    const u = (s && s.user) || null;
+                    if (u && u.name) uname = String(u.name).split(/[\s@]/)[0];
+                    else if (u && u.email) uname = String(u.email).split('@')[0].split(/[._-]/)[0];
+                } catch (e) { }
+                const pname = $('profile-name');
+                if (pname) pname.textContent = uname.charAt(0).toUpperCase() + uname.slice(1);
+                refreshAccountTag();
+
+                /* populate sizes + first paint */
+                syncPipValue();
+                if (pipValTouched && pipInput) { /* keep the saved override */ }
+                runAll();
+                saveParams();
+                refreshAccountTag();
+
+                if (window.lucide) lucide.createIcons();
+
+                /* live clock: the session rows and the topbar chip */
+                setInterval(renderSessions, 1000);
+            }
+
+            let toastTimer;
+            function showToast(msg) {
+                const t = $('toast');
+                if (!t) return;
+                $('toast-msg').textContent = msg;
+                t.classList.add('show');
+                clearTimeout(toastTimer);
+                toastTimer = setTimeout(function () { t.classList.remove('show'); }, 2400);
+            }
+            window.showToast = showToast;
+
+            if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+            else boot();
+        })();
+    </script>
+
+    <script src="assets/tour.js"></script>
+    <script src="assets/profile-meta.js"></script>
+    <script src="assets/account-switcher.js"></script>
+    <script src="reset.js"></script>
+</body>
+</html>

@@ -66,7 +66,7 @@ Core.seedDemoAccount(12);
 Core.ConfigAPI.createAccount({ name: 'Second', start: 2000, dailyLoss: 60, maxDD: 300, risk: 15 }, 'acc-2');
 Core.ConfigAPI.createStrategy({ name: 'Sweep', desc: '', color: '#0EA5E9', markets: 'FX', sessions: ['London'], setup: 'Sweep', riskPerTrade: '1%', minRR: 1.5, stopRequired: true, entry: '', exit: '', behavior: [], evidence: [], tags: [] }, 'strat-sweep');
 Core.logTradePipeline({ account_id: 'acc-prop', strategy_id: 'strat-lfvg', symbol: 'XAUUSD', dir: 'Short', entry: 2350, exit: 2347.5, size: 0.5, risk: 25, pnl: 125, setup: 'MSS + FVG', session: 'London', emotion: 'Calm', strategy: 'London FVG', adherence: 'followed' });
-Core.TradeService.update(Core.Trades[0].id, { risk: 30, note: 'edited' });
+Core.TradeService.update(Core.Trades[0].id, { risk: 30, note: 'edited', reflection_tags: 'thesis,fomo', chart_url: 'data:image/png;base64,AAA' });
 Core.ConfigAPI.recordManualChange('test manual change');
 const state = Core.serializeState();
 
@@ -93,8 +93,10 @@ while ((m = re.exec(migText))) {
     });
     tableCols[m[1]] = cols;
 }
-// migration 003 adds user_id via ALTER TABLE … ADD COLUMN — fold those in too.
-const reAlter = /ALTER TABLE\s+(\w+)\s+ADD COLUMN\s+(\w+)/g;
+// migration 003 adds user_id via ALTER TABLE … ADD COLUMN, and 013 adds
+// chart_url + reflection_tags as "ADD COLUMN IF NOT EXISTS" — fold both forms in,
+// otherwise a legitimately migrated column reads as unknown here.
+const reAlter = /ALTER TABLE\s+(\w+)\s+ADD COLUMN\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)/gi;
 while ((m = reAlter.exec(migText))) {
     (tableCols[m[1]] = tableCols[m[1]] || []).push(m[2]);
 }
@@ -141,6 +143,11 @@ check('account equity is a number', S2.Accounts[0] && typeof S2.Accounts[0].curr
 check('trade versions frozen', t1 && t1.config_version_id === t0.config_version_id && t1.strategy_version_id === t0.strategy_version_id);
 check('trade ts preserved', t1 && new Date(t1.ts).getTime() === new Date(t0.ts).getTime());
 check('trade reviewed bool', t1 && !!t1.reviewed === !!t0.reviewed);
+// TABLE_COLUMNS and the INSERT value list are positional and hand-written, so a
+// new column without a matching value silently shifts every field after it.
+check('trade note preserved (positional alignment)', t1 && t1.note === t0.note, t1 && t1.note);
+check('trade reflection_tags survive the round-trip', t1 && t1.reflection_tags === t0.reflection_tags && t0.reflection_tags === 'thesis,fomo', t1 && t1.reflection_tags);
+check('trade chart_url survives the round-trip', t1 && t1.chart_url === t0.chart_url && !!t0.chart_url, t1 && String(t1.chart_url).slice(0, 20));
 
 const c0 = state.ConfigVersions.find(c => c.entity_type === 'RiskPolicy');
 const c1 = S2.ConfigVersions.find(c => c.id === c0.id);

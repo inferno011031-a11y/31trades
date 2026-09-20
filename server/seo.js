@@ -206,7 +206,7 @@ const PRIVATE_ROUTES = [
     '/dashboard', '/journal', '/review', '/improve', '/insights', '/analytics',
     '/ai-mentor', '/backtesting', '/strategy-lab', '/market-replay', '/risk',
     '/discipline', '/calendar', '/community', '/reports', '/notifications',
-    '/settings', '/imports', '/battles'
+    '/settings', '/imports', '/battles', '/leaderboard', '/tools'
 ];
 
 const PRIVATE_FILES = [
@@ -214,7 +214,8 @@ const PRIVATE_FILES = [
     'battles.html', 'calendar.html', 'community.html', 'dashboard.html',
     'discipline.html', 'help.html', 'imports.html', 'improve.html',
     'insights.html', 'journal.html', 'notifications.html', 'replay.html',
-    'reports.html', 'review.html', 'risk.html', 'settings.html', 'strategy-lab.html'
+    'reports.html', 'review.html', 'risk.html', 'settings.html', 'strategy-lab.html',
+    'leaderboard.html', 'tools.html'
 ];
 
 /* ---------------------------------------------------------------------------
@@ -246,6 +247,8 @@ const REDIRECTS = {
     '/settings': '/settings.html',
     '/imports': '/imports.html',
     '/battles': '/battles.html',
+    '/leaderboard': '/leaderboard.html',
+    '/tools': '/tools.html',
     '/auth': '/auth.html'
 };
 

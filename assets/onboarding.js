@@ -136,7 +136,7 @@
             return '<div class="flex items-start gap-3.5 px-4 py-3 rounded-xl transition-colors ' +
                 (stateCls === 'current' ? 'style="background:linear-gradient(135deg,rgba(99,102,241,0.10),rgba(52,211,153,0.06));border:1px solid rgba(129,140,248,0.30)"' : '') +
                 (stateCls === 'done' ? ' style="opacity:0.55"' : '') + '>' +
-                '<div class="num text-[12px] font-extrabold pt-0.5 flex-shrink-0 ' + (stateCls === 'current' ? 'text-[var(--tm-accent-2)]' : 'text-[var(--tm-dim)]') + '">' + s.num + '</div>' +
+                '<div class="num text-[12px] font-extrabold pt-0.5 flex-shrink-0 ' + (stateCls === 'current' ? 'fg-indigo' : 'text-[var(--tm-dim)]') + '">' + s.num + '</div>' +
                 '<div class="flex-1 min-w-0">' +
                     '<div class="text-[13.5px] font-bold ' + (stateCls === 'current' ? '' : '') + '">' + esc(s.label) + '</div>' +
                     '<div class="text-[12px] text-[var(--tm-dim)] mt-0.5 leading-relaxed">' + esc(s.sub) + '</div>' +

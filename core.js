@@ -23,11 +23,17 @@
    core every other page uses (mutations replay to the API / get adopted on
    the next page load).
 
-   Pages must load demo-trades.js and src/core/index.js BEFORE core.js:
+   Pages must load demo-trades.js, src/merge.js and src/core/index.js BEFORE
+   core.js:
 
        <script src="demo-trades.js"></script>
+       <script src="src/merge.js"></script>
        <script src="src/core/index.js"></script>
        <script src="core.js"></script>
+
+   src/merge.js holds the record-by-record reconciliation used by adoptState()
+   below — server data is only ever overwritten by records that are actually
+   newer (see src/merge.js for the full precedence rules).
    ========================================================================== */
 (function () {
     'use strict';
@@ -81,6 +87,37 @@
     let backendOnline = false;
     let _syncChain = Promise.resolve();
 
+    // The state this browser last held, and the baseline every stamp is measured
+    // against: a record whose content differs from this snapshot was edited HERE,
+    // and only those records may out-rank the server (src/merge.js).
+    let lastSaved = null;
+
+    // Hashes of the SERVER's copies as this client last saw them. Reconciliation
+    // compares content against this, so "the server changed it" is provable even
+    // though the store hands back no usable timestamps (Postgres never maps its
+    // updated_at back on read). Persisted, so an edit from an earlier session
+    // stays provable after a reload.
+    let syncBaseline = null;
+    let baselineKey = null;
+
+    function loadBaseline() {
+        try {
+            const raw = baselineKey ? window.localStorage.getItem(baselineKey) : null;
+            syncBaseline = raw ? JSON.parse(raw) : null;
+        } catch (e) { syncBaseline = null; }
+        return syncBaseline;
+    }
+
+    // Called ONLY after the server provably holds `state` (push succeeded, or the
+    // adopt needed no push). If a push fails, the old baseline must survive so the
+    // local edits stay provable on the next attempt.
+    function saveBaseline(state) {
+        const Merge = window.TradeMindMerge;
+        if (!Merge || typeof Merge.hashState !== 'function' || !baselineKey) return;
+        syncBaseline = Merge.hashState(state);
+        try { window.localStorage.setItem(baselineKey, JSON.stringify(syncBaseline)); } catch (e) {}
+    }
+
     function currentSession() {
         return BYPASS ? null : getSession();
     }
@@ -122,38 +159,99 @@
             .catch(err => console.warn('[31trades] backend sync failed: ' + err.message));
     }
 
-    // Two-way reconciliation: if server has state, adopt server state; else push local state.
+    // ---- Two-way reconciliation, RECORD BY RECORD.
+    //
+    // This used to compare TRADE COUNTS: if the local store merely held more
+    // trades than the server, the client POSTed its entire local state over the
+    // server. A count is not a recency signal, so a stale browser snapshot could
+    // revert server fields it never touched — real data loss (a note and the R on
+    // one trade were wiped that way, with no audit entry, because it did not go
+    // through TradeService.update).
+    //
+    // Now every record is merged by its modification stamp (src/merge.js):
+    //   · only on the server      → kept, never pushed
+    //   · only locally            → kept AND pushed (genuine offline work)
+    //   · on both, local strictly newer → local kept and pushed
+    //   · otherwise (stale/equal/no stamp) → the SERVER's copy is kept
+    // The merged result is a superset of the server state, which is exactly what
+    // makes the single whole-state POST below safe.
+    //
+    // `force` (the live 'ledger.changed' websocket ping) now only means "re-pull
+    // now" — it never grants the client permission to overwrite the server.
     async function adoptState(force) {
+        const Merge = window.TradeMindMerge;
         try {
             const stateRes = await fetch(API_ROOT + '/api/state', {
                 method: 'GET',
                 headers: authHeaders({ Accept: 'application/json' })
             });
-            if (stateRes.ok) {
-                const serverState = await stateRes.json();
-                const serverTradeCount = (serverState && Array.isArray(serverState.Trades)) ? serverState.Trades.length : 0;
-                const localTradeCount = (core.Trades ? core.Trades.length : 0);
-
-                // If server has trades or server was updated or force adoption
-                if (serverState && Array.isArray(serverState.Trades) && (force || serverTradeCount >= localTradeCount || localTradeCount === 0)) {
-                    core.hydrate(serverState);
-                    if (repo && typeof repo.save === 'function') repo.save(core.serializeState());
-                    core.TradeMindBus.publish('state.hydrated', core.serializeState());
-                    core.TradeMindBus.publish('config.changed', { hydrated: true });
-                    console.log('[31trades] client hydrated ' + core.Trades.length + ' trades from backend server');
-                    return true;
-                }
+            if (!stateRes.ok) {
+                // An unreadable server is NOT an empty server — pushing here is how
+                // a 500/401 used to clobber the backend with local data.
+                if (stateRes.status === 401 && currentSession()) sessionExpired();
+                console.warn('[31trades] backend state unreadable (HTTP ' + stateRes.status + ') — staying local-only');
+                return false;
             }
 
-            // Otherwise push local state if local has trades or server is empty
-            const r = await fetch(API_ROOT + '/api/state', {
-                method: 'POST',
-                headers: authHeaders(),
-                body: JSON.stringify(core.serializeState())
-            });
-            if (r.status === 401 && currentSession()) sessionExpired();
-            if (!r.ok) throw new Error('adopt → HTTP ' + r.status);
-            console.log('[31trades] backend adopted local state (' + core.Trades.length + ' trades, ' + core.Accounts.length + ' accounts)');
+            const serverState = await stateRes.json();
+            // Which records did THIS client edit since it last synced? Those — and
+            // only those — may out-rank the server, and they are stamped here so the
+            // merge can see it even if the edit never reached storage yet.
+            const snapshot = core.serializeState();
+            const canStamp = !!(Merge && typeof Merge.stampChanged === 'function');
+            const own = canStamp ? Merge.stampChanged({ previous: lastSaved, next: snapshot })
+                                : { state: snapshot, stamped: [] };
+            const localState = own.state;
+
+            if (!Merge || typeof Merge.mergeStates !== 'function') {
+                // Fail SAFE: without the merge module we may only READ the server.
+                console.error('[31trades] src/merge.js is missing — refusing to write over the server');
+                if (serverState && Array.isArray(serverState.Trades) && serverState.Trades.length) {
+                    core.hydrate(serverState);
+                    lastSaved = core.serializeState();
+                    if (repo && typeof repo.save === 'function') repo.save(core.serializeState());
+                    saveBaseline(core.serializeState());
+                    core.TradeMindBus.publish('state.hydrated', core.serializeState());
+                    core.TradeMindBus.publish('config.changed', { hydrated: true });
+                    console.log('[31trades] client hydrated ' + core.Trades.length + ' trades from backend server (merge module unavailable)');
+                    return true;
+                }
+                return false;
+            }
+
+            const plan = Merge.mergeStates({ server: serverState, local: localState, baseline: syncBaseline });
+            const s = plan.stats;
+            core.hydrate(plan.merged);
+            // The baseline is now what the client and server agree on, so nothing
+            // here looks like a local edit on the next pass.
+            lastSaved = core.serializeState();
+            if (repo && typeof repo.save === 'function') repo.save(core.serializeState());
+            core.TradeMindBus.publish('state.hydrated', core.serializeState());
+            core.TradeMindBus.publish('config.changed', { hydrated: true });
+            console.log('[31trades] synced with backend — ' + plan.decision +
+                ' · identical ' + s.identical + ', server-changed ' + s.serverEdited +
+                ', edited-here ' + s.localEdited + ', local-newer ' + s.localNewer +
+                ', local-only ' + s.localOnly + ', server-only ' + s.serverOnly +
+                ', conflicts-server ' + s.conflictServerWon + ', unproven ' + s.unproven +
+                ', log ' + s.logAdded +
+                (force ? ' (live change)' : '') +
+                ' → ' + core.Trades.length + ' trades, ' + core.Accounts.length + ' accounts');
+
+            // Push only when this client actually holds something the server does
+            // not, or is behind on — never just to re-assert local state.
+            if (plan.push.length) {
+                const r = await fetch(API_ROOT + '/api/state', {
+                    method: 'POST',
+                    headers: authHeaders(),
+                    body: JSON.stringify(plan.merged)
+                });
+                if (r.status === 401 && currentSession()) sessionExpired();
+                if (!r.ok) throw new Error('sync push → HTTP ' + r.status);
+                console.log('[31trades] pushed ' + plan.push.length + ' record(s) the server lacked or was behind on');
+            }
+            // Only now — with the server provably holding the merged state (or
+            // nothing needing to be sent) — is this the new baseline.
+            saveBaseline(plan.merged);
             return true;
         } catch (err) {
             console.warn('[31trades] backend sync/adopt failed: ' + err.message);
@@ -199,6 +297,8 @@
         // ---- persistence: localStorage adapter, keyed per user ----
         const userId = (!BYPASS && session.user && session.user.id) ? session.user.id : 'anon';
         const STORAGE_KEY = '31trades.state.v1' + (BYPASS ? '' : '.' + userId);
+        baselineKey = STORAGE_KEY + '.syncbase';
+        loadBaseline();
 
         repo = window.localStorage ? {
             load() {
@@ -207,8 +307,21 @@
                     return raw ? JSON.parse(raw) : null;
                 } catch (e) { console.warn('[31trades] storage read failed: ' + e.message); return null; }
             },
+            // Persisting is also where this client stamps its OWN edits: the store
+            // records which records it changed and when, so the next reconciliation
+            // (even after a reload) can tell "I edited this" from "this is stale".
             save(state) {
-                try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); return true; }
+                try {
+                    const Merge = window.TradeMindMerge;
+                    // No baseline yet = we cannot tell edits from staleness. Writing
+                    // unstamped is safe: unstamped always loses to the server.
+                    const stamped = (lastSaved && Merge && typeof Merge.stampChanged === 'function')
+                        ? Merge.stampChanged({ previous: lastSaved, next: state }).state
+                        : state;
+                    lastSaved = stamped;
+                    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stamped));
+                    return true;
+                }
                 catch (e) { console.warn('[31trades] storage write failed: ' + e.message); return false; }
             },
             clear() { try { window.localStorage.removeItem(STORAGE_KEY); } catch (e) {} }
@@ -232,6 +345,9 @@
             core.reseed();
             console.log('[31trades] first user — starting with zero trades');
         }
+        // Baseline for edit-stamping: exactly what this browser has right now, so
+        // nothing looks "edited" until the user actually changes it.
+        lastSaved = core.serializeState();
         core.TradeMindBus.publish('state.hydrated', core.serializeState());
         core.TradeMindBus.publish('config.changed', { hydrated: true });
 
@@ -249,6 +365,10 @@
                         const parsed = JSON.parse(e.newValue);
                         if (parsed && Array.isArray(parsed.Accounts) && Array.isArray(parsed.Trades)) {
                             core.hydrate(parsed);
+                            // `lastSaved` must keep meaning "what THIS browser last held",
+                            // otherwise the next save would stamp the other tab's records
+                            // as edits made here.
+                            lastSaved = parsed;
                             core.TradeMindBus.publish('state.hydrated', core.serializeState());
                             core.TradeMindBus.publish('config.changed', { hydrated: true });
                             console.log('[31trades] cross-tab sync hydrated ' + core.Trades.length + ' trades');

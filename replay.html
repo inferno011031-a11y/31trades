@@ -28,6 +28,7 @@
 
     <!-- Tailwind CSS CDN & Lucide -->
     <script src="assets/lightweight-charts.js"></script>
+    <script src="src/merge.js"></script>
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
@@ -148,7 +149,7 @@
         .tag-amber { background: rgba(245,158,11,0.10); color: var(--tm-amber); border-color: rgba(245,158,11,0.25); }
         .tag-gray { background: rgba(148,163,184,0.10); color: var(--tm-muted); border-color: var(--tm-border-2); }
         .tag-blue { background: rgba(59,130,246,0.10); color: var(--tm-blue); border-color: rgba(59,130,246,0.25); }
-        .tag-indigo { background: rgba(99,102,241,0.10); color: var(--tm-accent-2); border-color: rgba(99,102,241,0.25); }
+        /* .tag-indigo lives in assets/trademind-theme.css (theme-aware there). */
 
         .topbar { height: 56px; background: var(--tm-bg-elev); border-bottom: 1px solid var(--tm-border); }
         .search-input { background: var(--tm-card); border: 1px solid var(--tm-border-2); border-radius: 8px; padding: 8px 12px 8px 36px; font-size: 13px; color: var(--tm-text); width: 320px; outline: none; }
@@ -202,7 +203,7 @@
 
         @keyframes fadeUp { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
         .fade-up { animation: fadeUp 0.22s ease; }
-        
+        @media (max-width: 767px) {
             .topbar { padding-left: 12px; padding-right: 12px; }
             .chart-unavailable { min-height: 320px; }
         }
@@ -486,8 +487,23 @@
                             <svg data-lucide="swords"></svg><span class="nav-label">Battles</span>
                             <span class="sidebar-soon-badge">SOON</span>
                         </a>
+                        <a href="leaderboard.html" class="nav-item">
+                            <svg data-lucide="trophy"></svg><span class="nav-label">Leaderboard</span>
+                        </a>
                         <a href="backtesting.html" class="nav-item">
                             <svg data-lucide="flask-conical"></svg><span class="nav-label">Backtesting</span>
+                        </a>
+                    </div>
+                </div>
+                <!-- 6. TOOLS -->
+                <div class="sidebar-section" data-section="tools">
+                    <button type="button" class="sidebar-section-header">
+                        <span>TOOLS</span>
+                        <svg data-lucide="chevron-down" class="chevron-icon"></svg>
+                    </button>
+                    <div class="sidebar-section-items">
+                        <a href="tools.html" class="nav-item">
+                            <svg data-lucide="wrench"></svg><span class="nav-label">Tools</span>
                         </a>
                     </div>
                 </div>
@@ -614,7 +630,7 @@
                             <!-- Empty State overlay before session starts -->
                             <div id="chart-empty-hint" class="absolute inset-0 z-10 flex flex-col items-center justify-center bg-[#06080b]/90 pointer-events-none transition-opacity">
                                 <div class="w-12 h-12 rounded-2xl mb-3 flex items-center justify-center bg-white/[0.06] border border-[#202738]">
-                                    <svg data-lucide="candlestick-chart" class="w-6 h-6 text-[var(--tm-accent-2)]"></svg>
+                                    <svg data-lucide="candlestick-chart" class="w-6 h-6 text-[var(--tm-accent)]"></svg>
                                 </div>
                                 <div class="text-[14px] font-bold text-white">BattleX Market Replay Engine</div>
                                 <p class="text-[12px] text-[var(--tm-dim)] mt-1">Start a replay session to begin bar-by-bar market playback.</p>
@@ -631,7 +647,7 @@
                                     <span>Pause</span>
                                 </button>
                                 <button type="button" class="btn-mini !px-3 !py-1.5 !text-[11px] !bg-white/[0.10] text-white font-bold" data-ctrl="step" disabled title="Next Candle (Spacebar)">
-                                    <svg data-lucide="skip-forward" class="w-3.5 h-3.5 text-[var(--tm-accent-2)]"></svg>
+                                    <svg data-lucide="skip-forward" class="w-3.5 h-3.5 text-[var(--tm-accent)]"></svg>
                                     <span>Step</span>
                                 </button>
                                 <div class="w-[1px] h-4 bg-white/[0.12] mx-0.5"></div>
@@ -894,7 +910,7 @@
                             </p>
                         </div>
                         <div class="glass p-5 flex flex-col justify-center">
-                            <svg data-lucide="quote" class="w-5 h-5 text-[var(--tm-accent-2)] mb-2.5"></svg>
+                            <svg data-lucide="quote" class="w-5 h-5 text-[var(--tm-accent)] mb-2.5"></svg>
                             <div class="text-[15px] font-bold leading-snug">Do not predict the next candle. Read the information available now.</div>
                             <div class="text-[11.5px] text-[var(--tm-dim)] mt-2">Replay is about reading what is in front of you — one bar, one decision.</div>
                             <a href="backtesting.html" class="btn-ghost !py-2 !px-3.5 !text-[12px] mt-4 self-start"><svg data-lucide="flask-conical" class="w-3.5 h-3.5"></svg> Practice in Backtesting</a>
