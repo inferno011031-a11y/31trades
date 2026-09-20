@@ -33,6 +33,7 @@
     <script src="core.js"></script>
     <script src="connection.js"></script>
     <script src="assets/focus.js"></script>
+    <link rel="stylesheet" href="assets/trademind-theme.css">
 
     <style>
         * {
@@ -502,8 +503,135 @@
         @media (max-width: 767px) {
             .topbar { padding-left: 12px; padding-right: 12px; }
         }
+        /* =====================================================================
+           BATTLEX DASHBOARD — strict charcoal surface pass
+           Presentation only. Live IDs, charts, data attributes and JS bindings
+           are intentionally untouched.
+           ===================================================================== */
+        :root {
+            --dash-bg: #0b0e14;
+            --dash-surface: rgba(17, 21, 32, .86);
+            --dash-surface-2: rgba(15, 19, 28, .68);
+            --dash-line: rgba(255, 255, 255, .06);
+            --dash-line-soft: rgba(255, 255, 255, .045);
+            --dash-muted: #94a3b8;
+            --dash-dim: #64748b;
+            --dash-cyan: #38bdf8;
+            --dash-green: #34d399;
+            --dash-rose: #fb7185;
+            --dash-amber: #fbbf24;
+        }
+
+        html, body { background: var(--dash-bg) !important; }
+        body { background: radial-gradient(ellipse 85% 38% at 72% 0%, rgba(56,189,248,.055), transparent 62%), var(--dash-bg) !important; }
+        .cal-bg { background: radial-gradient(ellipse 70% 42% at 82% -8%, rgba(56,189,248,.05), transparent 62%), var(--dash-bg) !important; }
+        .sidebar { background: #0d1118 !important; border-color: var(--dash-line) !important; }
+        .topbar { background: rgba(8,10,15,.88) !important; border-color: var(--dash-line) !important; }
+        .sidebar-section-header { color: #64748b !important; font-size: 10px !important; letter-spacing: .14em !important; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(56,189,248,.11), transparent) !important; border-left: 2px solid rgba(56,189,248,.75) !important; border-radius: 0 8px 8px 0 !important; box-shadow: none !important; padding-left: 10px !important; }
+
+        #dash-content { gap: 14px !important; }
+        .dash-greeting-h1 { color: #f8fafc !important; font-size: 24px !important; letter-spacing: -.035em !important; }
+        .dash-greeting-sub { color: #8190a4 !important; font-size: 12px !important; }
+        .panel, .glass, .glass-strong {
+            background: var(--dash-surface) !important;
+            border: 1px solid var(--dash-line) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 4px 20px rgba(0,0,0,.24) !important;
+            backdrop-filter: blur(14px) !important;
+            -webkit-backdrop-filter: blur(14px) !important;
+        }
+        .panel:hover, .glass:hover, .glass-strong:hover { border-color: rgba(255,255,255,.11) !important; }
+        .btn-header-ghost, .btn-ghost { background: rgba(255,255,255,.025) !important; border: 1px solid rgba(255,255,255,.08) !important; border-radius: 10px !important; color: #cbd5e1 !important; }
+        .btn-header-ghost:hover, .btn-ghost:hover { background: rgba(255,255,255,.075) !important; border-color: rgba(255,255,255,.15) !important; color: #fff !important; }
+        .btn-header-primary, .btn-primary { border-radius: 10px !important; box-shadow: 0 2px 10px rgba(0,0,0,.28) !important; }
+        .label-xs { color: #718096 !important; font-size: 10px !important; letter-spacing: .12em !important; }
+        .panel-title { color: #f1f5f9 !important; }
+        .panel-sub { color: #718096 !important; }
+
+        /* Four-card risk telemetry strip. */
+        #dash-content > .grid.grid-cols-1.sm\\:grid-cols-2.xl\\:grid-cols-4 { gap: 12px !important; }
+        #dash-content > .grid.grid-cols-1.sm\\:grid-cols-2.xl\\:grid-cols-4 > .glass {
+            background: rgba(17,21,32,.88) !important;
+            border-radius: 13px !important;
+            min-height: 148px;
+        }
+        .kpi-value { color: #f1f5f9 !important; font-family: var(--tm-mono) !important; font-size: 24px !important; }
+        .kpi-value.pos, #st-perf-pnl.pos { color: var(--dash-green) !important; }
+        .kpi-value.neg, #st-perf-pnl.neg { color: var(--dash-rose) !important; }
+        #st-disc-state.tag-emerald, #st-risk-state.tag-emerald { color: var(--dash-green) !important; background: rgba(16,185,129,.10) !important; border-color: rgba(16,185,129,.20) !important; }
+        #st-disc-state.tag-amber, #st-risk-state.tag-amber, #st-dd-state.tag-amber { color: var(--dash-amber) !important; background: rgba(245,158,11,.10) !important; border-color: rgba(245,158,11,.20) !important; }
+        #st-disc-state.tag-red, #st-risk-state.tag-red, #st-dd-state.tag-red { color: var(--dash-rose) !important; background: rgba(244,63,94,.10) !important; border-color: rgba(244,63,94,.20) !important; }
+        #st-dd-state.tag-gray, #st-perf-trades.tag-gray, #ce-tag.tag-gray { color: #94a3b8 !important; background: rgba(255,255,255,.05) !important; border-color: rgba(255,255,255,.09) !important; }
+        .mini-track, .risk-track, .dd-track, .dim-bar { height: 6px !important; background: rgba(255,255,255,.05) !important; border: 0 !important; }
+        .risk-consumed, .mini-fill, .dd-fill { box-shadow: none !important; }
+        .mini-fill, .risk-consumed, .dd-fill, .dim-bar-fill.bar-profit { background: var(--dash-green) !important; }
+        .mini-fill.bar-loss, .dim-bar-fill.bar-loss { background: var(--dash-rose) !important; }
+        .mini-fill.bar-amber, .dim-bar-fill.bar-amber { background: var(--dash-amber) !important; }
+
+        /* Performance and behavior bento cards. */
+        #dash-content > .grid.grid-cols-1.lg\\:grid-cols-5 { gap: 12px !important; }
+        #dash-content > .grid.grid-cols-1.lg\\:grid-cols-5 > .panel { min-height: 400px; }
+        .seg { background: rgba(255,255,255,.04) !important; border-color: var(--dash-line) !important; border-radius: 8px !important; }
+        .seg button { color: #94a3b8 !important; border-radius: 6px !important; }
+        .seg button:hover { color: #fff !important; background: rgba(255,255,255,.07) !important; }
+        .seg button.active { background: rgba(255,255,255,.13) !important; color: #fff !important; box-shadow: inset 0 0 0 1px rgba(255,255,255,.14) !important; }
+        .eq-chart svg { background: rgba(255,255,255,.008); border-radius: 10px; }
+        #dash-content .rounded-lg.border.border-\\[var\\(--tm-border\\)\\].bg-\\[var\\(--tm-card-2\\)\\] { background: rgba(255,255,255,.025) !important; border-color: var(--dash-line) !important; border-radius: 10px !important; }
+        #perf-net, #perf-exp, #perf-avgr { color: var(--dash-green) !important; }
+        #perf-maxdd { color: var(--dash-rose) !important; }
+        .dim-row { gap: 10px !important; }
+        .dim-row > span:first-child { color: #94a3b8 !important; }
+        .dim-row .num { color: #e2e8f0 !important; font-family: var(--tm-mono) !important; }
+        .dim-bar.empty { border: 1px dashed rgba(255,255,255,.12) !important; }
+        #bh-state.tag-emerald { color: var(--dash-green) !important; background: rgba(16,185,129,.10) !important; border-color: rgba(16,185,129,.20) !important; }
+        #bh-state.tag-amber { color: var(--dash-amber) !important; background: rgba(245,158,11,.10) !important; border-color: rgba(245,158,11,.20) !important; }
+        #bh-state.tag-red { color: var(--dash-rose) !important; background: rgba(244,63,94,.10) !important; border-color: rgba(244,63,94,.20) !important; }
+
+        /* Battlex Read: priority card, no violet fallback. */
+        .glass[style*="border-left"] { border-left: 2px solid rgba(244,63,94,.65) !important; background: linear-gradient(105deg, rgba(244,63,94,.055), transparent 42%), var(--dash-surface) !important; }
+        #bx-sev.tag-red { color: var(--dash-rose) !important; background: rgba(244,63,94,.10) !important; border-color: rgba(244,63,94,.20) !important; }
+        #bx-sev.tag-emerald { color: var(--dash-green) !important; background: rgba(16,185,129,.10) !important; border-color: rgba(16,185,129,.20) !important; }
+        #bx-sev.tag-purple { color: var(--dash-cyan) !important; background: rgba(56,189,248,.08) !important; border-color: rgba(56,189,248,.20) !important; }
+        #bx-body .text-\\[var\\(--tm-accent\\)\\] { color: var(--dash-cyan) !important; }
+        #bx-body + div { border-color: var(--dash-line) !important; }
+
+        /* Recent trades and all lower dashboard modules. */
+        #rt-body tr:hover { background: rgba(255,255,255,.025) !important; }
+        .tbl { border-collapse: separate !important; border-spacing: 0 !important; min-width: 760px; }
+        .tbl th { background: rgba(255,255,255,.018) !important; border-bottom: 1px solid var(--dash-line) !important; color: #718096 !important; font-size: 10px !important; letter-spacing: .12em !important; padding: 11px 13px !important; }
+        .tbl td { border-bottom: 1px solid var(--dash-line-soft) !important; color: #94a3b8 !important; padding: 12px 13px !important; font-size: 12px !important; }
+        .tbl tr:last-child td { border-bottom: 0 !important; }
+        .tbl td:nth-child(1), .tbl td:nth-child(6), .tbl td:nth-child(7) { font-family: var(--tm-mono) !important; font-variant-numeric: tabular-nums; }
+        .tbl td:nth-child(2) { color: #f1f5f9 !important; font-family: var(--tm-mono) !important; font-weight: 700 !important; }
+        .tbl .tag-emerald { color: var(--dash-green) !important; background: rgba(16,185,129,.10) !important; border-color: rgba(16,185,129,.20) !important; }
+        .tbl .tag-red { color: var(--dash-rose) !important; background: rgba(244,63,94,.10) !important; border-color: rgba(244,63,94,.20) !important; }
+        .tbl .tag-blue { color: var(--dash-amber) !important; background: rgba(245,158,11,.09) !important; border-color: rgba(245,158,11,.19) !important; }
+        #rt-body td:nth-child(8) svg { color: currentColor !important; }
+        #rt-body td:nth-child(9) .tag-emerald { color: #94a3b8 !important; background: rgba(255,255,255,.05) !important; border-color: rgba(255,255,255,.09) !important; }
+        #rt-body td:nth-child(8) span { font-size: 11px !important; }
+        #ecocal-list > div, #battles-active > div, #battles-invites > div, #battles-results > div { border-color: var(--dash-line) !important; }
+        .brief-section { border-color: rgba(255,255,255,.12) !important; }
+        .brief-section.why { border-color: rgba(56,189,248,.45) !important; }
+        .brief-section.next { border-color: rgba(16,185,129,.45) !important; }
+
+        @media (max-width: 900px) {
+            #dash-content { padding: 14px 10px !important; gap: 12px !important; }
+            #dash-content > .grid.grid-cols-1.sm\\:grid-cols-2.xl\\:grid-cols-4 { gap: 8px !important; }
+            #dash-content > .grid.grid-cols-1.sm\\:grid-cols-2.xl\\:grid-cols-4 > .glass { min-height: 140px; padding: 13px !important; }
+            #dash-content > .grid.grid-cols-1.lg\\:grid-cols-5 > .panel { min-height: 0; }
+            .dash-header-banner { align-items: flex-start !important; }
+            .dash-header-banner > div:last-child { width: 100%; }
+            .dash-header-banner > div:last-child > a { flex: 1; justify-content: center; }
+        }
+        @media (max-width: 640px) {
+            .kpi-value { font-size: 20px !important; }
+            .dash-greeting-h1 { font-size: 20px !important; }
+            .tbl { min-width: 760px; }
+            #dash-content > .grid.grid-cols-1.sm\\:grid-cols-2.xl\\:grid-cols-4 > .glass { min-height: 136px; }
+        }
+
     </style>
-    <link rel="stylesheet" href="assets/trademind-theme.css">
     <script src="assets/theme-toggle.js"></script>
     <script src="assets/sidebar-nav.js"></script>
     <link rel="icon" type="image/png" href="assets/favicon.png">
