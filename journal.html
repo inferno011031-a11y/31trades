@@ -968,6 +968,138 @@
             background: #e2e8f0 !important;
         }
 
+        /* =====================================================================
+           BATTLEX JOURNAL — strict charcoal journal surface pass
+           Presentation only: data, IDs, handlers and render functions remain
+           untouched. Keep the ledger dense, quiet and readable at every width.
+           ===================================================================== */
+        :root {
+            --journal-bg: #0b0e14;
+            --journal-surface: rgba(17, 21, 32, 0.88);
+            --journal-surface-2: rgba(15, 19, 28, 0.68);
+            --journal-line: rgba(255, 255, 255, 0.06);
+            --journal-line-soft: rgba(255, 255, 255, 0.045);
+            --journal-muted: #94a3b8;
+            --journal-dim: #64748b;
+            --journal-cyan: #38bdf8;
+            --journal-emerald: #34d399;
+            --journal-rose: #fb7185;
+            --journal-amber: #fbbf24;
+        }
+
+        html, body { background: var(--journal-bg) !important; }
+        body { background: radial-gradient(ellipse 80% 36% at 70% 0%, rgba(56,189,248,.055), transparent 62%), var(--journal-bg) !important; }
+        .topbar { background: rgba(8, 10, 15, .86) !important; border-color: var(--journal-line) !important; }
+        .sidebar { background: #0d1118 !important; border-color: var(--journal-line) !important; }
+        .nav-item.active { background: linear-gradient(90deg, rgba(56,189,248,.11), transparent) !important; border-left: 2px solid rgba(56,189,248,.75) !important; border-radius: 0 8px 8px 0 !important; padding-left: 10px !important; }
+        .sidebar-section-header { color: #64748b !important; font-size: 10px !important; letter-spacing: .14em !important; }
+
+        main > .max-w-\[1440px\] { gap: 14px !important; }
+        main h1 { color: #f8fafc !important; font-size: 24px !important; letter-spacing: -.035em !important; }
+        #journal-sub { color: #8090a5 !important; font-size: 12px !important; }
+
+        .panel {
+            background: var(--journal-surface) !important;
+            border: 1px solid var(--journal-line) !important;
+            border-radius: 14px !important;
+            box-shadow: 0 4px 24px rgba(0,0,0,.20) !important;
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+        }
+        .panel:hover { border-color: rgba(255,255,255,.10) !important; }
+        .btn-primary { border-radius: 10px !important; box-shadow: 0 2px 10px rgba(0,0,0,.28) !important; }
+        .btn-ghost { border: 1px solid rgba(255,255,255,.08) !important; border-radius: 10px !important; color: #cbd5e1 !important; background: rgba(255,255,255,.025) !important; }
+        .btn-ghost:hover { background: rgba(255,255,255,.075) !important; border-color: rgba(255,255,255,.15) !important; }
+
+        /* Metrics: one coherent bento strip, with hairline divisions. */
+        #j-sum {
+            grid-template-columns: repeat(5, minmax(0, 1fr)) !important;
+            gap: 0 !important;
+            padding: 0 !important;
+            overflow: hidden !important;
+            background: rgba(17,21,32,.82) !important;
+        }
+        #j-sum .sum-cell { padding: 16px 18px !important; min-height: 82px; border-right: 1px solid var(--journal-line) !important; }
+        #j-sum .sum-cell:last-child { border-right: 0 !important; }
+        #j-sum .label-xs { color: #718096 !important; font-size: 10px !important; letter-spacing: .12em !important; }
+        #j-sum .sum-value { color: #e2e8f0; font-family: var(--tm-mono) !important; font-size: 20px !important; line-height: 1.2; }
+        #j-sum #j-sum-pnl.text-\[var\(--tm-red\)\] { color: var(--journal-rose) !important; }
+        #j-sum #j-sum-pnl.text-\[var\(--tm-green\)\], #j-sum #j-sum-avgr.text-\[var\(--tm-green\)\] { color: var(--journal-emerald) !important; }
+        #j-sum #j-sum-avgr.text-\[var\(--tm-red\)\] { color: var(--journal-rose) !important; }
+
+        #rev-bar { background: rgba(245,158,11,.06) !important; border-color: rgba(245,158,11,.20) !important; }
+        #rev-bar .tag-blue { background: rgba(245,158,11,.10) !important; border-color: rgba(245,158,11,.20) !important; color: var(--journal-amber) !important; }
+
+        /* Saved views are the primary quick-filter segmented rail. */
+        #views { gap: 6px !important; padding: 2px 0 4px !important; scrollbar-width: thin; }
+        .view-chip { background: rgba(255,255,255,.025) !important; border: 1px solid var(--journal-line) !important; border-radius: 8px !important; color: #94a3b8 !important; padding: 7px 11px !important; font-size: 11.5px !important; }
+        .view-chip:hover { background: rgba(255,255,255,.07) !important; border-color: rgba(255,255,255,.14) !important; color: #e2e8f0 !important; }
+        .view-chip.active { background: rgba(255,255,255,.13) !important; border-color: rgba(255,255,255,.22) !important; color: #fff !important; box-shadow: none !important; }
+        .view-chip .count { font-family: var(--tm-mono) !important; opacity: .72; }
+
+        /* Compact filter toolbar. */
+        #f-search, .ctrl { background: #121622 !important; border-color: rgba(255,255,255,.09) !important; border-radius: 10px !important; height: 36px !important; color: #cbd5e1 !important; }
+        #f-search { width: 230px !important; }
+        #f-search:focus, .ctrl:focus { border-color: rgba(56,189,248,.42) !important; box-shadow: 0 0 0 1px rgba(56,189,248,.12) !important; }
+        select.ctrl option { background: #121622 !important; }
+        #f-clear { color: #94a3b8 !important; background: transparent !important; border-color: transparent !important; }
+        #f-clear:hover { color: #fff !important; background: rgba(255,255,255,.06) !important; }
+        #f-count { color: #718096 !important; font-family: var(--tm-mono) !important; }
+
+        #bulk-bar { background: rgba(16,185,129,.055) !important; border-color: rgba(16,185,129,.20) !important; }
+        #j-ins { padding: 11px 15px !important; background: rgba(255,255,255,.018) !important; border-radius: 11px !important; }
+        #j-ins .label-xs { color: #64748b !important; letter-spacing: .14em !important; }
+        #j-ins span span { color: #e2e8f0 !important; font-family: var(--tm-mono) !important; }
+
+        /* Elevated table wrap; keep horizontal scroll for the full ledger. */
+        .tbl { border-collapse: separate !important; border-spacing: 0 !important; min-width: 1180px; }
+        .panel:has(> .overflow-x-auto > .tbl) { background: var(--journal-surface-2) !important; border-radius: 14px !important; }
+        .tbl th { background: rgba(255,255,255,.018) !important; border-bottom: 1px solid var(--journal-line) !important; color: #718096 !important; font-size: 10px !important; letter-spacing: .12em !important; padding: 11px 14px !important; }
+        .tbl td { border-bottom: 1px solid var(--journal-line-soft) !important; color: #94a3b8 !important; padding: 13px 14px !important; font-size: 12px !important; }
+        .tbl tbody tr:hover { background: rgba(255,255,255,.025) !important; }
+        .tbl tbody tr.selected-row { background: rgba(56,189,248,.055) !important; box-shadow: inset 2px 0 0 rgba(56,189,248,.8) !important; }
+        .tbl td:nth-child(2), .tbl td:nth-child(7), .tbl td:nth-child(8), .tbl td:nth-child(9) { font-family: var(--tm-mono) !important; font-variant-numeric: tabular-nums; }
+        .tbl td:nth-child(3) .tm-ticker-pill { color: #f1f5f9 !important; font-family: var(--tm-mono) !important; font-weight: 700 !important; }
+        .tbl td:nth-child(5), .tbl td:nth-child(6) { color: #a7b3c5 !important; }
+        .tbl input[type="checkbox"] { accent-color: #94a3b8 !important; width: 13px !important; height: 13px !important; }
+        .badge-dir-long, .badge-adherence-followed { color: var(--journal-emerald) !important; background: rgba(16,185,129,.10) !important; border-color: rgba(16,185,129,.20) !important; }
+        .badge-dir-short, .badge-adherence-blocked { color: var(--journal-rose) !important; background: rgba(244,63,94,.10) !important; border-color: rgba(244,63,94,.20) !important; }
+        .badge-adherence-early { color: var(--journal-amber) !important; background: rgba(245,158,11,.10) !important; border-color: rgba(245,158,11,.20) !important; }
+        .badge-voice-tag { color: var(--journal-cyan) !important; background: rgba(56,189,248,.08) !important; border-color: rgba(56,189,248,.20) !important; }
+        .badge-imported-tag { color: #94a3b8 !important; background: rgba(255,255,255,.045) !important; border-color: rgba(255,255,255,.09) !important; }
+        .tbl .tag-blue { color: var(--journal-amber) !important; background: rgba(245,158,11,.09) !important; border-color: rgba(245,158,11,.19) !important; }
+        .tbl .tag-emerald { color: #94a3b8 !important; background: rgba(255,255,255,.05) !important; border-color: rgba(255,255,255,.09) !important; }
+        .tbl td:nth-child(11) .text-amber-400 { color: #94a3b8 !important; }
+        .tbl td:nth-child(11) .text-zinc-400 { color: #94a3b8 !important; }
+        .tbl td:nth-child(11) button { color: #718096 !important; background: transparent !important; }
+        .tbl td:nth-child(11) button:hover { color: #e2e8f0 !important; background: rgba(255,255,255,.06) !important; }
+
+        #eco-list > div { border-color: var(--journal-line) !important; }
+        #eco-sessions .period-chip { background: rgba(255,255,255,.025) !important; border: 1px solid var(--journal-line) !important; border-radius: 8px !important; color: #94a3b8 !important; }
+        #eco-sessions .period-chip.active { background: rgba(255,255,255,.12) !important; border-color: rgba(255,255,255,.2) !important; color: #fff !important; }
+
+        @media (max-width: 900px) {
+            #j-sum { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+            #j-sum .sum-cell:nth-child(3) { border-right: 0 !important; }
+            #j-sum .sum-cell:nth-child(4), #j-sum .sum-cell:nth-child(5) { border-top: 1px solid var(--journal-line) !important; }
+            #j-sum .sum-cell:nth-child(4) { border-right: 1px solid var(--journal-line) !important; }
+            #f-search { width: min(100%, 260px) !important; }
+        }
+        @media (max-width: 640px) {
+            main > .max-w-\[1440px\] { padding: 14px 10px !important; gap: 12px !important; }
+            #j-sum { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
+            #j-sum .sum-cell { padding: 13px 14px !important; min-height: 70px; }
+            #j-sum .sum-cell:nth-child(3) { border-right: 1px solid var(--journal-line) !important; }
+            #j-sum .sum-cell:nth-child(2), #j-sum .sum-cell:nth-child(4) { border-right: 0 !important; }
+            #j-sum .sum-cell:nth-child(3), #j-sum .sum-cell:nth-child(4), #j-sum .sum-cell:nth-child(5) { border-top: 1px solid var(--journal-line) !important; }
+            #j-sum .sum-cell:last-child { grid-column: 1 / -1; }
+            #j-sum .sum-value { font-size: 18px !important; }
+            #views { max-width: calc(100vw - 20px); }
+            #f-search { width: 100% !important; }
+            .panel:has(> .overflow-x-auto > .tbl) { margin-left: 0 !important; margin-right: 0 !important; }
+            .tbl th, .tbl td { padding-left: 11px !important; padding-right: 11px !important; }
+        }
+
     </style>
     <link rel="icon" type="image/png" href="assets/favicon.png">
     <link rel="apple-touch-icon" href="assets/favicon.png">
