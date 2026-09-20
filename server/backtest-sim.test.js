@@ -99,6 +99,7 @@ function newSession(overrides) {
     ok(s2.trades.length === 1, 'exactly one trade recorded after SL hit');
     const t = s2.trades[0];
     ok(t.exitReason === 'SL', 'exit reason is SL');
+    ok(t.result === 'loss', 'negative trade is loss');
     ok(t.exit === 99.5, 'filled at the stop price');
     ok(t.realizedR === -1, 'SL fills at exactly -1R');
     ok(t.pnl === -25, 'P&L equals the risk amount');
@@ -126,9 +127,30 @@ function newSession(overrides) {
     ok(r.ok === true && r.trade.exitReason === 'manual', 'manual close records the reason');
     ok(r.trade.realizedR === 1, 'manual close at 106 → +1R');
     ok(r.trade.pnl === 25, 'manual close P&L = +$25');
+    const scoped = newSession({ period: '2025-01', periodLabel: 'January 2025' });
+    scoped.enter({ direction: 'long', entry: 100, sl: 99, tp: 103, riskAmount: 25 });
+    scoped.close({ reason: 'TP', price: 103 });
+    ok(scoped.trades[0].period === '2025-01' && scoped.trades[0].periodLabel === 'January 2025', 'closed trade carries configured replay period');
+    ok(scoped.trades[0].result === 'win', 'TP trade is win');
 }
 
-// 5 · risk modes — % of balance, explicit size
+// 5 · chart replay synchronization — the chart's selected bar is authoritative
+// even when its timestamp is before the default server pre-roll cursor.
+{
+    const candles = makeCandles(8);
+    candles[2] = { ...candles[2], high: 104, low: 102, close: 103 };
+    const s = newSession({ candles, startIndex: 5, cursor: 5, period: '2025-01' });
+    const pre = s.syncToTime(candles[1].time, candles[1]);
+    ok(pre.ok && s.cursor === 1, 'chart cut can move an untouched session before its default pre-roll');
+    const entry = candles[1].close;
+    s.enter({ direction: 'long', entry, sl: entry - 1, tp: entry + 2, riskAmount: 25 });
+    const synced = s.syncToTime(candles[2].time, candles[2]);
+    ok(synced.closedTrades.length === 1, 'chart bar synchronization closes the position');
+    ok(s.trades[0].exitReason === 'TP' && s.trades[0].exit === entry + 2, 'chart TP records the exact target price');
+    ok(s.trades[0].period === '2025-01', 'chart-synced TP keeps the selected period');
+}
+
+// 6 · risk modes — % of balance, explicit size
 {
     const s = newSession({ riskModel: { basis: 'pct', perTrade: 2 } });
     const r = s.enter({ direction: 'long', entry: 100, sl: 99, tp: 200 });
@@ -139,7 +161,7 @@ function newSession(overrides) {
     ok(r2.ok === true && r2.position.riskAmount === 100, 'size-only entry derives risk = size × SL distance');
 }
 
-// 6 · results — core metrics + breakdowns derived purely
+// 7 · results — core metrics + breakdowns derived purely
 {
     const s = newSession();
     // win +2R (+50): advance to bar 25 (close 105, range 104.5–105.5) then long 105/104/107; TP crosses at bar 35 (high 107.5)
@@ -172,7 +194,7 @@ function newSession(overrides) {
     ok(r.byExitReason.TP.trades === 2 && r.byExitReason.SL.trades === 1, 'exit breakdown counts TP/SL fills');
 }
 
-// 7 · replay controls — step, seek (forward + rewind), reset, delete
+// 8 · replay controls — step, seek (forward + rewind), reset, delete
 {
     const s = newSession();
     Sim.saveSession('u-test', s);
@@ -194,7 +216,29 @@ function newSession(overrides) {
     ok(Sim.listSessions('u-test').length === 0, 'session deleted');
 }
 
-// 8 · isolation — practice data lives in its own per-user file, separate from live state
+// 9 · completion + management safety — final replay bar settles open trades and
+// invalid stop/target edits cannot create impossible positions.
+{
+    const candles = makeCandles(3);
+    const s = newSession({ userId: 'u-complete', candles, startIndex: 0, cursor: 0 });
+    s.enter({ direction: 'long', entry: 100, sl: 90, tp: 200, riskAmount: 25 });
+    Sim.saveSession('u-complete', s);
+    Sim.stepSession('u-complete', s.id);
+    const done = Sim.stepSession('u-complete', s.id);
+    const completed = Sim.getSession('u-complete', s.id);
+    ok(done.ok && completed.status === 'completed', 'step at final candle completes the replay');
+    ok(completed.position === null && completed.trades.length === 1, 'final replay candle closes an open position');
+    ok(completed.trades[0].exitReason === 'Session end', 'final settlement records Session end');
+    ok(completed.trades[0].result === 'win', 'positive session-end settlement is win');
+
+    const managed = newSession({ startIndex: 0, cursor: 0 });
+    managed.enter({ direction: 'long', entry: 100, sl: 99, tp: 102, riskAmount: 25 });
+    ok(managed.modify({ sl: 101 }).ok === false, 'modify rejects a long stop above entry');
+    ok(managed.modify({ tp: 98 }).ok === false, 'modify rejects a long target below entry');
+    ok(managed.modify({ sl: 99.5, tp: 103 }).ok === true && managed.position.rr === 6, 'modify accepts a valid stop and recalculates R:R');
+}
+
+// 10 · isolation — practice data lives in its own per-user file, separate from live state
 {
     const dir = process.env.TRADEMIND_BACKTEST_DATA_DIR;
     ok(dir === TMP, 'engine writes to its own isolated data dir');

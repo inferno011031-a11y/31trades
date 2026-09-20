@@ -1586,6 +1586,8 @@
             sessionId: null,
             token: null,
             strategy: null,
+            lastSyncedBarTime: null,
+            syncInFlight: false,
 
             init() {
                 try {
@@ -1647,6 +1649,8 @@
                 try {
                     const curBar = window.ChartHUD && window.ChartHUD.getCurrentBar && window.ChartHUD.getCurrentBar();
                     const entryTime = curBar && curBar.time ? curBar.time : Date.now();
+                    const period = window.currentBacktestPeriod || null;
+                    const periodLabel = window.currentBacktestPeriodLabel || null;
                     await this.call('/api/backtest/sessions/' + encodeURIComponent(this.sessionId) + '/enter', {
                         direction: pos.type === 'buy' ? 'Long' : 'Short',
                         entry: pos.entry,
@@ -1658,6 +1662,8 @@
                         session: pos.session || '',
                         setup: pos.session || '',
                         entryTime: entryTime,
+                        period: period,
+                        periodLabel: periodLabel,
                         notes: 'Advanced chart HUD'
                     });
                     console.log('[BattleX Bridge] enter synced to backend');
@@ -1667,6 +1673,38 @@
                     } catch (e) {}
                 } catch (e) {
                     console.warn('[BattleX Bridge] enter sync failed (trade stays local):', e.message);
+                }
+            },
+
+            async syncReplayBar(bar) {
+                if (!this.sessionId || !bar || this.syncInFlight) return;
+                const timestamp = bar.time;
+                if (this.lastSyncedBarTime != null && Number(timestamp) <= Number(this.lastSyncedBarTime)) return;
+                this.syncInFlight = true;
+                try {
+                    const data = await this.call('/api/backtest/sessions/' + encodeURIComponent(this.sessionId) + '/control', {
+                        action: 'sync',
+                        time: timestamp,
+                        bar: {
+                            time: bar.time,
+                            open: Number(bar.open),
+                            high: Number(bar.high),
+                            low: Number(bar.low),
+                            close: Number(bar.close),
+                            volume: Number(bar.volume || 0)
+                        }
+                    });
+                    this.lastSyncedBarTime = timestamp;
+                    if (data && data.state && window.ChartHUD && !window.ChartHUD.position) {
+                        window.ChartHUD.balance = Number(data.state.balance || window.ChartHUD.balance);
+                    }
+                    if (data && data.state && window.ChartHUD && data.state.status === 'completed') {
+                        window.ChartHUD.setFeedback('Replay completed · final position settled');
+                    }
+                } catch (e) {
+                    console.warn('[BattleX Bridge] replay bar sync failed:', e.message);
+                } finally {
+                    this.syncInFlight = false;
                 }
             },
 
@@ -2159,6 +2197,17 @@
             executeOrder(type) {
                 console.log('[BattleX HUD] executeOrder called:', type);
 
+                const replayState = window.BattleXReplay && window.BattleXReplay.state;
+                const replayActive = replayState && replayState.replayStatus !== 'idle' && replayState.replayCursorIndex !== null;
+                if (!replayActive && !window.isBacktestMode) {
+                    this.setFeedback('Start Bar Replay before placing an order.', true);
+                    return;
+                }
+                if (!this.getCurrentBar()) {
+                    this.setFeedback('Waiting for replay candle data.', true);
+                    return;
+                }
+
                 if (this.position) {
                     this.setFeedback('Position already open: ' + this.position.type.toUpperCase() + ' ' + this.position.lots + ' Lots. Close or manage it first.', true);
                     return;
@@ -2353,7 +2402,7 @@
                         this.closePosition('Stop Loss Hit @ $' + p.sl.toFixed(2), p.sl);
                         return;
                     }
-                    if (high >= p.tp) {
+                    if (p.tp != null && p.tp > 0 && high >= p.tp) {
                         this.closePosition('Take Profit Hit @ $' + p.tp.toFixed(2), p.tp);
                         return;
                     }
@@ -2362,7 +2411,7 @@
                         this.closePosition('Stop Loss Hit @ $' + p.sl.toFixed(2), p.sl);
                         return;
                     }
-                    if (low <= p.tp) {
+                    if (p.tp != null && p.tp > 0 && low <= p.tp) {
                         this.closePosition('Take Profit Hit @ $' + p.tp.toFixed(2), p.tp);
                         return;
                     }
@@ -2453,6 +2502,9 @@
                 }
 
                 const hasPos = !!this.position;
+                const replayState = window.BattleXReplay && window.BattleXReplay.state;
+                const replayActive = replayState && replayState.replayStatus !== 'idle' && replayState.replayCursorIndex !== null;
+                const canExecute = !!replayActive || !!window.isBacktestMode;
                 const buyBtn = document.getElementById('hud-buy-btn');
                 const sellBtn = document.getElementById('hud-sell-btn');
                 const p25 = document.getElementById('hud-partial-25');
@@ -2460,8 +2512,8 @@
                 const beBtn = document.getElementById('hud-be-btn');
                 const closeBtn = document.getElementById('hud-close-btn');
 
-                if (buyBtn) buyBtn.disabled = hasPos;
-                if (sellBtn) sellBtn.disabled = hasPos;
+                if (buyBtn) buyBtn.disabled = hasPos || !canExecute;
+                if (sellBtn) sellBtn.disabled = hasPos || !canExecute;
                 if (p25) p25.disabled = !hasPos;
                 if (p50) p50.disabled = !hasPos;
                 if (beBtn) beBtn.disabled = !hasPos;
@@ -3087,6 +3139,10 @@
                                 console.warn('[REPLAY] tick not dispatched this frame (guards active)');
                             }
 
+                            // The backend is authoritative for the same revealed bar. It
+                            // advances server-side SL/TP and returns closed trades to analytics;
+                            // the local HUD then mirrors the result for immediate feedback.
+                            if (window.BacktestBridge) BacktestBridge.syncReplayBar(tvBar);
                             // Check SL/TP against the freshly revealed bar — this is what
                             // makes stop-loss / take-profit actually CLOSE the trade.
                             if (window.ChartHUD) ChartHUD.updateTelemetry();

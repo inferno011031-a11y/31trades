@@ -39,6 +39,16 @@ function rrOf(entry, sl, tp) {
     return slDist > 0 ? tpDist / slDist : 0;
 }
 
+function toUnixSec(ts) {
+    if (ts == null) return null;
+    if (typeof ts === 'number' && Number.isFinite(ts)) return ts > 1e12 ? Math.floor(ts / 1000) : Math.floor(ts);
+    if (typeof ts === 'string') {
+        const parsed = Date.parse(ts);
+        return Number.isFinite(parsed) ? Math.floor(parsed / 1000) : null;
+    }
+    return null;
+}
+
 // ---------------------------------------------------------------------------
 // Session
 // ---------------------------------------------------------------------------
@@ -102,16 +112,79 @@ class BacktestSession {
         this._refreshBalance();
     }
 
+    /** Move the server cursor to the latest chart timestamp without allowing
+     * a browser/timeframe switch to rewind the authoritative replay.
+     *
+     * When the chart sends its current OHLC bar, that bar is authoritative for
+     * execution. This matters when a user changes timeframe: the persisted
+     * session may be 15m while the chart is currently 1m/1h. We still advance
+     * the server cursor for replay state, but evaluate the supplied chart bar
+     * instead of simulating a different timeframe's candle path. */
+    syncToTime(timestamp, chartBar) {
+        const target = toUnixSec(timestamp);
+        if (target == null) return { ok: false, error: 'invalid replay timestamp' };
+        let next = this.cursor;
+        const currentTime = toUnixSec(this.candles[this.cursor] && this.candles[this.cursor].time);
+
+        // Before the first trade, allow the browser's replay cut to select an
+        // earlier point than the default pre-roll cursor. Once a position or a
+        // closed trade exists, replay remains forward-only.
+        if (!this.position && this.trades.length === 0 && currentTime != null && target < currentTime) {
+            next = 0;
+            for (let i = 0; i < this.candles.length; i++) {
+                const candleTime = toUnixSec(this.candles[i].time);
+                if (candleTime == null || candleTime > target) break;
+                next = i;
+            }
+            this.cursor = next;
+        } else {
+            for (let i = this.cursor + 1; i < this.candles.length; i++) {
+                const candleTime = toUnixSec(this.candles[i].time);
+                if (candleTime == null || candleTime > target) break;
+                next = i;
+            }
+            // Do not run a second, different timeframe simulation when the
+            // client supplied the exact bar currently visible on its chart.
+            if (chartBar && this.position) {
+                this.cursor = next;
+                this._refreshBalance();
+            } else {
+                this.setCursor(next);
+            }
+        }
+
+        const before = this.trades.length;
+        if (chartBar && this.position) {
+            const bar = {
+                time: chartBar.time != null ? chartBar.time : timestamp,
+                open: Number(chartBar.open),
+                high: Number(chartBar.high),
+                low: Number(chartBar.low),
+                close: Number(chartBar.close),
+                volume: Number(chartBar.volume || 0)
+            };
+            if ([bar.open, bar.high, bar.low, bar.close].every(Number.isFinite)) {
+                this._simulateBar(bar);
+            }
+            this._refreshBalance();
+        }
+        return {
+            ok: true,
+            cursor: this.cursor,
+            closedTrades: this.trades.slice(before)
+        };
+    }
+
     _simulateBar(bar) {
         const p = this.position;
         if (!p) return;
         // intrabar precedence — conservative: the losing fill happens first
         if (p.dir === 'Long') {
             if (bar.low <= p.sl) return this._fillExit(bar, p.sl, 'SL');
-            if (bar.high >= p.tp) return this._fillExit(bar, p.tp, 'TP');
+            if (p.tp != null && p.tp > 0 && bar.high >= p.tp) return this._fillExit(bar, p.tp, 'TP');
         } else {
             if (bar.high >= p.sl) return this._fillExit(bar, p.sl, 'SL');
-            if (bar.low <= p.tp) return this._fillExit(bar, p.tp, 'TP');
+            if (p.tp != null && p.tp > 0 && bar.low <= p.tp) return this._fillExit(bar, p.tp, 'TP');
         }
     }
 
@@ -143,12 +216,14 @@ class BacktestSession {
             plannedRR: p.rr,
             realizedR: Math.round(r * 1000) / 1000,
             pnl: Math.round(pnl * 100) / 100,
-            result: pnl >= 0 ? 'win' : 'loss',
+            result: pnl > 0 ? 'win' : pnl < 0 ? 'loss' : 'be',
             exitReason: reason,
             setup: p.setup || '',
             notes: p.notes || '',
             tags: Array.isArray(p.tags) ? p.tags : [],
             session: p.session || sessionOf(p.openedAt),
+            period: p.period || this.period || null,
+            periodLabel: p.periodLabel || this.periodLabel || null,
             openedAt: new Date().toISOString(),
             closedAt: new Date().toISOString()
         };
@@ -229,6 +304,8 @@ class BacktestSession {
             session: String(o.session || ''),
             setup: String(o.setup || ''),
             notes: String(o.notes || ''),
+            period: String(o.period || this.period || ''),
+            periodLabel: String(o.periodLabel || this.periodLabel || ''),
             openedAt: (o && o.entryTime) || (bar ? bar.time : Date.now()),
             openedAtIdx: this.cursor
         };
@@ -292,10 +369,13 @@ class BacktestSession {
             plannedRR: p.rr,
             realizedR: Math.round(r * 1000) / 1000,
             pnl: Math.round(pnl * 100) / 100,
-            result: pnl >= 0 ? 'win' : 'loss',
+            result: pnl > 0 ? 'win' : pnl < 0 ? 'loss' : 'be',
             exitReason: 'partial_' + Math.round(frac * 100) + '%',
             setup: p.setup || '',
             notes: (p.notes ? p.notes + ' • ' : '') + 'Partial ' + Math.round(frac * 100) + '%',
+            session: p.session || sessionOf(p.openedAt),
+            period: p.period || this.period || null,
+            periodLabel: p.periodLabel || this.periodLabel || null,
             openedAt: new Date().toISOString(),
             closedAt: new Date().toISOString()
         };
@@ -313,9 +393,18 @@ class BacktestSession {
     modify(o) {
         if (!this.position) return { ok: false, error: 'no open position' };
         const p = this.position;
-        if (o && o.sl != null && Number(o.sl) > 0) p.sl = Number(o.sl);
-        if (o && o.tp != null) p.tp = Number(o.tp) > 0 ? Number(o.tp) : null;
-        if (p.tp > 0) p.rr = Math.round(rrOf(p.entry, p.sl, p.tp) * 100) / 100;
+        const nextSl = o && o.sl != null ? Number(o.sl) : p.sl;
+        const nextTp = o && o.tp != null ? (Number(o.tp) > 0 ? Number(o.tp) : null) : p.tp;
+        if (!(nextSl > 0)) return { ok: false, error: 'stop loss must be positive' };
+        if (p.dir === 'Long' && nextSl >= p.entry) return { ok: false, error: 'stop loss must be below entry for a long' };
+        if (p.dir === 'Short' && nextSl <= p.entry) return { ok: false, error: 'stop loss must be above entry for a short' };
+        if (nextTp != null) {
+            if (p.dir === 'Long' && nextTp <= p.entry) return { ok: false, error: 'take profit must be above entry for a long' };
+            if (p.dir === 'Short' && nextTp >= p.entry) return { ok: false, error: 'take profit must be below entry for a short' };
+        }
+        p.sl = nextSl;
+        p.tp = nextTp;
+        p.rr = p.tp > 0 ? Math.round(rrOf(p.entry, p.sl, p.tp) * 100) / 100 : 0;
         this._log('modify_position', { sl: p.sl, tp: p.tp, rr: p.rr });
         return { ok: true, position: p };
     }
@@ -501,9 +590,10 @@ const active = new Map();
 
 function loadActive(userId, id) {
     let s = active.get(id);
+    if (s && s.userId !== userId) return null;
     if (!s) {
         s = getSession(userId, id);
-        if (!s) return null;
+        if (!s || s.userId !== userId) return null;
         active.set(id, s);
     }
     return s;
@@ -518,35 +608,47 @@ function play(userId, id, speedMs) {
     s.timer = setInterval(() => {
         if (s.cursor >= s.candles.length - 1) {
             clearInterval(s.timer); s.timer = null;
-            s.status = s.status === 'running' ? 'completed' : s.status;
-            s.completedAt = s.completedAt || new Date().toISOString();
+            completeAtEnd(s);
             saveSession(userId, s);
             return;
         }
         s.setCursor(s.cursor + 1);
-        if (Date.now() - lastSave > 400) { saveSession(userId, s); lastSave = Date.now(); }
+        if (s.cursor >= s.candles.length - 1) {
+            completeAtEnd(s);
+        }
+        if (Date.now() - lastSave > 400 || s.status === 'completed') { saveSession(userId, s); lastSave = Date.now(); }
     }, ms);
     return { ok: true };
 }
 
 function pause(userId, id) {
     const s = active.get(id);
-    if (!s) return { ok: true };
+    if (!s || s.userId !== userId) return { ok: true };
     if (s.timer) { clearInterval(s.timer); s.timer = null; }
     saveSession(userId, s);
     return { ok: true };
+}
+
+function completeAtEnd(s) {
+    if (s.cursor < s.candles.length - 1) return false;
+    // A replay cannot finish with an invisible open position. Use the final
+    // candle close as the deterministic settlement price so the trade reaches
+    // history analytics even when neither SL nor TP was touched.
+    if (s.position) s.close({ reason: 'Session end' });
+    if (s.status === 'running' || s.status === 'lobby') {
+        s.status = 'completed';
+        s.completedAt = s.completedAt || new Date().toISOString();
+    }
+    return true;
 }
 
 function stepSession(userId, id) {
     const s = loadActive(userId, id);
     if (!s) return { ok: false, error: 'unknown session' };
     s.setCursor(s.cursor + 1);
-    if (s.cursor >= s.candles.length - 1) {
-        s.status = s.status === 'running' ? 'completed' : s.status;
-        s.completedAt = s.completedAt || new Date().toISOString();
-    }
+    completeAtEnd(s);
     saveSession(userId, s);
-    return { ok: true };
+    return { ok: true, state: stateOf(s) };
 }
 
 function seekSession(userId, id, idx) {
@@ -605,10 +707,9 @@ function stateOf(s) {
     };
 }
 
-function manageSession(userId, id, action, payload) {
-    const s = loadActive(userId, id);
-    if (!s) return { ok: false, error: 'unknown session' };
-    const p = payload || {};
+function manageSession(userId, id, action, payload) {        const s = loadActive(userId, id);
+        if (!s) return { ok: false, error: 'unknown session' };
+        const p = payload || {};
     let r;
     if (action === 'be' || action === 'breakeven') {
         r = s.breakEven();
@@ -616,16 +717,14 @@ function manageSession(userId, id, action, payload) {
         r = s.closePartial(p.fraction || 0.5, p);
     } else if (action === 'modify') {
         r = s.modify(p);
+    } else if (action === 'sync') {
+        r = s.syncToTime(p.time, p.bar);
     } else if (action === 'complete') {
-        // Replay finished: advance the sim to the final bar (force-closing any still-open
-        // position at the last bar so the trade lands in analytics), then mark completed
-        // so history aggregations (YEAR → MONTH → drill-down) include this session.
-        if (s.position) s.close({ reason: 'Session end' });
+        // Replay finished: first advance through the remaining candles so SL/TP
+        // can fill on their actual bar; completeAtEnd then settles anything still
+        // open at the final candle close and marks the session completed.
         s.setCursor(s.candles.length - 1);
-        if (s.status === 'running') {
-            s.status = 'completed';
-            s.completedAt = s.completedAt || new Date().toISOString();
-        }
+        completeAtEnd(s);
         saveSession(userId, s);
         return { ok: true, state: stateOf(s), results: s.results() };
     } else {

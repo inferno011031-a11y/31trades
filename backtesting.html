@@ -288,6 +288,51 @@
         @media (max-width: 767px) {
             .topbar { padding-left: 12px; padding-right: 12px; }
         }
+
+        /* Backtesting mobile pass: keep the replay workspace usable without
+           changing any IDs, data attributes, or chart/event wiring. */
+        @media (max-width: 767px) {
+            html, body { overflow: hidden; }
+            main { min-width: 0; }
+            main > header { padding: 14px 14px 0 !important; }
+            main > header .flex.items-center.justify-between { align-items: flex-start; gap: 10px; }
+            main > header h1 { font-size: 20px !important; }
+            main > header nav { align-items: stretch !important; gap: 10px !important; flex-wrap: wrap; }
+            .bx-mode-switch { width: 100%; overflow-x: auto; justify-content: flex-start; }
+            .bx-mode-switch .stitch-tab { flex: 0 0 auto; padding: 7px 10px !important; }
+            .bx-header-action { margin-left: auto; white-space: nowrap; }
+            main > .relative.z-10.max-w-\\[1580px\\] { padding: 16px 14px 92px !important; }
+            .stitch-card, .bx-dashboard-surface { padding: 15px !important; }
+            .stitch-stat-grid { gap: 10px !important; }
+            .stitch-stat-grid .bx-telemetry-card { min-height: 124px !important; }
+            .bx-quick-card { min-height: 106px; }
+            #dash-hist-replayed { gap: 8px !important; }
+            #dash-hist-replayed .text-3xl { font-size: 22px !important; }
+            #ba-hierarchy-controls { width: 100%; overflow-x: auto; flex-wrap: nowrap !important; padding-bottom: 3px; }
+            #ba-year-chips, #ba-month-chips { flex: 0 0 auto; }
+            #ba-refresh-btn { flex: 0 0 auto; }
+            #ba-years-grid { grid-template-columns: repeat(2, minmax(0, 1fr)) !important; gap: 10px !important; }
+            #ba-years-grid > div { padding: 13px !important; }
+            #ba-month-detail-panel .grid.grid-cols-2 { gap: 8px !important; }
+            #ba-month-detail-panel .grid.grid-cols-2 > div { padding: 12px !important; }
+            #ba-trades-tbody { min-width: 720px; }
+            #tab-panel-trades .tbl-wrap, #ba-month-detail-panel .tbl-wrap { overflow-x: auto; }
+            #modal-new-session { padding: 10px !important; align-items: flex-start !important; }
+            #modal-new-session > div { width: 100% !important; max-height: calc(100dvh - 20px); overflow-y: auto; margin-top: 0 !important; }
+            #modal-new-session .p-6 { padding: 15px !important; }
+            #balance-presets { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+            #year-pills-grid { grid-template-columns: repeat(3, minmax(0, 1fr)) !important; }
+            #month-pills-grid { grid-template-columns: repeat(4, minmax(0, 1fr)) !important; }
+        }
+        @media (max-width: 420px) {
+            .bx-engine-status { display: none !important; }
+            main > header .flex.items-center.justify-between > div:last-child { font-size: 10px; padding: 6px 8px; }
+            .bx-header-action { padding: 7px 9px !important; }
+            #ba-years-grid { grid-template-columns: 1fr !important; }
+        }
+
+        .bx-data-loading { color: #94a3b8; }
+        .bx-data-error { color: #fb7185; border-color: rgba(244,63,94,.22) !important; background: rgba(244,63,94,.05) !important; }
     
         
         /* ---- Robust Standalone Stitch Dashboard & Replay System ---- */
@@ -1503,7 +1548,7 @@
             const fmtSignedMoney = n => { const v = Number(n || 0); return v > 0 ? '+$' + v.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : v < 0 ? '-$' + Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00'; };
             const fmtNum = n => n == null || isNaN(n) ? '—' : Number(n).toLocaleString('en-US', { maximumFractionDigits: 2 });
             const fmtPct = n => n == null || isNaN(n) ? '—' : Math.round(n * 100) + '%';
-            const fmtTime = iso => { try { return new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + new Date(iso).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); } catch (e) { return '—'; } };
+            const fmtTime = iso => { const d = new Date(iso); return Number.isNaN(d.getTime()) ? '—' : d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' · ' + d.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }); };
 
             // ============ STATE ============
             let sessions = [];
@@ -1522,6 +1567,8 @@
             let tpLine = null;
             let cutMode = false;
             let playSpeedMs = 1000;
+            let listenersInitialized = false;
+            let refreshTimer = null;
             const demoMode = new URLSearchParams(window.location.search).get('demo') === '1';
 
             // Preview-only fixtures. Normal users always use the live API response;
@@ -1545,7 +1592,7 @@
                     const acc = core.Accounts.find(a => a.id === sel) || core.Accounts[0];
                     if (chip) chip.innerHTML = '<span class="num text-[12px]">' + Number(acc.current_equity != null ? acc.current_equity : acc.starting_balance || 0).toLocaleString('en-US', { style: 'currency', currency: acc.currency || 'USD', maximumFractionDigits: 0 }) + '</span><span class="text-[var(--tm-dim)]">·</span><span>' + esc(acc.name) + '</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
                 } else if (chip) chip.innerHTML = '<span class="text-[var(--tm-dim)]">No account</span><svg data-lucide="chevron-down" class="w-3.5 h-3.5 text-[var(--tm-dim)]"></svg>';
-                setupStitchListeners();
+                if (!listenersInitialized) setupStitchListeners();
                 if (window.lucide) lucide.createIcons();
                 const sess = $('session-chip-text');
                 if (sess && window.TM_SESSION_INFO) sess.textContent = window.TM_SESSION_INFO.label + ' · ' + window.TM_SESSION_INFO.time;
@@ -1592,6 +1639,11 @@
                         sessions = (data && Array.isArray(data.sessions)) ? data.sessions : [];
                     } catch (e) {
                         sessions = [];
+                        const dashGrid = $('dash-sessions-grid');
+                        if (dashGrid) dashGrid.innerHTML = '<div class="bx-empty-state bx-data-error col-span-full py-10 text-center text-xs rounded-xl">Unable to load practice sessions. Check your connection and retry.</div>';
+                        const list = $('sess-list');
+                        if (list) list.innerHTML = '<div class="bx-data-error py-8 text-center text-xs rounded-xl">Session history is temporarily unavailable.</div>';
+                        return;
                     }
                 }
                 updateSessionStreak();
@@ -1849,6 +1901,7 @@
                     $('exec-msg').style.color = 'var(--tm-green)';
                     state = data.state || null;
                     renderTerminal();
+                    refreshBacktestData();
                 } catch (e) {
                     $('exec-msg').textContent = e.message;
                     $('exec-msg').style.color = 'var(--tm-red)';
@@ -1873,6 +1926,7 @@
                     $('exec-msg').style.color = 'var(--tm-green)';
                     state = data.state || null;
                     renderTerminal();
+                    refreshBacktestData();
                 } catch (e) {
                     $('exec-msg').textContent = e.message;
                     $('exec-msg').style.color = 'var(--tm-red)';
@@ -1895,6 +1949,7 @@
                     $('exec-msg').style.color = 'var(--tm-green)';
                     state = data.state || null;
                     renderTerminal();
+                    refreshBacktestData();
                 } catch (e) {
                     $('exec-msg').textContent = e.message;
                     $('exec-msg').style.color = 'var(--tm-red)';
@@ -1919,6 +1974,7 @@
                     $('exec-msg').style.color = 'var(--tm-green)';
                     state = data.state || null;
                     renderTerminal();
+                    refreshBacktestData();
                 } catch (e) {
                     $('exec-msg').textContent = e.message;
                     $('exec-msg').style.color = 'var(--tm-red)';
@@ -2362,6 +2418,7 @@
                         showToast(direction + ' Order Filled @ ' + fmtNum(entry));
                         state = data.state || null;
                         renderTerminal();
+                        refreshBacktestData();
                     } catch (e) {
                         this.setFeedback(e.message, true);
                     }
@@ -2385,6 +2442,7 @@
                         showToast(pct + '% Partial closed' + pnl);
                         state = data.state || null;
                         renderTerminal();
+                        refreshBacktestData();
                     } catch (e) {
                         this.setFeedback(e.message, true);
                     }
@@ -2405,6 +2463,7 @@
                         showToast('SL Moved to Break-Even');
                         state = data.state || null;
                         renderTerminal();
+                        refreshBacktestData();
                     } catch (e) {
                         this.setFeedback(e.message, true);
                     }
@@ -2427,6 +2486,7 @@
                         showToast('Position closed' + pnlStr);
                         state = data.state || null;
                         renderTerminal();
+                        refreshBacktestData();
                     } catch (e) {
                         this.setFeedback(e.message, true);
                     }
@@ -2675,6 +2735,15 @@
             }
 
             // ============ PRACTICE ANALYTICS + INSIGHTS ============
+            function refreshBacktestData() {
+                if (demoMode) return;
+                clearTimeout(refreshTimer);
+                refreshTimer = setTimeout(() => {
+                    Promise.all([loadSessions(), loadPracticeAnalytics(), loadPracticeInsights(), loadBacktestHistoryAnalytics()])
+                        .catch(() => {});
+                }, 80);
+            }
+
             async function loadPracticeAnalytics() {
                 if (demoMode) {
                     renderPA(demoAnalytics);
@@ -2688,7 +2757,7 @@
                     renderPA(a || {});
                     updateDashboardMetrics(a || {});
                 } catch (e) {
-                    $('pa-body').innerHTML = '<div class="py-8 text-center text-[12.5px] text-[var(--tm-dim)]">Practice analytics unavailable right now.</div>';
+                    $('pa-body').innerHTML = '<div class="bx-data-error py-8 text-center text-[12.5px] rounded-xl">Practice analytics unavailable right now. Retry after reconnecting.</div>';
                 }
             }
             function renderPA(a) {
@@ -2725,7 +2794,7 @@
                     const data = await r.json();
                     renderPI((data && data.findings) || []);
                 } catch (e) {
-                    $('pi-body').innerHTML = '<div class="py-8 text-center text-[12.5px] text-[var(--tm-dim)]">Backtest insights unavailable right now.</div>';
+                    $('pi-body').innerHTML = '<div class="bx-data-error py-8 text-center text-[12.5px] rounded-xl">Backtest insights unavailable right now. Retry after reconnecting.</div>';
                 }
             }
             function renderPI(findings) {
@@ -3351,6 +3420,8 @@
             }
 
             function setupStitchListeners() {
+                if (listenersInitialized) return;
+                listenersInitialized = true;
                 initStitchModalInteractivity();
                 // Tab switching
                 document.querySelectorAll('.stitch-tab').forEach(btn => {
@@ -3521,9 +3592,7 @@
                     const bc = new BroadcastChannel('battlex_backtest_sync');
                     bc.onmessage = (ev) => {
                         if (ev.data && (ev.data.type === 'trade_closed' || ev.data.type === 'trade_entered')) {
-                            loadSessions();
-                            loadPracticeAnalytics();
-                            loadBacktestHistoryAnalytics();
+                            refreshBacktestData();
                         }
                     };
                 } catch (e) {}
@@ -3547,7 +3616,7 @@
                     });
                 }
 
-                setupStitchListeners();
+                if (!listenersInitialized) setupStitchListeners();
                 if (window.BacktestHUD) BacktestHUD.init();
                 if (window.lucide) lucide.createIcons();
             }

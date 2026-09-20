@@ -256,7 +256,9 @@ async function getCandles(opts) {
 
         // If requested month file is not on disk (or period was random/unspecified),
         // fallback to verified real gold archives on disk (feb2024 or 2024-02)
-        if (!histFile) {
+        // An explicit YYYY-MM request must never silently fall back to another
+        // month. That makes a 2025-Jan replay look like 2024 data in analytics.
+        if (!histFile && !/^\d{4}-\d{2}$/.test(period)) {
             const fallbacks = ['2024-02', 'feb2024', '2024-01', 'jan2024'];
             for (const fb of fallbacks) {
                 const candidate = path.join(DATA_DIR, 'gold', fb, `xau_${tfFile}_${fb}.json`);

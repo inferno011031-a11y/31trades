@@ -1561,6 +1561,11 @@ async function handleApi(req, res, url) {
                 symbol,
                 timeframe,
                 count: window,
+                // The chart replay requests the complete selected archive. The
+                // session must use that same timeline; otherwise the old tail-
+                // window makes chart timestamps fall outside the server candles
+                // and TP/SL settles against a different bar.
+                all: true,
                 period: body.period,
                 blind: !!(body.blind || body.isRandom)
             });
@@ -1590,12 +1595,15 @@ async function handleApi(req, res, url) {
         }
         if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/control$/))) {
             const id = m[1];
-            if (body.action === 'play') return json(res, 200, Sim.play(uc.userId, id, body.speedMs));
-            if (body.action === 'pause') return json(res, 200, Sim.pause(uc.userId, id));
-            if (body.action === 'step') return json(res, 200, Sim.stepSession(uc.userId, id));
-            if (body.action === 'seek') return json(res, 200, Sim.seekSession(uc.userId, id, Number(body.cursor)));
-            if (body.action === 'reset') return json(res, 200, Sim.resetSession(uc.userId, id));
-            return json(res, 400, { error: 'unknown control action' });
+            let result;
+            if (body.action === 'play') result = Sim.play(uc.userId, id, body.speedMs);
+            else if (body.action === 'pause') result = Sim.pause(uc.userId, id);
+            else if (body.action === 'step') result = Sim.stepSession(uc.userId, id);
+            else if (body.action === 'seek') result = Sim.seekSession(uc.userId, id, Number(body.cursor));
+            else if (body.action === 'sync') result = Sim.manageSession(uc.userId, id, 'sync', { time: body.time, bar: body.bar });
+            else if (body.action === 'reset') result = Sim.resetSession(uc.userId, id);
+            else return json(res, 400, { error: 'unknown control action' });
+            return json(res, result && result.ok === false ? 400 : 200, result);
         }
         if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/enter$/))) {
             const s = Sim.loadActive(uc.userId, m[1]);
@@ -1604,7 +1612,8 @@ async function handleApi(req, res, url) {
                 direction: body.direction, entry: body.entry, sl: body.sl, tp: body.tp,
                 riskAmount: body.riskAmount, riskPct: body.riskPct, size: body.size,
                 notes: body.notes, setup: body.setup, session: body.session,
-                strategy: body.strategy, entryTime: body.entryTime
+                strategy: body.strategy, entryTime: body.entryTime,
+                period: body.period, periodLabel: body.periodLabel
             });
             if (!r.ok) return json(res, 400, { error: r.error });
             Sim.saveSession(uc.userId, s);

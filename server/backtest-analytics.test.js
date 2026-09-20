@@ -95,6 +95,22 @@ t('legacy: t4 year derived (2024)', t4.year === 2024);
 t('legacy: t4 month derived (3)', t4.month === 3);
 t('legacy: t4 tags defaulted to []', Array.isArray(t4.tags) && t4.tags.length === 0);
 t('legacy: strategy inherited from session', t4.strategy === 'Liquidity Sweep');
+const scoped = A.collectTrades([{
+    id: 'bt-scoped', userId: 'u1', symbol: 'XAUUSD', strategy: 'Scoped replay',
+    period: '2025-01', status: 'running', startingBalance: 10000,
+    trades: [{ id: 'scoped-trade', entryTime: ts(2024, 12, 31, 23, 55), exitTime: ts(2025, 1, 1, 0, 5),
+        symbol: 'XAUUSD', direction: 'Long', entry: 2600, exit: 2610, pnl: 10, realizedR: 1,
+        result: 'win', exitReason: 'TP' }]
+}]);
+t('configured period overrides candle year/month for live session', scoped[0].year === 2025 && scoped[0].month === 1);
+const scopedDetail = A.historyMonthDetail([{
+    id: 'bt-scoped', userId: 'u1', symbol: 'XAUUSD', strategy: 'Scoped replay',
+    period: 'January 2025', status: 'running', startingBalance: 10000,
+    trades: [{ id: 'scoped-trade', entryTime: ts(2024, 12, 31, 23, 55), exitTime: ts(2025, 1, 1, 0, 5),
+        symbol: 'XAUUSD', direction: 'Long', entry: 2600, exit: 2610, pnl: 10, realizedR: 1,
+        result: 'win', exitReason: 'TP' }]
+}], 2025, 1);
+t('scoped month detail retains entry/exit prices and TP result', scopedDetail.trades[0].entry === 2600 && scopedDetail.trades[0].exit === 2610 && scopedDetail.trades[0].exitReason === 'TP');
 const t1 = enriched.find(x => x.id === 't1');
 t('stored: t1 session preserved (New York AM)', t1.session === 'New York AM');
 t('stored: t1 tags preserved', t1.tags.length === 1 && t1.tags[0] === 'london-killzone');
@@ -192,6 +208,22 @@ t('env override: 10:00 UTC → Custom', A.classifySession(ts(2025, 6, 2, 10, 0))
 t('env override: 07:00 UTC → — (no rule covers)', A.classifySession(ts(2025, 6, 2, 7, 0)) === '—');
 delete process.env.TRADEMIND_SESSIONS;
 t('env removed: defaults restored', A.classifySession(ts(2025, 6, 2, 10, 0)) === 'London');
+t('period parser accepts ISO, named, and legacy month labels',
+    A.periodParts('2025-01').month === 1
+    && A.periodParts('January 2025').year === 2025
+    && A.periodParts('jan2025').month === 1
+    && A.periodParts('feb2024').year === 2024);
+const tpSession = {
+    id: 'bt-tp-period', userId: 'u1', symbol: 'XAUUSD', period: '2025-01', periodLabel: 'January 2025',
+    trades: [{ id: 'tp-2025-jan', entryTime: ts(2024, 12, 31, 23, 0), exitTime: ts(2025, 1, 1, 0, 0),
+        entry: 2700, exit: 2710, sl: 2695, tp: 2710, pnl: 10, realizedR: 2, result: 'win', exitReason: 'TP' }]
+};
+const tpDetail = A.historyMonthDetail([tpSession], 2025, 1);
+t('selected 2025-Jan TP trade is grouped in 2025-Jan with prices intact',
+    tpDetail.headline.trades === 1
+    && tpDetail.trades[0].entry === 2700
+    && tpDetail.trades[0].exit === 2710
+    && tpDetail.trades[0].exitReason === 'TP');
 
 // ---------------------------------------------------------------------------
 console.log('\nbacktest-analytics: ' + pass + ' passed, ' + fail + ' failed');

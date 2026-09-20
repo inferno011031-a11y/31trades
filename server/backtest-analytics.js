@@ -85,6 +85,37 @@ const MONTH_NAMES = ['January', 'February', 'March', 'April', 'May', 'June',
     'July', 'August', 'September', 'October', 'November', 'December'];
 const DOW_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+/** Parse the configured simulation period into an analytics scope. */
+function periodParts(period) {
+    const raw = String(period || '').trim().toLowerCase();
+    if (!raw) return null;
+    const normalized = raw.replace(/[._/]+/g, '-').replace(/\s+/g, ' ');
+    const monthByName = {
+        jan: 1, january: 1, feb: 2, february: 2, mar: 3, march: 3,
+        apr: 4, april: 4, may: 5, jun: 6, june: 6, jul: 7, july: 7,
+        aug: 8, august: 8, sep: 9, sept: 9, september: 9,
+        oct: 10, october: 10, nov: 11, november: 11, dec: 12, december: 12
+    };
+
+    let match = normalized.match(/^([0-9]{4})[- ]([0-9]{1,2})$/);
+    if (match) {
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        return month >= 1 && month <= 12 ? { year, month } : null;
+    }
+
+    match = normalized.match(/^([a-z]+)[- ]([0-9]{4})$/) || normalized.match(/^([0-9]{4})[- ]([a-z]+)$/);
+    if (!match) {
+        const compact = normalized.match(/^([a-z]+)([0-9]{4})$/);
+        if (!compact) return null;
+        match = compact;
+    }
+    const firstIsYear = /^[0-9]{4}$/.test(match[1]);
+    const year = Number(firstIsYear ? match[1] : match[2]);
+    const month = monthByName[firstIsYear ? match[2] : match[1]];
+    return Number.isInteger(year) && month ? { year, month } : null;
+}
+
 // ---------------------------------------------------------------------------
 // Extensible analytics dimensions (spec 10) — one accessor per breakdown
 // ---------------------------------------------------------------------------
@@ -135,11 +166,15 @@ function enrichTrade(t, session) {
     const d = sec != null ? new Date(sec * 1000) : null;
     const exitSec = toUnixSec(t.exitTime);
     const sessionName = t.session || classifySession(t.entryTime);
+    // The configured replay period is authoritative for historical analytics.
+    // Candle timestamps can be transformed/trimmed by a datafeed, so grouping
+    // only by entryTime can place a 2025-Jan trade in the wrong year/month.
+    const scope = periodParts((session && (session.period || session.actualPeriod)) || t.period);
     return {
         ...t,
         session: sessionName,
-        year: t.year != null ? t.year : (d ? d.getUTCFullYear() : null),
-        month: t.month != null ? t.month : (d ? d.getUTCMonth() + 1 : null),
+        year: scope ? scope.year : (t.year != null ? t.year : (d ? d.getUTCFullYear() : null)),
+        month: scope ? scope.month : (t.month != null ? t.month : (d ? d.getUTCMonth() + 1 : null)),
         dow: d ? DOW_NAMES[d.getUTCDay()] : '—',
         hour: d ? (String(d.getUTCHours()).padStart(2, '0') + ':00') : '—',
         durationSec: exitSec != null && sec != null ? Math.max(0, exitSec - sec) : 0,
@@ -202,7 +237,7 @@ function groupAggregate(trades, keyFn) {
 
 function headlineMetrics(trades, startingCapital) {
     const wins = trades.filter(t => t.pnl > 0);
-    const losses = trades.filter(t => t.pnl <= 0);
+    const losses = trades.filter(t => t.pnl < 0);
     const net = trades.reduce((a, t) => a + (t.pnl || 0), 0);
     const grossP = wins.reduce((a, t) => a + t.pnl, 0);
     const grossL = Math.abs(losses.reduce((a, t) => a + t.pnl, 0));
@@ -262,6 +297,10 @@ function compactTrade(t) {
         realizedR: t.realizedR,
         result: t.result,
         exitReason: t.exitReason,
+        period: t.period || null,
+        periodLabel: t.periodLabel || null,
+        year: t.year,
+        month: t.month,
         tags: t.tags
     };
 }
@@ -428,5 +467,6 @@ module.exports = {
     historyMonths,
     historyMonthDetail,
     queryTrades,
-    MONTH_NAMES
+    MONTH_NAMES,
+    periodParts
 };
