@@ -194,7 +194,46 @@ function newSession(overrides) {
     ok(r.byExitReason.TP.trades === 2 && r.byExitReason.SL.trades === 1, 'exit breakdown counts TP/SL fills');
 }
 
-// 8 · replay controls — step, seek (forward + rewind), reset, delete
+// 8 · execution costs — optional spread, slippage, commission and fees are
+// applied only when configured; the default path remains fee-free.
+{
+    const s = newSession({ executionCosts: { spread: 0.2, slippage: 0.1, commissionFixed: 2 } });
+    const entered = s.enter({ direction: 'long', entry: 100, sl: 99, tp: 103, riskAmount: 25 });
+    ok(entered.ok && Math.abs(entered.position.entry - 100.2) < 1e-9, 'long entry includes half-spread plus adverse slippage');
+    const closed = s.close({ reason: 'manual', price: 102 });
+    ok(closed.ok && closed.trade.exit === 101.9, 'long exit includes adverse slippage');
+    ok(closed.trade.grossPnl === 35.42 && closed.trade.executionCost === 2, 'trade preserves gross P&L and execution cost');
+    ok(closed.trade.pnl === 33.42, 'net P&L subtracts commission');
+    ok(s.results().net === 33.42, 'results use net P&L');
+}
+
+// 9 · voice confirmation idempotency — the same client nonce cannot open a
+// second replay position when a confirmation is retried.
+{
+    const s = newSession();
+    const first = s.enter({ direction: 'Long', entry: 100, sl: 99, tp: 200, riskAmount: 25, source: 'VOICE', clientNonce: 'voice-1' });
+    const retry = s.enter({ direction: 'Long', entry: 100, sl: 99, tp: 200, riskAmount: 25, source: 'VOICE', clientNonce: 'voice-1' });
+    ok(first.ok && retry.ok && retry.duplicate === true, 'voice retry returns duplicate without creating another order');
+    ok(s.actions.filter(a => a.type === 'enter').length === 1, 'voice nonce is recorded once');
+    ok(s.position && s.position.source === 'VOICE', 'voice order is marked as VOICE');
+}
+
+// 10 · multiple positions — opt-in strategy/account setting keeps the legacy
+// single-position default while allowing independent positions to fill and settle.
+{
+    const s = newSession({ extensions: { allowMultiplePositions: true } });
+    const a = s.enter({ positionId: 'p-a', direction: 'Long', entry: 100, sl: 99, tp: 200, riskAmount: 25 });
+    const b = s.enter({ positionId: 'p-b', direction: 'Short', entry: 102, sl: 103, tp: 1, riskAmount: 25 });
+    ok(a.ok && b.ok && s.positions.length === 2, 'multiple positions can be opened when explicitly enabled');
+    ok(s.enter({ direction: 'Long', entry: 100, sl: 99, tp: 200, riskAmount: 25 }).ok === true, 'third position remains independently sized');
+    s.close({ positionId: 'p-a', price: 101, reason: 'manual' });
+    ok(s.positions.length === 2 && s.trades.length === 1, 'closing one position preserves other open positions');
+    s.close({ positionId: 'p-b', price: 101, reason: 'manual' });
+    s.close({ price: 101, reason: 'manual' });
+    ok(s.positions.length === 0 && s.trades.length === 3, 'all positions become separate analytics trades');
+}
+
+// 11 · replay controls — step, seek (forward + rewind), reset, delete
 {
     const s = newSession();
     Sim.saveSession('u-test', s);
@@ -216,7 +255,7 @@ function newSession(overrides) {
     ok(Sim.listSessions('u-test').length === 0, 'session deleted');
 }
 
-// 9 · completion + management safety — final replay bar settles open trades and
+// 12 · completion + management safety — final replay bar settles open trades and
 // invalid stop/target edits cannot create impossible positions.
 {
     const candles = makeCandles(3);

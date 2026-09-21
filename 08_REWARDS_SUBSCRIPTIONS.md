@@ -2,15 +2,27 @@
 
 ---
 
-## 8.1 Rewards / Credits
+## 8.1 Rewards — achievements read model (derived, no credits ledger)
 
-**UNKNOWN — NOT FOUND IN IMPLEMENTATION.**
-- No credits ledger, no reward events, no redemption, no giveaways, no achievement awards, no subscription redemption. The word "credits" appears nowhere in code. The only "reward-like" output is the battle **score** (0–1000, displayed on leaderboards) and AI positive findings ("strengths") — neither is spendable or storable.
+**IMPLEMENTED — `server/rewards.js` → `GET /api/rewards`.** Rewards are a *read model*: there is no credits ledger, no balance, no redemption and nothing spendable, so progression cannot be bought, farmed or faked.
 
-## 8.2 Subscriptions / Free Plan
+- 19 milestones across Journal · Consistency · Discipline · Edge · Proof · Battles · Mission 100K (`MILESTONES`), each with an explicit `metric`, `target` and `points`.
+- Every number is recomputed from canonical engines on each read: live trades, journaled session days, discipline score, average R, profit factor, max-daily-loss breaches, backtest proof trades, completed battles + wins, Mission 100K rung.
+- Output: `points`, `completionPct`, `tier` (Bronze/Silver/Gold/Platinum) + `nextTier` distance, `achieved[]`, `next[]` (three nearest), `locked[]`, and the raw `snapshot` used.
+- Honesty guarantees: a milestone is only `achieved` when `value ≥ target`; deleting trades or losing a streak immediately removes the reward; an empty account earns zero (breach-free credit requires actual trading).
+- `battlesCompleted` / `battleWins` are read from the user's battle store (completed battles with a seat; wins from the stored leaderboard).
 
-**UNKNOWN — NOT FOUND IN IMPLEMENTATION.**
-- No plans, no feature gating, no ads, no upgrade/downgrade, no subscription status, no battle/backtesting/community access restrictions. **Every feature is available to every signed-in user.** (Auth itself is free GoTrue; email confirmation on signup is optional depending on the Supabase project config.)
+## 8.2 Subscriptions — provider-neutral contract (no provider wired yet)
+
+**PARTIALLY IMPLEMENTED — `server/billing.js`, migration `019_entitlements_billing.sql`.**
+
+- Plan catalogue (`PLANS`): `standard` (free, 50 lifetime AI), `tester` (invite program, monthly AI), `pro` (paid, declared monthly AI). AI counters reported by `GET /api/billing/subscription` are always what `server/access.js` *actually enforces*; the plan's own allowance is exposed separately as `declaredAi`.
+- Provider-neutral webhook: `POST /api/billing/webhook/:provider` accepts ANY provider that HMAC-signs the raw body with `BILLING_WEBHOOK_SECRET` (`X-Battlex-Signature: t=<unix>,v1=<hex>`). Timing-safe compare, 5-minute replay window, strict canonical schema validation (`subscription.activated|renewed|canceled|expired`).
+- **No secret ⇒ no billing:** without `BILLING_WEBHOOK_SECRET` the endpoint answers `503 billing_not_configured` and no plan is ever written. There is no fake checkout, no fake invoice, no simulated payment.
+- Idempotency: events are keyed `(provider, event_id)` in `subscription_events`; a retried webhook can never double-apply. Duplicate deliveries return `{ duplicate: true }`.
+- Lifecycle semantics: `activated/renewed` → plan active until `current_period_end`; `canceled` → access continues until the period actually ends; `expired` → falls back to `standard`. An already-ended period never grants the plan, even if a stale row still says `active`.
+- Storage: `user_entitlements` gains `plan`, `plan_status`, `plan_expires_at`, `billing_provider` (migration 019) written with an `UPDATE`-first strategy so an existing tester entitlement row is never clobbered; the local mirror `data/subscriptions.json` keeps the bot/app working without Postgres.
+- Not done yet (honest): no provider account, no hosted checkout UI, no invoice/receipt artifacts, and paid plans do not yet raise the enforced AI quota — that requires plan-aware enforcement in `server/access.js`.
 
 ## 8.3 Notifications — the complete engine
 

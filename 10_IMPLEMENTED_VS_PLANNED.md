@@ -15,7 +15,7 @@
 | Log Trade (7-step rule pipeline) | IMPLEMENTED | logTradePipeline |
 | Trade edit/delete with full recalculation | IMPLEMENTED | TradeService |
 | Asset-class-aware P&L/sizing/units (FX/Indices/Crypto/Stocks/Commodities) | IMPLEMENTED | ASSET_SPECS |
-| Trade screenshots/evidence | PARTIALLY IMPLEMENTED | evidence JSONB stored; **no upload endpoint** |
+| Trade screenshots/evidence | PARTIALLY IMPLEMENTED | evidence JSONB + validated `/api/trades/:id/evidence` attachment endpoint; provider upload still external |
 | Trade importing (broker/MT/TV/cTrader) | PLANNED / NOT IMPLEMENTED | only onboarding copy mentions it |
 | Tags | PLACEHOLDER | schema exists; no service/UI |
 | Daily snapshots read model | PLACEHOLDER | schema exists; never used |
@@ -46,11 +46,11 @@
 | Real TradingView historical candles + synthetic fallback | IMPLEMENTED | marketdata.js |
 | Replay engine (hidden future, play/pause/step/seek/reset/speed) | IMPLEMENTED | backtest-sim.js |
 | LONG/SHORT/SL/TP simulation, intrabar fills, audit trail | IMPLEMENTED | backtest-sim.js |
-| Session persistence (file) | PARTIALLY IMPLEMENTED | per-user JSON; **no DB table** |
+| Session persistence (file + Supabase mirror) | PARTIALLY IMPLEMENTED | per-user JSON fallback + migration 018 asynchronous DB mirror; DB hydration on cold file loss still pending |
 | Results (equity curve, R dist, breakdowns) | IMPLEMENTED | results() |
 | Market Replay page (local + gated live TV replay) | IMPLEMENTED | replay.js |
 | Chart workspaces per timeframe (drawings/indicators/state) | IMPLEMENTED | workspace.js (localStorage) |
-| Spread/slippage/commission/partial exits/multi-position | PLANNED / NOT IMPLEMENTED | code comments say "later" |
+| Spread/slippage/commission/partial exits/multi-position | PARTIALLY IMPLEMENTED | optional execution costs, partial exits, and opt-in `allowMultiplePositions`; UI/risk aggregation hardening remains |
 | **Battles** | | |
 | Battle create/join/invite/control/enter/close | IMPLEMENTED | battle.js |
 | Canonical timeline + private seats + anti-cheat | IMPLEMENTED | battle.js |
@@ -69,9 +69,12 @@
 | Unique user ID (copyable, for Discord/giveaways) | IMPLEMENTED | auth user id |
 | Public/private profile fields | PLANNED / NOT IMPLEMENTED | — |
 | **Leaderboards / Rewards / Subs** | | |
+| Mission 100K read model | PARTIALLY IMPLEMENTED | `/api/mission-100k`, derived from canonical ledger/risk/discipline/backtest data |
+| Rewards / achievements read model | IMPLEMENTED | `server/rewards.js`, `/api/rewards` — derived from canonical engines; no stored ledger, nothing spendable |
+| Subscription / plan gating | PARTIALLY IMPLEMENTED | provider-neutral HMAC webhook contract, idempotent `subscription_events`, `/api/billing/subscription` + `/api/billing/plans`; no payment provider wired yet and paid AI quota still enforced at the standard allowance |
 | Battle leaderboard (per-battle + feed) | IMPLEMENTED | scoreSeat/leaderboard |
 | Global/user leaderboards, filters, rewards | PLANNED / NOT IMPLEMENTED | — |
-| Credits/rewards/giveaways | PLANNED / NOT IMPLEMENTED | — |
+| Credits/rewards/giveaways | PLANNED / NOT IMPLEMENTED | no provider-backed wallet or redemption flow |
 | Subscriptions/free-plan gating/ads | PLANNED / NOT IMPLEMENTED | — |
 | **Notifications** | | |
 | Derived feed (onboarding/risk/discipline/reviews/system/market/battles) | IMPLEMENTED | notifications.js |

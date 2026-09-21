@@ -355,6 +355,23 @@
 
 ---
 
+### GET /api/billing/subscription
+- Response: `{ ok, configured, provider, plan, label, status, currentPeriodEnd, expiresAt, accessType, isTester, ai, declaredAi, features }`.
+- `ai` reports what the quota engine actually enforces; `declaredAi` is what the plan grants once plan-aware enforcement is switched on — the UI never shows a quota the engine would refuse.
+
+### GET /api/billing/plans
+- Response: `{ ok, configured, plans[] }` — plan catalogue with per-plan AI allowance and feature map.
+
+### POST /api/billing/webhook/:provider
+- No session: the HMAC signature IS the auth. Header `X-Battlex-Signature: t=<unix>,v1=<hex>` (or a plain `<hex>`), computed with `BILLING_WEBHOOK_SECRET` over `<t>.<rawBody>` (or `<rawBody>`).
+- Body (canonical, provider-neutral): `{ event_id, type: subscription.activated|subscription.renewed|subscription.canceled|subscription.expired, user_id, plan, current_period_end?, external_customer_id?, occurred_at? }`.
+- Responses: `503 billing_not_configured` (no secret set), `401 missing_signature|bad_signature|signature_expired`, `400 invalid_json`, `422 unsupported_event_type|unknown_plan|invalid_user_id|plan_required_for_active_event`, `200 { ok, duplicate, event_id, plan, status }`.
+- Idempotent on `(provider, event_id)`. Cancellation keeps the plan until `current_period_end`; expiry falls back to `standard`.
+
+### GET /api/rewards
+- Derived achievement read model (`?accountId` optional). Points/tiers are recomputed from canonical engines on every read — nothing is stored and nothing is spendable.
+- Response: `{ ok, rewards: { points, totalPoints, completionPct, tier, nextTier, achievedCount, totalCount, achieved[], next[], locked[], snapshot } }`.
+
 ## 3.3 WebSocket /ws
 - `?battle=<id>` → room subscription. Messages pushed: `{type:'battle.cursor', battle, cursor, status}` and `{type:'battle.status', battle, state}` (public state).
 - No battle param → dashboard feed client. Receives `{type:'feed.changed'}` ping on every battle mutation.

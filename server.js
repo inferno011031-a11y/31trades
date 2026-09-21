@@ -60,6 +60,8 @@ const DiscordVerify = require('./server/discord-verify.js');
 const Profiles = require('./server/profiles.js');
 const Leaderboard = require('./server/leaderboard.js');
 const Squads = require('./server/squads.js');
+const Mission100K = require('./server/mission-100k.js');
+const Evidence = require('./server/evidence.js');
 const Imports = require('./server/imports.js');
 const SEO = require('./server/seo.js');
 const { PostgresRepository: PostgresRepo, LOCAL_USER_ID } = require('./server/pg-repo.js');
@@ -967,6 +969,24 @@ async function handleApi(req, res, url) {
         } catch (err) { return json(res, err.code || 401, { error: err.message }); }
     }
 
+    // ---------- billing webhook (pre-auth: the HMAC signature IS the auth) ----------
+    // Provider-neutral: any provider that signs the raw body with
+    // BILLING_WEBHOOK_SECRET can manage plans. Without that env var this answers
+    // 503 billing_not_configured and NOTHING is ever written.
+    if (p.indexOf('/api/billing/webhook') === 0 && req.method === 'POST') {
+        const Billing = require('./server/billing.js');
+        let raw = '';
+        try { raw = (await readBodyRaw(req, 64 * 1024)).toString('utf8'); }
+        catch (e) { return json(res, 413, { ok: false, error: 'body_too_large' }); }
+        const provider = String(p.slice('/api/billing/webhook'.length).replace(/^\/+/, '').replace(/\/+$/, '') || q.get('provider') || '').toLowerCase();
+        const out = await Billing.handleWebhook({
+            provider,
+            rawBody: raw,
+            signature: req.headers['x-battlex-signature'] || req.headers['x-signature'] || req.headers['x-hub-signature-256'] || ''
+        });
+        return json(res, out.status, out.body);
+    }
+
     // ---------- Backtesting candles data (pre-auth OHLCV for backtesting and charts) ----------
     if (p === '/api/backtest/candles' && req.method === 'GET') {
         const data = await MarketData.getCandles({
@@ -995,6 +1015,50 @@ async function handleApi(req, res, url) {
         try {
             if (p === '/api/state') {
                 return json(res, 200, Object.assign(uc.serialize(), { serverTime: new Date().toISOString() }));
+            }
+            if (p === '/api/mission-100k') {
+                const accountId = q.get('accountId') || (Core.Accounts[0] && Core.Accounts[0].id);
+                const account = Core.Accounts.find(a => a.id === accountId) || null;
+                if (!account) return json(res, 404, { ok: false, error: 'unknown account' });
+                const risk = Core.riskState ? Core.riskState(account.id) : null;
+                const discipline = Core.disciplineState ? Core.disciplineState(account.id) : null;
+                return json(res, 200, { ok: true, mission: Mission100K.computeMission({ account, trades: Core.Trades, discipline, risk, backtestTrades: Practice.flattenTrades(uc.userId) }) });
+            }
+            // ---- Rewards read model (derived, never stored — nothing spendable) ----
+            if (p === '/api/rewards') {
+                const Rewards = require('./server/rewards.js');
+                const accountId = q.get('accountId') || (Core.Accounts[0] && Core.Accounts[0].id);
+                const account = Core.Accounts.find(a => a.id === accountId) || null;
+                if (!account) return json(res, 404, { ok: false, error: 'unknown account' });
+                const risk = Core.riskState ? Core.riskState(account.id) : null;
+                const discipline = Core.disciplineState ? Core.disciplineState(account.id) : null;
+                const mission = Mission100K.computeMission({ account, trades: Core.Trades, discipline, risk, backtestTrades: Practice.flattenTrades(uc.userId) });
+                let battlesCompleted = 0, battleWins = 0;
+                try {
+                    const mine = Battle.listBattles(uc.userId).filter(b => b.status === 'completed').slice(0, 25);
+                    battlesCompleted = mine.length;
+                    for (const bsum of mine) {
+                        const full = Battle.getBattle(uc.userId, bsum.id);
+                        if (!full) continue;
+                        const mySeat = full.seats.find(s => s.userId === uc.userId);
+                        if (!mySeat) continue;
+                        const lb = full.leaderboard();
+                        if (lb && lb.length && lb[0].seat === mySeat.id) battleWins++;
+                    }
+                } catch (e) { /* battles are optional for rewards */ }
+                return json(res, 200, {
+                    ok: true,
+                    rewards: Rewards.computeRewards({ mission, liveTrades: mission.metrics.liveTrades, battleWins, battlesCompleted })
+                });
+            }
+            // ---- Subscription / plan read model (honest: Access + verified provider only) ----
+            if (p === '/api/billing/subscription') {
+                const Billing = require('./server/billing.js');
+                return json(res, 200, await Billing.getSubscription(uc.userId));
+            }
+            if (p === '/api/billing/plans') {
+                const Billing = require('./server/billing.js');
+                return json(res, 200, { ok: true, configured: Billing.configured(), plans: Billing.listPlans() });
             }
             if (p === '/api/audit') {
                 return json(res, 200, { events: Core.getEventLog() });
@@ -1219,6 +1283,14 @@ async function handleApi(req, res, url) {
                 return json(res, r.error ? 400 : 200, r.error ? { ok: false, error: r.error } : { ok: true, ...r });
             }
 
+            // ---------- Historical archive catalogue (real months on disk) ----------
+            // Practice and Battle both replay REAL archived months. This is the
+            // single source of truth for which Year → Month → Timeframe combos a
+            // user may choose, so the UI can never offer a missing archive.
+            if (p === '/api/backtest/periods' && req.method === 'GET') {
+                return json(res, 200, MarketData.availablePeriods(q.get('symbol') || 'XAUUSD'));
+            }
+
             // ---------- Practice view (same canonical analytics/insights over
             // flattened backtest records — strictly separate from live) ----------
             if (p === '/api/practice/trades') {
@@ -1280,7 +1352,9 @@ async function handleApi(req, res, url) {
                 if (s.userId && s.userId !== uc.userId && s.userId !== 'seat-' + s.id) {
                     return json(res, 403, { error: 'not your seat' });
                 }
-                return json(res, 200, { ok: true, state: b.seatState(seat) });
+                // `window` bounds the delivered candle tail (the canonical timeline
+                // stays the full archive — only the payload is windowed).
+                return json(res, 200, { ok: true, state: b.seatState(seat, { window: q.get('window') }) });
             }
 
             // ---------- Social layer (public profiles · global leaderboard · squads) ----------
@@ -1577,6 +1651,7 @@ async function handleApi(req, res, url) {
                 strategy: String(body.strategy || 'Manual practice'),
                 startingBalance: Number(body.startingBalance) || 10000,
                 riskModel: body.riskModel || { basis: 'money', perTrade: 25 },
+                executionCosts: body.executionCosts || {},
                 period: md.period || body.period || null,
                 periodLabel: md.periodLabel || null,
                 blind: !!(md.meta && md.meta.blind),
@@ -1613,11 +1688,56 @@ async function handleApi(req, res, url) {
                 riskAmount: body.riskAmount, riskPct: body.riskPct, size: body.size,
                 notes: body.notes, setup: body.setup, session: body.session,
                 strategy: body.strategy, entryTime: body.entryTime,
+                positionId: body.positionId, source: body.source, origin: body.origin,
+                clientNonce: body.clientNonce,
                 period: body.period, periodLabel: body.periodLabel
             });
             if (!r.ok) return json(res, 400, { error: r.error });
             Sim.saveSession(uc.userId, s);
             return json(res, 200, { ok: true, position: r.position, state: Sim.stateOf(s) });
+        }
+        // Voice replay order: the client must first parse and show a confirmation
+        // card, then send the confirmed structured fields here. Spoken P&L is
+        // intentionally ignored — realized P&L always comes from replay fills.
+        if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/voice-order$/))) {
+            const s = Sim.loadActive(uc.userId, m[1]);
+            if (!s) return json(res, 404, { error: 'unknown session' });
+            if (body.confirm !== true) {
+                return json(res, 400, { ok: false, error: 'explicit confirmation required before placing a voice order' });
+            }
+            const parsed = body.parsed && typeof body.parsed === 'object' ? body.parsed : body;
+            const direction = parsed.direction === 'Long' || parsed.direction === 'Short' ? parsed.direction : null;
+            const sl = Number(parsed.stop != null ? parsed.stop : parsed.sl);
+            const tp = Number(parsed.target != null ? parsed.target : parsed.tp);
+            if (!direction) return json(res, 400, { ok: false, error: 'voice order needs a confirmed Long or Short direction' });
+            if (!(sl > 0) || !(tp > 0)) return json(res, 400, { ok: false, error: 'voice replay orders require confirmed stop loss and take profit' });
+            const nonce = String(body.clientNonce || parsed.clientNonce || '').trim().slice(0, 120);
+            if (!nonce) return json(res, 400, { ok: false, error: 'clientNonce required for idempotent voice confirmation' });
+            const notes = [parsed.notes]
+                .concat(Array.isArray(parsed.setup_notes) ? parsed.setup_notes : [])
+                .filter(v => typeof v === 'string' && v.trim())
+                .join(' · ')
+                .slice(0, 2000);
+            const r = s.enter({
+                direction,
+                entry: parsed.entry != null ? Number(parsed.entry) : undefined,
+                sl,
+                tp,
+                riskAmount: parsed.risk != null ? Number(parsed.risk) : undefined,
+                riskPct: parsed.risk_pct != null ? Number(parsed.risk_pct) : undefined,
+                size: parsed.size_number != null ? Number(parsed.size_number) : undefined,
+                notes,
+                setup: parsed.setup || parsed.strategy || '',
+                session: parsed.session || '',
+                strategy: body.strategy || parsed.strategy || s.strategy,
+                source: 'VOICE',
+                origin: 'backtest',
+                clientNonce: nonce,
+                entryTime: parsed.entryTime
+            });
+            if (!r.ok) return json(res, 400, { ok: false, error: r.error });
+            Sim.saveSession(uc.userId, s);
+            return json(res, 200, { ok: true, duplicate: !!r.duplicate, source: 'VOICE', position: r.position, trade: r.trade || null, state: Sim.stateOf(s) });
         }
         if ((m = p.match(/^\/api\/backtest\/sessions\/([^/]+)\/manage$/))) {
             const id = m[1];
@@ -1644,16 +1764,34 @@ async function handleApi(req, res, url) {
         if (p === '/api/battles' && req.method === 'POST') {
             const symbol = String(body.symbol || 'EURUSD').toUpperCase();
             const timeframe = String(body.timeframe || '1h');
-            const window = Math.max(30, Math.min(1500, Number(body.window) || 300));
-            const md = await MarketData.getCandles({ symbol, timeframe, count: window });
+            const window = Math.max(30, Math.min(6500, Number(body.window) || 300));
+            // Archive battles (the default) replay a REAL archived month on the
+            // FULL timeline — same source practice backtesting uses. Live/synthetic
+            // battles keep the bounded recent window so a battle is never empty.
+            const period = /^\d{4}-\d{2}$/.test(String(body.period || '')) ? String(body.period) : null;
+            const md = await MarketData.getCandles({
+                symbol, timeframe, count: window,
+                period: period || undefined,
+                all: !!period
+            });
             if (!md.ok || !md.candles.length) return json(res, 400, { error: 'no candles for ' + symbol });
-            const startIndex = Math.max(0, Math.min(Number(body.startBars) || Math.min(30, md.candles.length - 1), md.candles.length - 1));
+            if (period && md.period !== period) {
+                return json(res, 404, { error: 'no archived ' + symbol + ' ' + timeframe + ' data for ' + period });
+            }
+            // Warm-up bars: an explicit host choice (including 0) is honoured; only
+            // an absent value falls back to the 30-bar pre-roll default.
+            const warmupRaw = body.startBars != null && body.startBars !== '' ? Number(body.startBars) : null;
+            const warmup = warmupRaw == null || !isFinite(warmupRaw) ? Math.min(30, md.candles.length - 1) : Math.max(0, Math.min(500, warmupRaw));
+            const startIndex = Math.max(0, Math.min(warmup, md.candles.length - 1));
             const seatNames = Array.isArray(body.seats) ? body.seats.slice(0, 10).map(s => String(s).trim()) : ['Trader 1', 'Trader 2'];
             const teams = Array.isArray(body.teams) && body.teams.length === seatNames.length ? body.teams.map(t => String(t).trim() || null) : null;
             const b = new Battle.Battle({
                 hostId: uc.userId,
                 title: String(body.title || symbol + ' ' + timeframe + ' battle'),
                 symbol, timeframe,
+                period: period || md.period || null,
+                periodLabel: md.periodLabel || null,
+                candleWindow: body.candleWindow,
                 category: (md.meta && md.meta.category) || 'Other',
                 candles: md.candles, startIndex,
                 startingBalance: Number(body.startingBalance) || 10000,
@@ -1959,6 +2097,20 @@ async function handleApi(req, res, url) {
                 accounts: Core.Accounts,
                 evaluations: Core.TradeEvaluations.filter(e => e.trade_id === trade.id)
             });
+        }
+
+        // ---- trade evidence attachment (metadata only; storage URLs must be
+        // issued by the configured storage provider, never arbitrary file paths) ----
+        if (req.method === 'POST' && (m = p.match(/^\/api\/trades\/([^/]+)\/evidence$/))) {
+            const trade = Core.Trades.find(t => t.id === m[1]);
+            if (!trade) return json(res, 404, { ok: false, error: 'unknown trade' });
+            const attached = Evidence.attachToTrade(trade, body);
+            if (!attached.ok) return json(res, 400, attached);
+            if (!attached.duplicate) {
+                Core.TradeService.update(trade.id, { evidence: attached.evidence });
+                uc.scheduleSave();
+            }
+            return json(res, 200, { ok: true, duplicate: !!attached.duplicate, evidence: attached.evidence });
         }
 
         // ---- trade edit / delete (full downstream recalculation) ----

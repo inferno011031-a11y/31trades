@@ -86,6 +86,15 @@ class Battle {
         this.symbol = String(o.symbol || 'EURUSD').toUpperCase();
         this.timeframe = String(o.timeframe || '1h');
         this.category = o.category || 'Other';
+        // Historical archive identity. A battle replays a real archived month
+        // exactly like practice backtesting — `period` is the YYYY-MM folder and
+        // `periodLabel` is the human label shown in the UI.
+        this.period = o.period || null;
+        this.periodLabel = o.periodLabel || null;
+        // Chart delivery window: the canonical timeline is the FULL archive, but
+        // each seat poll only ships the tail window of visible bars so a month of
+        // 1m candles never becomes a multi-megabyte response.
+        this.candleWindow = Math.max(60, Math.min(2000, Number(o.candleWindow) || 400));
         this.candles = (o.candles || []).map(c => ({ ...c }));   // the ONE canonical timeline
         this.startIndex = Math.max(0, Math.min(o.startIndex || 0, this.candles.length - 1));
         this.cursor = o.cursor != null ? Math.max(this.startIndex, Math.min(this.candles.length - 1, o.cursor)) : this.startIndex;
@@ -117,6 +126,7 @@ class Battle {
                     symbol: this.symbol, timeframe: this.timeframe,
                     category: this.category, strategy: s.name,
                     startingBalance: this.startingBalance, riskModel: this.riskModel,
+                    period: this.period, periodLabel: this.periodLabel,
                     candles: this.candles, startIndex: this.startIndex,
                     cursor: this.cursor
                 });
@@ -180,6 +190,7 @@ class Battle {
         return {
             id: this.id, title: this.title, symbol: this.symbol, timeframe: this.timeframe,
             category: this.category, status: this.status, createdAt: this.createdAt,
+            period: this.period, periodLabel: this.periodLabel, candleWindow: this.candleWindow,
             cursor: this.cursor, total: this.candles.length, startIndex: this.startIndex,
             startingBalance: this.startingBalance, riskModel: this.riskModel,
             seats: this.seats.map(s => ({
@@ -190,14 +201,25 @@ class Battle {
         };
     }
 
-    seatState(seatId) {
+    seatState(seatId, opts) {
         const s = this.seat(seatId);
         if (!s) return null;
         this._ensureSeats();
+        const o = opts || {};
         const st = stateOf(s.session);
-        st.candles = this.candles.slice(0, this.cursor + 1);   // shared canonical visibility
+        // Shared canonical visibility, delivered as a bounded TAIL window: the
+        // chart needs recent context, not the whole month on every poll.
+        const window = Math.max(60, Math.min(2000, Number(o.window) || this.candleWindow));
+        const visible = this.cursor + 1;
+        const from = Math.max(0, visible - window);
+        st.candles = this.candles.slice(from, visible);
+        st.candlesFrom = from;
+        st.candlesTotal = visible;
+        st.candleWindow = window;
         st.cursor = this.cursor;
-        st.battle = { id: this.id, title: this.title, status: this.status, seat: s.id, name: s.name, team: s.team };
+        st.period = this.period;
+        st.periodLabel = this.periodLabel;
+        st.battle = { id: this.id, title: this.title, status: this.status, seat: s.id, name: s.name, team: s.team, period: this.period, periodLabel: this.periodLabel };
         return st;
     }
 
@@ -243,6 +265,7 @@ class Battle {
             candles: this.candles, startIndex: this.startIndex, cursor: this.cursor,
             startingBalance: this.startingBalance, riskModel: this.riskModel,
             inviteCode: this.inviteCode,
+            period: this.period, periodLabel: this.periodLabel, candleWindow: this.candleWindow,
             status: this.status, seats: this.seats.map(s => ({
                 id: s.id, name: s.name, team: s.team, userId: s.userId,
                 session: s.session ? s.session.serialize() : null
@@ -295,6 +318,7 @@ function listBattles(hostId) {
         const x = Battle.hydrate(b);
         return {
             id: x.id, title: x.title, symbol: x.symbol, timeframe: x.timeframe,
+            period: x.period, periodLabel: x.periodLabel,
             status: x.status, createdAt: x.createdAt, cursor: x.cursor, total: x.candles.length,
             seats: x.seats.length, taken: x.seats.filter(s => s.userId).length,
             teams: [...new Set(x.seats.map(s => s.team).filter(Boolean))],
@@ -514,6 +538,7 @@ function battlesFeed(hostId) {
         const free = x.seats.some(s => !s.userId);
         const base = {
             id: x.id, title: x.title, symbol: x.symbol, timeframe: x.timeframe,
+            period: x.period, periodLabel: x.periodLabel,
             status: x.status, createdAt: x.createdAt, completedAt: x.completedAt,
             cursor: x.cursor, total: x.candles.length,
             seats: x.seats.length, taken, teams: [...new Set(x.seats.map(s => s.team).filter(Boolean))]

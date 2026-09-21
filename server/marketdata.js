@@ -327,5 +327,51 @@ async function getCandles(opts) {
     return Object.assign({}, syn, { meta: Object.assign({}, syn.meta, { source: 'synthetic', provider: '31Trades deterministic generator' }) });
 }
 
+// ---------------------------------------------------------------------------
+// Available historical archive periods (real gold datasets on disk).
+//
+// Practice and Battle both replay REAL archived months; this is the single
+// source of truth for which Year → Month → Timeframe combinations exist, so the
+// UI can never offer a period that silently falls back to another month.
+// ---------------------------------------------------------------------------
+const ARCHIVE_TIMEFRAMES = ['1m', '2m', '3m', '5m', '15m', '30m', '1h', '2h', '4h', '6h', '1d', 'w', 'm'];
+
+function availablePeriods(symbol) {
+    const sym = String(symbol || 'XAUUSD').toUpperCase();
+    const dir = path.join(DATA_DIR, 'gold');
+    const years = new Map();   // year → Map(month → { timeframes: [] })
+    let folders = [];
+    try {
+        folders = fs.readdirSync(dir).filter(f => /^\d{4}-\d{2}$/.test(f)).sort();
+    } catch (e) { /* no archive on disk → empty catalogue */ }
+    folders.forEach(folder => {
+        const [year, month] = folder.split('-');
+        const timeframes = [];
+        ARCHIVE_TIMEFRAMES.forEach(tf => {
+            try {
+                if (fs.existsSync(path.join(dir, folder, 'xau_' + tf + '_' + folder + '.json'))) timeframes.push(tf);
+            } catch (e) { /* ignore */ }
+        });
+        if (!timeframes.length) return;
+        const y = Number(year), m = Number(month);
+        if (!years.has(y)) years.set(y, new Map());
+        years.get(y).set(m, {
+            period: folder,
+            label: (MONTH_NAMES[m - 1] || month) + ' ' + year,
+            timeframes
+        });
+    });
+    return {
+        ok: true,
+        symbol: sym === 'GOLD' ? 'XAUUSD' : sym,
+        source: 'historical-archive',
+        timeframes: ARCHIVE_TIMEFRAMES,
+        years: [...years.keys()].sort((a, b) => b - a).map(year => ({
+            year,
+            months: [...years.get(year).keys()].sort((a, b) => a - b).map(m => years.get(year).get(m))
+        }))
+    };
+}
+
 // expose the synthetic generator + helpers for tests
-module.exports = { getCandles, resolveSymbol, fetchFromTV, generateCandles, TV_TF, DATA_DIR, CACHE_TTL_MS };
+module.exports = { getCandles, availablePeriods, ARCHIVE_TIMEFRAMES, resolveSymbol, fetchFromTV, generateCandles, TV_TF, DATA_DIR, CACHE_TTL_MS };

@@ -69,6 +69,9 @@ endingBalance = startingBalance + net; balance (current), peak
 
 ### Canonical-timeline architecture
 - **One `Battle`** owns one `candles[]` (fetched once via marketdata) + a server-owned `cursor`. Every seat gets a `BacktestSession` over the **same candles array**; `setCursor` advances all seats bar-by-bar on the same bar (fair SL/TP event ordering).
+- **Battles replay exactly like practice backtesting — a full archived month.** The create form offers the same hierarchy: `Symbol → Historical archive (Year · Month) → Timeframe` (timeframes listed per month straight from `/api/backtest/periods`, so a battle can never silently fall back to another month) plus `Bars shown at once`, `Warm-up bars before start`, starting balance and risk-per-trade. `Replay data: Recent live window` stays as an explicit fallback mode.
+- **Why a battle can look like "limited bars":** two different layers. The *canonical timeline* is the WHOLE archived month — every seat is scored over all of it and SL/TP fills on the same bar for everyone. The *chart delivery window* (`candleWindow`, default 400, host-selectable up to 2000) only bounds the tail of visible bars sent on each seat poll, so a 1m month (≈20k+ bars) never becomes a multi-megabyte response every few hundred ms. `publicState.total` always reports the true bar count for the month — the UI prints `Timeline: N bars total · <Month Year> archive` so the window is never mistaken for the data set.
+- `startBars` (warm-up bars) is an explicit host choice; an absent value falls back to the 30-bar pre-roll default, and an explicit `0` is honoured.
 - **Private seats**: each seat's position/trades/balance are private (`seatState` only returns your own); the public state exposes seats (id/name/team/taken) + cursor + current candle only. Anti-cheat: entries must be within the current visible bar's low/high (±0.1%).
 
 ### Lifecycle

@@ -524,13 +524,33 @@
                     </select>
                 </div>
                 <div>
-                    <label class="field-label" for="cb-window">Bar window</label>
-                    <select id="cb-window" class="field-select">
-                        <option value="100">100</option>
-                        <option value="300" selected>300</option>
-                        <option value="600">600</option>
-                        <option value="900">900</option>
+                    <label class="field-label" for="cb-period-mode">Replay data</label>
+                    <select id="cb-period-mode" class="field-select">
+                        <option value="archive" selected>Historical archive (Year · Month)</option>
+                        <option value="live">Recent live window</option>
                     </select>
+                </div>
+                <div>
+                    <label class="field-label" for="cb-year">Archive year</label>
+                    <select id="cb-year" class="field-select"></select>
+                </div>
+                <div>
+                    <label class="field-label" for="cb-month">Archive month</label>
+                    <select id="cb-month" class="field-select"></select>
+                </div>
+                <div>
+                    <label class="field-label" for="cb-window">Bars shown at once</label>
+                    <select id="cb-window" class="field-select">
+                        <option value="200">200</option>
+                        <option value="400" selected>400</option>
+                        <option value="800">800</option>
+                        <option value="1200">1200</option>
+                        <option value="2000">All available</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="field-label" for="cb-warmup">Warm-up bars before start</label>
+                    <input id="cb-warmup" type="number" class="field-input" value="30" min="0" max="500">
                 </div>
                 <div>
                     <label class="field-label" for="cb-balance">Starting balance</label>
@@ -541,6 +561,7 @@
                     <input id="cb-risk" type="number" class="field-input" value="25">
                 </div>
             </div>
+            <div id="cb-timeline-note" class="mt-3 glass p-3 text-[11.5px] text-[var(--tm-dim)] leading-relaxed"></div>
             <div class="mt-4">
                 <label class="field-label">Seats &amp; teams</label>
                 <div id="seat-builder" class="flex flex-col gap-2"></div>
@@ -657,8 +678,10 @@
                     if (u && u.name) name = String(u.name).split(/[\s@]/)[0];
                     else if (u && u.email) name = String(u.email).split('@')[0].split(/[._-]/)[0];
                 } catch (e) {}
-                $('nav-name').textContent = name.charAt(0).toUpperCase() + name.slice(1);
-                $('nav-avatar').textContent = name.slice(0, 2).toUpperCase();
+                const navName = $('nav-name');
+                const navAvatar = $('nav-avatar');
+                if (navName) navName.textContent = name.charAt(0).toUpperCase() + name.slice(1);
+                if (navAvatar) navAvatar.textContent = name.slice(0, 2).toUpperCase();
             }
 
             // ============ VIEWS ============
@@ -858,6 +881,7 @@
                             '<div class="flex items-center gap-2 mt-1.5 flex-wrap">' +
                                 '<span class="tag ' + statusTag(pub.status) + '">' + esc(pub.status.toUpperCase()) + '</span>' +
                                 '<span class="tag tag-gray">' + esc(pub.symbol) + ' · ' + esc(pub.timeframe) + '</span>' +
+                                '<span class="tag tag-gray">' + (pub.periodLabel ? esc(pub.periodLabel) + ' archive' : 'Recent live window') + '</span>' +
                                 (cur.host ? '<span class="tag tag-indigo">HOST</span>' : '') +
                                 (cur.mySeatId ? '<span class="tag tag-emerald">SEATED</span>' : '') +
                             '</div>' +
@@ -874,7 +898,8 @@
                             chartBlock() +
                             (cur.host ? hostControls() : '') +
                             (seated ? executionBlock() : '<div class="glass p-5 text-center text-[13px] text-[var(--tm-muted)]">Join a seat to place trades in this battle.</div>') +
-                            '<div class="glass p-4"><div class="label-xs mb-3">YOUR TRADES</div>' + (seated ? tradeLog() : '<div class="text-[12.5px] text-[var(--tm-dim)]">No seat joined yet.</div>') + '</div>' +
+                            '<div class="glass p-4"><div class="label-xs mb-3">YOUR TRADES</div>' + (seated ? tradeLog() :                            '<div class="text-[12.5px] text-[var(--tm-dim)]">No seat joined yet.</div>') + '</div>' +
+                            ((cur.host || seated) ? '<div class="glass p-3 text-[11.5px] text-[var(--tm-dim)] leading-relaxed">The full archived month is the canonical timeline for scoring and SL/TP. The chart shows the most recent ' + (pub.candleWindow || 400) + ' bars to keep polling light.</div>' : '') +
                         '</div>' +
                         '<div class="flex flex-col gap-4">' +
                             seatsBlock() +
@@ -1037,6 +1062,8 @@
                         '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Starting balance</span><b class="num">' + fmtMoney(pub.startingBalance) + '</b></div>' +
                         '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Risk model</span><b class="num">$' + fmtNum((pub.riskModel && pub.riskModel.perTrade) || 25) + ' / trade</b></div>' +
                         '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Category</span><b>' + esc(pub.category || 'Other') + '</b></div>' +
+                        '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Replay data</span><b>' + (pub.periodLabel ? esc(pub.periodLabel) + ' archive' : 'Recent live window') + '</b></div>' +
+                        '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Timeline</span><b class="num">' + pub.total + ' bars total</b></div>' +
                         '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Progress</span><b class="num">' + pct + '%</b></div>' +
                         '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Created</span><b class="num">' + fmtTime(pub.createdAt) + '</b></div>' +
                     '</div>' +
@@ -1212,11 +1239,78 @@
                     b.closest('.seat-row').remove();
                 }));
             }
+            // Archive catalogue: which Year → Month → Timeframe combos really exist
+            // on disk. Populated from the server so a battle can never be created
+            // against a missing month (which would silently replay another one).
+            let archiveCatalogue = null;
+            async function loadArchiveCatalogue() {
+                if (archiveCatalogue) return archiveCatalogue;
+                try {
+                    const r = await apiFetch('/api/backtest/periods');
+                    const j = await r.json().catch(() => ({}));
+                    archiveCatalogue = (j && j.years) || [];
+                } catch (e) { archiveCatalogue = []; }
+                return archiveCatalogue;
+            }
+            function syncMonthOptions() {
+                const yearSel = $('cb-year'), monthSel = $('cb-month');
+                if (!yearSel || !monthSel) return;
+                const y = archiveCatalogue.find(x => String(x.year) === String(yearSel.value));
+                const months = (y && y.months) || [];
+                const prev = monthSel.value;
+                monthSel.innerHTML = months.map(m => '<option value="' + m.period + '">' + esc(m.label) + '</option>').join('');
+                if (months.some(m => m.period === prev)) monthSel.value = prev;
+                syncTimeframeOptions();
+            }
+            // Only offer timeframes that exist for the selected archive month.
+            function syncTimeframeOptions() {
+                const tfSel = $('cb-timeframe');
+                if (!tfSel) return;
+                const mode = $('cb-period-mode') ? $('cb-period-mode').value : 'archive';
+                if (mode !== 'archive') { return; }
+                const yearSel = $('cb-year'), monthSel = $('cb-month');
+                const y = archiveCatalogue && archiveCatalogue.find(x => String(x.year) === String(yearSel.value));
+                const m = y && y.months.find(x => x.period === monthSel.value);
+                if (!m || !m.timeframes) return;
+                const prev = tfSel.value;
+                tfSel.innerHTML = m.timeframes.map(tf => '<option value="' + tf + '">' + tf + '</option>').join('');
+                if (m.timeframes.indexOf(prev) !== -1) tfSel.value = prev;
+                else if (m.timeframes.indexOf('1h') !== -1) tfSel.value = '1h';
+                updateTimelineNote();
+            }
+            // Explains the two-layer design: the canonical timeline is the FULL
+            // archive (scoring + SL/TP), while the chart only streams the tail
+            // window of visible bars so polling never ships a whole month of 1m.
+            function updateTimelineNote() {
+                const note = $('cb-timeline-note');
+                if (!note) return;
+                const archive = ($('cb-period-mode') ? $('cb-period-mode').value : 'archive') === 'archive';
+                const bars = Number($('cb-window') ? $('cb-window').value : 400) || 400;
+                const warm = Number($('cb-warmup') ? $('cb-warmup').value : 0) || 0;
+                const tf = $('cb-timeframe') ? $('cb-timeframe').value : '1h';
+                if (archive) {
+                    const monthSel = $('cb-month');
+                    const label = (monthSel && monthSel.selectedOptions && monthSel.selectedOptions.length) ? monthSel.selectedOptions[0].textContent : 'archive month';
+                    note.innerHTML = '<b class="text-[var(--tm-text)]">' + esc(label) + ' · ' + esc(tf) + '</b> — the full archived month is the canonical timeline: every seat advances on the same bars and SL/TP fills on the same candle. The chart streams the most recent ' + bars + ' bars so polling stays light' + (warm > 0 ? '; ' + warm + ' warm-up bars are revealed before the battle starts' : '') + '.';
+                } else {
+                    note.innerHTML = '<b class="text-[var(--tm-text)]">Recent live window</b> — only the latest ' + bars + ' bars, not an archived month. Pick the historical archive for a real replay like practice backtesting.';
+                }
+            }
+            function syncPeriodMode() {
+                const archive = ($('cb-period-mode') ? $('cb-period-mode').value : 'archive') === 'archive';
+                ['cb-year', 'cb-month'].forEach(id => { const el = $(id); if (el && el.closest('div')) el.closest('div').classList.toggle('hidden', !archive); });
+                if (archive) syncTimeframeOptions();
+                updateTimelineNote();
+            }
+
             async function createBattle() {
                 const title = $('cb-title').value.trim() || '';
                 const symbol = $('cb-symbol').value;
                 const timeframe = $('cb-timeframe').value;
-                const window = Number($('cb-window').value) || 300;
+                const mode = $('cb-period-mode') ? $('cb-period-mode').value : 'archive';
+                const period = mode === 'archive' && $('cb-month') ? $('cb-month').value : null;
+                const window = Number($('cb-window') ? $('cb-window').value : 400) || 400;
+                const startBars = Math.max(0, Math.min(500, Number($('cb-warmup') ? $('cb-warmup').value : 0) || 0));
                 const startingBalance = Number($('cb-balance').value) || 10000;
                 const perTrade = Number($('cb-risk').value) || 25;
                 const seats = Array.from($('seat-builder').querySelectorAll('[data-name]')).map(i => i.value.trim() || 'Trader');
@@ -1227,7 +1321,7 @@
                 try {
                     const r = await apiFetch('/api/battles', {
                         method: 'POST', headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ title, symbol, timeframe, window, startingBalance, riskModel: { basis: 'money', perTrade }, seats, teams })
+                        body: JSON.stringify({ title, symbol, timeframe, window, candleWindow: window, startBars, period, startingBalance, riskModel: { basis: 'money', perTrade }, seats, teams })
                     });
                     const j = await r.json().catch(() => ({}));
                     if (!r.ok) throw new Error(j.error || 'Unable to create battle');
@@ -1308,8 +1402,32 @@
                 if (cb) cb.addEventListener('click', () => document.body.classList.toggle('collapsed'));
 
                 // create
-                $('create-battle-btn').addEventListener('click', () => { seatBuilder(); openModal('create-modal'); });
+                $('create-battle-btn').addEventListener('click', async () => {
+                    seatBuilder();
+                    openModal('create-modal');
+                    // Real archive first: Year · Month · Timeframe come from disk,
+                    // exactly like practice backtesting. Recent live window stays
+                    // available as the fallback mode.
+                    const years = await loadArchiveCatalogue();
+                    const yearSel = $('cb-year');
+                    if (yearSel && years.length) {
+                        const prev = yearSel.value;
+                        yearSel.innerHTML = years.map(y => '<option value="' + y.year + '">' + y.year + '</option>').join('');
+                        if (years.some(y => String(y.year) === prev)) yearSel.value = prev;
+                        syncMonthOptions();
+                    } else {
+                        const modeSel = $('cb-period-mode');
+                        if (modeSel) modeSel.value = 'live';
+                    }
+                    syncPeriodMode();
+                });
                 $('create-battle-submit').addEventListener('click', createBattle);
+                if ($('cb-period-mode')) $('cb-period-mode').addEventListener('change', syncPeriodMode);
+                if ($('cb-year')) $('cb-year').addEventListener('change', syncMonthOptions);
+                if ($('cb-month')) $('cb-month').addEventListener('change', syncTimeframeOptions);
+                if ($('cb-window')) $('cb-window').addEventListener('change', updateTimelineNote);
+                if ($('cb-warmup')) $('cb-warmup').addEventListener('input', updateTimelineNote);
+                if ($('cb-symbol')) $('cb-symbol').addEventListener('change', () => { archiveCatalogue = null; });
                 $('add-seat').addEventListener('click', () => {
                     const wrap = $('seat-builder');
                     if (wrap.querySelectorAll('.seat-row').length >= 6) return;

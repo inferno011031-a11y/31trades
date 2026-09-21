@@ -22,6 +22,7 @@
 const path = require('node:path');
 const fs = require('node:fs');
 const Analytics = require('./backtest-analytics.js');
+const { getPool } = require('./db.js');
 
 // ---------------------------------------------------------------------------
 // Risk / sizing helpers
@@ -37,6 +38,17 @@ function rrOf(entry, sl, tp) {
     const slDist = Math.abs(entry - sl);
     const tpDist = Math.abs(tp - entry);
     return slDist > 0 ? tpDist / slDist : 0;
+}
+
+function normalizeExecutionCosts(value) {
+    const c = value && typeof value === 'object' ? value : {};
+    return {
+        spread: Math.max(0, Number(c.spread) || 0),
+        slippage: Math.max(0, Number(c.slippage) || 0),
+        commissionPerUnit: Math.max(0, Number(c.commissionPerUnit) || 0),
+        commissionFixed: Math.max(0, Number(c.commissionFixed) || 0),
+        feeBps: Math.max(0, Number(c.feeBps) || 0)
+    };
 }
 
 function toUnixSec(ts) {
@@ -63,10 +75,14 @@ class BacktestSession {
         this.category = o.category || 'Forex';
         this.startingBalance = Number(o.startingBalance) > 0 ? Number(o.startingBalance) : 10000;
         this.riskModel = o.riskModel || { basis: 'money', perTrade: 25 };   // { basis: 'money'|'pct', perTrade }
+        this.executionCosts = normalizeExecutionCosts(o.executionCosts || (o.extensions && o.extensions.executionCosts));
         this.candles = (o.candles || []).map(c => ({ ...c }));              // canonical timeline
         this.startIndex = Math.max(0, Math.min(o.startIndex || 0, this.candles.length - 1));
         this.cursor = o.cursor != null ? Math.max(this.startIndex, Math.min(this.candles.length - 1, o.cursor)) : this.startIndex;
-        this.position = o.position || null;                                 // open position or null
+        this.positions = Array.isArray(o.positions)
+            ? o.positions.map(p => ({ ...p }))
+            : (o.position ? [{ ...o.position }] : []);
+        this.position = this.positions[0] || null;                            // legacy primary position view
         this.trades = (o.trades || []).map(t => ({ ...t }));                // closed trades (recorded)
         this.actions = (o.actions || []).map(a => ({ ...a }));              // full audit trail
         this.status = o.status || 'running';
@@ -86,6 +102,10 @@ class BacktestSession {
         this.checklist = Array.isArray(o.checklist) ? o.checklist : [];
         this.propRules = o.propRules || null;
         this.extensions = o.extensions && typeof o.extensions === 'object' ? { ...o.extensions } : {};
+    }
+
+    _syncPositions() {
+        this.position = this.positions[0] || null;
     }
 
     balanceAt(idx) {
@@ -176,21 +196,30 @@ class BacktestSession {
     }
 
     _simulateBar(bar) {
-        const p = this.position;
-        if (!p) return;
-        // intrabar precedence — conservative: the losing fill happens first
-        if (p.dir === 'Long') {
-            if (bar.low <= p.sl) return this._fillExit(bar, p.sl, 'SL');
-            if (p.tp != null && p.tp > 0 && bar.high >= p.tp) return this._fillExit(bar, p.tp, 'TP');
-        } else {
-            if (bar.high >= p.sl) return this._fillExit(bar, p.sl, 'SL');
-            if (p.tp != null && p.tp > 0 && bar.low <= p.tp) return this._fillExit(bar, p.tp, 'TP');
+        for (const p of this.positions.slice()) {
+            // intrabar precedence — conservative: the losing fill happens first
+            if (p.dir === 'Long') {
+                if (bar.low <= p.sl) this._fillExit(bar, p.sl, 'SL', undefined, p);
+                else if (p.tp != null && p.tp > 0 && bar.high >= p.tp) this._fillExit(bar, p.tp, 'TP', undefined, p);
+            } else {
+                if (bar.high >= p.sl) this._fillExit(bar, p.sl, 'SL', undefined, p);
+                else if (p.tp != null && p.tp > 0 && bar.low <= p.tp) this._fillExit(bar, p.tp, 'TP', undefined, p);
+            }
         }
     }
 
-    _fillExit(bar, price, reason, opts) {
-        const p = this.position;
-        const pnl = this._pnlAt(p, price);
+    _fillExit(bar, price, reason, opts, positionOverride) {
+        const p = positionOverride || this.position;
+        if (!p) return;
+
+        const costs = this.executionCosts;
+        const slip = costs.slippage * (p.dir === 'Long' ? -1 : 1);
+        const fillPrice = price + slip;
+        const grossPnl = this._pnlAt(p, fillPrice);
+        const commission = costs.commissionFixed
+            + (costs.commissionPerUnit * p.size)
+            + (costs.feeBps > 0 ? Math.abs(fillPrice * p.size) * (costs.feeBps / 10000) : 0);
+        const pnl = grossPnl - commission;
         const r = p.riskAmount > 0 ? pnl / p.riskAmount : 0;
         const exitTime = (opts && opts.exitTime) || (bar && bar.time) || Date.now();
         const trade = {
@@ -207,7 +236,10 @@ class BacktestSession {
             entryIndex: p.openedAtIdx,
             exitIndex: this.cursor,
             entry: p.entry,
-            exit: price,
+            exit: fillPrice,
+            requestedExit: price,
+            grossPnl: Math.round(grossPnl * 100) / 100,
+            executionCost: Math.round(commission * 100) / 100,
             sl: p.sl,
             tp: p.tp,
             size: p.size,
@@ -221,6 +253,9 @@ class BacktestSession {
             setup: p.setup || '',
             notes: p.notes || '',
             tags: Array.isArray(p.tags) ? p.tags : [],
+            source: p.source || 'BACKTEST',
+            origin: p.origin || 'manual',
+            clientNonce: p.clientNonce || null,
             session: p.session || sessionOf(p.openedAt),
             period: p.period || this.period || null,
             periodLabel: p.periodLabel || this.periodLabel || null,
@@ -239,8 +274,9 @@ class BacktestSession {
             }
         } catch (e) { /* legacy-safe: analytics derives from entryTime on read */ }
         this.trades.push(trade);
-        this._log('close', { tradeId: trade.id, reason, price, pnl, r: trade.realizedR });
-        this.position = null;
+        this._log('close', { tradeId: trade.id, reason, price: fillPrice, requestedPrice: price, pnl, grossPnl, executionCost: commission, r: trade.realizedR });
+        this.positions = this.positions.filter(x => x !== p);
+        this._syncPositions();
         this._refreshBalance();
     }
 
@@ -261,16 +297,27 @@ class BacktestSession {
     // @param {object} o { direction: 'Long'|'Short', entry, sl, tp,
     //                      riskAmount?, riskPct?, size?, notes, setup }
     enter(o) {
-        if (this.position) return { ok: false, error: 'position already open' };
-        const dir = String(o.direction || '').toLowerCase();
+        const opts = o || {};
+        if (opts.clientNonce) {
+            const duplicate = this.actions.find(a => a.type === 'enter' && a.clientNonce === String(opts.clientNonce));
+            if (duplicate) {
+                return { ok: true, duplicate: true, position: this.position, trade: this.trades[this.trades.length - 1] || null };
+            }
+        }
+        if (this.position && !this.extensions.allowMultiplePositions) return { ok: false, error: 'position already open' };
+        const dir = String(opts.direction || '').toLowerCase();
         if (dir !== 'long' && dir !== 'short') return { ok: false, error: 'direction must be Long or Short' };
         const bar = this.candles[this.cursor];
         if (!bar) return { ok: false, error: 'no candle at replay position' };
-        const entry = o.entry != null ? Number(o.entry) : bar.close;
-        const sl = Number(o.sl);
-        const tp = Number(o.tp);
-        if (!(entry > 0) || !(sl > 0)) return { ok: false, error: 'entry and stop loss are required' };
+        const requestedEntry = opts.entry != null ? Number(opts.entry) : bar.close;
+        const costs = this.executionCosts;
         const long = dir === 'long';
+        const entrySlip = costs.slippage * (long ? 1 : -1);
+        const spreadHalf = costs.spread / 2;
+        const entry = requestedEntry + entrySlip + (long ? spreadHalf : -spreadHalf);
+        const sl = Number(opts.sl);
+        const tp = Number(opts.tp);
+        if (!(entry > 0) || !(sl > 0)) return { ok: false, error: 'entry and stop loss are required' };
         if (long && sl >= entry) return { ok: false, error: 'stop loss must be below entry for a long' };
         if (!long && sl <= entry) return { ok: false, error: 'stop loss must be above entry for a short' };
         if (tp > 0) {
@@ -278,12 +325,12 @@ class BacktestSession {
             if (!long && tp >= entry) return { ok: false, error: 'take profit must be below entry for a short' };
         }
         // risk amount: explicit, or % of balance, or derived from size
-        let riskAmount = Number(o.riskAmount);
+        let riskAmount = Number(opts.riskAmount);
         const slDist = Math.abs(entry - sl);
-        if (!(riskAmount > 0) && o.riskPct) {
-            riskAmount = this.balance * (Number(o.riskPct) / 100);
+        if (!(riskAmount > 0) && opts.riskPct) {
+            riskAmount = this.balance * (Number(opts.riskPct) / 100);
         }
-        let size = Number(o.size);
+        let size = Number(opts.size);
         if (!(riskAmount > 0) && !(size > 0)) {
             // default to the account risk model
             const per = this.riskModel.perTrade || 25;
@@ -293,34 +340,42 @@ class BacktestSession {
         if (!(size > 0)) return { ok: false, error: 'cannot size position — check risk and stop distance' };
         if (!(riskAmount > 0)) riskAmount = Math.abs(slDist * size);
         const rr = tp > 0 ? rrOf(entry, sl, tp) : 0;
-        this.position = {
+        const newPosition = {
+            id: opts.positionId ? String(opts.positionId) : 'pos_' + this.id + '_' + (this.actions.filter(a => a.type === 'enter').length + 1),
             dir: long ? 'Long' : 'Short',
-            entry, sl, tp: tp > 0 ? tp : null,
+            entry, requestedEntry, sl, tp: tp > 0 ? tp : null,
             size: Math.round(size * 1e6) / 1e6,
             riskAmount: Math.round(riskAmount * 100) / 100,
             riskPct: this.balance > 0 ? Math.round((riskAmount / this.balance) * 10000) / 100 : 0,
             rr: Math.round(rr * 100) / 100,
-            strategy: String(o.strategy || this.strategy || ''),
-            session: String(o.session || ''),
-            setup: String(o.setup || ''),
-            notes: String(o.notes || ''),
-            period: String(o.period || this.period || ''),
-            periodLabel: String(o.periodLabel || this.periodLabel || ''),
-            openedAt: (o && o.entryTime) || (bar ? bar.time : Date.now()),
+            strategy: String(opts.strategy || this.strategy || ''),
+            session: String(opts.session || ''),
+            setup: String(opts.setup || ''),
+            notes: String(opts.notes || ''),
+            source: String(opts.source || 'BACKTEST'),
+            origin: String(opts.origin || 'manual'),
+            clientNonce: opts.clientNonce ? String(opts.clientNonce) : null,
+            period: String(opts.period || this.period || ''),
+            periodLabel: String(opts.periodLabel || this.periodLabel || ''),
+            openedAt: (opts && opts.entryTime) || (bar ? bar.time : Date.now()),
             openedAtIdx: this.cursor
         };
-        this._log('enter', { direction: this.position.dir, entry, sl, tp, size: this.position.size, riskAmount: this.position.riskAmount });
-        // if SL is inside the entry bar it fills immediately (discipline)
+        this.positions.push(newPosition);
+        this._syncPositions();
+        this._log('enter', { positionId: newPosition.id, direction: newPosition.dir, entry, requestedEntry, sl, tp, size: newPosition.size, riskAmount: newPosition.riskAmount, source: newPosition.source, origin: newPosition.origin, clientNonce: newPosition.clientNonce, executionCosts: this.executionCosts });
+        // if SL/TP is inside the entry bar it fills immediately (discipline)
         this._simulateBar(bar);
-        return { ok: true, position: this.position };
+        return { ok: true, position: newPosition, positions: this.positions.slice() };
     }
 
     close(o) {
         if (!this.position) return { ok: false, error: 'no open position' };
+        const target = o && o.positionId ? this.positions.find(p => p.id === String(o.positionId)) : this.position;
+        if (!target) return { ok: false, error: 'unknown position' };
         const bar = this.candles[this.cursor];
-        const price = o && o.price != null ? Number(o.price) : (bar ? bar.close : this.position.entry);
-        this._fillExit(bar || { time: (o && o.exitTime) || Date.now(), close: price, low: price, high: price }, price, String((o && o.reason) || 'manual'), o);
-        return { ok: true, position: null, trade: this.trades[this.trades.length - 1] };
+        const price = o && o.price != null ? Number(o.price) : (bar ? bar.close : target.entry);
+        this._fillExit(bar || { time: (o && o.exitTime) || Date.now(), close: price, low: price, high: price }, price, String((o && o.reason) || 'manual'), o, target);
+        return { ok: true, position: this.position, positions: this.positions.slice(), trade: this.trades[this.trades.length - 1] };
     }
 
     // Active trade management: Break-Even, Partial Close, Dynamic SL/TP modification
@@ -342,7 +397,12 @@ class BacktestSession {
         const closeSize = Math.round(p.size * frac * 1e6) / 1e6;
         if (!(closeSize > 0)) return { ok: false, error: 'cannot calculate partial size' };
 
-        const pnl = p.dir === 'Long' ? (price - p.entry) * closeSize : (p.entry - price) * closeSize;
+        const fillPrice = price + (this.executionCosts.slippage * (p.dir === 'Long' ? -1 : 1));
+        const grossPnl = p.dir === 'Long' ? (fillPrice - p.entry) * closeSize : (p.entry - fillPrice) * closeSize;
+        const commission = this.executionCosts.commissionFixed
+            + (this.executionCosts.commissionPerUnit * closeSize)
+            + (this.executionCosts.feeBps > 0 ? Math.abs(fillPrice * closeSize) * (this.executionCosts.feeBps / 10000) : 0);
+        const pnl = grossPnl - commission;
         const partialRisk = p.riskAmount * frac;
         const r = partialRisk > 0 ? pnl / partialRisk : 0;
 
@@ -352,7 +412,7 @@ class BacktestSession {
             userId: this.userId,
             symbol: this.symbol,
             timeframe: this.timeframe,
-            strategy: this.strategy,
+            strategy: p.strategy || this.strategy,
             category: this.category,
             direction: p.dir,
             entryTime: p.openedAt,
@@ -360,7 +420,10 @@ class BacktestSession {
             entryIndex: p.openedAtIdx,
             exitIndex: this.cursor,
             entry: p.entry,
-            exit: price,
+            exit: fillPrice,
+            requestedExit: price,
+            grossPnl: Math.round(grossPnl * 100) / 100,
+            executionCost: Math.round(commission * 100) / 100,
             sl: p.sl,
             tp: p.tp,
             size: closeSize,
@@ -373,6 +436,9 @@ class BacktestSession {
             exitReason: 'partial_' + Math.round(frac * 100) + '%',
             setup: p.setup || '',
             notes: (p.notes ? p.notes + ' • ' : '') + 'Partial ' + Math.round(frac * 100) + '%',
+            source: p.source || 'BACKTEST',
+            origin: p.origin || 'manual',
+            clientNonce: p.clientNonce || null,
             session: p.session || sessionOf(p.openedAt),
             period: p.period || this.period || null,
             periodLabel: p.periodLabel || this.periodLabel || null,
@@ -385,7 +451,7 @@ class BacktestSession {
         p.riskAmount = Math.max(0, Math.round((p.riskAmount - partialRisk) * 100) / 100);
         p.riskPct = Math.max(0, Math.round((p.riskPct * (1 - frac)) * 100) / 100);
 
-        this._log('close_partial', { tradeId: trade.id, fraction: frac, price, pnl, remainingSize: p.size });
+        this._log('close_partial', { tradeId: trade.id, fraction: frac, price: fillPrice, requestedPrice: price, pnl, grossPnl, executionCost: commission, remainingSize: p.size });
         this._refreshBalance();
         return { ok: true, position: p, trade };
     }
@@ -475,13 +541,13 @@ class BacktestSession {
         return {
             id: this.id, userId: this.userId, symbol: this.symbol, timeframe: this.timeframe,
             strategy: this.strategy, category: this.category,
-            startingBalance: this.startingBalance, riskModel: this.riskModel,
+            startingBalance: this.startingBalance, riskModel: this.riskModel, executionCosts: this.executionCosts,
             period: this.period, periodLabel: this.periodLabel, blind: this.blind,
             actualPeriod: this.actualPeriod, actualLabel: this.actualLabel,
             notes: this.notes, tags: this.tags, checklist: this.checklist,
             propRules: this.propRules, extensions: this.extensions,
             candles: this.candles, startIndex: this.startIndex, cursor: this.cursor,
-            position: this.position, trades: this.trades, actions: this.actions,
+            position: this.position, positions: this.positions, trades: this.trades, actions: this.actions,
             status: this.status, createdAt: this.createdAt, completedAt: this.completedAt,
             balance: this.balance, peak: this.peak
         };
@@ -573,13 +639,38 @@ function getSession(userId, id) {
     const s = readAll(userId).find(x => x.id === id);
     return s ? BacktestSession.hydrate(s) : null;
 }
+async function mirrorSession(userId, sess) {
+    const pool = getPool();
+    // Local-first remains authoritative when Supabase is not configured.
+    if (!pool || !userId || !/^[0-9a-f-]{36}$/i.test(String(userId))) return;
+    try {
+        const row = sess.serialize();
+        await pool.query(
+            `INSERT INTO backtest_sessions (id, user_id, status, period, symbol, timeframe, session, updated_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7::jsonb, now())
+             ON CONFLICT (id) DO UPDATE SET status = EXCLUDED.status, period = EXCLUDED.period,
+               symbol = EXCLUDED.symbol, timeframe = EXCLUDED.timeframe, session = EXCLUDED.session,
+               updated_at = now()`,
+            [sess.id, userId, sess.status, sess.period, sess.symbol, sess.timeframe, JSON.stringify(row)]
+        );
+    } catch (err) {
+        // Never make replay fail because the optional database mirror is down.
+        console.warn('[Backtest] Supabase session mirror skipped:', err.message);
+    }
+}
 function saveSession(userId, sess) {
     const list = readAll(userId).filter(x => x.id !== sess.id);
     list.push(sess.serialize());
     writeAll(userId, list);
+    void mirrorSession(userId, sess);
 }
 function deleteSession(userId, id) {
     writeAll(userId, readAll(userId).filter(x => x.id !== id));
+    const pool = getPool();
+    if (pool && /^[0-9a-f-]{36}$/i.test(String(userId))) {
+        void pool.query('DELETE FROM backtest_sessions WHERE id = $1 AND user_id = $2', [id, userId])
+            .catch(err => console.warn('[Backtest] Supabase session delete skipped:', err.message));
+    }
 }
 
 // ---------------------------------------------------------------------------
@@ -634,7 +725,7 @@ function completeAtEnd(s) {
     // A replay cannot finish with an invisible open position. Use the final
     // candle close as the deterministic settlement price so the trade reaches
     // history analytics even when neither SL nor TP was touched.
-    if (s.position) s.close({ reason: 'Session end' });
+    while (s.position) s.close({ reason: 'Session end', positionId: s.position.id });
     if (s.status === 'running' || s.status === 'lobby') {
         s.status = 'completed';
         s.completedAt = s.completedAt || new Date().toISOString();
@@ -666,7 +757,8 @@ function resetSession(userId, id) {
     const s = loadActive(userId, id);
     if (!s) return { ok: false, error: 'unknown session' };
     if (s.timer) { clearInterval(s.timer); s.timer = null; }
-    s.position = null;
+    s.positions = [];
+    s._syncPositions();
     s.cursor = s.startIndex;
     s.trades = [];
     s.balance = s.startingBalance;
@@ -690,14 +782,16 @@ function stateOf(s) {
         status: s.status, createdAt: s.createdAt, completedAt: s.completedAt,
         startingBalance: s.startingBalance, balance: Math.round(s.balance * 100) / 100,
         riskModel: s.riskModel,
+        executionCosts: s.executionCosts,
         cursor: s.cursor, total: s.candles.length, startIndex: s.startIndex,
         candle: bar || null,
         position: pos ? {
-            direction: pos.dir, entry: pos.entry, sl: pos.sl, tp: pos.tp, size: pos.size,
+            id: pos.id, direction: pos.dir, entry: pos.entry, sl: pos.sl, tp: pos.tp, size: pos.size,
             riskAmount: pos.riskAmount, riskPct: pos.riskPct, rr: pos.rr,
-            notes: pos.notes, setup: pos.setup, openedAt: pos.openedAt,
+            notes: pos.notes, setup: pos.setup, source: pos.source || 'BACKTEST', origin: pos.origin || 'manual', openedAt: pos.openedAt,
             unrealized: Math.round(unrealized * 100) / 100, unrealizedR: Math.round(unrealizedR * 1000) / 1000
         } : null,
+        positions: s.positions.map(p => ({ id: p.id, direction: p.dir, entry: p.entry, sl: p.sl, tp: p.tp, size: p.size, riskAmount: p.riskAmount, riskPct: p.riskPct, rr: p.rr, source: p.source || 'BACKTEST', openedAt: p.openedAt })),
         period: s.period, periodLabel: s.periodLabel, blind: s.blind,
         actualPeriod: (s.status === 'completed' || !s.blind) ? s.actualPeriod : null,
         actualLabel: (s.status === 'completed' || !s.blind) ? s.actualLabel : null,

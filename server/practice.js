@@ -21,7 +21,8 @@ function toAnalyticsTrade(t) {
     return {
         id: t.id,
         account_id: 'practice',
-        source: 'BACKTEST',
+        source: t.source || 'BACKTEST',
+        origin: t.origin || 'manual',
         session_id: t.sessionId,
         ts: (t.exitTime != null ? t.exitTime * 1000 : Date.now()),
         symbol: t.symbol,

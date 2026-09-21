@@ -1,9 +1,9 @@
 # MISSION 100K
 ### The BattleXJournal playbook for a trader's first $100,000
 
-> Status: **VISION DOCUMENT** — Part I–III describe systems that exist today.
-> Part IV is a **planned feature** (voice parser wired into backtesting), deliberately
-> deferred. Nothing in Part IV is implemented yet.
+> Status: **ACTIVE READ MODEL** — Part I–III describe systems that exist today.
+> Part IV voice replay orders are now implemented behind explicit confirmation;
+> Mission progress is exposed as a read-only view over the canonical ledger.
 
 ---
 
@@ -93,11 +93,10 @@ same signals.
 
 ---
 
-## Part IV — PLANNED FEATURE (deferred): Voice in the Backtesting Flow
+## Part IV — SHIPPED: Voice in the Backtesting Flow
 
-> **This is the feature intentionally saved for later.** Spoken trade replays
-> get logged with the same pipeline. Do not implement without re-validating
-> against the replay engine as it exists at that time.
+> Spoken replay orders are confirmation-gated and use the replay engine's
+> existing fill/exit pipeline. No spoken P&L is trusted.
 
 ### 4.1 The experience
 
@@ -120,7 +119,7 @@ short-cut: entry/SL/TP are honored against the candle stream, exits fire
 mechanically, and the realized result is what gets logged — not what the
 trader *said* they made.
 
-### 4.2 Backend spec (to build later)
+### 4.2 Backend implementation
 
 | Piece | Design |
 |---|---|
@@ -142,7 +141,7 @@ trader *said* they made.
 - Duplicate confirms → idempotent by client-generated order nonce
 - Mic permission denied → type/paste path is identical
 
-### 4.4 Acceptance criteria (when this gets built)
+### 4.4 Acceptance criteria
 
 1. A spoken replay trade appears in the session's trade list with the mic badge
 2. SL/TP exits fire mechanically against replay candles
@@ -170,4 +169,4 @@ report: numbers from the engines, story from the trader's own mouth.
   or require a minimum replay-trade count first
 - Battle Battles (06) integration: mission checkpoints as battle entry gates
 
-*Last updated: 2026-09-17 — voice parser v3 shipped (`09bfecb`), Part IV pending.*
+*Last updated: 2026-09-21 — voice parser v3 and confirmed backtest voice orders shipped; Mission read model added.*

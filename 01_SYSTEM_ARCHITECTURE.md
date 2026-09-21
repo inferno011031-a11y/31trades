@@ -99,6 +99,7 @@ server.js  (single zero-dependency HTTP server, port process.env.PORT || 8080, b
 | TradingView (`@mathieuc/tradingview`) | Historical OHLCV candles + true replay mode | `TRADEMIND_TV_SESSION`, `TRADEMIND_TV_SIGNATURE` (live replay), `TRADEMIND_TV=off` to disable | 6h disk cache → 5-min failure latch → synthetic generator |
 | Economic calendar | FMP `economic_calendar` (needs `ECON_CALENDAR_KEY`/`FMP_API_KEY`) then keyless ForexFactory mirror `nfs.faireconomy.media/ff_calendar_thisweek.json` | `ECON_CALENDAR_KEY` or `FMP_API_KEY` | per-day cache (15 min TTL); honest `ok:false` — **never fabricated events** |
 | Google Gemini | Narration of already-grounded AI answers (Interactions API `v1beta/interactions`, model `gemini-3.6-flash` default) | `GEMINI_API_KEY`, `GEMINI_MODEL` | degrades to null → deterministic answer used; grounding guard discards any narration that alters a number |
+| Payment provider (any, provider-neutral HMAC webhook) | Plan activation/renewal/cancellation/expiry → `user_entitlements` plan columns | `BILLING_WEBHOOK_SECRET` (required to enable), `BILLING_WEBHOOK_TOLERANCE_MS`, `PRO_AI_LIMIT` | absent secret → `503 billing_not_configured`, no plan ever written; DB write failure → local mirror `data/subscriptions.json` |
 
 ## 1.8 Realtime Systems
 - **WebSocket server** at `/ws` (`server/battle-ws.js`, `ws` package), attached to the same HTTP server.

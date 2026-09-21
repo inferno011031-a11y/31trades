@@ -1521,6 +1521,11 @@
                 <button type="button" id="hud-close-btn" class="hud-sub-btn danger" onclick="window.ChartHUD && window.ChartHUD.closePosition('Manual close all')">Close All</button>
             </div>
 
+            <!-- Voice replay order: parser result is always shown for confirmation before execution. -->
+            <button type="button" id="hud-voice-order-btn" class="hud-sub-btn" style="width:100%;margin-top:8px;" onclick="window.openVoiceReplayOrder && window.openVoiceReplayOrder()">
+                <span aria-hidden="true">◉</span> Voice Order · Confirm First
+            </button>
+
             <!-- Feedback Message -->
             <div id="hud-feedback-msg" class="hud-feedback-msg"></div>
 
@@ -1736,6 +1741,42 @@
             }
         };
         window.BacktestBridge = BacktestBridge;
+
+        // Spoken replay orders are deliberately confirmation-gated. The parser may
+        // suggest direction/setup/session, but the replay engine remains the source
+        // of truth for entry, exit, SL/TP and realized P&L.
+        window.openVoiceReplayOrder = async function () {
+            const bridge = window.BacktestBridge;
+            if (!bridge || !bridge.sessionId) {
+                window.ChartHUD && window.ChartHUD.setFeedback('Start a replay session before using Voice Order.', true);
+                return;
+            }
+            const transcript = window.prompt('Describe the trade. Include buy/sell, stop loss and take profit.');
+            if (!transcript || !transcript.trim()) return;
+            try {
+                const parsedResponse = await bridge.call('/api/ai/voice-parse', { transcript: transcript.trim() });
+                const parsed = parsedResponse.parsed || parsedResponse;
+                const direction = parsed.direction === 'Long' || parsed.direction === 'Short' ? parsed.direction : null;
+                const sl = Number(parsed.stop != null ? parsed.stop : parsed.sl);
+                const tp = Number(parsed.target != null ? parsed.target : parsed.tp);
+                if (!direction || !(sl > 0) || !(tp > 0)) {
+                    throw new Error('Voice order needs confirmed direction, stop loss, and take profit.');
+                }
+                const summary = direction + ' · SL ' + sl + ' · TP ' + tp + '\\n\\nPress OK to place this replay order.';
+                if (!window.confirm(summary)) return;
+                const nonce = 'voice-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 8);
+                const result = await bridge.call('/api/backtest/sessions/' + encodeURIComponent(bridge.sessionId) + '/voice-order', {
+                    confirm: true, clientNonce: nonce, parsed,
+                    strategy: bridge.strategy || undefined
+                });
+                if (window.ChartHUD) {
+                    window.ChartHUD.setFeedback(result.duplicate ? 'Voice order already confirmed.' : 'Voice order placed · ' + direction, false);
+                    if (result.state) window.ChartHUD.updateTelemetry(result.state);
+                }
+            } catch (err) {
+                if (window.ChartHUD) window.ChartHUD.setFeedback(err.message || 'Voice order failed.', true);
+            }
+        };
 
         // ============ BATTLEX ON-CHART FLOATING EXECUTION HUD CONTROLLER ============
         const ChartHUD = {
