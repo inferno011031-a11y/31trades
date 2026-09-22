@@ -47,6 +47,7 @@ const Notif = require('./server/notifications.js');
 const Brokers = require('./server/brokers.js');
 const BrokerSync = require('./server/broker-sync.js');
 const BrokerParsers = require('./server/broker-parsers.js');
+const MaxelPay = require('./server/maxelpay.js');
 const Backtest = require('./server/backtest.js');
 const BacktestAnalytics = require('./server/backtest-analytics.js');
 const MarketData = require('./server/marketdata.js');
@@ -1050,6 +1051,69 @@ async function handleApi(req, res, url) {
                 duplicated: result.duplicated,
                 trade: result.trade
             });
+        } catch (err) {
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    // ---------- MaxelPay Crypto Gateway APIs (Public & Webhook) ----------
+    // Webhook IPN Receiver (MaxelPay posts directly to this endpoint with HMAC SHA-256)
+    if (p === '/api/pay/maxelpay/webhook' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { ok: false, error: e.message }); }
+        const signature = req.headers['x-maxelpay-signature'];
+        try {
+            const result = await MaxelPay.processWebhookEvent(b, signature);
+            return json(res, 200, { ok: true, received: true, event: result.event, orderId: result.orderId, status: result.status });
+        } catch (err) {
+            console.warn('[MaxelPay Webhook] Failed:', err.message);
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    // Create payment session (called by frontend checkout modal or test script)
+    if (p === '/api/pay/maxelpay/create-session' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { ok: false, error: e.message }); }
+        try {
+            const host = req.headers.host || 'localhost:8080';
+            const proto = req.headers['x-forwarded-proto'] || 'http';
+            const baseUrl = `${proto}://${host}`;
+            const orderId = b.orderId || ('bx_ord_' + Date.now());
+            const session = await MaxelPay.createPaymentSession({
+                orderId,
+                amount: Number(b.amount || 29.00),
+                currency: b.currency || 'USD',
+                description: b.description || 'BattleX Journal Pro Tier (Crypto)',
+                successUrl: b.successUrl || `${baseUrl}/settings.html?billing=success&orderId=${orderId}`,
+                cancelUrl: b.cancelUrl || `${baseUrl}/settings.html?billing=cancelled&orderId=${orderId}`,
+                callbackUrl: b.callbackUrl || `${baseUrl}/api/pay/maxelpay/webhook`,
+                metadata: b.metadata || {}
+            });
+            return json(res, 200, { ok: true, session });
+        } catch (err) {
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    // Query session status
+    if (p.startsWith('/api/pay/maxelpay/status/') && req.method === 'GET') {
+        const sessionId = p.slice('/api/pay/maxelpay/status/'.length);
+        try {
+            const status = await MaxelPay.getSessionStatus(sessionId);
+            return json(res, 200, { ok: true, status });
+        } catch (err) {
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    // Simulate instant test payment confirmation (for UI & developer testing)
+    if (p === '/api/pay/maxelpay/simulate-test-payment' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { ok: false, error: e.message }); }
+        try {
+            const sim = await MaxelPay.simulateTestPayment(b);
+            return json(res, 200, sim);
         } catch (err) {
             return json(res, 400, { ok: false, error: err.message });
         }
