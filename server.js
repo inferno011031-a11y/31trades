@@ -45,6 +45,9 @@ const EcoCal = require('./server/ecocal.js');
 const LLM = require('./server/llm.js');
 const Notif = require('./server/notifications.js');
 const Brokers = require('./server/brokers.js');
+const BrokerSync = require('./server/broker-sync.js');
+const BrokerParsers = require('./server/broker-parsers.js');
+const MaxelPay = require('./server/maxelpay.js');
 const Backtest = require('./server/backtest.js');
 const BacktestAnalytics = require('./server/backtest-analytics.js');
 const MarketData = require('./server/marketdata.js');
@@ -98,7 +101,9 @@ const MIME = {
     '.txt': 'text/plain; charset=utf-8',
     '.csv': 'text/csv; charset=utf-8',
     '.woff2': 'font/woff2',
-    '.map': 'application/json'
+    '.map': 'application/json',
+    '.mq5': 'text/plain; charset=utf-8',
+    '.ex5': 'application/octet-stream'
 };
 
 /* ---------------------------------------------------------------------------
@@ -1143,6 +1148,141 @@ async function handleApi(req, res, url) {
         return json(res, 200, data);
     }
 
+    // ---------- Broker Live Sync Webhooks (MT5 & TradingView) ----------
+    // External terminals (MetaTrader 5 EA, TradingView alerts) post directly to
+    // these endpoints. Authenticated via user sync token, not session cookie.
+    if (p === '/api/brokers/mt5/sync' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { ok: false, error: e.message }); }
+        const token = req.headers['x-battlex-token'] || req.headers['x-sync-token'] || q.get('token') || b.token;
+        if (!token) {
+            return json(res, 401, { ok: false, error: 'Unauthorized: Missing BattleX Sync Token. Provide X-BattleX-Token header or ?token= query parameter.' });
+        }
+        const uid = await BrokerSync.resolveUserFromToken(token);
+        if (!uid) {
+            return json(res, 401, { ok: false, error: 'Unauthorized: Invalid or revoked BattleX Sync Token. Check your token in Settings -> Connected Brokers.' });
+        }
+        try {
+            const userUc = await getUserCore({ id: uid });
+            const result = await BrokerSync.ingestMt5Trade(userUc.core, uid, b);
+            userUc.scheduleSave();
+            try {
+                BattleWs.broadcastUser(uid, {
+                    type: 'ledger.changed',
+                    action: 'broker.synced',
+                    broker: 'MetaTrader 5',
+                    trade: result.trade,
+                    accounts: userUc.core.Accounts
+                });
+            } catch (e) {}
+            return json(res, result.duplicated ? 200 : 201, {
+                ok: true,
+                duplicated: result.duplicated,
+                trade: result.trade,
+                message: result.duplicated ? 'Trade already recorded (duplicate skipped)' : 'Trade synced to BattleX Journal successfully'
+            });
+        } catch (err) {
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    if (p === '/api/brokers/tradingview/webhook' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { ok: false, error: e.message }); }
+        const token = req.headers['x-battlex-token'] || q.get('token') || b.secret || b.token;
+        if (!token) {
+            return json(res, 401, { ok: false, error: 'Unauthorized: Missing TradingView Webhook Secret' });
+        }
+        const uid = await BrokerSync.resolveUserFromToken(token);
+        if (!uid) {
+            return json(res, 401, { ok: false, error: 'Unauthorized: Invalid TradingView Webhook Secret' });
+        }
+        try {
+            const userUc = await getUserCore({ id: uid });
+            const result = await BrokerSync.ingestTradingViewAlert(userUc.core, uid, b);
+            userUc.scheduleSave();
+            try {
+                BattleWs.broadcastUser(uid, {
+                    type: 'ledger.changed',
+                    action: 'broker.synced',
+                    broker: 'TradingView',
+                    trade: result.trade,
+                    accounts: userUc.core.Accounts
+                });
+            } catch (e) {}
+            return json(res, result.duplicated ? 200 : 201, {
+                ok: true,
+                duplicated: result.duplicated,
+                trade: result.trade
+            });
+        } catch (err) {
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    // ---------- MaxelPay Crypto Gateway APIs (Public & Webhook) ----------
+    // Webhook IPN Receiver (MaxelPay posts directly to this endpoint with HMAC SHA-256)
+    if (p === '/api/pay/maxelpay/webhook' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { ok: false, error: e.message }); }
+        const signature = req.headers['x-maxelpay-signature'];
+        try {
+            const result = await MaxelPay.processWebhookEvent(b, signature);
+            return json(res, 200, { ok: true, received: true, event: result.event, orderId: result.orderId, status: result.status });
+        } catch (err) {
+            console.warn('[MaxelPay Webhook] Failed:', err.message);
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    // Create payment session (called by frontend checkout modal or test script)
+    if (p === '/api/pay/maxelpay/create-session' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { ok: false, error: e.message }); }
+        try {
+            const host = req.headers.host || 'localhost:8080';
+            const proto = req.headers['x-forwarded-proto'] || 'http';
+            const baseUrl = `${proto}://${host}`;
+            const orderId = b.orderId || ('bx_ord_' + Date.now());
+            const session = await MaxelPay.createPaymentSession({
+                orderId,
+                amount: Number(b.amount || 29.00),
+                currency: b.currency || 'USD',
+                description: b.description || 'BattleX Journal Pro Tier (Crypto)',
+                successUrl: b.successUrl || `${baseUrl}/settings.html?billing=success&orderId=${orderId}`,
+                cancelUrl: b.cancelUrl || `${baseUrl}/settings.html?billing=cancelled&orderId=${orderId}`,
+                callbackUrl: b.callbackUrl || `${baseUrl}/api/pay/maxelpay/webhook`,
+                metadata: b.metadata || {}
+            });
+            return json(res, 200, { ok: true, session });
+        } catch (err) {
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    // Query session status
+    if (p.startsWith('/api/pay/maxelpay/status/') && req.method === 'GET') {
+        const sessionId = p.slice('/api/pay/maxelpay/status/'.length);
+        try {
+            const status = await MaxelPay.getSessionStatus(sessionId);
+            return json(res, 200, { ok: true, status });
+        } catch (err) {
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
+    // Simulate instant test payment confirmation (for UI & developer testing)
+    if (p === '/api/pay/maxelpay/simulate-test-payment' && req.method === 'POST') {
+        let b = {};
+        try { b = await readBody(req); } catch (e) { return json(res, 400, { ok: false, error: e.message }); }
+        try {
+            const sim = await MaxelPay.simulateTestPayment(b);
+            return json(res, 200, sim);
+        } catch (err) {
+            return json(res, 400, { ok: false, error: err.message });
+        }
+    }
+
     // ---------- everything below requires a user context ----------
     let uc;
     try { uc = await coreFor(req); } catch (err) { return json(res, err.code || 401, { error: err.message }); }
@@ -1386,6 +1526,20 @@ async function handleApi(req, res, url) {
             }
             if (p === '/api/brokers') {
                 return json(res, 200, { ok: true, brokers: await Brokers.list(uc.userId), connected: await Brokers.isConnected(uc.userId) });
+            }
+            if (p === '/api/brokers/sync-token') {
+                const tokenData = await BrokerSync.getOrCreateSyncToken(uc.userId);
+                return json(res, 200, {
+                    ok: true,
+                    token: tokenData.token,
+                    created_at: tokenData.created_at,
+                    last_used_at: tokenData.last_used_at,
+                    total_synced_trades: tokenData.total_synced_trades,
+                    active_brokers: tokenData.active_brokers,
+                    mt5WebhookUrl: '/api/brokers/mt5/sync',
+                    tvWebhookUrl: '/api/brokers/tradingview/webhook',
+                    eaDownloadUrl: '/assets/ea/BattleX_Sync.mq5'
+                });
             }
             if (p === '/api/prefs') {
                 return json(res, 200, { ok: true, prefs: await Prefs.get(uc.userId) });
@@ -2174,6 +2328,63 @@ async function handleApi(req, res, url) {
             logBrokerEvent(Core, body.broker, 'Disconnected');
             uc.scheduleSave();
             return json(res, 200, { ok: true });
+        }
+        if (p === '/api/brokers/sync-token/regenerate') {
+            const newTokenData = await BrokerSync.regenerateSyncToken(uc.userId);
+            return json(res, 200, {
+                ok: true,
+                token: newTokenData.token,
+                created_at: newTokenData.created_at,
+                message: 'Sync token regenerated. Previous token has been revoked.'
+            });
+        }
+        if (p === '/api/brokers/import-statement') {
+            const rawContent = body.content || body.fileContent;
+            if (!rawContent) return json(res, 400, { ok: false, error: 'No statement content provided' });
+            const accountId = body.accountId || (Core.selectedAccountId ? Core.selectedAccountId() : null) || (Core.Accounts[0] ? Core.Accounts[0].id : null);
+            const parsed = BrokerParsers.parseBrokerStatement(rawContent, accountId);
+            if (!parsed.ok) return json(res, 400, { ok: false, error: parsed.error });
+
+            let imported = 0;
+            let skipped = 0;
+            const importedTrades = [];
+
+            for (const t of parsed.trades) {
+                const exists = Core.Trades.some(x => x.id === t.id || (t.broker_ticket && x.broker_ticket === t.broker_ticket));
+                if (exists) {
+                    skipped++;
+                    continue;
+                }
+                try {
+                    const saved = Core.logTradePipeline(t);
+                    importedTrades.push(saved);
+                    imported++;
+                } catch (e) {
+                    skipped++;
+                }
+            }
+
+            if (imported > 0) {
+                uc.scheduleSave();
+                try {
+                    BattleWs.broadcastUser(uc.userId, {
+                        type: 'ledger.changed',
+                        action: 'statement.imported',
+                        count: imported,
+                        format: parsed.detectedFormat,
+                        accounts: Core.Accounts
+                    });
+                } catch (e) {}
+            }
+
+            return json(res, 200, {
+                ok: true,
+                detectedFormat: parsed.detectedFormat,
+                totalParsed: parsed.count,
+                imported,
+                skipped,
+                trades: importedTrades
+            });
         }
 
         // ---- Journal Import lifecycle (commit / cancel / rollback) ----
