@@ -22,15 +22,17 @@ function attach(httpServer) {
     wss = new WebSocketServer({ server: httpServer, path: '/ws' });
 
     wss.on('connection', (ws, req) => {
-        let battleId = null, user = null;
+        let battleId = null;
         try {
             const url = new URL(req.url, 'http://127.0.0.1');
             battleId = url.searchParams.get('battle');
-            user = url.searchParams.get('user');
         } catch (e) { /* keep nulls */ }
 
         ws.battleId = battleId;
-        ws.user = user || 'anon';
+        // The query string is untrusted and must never identify a user. Battle
+        // rooms only carry public snapshots; private seat state stays on the
+        // authenticated REST endpoints.
+        ws.user = null;
 
         if (battleId) {
             if (!rooms.has(battleId)) rooms.set(battleId, new Set());
@@ -54,10 +56,29 @@ function attach(httpServer) {
         let payload = null;
         try {
             if (type === 'cursor') {
-                payload = { type: 'battle.cursor', battle: b.id, cursor: b.cursor, status: b.status };
-            } else if (type === 'status' || type === 'created' || type === 'seat') {
+                // every room update carries the policy-filtered participant
+                // projection, so opponent presence/status stays in step with the
+                // shared cursor without any private seat data on the wire.
+                payload = {
+                    type: 'battle.cursor', battle: b.id, cursor: b.cursor, status: b.status,
+                    lifecycle: b.lifecycle, stateRevision: b.stateRevision,
+                    participants: b.participants(null)
+                };
+            } else if (type === 'seat') {
+                // a seat acted: the room learns THAT it moved (plus whatever the
+                // visibility policy allows) — never the private decision itself.
+                const last = (b.actions && b.actions[b.actions.length - 1]) || {};
+                payload = {
+                    type: 'battle.seat', battle: b.id, seat: last.seat || null, kind: last.type || null,
+                    cursor: b.cursor, status: b.status, lifecycle: b.lifecycle,
+                    stateRevision: b.stateRevision, participants: b.participants(null)
+                };
+            } else if (type === 'status' || type === 'created') {
                 const pub = b.publicState();
                 payload = { type: 'battle.status', battle: b.id, state: pub };
+            } else if (type === 'challenges') {
+                // no battle room — the dashboard/feed clients re-read instead
+                payload = { type: 'challenges.changed' };
             }
         } catch (e) { payload = null; }
         if (payload) {
@@ -79,13 +100,10 @@ function broadcastFeed() {
 }
 
 function broadcastUser(userId, message) {
-    if (!wss || !userId) return;
-    const msg = typeof message === 'string' ? message : JSON.stringify(message);
-    wss.clients.forEach(ws => {
-        if (ws.readyState === 1 && (ws.user === userId || (!ws.user && userId === 'anon') || userId === '*')) {
-            try { ws.send(msg); } catch (e) {}
-        }
-    });
+    // User-targeted delivery requires authenticated upgrade handling. Until the
+    // WebSocket handshake shares the HTTP auth verifier, fail closed rather than
+    // trusting a spoofable ?user= query parameter.
+    return false;
 }
 
 module.exports = { attach, broadcastFeed, broadcastUser };

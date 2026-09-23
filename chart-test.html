@@ -1295,6 +1295,9 @@
     </script>
     <!-- BattleX Replay Engine -->
     <script type="text/javascript" src="replay-engine.js"></script>
+    <!-- Battle mode (?battle=<id>&seat=<id>): drives THIS chart from a server-owned
+         battle timeline. Inert without the parameter. -->
+    <script type="text/javascript" src="assets/battle-driver.js"></script>
 </head>
 <body>
     <!-- BattleX Bottom-Left Interactive Watermark Badge (Square -> Rectangle Morph) -->
@@ -1598,6 +1601,23 @@
                 try {
                     const _qs = new URLSearchParams(window.location.search);
                     this.sessionId = _qs.get('session') || window.currentBacktestSessionId || null;
+                    // practice is the default target; battle mode re-points these at a
+                    // battle seat (assets/battle-driver.js linkBridge)
+                    this.mode = 'practice';
+                    this.seatId = null;
+                    this.apiBase = this.sessionId ? '/api/backtest/sessions/' + encodeURIComponent(this.sessionId) : null;
+                    // ?battle=<id> turns this bridge into a battle seat bridge from the
+                    // very first call — the market is server-owned, so no practice
+                    // session is linked and bar sync is disabled in battle mode.
+                    const _battleQ = _qs.get('battle');
+                    if (_battleQ) {
+                        this.mode = 'battle';
+                        this.battleId = _battleQ;
+                        this.seatId = _qs.get('seat') || null;
+                        this.apiBase = '/api/battles/' + encodeURIComponent(_battleQ);
+                        this.sessionId = null;
+                        window.currentBacktestSessionId = null;
+                    }
                     this.strategy = _qs.get('strategy') || window.currentBacktestStrategy || null;
                     if (this.sessionId && !window.currentBacktestSessionId) {
                         window.currentBacktestSessionId = this.sessionId;
@@ -1615,6 +1635,15 @@
                 } else {
                     console.log('[BattleX Bridge] No backend session — HUD runs in standalone mode');
                 }
+            },
+
+            // Is this bridge linked to anything that can receive orders?
+            linked() { return !!(this.mode === 'battle' ? this.seatId : this.sessionId); },
+
+            // Practice reads a session by id; a battle seat is read with ?seat=.
+            statePath() {
+                if (this.mode === 'battle') return this.apiBase + '/seat?seat=' + encodeURIComponent(this.seatId);
+                return this.apiBase;
             },
 
             authHeaders(extra) {
@@ -1638,7 +1667,7 @@
             // every synced trade). Only adopt it while the HUD has no open position.
             async preflight() {
                 try {
-                    const d = await this.call('/api/backtest/sessions/' + encodeURIComponent(this.sessionId), null, 'GET');
+                    const d = await this.call(this.statePath(), null, 'GET');
                     const st = d && d.state;
                     if (st && Number(st.balance) > 0 && window.ChartHUD && !window.ChartHUD.position) {
                         window.ChartHUD.balance = Number(st.balance);
@@ -1650,13 +1679,14 @@
             },
 
             async enterTrade(pos) {
-                if (!this.sessionId || !pos) return;
+                if (!this.linked() || !pos) return;
                 try {
                     const curBar = window.ChartHUD && window.ChartHUD.getCurrentBar && window.ChartHUD.getCurrentBar();
                     const entryTime = curBar && curBar.time ? curBar.time : Date.now();
                     const period = window.currentBacktestPeriod || null;
                     const periodLabel = window.currentBacktestPeriodLabel || null;
-                    await this.call('/api/backtest/sessions/' + encodeURIComponent(this.sessionId) + '/enter', {
+                    await this.call(this.apiBase + '/enter', {
+                        seat: this.seatId,
                         direction: pos.type === 'buy' ? 'Long' : 'Short',
                         entry: pos.entry,
                         sl: pos.sl,
@@ -1682,12 +1712,13 @@
             },
 
             async syncReplayBar(bar) {
-                if (!this.sessionId || !bar || this.syncInFlight) return;
+                // a battle's market is server-owned — never sync bars into it from here
+                if (this.mode === 'battle' || !this.linked() || !bar || this.syncInFlight) return;
                 const timestamp = bar.time;
                 if (this.lastSyncedBarTime != null && Number(timestamp) <= Number(this.lastSyncedBarTime)) return;
                 this.syncInFlight = true;
                 try {
-                    const data = await this.call('/api/backtest/sessions/' + encodeURIComponent(this.sessionId) + '/control', {
+                    const data = await this.call(this.apiBase + '/control', {
                         action: 'sync',
                         time: timestamp,
                         bar: {
@@ -1714,11 +1745,12 @@
             },
 
             async closeTrade(reason, exitPrice) {
-                if (!this.sessionId) return;
+                if (!this.linked()) return;
                 try {
                     const curBar = window.ChartHUD && window.ChartHUD.getCurrentBar && window.ChartHUD.getCurrentBar();
                     const exitTime = curBar && curBar.time ? curBar.time : Date.now();
-                    const res = await this.call('/api/backtest/sessions/' + encodeURIComponent(this.sessionId) + '/close', {
+                    const res = await this.call(this.apiBase + '/close', {
+                        seat: this.seatId,
                         price: exitPrice,
                         reason: String(reason || 'manual').split(' @ ')[0],
                         exitTime: exitTime
@@ -2689,7 +2721,7 @@
             window.currentBacktestPeriodLabel = 'February 2024';
         }
         // Full-resolution map — every timeframe is backed by real archive data (see tools/split-gold-months.js)
-        const RESOLUTION_MAP = {
+        const RESOLUTION_MAP = window.BX_RESOLUTION_MAP = {
             '1': '1m', '2': '2m', '3': '3m', '5': '5m', '15': '15m', '30': '30m',
             '60': '1h', '120': '2h', '240': '4h', '360': '6h',
             '1D': '1d', 'D': '1d', '1W': 'w', 'W': 'w', '1M': 'm', 'M': 'm'
@@ -2773,7 +2805,14 @@
             },
 
             getBars: async (symbolInfo, resolution, periodParams, onResult, onError) => {
-                try {                    let tf = '15m';
+                try {
+                    // BATTLE MODE: the series for EVERY timeframe comes from the battle
+                    // timeline (revealed canonical bars aggregated per timeframe), never
+                    // from the raw archive — see assets/battle-driver.js.
+                    if (window.BX_BATTLE && window.BX_BATTLE.active) {
+                        return window.BX_BATTLE.getBars(symbolInfo, resolution, periodParams, onResult, onError);
+                    }
+                    let tf = '15m';
                     tf = RESOLUTION_MAP[String(resolution).toUpperCase()] || '15m';
 
                     const currentPeriod = window.currentBacktestPeriod || 'feb2024';

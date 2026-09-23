@@ -73,6 +73,14 @@ The chain includes `server/trade-notes.test.js`, which covers the notes domain
 module below — tags, the markdown renderer (escape-before-decorate), note
 quality/coverage maths, and the refusal to report a lift the sample can't support.
 
+`server/battle-timeline.test.js` boots the REAL server on a scratch data dir
+(`TRADEMIND_DATA_DIR` + `TRADEMIND_BATTLE_DATA_DIR`, `TRADEMIND_AUTH=off`, no DB)
+and drives TWO battle seats over HTTP on different display timeframes, proving
+they share one market moment (`cutTime`), that every display series is built from
+revealed bars only (the forming bar is exactly the aggregate of the revealed
+canonical bars), that the same order on both seats produces the same fill, and
+that positions/trades/balances stay independent per seat. ~3s, part of `npm test`.
+
 `server/state-merge.test.js` covers the sync model: the real data-loss incident,
 legacy rows with no stamps, the content-baseline rules (including "the server has
 NO usable timestamp" — the situation Postgres actually produces), the settle

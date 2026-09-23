@@ -53,11 +53,15 @@
 | Spread/slippage/commission/partial exits/multi-position | PARTIALLY IMPLEMENTED | optional execution costs, partial exits, and opt-in `allowMultiplePositions`; UI/risk aggregation hardening remains |
 | **Battles** | | |
 | Battle create/join/invite/control/enter/close | IMPLEMENTED | battle.js |
+| Battle canonical timeline = finest archive resolution + server-owned cut time | IMPLEMENTED | battle.js timelineState/seriesAt, GET /api/battles/:id/timeline |
+| Battle display timeframes (any resolution, switchable mid-battle, forming candle, no coarse-bar leak) | IMPLEMENTED | server aggregation of revealed bars |
+| Battle seat view runs the SAME chart as practice (chart-test.html battle driver) | IMPLEMENTED | assets/battle-driver.js + BacktestBridge re-pointed at the battle seat |
 | Canonical timeline + private seats + anti-cheat | IMPLEMENTED | battle.js |
 | Blended scoring + team aggregation + leaderboard | IMPLEMENTED | scoreSeat |
 | Dashboard live feed with own-seat P&L/rank | IMPLEMENTED | battlesFeed |
 | WebSocket realtime (cursor/status/feed) | IMPLEMENTED | battle-ws.js |
 | Battle replay with opponent reveal | PLANNED / NOT IMPLEMENTED | leaderboard shows trades post-hoc only |
+| Battle chart on the TradingView free-widget fallback | NOT SUPPORTED | that widget charts its own data; battle mode needs the Charting Library path (token proxy or charting_library/) and the driver says so loudly |
 | Squad chat / voice | PLANNED / NOT IMPLEMENTED | — |
 | Matchmaking/ranked/1v1-10v10 formats | PLANNED / NOT IMPLEMENTED | free-form seats only |
 | **Community / Social** | | |

@@ -11,7 +11,7 @@
 | Backend | Plain **Node.js** HTTP server, CommonJS, **zero runtime dependencies beyond 4 npm packages** | `server.js`, `package.json` (`"type": "commonjs"`) |
 | Frontend | **Static multi-page HTML** (16+ standalone `.html` pages), vanilla JS inline, **Tailwind CSS via CDN** (`https://cdn.tailwindcss.com`), **Lucide icons** via CDN (`unpkg.com/lucide`), custom tokens (`assets/tokens.css`, `assets/tailwind-config.js`) | every page's `<head>` |
 | Shared logic | **UMD factory** `src/core/index.js` (`createTradeMindCore`) runs **identically in browser and Node** — single source of truth for data model + all calculation engines | header comment, `module.exports` + `window.createTradeMindCore` |
-| Charts | **TradingView Lightweight Charts** (bundled locally: `assets/lightweight-charts.js`) | backtesting.html, replay-mode.js, battle-mode.js |
+| Charts | **TradingView Charting Library** for the advanced backtest/battle terminal (`chart-test.html` + `replay-engine.js`; token-gated proxy with a local `charting_library/` fallback), **Lightweight Charts** (`assets/lightweight-charts.js`) for the lighter surfaces | chart-test.html, backtesting.html, replay-mode.js |
 | Tests | Node test scripts per module (no framework), run via `npm test` | `package.json` scripts, `server/*.test.js` |
 
 npm dependencies (complete): `@mathieuc/tradingview` (^3.5.2), `motion-sv` (^0.1.13), `pg` (^8.23.0), `ws` (^8.21.3).
@@ -51,7 +51,8 @@ server.js  (single zero-dependency HTTP server, port process.env.PORT || 8080, b
               backtest-sim.js— Backtest Simulation Engine (replay cursor, SL/TP fills, sizing, results)
               replay.js      — Market Replay sessions (local timer mode + optional live TV replay mode)
               practice.js    — Practice data adapter (flattens backtest trades into canonical analytics)
-              battle.js      — Online Battle engine (one timeline, private seats, scoring, invites)
+              battle-config.js— Battle configuration contract (policy slots/registries, lifecycle, availability, capability catalogue; unimplemented policies are refused, never faked)
+              battle.js      — Online Battle foundation (one canonical timeline at the finest archived resolution + a server-owned cut time, per-seat display timeframes, private seats, lifecycle/presence, participant sync, settlement record; provisional scoring adapter)
               battle-ws.js   — WebSocket hub for battles + dashboard feed
               notifications.js — derived notification feed + read-state persistence
               brokers.js     — broker connection registry (onboarding checklist state)
@@ -84,7 +85,7 @@ server.js  (single zero-dependency HTTP server, port process.env.PORT || 8080, b
 - No refresh-token rotation logic in-app (GoTrue handles it; the client stores whatever session it's given).
 
 ## 1.5 Storage / File Systems
-- `data/` (gitignored) holds: per-user canonical mirrors `db-<userId>.json`, backtest sessions `backtest-<userId>.json`, battles `battle-<hostId>.json` + `battle-registry.json` + `battle-invites-<userId>.json`, broker state `brokers-<userId>.json`, AI prefs `ai-<userId>.json`, chat memory `chat-<userId>-<accountId>.json`, notification read state `notif-<userId>.json`, prefs `prefs-<userId>.json`, econ calendar cache `ecocal-<day>.json`, TradingView candle cache `tv-candles-<sym>-<tf>-<count>.json` + failure latch `tv-fail-…`, user directory `user-directory.json` (email→id for invites).
+- `data/` (gitignored) holds: per-user canonical mirrors `db-<userId>.json`, backtest sessions `backtest-<userId>.json`, battles `battle-<hostId>.json` + `battle-registry.json` + `battle-invites-<userId>.json` + `battle-availability.json` + `battle-challenges.json`, broker state `brokers-<userId>.json`, AI prefs `ai-<userId>.json`, chat memory `chat-<userId>-<accountId>.json`, notification read state `notif-<userId>.json`, prefs `prefs-<userId>.json`, econ calendar cache `ecocal-<day>.json`, TradingView candle cache `tv-candles-<sym>-<tf>-<count>.json` + failure latch `tv-fail-…`, user directory `user-directory.json` (email→id for invites).
 - Browser: localStorage for canonical state, theme, chat transcript, chart workspaces (`31trades.ws.v1.<user>.<session>.<tf>`), battle seat id, replay dataset cache (in-memory only).
 
 ## 1.6 APIs
@@ -103,7 +104,7 @@ server.js  (single zero-dependency HTTP server, port process.env.PORT || 8080, b
 
 ## 1.8 Realtime Systems
 - **WebSocket server** at `/ws` (`server/battle-ws.js`, `ws` package), attached to the same HTTP server.
-  - Subscribe by `?battle=<id>` → room receives `battle.cursor` (cursor+status) and `battle.status` (full public state) pushes on every battle mutation.
+  - Subscribe by `?battle=<id>` → room receives `battle.cursor` (cursor+lifecycle+policy-filtered participants), `battle.seat` (a seat moved: seat id + kind + revision, never the decision) and `battle.status` (full public state) pushes on every battle mutation; `challenges.changed` pings feed clients when a challenge is created/resolved.
   - No battle param → dashboard feed client → receives lightweight `feed.changed` ping on any battle mutation (re-fetch trigger).
   - Only public state is pushed; private seat decisions are fetched over authed REST.
 - The battle engine emits via `Battle.subscribe/emit`; sim sessions use in-process `setInterval` timers (server-owned replay cursor).

@@ -530,6 +530,150 @@ function mailtoInvite(emails, link, title, fromName) {
     return 'mailto:' + to + '?subject=' + subject + '&body=' + body;
 }
 
+// ---------------------------------------------------------------------------
+// ONE battle-creation path. Host create, invite accept and an accepted challenge
+// all go through here, so archive/month resolution, warm-up choice, seat layout
+// and configuration validation can never drift between entry points.
+// Body accepts both flat legacy fields (symbol/timeframe/period/window/…) and
+// the extensible `config` contract — the contract wins where both are present.
+// ---------------------------------------------------------------------------
+async function createBattleFor(userId, body) {
+    const b = body || {};
+    if (b.config != null && (typeof b.config !== 'object' || Array.isArray(b.config))) {
+        return { ok: false, code: 400, error: 'config must be an object' };
+    }
+    // An unimplemented policy is refused HERE: a battle that can never legally run
+    // must never be created.
+    const cfg = Battle.BattleConfig.normalize(b.config);
+    if (cfg.errors.length) return { ok: false, code: 400, error: cfg.errors.join('; '), errors: cfg.errors };
+    const config = cfg.config;
+    const market = config.market;
+    const symbol = String(b.symbol || market.symbol || 'EURUSD').toUpperCase();
+    const timeframe = String(b.timeframe || market.timeframe || '1h');
+    const window = Math.max(30, Math.min(6500, Number(b.window) || 300));
+    const periodRaw = String(b.period != null ? b.period : (market.period == null ? '' : market.period));
+    // Archive battles (the default) replay a REAL archived month on the FULL
+    // timeline — the same source practice backtesting uses. Live/synthetic
+    // battles keep the bounded recent window so a battle is never empty.
+    // Blind battles: `period: 'random'` resolves to a real archived month (any
+    // month on disk that actually has the requested timeframe), so a battle can
+    // start on a market the host has never seen before.
+    let period = /^\d{4}-\d{2}$/.test(periodRaw) ? periodRaw : null;
+    if (periodRaw === 'random' || periodRaw === 'blind') {
+        const cat = MarketData.availablePeriods(symbol);
+        const candidates = [];
+        (cat.years || []).forEach(y => (y.months || []).forEach(m => {
+            if (!m.timeframes || m.timeframes.indexOf(timeframe) !== -1) candidates.push(m.period);
+        }));
+        if (!candidates.length) return { ok: false, code: 404, error: 'no archived months with ' + timeframe + ' data for ' + symbol };
+        period = candidates[Math.floor(Math.random() * candidates.length)];
+    }
+    // ---- canonical timeline resolution --------------------------------------
+    // The battle walks the FINEST resolution the archive actually has for this
+    // symbol+month, so fills are precise and every coarser timeframe is available
+    // as a per-seat VIEW. The backend must never dictate what a player may look
+    // at: `timeframe` above is only the timeframe the chart opens on (and, for a
+    // live-window battle, the resolution of that bounded series).
+    const monthTimeframes = (() => {
+        if (!period) return [];
+        const cat = MarketData.availablePeriods(symbol);
+        for (const y of (cat.years || [])) {
+            for (const m of (y.months || [])) if (m.period === period) return (m.timeframes || []).slice();
+        }
+        return [];
+    })();
+    let baseTimeframe = timeframe;
+    let baseNote = null;
+    if (period) {
+        const baseRes = Battle.BattleConfig.resolveBaseTimeframe(b.baseTimeframe || market.baseTimeframe, monthTimeframes);
+        if (!baseRes.ok) return { ok: false, code: 400, error: baseRes.error, availableTimeframes: baseRes.available };
+        baseTimeframe = baseRes.baseTimeframe;
+        if (baseRes.warning) baseNote = baseRes.warning;
+    }
+    const baseMs = Battle.BattleConfig.timeframeMs(baseTimeframe) || 3600000;
+    const chosenMs = Battle.BattleConfig.timeframeMs(timeframe) || baseMs;
+    const md = await MarketData.getCandles({
+        symbol, timeframe: baseTimeframe, count: window,
+        period: period || undefined,
+        all: !!period
+    });
+    if (!md.ok || !md.candles.length) return { ok: false, code: 400, error: 'no candles for ' + symbol };
+    if (period && md.period !== period) {
+        return { ok: false, code: 404, error: 'no archived ' + symbol + ' ' + timeframe + ' data for ' + period };
+    }
+    // Warm-up bars: an explicit host choice (including 0) is honoured; only an
+    // absent value falls back to the 30-bar pre-roll default.
+    const warmupRaw = b.startBars != null && b.startBars !== '' ? Number(b.startBars) : (market.startIndex != null ? Number(market.startIndex) : null);
+    // The form's warm-up is expressed in the host's own timeframe; the battle walks
+    // base bars, so the number is converted (30 bars of 1h context = 1800 bars of
+    // 1m) instead of silently meaning something else. An absent value keeps the
+    // 30-bar pre-roll default.
+    const warmupTf = warmupRaw == null || !isFinite(warmupRaw) ? 30 : Math.max(0, Math.min(500, warmupRaw));
+    const warmup = Math.round(warmupTf * (chosenMs / baseMs));
+    const startIndex = Math.max(0, Math.min(warmup, md.candles.length - 1));
+    // The resolved market identity is written BACK into the config so the record
+    // describes what the battle actually is (and so the settlement record and the
+    // lobby can show it without a second source of truth).
+    market.symbol = symbol;
+    market.timeframe = timeframe;   // compatibility alias of startingTimeframe
+    market.startingTimeframe = timeframe;
+    market.baseTimeframe = baseTimeframe;
+    market.displayTimeframes = Battle.BattleConfig.displayTimeframes(baseTimeframe);
+    market.startIndex = startIndex;
+    if (period) {
+        market.policy = 'archive-month';
+        market.period = period;
+        market.dataset = symbol + ':' + timeframe + ':' + period;
+    } else {
+        market.policy = 'live-window';
+        market.dataset = symbol + ':' + timeframe + ':recent-window';
+        delete market.period;
+    }
+    const rawSeats = Array.isArray(b.seats) && b.seats.length ? b.seats.slice(0, 10) : [{}, {}];
+    const seatDefs = rawSeats.map((s, i) => {
+        if (typeof s === 'string') return { name: String(s).trim() || 'Trader ' + (i + 1), userId: null, team: null };
+        const row = s && typeof s === 'object' ? s : {};
+        return {
+            name: String(row.name || 'Trader ' + (i + 1)).trim(),
+            userId: row.userId || null,
+            team: row.team || null
+        };
+    });
+    // the creator takes seat 1 unless a seat layout already names them
+    if (!seatDefs.some(s => s.userId === userId)) seatDefs[0].userId = userId;
+    const teams = Array.isArray(b.teams) && b.teams.length === seatDefs.length ? b.teams.map(t => String(t).trim() || null) : null;
+    const battle = new Battle.Battle({
+        hostId: userId,
+        title: String(b.title || symbol + ' ' + timeframe + ' battle'),
+        baseTimeframe,
+        startingTimeframe: timeframe,
+        symbol, timeframe,
+        period: period || md.period || null,
+        periodLabel: md.periodLabel || null,
+        candleWindow: b.candleWindow,
+        category: (md.meta && md.meta.category) || 'Other',
+        candles: md.candles, startIndex,
+        startingBalance: Number(b.startingBalance) || 10000,
+        riskModel: b.riskModel || { basis: 'money', perTrade: 25 },
+        config,
+        replay: b.replay,
+        execution: b.execution,
+        settlement: b.settlement,
+        marketDataVersion: b.marketDataVersion,
+        scoringPolicy: b.scoringPolicy || null,
+        scoringPolicyDeclared: b.scoringPolicy || null,
+        status: 'lobby',
+        lifecycle: 'lobby',
+        seats: seatDefs.map((s, i) => ({ id: 's' + i, name: s.name, team: teams ? teams[i] : s.team, userId: s.userId }))
+    });
+    battle._ensureSeats();
+    return { ok: true, battle, warnings: (baseNote ? battle.configMeta.warnings.concat([baseNote]) : battle.configMeta.warnings) };
+}
+
+// Presence writes are cheap but not free: a seat poll marks the seat as seen in
+// memory every time, and only touches the file at most once per 15s per battle.
+const battlePresenceSavedAt = new Map();
+
 // Resolve the caller's user core. Throws {code:401} when unauthenticated.
 async function coreFor(req) {
     if (!AUTH_REQUIRED) return getUserCore(null);   // anonymous dev mode
@@ -1325,6 +1469,24 @@ async function handleApi(req, res, url) {
             if (p === '/api/battles/invites' && req.method === 'GET') {
                 return json(res, 200, { ok: true, invites: Battle.pendingInvites(uc.userId) });
             }
+            if (p === '/api/battles/availability' && req.method === 'GET') {
+                return json(res, 200, { ok: true, mine: Battle.getAvailability(uc.userId), players: Battle.listAvailability(), states: Battle.AVAILABILITY });
+            }
+            if (p === '/api/battles/config' && req.method === 'GET') {
+                // the capability catalogue: what a battle can be told to do TODAY.
+                // Everything else is "not specified yet" and is refused, not faked.
+                const cat = Battle.capabilities();
+                return json(res, 200, { ok: true, catalogue: cat, lifecycle: cat.lifecycle });
+            }
+            if (p === '/api/battles/history' && req.method === 'GET') {
+                return json(res, 200, Object.assign({ ok: true }, Battle.battleHistory(uc.userId, {
+                    limit: q.get('limit'), offset: q.get('offset'), status: q.get('status')
+                })));
+            }
+            if (p === '/api/battles/challenges' && req.method === 'GET') {
+                const c = Battle.pendingChallengesFor(uc.userId);
+                return json(res, 200, { ok: true, incoming: c.incoming, outgoing: c.outgoing, ttlMs: 900000 });
+            }
             if ((m = p.match(/^\/api\/battles\/invite\/([^/]+)$/))) {
                 // resolve a shareable invite code → battle (cross-user via registry)
                 const found = Battle.battleByCode(m[1]);
@@ -1334,13 +1496,33 @@ async function handleApi(req, res, url) {
                 return json(res, 200, {
                     ok: true,
                     invite: Battle.invitationFor(uc.userId, b.id, b.inviteCode),
-                    state: b.publicState()
+                    state: b.publicState(uc.userId)
                 });
             }
             if ((m = p.match(/^\/api\/battles\/([^/]+)$/))) {
                 const b = Battle.getBattle(uc.userId, m[1]);
                 if (!b) return json(res, 404, { error: 'unknown battle' });
-                return json(res, 200, { ok: true, state: b.publicState() });
+                return json(res, 200, { ok: true, state: b.publicState(uc.userId) });
+            }
+            if ((m = p.match(/^\/api\/battles\/([^/]+)\/timeline$/))) {
+                // The display series for ANY timeframe, built from the REVEALED
+                // canonical bars only — the battle's own equivalent of
+                // /api/backtest/candles. Both seats read the same server-built
+                // slices, so two players can never receive different market data
+                // whatever timeframe each one is looking at, and a coarser
+                // timeframe can never carry a bar whose interior is still future.
+                const b = Battle.loadActive(uc.userId, m[1]) || Battle.getBattle(uc.userId, m[1]);
+                if (!b) return json(res, 404, { error: 'unknown battle' });
+                const isParty = b.hostId === uc.userId || !!b.seatOfUser(uc.userId);
+                if (!isParty) return json(res, 403, { error: 'only battle participants can read the battle timeline' });
+                const series = b.seriesAt(q.get('timeframe') || undefined, {
+                    from: q.get('from'), limit: q.get('limit'), all: q.get('all') === '1'
+                });
+                if (!series.ok) return json(res, 400, series);
+                return json(res, 200, Object.assign({
+                    ok: true, battle: b.id, status: b.status, lifecycle: b.lifecycle,
+                    stateRevision: b.stateRevision, timeline: b.timelineState()
+                }, series));
             }
             if ((m = p.match(/^\/api\/battles\/([^/]+)\/seat$/))) {
                 const b = Battle.loadActive(uc.userId, m[1]);
@@ -1349,12 +1531,50 @@ async function handleApi(req, res, url) {
                 const s = b.seat(seat);
                 if (!s) return json(res, 404, { error: 'unknown seat' });
                 // the seat's own userId must match (or host viewing an open seat)
-                if (s.userId && s.userId !== uc.userId && s.userId !== 'seat-' + s.id) {
-                    return json(res, 403, { error: 'not your seat' });
+                if (!s.userId || s.userId !== uc.userId) {
+                    return json(res, 403, { error: 'claim this seat before reading private state' });
                 }
-                // `window` bounds the delivered candle tail (the canonical timeline
-                // stays the full archive — only the payload is windowed).
-                return json(res, 200, { ok: true, state: b.seatState(seat, { window: q.get('window') }) });
+                // Reading your own seat is the presence heartbeat: the server marks
+                // the seat as seen (persisted at most every 15s so polls stay cheap).
+                if (b.markSeatSeen(seat, uc.userId)) {
+                    const last = battlePresenceSavedAt.get(b.id) || 0;
+                    if (Date.now() - last > 15000) { battlePresenceSavedAt.set(b.id, Date.now()); Battle.saveBattle(b.hostId, b); }
+                }
+                // Delivery shape only — the canonical timeline stays the full archive.
+                // `full=1` ships every visible bar once, `from=N` ships just the new
+                // bars afterwards, `window` bounds the legacy tail window.
+                // `tf` is the seat's DISPLAY timeframe: recorded so the opponent /
+                // spectator views know what the seat is looking at. It never changes
+                // execution — fills and entry checks run on the canonical timeline.
+                return json(res, 200, { ok: true, state: b.seatState(seat, { window: q.get('window'), full: q.get('full'), from: q.get('from'), tf: q.get('tf') }) });
+            }
+            if ((m = p.match(/^\/api\/battles\/([^/]+)\/participants$/))) {
+                // the opponent-state channel. The server filters every field through
+                // the battle's visibility policy; `visibility.hidden` names what is
+                // withheld so the UI can explain the gap instead of implying idleness.
+                const b = Battle.loadActive(uc.userId, m[1]) || Battle.getBattle(uc.userId, m[1]);
+                if (!b) return json(res, 404, { error: 'unknown battle' });
+                return json(res, 200, {
+                    ok: true,
+                    battle: b.id,
+                    status: b.status,
+                    lifecycle: b.lifecycle,
+                    stateRevision: b.stateRevision,
+                    cursor: b.cursor,
+                    total: b.candles.length,
+                    participants: b.participants(uc.userId),
+                    visibility: b.visibility()
+                });
+            }
+            if ((m = p.match(/^\/api\/battles\/([^/]+)\/results$/))) {
+                // the settlement record — released only once the battle has ended, so
+                // it can never become a live peek at another seat's decisions.
+                const b = Battle.getBattle(uc.userId, m[1]);
+                if (!b) return json(res, 404, { error: 'unknown battle' });
+                const isParty = b.hostId === uc.userId || !!b.seatOfUser(uc.userId);
+                if (!isParty) return json(res, 403, { error: 'only battle participants can read the settlement record' });
+                if (b.status !== 'completed') return json(res, 409, { ok: false, error: 'battle has not been settled yet', status: b.status, lifecycle: b.lifecycle });
+                return json(res, 200, { ok: true, record: b.settlementRecord(uc.userId) });
             }
 
             // ---------- Social layer (public profiles · global leaderboard · squads) ----------
@@ -1760,51 +1980,73 @@ async function handleApi(req, res, url) {
             return json(res, 200, { ok: true });
         }
 
-        // ---- Online Battles (write: create / control / enter / close / join) ----
+        // ---- Battle presence is independent from matching and battle rules ----
+        if (p === '/api/battles/availability' && (req.method === 'PUT' || req.method === 'POST')) {
+            const result = Battle.setAvailability(uc.userId, String(body.status || '').toLowerCase(), body.meta);
+            return json(res, result.ok ? 200 : 400, result);
+        }
+
+        // ---- Online Battles create (config validated through the policy contract) ----
         if (p === '/api/battles' && req.method === 'POST') {
-            const symbol = String(body.symbol || 'EURUSD').toUpperCase();
-            const timeframe = String(body.timeframe || '1h');
-            const window = Math.max(30, Math.min(6500, Number(body.window) || 300));
-            // Archive battles (the default) replay a REAL archived month on the
-            // FULL timeline — same source practice backtesting uses. Live/synthetic
-            // battles keep the bounded recent window so a battle is never empty.
-            const period = /^\d{4}-\d{2}$/.test(String(body.period || '')) ? String(body.period) : null;
-            const md = await MarketData.getCandles({
-                symbol, timeframe, count: window,
-                period: period || undefined,
-                all: !!period
+            const created = await createBattleFor(uc.userId, body);
+            if (!created.ok) return json(res, created.code || 400, { ok: false, error: created.error, errors: created.errors });
+            Battle.saveBattle(uc.userId, created.battle);
+            Battle.emit('created', created.battle);
+            const b = created.battle;
+            const hostSeat = (b.seatOfUser(uc.userId) || b.seats[0]).id;
+            return json(res, 200, {
+                ok: true, battle: b.id, hostSeat,
+                state: b.publicState(uc.userId),
+                config: b.config, configWarnings: created.warnings
             });
-            if (!md.ok || !md.candles.length) return json(res, 400, { error: 'no candles for ' + symbol });
-            if (period && md.period !== period) {
-                return json(res, 404, { error: 'no archived ' + symbol + ' ' + timeframe + ' data for ' + period });
+        }
+        // ---- availability → matching → lobby: challenges ----
+        if (p === '/api/battles/challenges' && req.method === 'POST') {
+            let toUserId = body.toUserId ? String(body.toUserId) : null;
+            if (body.quick) {
+                // PLACEHOLDER opponent picker (longest-waiting available player).
+                // Real matchmaking replaces Battle.pickQuickOpponent — not this route.
+                toUserId = Battle.pickQuickOpponent(uc.userId);
+                if (!toUserId) return json(res, 404, { error: 'no player is available for a quick battle right now' });
             }
-            // Warm-up bars: an explicit host choice (including 0) is honoured; only
-            // an absent value falls back to the 30-bar pre-roll default.
-            const warmupRaw = body.startBars != null && body.startBars !== '' ? Number(body.startBars) : null;
-            const warmup = warmupRaw == null || !isFinite(warmupRaw) ? Math.min(30, md.candles.length - 1) : Math.max(0, Math.min(500, warmupRaw));
-            const startIndex = Math.max(0, Math.min(warmup, md.candles.length - 1));
-            const seatNames = Array.isArray(body.seats) ? body.seats.slice(0, 10).map(s => String(s).trim()) : ['Trader 1', 'Trader 2'];
-            const teams = Array.isArray(body.teams) && body.teams.length === seatNames.length ? body.teams.map(t => String(t).trim() || null) : null;
-            const b = new Battle.Battle({
-                hostId: uc.userId,
-                title: String(body.title || symbol + ' ' + timeframe + ' battle'),
-                symbol, timeframe,
-                period: period || md.period || null,
-                periodLabel: md.periodLabel || null,
-                candleWindow: body.candleWindow,
-                category: (md.meta && md.meta.category) || 'Other',
-                candles: md.candles, startIndex,
-                startingBalance: Number(body.startingBalance) || 10000,
-                riskModel: body.riskModel || { basis: 'money', perTrade: 25 },
-                status: 'lobby',
-                seats: seatNames.map((name, i) => ({
-                    id: 's' + i, name, team: teams ? teams[i] : null, userId: i === 0 ? uc.userId : null
-                }))
+            if (!toUserId) return json(res, 400, { error: 'toUserId is required (or pass quick: true)' });
+            if (toUserId === uc.userId) return json(res, 400, { error: 'you cannot challenge yourself' });
+            const r = Battle.createChallenge(uc.userId, toUserId, body.config, { message: body.message });
+            if (!r.ok) return json(res, 400, r);
+            return json(res, 201, { ok: true, challenge: r.challenge });
+        }
+        if ((m = p.match(/^\/api\/battles\/challenges\/([^/]+)\/(accept|decline)$/))) {
+            const decision = m[2];
+            const r = Battle.resolveChallenge(uc.userId, m[1], decision);
+            if (!r.ok) return json(res, 400, r);
+            if (decision === 'decline') return json(res, 200, { ok: true, challenge: r.challenge });
+            // accepted → a real battle record in the LOBBY state, both players
+            // seated, through the same creation path as a hosted battle.
+            const ch = r.challenge;
+            const created = await createBattleFor(uc.userId, {
+                title: body.title,
+                config: ch.config,
+                seats: [
+                    { name: body.fromName, userId: ch.fromUserId },
+                    { name: body.toName, userId: ch.toUserId }
+                ]
             });
-            b._ensureSeats();
-            Battle.saveBattle(uc.userId, b);
-            Battle.emit('created', b);
-            return json(res, 200, { ok: true, battle: b.id, hostSeat: b.seats[0].id, state: b.publicState() });
+            if (!created.ok) return json(res, created.code || 400, { ok: false, error: created.error });
+            Battle.linkChallengeBattle(m[1], created.battle.id);
+            Battle.saveBattle(uc.userId, created.battle);
+            Battle.emit('created', created.battle);
+            const seat = (created.battle.seatOfUser(uc.userId) || created.battle.seats[0]).id;
+            return json(res, 201, {
+                ok: true, challengeId: m[1], battle: created.battle.id, mySeat: seat,
+                state: created.battle.publicState(uc.userId)
+            });
+        }
+        if ((m = p.match(/^\/api\/battles\/([^/]+)\/spectate$/))) {
+            // watching without a seat is its own availability state — it is not a
+            // seat and never becomes one silently.
+            const b = Battle.getBattle(uc.userId, m[1]);
+            if (!b) return json(res, 404, { error: 'unknown battle' });
+            return json(res, 200, Battle.setAvailability(uc.userId, 'spectating', { battleId: b.id }));
         }
         if ((m = p.match(/^\/api\/battles\/([^/]+)\/invite$/))) {
             // host invites people: returns the shareable link + records an
@@ -1840,8 +2082,9 @@ async function handleApi(req, res, url) {
             free.userId = uc.userId;
             free.name = String(body.name || free.name || 'Seat');
             Battle.saveBattle(b.hostId, b);
+            Battle.setAvailability(uc.userId, 'in_battle', { battleId: b.id });
             Battle.emit('status', b);
-            return json(res, 200, { ok: true, seat: free.id, state: b.publicState() });
+            return json(res, 200, { ok: true, seat: free.id, state: b.publicState(uc.userId) });
         }
         if (req.method === 'DELETE' && (m = p.match(/^\/api\/battles\/([^/]+)\/invite$/))) {
             // invitee dismisses a pending invite
@@ -1857,8 +2100,9 @@ async function handleApi(req, res, url) {
             free.userId = uc.userId;
             free.name = String(body.name || free.name);
             Battle.saveBattle(b.hostId, b);
+            Battle.setAvailability(uc.userId, 'in_battle', { battleId: b.id });
             Battle.emit('status', b);
-            return json(res, 200, { ok: true, seat: free.id, state: b.publicState() });
+            return json(res, 200, { ok: true, seat: free.id, state: b.publicState(uc.userId) });
         }
         if ((m = p.match(/^\/api\/battles\/([^/]+)\/control$/))) {
             const id = m[1];
@@ -1871,6 +2115,7 @@ async function handleApi(req, res, url) {
             if (body.action === 'seek') return json(res, 200, Battle.seek(uc.userId, id, Number(body.cursor)));
             if (body.action === 'reset') return json(res, 200, Battle.reset(uc.userId, id));
             if (body.action === 'complete') return json(res, 200, Battle.complete(uc.userId, id));
+            if (body.action === 'transition') return json(res, 200, Battle.transition(uc.userId, id, body.lifecycle, body.meta));
             return json(res, 400, { error: 'unknown control action' });
         }
         if ((m = p.match(/^\/api\/battles\/([^/]+)\/enter$/))) {
@@ -1878,7 +2123,7 @@ async function handleApi(req, res, url) {
             if (!b) return json(res, 404, { error: 'unknown battle' });
             const seat = b.seat(String(body.seat));
             if (!seat) return json(res, 404, { error: 'unknown seat' });
-            if (seat.userId && seat.userId !== uc.userId) return json(res, 403, { error: 'not your seat' });
+            if (!seat.userId || seat.userId !== uc.userId) return json(res, 403, { error: 'claim this seat before placing orders' });
             const r = b.enter(seat.id, {
                 direction: body.direction, entry: body.entry, sl: body.sl, tp: body.tp,
                 riskAmount: body.riskAmount, riskPct: body.riskPct, size: body.size,
@@ -1894,7 +2139,7 @@ async function handleApi(req, res, url) {
             if (!b) return json(res, 404, { error: 'unknown battle' });
             const seat = b.seat(String(body.seat));
             if (!seat) return json(res, 404, { error: 'unknown seat' });
-            if (seat.userId && seat.userId !== uc.userId) return json(res, 403, { error: 'not your seat' });
+            if (!seat.userId || seat.userId !== uc.userId) return json(res, 403, { error: 'claim this seat before closing orders' });
             const r = b.close(seat.id, { price: body.price, reason: body.reason });
             if (!r.ok) return json(res, 400, { error: r.error });
             Battle.saveBattle(b.hostId, b);

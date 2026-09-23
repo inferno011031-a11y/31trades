@@ -109,6 +109,7 @@
         el.innerHTML =
             '<div class="flex items-center gap-2">' +
             '<span class="status-badge" style="background:' + (battle.status === 'completed' ? 'rgba(245,158,11,0.12);color:#FBBF24' : battle.status === 'running' ? 'rgba(16,185,129,0.12);color:#34D399' : 'rgba(99,102,241,0.12);color:#818CF8') + '">' + battle.status + '</span>' +
+            '<span class="status-badge" style="background:rgba(255,255,255,0.06);color:#B4B4BD;">' + String(battle.lifecycle || '').toUpperCase() + '</span>' +
             '<span class="status-badge" style="background:rgba(255,255,255,0.06);color:#B4B4BD;">' + battle.symbol + ' · ' + battle.timeframe + '</span></div>' +
             '<div class="text-[#6E6E78]">' + battle.title + '</div>' +
             '<div class="text-[#6E6E78]">Seats <b class="text-white">' + battle.seats.filter(s => s.taken).length + '/' + battle.seats.length + '</b></div>' +
@@ -119,18 +120,33 @@
     }
 
     function squadLabel(s) { return s && s.team ? s.team : 'Squad'; }
+    // Opponent state as the SERVER allows it: presence is always synchronized,
+    // every other field appears only if the battle's visibility policy names it.
+    function presenceDot(state) {
+        const c = state === 'active' ? '#34D399' : state === 'online' ? '#60A5FA' : state === 'offline' ? '#F87171' : '#55555E';
+        return '<span style="width:7px;height:7px;border-radius:99px;background:' + c + ';display:inline-block;flex-shrink:0"></span>';
+    }
     function renderSeats() {
         const list = $('bl-seats');
         if (!list) return;
         if (!battle) { list.innerHTML = ''; return; }
+        const parts = (seatState && seatState.participants) || battle.participants || [];
         list.innerHTML = battle.seats.map(s => {
-            const mine = s.id === seat;
+            const mine = !!s.mine || s.id === seat;
+            const p = parts.find(x => x.id === s.id) || {};
+            const state = (p.presence && p.presence.state) || (s.taken ? 'online' : 'unclaimed');
+            const bits = [];
+            if (p.status) bits.push(p.status === 'in_trade' ? 'in trade' : 'flat');
+            if (p.direction) bits.push(p.direction);
+            if (p.equity != null) bits.push('$' + Math.round(p.equity).toLocaleString());
             const badge = s.taken
                 ? '<span class="status-badge" style="background:' + (mine ? 'rgba(16,185,129,0.14);color:#34D399' : 'rgba(255,255,255,0.06);color:#B4B4BD') + '">' + (mine ? 'You' : 'Taken') + '</span>'
                 : '<button class="btn-ghost !py-1 !px-2.5 !text-[11px]" data-join="' + s.id + '"><svg data-lucide="log-in" class="w-3 h-3"></svg> Join</button>';
             return '<div class="seat-row">' +
+                (s.taken ? presenceDot(state) : '') +
                 '<span class="num text-[11px] font-bold text-white">' + s.name + '</span>' +
                 (s.team ? '<span class="status-badge" style="background:rgba(99,102,241,0.12);color:#818CF8;">' + s.team + '</span>' : '') +
+                (bits.length ? '<span class="num text-[10.5px] text-[#6E6E78]">' + bits.join(' · ') + '</span>' : '') +
                 '<span class="flex-1"></span>' + badge + '</div>';
         }).join('');
         list.querySelectorAll('[data-join]').forEach(b => b.addEventListener('click', async () => {
@@ -147,11 +163,15 @@
         }));
         const hint = $('bl-hint');
         if (hint) {
-            hint.textContent = battle.status === 'lobby'
-                ? 'Battle is in the lobby — the host starts the replay when everyone is seated. Create or join a Squad, then claim a seat to trade.'
+            const vis = (seatState && seatState.visibility) || battle.visibility || { mode: 'presence', hidden: [] };
+            const hidden = (vis.hidden || []).filter(f => f !== 'presence');
+            const base = battle.status === 'lobby'
+                ? 'Battle is in the lobby — the host starts the replay when everyone is seated. Claim a seat to trade.'
                 : battle.status === 'running'
                     ? 'Replay is live. Your ticket trades the current bar only; everyone sees the same candles. Decisions stay private.'
                     : "Battle over — the leaderboard reveals every seat's trades.";
+            hint.textContent = base + ' Opponent information: ' + vis.mode +
+                (hidden.length ? ' (hidden: ' + hidden.join(', ') + ' — the engine tracks them, no mode exposes them yet).' : ' (every tracked field).');
         }
         if (window.lucide) lucide.createIcons();
     }
@@ -409,7 +429,7 @@
             const proto = location.protocol === 'https:' ? 'wss' : 'ws';
             let uid = '';
             try { const s = window.TradeMindAuth && window.TradeMindAuth.getSession(); if (s && s.user) uid = s.user.id || s.user.email || ''; } catch (e) {}
-            ws = new WebSocket(proto + '://' + location.host + '/ws?battle=' + encodeURIComponent(battle.id) + '&user=' + encodeURIComponent(uid));
+            ws = new WebSocket(proto + '://' + location.host + '/ws?battle=' + encodeURIComponent(battle.id));
         } catch (e) { ws = null; return; }
         ws.onopen = () => {};
         ws.onmessage = async (ev) => {

@@ -31,6 +31,7 @@
     <script src="src/core/index.js"></script>
     <script src="core.js"></script>
     <script src="connection.js"></script>
+    <script src="assets/lightweight-charts.js"></script>
 
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -199,6 +200,10 @@
                 var(--tm-bg);
         }
         .chart-zone { position: relative; }
+        /* Live battle chart: the full archived month (as far as the shared cursor
+           has revealed it) is loaded, so the host and every seat can zoom out. */
+        .battle-chart-slot { position: relative; width: 100%; height: 420px; }
+        .battle-chart-empty { height: 420px; display: flex; align-items: center; justify-content: center; color: var(--tm-dim); font-size: 12.5px; text-align: center; padding: 0 24px; }
         .chart-overlay {
             position: absolute; top: 12px; left: 12px; right: 12px; display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; pointer-events: none;
         }
@@ -464,8 +469,31 @@
                         <div class="tag tag-amber hidden" id="invite-tag"><span id="invite-count">0</span> pending invite</div>
                     </div>
 
+                    <!-- Battle entry: who is around, and the two ways in -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3.5 mt-6">
+                        <div class="glass p-4">
+                            <div class="label-xs mb-2">YOUR AVAILABILITY</div>
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="tag tag-gray" id="avail-state">—</span>
+                                <button class="btn-primary !py-2 !px-3 !text-[12.5px]" id="avail-toggle"><svg data-lucide="radio" class="w-3.5 h-3.5"></svg> Available for Battle</button>
+                            </div>
+                            <div class="flex items-center gap-2 mt-2.5">
+                                <button class="btn-ghost !py-2 !px-3 !text-[12.5px]" id="quick-battle"><svg data-lucide="zap" class="w-3.5 h-3.5"></svg> Quick Battle</button>
+                                <button class="btn-ghost !py-2 !px-3 !text-[12.5px]" id="find-battle"><svg data-lucide="search" class="w-3.5 h-3.5"></svg> Find Battle</button>
+                            </div>
+                            <div id="avail-msg" class="text-[11.5px] text-[var(--tm-dim)] mt-2 leading-relaxed">Say you are available and another trader can challenge you into the same market replay.</div>
+                        </div>
+                        <div class="glass p-4 md:col-span-2">
+                            <div class="label-xs mb-2">AVAILABLE PLAYERS</div>
+                            <div id="available-players" class="flex flex-col gap-2"></div>
+                        </div>
+                    </div>
+
                     <!-- Pending invites -->
                     <div id="pending-invites" class="mt-6 hidden"></div>
+
+                    <!-- Incoming challenges (availability → matching) -->
+                    <div id="incoming-challenges" class="mt-6 hidden"></div>
 
                     <!-- Live battles -->
                     <h2 class="label-xs mt-7 mb-3">LIVE BATTLES</h2>
@@ -478,6 +506,10 @@
                     <!-- Battle activity -->
                     <h2 class="label-xs mt-7 mb-3">BATTLE ACTIVITY</h2>
                     <div id="battle-results" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
+
+                    <!-- Battle history (not time-boxed, every battle I was part of) -->
+                    <h2 class="label-xs mt-7 mb-3">BATTLE HISTORY</h2>
+                    <div id="battle-history" class="grid grid-cols-1 md:grid-cols-2 gap-3.5"></div>
 
                 </div>
             </div>
@@ -514,7 +546,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="field-label" for="cb-timeframe">Timeframe</label>
+                    <label class="field-label" for="cb-timeframe">Starting timeframe</label>
                     <select id="cb-timeframe" class="field-select">
                         <option value="1m">1m</option>
                         <option value="5m">5m</option>
@@ -539,7 +571,7 @@
                     <select id="cb-month" class="field-select"></select>
                 </div>
                 <div>
-                    <label class="field-label" for="cb-window">Bars shown at once</label>
+                    <label class="field-label" for="cb-window">Bars served per seat poll (tail window)</label>
                     <select id="cb-window" class="field-select">
                         <option value="200">200</option>
                         <option value="400" selected>400</option>
@@ -549,7 +581,7 @@
                     </select>
                 </div>
                 <div>
-                    <label class="field-label" for="cb-warmup">Warm-up bars before start</label>
+                    <label class="field-label" for="cb-warmup">Warm-up bars before start (of the starting timeframe)</label>
                     <input id="cb-warmup" type="number" class="field-input" value="30" min="0" max="500">
                 </div>
                 <div>
@@ -691,7 +723,126 @@
 
             // ============ LANDING ============
             async function loadAll() {
-                await Promise.all([loadFeed(), loadPending()]);
+                await Promise.all([loadFeed(), loadPending(), loadAvailability(), loadChallenges(), loadHistory()]);
+            }
+
+            // ---- availability: the "I am ready to battle" signal ----
+            let availability = null;
+            let opponents = [];
+            async function loadAvailability() {
+                try {
+                    const r = await apiFetch('/api/battles/availability');
+                    const j = await r.json().catch(() => ({}));
+                    availability = (j && j.mine) || null;
+                    opponents = ((j && j.players) || []).filter(p => p.userId && p.userId !== uid);
+                } catch (e) { availability = null; opponents = []; }
+                renderAvailability();
+            }
+            function renderAvailability() {
+                const state = (availability && availability.status) || 'offline';
+                const el = $('avail-state');
+                const tag = state === 'available' ? 'tag-emerald' : state === 'in_battle' ? 'tag-indigo' : state === 'spectating' ? 'tag-blue' : state === 'online' ? 'tag-gray' : 'tag-amber';
+                if (el) el.outerHTML = '<span class="tag ' + tag + '" id="avail-state">' + esc(state.replace('_', ' ').toUpperCase()) + '</span>';
+                const btn = $('avail-toggle');
+                if (btn) {
+                    btn.innerHTML = state === 'available'
+                        ? '<svg data-lucide="x" class="w-3.5 h-3.5"></svg> Stop being available'
+                        : '<svg data-lucide="radio" class="w-3.5 h-3.5"></svg> Available for Battle';
+                    btn.classList.toggle('btn-primary', state !== 'available');
+                    btn.classList.toggle('btn-ghost', state === 'available');
+                }
+                const msg = $('avail-msg');
+                if (msg) msg.textContent = state === 'available'
+                    ? 'You are listed as available. Another trader can challenge you, or hit Quick Battle to match with whoever has waited longest.'
+                    : state === 'in_battle' ? 'You are committed to a battle record.'
+                    : state === 'spectating' ? 'You are watching a battle as a spectator — no seat, no orders.'
+                    : 'Say you are available and another trader can challenge you into the same market replay.';
+                const list = $('available-players');
+                if (list) {
+                    list.innerHTML = opponents.length
+                        ? opponents.map(p => '<div class="flex items-center gap-2.5 py-1.5">' +
+                            '<span class="avatar !w-7 !h-7 !text-[10.5px]">' + esc(String(p.userId).slice(0, 2).toUpperCase()) + '</span>' +
+                            '<div class="flex-1 min-w-0"><div class="text-[12.5px] font-bold truncate">Trader ' + esc(String(p.userId).slice(0, 8)) + '</div>' +
+                            '<div class="text-[11px] text-[var(--tm-dim)]">' + esc(p.status.replace('_', ' ')) + '</div></div>' +
+                            (p.status === 'available' ? '<button class="btn-mini" data-challenge="' + esc(p.userId) + '"><svg data-lucide="swords" class="w-3.5 h-3.5"></svg> Challenge</button>' : '<span class="tag tag-gray">in battle</span>') +
+                          '</div>').join('')
+                        : '<div class="text-[12.5px] text-[var(--tm-dim)]">Nobody else is around right now. Mark yourself available and they will see you here.</div>';
+                    if (window.lucide) lucide.createIcons();
+                }
+            }
+
+            // ---- challenges: availability → matching → lobby ----
+            let challengesIn = [];
+            async function loadChallenges() {
+                try {
+                    const r = await apiFetch('/api/battles/challenges');
+                    const j = await r.json().catch(() => ({}));
+                    challengesIn = (j && j.incoming) || [];
+                } catch (e) { challengesIn = []; }
+                renderChallenges();
+            }
+            function challengeMarketLabel(cfg) {
+                const m = (cfg && cfg.market) || {};
+                const bits = [m.symbol || '—', m.timeframe || '—'];
+                if (m.period) bits.push(m.period);
+                else if (m.policy === 'live-window') bits.push('recent window');
+                return bits.join(' · ');
+            }
+            function renderChallenges() {
+                const wrap = $('incoming-challenges');
+                if (!wrap) return;
+                wrap.classList.toggle('hidden', !challengesIn.length);
+                if (!challengesIn.length) { wrap.innerHTML = ''; return; }
+                wrap.innerHTML = '<h2 class="label-xs mb-3">BATTLE CHALLENGES</h2><div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">' + challengesIn.map(c =>
+                    '<div class="battle-card !cursor-default">' +
+                        '<div class="flex items-start justify-between gap-2">' +
+                            '<div class="min-w-0"><div class="text-[14.5px] font-extrabold truncate">Challenge from Trader ' + esc(String(c.fromUserId).slice(0, 8)) + '</div>' +
+                            '<div class="text-[12px] text-[var(--tm-dim)] mt-0.5">' + esc(challengeMarketLabel(c.config)) + '</div></div>' +
+                            '<span class="tag tag-amber flex-shrink-0">PENDING</span>' +
+                        '</div>' +
+                        (c.message ? '<div class="text-[12px] text-[var(--tm-muted)]">“' + esc(c.message) + '”</div>' : '') +
+                        '<div class="text-[11px] text-[var(--tm-dim)]">Accepting opens a battle lobby — both of you trade the same replay from the same bar.</div>' +
+                        '<div class="flex items-center gap-2">' +
+                            '<button class="btn-primary !py-2 !px-3.5 !text-[12.5px]" data-ch-accept="' + esc(c.id) + '"><svg data-lucide="swords" class="w-3.5 h-3.5"></svg> Accept</button>' +
+                            '<button class="btn-ghost !py-2 !px-3.5 !text-[12.5px]" data-ch-decline="' + esc(c.id) + '">Decline</button>' +
+                        '</div>' +
+                    '</div>').join('') + '</div>';
+                if (window.lucide) lucide.createIcons();
+                bindCards();
+            }
+
+            // ---- history: every battle I was part of, completed included ----
+            let battleHistory = [];
+            async function loadHistory() {
+                try {
+                    const r = await apiFetch('/api/battles/history?limit=12');
+                    const j = await r.json().catch(() => ({}));
+                    battleHistory = (j && j.battles) || [];
+                } catch (e) { battleHistory = []; }
+                renderHistory();
+            }
+            function renderHistory() {
+                const el = $('battle-history');
+                if (!el) return;
+                el.innerHTML = battleHistory.length
+                    ? battleHistory.map(b => '<button class="battle-card" data-open="' + esc(b.id) + '">' +
+                        '<div class="flex items-start justify-between gap-2">' +
+                            '<div class="min-w-0"><div class="text-[14px] font-extrabold truncate">' + esc(b.title) + '</div>' +
+                            '<div class="text-[11.5px] text-[var(--tm-dim)] mt-0.5">' + esc(b.symbol) + ' · ' + esc(b.timeframe) + (b.periodLabel ? ' · ' + esc(b.periodLabel) : '') + '</div></div>' +
+                            '<span class="tag ' + statusTag(b.status) + ' flex-shrink-0">' + esc(b.lifecycle || b.status) + '</span>' +
+                        '</div>' +
+                        '<div class="flex flex-wrap gap-x-4 gap-y-1 text-[11.5px]">' +
+                            (b.mySeat ? '<span class="num">My seat <b>' + esc(b.mySeat) + '</b></span>' : '') +
+                            (b.myTrades != null ? '<span class="num text-[var(--tm-dim)]">' + b.myTrades + ' trades</span>' : '') +
+                            (b.myNet != null ? '<span class="num ' + (b.myNet >= 0 ? 'pos' : 'neg') + '">' + signed(b.myNet) + '</span>' : '') +
+                            (b.myScore != null ? '<span class="num text-[var(--tm-dim)]">score <b>' + b.myScore + '</b></span>' : '') +
+                            (b.winner ? '<span class="tag tag-amber">Winner: ' + esc(b.winner.name) + '</span>' : '') +
+                            (b.scoring && b.scoring.status === 'provisional' ? '<span class="tag tag-gray">provisional scoring</span>' : '') +
+                        '</div>' +
+                        '<div class="text-[11.5px] text-[var(--tm-dim)]">' + fmtTime(b.completedAt || b.createdAt) + '</div>' +
+                    '</button>').join('')
+                    : '<div class="col-span-full text-center py-8 text-[13px] text-[var(--tm-dim)] border border-dashed border-[var(--tm-border-2)] rounded-xl">No battles yet — every battle you host, join or challenge into is kept here.</div>';
+                bindCards();
             }
             async function loadFeed() {
                 try {
@@ -790,6 +941,66 @@
             }
             function bindCards() {
                 document.querySelectorAll('[data-open]').forEach(b => b.addEventListener('click', () => openBattle(b.dataset.open)));
+                // availability toggle + quick battle
+                const at = $('avail-toggle');
+                if (at && !at.dataset.bound) {
+                    at.dataset.bound = '1';
+                    at.addEventListener('click', async () => {
+                        const next = (availability && availability.status === 'available') ? 'online' : 'available';
+                        try {
+                            const r = await apiFetch('/api/battles/availability', { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ status: next }) });
+                            if (!r.ok) throw new Error('presence ' + r.status);
+                            showToast(next === 'available' ? 'You are available for battle' : 'You are no longer listed as available');
+                            await loadAvailability();
+                        } catch (e) { showToast('Presence failed: ' + e.message); }
+                    });
+                }
+                const qb = $('quick-battle');
+                if (qb && !qb.dataset.bound) {
+                    qb.dataset.bound = '1';
+                    qb.addEventListener('click', async () => {
+                        try {
+                            const r = await apiFetch('/api/battles/challenges', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ quick: true }) });
+                            const j = await r.json().catch(() => ({}));
+                            if (!r.ok) throw new Error(j.error || 'No match');
+                            showToast('Challenge sent — waiting for them to accept');
+                            await loadChallenges();
+                        } catch (e) { showToast(e.message); }
+                    });
+                }
+                const fb = $('find-battle');
+                if (fb && !fb.dataset.bound) {
+                    fb.dataset.bound = '1';
+                    fb.addEventListener('click', () => { showView('landing'); loadAll(); showToast('Open battles are listed under Open to join'); });
+                }
+                document.querySelectorAll('[data-challenge]').forEach(b => b.addEventListener('click', async ev => {
+                    ev.stopPropagation();
+                    try {
+                        const r = await apiFetch('/api/battles/challenges', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ toUserId: b.dataset.challenge }) });
+                        const j = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(j.error || 'Challenge failed');
+                        showToast('Challenge sent');
+                        await loadChallenges();
+                    } catch (e) { showToast(e.message); }
+                }));
+                document.querySelectorAll('[data-ch-accept]').forEach(b => b.addEventListener('click', async ev => {
+                    ev.stopPropagation();
+                    try {
+                        const r = await apiFetch('/api/battles/challenges/' + encodeURIComponent(b.dataset.chAccept) + '/accept', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+                        const j = await r.json().catch(() => ({}));
+                        if (!r.ok) throw new Error(j.error || 'Unable to accept');
+                        showToast('Battle lobby created');
+                        await loadAll();
+                        if (j.state) openBattle(j.state.id, j.state);
+                    } catch (e) { showToast(e.message); }
+                }));
+                document.querySelectorAll('[data-ch-decline]').forEach(b => b.addEventListener('click', async ev => {
+                    ev.stopPropagation();
+                    try {
+                        await apiFetch('/api/battles/challenges/' + encodeURIComponent(b.dataset.chDecline) + '/decline', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({}) });
+                        await loadChallenges();
+                    } catch (e) {}
+                }));
                 document.querySelectorAll('[data-accept]').forEach(b => b.addEventListener('click', async ev => {
                     ev.stopPropagation();
                     try {
@@ -822,40 +1033,215 @@
                     } catch (e) { showToast('Unable to load battle'); return; }
                 }
                 const host = myBattles.some(b => b.id === id);
-                const seatRow = (pub.seats || []).find(s => s.userId === uid);
+                const seatRow = (pub.seats || []).find(s => s.mine);
                 const mySeatId = seatRow ? seatRow.id : (host ? (pub.seats[0] ? pub.seats[0].id : null) : null);
-                cur = { id, pub, host, mySeatId, seat: null, playing: false };
+                cur = { id, pub, host, mySeatId, seat: null, playing: false, candles: [], candlesBase: 0 };
                 connectBattleWs(id);
                 showView('battle');
-                await refreshSeat();
+                await refreshSeat(true);   // full month so far — the chart starts complete
                 renderBattle();
             }
-            async function refreshSeat() {
+            // Seat payloads carry DELTAS after the first full fetch: `full=1` ships
+            // every bar the shared cursor has revealed (the whole archive month so
+            // far), then each poll asks only for bars after the ones we already hold.
+            async function refreshSeat(full) {
                 if (!cur || !cur.mySeatId) return;
                 try {
-                    const r = await apiFetch('/api/battles/' + encodeURIComponent(cur.id) + '/seat?seat=' + encodeURIComponent(cur.mySeatId));
+                    const held = cur.candlesBase + (cur.candles || []).length;
+                    const q = (full || !held) ? '&full=1' : '&from=' + held;
+                    const r = await apiFetch('/api/battles/' + encodeURIComponent(cur.id) + '/seat?seat=' + encodeURIComponent(cur.mySeatId) + q);
                     if (!r.ok) return;
                     const j = await r.json();
-                    if (j && j.state) { cur.seat = j.state; lastSeatFetch = Date.now(); }
+                    if (j && j.state) { mergeSeatCandles(j.state); cur.seat = j.state; lastSeatFetch = Date.now(); }
                 } catch (e) {}
+            }
+
+            // Append-only merge against the canonical index. A rewind (host seeks
+            // back) truncates instead of duplicating bars; a fresh window rebases.
+            function mergeSeatCandles(st) {
+                const incoming = (st && st.candles) || [];
+                const from = Number(st && st.candlesFrom) || 0;
+                let base = cur.candlesBase || 0;
+                let arr = cur.candles || [];
+                const held = base + arr.length;
+                if (!arr.length || from < base || from > held) { base = from; arr = []; }
+                else if (from > base) { arr = arr.slice(0, from - base); base = from; }
+                incoming.forEach(c => arr.push(c));
+                cur.candles = arr;
+                cur.candlesBase = base;
+            }
+
+            // ============ (retired) LOCAL BATTLE CHART ============
+            // A battle is played on the SAME chart as practice backtesting
+            // (chart-test.html, opened from chartBlock()'s launcher). The lightweight
+            // chart that used to live here rendered ONE fixed timeframe and was a
+            // second, simplified charting stack — exactly what the battle foundation
+            // forbids. These helpers stay unreferenced until they are deleted.
+            // The chart element is created ONCE and re-parented into every re-render,
+            // so the cursor ticking does not rebuild the chart or reset the viewport.
+            function chartHost() {
+                if (!cur.chartHost) {
+                    cur.chartHost = document.createElement('div');
+                    cur.chartHost.style.width = '100%';
+                    cur.chartHost.style.height = '100%';
+                }
+                return cur.chartHost;
+            }
+            function chartColors() {
+                return { up: '#00b386', down: '#e0314b', grid: 'rgba(255,255,255,0.04)', text: '#8b93a7', border: 'rgba(255,255,255,0.08)' };
+            }
+            function buildBattleChart(host) {
+                const LC = window.LightweightCharts;
+                const t = chartColors();
+                cur.chart = LC.createChart(host, {
+                    width: host.clientWidth || 640,
+                    height: 420,
+                    layout: { background: { type: 'solid', color: 'transparent' }, textColor: t.text, fontFamily: "'JetBrains Mono', monospace", fontSize: 11 },
+                    grid: { vertLines: { color: t.grid }, horzLines: { color: t.grid } },
+                    rightPriceScale: { borderColor: t.border, scaleMargins: { top: 0.08, bottom: 0.22 } },
+                    timeScale: { borderColor: t.border, timeVisible: true, secondsVisible: false, rightOffset: 4 },
+                    crosshair: { mode: 0 }
+                });
+                cur.candleSeries = cur.chart.addSeries(LC.CandlestickSeries, {
+                    upColor: t.up, downColor: t.down, borderUpColor: t.up, borderDownColor: t.down, wickUpColor: t.up, wickDownColor: t.down
+                });
+                cur.volumeSeries = cur.chart.addSeries(LC.HistogramSeries, { priceFormat: { type: 'volume' }, priceScaleId: '', lastValueVisible: false, priceLineVisible: false });
+                cur.volumeSeries.priceScale().applyOptions({ scaleMargins: { top: 0.85, bottom: 0 } });
+                try { cur.markerApi = LC.createSeriesMarkers ? LC.createSeriesMarkers(cur.candleSeries, []) : null; } catch (e) { cur.markerApi = null; }
+                if (window.ResizeObserver) {
+                    cur.chartObserver = new ResizeObserver(() => {
+                        if (cur.chart && host.clientWidth) cur.chart.applyOptions({ width: host.clientWidth });
+                    });
+                    cur.chartObserver.observe(host);
+                }
+                cur.paintedBase = null;
+                cur.paintedLen = 0;
+            }
+            function mountBattleChart() {
+                const slot = $('battle-chart-slot');
+                if (!cur || !slot) return;
+                if (!window.LightweightCharts) {
+                    slot.innerHTML = '<div class="battle-chart-empty">Chart library unavailable — candles still arrive from the canonical battle timeline.</div>';
+                    return;
+                }
+                const host = chartHost();
+                if (host.parentNode !== slot) slot.appendChild(host);
+                if (!cur.chart) buildBattleChart(host);
+                paintBattleChart();
+            }
+            function toBar(c) {
+                const t = Number(c.time) > 1e12 ? Math.floor(Number(c.time) / 1000) : Number(c.time);
+                return { time: t, open: Number(c.open), high: Number(c.high), low: Number(c.low), close: Number(c.close) };
+            }
+            function paintBattleChart() {
+                if (!cur || !cur.chart || !cur.candleSeries) return;
+                const arr = cur.candles || [];
+                if (!arr.length) return;
+                const bars = arr.map(toBar).filter(b => isFinite(b.time) && isFinite(b.close));
+                if (!bars.length) return;
+                const vols = arr.map((c, i) => ({
+                    time: bars[i] ? bars[i].time : toBar(c).time,
+                    value: Number(c.volume) || 0,
+                    color: Number(c.close) >= Number(c.open) ? 'rgba(0,179,134,0.35)' : 'rgba(224,49,75,0.35)'
+                }));
+                // First paint and rewinds need a full setData; a growing timeline uses
+                // update() per new bar so the trader's zoom/pan is never reset (a full
+                // setData on every cursor tick used to throw the viewport off).
+                const firstPaint = cur.paintedBase == null;
+                const rebase = !firstPaint && (cur.paintedBase !== cur.candlesBase || cur.paintedLen > bars.length);
+                if (firstPaint || rebase) {
+                    const keep = rebase ? null : cur.chart.timeScale().getVisibleLogicalRange();
+                    cur.candleSeries.setData(bars);
+                    cur.volumeSeries.setData(vols);
+                    if (keep) cur.chart.timeScale().setVisibleLogicalRange(keep);
+                    else focusBattleChart('tail');
+                } else if (bars.length > cur.paintedLen) {
+                    for (let i = cur.paintedLen; i < bars.length; i++) {
+                        cur.candleSeries.update(bars[i]);
+                        cur.volumeSeries.update(vols[i]);
+                    }
+                }
+                cur.paintedBase = cur.candlesBase;
+                cur.paintedLen = bars.length;
+                paintPositionLines();
+                paintTradeMarkers();
+            }
+            function focusBattleChart(mode) {
+                if (!cur || !cur.chart) return;
+                const n = (cur.candles || []).length;
+                if (!n) return;
+                const ts = cur.chart.timeScale();
+                // Explicit logical range beats fitContent(): fitContent() can settle on a
+                // tiny window, while this always spans every loaded bar (the library
+                // clamps bar spacing on its own for very long months).
+                if (mode === 'fit') { ts.setVisibleLogicalRange({ from: -0.5, to: n + 0.5 }); return; }
+                ts.setVisibleLogicalRange({ from: Math.max(0, n - 140), to: n + 6 });
+            }
+            function clearPriceLines() {
+                (cur.priceLines || []).forEach(l => { try { cur.candleSeries.removePriceLine(l); } catch (e) {} });
+                cur.priceLines = [];
+            }
+            function paintPositionLines() {
+                const st = cur.seat;
+                const pos = st && st.position;
+                clearPriceLines();
+                if (!pos) return;
+                const mk = (price, color, title, style) => {
+                    if (price == null || !isFinite(Number(price))) return;
+                    cur.priceLines.push(cur.candleSeries.createPriceLine({
+                        price: Number(price), color, lineWidth: 1, lineStyle: style, axisLabelVisible: true, title
+                    }));
+                };
+                mk(pos.entry, '#38bdf8', 'ENTRY', 0);
+                mk(pos.sl, '#f43f5e', 'SL', 2);
+                mk(pos.tp, '#10b981', 'TP', 2);
+            }
+            function paintTradeMarkers() {
+                const st = cur.seat;
+                const trades = (st && st.trades) || [];
+                const markers = [];
+                trades.forEach(t => {
+                    if (t.entryTime != null) markers.push({ time: Number(t.entryTime) > 1e12 ? Math.floor(Number(t.entryTime) / 1000) : Number(t.entryTime), position: t.direction === 'short' ? 'aboveBar' : 'belowBar', color: '#38bdf8', shape: t.direction === 'short' ? 'arrowDown' : 'arrowUp', text: (t.direction || '').toUpperCase() });
+                    if (t.exitTime != null) markers.push({ time: Number(t.exitTime) > 1e12 ? Math.floor(Number(t.exitTime) / 1000) : Number(t.exitTime), position: (t.pnl || 0) >= 0 ? 'aboveBar' : 'belowBar', color: (t.pnl || 0) >= 0 ? '#10b981' : '#f43f5e', shape: 'circle', text: (t.pnl || 0) >= 0 ? '+' + Math.round(t.pnl) : String(Math.round(t.pnl)) });
+                });
+                markers.sort((a, b) => a.time - b.time);
+                try {
+                    if (cur.markerApi && cur.markerApi.setMarkers) cur.markerApi.setMarkers(markers);
+                    else if (cur.candleSeries.setMarkers) cur.candleSeries.setMarkers(markers);
+                } catch (e) { /* markers are cosmetic */ }
             }
             function connectBattleWs(id) {
                 try { if (battleWs) { battleWs.close(); battleWs = null; } } catch (e) {}
                 try {
                     const proto = location.protocol === 'https:' ? 'wss' : 'ws';
-                    battleWs = new WebSocket(proto + '://' + location.host + '/ws?battle=' + encodeURIComponent(id) + '&user=' + encodeURIComponent(uid));
+                    battleWs = new WebSocket(proto + '://' + location.host + '/ws?battle=' + encodeURIComponent(id));
                 } catch (e) { battleWs = null; return; }
                 battleWs.onmessage = ev => {
                     let m; try { m = JSON.parse(ev.data); } catch (e) { return; }
                     if (!m || !cur || m.battle !== cur.id) return;
                     if (m.type === 'battle.cursor') {
-                        if (cur.pub) { cur.pub.cursor = m.cursor; cur.pub.status = m.status || cur.pub.status; }
-                        if (cur.seat && cur.seat.candles && m.cursor != null) {
+                        if (cur.pub) {
+                            cur.pub.cursor = m.cursor;
+                            cur.pub.status = m.status || cur.pub.status;
+                            if (m.lifecycle) cur.pub.lifecycle = m.lifecycle;
+                            if (m.stateRevision != null) cur.pub.stateRevision = m.stateRevision;
+                            if (m.participants) cur.pub.participants = m.participants;
+                        }
+                        if (cur.seat && m.cursor != null) {
                             cur.seat.cursor = m.cursor;
-                            cur.seat.candle = cur.seat.candles[m.cursor] || cur.seat.candle;
+                            const rel = m.cursor - (cur.candlesBase || 0);
+                            const held = (cur.candles || []);
+                            if (rel >= 0 && rel < held.length) cur.seat.candle = held[rel];
                         }
                         renderBattle();
                         if (Date.now() - lastSeatFetch > 1200) refreshSeat().then(renderBattle);
+                    } else if (m.type === 'battle.seat') {
+                        // an opponent acted: only THAT they moved is broadcast, plus
+                        // whatever the visibility policy allows.
+                        if (m.participants) cur.pub.participants = m.participants;
+                        if (m.stateRevision != null) cur.pub.stateRevision = m.stateRevision;
+                        if (m.cursor != null) cur.pub.cursor = m.cursor;
+                        renderBattle();
                     } else if (m.type === 'battle.status') {
                         cur.pub = m.state;
                         if (m.state && m.state.status === 'completed') { refreshSeat().then(() => { renderBattle(); loadAll(); }); }
@@ -880,6 +1266,7 @@
                             '<h1 class="text-[24px] font-extrabold tracking-tight">' + esc(pub.title) + '</h1>' +
                             '<div class="flex items-center gap-2 mt-1.5 flex-wrap">' +
                                 '<span class="tag ' + statusTag(pub.status) + '">' + esc(pub.status.toUpperCase()) + '</span>' +
+                                (pub.lifecycle && pub.lifecycle !== pub.status ? '<span class="tag tag-gray">' + esc(String(pub.lifecycle).toUpperCase()) + '</span>' : '') +
                                 '<span class="tag tag-gray">' + esc(pub.symbol) + ' · ' + esc(pub.timeframe) + '</span>' +
                                 '<span class="tag tag-gray">' + (pub.periodLabel ? esc(pub.periodLabel) + ' archive' : 'Recent live window') + '</span>' +
                                 (cur.host ? '<span class="tag tag-indigo">HOST</span>' : '') +
@@ -899,35 +1286,66 @@
                             (cur.host ? hostControls() : '') +
                             (seated ? executionBlock() : '<div class="glass p-5 text-center text-[13px] text-[var(--tm-muted)]">Join a seat to place trades in this battle.</div>') +
                             '<div class="glass p-4"><div class="label-xs mb-3">YOUR TRADES</div>' + (seated ? tradeLog() :                            '<div class="text-[12.5px] text-[var(--tm-dim)]">No seat joined yet.</div>') + '</div>' +
-                            ((cur.host || seated) ? '<div class="glass p-3 text-[11.5px] text-[var(--tm-dim)] leading-relaxed">The full archived month is the canonical timeline for scoring and SL/TP. The chart shows the most recent ' + (pub.candleWindow || 400) + ' bars to keep polling light.</div>' : '') +
+                            ((cur.host || seated) ? '<div class="glass p-3 text-[11.5px] text-[var(--tm-dim)] leading-relaxed">The whole archived month is the canonical timeline for scoring and SL/TP — the chart loads every bar the shared cursor has revealed (future bars are never sent), then only the new bars on each poll. <b class="text-[var(--tm-text)]">Fit month</b> zooms out to everything revealed so far.</div>' : '') +
                         '</div>' +
                         '<div class="flex flex-col gap-4">' +
                             seatsBlock() +
                             statusBlock() +
+                            opponentsBlock() +
+                            battleStateBlock() +
                             infoBlock() +
                         '</div>' +
                     '</div>';
                 bindBattle();
+                mountBattleChart();
                 if (window.lucide) lucide.createIcons();
+            }
+
+            // The battle is played on the SAME chart as practice backtesting
+            // (chart-test.html: TradingView Charting Library + BattleX HUD), driven by
+            // the battle's server-owned timeline. It opens in its own window exactly
+            // like the practice "Start Simulation" handoff does — the app serves
+            // X-Frame-Options: DENY, so embedding it would mean weakening a security
+            // header to duplicate a chart we already have.
+            function terminalUrl() {
+                const tl = (cur.pub && cur.pub.timeline) || {};
+                const tf = tl.startingTimeframe || (cur.pub && cur.pub.timeframe) || '15m';
+                return '/chart-test.html?battle=' + encodeURIComponent(cur.id) +
+                    (cur.mySeatId ? '&seat=' + encodeURIComponent(cur.mySeatId) : '') +
+                    '&tf=' + encodeURIComponent(tf);
+            }
+            function openTerminal() {
+                const url = terminalUrl();
+                const win = window.open(url, '_blank');
+                if (!win) showToast('Allow pop-ups to open the battle terminal');
             }
 
             function chartBlock() {
                 const pub = cur.pub;
                 const c = (cur.seat && cur.seat.candle) || pub.candle || null;
                 const pct = pub.total ? Math.round((pub.cursor / (pub.total - 1)) * 100) : 0;
+                const held = (cur.candles || []).length;
+                const base = cur.candlesBase || 0;
                 return '<div class="glass p-4 chart-zone">' +
-                    '<div class="flex items-center justify-between mb-3">' +
-                        '<span class="label-xs">BATTLE CHART · <span class="text-[var(--tm-green)]">' + esc(pub.symbol) + ' ' + esc(pub.timeframe) + '</span></span>' +
-                        '<span class="tag tag-amber">Chart engine unavailable</span>' +
+                    '<div class="flex items-center justify-between mb-3 gap-2 flex-wrap">' +
+                        '<span class="label-xs">BATTLE TERMINAL · <span class="text-[var(--tm-green)]">' + esc(pub.symbol) + ' ' + esc(pub.timeframe) + '</span></span>' +
+                        '<span class="flex items-center gap-2 flex-wrap">' +
+                            '<span class="tag tag-gray">' + (pub.periodLabel ? esc(pub.periodLabel) + ' archive' : 'live window') + '</span>' +
+                            '<span class="tag tag-gray" data-chart-count>' + (base + held) + ' bars loaded · future hidden</span>' +
+                            '<span class="tag tag-gray" title="Canonical timeline the battle walks">canonical ' + esc((pub.timeline && pub.timeline.baseTimeframe) || pub.timeframe) + '</span>' +
+                            '<span class="tag tag-gray" title="The shared market moment — server-owned">cut ' + (pub.timeline && pub.timeline.cutTime ? esc(new Date(pub.timeline.cutTime).toISOString().slice(0, 16).replace('T', ' ')) + 'Z' : '—') + '</span>' +
+                        '</span>' +
                     '</div>' +
-                    '<div class="chart-unavailable">' +
-                        '<div class="text-center px-6 max-w-[420px]">' +
-                            '<div class="text-[15px] font-extrabold">CHART ENGINE UNAVAILABLE</div>' +
-                            '<p class="text-[12.5px] text-[var(--tm-muted)] mt-2 leading-relaxed">The battle engine is ready, but the charting dependency is currently unavailable. Your seat data and the canonical battle cursor remain intact — restore the chart dependency to begin replaying candles.</p>' +
+                    '<div class="rounded-xl p-4 border border-[var(--tm-border)] bg-white/[0.02]">' +
+                        '<div class="flex items-start justify-between gap-4 flex-wrap">' +
+                            '<div class="text-[12.5px] text-[var(--tm-dim)] leading-relaxed max-w-[560px]">' +
+                                'This battle runs on the <b class="text-[var(--tm-text)]">same chart as backtesting</b> — TradingView Charting Library with the BattleX execution HUD. Timeframe switching is free: every resolution is rebuilt from the bars the shared cursor has revealed, so both seats always sit on the same market moment.' +
+                            '</div>' +
+                            '<button class="btn-primary" data-open-terminal>' +
+                                '<svg data-lucide="external-link" class="w-4 h-4"></svg>Enter battle terminal' +
+                            '</button>' +
                         '</div>' +
-                    '</div>' +
-                    '<div class="chart-overlay">' +
-                        '<span class="chart-tag">cursor</span><span class="chart-tag">entry</span><span class="chart-tag">SL/TP</span><span class="chart-tag">drawings</span>' +
+                        (cur.mySeatId ? '' : '<div class="text-[12px] text-[var(--tm-dim)] mt-3">Claim a seat to open the terminal with your own execution account — watching stays watching.</div>') +
                     '</div>' +
                     '<div class="flex items-center justify-between gap-3 mt-3">' +
                         '<div class="flex gap-4 flex-wrap text-[12px]">' +
@@ -961,6 +1379,10 @@
                 const pos = (st && st.position) || null;
                 const c = (st && st.candle) || cur.pub.candle || null;
                 const entryDefault = c ? fmtNum(c.close) : '';
+                // The server only accepts orders while the battle is in its BATTLE
+                // phase — the lobby/ready boundary is real, so the UI says so
+                // instead of letting a seat type an order the server will reject.
+                const ordersOpen = (cur.pub.lifecycle === 'battle');
                 return '<div class="glass p-4">' +
                     '<div class="label-xs mb-3">TRADE EXECUTION</div>' +
                     (pos
@@ -971,14 +1393,15 @@
                             '<div class="num text-[11.5px] text-[var(--tm-dim)]">' + signedR(pos.unrealizedR) + ' · ' + fmtNum(pos.size) + ' units</div></div>' +
                             '<button class="btn-danger" data-close-trade><svg data-lucide="x" class="w-3.5 h-3.5"></svg> Close Trade</button>' +
                           '</div>'
-                        : '<div class="grid grid-cols-2 md:grid-cols-6 gap-2.5">' +
+                        : (ordersOpen ? '<div class="grid grid-cols-2 md:grid-cols-6 gap-2.5">' +
                             '<div><label class="field-label">Direction</label><select id="ex-direction" class="field-select"><option value="long">Long</option><option value="short">Short</option></select></div>' +
                             '<div><label class="field-label">Entry</label><input id="ex-entry" class="field-input num" value="' + esc(entryDefault) + '"></div>' +
                             '<div><label class="field-label">Stop loss</label><input id="ex-sl" class="field-input num" placeholder="Required"></div>' +
                             '<div><label class="field-label">Take profit</label><input id="ex-tp" class="field-input num"></div>' +
                             '<div><label class="field-label">Risk ($)</label><input id="ex-risk" class="field-input num" value="25"></div>' +
                             '<div class="flex items-end"><button id="enter-trade" class="btn-primary w-full"><svg data-lucide="log-in" class="w-4 h-4"></svg> Enter</button></div>' +
-                          '</div>') +
+                          '</div>'
+                            : '<div class="text-[12.5px] text-[var(--tm-dim)] leading-relaxed">The lobby is open but orders are closed — the server accepts orders only once the replay is running (the host presses <b class="text-[var(--tm-text)]">Play</b> or <b class="text-[var(--tm-text)]">Step</b>). Every seat then trades the same bar.</div>')) +
                     '<div id="exec-msg" class="text-[12px] text-[var(--tm-dim)] mt-2.5"></div>' +
                 '</div>';
             }
@@ -1002,7 +1425,7 @@
             function seatsBlock() {
                 const pub = cur.pub;
                 const rows = (pub.seats || []).map((s, i) => {
-                    const mine = s.userId === uid;
+                    const mine = !!s.mine;
                     const cls = mine ? 'mine' : (i === 0 && cur.host ? 'host' : (s.taken ? '' : 'free'));
                     return '<div class="seat-cell ' + cls + '">' +
                         '<div class="avatar !w-8 !h-8 !text-[11px]">' + esc((s.name || 'Seat').slice(0, 2).toUpperCase()) + '</div>' +
@@ -1053,6 +1476,75 @@
                 '</div>';
             }
 
+            // Opponent status: exactly what the battle's visibility policy allows,
+            // plus the list of fields the engine tracks but no mode exposes yet.
+            function opponentsBlock() {
+                const pub = cur.pub;
+                const vis = (cur.seat && cur.seat.visibility) || pub.visibility || { mode: 'presence', hidden: [] };
+                const rowsRaw = (cur.seat && cur.seat.participants) || pub.participants || [];
+                const dotFor = s => s === 'active' ? 'var(--tm-green)' : s === 'online' ? 'var(--tm-blue)' : s === 'offline' ? 'var(--tm-red)' : 'var(--tm-dim)';
+                const rows = rowsRaw.map(p => {
+                    const state = (p.presence && p.presence.state) || 'unknown';
+                    const bits = [];
+                    if (p.status) bits.push(p.status === 'in_trade' ? 'In trade' : 'Flat');
+                    if (p.direction) bits.push(p.direction);
+                    if (p.equity != null) bits.push('equity ' + fmtMoney(p.equity));
+                    if (p.trades != null) bits.push(p.trades + ' trades');
+                    return '<div class="flex items-center gap-2 py-1.5">' +
+                        '<span style="width:7px;height:7px;border-radius:99px;background:' + dotFor(state) + ';flex-shrink:0"></span>' +
+                        '<span class="text-[12.5px] font-bold truncate">' + esc(p.name || 'Seat') + (p.mine ? ' <span class="text-[var(--tm-green)]">(You)</span>' : '') + '</span>' +
+                        '<span class="flex-1"></span>' +
+                        '<span class="num text-[11.5px] text-[var(--tm-dim)]">' + esc(state) + '</span>' +
+                        (bits.length ? '<span class="text-[11.5px] text-[var(--tm-dim)]">· ' + esc(bits.join(' · ')) + '</span>' : '') +
+                    '</div>';
+                }).join('');
+                const hidden = ((vis.hidden || []).filter(f => f !== 'presence'));
+                return '<div class="glass p-4"><div class="label-xs mb-3">OPPONENT STATUS</div>' +
+                    (rows || '<div class="text-[12.5px] text-[var(--tm-dim)]">No seats yet.</div>') +
+                    '<div class="mt-2.5 pt-2.5 border-t border-[var(--hairline)] text-[11px] text-[var(--tm-dim)] leading-relaxed">' +
+                        'Presence is synchronized server-side for every seat — who is here and whether they are working. ' +
+                        (hidden.length
+                            ? 'Your own seat is never filtered. What other seats keep private under the current policy (<b>' + esc(vis.mode) + '</b>): ' + esc(hidden.join(', ')) + '. The engine already tracks these; no mode exposes them until the rules say so.'
+                            : 'The current policy exposes every tracked opponent field.') +
+                    '</div></div>';
+            }
+
+            // Battle state: every axis a Battle mode may configure, showing what the
+            // engine can honour today and what is still "not specified yet".
+            function battleStateBlock() {
+                const pub = cur.pub;
+                const cfg = pub.config || {};
+                const dash = '<span class="text-[var(--tm-dim)]">— not specified yet</span>';
+                const slot = name => esc((cfg[name] && cfg[name].policy) || '—');
+                const row = (k, v) => '<div class="flex justify-between gap-3"><span class="text-[var(--tm-dim)]">' + k + '</span><b class="num text-right">' + v + '</b></div>';
+                const market = cfg.market || {};
+                const ec = pub.endCondition || {};
+                return '<div class="glass p-4"><div class="label-xs mb-3">BATTLE STATE</div>' +
+                    '<div class="flex flex-col gap-2 text-[12.5px]">' +
+                        row('Phase', '<span class="tag tag-gray !py-0 !px-1.5 !text-[10.5px]">' + esc(String(pub.lifecycle || pub.status).toUpperCase()) + '</span>') +
+                        row('Market', esc(market.symbol || pub.symbol) + ' · ' + esc(market.timeframe || pub.timeframe)) +
+                        row('Historical window', market.period ? esc(market.period)
+                            : (pub.periodLabel ? esc(pub.periodLabel)
+                            : (market.policy === 'live-window' ? '<span class="text-[var(--tm-dim)]">recent live window (no archive month)</span>' : dash))) +
+                        row('Session', market.session ? esc(market.session) : '<span class="text-[var(--tm-dim)]">whole archive</span>') +
+                        row('Replay', slot('replay')) +
+                        row('Ending condition', ec.policy ? esc(ec.policy) : slot('settlement')) +
+                        row('Trading rules', slot('execution')) +
+                        row('Risk rules', slot('risk') + (pub.riskModel ? ' · $' + fmtNum(pub.riskModel.perTrade) + '/trade' : '')) +
+                        row('Opponent info', slot('visibility')) +
+                        row('Scoring', pub.scoring && pub.scoring.status === 'provisional' ? 'provisional (not the final model)' : slot('scoring')) +
+                        row('Market cursor', '<span class="num">' + pub.cursor + ' / ' + pub.total + '</span>') +
+                        row('State revision', '<span class="num">' + pub.stateRevision + '</span>') +
+                    '</div>' +
+                    (pub.configBlockers && pub.configBlockers.length
+                        ? '<div class="mt-3 text-[11.5px]" style="color:var(--tm-red)">Blocked: ' + esc(pub.configBlockers.join('; ')) + '</div>'
+                        : '') +
+                    '<div class="mt-3 pt-3 border-t border-[var(--hairline)] text-[11.5px] text-[var(--tm-dim)] leading-relaxed">' +
+                        'Each row is a policy the engine can honour. <b>Not specified yet</b> means no rule exists for it, and a battle configured that way is refused rather than invented. ' +
+                        '<a href="/api/battles/config" class="text-[var(--tm-blue)]" target="_blank" rel="noopener">Capability catalogue →</a>' +
+                    '</div></div>';
+            }
+
             function infoBlock() {
                 const pub = cur.pub;
                 const pct = pub.total ? Math.round((pub.cursor / (pub.total - 1)) * 100) : 0;
@@ -1067,7 +1559,7 @@
                         '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Progress</span><b class="num">' + pct + '%</b></div>' +
                         '<div class="flex justify-between"><span class="text-[var(--tm-dim)]">Created</span><b class="num">' + fmtTime(pub.createdAt) + '</b></div>' +
                     '</div>' +
-                    '<div class="mt-3 pt-3 border-t border-[var(--hairline)] text-[11.5px] text-[var(--tm-dim)] leading-relaxed">The battle score is a blended 0–1000 measure of execution, risk and consistency — not raw profit alone.</div>' +
+                    '<div class="mt-3 pt-3 border-t border-[var(--hairline)] text-[11.5px] text-[var(--tm-dim)] leading-relaxed">Scoring and settlement are intentionally not configured yet. The foundation records the shared replay and each private execution; the battle rules will be added later.</div>' +
                 '</div>';
             }
 
@@ -1075,7 +1567,7 @@
                 const pub = cur.pub;
                 const lb = (pub.leaderboard && pub.leaderboard.seats) || [];
                 const byTeam = (pub.leaderboard && pub.leaderboard.byTeam) || [];
-                const winner = lb[0] || null;
+                const winner = lb.find(r => r.score != null) || null;
                 const myRow = lb.find(r => r.userId === uid) || (cur.mySeatId ? lb.find(r => r.seat === cur.mySeatId) : null);
                 const lbRows = lb.map((r, i) => {
                     const mine = r.userId === uid || r.seat === cur.mySeatId;
@@ -1221,6 +1713,7 @@
                 if (et) et.addEventListener('click', enterTrade);
                 const ct = root.querySelector('[data-close-trade]');
                 if (ct) ct.addEventListener('click', closeTrade);
+                root.querySelectorAll('[data-open-terminal]').forEach(b => b.addEventListener('click', openTerminal));
             }
 
             // ============ CREATE ============
@@ -1242,13 +1735,15 @@
             // Archive catalogue: which Year → Month → Timeframe combos really exist
             // on disk. Populated from the server so a battle can never be created
             // against a missing month (which would silently replay another one).
-            let archiveCatalogue = null;
+            let archiveCatalogue = null;   // [{ year, months: [{ period, label, timeframes }] }]
+            let archiveTimeframes = null;  // every timeframe the archive ships
             async function loadArchiveCatalogue() {
                 if (archiveCatalogue) return archiveCatalogue;
                 try {
                     const r = await apiFetch('/api/backtest/periods');
                     const j = await r.json().catch(() => ({}));
                     archiveCatalogue = (j && j.years) || [];
+                    archiveTimeframes = (j && j.timeframes) || null;
                 } catch (e) { archiveCatalogue = []; }
                 return archiveCatalogue;
             }
@@ -1258,8 +1753,9 @@
                 const y = archiveCatalogue.find(x => String(x.year) === String(yearSel.value));
                 const months = (y && y.months) || [];
                 const prev = monthSel.value;
-                monthSel.innerHTML = months.map(m => '<option value="' + m.period + '">' + esc(m.label) + '</option>').join('');
-                if (months.some(m => m.period === prev)) monthSel.value = prev;
+                monthSel.innerHTML = '<option value="random">Random month (blind — revealed on start)</option>' +
+                    months.map(m => '<option value="' + m.period + '">' + esc(m.label) + '</option>').join('');
+                if (months.some(m => m.period === prev) || prev === 'random') monthSel.value = prev;
                 syncTimeframeOptions();
             }
             // Only offer timeframes that exist for the selected archive month.
@@ -1271,11 +1767,13 @@
                 const yearSel = $('cb-year'), monthSel = $('cb-month');
                 const y = archiveCatalogue && archiveCatalogue.find(x => String(x.year) === String(yearSel.value));
                 const m = y && y.months.find(x => x.period === monthSel.value);
-                if (!m || !m.timeframes) return;
+                // "Random month" has no fixed month, so offer the archive's full set.
+                const list = (m && m.timeframes) ? m.timeframes : archiveTimeframes;
+                if (!list) { updateTimelineNote(); return; }
                 const prev = tfSel.value;
-                tfSel.innerHTML = m.timeframes.map(tf => '<option value="' + tf + '">' + tf + '</option>').join('');
-                if (m.timeframes.indexOf(prev) !== -1) tfSel.value = prev;
-                else if (m.timeframes.indexOf('1h') !== -1) tfSel.value = '1h';
+                tfSel.innerHTML = list.map(tf => '<option value="' + tf + '">' + tf + '</option>').join('');
+                if (list.indexOf(prev) !== -1) tfSel.value = prev;
+                else if (list.indexOf('1h') !== -1) tfSel.value = '1h';
                 updateTimelineNote();
             }
             // Explains the two-layer design: the canonical timeline is the FULL
@@ -1288,10 +1786,13 @@
                 const bars = Number($('cb-window') ? $('cb-window').value : 400) || 400;
                 const warm = Number($('cb-warmup') ? $('cb-warmup').value : 0) || 0;
                 const tf = $('cb-timeframe') ? $('cb-timeframe').value : '1h';
-                if (archive) {
-                    const monthSel = $('cb-month');
+                const monthSel = $('cb-month');
+                const randomMonth = archive && monthSel && monthSel.value === 'random';
+                if (randomMonth) {
+                    note.innerHTML = '<b class="text-[var(--tm-text)]">Random archived month · starting ' + esc(tf) + '</b> — the server picks a real month that has ' + esc(tf) + ' data the moment you create the battle, and reveals it when the battle opens. The battle walks that month\'s <b class="text-[var(--tm-text)]">finest available resolution</b>, so every coarser timeframe is available in the chart' + (warm > 0 ? '; ' + warm + ' bars of ' + esc(tf) + ' context are revealed before the start' : '') + '.';
+                } else if (archive) {
                     const label = (monthSel && monthSel.selectedOptions && monthSel.selectedOptions.length) ? monthSel.selectedOptions[0].textContent : 'archive month';
-                    note.innerHTML = '<b class="text-[var(--tm-text)]">' + esc(label) + ' · ' + esc(tf) + '</b> — the full archived month is the canonical timeline: every seat advances on the same bars and SL/TP fills on the same candle. The chart streams the most recent ' + bars + ' bars so polling stays light' + (warm > 0 ? '; ' + warm + ' warm-up bars are revealed before the battle starts' : '') + '.';
+                    note.innerHTML = '<b class="text-[var(--tm-text)]">' + esc(label) + ' · starting ' + esc(tf) + '</b> — the full archived month is the canonical timeline and every seat advances on the same bars. The battle walks the <b class="text-[var(--tm-text)]">finest resolution that month has</b> (usually 1m), so fills are precise and <b class="text-[var(--tm-text)]">every coarser timeframe is available in the chart</b> — each seat may switch freely and still be on the same market moment. The chart is the same one practice backtesting uses' + (warm > 0 ? '; ' + warm + ' bars of ' + esc(tf) + ' context are revealed before the start' : '') + '.';
                 } else {
                     note.innerHTML = '<b class="text-[var(--tm-text)]">Recent live window</b> — only the latest ' + bars + ' bars, not an archived month. Pick the historical archive for a real replay like practice backtesting.';
                 }
@@ -1326,8 +1827,8 @@
                     const j = await r.json().catch(() => ({}));
                     if (!r.ok) throw new Error(j.error || 'Unable to create battle');
                     closeModal('create-modal');
-                    showToast('Battle created — ' + (j.state && j.state.title ? j.state.title : ''));
                     await loadAll();
+                    showToast('Battle created · ' + (j.state && j.state.periodLabel ? j.state.periodLabel + ' ' + j.state.timeframe : symbol));
                     openBattle(j.battle, j.state);
                 } catch (e) { msg.textContent = e.message; msg.style.color = 'var(--tm-red)'; }
                 finally { btn.disabled = false; }
