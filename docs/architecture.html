@@ -1,0 +1,1243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BattleX Journal (31Trades) — Interactive System Architecture</title>
+    <link rel="stylesheet" href="/assets/tailwind-compiled.css">
+    <style>
+        :root {
+            --bg-canvas: #090d16;
+            --panel-bg: #101726;
+            --card-bg: #141b2d;
+            --card-border: #222d46;
+            --card-hover-border: #3b82f6;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --text-dim: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-emerald: #10b981;
+            --accent-indigo: #6366f1;
+            --accent-amber: #f59e0b;
+            --accent-rose: #f43f5e;
+            --accent-purple: #8b5cf6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-canvas);
+            color: var(--text-main);
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            flex-direction: column;
+            user-select: none;
+        }
+
+        /* Canvas Background Grid */
+        .canvas-area {
+            flex: 1;
+            position: relative;
+            overflow: hidden;
+            background-color: #080c14;
+            background-image: 
+                radial-gradient(circle at 50% 50%, rgba(30, 41, 59, 0.45) 0%, rgba(8, 12, 20, 1) 100%),
+                linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+            background-size: 100% 100%, 32px 32px, 32px 32px;
+            cursor: grab;
+        }
+
+        .canvas-area:active {
+            cursor: grabbing;
+        }
+
+        /* Header Bar */
+        .app-header {
+            height: 56px;
+            background: #0d1322;
+            border-bottom: 1px solid #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 18px;
+            z-index: 40;
+            flex-shrink: 0;
+        }
+
+        .logo-badge {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: linear-gradient(135deg, #2563eb, #10b981);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 800;
+            font-size: 14px;
+            color: #fff;
+            box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+        }
+
+        /* View Mode Pills */
+        .view-pill-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            background: #141c2e;
+            padding: 4px;
+            border-radius: 10px;
+            border: 1px solid #23304b;
+        }
+
+        .view-btn {
+            background: transparent;
+            border: none;
+            color: #94a3b8;
+            padding: 5px 12px;
+            border-radius: 6px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .view-btn:hover {
+            color: #f8fafc;
+        }
+
+        .view-btn.active {
+            background: #2563eb;
+            color: #fff;
+            box-shadow: 0 2px 8px rgba(37, 99, 235, 0.4);
+        }
+
+        /* Tool buttons */
+        .btn-tool {
+            background: #141c2e;
+            border: 1px solid #23304b;
+            color: #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 7px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+        }
+
+        .btn-tool:hover {
+            background: #1c2842;
+            color: #fff;
+            border-color: #3b82f6;
+        }
+
+        /* Animated SVG Connectors */
+        @keyframes dashFlow {
+            from { stroke-dashoffset: 40; }
+            to { stroke-dashoffset: 0; }
+        }
+
+        .flow-line {
+            stroke-dasharray: 8 6;
+            animation: dashFlow 1.2s linear infinite;
+        }
+
+        .flow-line-fast {
+            stroke-dasharray: 6 4;
+            animation: dashFlow 0.75s linear infinite;
+        }
+
+        /* Architecture Columns Container */
+        .stage-wrapper {
+            position: absolute;
+            transform-origin: 0 0;
+            will-change: transform;
+            padding: 30px;
+            display: flex;
+            gap: 48px;
+            min-width: 1750px;
+        }
+
+        .arch-column {
+            width: 380px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .column-header {
+            padding-bottom: 10px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .column-title {
+            font-size: 12px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .dot-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+
+        /* Node Cards */
+        .node-card {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 16px;
+            cursor: pointer;
+            transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+            position: relative;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        }
+
+        .node-card:hover {
+            transform: translateY(-2px);
+            border-color: var(--card-hover-border);
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.6), 0 0 16px 2px rgba(59, 130, 246, 0.2);
+        }
+
+        .node-card.active {
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5), 0 12px 28px rgba(0, 0, 0, 0.6);
+            background: #172138;
+        }
+
+        .card-top {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .card-identity {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 13px;
+        }
+
+        .card-name {
+            font-size: 13px;
+            font-weight: 700;
+            color: #f8fafc;
+        }
+
+        .card-sub {
+            font-size: 11px;
+            color: #94a3b8;
+            font-family: monospace;
+        }
+
+        .card-tag {
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 7px;
+            border-radius: 4px;
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+        }
+
+        .card-body {
+            font-size: 11.5px;
+            color: #94a3b8;
+            line-height: 1.5;
+            margin-bottom: 12px;
+        }
+
+        .card-body code {
+            background: rgba(0, 0, 0, 0.4);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            font-size: 11px;
+            color: #93c5fd;
+        }
+
+        .card-footer {
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.06);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            font-size: 10.5px;
+            font-family: monospace;
+            color: #64748b;
+        }
+
+        /* Inspector Slide-over Drawer */
+        .inspector-panel {
+            width: 400px;
+            background: #0c1220;
+            border-left: 1px solid #1e293b;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            padding: 20px;
+            overflow-y: auto;
+            z-index: 30;
+            flex-shrink: 0;
+            transition: transform 0.25s ease;
+        }
+
+        .insp-section-title {
+            font-size: 10.5px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            color: #64748b;
+            margin-bottom: 6px;
+            display: block;
+        }
+
+        .code-box {
+            background: #060911;
+            border: 1px solid #1b253b;
+            border-radius: 8px;
+            padding: 12px;
+            font-size: 11px;
+            font-family: 'JetBrains Mono', Consolas, monospace;
+            color: #93c5fd;
+            overflow-x: auto;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .file-pill {
+            background: #080d18;
+            border: 1px solid #1e2c47;
+            padding: 5px 9px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-family: monospace;
+            color: #60a5fa;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 5px;
+        }
+
+        .conduit-box {
+            background: #090e1a;
+            border: 1px solid #1a253d;
+            border-radius: 6px;
+            padding: 8px 10px;
+            font-size: 11px;
+            color: #cbd5e1;
+            margin-bottom: 6px;
+        }
+
+        /* Bottom Floating Bar */
+        .bottom-hint {
+            position: absolute;
+            bottom: 16px;
+            left: 16px;
+            background: rgba(13, 19, 34, 0.85);
+            backdrop-filter: blur(8px);
+            border: 1px solid #1e293b;
+            padding: 6px 14px;
+            border-radius: 8px;
+            font-size: 11px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: none;
+            z-index: 20;
+        }
+
+        .kbd-key {
+            background: #1e293b;
+            border: 1px solid #334155;
+            padding: 1px 5px;
+            border-radius: 4px;
+            font-size: 10px;
+            font-family: monospace;
+            color: #f1f5f9;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="app-header">
+        <div style="display: flex; align-items: center; gap: 12px;">
+            <div class="logo-badge">BX</div>
+            <div>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <span style="font-weight: 700; font-size: 14px; color: #fff;">BattleX Journal Architecture</span>
+                    <span style="font-size: 10px; font-weight: 700; background: rgba(59, 130, 246, 0.15); color: #60a5fa; padding: 2px 7px; border-radius: 4px; border: 1px solid rgba(59, 130, 246, 0.3);">Archify Visual Map</span>
+                </div>
+                <div style="font-size: 11px; color: #64748b;">31Trades Multi-Broker Sync, Replay Simulator & Core Engine</div>
+            </div>
+        </div>
+
+        <!-- Filter Modes -->
+        <div class="view-pill-group">
+            <button onclick="switchView('full')" id="btn-view-full" class="view-btn active">🌐 Full Ecosystem</button>
+            <button onclick="switchView('sync')" id="btn-view-sync" class="view-btn">⚡ TradeLog Sync</button>
+            <button onclick="switchView('replay')" id="btn-view-replay" class="view-btn">🎯 Replay Engine</button>
+            <button onclick="switchView('storage')" id="btn-view-storage" class="view-btn">🗄️ Database Topology</button>
+        </div>
+
+        <!-- Zoom & Action Controls -->
+        <div style="display: flex; align-items: center; gap: 8px;">
+            <div style="display: flex; align-items: center; background: #141c2e; border: 1px solid #23304b; border-radius: 6px; padding: 2px;">
+                <button onclick="zoom(-0.1)" class="view-btn" style="padding: 4px 8px;" title="Zoom Out">−</button>
+                <span id="zoom-text" style="font-size: 11px; font-family: monospace; color: #94a3b8; padding: 0 4px;">85%</span>
+                <button onclick="zoom(0.1)" class="view-btn" style="padding: 4px 8px;" title="Zoom In">+</button>
+                <button onclick="fitView()" class="view-btn" style="padding: 4px 8px; font-size: 10.5px;" title="Fit Screen">Fit</button>
+            </div>
+            
+            <button onclick="exportSVG()" class="btn-tool">
+                <svg width="13" height="13" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Export SVG
+            </button>
+        </div>
+    </header>
+
+    <!-- Main Viewport Container -->
+    <div style="flex: 1; display: flex; position: relative; overflow: hidden;">
+
+        <!-- Canvas Area -->
+        <div id="canvas-container" class="canvas-area">
+            
+            <!-- Transformable Stage -->
+            <div id="viewport-stage" class="stage-wrapper" style="transform: translate(25px, 20px) scale(0.85);">
+                
+                <!-- SVG Connecting Conduits -->
+                <svg id="connections-svg" style="position: absolute; inset: 0; width: 2200px; height: 1300px; pointer-events: none; z-index: 0;">
+                    <defs>
+                        <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+                            <feGaussianBlur stdDeviation="3" result="blur" />
+                            <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                        </filter>
+                    </defs>
+                    <g id="svg-paths-layer"></g>
+                </svg>
+
+                <!-- 4 Architecture Columns -->
+                
+                <!-- COLUMN 1: Ingestion & Brokers -->
+                <div class="arch-column">
+                    <div class="column-header">
+                        <span class="column-title" style="color: #60a5fa;">
+                            <span class="dot-indicator" style="background: #3b82f6;"></span>
+                            1. Ingestion & Brokers
+                        </span>
+                        <span style="font-size: 10px; color: #475569;">Source Feeds</span>
+                    </div>
+
+                    <!-- Node: MT4 -->
+                    <div class="node-card" id="node-mt4" onclick="selectNode('node-mt4')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">4</div>
+                                <div>
+                                    <div class="card-name">MetaTrader 4 (MT4 EA)</div>
+                                    <div class="card-sub">BattleX_MT4_Sync.mq4</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(59, 130, 246, 0.15); color: #93c5fd;">MQL4 Push</span>
+                        </div>
+                        <div class="card-body">
+                            Native <code>WebRequest()</code> pushes tickets, lots, open/close prices, swap, commission & broker GMT offset. Zero DLL dependencies.
+                        </div>
+                        <div class="card-footer">
+                            <span>Prop Compliant</span>
+                            <span style="color: #10b981;">POST /trade-sync</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: MT5 -->
+                    <div class="node-card" id="node-mt5" onclick="selectNode('node-mt5')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">5</div>
+                                <div>
+                                    <div class="card-name">MetaTrader 5 (MT5 EA)</div>
+                                    <div class="card-sub">BattleX_MT5_Sync.mq5</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7;">VWAP Deals</span>
+                        </div>
+                        <div class="card-body">
+                            Hooks <code>OnTradeTransaction()</code> on <code>DEAL_ENTRY_OUT</code>. Accurately calculates Volume-Weighted Average Price on scaled entries.
+                        </div>
+                        <div class="card-footer">
+                            <span>Position Reconciler</span>
+                            <span style="color: #10b981;">POST /trade-sync</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: cTrader -->
+                    <div class="node-card" id="node-ctrader" onclick="selectNode('node-ctrader')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">cT</div>
+                                <div>
+                                    <div class="card-name">cTrader Open API / cBot</div>
+                                    <div class="card-sub">Protobuf WSS / C# Automate</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc;">Cloud OAuth2</span>
+                        </div>
+                        <div class="card-body">
+                            Dual stream: Direct Spotware Cloud OAuth2 via Protobuf (ProtoOAExecutionEvent) or local C# cBot on <code>Positions.Closed</code>.
+                        </div>
+                        <div class="card-footer">
+                            <span>TCP Port 5035</span>
+                            <span style="color: #818cf8;">ProtoMessage</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: Prop Firms & Brokers -->
+                    <div class="node-card" id="node-brokers" onclick="selectNode('node-brokers')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">🌐</div>
+                                <div>
+                                    <div class="card-name">Prop Firms & Broker APIs</div>
+                                    <div class="card-sub">TradeLocker, DXtrade, Tradovate, IBKR</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(245, 158, 11, 0.15); color: #fde68a;">Multi-Broker</span>
+                        </div>
+                        <div class="card-body">
+                            REST & SockJS streaming for Futures (Tradovate), Prop (TradeLocker / DXtrade), IBKR Flex statement pull, & 100+ Crypto via CCXT.
+                        </div>
+                        <div class="card-footer">
+                            <span>JWT / Flex Token</span>
+                            <span style="color: #fbbf24;">Auto Sync</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: Frontend Web App -->
+                    <div class="node-card" id="node-web-ui" onclick="selectNode('node-web-ui')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee; border: 1px solid rgba(6, 182, 212, 0.3);">UI</div>
+                                <div>
+                                    <div class="card-name">BattleX Frontend Web App</div>
+                                    <div class="card-sub">journal.html / backtesting.html</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(6, 182, 212, 0.15); color: #67e8f9;">SPA Client</span>
+                        </div>
+                        <div class="card-body">
+                            High-density institutional trading UI with TradingView LightweightCharts, Execution HUD, and live real-time WebSocket sync.
+                        </div>
+                        <div class="card-footer">
+                            <span>Vanilla JS + Tailwind</span>
+                            <span style="color: #22d3ee;">/ws Client</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- COLUMN 2: Gateway & Feeds -->
+                <div class="arch-column">
+                    <div class="column-header">
+                        <span class="column-title" style="color: #818cf8;">
+                            <span class="dot-indicator" style="background: #6366f1;"></span>
+                            2. Gateway & Feeds
+                        </span>
+                        <span style="font-size: 10px; color: #475569;">Security & Data</span>
+                    </div>
+
+                    <!-- Node: Gateway -->
+                    <div class="node-card" id="node-gateway" onclick="selectNode('node-gateway')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8; border: 1px solid rgba(99, 102, 241, 0.3);">🔐</div>
+                                <div>
+                                    <div class="card-name">API Key Auth Gateway</div>
+                                    <div class="card-sub">POST /api/integrations/trade-sync</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc;">SHA-256</span>
+                        </div>
+                        <div class="card-body">
+                            Validates broker API keys, resolves user core instance (<code>cores.get(userId)</code>), and maps incoming broker accounts.
+                        </div>
+                        <div class="card-footer">
+                            <span>Rate Limit: 120/min</span>
+                            <span style="color: #10b981;">200 OK Guard</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: Normalizer -->
+                    <div class="node-card" id="node-normalizer" onclick="selectNode('node-normalizer')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(168, 85, 247, 0.15); color: #c084fc; border: 1px solid rgba(168, 85, 247, 0.3);">🔄</div>
+                                <div>
+                                    <div class="card-name">Canonical Normalizer</div>
+                                    <div class="card-sub">server/import-engine.js</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(168, 85, 247, 0.15); color: #d8b4fe;">Idempotent</span>
+                        </div>
+                        <div class="card-body">
+                            Transforms raw broker tickets into strict schema: <code>dir: Long|Short</code>, <code>ts in UTC</code>, and deterministic ID: <code>txn-{source}-{ref}</code>.
+                        </div>
+                        <div class="card-footer">
+                            <span>Deduplication</span>
+                            <span style="color: #c084fc;">Canonical Trade</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: Market Data -->
+                    <div class="node-card" id="node-market-data" onclick="selectNode('node-market-data')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(14, 165, 233, 0.15); color: #38bdf8; border: 1px solid rgba(14, 165, 233, 0.3);">📊</div>
+                                <div>
+                                    <div class="card-name">Market Data & Feeds</div>
+                                    <div class="card-sub">server/marketdata.js</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(14, 165, 233, 0.15); color: #7dd3fc;">4-Tier</span>
+                        </div>
+                        <div class="card-body">
+                            Kaggle Gold 2004–2024 Archive $\rightarrow$ Disk Cache (6h TTL) $\rightarrow$ TradingView WebSocket $\rightarrow$ Deterministic Seeded Generator (5-dec FX).
+                        </div>
+                        <div class="card-footer">
+                            <span>Real OHLCV</span>
+                            <span style="color: #38bdf8;">/api/backtest/candles</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- COLUMN 3: Core Processing & Sim Engine -->
+                <div class="arch-column" style="width: 410px;">
+                    <div class="column-header">
+                        <span class="column-title" style="color: #34d399;">
+                            <span class="dot-indicator" style="background: #10b981;"></span>
+                            3. Core Engine & Analytics
+                        </span>
+                        <span style="font-size: 10px; color: #475569;">Business Logic</span>
+                    </div>
+
+                    <!-- Node: 7-Step Pipeline -->
+                    <div class="node-card" id="node-pipeline" onclick="selectNode('node-pipeline')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">⚡</div>
+                                <div>
+                                    <div class="card-name">7-Step Trade Pipeline</div>
+                                    <div class="card-sub">src/core/index.js (TradeMindCore)</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7;">Zero-Loss</span>
+                        </div>
+                        <div class="card-body">
+                            Evaluates Risk Limits, Rule Sets, calculates R-Multiple, updates account balances, computes equity curves, and enforces discipline metrics.
+                        </div>
+                        <div class="card-footer">
+                            <span>Core.logTradePipeline()</span>
+                            <span style="color: #34d399;">Ledger State</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: Backtest Sim Engine -->
+                    <div class="node-card" id="node-sim-engine" onclick="selectNode('node-sim-engine')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(244, 63, 94, 0.15); color: #fb7185; border: 1px solid rgba(244, 63, 94, 0.3);">🎯</div>
+                                <div>
+                                    <div class="card-name">Backtest & Replay Sim Engine</div>
+                                    <div class="card-sub">server/backtest-sim.js</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(244, 63, 94, 0.15); color: #fda4af;">Tick Walker</span>
+                        </div>
+                        <div class="card-body">
+                            Replay state machine with Spacebar step, timeline slider seek, jump cut, dynamic spread/slippage, break-even SL & partial closes.
+                        </div>
+                        <div class="card-footer">
+                            <span>Sim.stateOf()</span>
+                            <span style="color: #fb7185;">/api/backtest/sessions</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: AI Coach -->
+                    <div class="node-card" id="node-ai-coach" onclick="selectNode('node-ai-coach')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(139, 92, 246, 0.15); color: #a78bfa; border: 1px solid rgba(139, 92, 246, 0.3);">🧠</div>
+                                <div>
+                                    <div class="card-name">AI Mentor & Pattern Intelligence</div>
+                                    <div class="card-sub">server/ai-coach.js & llm.js</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(139, 92, 246, 0.15); color: #c4b5fd;">Grounded AI</span>
+                        </div>
+                        <div class="card-body">
+                            Detects revenge tilt, sizing anomalies, and setup win-rate edge. Factual grounding guard verifies numbers to eliminate hallucinations.
+                        </div>
+                        <div class="card-footer">
+                            <span>Gemini Grounded</span>
+                            <span style="color: #a78bfa;">/api/ai/coach</span>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- COLUMN 4: Persistence & Broadcast -->
+                <div class="arch-column">
+                    <div class="column-header">
+                        <span class="column-title" style="color: #f43f5e;">
+                            <span class="dot-indicator" style="background: #f43f5e;"></span>
+                            4. Database & Broadcast
+                        </span>
+                        <span style="font-size: 10px; color: #475569;">Storage & Live Push</span>
+                    </div>
+
+                    <!-- Node: WebSocket Hub -->
+                    <div class="node-card" id="node-websocket" onclick="selectNode('node-websocket')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.3);">📡</div>
+                                <div>
+                                    <div class="card-name">Real-Time WebSocket Hub</div>
+                                    <div class="card-sub">server/battle-ws.js (/ws)</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(16, 185, 129, 0.15); color: #6ee7b7;">&lt;5ms Push</span>
+                        </div>
+                        <div class="card-body">
+                            Broadcasts <code>ledger.changed</code>, <code>trade.synced</code>, and live backtest simulation state directly to connected browser tabs.
+                        </div>
+                        <div class="card-footer">
+                            <span>Instant Sync</span>
+                            <span style="color: #34d399;">BattleWs.broadcast</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: PostgreSQL DB -->
+                    <div class="node-card" id="node-postgres" onclick="selectNode('node-postgres')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa; border: 1px solid rgba(59, 130, 246, 0.3);">🐘</div>
+                                <div>
+                                    <div class="card-name">Supabase PostgreSQL (Primary)</div>
+                                    <div class="card-sub">server/pg-repo.js</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(59, 130, 246, 0.15); color: #93c5fd;">SQL RLS</span>
+                        </div>
+                        <div class="card-body">
+                            Relational storage for <code>users</code>, <code>accounts</code>, <code>trades</code>, <code>rules</code>, <code>sessions</code>, and <code>broker_api_keys</code>.
+                        </div>
+                        <div class="card-footer">
+                            <span>Debounced Commit</span>
+                            <span style="color: #60a5fa;">pg-repo.saveState()</span>
+                        </div>
+                    </div>
+
+                    <!-- Node: Local JSON Fallback -->
+                    <div class="node-card" id="node-json-store" onclick="selectNode('node-json-store')">
+                        <div class="card-top">
+                            <div class="card-identity">
+                                <div class="card-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24; border: 1px solid rgba(245, 158, 11, 0.3);">💾</div>
+                                <div>
+                                    <div class="card-name">Local JSON Fallback Store</div>
+                                    <div class="card-sub">data/db.json / state.json</div>
+                                </div>
+                            </div>
+                            <span class="card-tag" style="background: rgba(245, 158, 11, 0.15); color: #fde68a;">Offline Mode</span>
+                        </div>
+                        <div class="card-body">
+                            Atomic file storage allowing 100% full application operation locally without external database cloud requirements.
+                        </div>
+                        <div class="card-footer">
+                            <span>Zero-Config</span>
+                            <span style="color: #fbbf24;">Local JSON</span>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- Bottom Floating Hint -->
+            <div class="bottom-hint">
+                <span><span class="kbd-key">Drag</span> Pan Canvas</span>
+                <span><span class="kbd-key">Scroll</span> Zoom In/Out</span>
+                <span><span class="kbd-key">Click Node</span> Inspect Specs</span>
+            </div>
+
+        </div>
+
+        <!-- Inspector Drawer -->
+        <aside id="inspector-drawer" class="inspector-panel">
+            <div>
+                <div style="display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid #1e293b;">
+                    <div style="display: flex; align-items: center; gap: 8px;">
+                        <span id="insp-badge" class="card-tag" style="background: rgba(59, 130, 246, 0.2); color: #60a5fa;">NODE</span>
+                        <h3 id="insp-title" style="font-weight: 700; font-size: 14px; color: #fff;">Component Specs</h3>
+                    </div>
+                </div>
+
+                <div style="margin-top: 16px; display: flex; flex-direction: column; gap: 16px;">
+                    <div>
+                        <span class="insp-section-title">Description</span>
+                        <p id="insp-desc" style="font-size: 12px; color: #cbd5e1; line-height: 1.5;"></p>
+                    </div>
+
+                    <div>
+                        <span class="insp-section-title">Source Code Grounding</span>
+                        <div id="insp-files"></div>
+                    </div>
+
+                    <div>
+                        <span class="insp-section-title">Protocols & Payload Schema</span>
+                        <div id="insp-payload" class="code-box"></div>
+                    </div>
+
+                    <div>
+                        <span class="insp-section-title">Connected Conduits</span>
+                        <div id="insp-conduits"></div>
+                    </div>
+                </div>
+            </div>
+
+            <div style="padding-top: 16px; border-top: 1px solid #1e293b; font-size: 11px; font-family: monospace; color: #64748b; display: flex; justify-content: space-between;">
+                <span>BattleX Journal v2.4</span>
+                <span style="color: #10b981;">● 877 Tests Passing</span>
+            </div>
+        </aside>
+
+    </div>
+
+    <!-- Interactive Script -->
+    <script>
+        const nodesData = {
+            'node-mt4': {
+                title: 'MetaTrader 4 (MT4 EA Webhook)',
+                badge: 'MQL4 CONNECTOR',
+                desc: 'Client-side Expert Advisor script placed in MT4 Experts directory. Listens to closed order history and dispatches HTTP POST payloads containing ticket, lot size, entry, exit, swap, and GMT broker offset to the 31Trades Ingestion Gateway.',
+                files: ['31trades/assets/integrations/BattleX_MT4_Sync.mq4', '31trades/server.js'],
+                payload: `POST /api/integrations/trade-sync
+Header: Authorization: Bearer <API_KEY>
+{
+  "source": "MT4",
+  "ticket": 12849201,
+  "symbol": "EURUSD",
+  "dir": "Long",
+  "size": 1.5,
+  "entry": 1.08520,
+  "exit": 1.08940,
+  "grossPnL": 630.00,
+  "commission": -10.50,
+  "swap": -2.10,
+  "pnl": 617.40,
+  "closeTime": "2026-09-24T12:45:00Z",
+  "gmtOffset": 7200
+}`,
+                conduits: ['Outbound -> Ingestion Gateway (POST /trade-sync)']
+            },
+            'node-mt5': {
+                title: 'MetaTrader 5 (MT5 EA & Python)',
+                badge: 'MQL5 / PYTHON',
+                desc: 'MQL5 Expert Advisor utilizing OnTradeTransaction() with DEAL_ENTRY_OUT triggers. Performs mathematical Volume-Weighted Average Price (VWAP) calculation on multi-entry scale-ins and accounts for deal splitting.',
+                files: ['31trades/assets/integrations/BattleX_MT5_Sync.mq5', '31trades/scripts/mt5_sync_worker.py'],
+                payload: `POST /api/integrations/trade-sync
+{
+  "source": "MT5",
+  "positionId": 9817203,
+  "dealTicket": 4410291,
+  "symbol": "XAUUSD",
+  "dir": "Short",
+  "size": 2.0,
+  "entry": 2685.50,
+  "exit": 2670.20,
+  "pnl": 3060.00,
+  "closeTime": "2026-09-24T14:10:00Z"
+}`,
+                conduits: ['Outbound -> Ingestion Gateway (POST /trade-sync)']
+            },
+            'node-ctrader': {
+                title: 'cTrader Open API v2 / cBot',
+                badge: 'PROTOBUF / C#',
+                desc: 'Direct Spotware Open API v2 integration via TCP/TLS port 5035 using Protobuf message envelopes (ProtoOAExecutionEvent) or local C# cBot hook on Positions.Closed.',
+                files: ['31trades/server/integrations/ctrader.js', 'BattleX_cTrader.algo'],
+                payload: `ProtoMessage {
+  payloadType: 2126 (ProtoOAExecutionEvent),
+  payload: {
+    executionType: ORDER_FILLED,
+    position: { positionId: 77210, symbolId: 1, volume: 100000, pnl: 450.00 }
+  }
+}`,
+                conduits: ['Outbound -> Ingestion Gateway (WSS/REST)']
+            },
+            'node-brokers': {
+                title: 'Prop Firms & Multi-Broker APIs',
+                badge: 'REST / WEBSOCKET',
+                desc: 'Connectors for TradeLocker (JWT Auth / OrderHistory), DXtrade (STOMP Push), Tradovate (SockJS Futures stream), Interactive Brokers (Flex Web Service nightly pull), and 100+ Crypto exchanges via CCXT.',
+                files: ['31trades/server/integrations/tradelocker.js', '31trades/server/integrations/ibkr-flex.js'],
+                payload: `GET /trade/accounts/{accountId}/ordersHistory
+Header: Authorization: Bearer <JWT_TOKEN>
+-> Normalized to txn-tradelocker-{orderId}`,
+                conduits: ['Outbound -> Ingestion Gateway']
+            },
+            'node-gateway': {
+                title: 'API Key Auth & Ingestion Gate',
+                badge: 'GATEWAY',
+                desc: 'Ingestion endpoint in server.js that validates SHA-256 hashed API keys from broker_api_keys table, isolates user sessions via getUserCore(), and defends against duplicate webhook delivery.',
+                files: ['31trades/server.js', '31trades/db/migrations/014_broker_api_integrations.sql'],
+                payload: `POST /api/integrations/trade-sync
+1. Hash key: crypto.createHash('sha256').update(key).digest('hex')
+2. Lookup user_id & account_id
+3. Invoke uc.core.logTradePipeline()`,
+                conduits: ['Inbound <- MT4, MT5, cTrader, Brokers', 'Outbound -> Canonical Normalizer']
+            },
+            'node-normalizer': {
+                title: 'Canonical Normalizer & Lineage',
+                badge: 'DATA ENGINE',
+                desc: 'Transforms arbitrary broker fields into 31Trades strict schema (dir: Long|Short, size, entry, exit, pnl, ts in UTC). Generates idempotent deterministic ID: txn-{source}-{externalRef}.',
+                files: ['31trades/server/import-engine.js', '31trades/server.js'],
+                payload: `CanonicalTradeSchema = {
+  id: "txn-mt5-9817203",
+  account_id: "acc-prop-01",
+  symbol: "XAUUSD",
+  dir: "Short",
+  size: 2.0,
+  entry: 2685.50,
+  exit: 2670.20,
+  pnl: 3060.00,
+  ts: "2026-09-24T14:10:00.000Z",
+  source: "MT5"
+}`,
+                conduits: ['Inbound <- Gateway', 'Outbound -> 7-Step Trade Pipeline']
+            },
+            'node-pipeline': {
+                title: '7-Step Trade Execution Pipeline',
+                badge: 'CORE ENGINE',
+                desc: 'Core business logic in TradeMindCore. Executes 7 steps: 1. Schema Validation, 2. Account Balance Update, 3. Dynamic R-Multiple Calculation, 4. Risk Limit Rules Enforcement, 5. Discipline & Streak Tracking, 6. Equity Curve Recalculation, 7. Ledger Commit.',
+                files: ['31trades/src/core/index.js', '31trades/core.js'],
+                payload: `Core.logTradePipeline(canonicalTrade) -> {
+  trade: { ... },
+  account: { balance: 103060.00, equity: 103060.00 },
+  rMultiple: 3.06,
+  ruleBreaches: []
+}`,
+                conduits: ['Inbound <- Normalizer', 'Outbound -> Postgres, WebSocket Hub, AI Coach']
+            },
+            'node-sim-engine': {
+                title: 'Backtest & Replay Sim Engine',
+                badge: 'SIMULATION',
+                desc: 'Deterministic market replay engine supporting Spacebar single-step, auto-play (1x-10x), timeline scrubber seek, jump cut, break-even SL modification, and simulated spread/slippage calculation.',
+                files: ['31trades/server/backtest-sim.js', '31trades/server/replay.js', '31trades/backtesting.html'],
+                payload: `Sim.stateOf(session) -> {
+  id: "bt_session_928",
+  cursor: 142,
+  total: 620,
+  candle: { open, high, low, close, volume, time },
+  position: { dir, entry, sl, tp, unrealized, unrealizedR }
+}`,
+                conduits: ['Inbound <- Market Data', 'Outbound -> WebSocket Hub, Frontend Chart']
+            },
+            'node-market-data': {
+                title: 'Market Data & Historical Feeds',
+                badge: 'FEEDS',
+                desc: '4-tier market data service delivering historical OHLCV. Integrates Kaggle Real Gold 2004-2024 dataset, TradingView guest WebSocket feed, 6-hour disk caching, and deterministic seeded regime generators.',
+                files: ['31trades/server/marketdata.js', '31trades/server/backtest.js'],
+                payload: `MarketData.getCandles({ symbol, timeframe, count }) -> {
+  ok: true,
+  symbol: "EURUSD",
+  candles: [ { time, open, high, low, close, volume } ],
+  meta: { source: "tradingview" | "historical-archive" }
+}`,
+                conduits: ['Outbound -> Sim Engine, Frontend Chart']
+            },
+            'node-ai-coach': {
+                title: 'AI Coach & Pattern Insights',
+                badge: 'AI INTELLIGENCE',
+                desc: 'Pattern recognition engine analyzing trade history for revenge trading, emotional over-leveraging, session win-rate decay, and setup efficiency. Grounding guard verifies all numbers to eliminate hallucinations.',
+                files: ['31trades/server/ai-coach.js', '31trades/server/llm.js', '31trades/ai.html'],
+                payload: `AICoach.diagnose(trades) -> {
+  score: 88,
+  findings: [
+    { type: "strength", rule: "ICT Silver Bullet London AM has 75% Win Rate (+4.2R)" },
+    { type: "warning", rule: "Loss recovery trade executed within 2 mins (Revenge tilt risk)" }
+  ]
+}`,
+                conduits: ['Inbound <- Trade Pipeline', 'Outbound -> Frontend AI Tab']
+            },
+            'node-websocket': {
+                title: 'Real-Time WebSocket Broadcast Hub',
+                badge: 'WEBSOCKET WSS',
+                desc: 'Lightweight WebSocket engine (/ws) providing sub-5ms push notifications to connected browser client sessions. Pushes ledger.changed, trade.synced, and backtest tick advancements.',
+                files: ['31trades/server/battle-ws.js', '31trades/server.js'],
+                payload: `WSS Frame:
+{
+  "type": "ledger.changed",
+  "action": "trade.synced",
+  "tradeId": "txn-mt5-9817203",
+  "accounts": [ { "id": "acc-prop", "balance": 103060 } ]
+}`,
+                conduits: ['Inbound <- Trade Pipeline, Sim Engine', 'Outbound -> Web Client UI']
+            },
+            'node-postgres': {
+                title: 'Supabase PostgreSQL Primary DB',
+                badge: 'POSTGRESQL',
+                desc: 'Production relational persistence layer with foreign keys, cascading deletes, JSONB metadata indexing, and debounced snapshotting. Managed by pg-repo.js.',
+                files: ['31trades/server/pg-repo.js', '31trades/db/migrations/001_initial_schema.sql'],
+                payload: `SQL Tables:
+• users (id, email, password_hash)
+• accounts (id, user_id, starting_balance, currency)
+• trades (id, account_id, symbol, dir, size, entry, exit, pnl, ts)
+• broker_api_keys (id, user_id, api_key_hash, platform)`,
+                conduits: ['Inbound <- Trade Pipeline (Debounced Save)']
+            },
+            'node-json-store': {
+                title: 'Local JSON Storage (Fallback)',
+                badge: 'ZERO-SETUP DB',
+                desc: 'Atomic filesystem store (data/db.json) utilized automatically during offline development or when SUPABASE_DB_URL is omitted.',
+                files: ['31trades/data/db.json', '31trades/server.js'],
+                payload: `{
+  "users": { "usr-demo": { "accounts": [ ... ], "trades": [ ... ] } }
+}`,
+                conduits: ['Inbound <- Server Runtime']
+            },
+            'node-web-ui': {
+                title: 'BattleX Frontend Single-Page App',
+                badge: 'FRONTEND SPA',
+                desc: 'High-density fintech web application built with TradingView LightweightCharts, Tailwind CSS, Lucide icons, and Vanilla JS IIFE architecture.',
+                files: ['31trades/journal.html', '31trades/backtesting.html', '31trades/dashboard.html'],
+                payload: `Frontend Capabilities:
+• Live Execution HUD (Buy/Sell, Break-Even, Partial Close)
+• Interactive Chart Replay & Candle TimeScale Fit
+• Calendar Heatmap & Hierarchical Analytics Drilldown`,
+                conduits: ['Inbound <- WebSocket Hub, REST API', 'Outbound -> Gateway']
+            }
+        };
+
+        const connections = [
+            ['node-mt4', 'node-gateway', '#3b82f6', 'flow-line'],
+            ['node-mt5', 'node-gateway', '#10b981', 'flow-line'],
+            ['node-ctrader', 'node-gateway', '#6366f1', 'flow-line'],
+            ['node-brokers', 'node-gateway', '#f59e0b', 'flow-line'],
+            ['node-web-ui', 'node-gateway', '#06b6d4', 'flow-line'],
+            ['node-gateway', 'node-normalizer', '#818cf8', 'flow-line-fast'],
+            ['node-normalizer', 'node-pipeline', '#34d399', 'flow-line-fast'],
+            ['node-market-data', 'node-sim-engine', '#38bdf8', 'flow-line'],
+            ['node-sim-engine', 'node-pipeline', '#fb7185', 'flow-line'],
+            ['node-pipeline', 'node-postgres', '#60a5fa', 'flow-line'],
+            ['node-pipeline', 'node-json-store', '#fbbf24', 'flow-line'],
+            ['node-pipeline', 'node-ai-coach', '#a78bfa', 'flow-line'],
+            ['node-pipeline', 'node-websocket', '#34d399', 'flow-line-fast'],
+            ['node-websocket', 'node-web-ui', '#22d3ee', 'flow-line-fast']
+        ];
+
+        function renderConnections() {
+            const svgLayer = document.getElementById('svg-paths-layer');
+            const stage = document.getElementById('viewport-stage');
+            const stageRect = stage.getBoundingClientRect();
+            let pathsHtml = '';
+
+            connections.forEach(([srcId, dstId, strokeColor, cls]) => {
+                const srcEl = document.getElementById(srcId);
+                const dstEl = document.getElementById(dstId);
+                if (!srcEl || !dstEl) return;
+
+                const r1 = srcEl.getBoundingClientRect();
+                const r2 = dstEl.getBoundingClientRect();
+
+                const zoomFactor = currentZoom;
+                const x1 = (r1.right - stageRect.left) / zoomFactor;
+                const y1 = (r1.top + r1.height / 2 - stageRect.top) / zoomFactor;
+                const x2 = (r2.left - stageRect.left) / zoomFactor;
+                const y2 = (r2.top + r2.height / 2 - stageRect.top) / zoomFactor;
+
+                const dx = Math.abs(x2 - x1) * 0.55;
+                const d = `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`;
+
+                pathsHtml += `<path d="${d}" fill="none" stroke="${strokeColor}" stroke-width="2.2" class="${cls}" opacity="0.85" filter="url(#glow)"/>`;
+                pathsHtml += `<circle cx="${x2}" cy="${y2}" r="3.5" fill="${strokeColor}"/>`;
+            });
+
+            svgLayer.innerHTML = pathsHtml;
+        }
+
+        // Pan & Zoom State
+        let currentZoom = 0.82;
+        let panX = 30, panY = 20;
+        let isDragging = false;
+        let startX = 0, startY = 0;
+
+        const stage = document.getElementById('viewport-stage');
+        const container = document.getElementById('canvas-container');
+
+        function updateTransform() {
+            stage.style.transform = `translate(${panX}px, ${panY}px) scale(${currentZoom})`;
+            document.getElementById('zoom-text').textContent = Math.round(currentZoom * 100) + '%';
+            renderConnections();
+        }
+
+        function zoom(delta) {
+            currentZoom = Math.max(0.35, Math.min(1.8, currentZoom + delta));
+            updateTransform();
+        }
+
+        function fitView() {
+            const availW = container.clientWidth;
+            const availH = container.clientHeight;
+            const targetScale = Math.min(availW / 1850, availH / 1050, 0.95);
+            currentZoom = Math.max(0.45, Math.min(1.0, targetScale));
+            panX = 20;
+            panY = 15;
+            updateTransform();
+        }
+
+        container.addEventListener('mousedown', e => {
+            if (e.target.closest('.node-card') || e.target.closest('button')) return;
+            isDragging = true;
+            startX = e.clientX - panX;
+            startY = e.clientY - panY;
+        });
+
+        window.addEventListener('mousemove', e => {
+            if (!isDragging) return;
+            panX = e.clientX - startX;
+            panY = e.clientY - startY;
+            updateTransform();
+        });
+
+        window.addEventListener('mouseup', () => { isDragging = false; });
+
+        container.addEventListener('wheel', e => {
+            e.preventDefault();
+            const delta = e.deltaY < 0 ? 0.08 : -0.08;
+            zoom(delta);
+        }, { passive: false });
+
+        function selectNode(id) {
+            document.querySelectorAll('.node-card').forEach(n => n.classList.remove('active'));
+            const el = document.getElementById(id);
+            if (el) el.classList.add('active');
+
+            const data = nodesData[id];
+            if (!data) return;
+
+            document.getElementById('insp-title').textContent = data.title;
+            document.getElementById('insp-badge').textContent = data.badge;
+            document.getElementById('insp-desc').textContent = data.desc;
+            document.getElementById('insp-payload').textContent = data.payload;
+
+            document.getElementById('insp-files').innerHTML = data.files.map(f => 
+                `<div class="file-pill"><span>📄</span><span>${f}</span></div>`
+            ).join('');
+
+            document.getElementById('insp-conduits').innerHTML = data.conduits.map(c =>
+                `<div class="conduit-box">${c}</div>`
+            ).join('');
+        }
+
+        function switchView(mode) {
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            const btn = document.getElementById('btn-view-' + mode);
+            if (btn) btn.classList.add('active');
+
+            document.querySelectorAll('.node-card').forEach(c => {
+                c.style.opacity = '1';
+                c.style.filter = 'none';
+            });
+
+            if (mode === 'sync') {
+                document.querySelectorAll('.node-card').forEach(c => {
+                    const id = c.id;
+                    const isSync = ['node-mt4', 'node-mt5', 'node-ctrader', 'node-brokers', 'node-gateway', 'node-normalizer', 'node-pipeline', 'node-websocket', 'node-web-ui'].includes(id);
+                    if (!isSync) {
+                        c.style.opacity = '0.18';
+                        c.style.filter = 'grayscale(80%)';
+                    }
+                });
+                selectNode('node-gateway');
+            } else if (mode === 'replay') {
+                document.querySelectorAll('.node-card').forEach(c => {
+                    const id = c.id;
+                    const isReplay = ['node-market-data', 'node-sim-engine', 'node-pipeline', 'node-web-ui', 'node-websocket'].includes(id);
+                    if (!isReplay) {
+                        c.style.opacity = '0.18';
+                        c.style.filter = 'grayscale(80%)';
+                    }
+                });
+                selectNode('node-sim-engine');
+            } else if (mode === 'storage') {
+                document.querySelectorAll('.node-card').forEach(c => {
+                    const id = c.id;
+                    const isStorage = ['node-pipeline', 'node-postgres', 'node-json-store', 'node-gateway'].includes(id);
+                    if (!isStorage) {
+                        c.style.opacity = '0.18';
+                        c.style.filter = 'grayscale(80%)';
+                    }
+                });
+                selectNode('node-postgres');
+            } else {
+                selectNode('node-pipeline');
+            }
+            renderConnections();
+        }
+
+        function exportSVG() {
+            const svg = document.getElementById('connections-svg');
+            const data = (new XMLSerializer()).serializeToString(svg);
+            const blob = new Blob([data], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'battlex-journal-architecture.svg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        window.addEventListener('load', () => {
+            selectNode('node-pipeline');
+            fitView();
+            setTimeout(renderConnections, 80);
+        });
+        window.addEventListener('resize', () => {
+            fitView();
+            renderConnections();
+        });
+    </script>
+</body>
+</html>
